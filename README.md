@@ -39,7 +39,7 @@ sudo chmod 777 * -R /home/liu/.local/share
 
 以前你可能需要打开多个图像，逐个对比，再到文件夹找到图像，复制到别的地方。
 
-现在只需使用Mulimg_viewer多图像浏览器，输入各个需要对比的目录，一键保存对比图像对到本地！![image](https://github.com/nachifur/Mulimg_viewer/blob/master/img/f0.png)
+现在只需使用Mulimg_viewer多图像浏览器，输入各个需要对比的目录，一键保存对比图像对到本地！![image](https://github.com/nachifur/Mulimg_viewer/tree/master/img/f0.png)
 
 例2：
 

@@ -36,8 +36,8 @@ sudo chmod 777 * -R /home/liu/.local/share
 /etc/Mulimg_viewer/main
 ```
 这个不含测试图像，可以从code中直接下载。
-##Windows
-目前已经打包一个exe，已经在win10下测试。
+## Windows
+目前已经打包一个exe，已经在win10下测试。也可以下载源码运行`main.py`。
 # 三、应用场景
 例1：
 

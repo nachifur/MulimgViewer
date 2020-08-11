@@ -3,20 +3,21 @@
 Mulimg_viewer是多图像浏览器，在一个界面打开**多个**图像，方便图像的比较，方便的选出对比明显的**图像对**，同时可以方便的进行图像的拼接。
 
 **输入路径**有两种模式
-1. 一个文件夹下有n个子文件夹，子文件夹中为png图片
-2. 单独选择每个子文件夹（名字相同时，变为名称+数字）
+1. 仅需添加一次文件夹。一个文件夹下有n个子文件夹，子文件夹中为png图片。
+2. 单独选择每个子文件夹（子文件夹名字相同时，保存时变为名称+数字）
 
 选择**输出的路径**，输出的文夹名称为**输入的子文件夹名称**
 
 # 二、安装与运行
 目前仅在Ubuntu18.04测试，其他版本的linux系统理论上有python3和wxpython即可运行。
-## 1
+## ubuntu
+### 1
 安装：(python3)
 推荐使用conda安装，pip安装wxpython可能会失败。
 pip：
 ```bash
 sudo apt-get install build-essential libgtk-3-dev
-/usr/bin/pip3 install wxpython pillow
+/usr/bin/pip3 install wxpython pillow pytest-shutil
 ```
 运行：
 ```python
@@ -29,12 +30,14 @@ python3 main.py
 ```bash
 sudo chmod 777 * -R /home/liu/.local/share
 ```
-## 2
+### 2
 目前已经发布一个deb包（release中可以找到），在Ubuntu18.04(amd64)测试可用，安装之后运行：
 ```bash
 /etc/Mulimg_viewer/main
 ```
 这个不含测试图像，可以从code中直接下载。
+##Windows
+目前已经打包一个exe，已经在win10下测试。
 # 三、应用场景
 例1：
 

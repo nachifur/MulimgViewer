@@ -4,13 +4,16 @@ import numpy as np
 import os
 from PIL import Image
 from about import About
+from shutil import copyfile
+from pathlib import Path
 
 
 class SelectImgFrame (SelectImgFrameGui):
 
-    def __init__(self, parent, UpdateUI):
+    def __init__(self, parent, UpdateUI, get_type):
         super().__init__(parent)
         self.UpdateUI = UpdateUI
+        self.get_type = get_type
 
         acceltbl = wx.AcceleratorTable([(wx.ACCEL_CTRL, ord('N'), self.menu_next.GetId()),
                                         (wx.ACCEL_CTRL, ord('L'),
@@ -43,7 +46,10 @@ class SelectImgFrame (SelectImgFrameGui):
         self.width = self.Size[0]
 
     def Close(self, event):
-        self.UpdateUI(-1)
+        if self.get_type()==-1:
+            self.Destroy()
+        else:
+            self.UpdateUI(-1)
 
     def next_img(self, event):
         self.SetStatusText_(["Next", "-1", "-1", "-1"])
@@ -87,18 +93,17 @@ class SelectImgFrame (SelectImgFrameGui):
             dir_name = []
             if self.m_choice1.GetSelection() == 0:
                 for path in self.input_paths:
-                    dir_name.append(path.split("/")[-1])
+                    dir_name.append(Path(path).name)
                 if len(dir_name) == len(set(dir_name)):
                     pass
                 else:
                     dir_name = [dir_name[0]+str(i)
                                 for i in range(len(dir_name))]
             elif self.m_choice1.GetSelection() == 1:
-                dir_name = ["stitch_images" for i in range(
-                    len(self.input_paths))]
+                dir_name = ["stitch_images"]
             else:
                 for path in self.input_paths:
-                    dir_name.append(path.split("/")[-1])
+                    dir_name.append(Path(path).name)
                 if len(dir_name) == len(set(dir_name)):
                     pass
                 else:
@@ -107,38 +112,41 @@ class SelectImgFrame (SelectImgFrameGui):
                 dir_name.append("stitch_images")
             if self.m_choice1.GetSelection() == 0:
                 for i in range(len(dir_name)):
-                    if not os.path.exists(os.path.join(self.out_path_str, dir_name[i])):
-                        os.system(
-                            "mkdir "+os.path.join(self.out_path_str, dir_name[i]))
 
-                        f_path = os.path.join(
-                            self.input_paths[i], self.img_name[self.count_img])
-                        if os.path.isfile(f_path):
-                            check.append(os.system("cp "+f_path+" " + os.path.join(
-                                os.path.join(self.out_path_str, dir_name[i]), str(self.img_name[self.count_img]))))
-                        else:
-                            check.append(1)
+                    if not (Path(self.out_path_str)/dir_name[i]).exists():
+                        os.makedirs(Path(self.out_path_str) / dir_name[i])
+
+                    f_path = Path(
+                        self.input_paths[i]) / self.img_name[self.count_img]
+                    try:
+                        copyfile(f_path, (Path(self.out_path_str) /
+                                          dir_name[i]) / str(self.img_name[self.count_img]))
+                    except:
+                        check.append(1)
+                    else:
+                        check.append(0)
+
             elif self.m_choice1.GetSelection() == 1:
-                if not os.path.exists(os.path.join(self.out_path_str, dir_name[-1])):
-                    os.system(
-                        "mkdir "+os.path.join(self.out_path_str, dir_name[-1]))
+                if not (Path(self.out_path_str)/dir_name[-1]).exists():
+                    os.makedirs(Path(self.out_path_str) / dir_name[-1])
                 check_1.append(self.stitch_images(dir_name[-1]))
             else:
                 for i in range(len(dir_name)-1):
-                    if not os.path.exists(os.path.join(self.out_path_str, dir_name[i])):
-                        os.system(
-                            "mkdir "+os.path.join(self.out_path_str, dir_name[i]))
+                    if not (Path(self.out_path_str)/dir_name[i]).exists():
+                        os.makedirs(Path(self.out_path_str) / dir_name[i])
 
-                        f_path = os.path.join(
-                            self.input_paths[i], self.img_name[self.count_img])
-                        if os.path.isfile(f_path):
-                            check.append(os.system("cp "+f_path+" " + os.path.join(
-                                os.path.join(self.out_path_str, dir_name[i]), str(self.img_name[self.count_img]))))
-                        else:
-                            check.append(1)
-                if not os.path.exists(os.path.join(self.out_path_str, dir_name[-1])):
-                    os.system(
-                        "mkdir "+os.path.join(self.out_path_str, dir_name[-1]))
+                    f_path = Path(
+                        self.input_paths[i]) / self.img_name[self.count_img]
+                    try:
+                        copyfile(f_path, (Path(self.out_path_str) /
+                                          dir_name[i]) / str(self.img_name[self.count_img]))
+                    except:
+                        check.append(1)
+                    else:
+                        check.append(0)
+
+                if not (Path(self.out_path_str)/dir_name[-1]).exists():
+                    os.makedirs(Path(self.out_path_str) / dir_name[-1])
                 check_1.append(self.stitch_images(dir_name[-1]))
 
             if sum(check) == 0:

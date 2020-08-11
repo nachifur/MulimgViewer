@@ -2,9 +2,11 @@ import wx
 from select_image import SelectImgFrame
 from path_select import PathSelectFrame
 
+
 class GuiManager():
-    def __init__(self, UpdateUI):
+    def __init__(self, UpdateUI, get_type):
         self.UpdateUI = UpdateUI
+        self.get_type = get_type
         self.frameDict = {}
 
     def GetFrame(self, type):
@@ -18,24 +20,25 @@ class GuiManager():
 
     def CreateFrame(self, type):
         if type == 0:
-            return SelectImgFrame(None, self.UpdateUI)
+            return SelectImgFrame(None, self.UpdateUI, self.get_type)
         elif type == 1:
-            return PathSelectFrame(None, self.UpdateUI)
+            return PathSelectFrame(None, self.UpdateUI, self.get_type)
 
 
 class MainAPP(wx.App):
 
-
     def OnInit(self):
-        self.manager = GuiManager(self.UpdateUI)
+        self.manager = GuiManager(self.UpdateUI, self.get_type)
         self.frame = []
         self.frame.append(self.manager.GetFrame(0))
         self.frame.append(self.manager.GetFrame(1))
         self.frame[0].Show()
         self.SetTopWindow(self.frame[0])
+        self.type = 0
         return True
 
     def UpdateUI(self, type, input_path=0):
+        self.type = type
         if input_path != 0:
             self.frame[0].input_paths = input_path
             if len(input_path) != 0:
@@ -43,11 +46,14 @@ class MainAPP(wx.App):
                 self.frame[0].show_img()
 
         if type == -1:
-            self.Destroy()
+            self.frame[0].Close(None)
+            self.frame[1].Close(None)
         elif type == 0:
             self.frame[1].Show(False)
-
         self.frame[type].Show(True)
+
+    def get_type(self):
+        return self.type
 
 
 def main():

@@ -10,7 +10,7 @@ Mulimg_viewer是多图像浏览器，在一个界面打开**多个**图像，方
 
 # 二、安装与运行
 目前仅在Ubuntu18.04测试，其他版本的linux系统理论上有python3和wxpython即可运行。
-
+## 1
 安装：(python3)
 推荐使用conda安装，pip安装wxpython可能会失败。
 pip：
@@ -29,7 +29,12 @@ python3 main.py
 ```bash
 sudo chmod 777 * -R /home/liu/.local/share
 ```
-
+## 2
+目前已经发布一个deb包（release中可以找到），在Ubuntu18.04(amd64)测试可用，安装之后运行：
+```bash
+/etc/Mulimg_viewer/main
+```
+这个不含测试图像，可以从code中直接下载。
 # 三、应用场景
 例1：
 

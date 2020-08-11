@@ -4,19 +4,23 @@ from path_select_gui import PathSelectFrameGui
 
 class PathSelectFrame (PathSelectFrameGui):
 
-    def __init__(self, parent, UpdateUI, title="Select input path"):
+    def __init__(self, parent, UpdateUI, get_type, title="Select input path"):
         super().__init__(parent)
 
         self.title = title
         self.UpdateUI = UpdateUI
+        self.get_type = get_type
         self.Bind(wx.EVT_CLOSE, self.Close)
 
     def Close(self, event):
-        texts = self.m_richText1.Value
-        strlist = texts.split('\n')
-        strlist = [i for i in strlist if i != ""]
+        if self.get_type()==-1:
+            self.Destroy()
+        else:
+            texts = self.m_richText1.Value
+            strlist = texts.split('\n')
+            strlist = [i for i in strlist if i != ""]
 
-        self.UpdateUI(0, input_path=strlist)
+            self.UpdateUI(0, input_path=strlist)
 
     def change_dir(self, event):
         if self.m_richText1.Value[-2:] != "\n":

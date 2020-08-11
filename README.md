@@ -16,7 +16,7 @@ Mulimg_viewer是多图像浏览器，在一个界面打开**多个**图像，方
 pip：
 ```bash
 sudo apt-get install build-essential libgtk-3-dev
-/usr/bin/pip3 install wxpython pillow
+/usr/bin/pip3 install wxpython pillow pytest-shutil
 ```
 运行：
 ```python

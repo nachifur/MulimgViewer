@@ -17,7 +17,7 @@ import wx.xrc
 class SelectImgFrameGui ( wx.Frame ):
 
 	def __init__( self, parent ):
-		wx.Frame.__init__ ( self, parent, id = wx.ID_ANY, title = u"Select image", pos = wx.DefaultPosition, size = wx.Size( 900,400 ), style = wx.DEFAULT_FRAME_STYLE|wx.TAB_TRAVERSAL )
+		wx.Frame.__init__ ( self, parent, id = wx.ID_ANY, title = u"Mulimg viewer", pos = wx.DefaultPosition, size = wx.Size( 900,400 ), style = wx.DEFAULT_FRAME_STYLE|wx.TAB_TRAVERSAL )
 
 		self.SetSizeHints( wx.DefaultSize, wx.DefaultSize )
 
@@ -217,6 +217,12 @@ class SelectImgFrameGui ( wx.Frame ):
 
 		self.m_menubar1.Append( self.m_menu2, u"Edit" )
 
+		self.m_menu3 = wx.Menu()
+		self.menu_about = wx.MenuItem( self.m_menu3, wx.ID_ANY, u"About", wx.EmptyString, wx.ITEM_NORMAL )
+		self.m_menu3.Append( self.menu_about )
+
+		self.m_menubar1.Append( self.m_menu3, u"Help" )
+
 		self.SetMenuBar( self.m_menubar1 )
 
 		self.m_statusBar1 = self.CreateStatusBar( 4, wx.STB_SIZEGRIP, wx.ID_ANY )
@@ -239,6 +245,7 @@ class SelectImgFrameGui ( wx.Frame ):
 		self.Bind( wx.EVT_MENU, self.down_img, id = self.menu_down.GetId() )
 		self.Bind( wx.EVT_MENU, self.right_img, id = self.menu_right.GetId() )
 		self.Bind( wx.EVT_MENU, self.left_img, id = self.menu_left.GetId() )
+		self.Bind( wx.EVT_MENU, self.about_gui, id = self.menu_about.GetId() )
 
 	def __del__( self ):
 		pass
@@ -282,6 +289,9 @@ class SelectImgFrameGui ( wx.Frame ):
 		event.Skip()
 
 	def left_img( self, event ):
+		event.Skip()
+
+	def about_gui( self, event ):
 		event.Skip()
 
 

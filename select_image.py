@@ -3,6 +3,7 @@ from select_image_gui import SelectImgFrameGui
 import numpy as np
 import os
 from PIL import Image
+from about import About
 
 
 class SelectImgFrame (SelectImgFrameGui):
@@ -208,7 +209,7 @@ class SelectImgFrame (SelectImgFrameGui):
                                 img.paste(im, (x, y))
             else:
                 img_num_per_row = int(self.img_Sizer.GetCols()/num_per_img)
-                img_num_per_column = self.img_Sizer.GetRows()   
+                img_num_per_column = self.img_Sizer.GetRows()
                 img = Image.new('RGB', (width * img_num_per_row * num_per_img + gap * (img_num_per_row-1),
                                         height * img_num_per_column))
 
@@ -427,3 +428,7 @@ class SelectImgFrame (SelectImgFrameGui):
                 h = self.img_Sizer.MinSize[1]+250
                 self.Size = wx.Size((w, h))
             self.Layout()
+
+    def about_gui(self, event):
+        about = About(None)
+        about.Show(True)

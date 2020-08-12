@@ -371,6 +371,8 @@ class SelectImgFrame (SelectImgFrameGui):
         elif img_name_format == "tif":
             image = wx.Image(
                 f_path, wx.BITMAP_TYPE_TIFF).ConvertToBitmap()
+        else:
+            image = False
         return image
 
     def set_img_sizer(self):
@@ -403,39 +405,47 @@ class SelectImgFrame (SelectImgFrameGui):
                     self.img_Sizer.Children[0].GetWindow().Destroy()
             except:
                 pass
-            for i in range(dir_num):
-                m_panel1 = wx.Panel(self.m_scrolledWindow1, wx.ID_ANY,
-                                    wx.DefaultPosition, wx.DefaultSize, wx.TAB_TRAVERSAL)
-                f_path = os.path.join(
-                    self.input_paths[i], self.img_name[self.count_img])
-                if os.path.isfile(f_path):
-                    image = self.load_img(f_path)
-                    size = image.GetWidth(), image.GetHeight()
-                    m_panel1.SetSize(size)
-                    wx.StaticBitmap(parent=m_panel1, bitmap=image)
-                    if orientation == "Horizontal":
-                        col = i % self.img_Sizer.GetCols()
-                        row = int((i-col)/self.img_Sizer.GetCols())
+            try:
+                for i in range(dir_num):
+                    m_panel1 = wx.Panel(self.m_scrolledWindow1, wx.ID_ANY,
+                                        wx.DefaultPosition, wx.DefaultSize, wx.TAB_TRAVERSAL)
+                    f_path = os.path.join(
+                        self.input_paths[i], self.img_name[self.count_img])
+                    if os.path.isfile(f_path):
+                        image = self.load_img(f_path)
+                        if image==False:
+                            self.SetStatusText_(
+                                ["-1", str(self.count_img)+' image', "***Error: image format***", "-1"])                        
+                        else:
+                            size = image.GetWidth(), image.GetHeight()
+                            m_panel1.SetSize(size)
+                            wx.StaticBitmap(parent=m_panel1, bitmap=image)
+                            if orientation == "Horizontal":
+                                col = i % self.img_Sizer.GetCols()
+                                row = int((i-col)/self.img_Sizer.GetCols())
+                            else:
+                                row = i % self.img_Sizer.GetRows()
+                                col = int((i-row)/self.img_Sizer.GetRows())
+                            self.img_Sizer.Add(m_panel1, pos=(row, col), flag=wx.EXPAND |
+                                            wx.ALL, border=5)
+                            self.SetStatusText_(
+                                ["-1", str(self.count_img)+' image', str(self.img_name[self.count_img]), "-1"])
                     else:
-                        row = i % self.img_Sizer.GetRows()
-                        col = int((i-row)/self.img_Sizer.GetRows())
-                    self.img_Sizer.Add(m_panel1, pos=(row, col), flag=wx.EXPAND |
-                                       wx.ALL, border=5)
-                    self.SetStatusText_(
-                        ["-1", str(self.count_img)+' image', str(self.img_name[self.count_img]), "-1"])
-                else:
-                    self.SetStatusText_(
-                        ["-1", str(self.count_img)+' image', "***Error: "+str(self.img_name[self.count_img]) + ", the number of img in sub folders is different***", "-1"])
-
-            # self.Size = wx.Size(wx.DisplaySize())
-            if self.auto_layout.Value:
-                if self.img_Sizer.MinSize[0]+50 < self.width:
-                    w = self.width
-                else:
-                    w = self.img_Sizer.MinSize[0]+50
-                h = self.img_Sizer.MinSize[1]+250
-                self.Size = wx.Size((w, h))
-            self.Layout()
+                        self.SetStatusText_(
+                            ["-1", str(self.count_img)+' image', "***Error: "+str(self.img_name[self.count_img]) + ", the number of img in sub folders is different***", "-1"])
+            except:
+                self.SetStatusText_(
+                    ["-1", str(self.count_img)+' image', "***Error: check image format and name***", "-1"])                
+            else:
+                # self.Size = wx.Size(wx.DisplaySize())
+                if self.auto_layout.Value:
+                    if self.img_Sizer.MinSize[0]+50 < self.width:
+                        w = self.width
+                    else:
+                        w = self.img_Sizer.MinSize[0]+50
+                    h = self.img_Sizer.MinSize[1]+250
+                    self.Size = wx.Size((w, h))
+                self.Layout()
 
     def about_gui(self, event):
         about = About(None)

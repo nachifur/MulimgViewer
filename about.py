@@ -33,6 +33,11 @@ class About (AboutGui):
         self.about_txt.WriteText("amd64\n")
 
         self.about_txt.BeginBold()
+        self.about_txt.WriteText("Image format: ")
+        self.about_txt.EndBold()
+        self.about_txt.WriteText("png, jpg, bmp, tif\n")
+
+        self.about_txt.BeginBold()
         self.about_txt.WriteText("Description: ")
         self.about_txt.EndBold()
         self.about_txt.WriteText(

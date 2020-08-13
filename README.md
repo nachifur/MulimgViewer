@@ -52,7 +52,7 @@ sudo chmod 777 * -R /home/liu/.local/share
 
 例2：
 
-Mulimg_viewer可以轻松的完成纵向与横向的拼接，支持自动一键保存！
+Mulimg_viewer可以轻松的完成纵向与横向的拼接，**支持自动拼接保存**！
 # 四、快捷键操作
 
 下一张：Ctrl+N

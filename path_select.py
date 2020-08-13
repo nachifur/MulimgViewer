@@ -13,7 +13,7 @@ class PathSelectFrame (PathSelectFrameGui):
         self.Bind(wx.EVT_CLOSE, self.Close)
 
     def Close(self, event):
-        if self.get_type()==-1:
+        if self.get_type() == -1:
             self.Destroy()
         else:
             texts = self.m_richText1.Value

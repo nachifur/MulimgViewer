@@ -5,7 +5,7 @@ class About (AboutGui):
     def __init__(self, parent):
         super().__init__(parent)
 
-        self.about_txt.SetEditable(False) 
+        self.about_txt.SetEditable(False)
         self.about_txt.BeginFontSize(12)
         self.about_txt.BeginBold()
         self.about_txt.WriteText("Maintainer: ")

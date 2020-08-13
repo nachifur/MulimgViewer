@@ -42,7 +42,7 @@ class MainAPP(wx.App):
         if input_path != 0:
             self.frame[0].input_paths = input_path
             if len(input_path) != 0:
-                self.frame[0].ImgManager = self.create_ImgManager(
+                self.frame[0].ImgManager = self.frame[0].create_ImgManager(
                     input_path, 1)
                 self.frame[0].ImgManager.set_action_count(0)
                 self.frame[0].show_img()

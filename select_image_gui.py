@@ -106,7 +106,7 @@ class SelectImgFrameGui ( wx.Frame ):
 
 		fgSizer3.Add( self.m_staticText8, 0, wx.ALL, 5 )
 
-		self.img_num_per_row = wx.TextCtrl( self.m_panel2, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.img_num_per_row = wx.TextCtrl( self.m_panel2, wx.ID_ANY, u"1", wx.DefaultPosition, wx.DefaultSize, 0 )
 		fgSizer3.Add( self.img_num_per_row, 0, wx.ALL, 5 )
 
 		self.checkBox_orientation = wx.CheckBox( self.m_panel2, wx.ID_ANY, u"Vertical", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
@@ -124,7 +124,7 @@ class SelectImgFrameGui ( wx.Frame ):
 
 		fgSizer4.Add( self.m_staticText6, 0, wx.ALL, 5 )
 
-		self.num_per_img = wx.TextCtrl( self.m_panel2, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
+		self.num_per_img = wx.TextCtrl( self.m_panel2, wx.ID_ANY, u"1", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
 		fgSizer4.Add( self.num_per_img, 0, wx.ALL, 5 )
 
 		self.auto_layout = wx.CheckBox( self.m_panel2, wx.ID_ANY, u"Auto layout", wx.DefaultPosition, wx.DefaultSize, 0 )
@@ -143,10 +143,10 @@ class SelectImgFrameGui ( wx.Frame ):
 
 		fgSizer5.Add( self.m_staticText5, 0, wx.ALL, 5 )
 
-		self.img_num_per_column = wx.TextCtrl( self.m_panel2, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
+		self.img_num_per_column = wx.TextCtrl( self.m_panel2, wx.ID_ANY, u"1", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
 		fgSizer5.Add( self.img_num_per_column, 0, wx.ALL, 5 )
 
-		self.m_colourPicker1 = wx.ColourPickerCtrl( self.m_panel2, wx.ID_ANY, wx.BLACK, wx.DefaultPosition, wx.DefaultSize, wx.CLRP_DEFAULT_STYLE )
+		self.m_colourPicker1 = wx.ColourPickerCtrl( self.m_panel2, wx.ID_ANY, wx.Colour( 255, 255, 255 ), wx.DefaultPosition, wx.DefaultSize, wx.CLRP_DEFAULT_STYLE )
 		fgSizer5.Add( self.m_colourPicker1, 0, wx.ALL, 5 )
 
 

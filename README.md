@@ -68,6 +68,8 @@ Mulimg_viewer可以轻松的完成纵向与横向的拼接，**支持自动拼�
 
 **3是多图拼接模式**，一个文件夹下有不同的图片，命名不同，用于这些图片的拼接。
 
+![image](https://github.com/nachifur/Mulimg_viewer/blob/master/img/f1.png)
+
 ## 2 快捷键
 下一张：Ctrl+N
 

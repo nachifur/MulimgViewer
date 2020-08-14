@@ -73,7 +73,10 @@ Mulimg_viewer可以轻松的完成纵向与横向的拼接，**支持自动拼�
 **输出模式**：
 
 Each img： 在**图像挑选**时使用，分别保存当前浏览的图像到不同的文件夹
+
 Stitch img： 在**图像拼接**时使用，将拼接的图像保存到*stitch_images*目录下
+
+Each + Stitch： 同时保存
 
 ![image](https://github.com/nachifur/Mulimg_viewer/blob/master/img/f2.png)
 

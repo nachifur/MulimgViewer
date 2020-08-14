@@ -4,6 +4,8 @@ Mulimg_viewer是**多图像**浏览器，在一个界面查看多个图像，方
 
 下载地址：https://github.com/nachifur/Mulimg_viewer/releases/tag/v1.1
 
+测试图像地址：https://github.com/nachifur/Mulimg_viewer/blob/master/img/test_img.zip
+
 目前处于测试阶段，需要改进的部分或者bug可以告诉我。邮箱：nachifur@mail.ustc.edu.cn
 
 # 二、安装与运行
@@ -48,11 +50,11 @@ sudo chmod 777 * -R /home/liu/.local/share
 
 ## 例2：
 
-Mulimg_viewer可以轻松的完成纵向与横向的拼接，**支持自动拼接保存**！![image](https://github.com/nachifur/Mulimg_viewer/blob/master/img/f0.png)
+Mulimg_viewer可以轻松的完成纵向与横向的拼接，**支持自动拼接保存**！![image](https://github.com/nachifur/Mulimg_viewer/blob/master/img/f0.jpg)
 # 四、操作流程与快捷键操作
 
 ## 1 操作流程
-1. 在**Setting中填写布局参数**：num per row, num per img, num per column
+1. 在**Setting中填写布局参数**：num per row（一行有几张图片）, num per img（一个图片由几个子图片组成）, num per column（一列有几个图片）
 2. File->Input path，选择**输入模式**（3种）
     2.1. auto：一个文件夹多个子文件夹。一个文件夹下有n个子文件夹，子文件夹中为图片。
     2.2. manual：手动选择多个子文件夹。
@@ -60,8 +62,24 @@ Mulimg_viewer可以轻松的完成纵向与横向的拼接，**支持自动拼�
 3. 这时图片显示在面板，可以使用**next、last**查看下一张，上一张图片
 4. File->Out path, **选择输出的路径**。输出的文夹名称为输入的子文件夹名称。子文件夹名字相同时，保存时变为名称+数字。
 
-**注**：输入模式：1和2是多图浏览模式，需要确保各子文件夹下面的图片命名相同，用于不同图片的对比。
-3是多图拼接模式，一个文件夹下有不同的图片，命名不同，用于这些图片的拼接。
+**输入模式**：
+
+**1和2是多图浏览模式**，需要确保各子文件夹下面的图片命名相同，用于不同图片的对比。
+
+**3是多图拼接模式**，一个文件夹下有不同的图片，命名不同，用于这些图片的拼接。
+
+![image](https://github.com/nachifur/Mulimg_viewer/blob/master/img/f1.png)
+
+**输出模式**：
+
+Each img： 在**图像挑选**时使用，分别保存当前浏览的图像到不同的文件夹
+
+Stitch img： 在**图像拼接**时使用，将拼接的图像保存到*stitch_images*目录下
+
+Each + Stitch： 同时保存
+
+![image](https://github.com/nachifur/Mulimg_viewer/blob/master/img/f2.png)
+
 ## 2 快捷键
 下一张：Ctrl+N
 

@@ -4,14 +4,13 @@ from path_select_gui import PathSelectFrameGui
 
 class PathSelectFrame (PathSelectFrameGui):
 
-    def __init__(self, parent, UpdateUI, get_type, title="Select input path"):
+    def __init__(self, parent, UpdateUI, get_type, title="Parallel manual choose input directory"):
         super().__init__(parent)
 
         self.title = title
         self.UpdateUI = UpdateUI
         self.get_type = get_type
         self.Bind(wx.EVT_CLOSE, self.Close)
-
     def Close(self, event):
         if self.get_type() == -1:
             self.Destroy()

@@ -23,7 +23,9 @@ class ImgDataset():
             # one_dir_mul_dir_auto
             cwd = Path(self.input_path)
             self.path_list = [str(path)
-                              for path in cwd.iterdir() if cwd.is_dir()]
+                              for path in cwd.iterdir() if cwd.is_dir() and path.is_dir()]
+            if len(self.path_list) == 0:
+                self.path_list = [self.input_path]
             self.path_list = np.sort(self.path_list)
             name_list = [str(f.name) for f in Path(self.path_list[0]).iterdir(
             ) if f.is_file() and f.suffix in format_group]
@@ -33,12 +35,12 @@ class ImgDataset():
             self.path_list = [path
                               for path in self.input_path if Path(path).is_dir()]
             self.path_list = np.sort(self.path_list)
-            if len(self.path_list)!=0:
+            if len(self.path_list) != 0:
                 name_list = [str(f.name) for f in Path(self.path_list[0]).iterdir(
                 ) if f.is_file() and f.suffix in format_group]
                 self.name_list = np.sort(name_list)
             else:
-                self.name_list=[]
+                self.name_list = []
         elif self.type == 2:
             # one_dir_mul_img
             self.path_list = [self.input_path]
@@ -97,6 +99,42 @@ class ImgDataset():
         self.action_count = action_count
         self.img_count = self.count_per_action*self.action_count
 
+    def layout_advice(self):
+        if self.type == 2:
+            return [2, 1]
+        else:
+            num_all = len(self.path_list)
+            list_factor = self.solve_factor(num_all)
+            list_factor = list(set(list_factor))
+            list_factor = np.sort(list_factor)
+            if len(list_factor) == 0:
+                return [num_all, 1]
+            else:
+                if len(list_factor) <= 2:
+                    row = list_factor[0]
+                else:
+                    row = list_factor[int(len(list_factor)/2)-1]
+                row = int(row)
+                col = int(num_all/row)
+                if row < col:
+                    return [col, row]
+                else:
+                    return [row, col]
+
+    def solve_factor(self, num):
+        list_factor = []
+        i = 1
+        if num >= 2:
+            while i <= num:
+                i += 1
+                if num % i == 0:
+                    list_factor.append(i)
+                else:
+                    pass
+            return list_factor
+        else:
+            return []
+
 
 class ImgManager(ImgDataset):
     def __init__(self, input_path, type=-1):
@@ -104,44 +142,36 @@ class ImgManager(ImgDataset):
         self.type = type
         self.layout_params = []
         self.gap_color = (0, 0, 0, 0)
+        self.img = ""
+        self.gap_alpha = 255
+        self.img_alpha = 255
+        self.img_stitch_mode = 0  # 0:"fill" 1:"crop" 2:"resize"
+        self.img_resolution = [-1,-1]
 
-    def load_img(self, f_path):
-        img_name_format = Path(f_path).suffix
-        if img_name_format == ".png":
-            image = wx.Image(f_path, wx.BITMAP_TYPE_PNG).ConvertToBitmap()
-        elif img_name_format == ".jpeg":
-            image = wx.Image(
-                f_path, wx.BITMAP_TYPE_JPEG).ConvertToBitmap()
-        elif img_name_format == ".jpg":
-            image = wx.Image(
-                f_path, wx.BITMAP_TYPE_JPEG).ConvertToBitmap()
-        elif img_name_format == ".bmp":
-            image = wx.Image(
-                f_path, wx.BITMAP_TYPE_BMP).ConvertToBitmap()
-        elif img_name_format == ".tif":
-            image = wx.Image(
-                f_path, wx.BITMAP_TYPE_TIFF).ConvertToBitmap()
-        else:
-            image = False
-        return image
-
-    def save_img(self, out_path_str, type):
+    def save_img(self, out_path_str, out_type):
         check = []
         check_1 = []
+        img = self.img
+        img = self.resize(img, self.layout_params[5])
         if out_path_str != "" and Path(out_path_str).is_dir():
             dir_name = [Path(path)._parts[-1] for path in self.path_list]
-            if type == 0:
+            if out_type == "Select":
                 pass
-            elif type == 1:
+            elif out_type == "Stitch":
                 dir_name = ["stitch_images"]
-            elif type == 2:
+            elif out_type == "Both":
                 dir_name.append("stitch_images")
-            if type == 0:
+
+            name_f = self.name_list[self.action_count]
+            name_f = Path(name_f).with_suffix(".png")
+            f_path_output = Path(out_path_str) / dir_name[-1] / name_f
+
+            if out_type == "Select":
                 for i in range(len(dir_name)):
                     if not (Path(out_path_str)/dir_name[i]).exists():
                         os.makedirs(Path(out_path_str) / dir_name[i])
 
-                    f_path = self.flist[self.action_count]
+                    f_path = self.flist[i]
                     try:
                         copyfile(f_path, Path(
                             out_path_str) / dir_name[i] / self.name_list[self.action_count])
@@ -150,16 +180,17 @@ class ImgManager(ImgDataset):
                     else:
                         check.append(0)
 
-            elif type == 1:
+            elif out_type == "Stitch":
                 if not (Path(out_path_str)/dir_name[-1]).is_dir():
                     os.makedirs(Path(out_path_str) / dir_name[-1])
-                check_1.append(self.stitch_images(out_path_str, dir_name[-1]))
-            elif type == 2:
-                for i in range(len(dir_name)):
+                check_1.append(self.stitch_images())
+
+                img.save(f_path_output)
+            elif out_type == "Both":
+                for i in range(len(dir_name)-1):
                     if not (Path(out_path_str)/dir_name[i]).exists():
                         os.makedirs(Path(out_path_str) / dir_name[i])
-
-                    f_path = self.flist[self.action_count]
+                    f_path = self.flist[i]
                     try:
                         copyfile(f_path, Path(
                             out_path_str) / dir_name[i] / self.name_list[self.action_count])
@@ -170,7 +201,8 @@ class ImgManager(ImgDataset):
 
                 if not (Path(out_path_str)/dir_name[-1]).exists():
                     os.makedirs(Path(out_path_str) / dir_name[-1])
-                check_1.append(self.stitch_images(out_path_str, dir_name[-1]))
+                check_1.append(self.stitch_images())
+                img.save(f_path_output)
 
             if sum(check) == 0:
                 if sum(check_1) == 0:
@@ -182,60 +214,113 @@ class ImgManager(ImgDataset):
         else:
             return 1
 
-    def stitch_images(self, out_path_str, dir_name):
-        try:
-            img_list = []
-            f_path_output = Path(out_path_str) / dir_name / \
-                self.name_list[self.action_count]
-            for path in self.flist:
-                img_list.append(Image.open(path))
-            num_per_img = self.layout_params[0]
-            gap = self.layout_params[3]
-            width_ = []
-            height_ = []
-            for img in img_list:
-                width, height = img.size
-                width_.append(width)
-                height_.append(height)
+    def get_img_list(self):
+        img_list = []
+        for path in self.flist:
+            img_list.append(Image.open(path))
+        # resolution
+        width_ = []
+        height_ = []
+        for img in img_list:
+            width, height = img.size
+            width_.append(width)
+            height_.append(height)
+        width_ = np.sort(width_)
+        height_ = np.sort(height_)
+
+        if self.img_stitch_mode == 0:
             width = max(width_)
             height = max(height_)
+        elif self.img_stitch_mode == 1:
+            width = np.min(width_)
+            height = np.min(height_)
+        elif self.img_stitch_mode == 2:
+            if len(width_) > 3:
+                width = np.mean(width_[1:-1])
+                height = np.mean(height_[1:-1])
+            else:
+                width = np.mean(width_)
+                height = np.mean(height_)
+        else:
+            self.img_resolution = [-1,-1]
+        self.img_resolution = [int(width),int(height)]
 
+        return img_list
+
+    def stitch_images(self):
+        try:
+            img_list = self.get_img_list()
+            width,height = self.img_resolution
+
+            img_num_per_row = self.layout_params[0]
+            num_per_img = self.layout_params[1]
+            img_num_per_column = self.layout_params[2]
+            gap = self.layout_params[3]
             if self.layout_params[-1]:
-                img_num_per_row = self.layout_params[-3]
-                img_num_per_column = int(self.layout_params[-2]/num_per_img)
-                img = Image.new('RGB', (width * img_num_per_row + gap * (img_num_per_row-1), height *
-                                        img_num_per_column * num_per_img + gap*(img_num_per_column-1)), self.gap_color)
+                img_num_per_column = img_num_per_row
+                img_num_per_row = self.layout_params[2]
+                img = Image.new('RGBA', (width * img_num_per_row + gap[1] * (img_num_per_row-1), height *
+                                         img_num_per_column * num_per_img + gap[0]*(img_num_per_column-1)), self.gap_color)
 
                 for ix in range(img_num_per_row):
-                    x = ix * width + gap * ix
+                    x = ix * width + gap[1] * ix
 
                     for iyy in range(img_num_per_column):
                         for iy in range(num_per_img):
-                            y = (iyy*num_per_img+iy) * height+gap * iyy
+                            y = (iyy*num_per_img+iy) * height+gap[0] * iyy
                             if ix*(img_num_per_column * num_per_img)+iyy*num_per_img+iy < len(img_list):
                                 im = img_list[ix*(img_num_per_column *
                                                   num_per_img)+iyy*num_per_img+iy]
+                                im = self.img_preprocessing(im)
                                 img.paste(im, (x, y))
             else:
-                img_num_per_row = int(self.layout_params[-3]/num_per_img)
-                img_num_per_column = self.layout_params[-2]
-                img = Image.new('RGB', (width * img_num_per_row * num_per_img + gap * (img_num_per_row-1),
-                                        height * img_num_per_column + gap * (img_num_per_column-1)), self.gap_color)
+                img = Image.new('RGBA', (width * img_num_per_row * num_per_img + gap[0] * (img_num_per_row-1),height * img_num_per_column + gap[1] * (img_num_per_column-1)), self.gap_color)
 
                 for iy in range(img_num_per_column):
 
-                    y = iy * height + gap * iy
+                    y = iy * height + gap[1] * iy
 
                     for ixx in range(img_num_per_row):
                         for ix in range(num_per_img):
-                            x = (ixx*num_per_img+ix) * width+gap * ixx
+                            x = (ixx*num_per_img+ix) * width+gap[0] * ixx
                             if iy*(img_num_per_row * num_per_img)+ixx*num_per_img+ix < len(img_list):
                                 im = img_list[iy*(img_num_per_row *
                                                   num_per_img)+ixx*num_per_img+ix]
+                                im = self.img_preprocessing(im)
                                 img.paste(im, (x, y))
+            # img = img.convert("RGBA")
 
-            img.save(f_path_output)
+            self.img = img
         except:
             return 1
         else:
             return 0
+
+    def PIL2wx(self, image):
+        width, height = image.size
+        return wx.Bitmap.FromBufferRGBA(width, height, image.tobytes())
+
+    def img_preprocessing(self, img):
+        if self.img_stitch_mode==0:
+            pass
+        elif self.img_stitch_mode==1:
+            width,height = self.img_resolution
+            (left, upper, right, lower) = ((img.size[0]-width)/2,(img.size[1]-height)/2, (img.size[0]-width)/2+width, (img.size[1]-height)/2+height)
+            img = img.crop((left, upper, right, lower))
+        elif self.img_stitch_mode==2:
+            width,height = self.img_resolution
+            img = img.resize((width, height), Image.BICUBIC)
+        return img
+    def change_img_alpha(self, img):
+        img_array = np.array(img)
+        temp = img_array[:, :, 0]
+        img = np.concatenate((img_array, np.ones_like(
+            temp[:, :, np.newaxis])*self.img_alpha), axis=2)
+        img = Image.fromarray(img.astype('uint8')).convert('RGBA')
+        return img
+
+    def resize(self, img, scale):
+        width = int(img.size[0]*scale[0])
+        height = int(img.size[1]*scale[1])
+        img = img.resize((width, height), Image.BICUBIC)
+        return img

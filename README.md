@@ -56,9 +56,11 @@ Mulimg_viewer可以轻松的完成纵向与横向的拼接，**支持自动拼�
 ## 1 操作流程
 1. 在**Setting中填写布局参数**：num per row（一行有几张图片）, num per img（一个图片由几个子图片组成）, num per column（一列有几个图片）
 2. File->Input path，选择**输入模式**（3种）
-    2.1. auto：一个文件夹多个子文件夹。一个文件夹下有n个子文件夹，子文件夹中为图片。
-    2.2. manual：手动选择多个子文件夹。
-    2.3. 一个文件夹多张图片。
+
+    2.1. Sequential: 一个文件夹多张图片。
+    2.2. Parallel auto: 一个文件夹多个子文件夹。一个文件夹下有n个子文件夹，子文件夹中为图片。
+    2.3. Parallel manual: 手动选择多个子文件夹。
+
 3. 这时图片显示在面板，可以使用**next、last**查看下一张，上一张图片
 4. File->Out path, **选择输出的路径**。输出的文夹名称为输入的子文件夹名称。子文件夹名字相同时，保存时变为名称+数字。
 
@@ -68,17 +70,25 @@ Mulimg_viewer可以轻松的完成纵向与横向的拼接，**支持自动拼�
 
 **3是多图拼接模式**，一个文件夹下有不同的图片，命名不同，用于这些图片的拼接。
 
-![image](https://github.com/nachifur/Mulimg_viewer/blob/master/img/f1.png)
+![image](https://github.com/nachifur/Mulimg_viewer/blob/master/img/f1.jpg)
 
 **输出模式**：
 
-Each img： 在**图像挑选**时使用，分别保存当前浏览的图像到不同的文件夹
+Stitch: 在**图像拼接**时使用，将拼接的图像保存到*stitch_images*目录下
 
-Stitch img： 在**图像拼接**时使用，将拼接的图像保存到*stitch_images*目录下
+select: 在**图像挑选**时使用，分别保存当前浏览的图像到不同的文件夹
 
-Each + Stitch： 同时保存
+Both: 同时保存
 
-![image](https://github.com/nachifur/Mulimg_viewer/blob/master/img/f2.png)
+![image](https://github.com/nachifur/Mulimg_viewer/blob/master/img/f2.jpg)
+
+**图像尺寸归一化**
+
+Fill: 图像尺寸为一组图像中的最大尺寸，填充模式
+Crop: 图像尺寸为一组图像中的最小尺寸，裁剪模式
+Resize: 图像尺寸为一组图像中的平均尺寸，缩放模式
+
+![image](https://github.com/nachifur/Mulimg_viewer/blob/master/img/f3.jpg)
 
 ## 2 快捷键
 下一张：Ctrl+N

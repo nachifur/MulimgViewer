@@ -146,7 +146,8 @@ class ImgManager(ImgDataset):
         self.gap_alpha = 255
         self.img_alpha = 255
         self.img_stitch_mode = 0  # 0:"fill" 1:"crop" 2:"resize"
-        self.img_resolution = [-1,-1]
+        self.img_resolution = [-1, -1]
+        self.custom_resolution = False
 
     def save_img(self, out_path_str, out_type):
         check = []
@@ -242,8 +243,14 @@ class ImgManager(ImgDataset):
                 width = np.mean(width_)
                 height = np.mean(height_)
         else:
-            self.img_resolution = [-1,-1]
-        self.img_resolution = [int(width),int(height)]
+            self.img_resolution = [-1, -1]
+
+        if self.layout_params[6][0]==-1 or self.layout_params[6][1]==-1:
+            self.img_resolution = [int(width), int(height)]
+            self.custom_resolution = False
+        else:
+            self.img_resolution = [int(i) for i in self.layout_params[6]]
+            self.custom_resolution = True
 
         return img_list
 
@@ -251,7 +258,6 @@ class ImgManager(ImgDataset):
         try:
             img_list = self.get_img_list()
             width,height = self.img_resolution
-
             img_num_per_row = self.layout_params[0]
             num_per_img = self.layout_params[1]
             img_num_per_column = self.layout_params[2]
@@ -274,7 +280,7 @@ class ImgManager(ImgDataset):
                                 im = self.img_preprocessing(im)
                                 img.paste(im, (x, y))
             else:
-                img = Image.new('RGBA', (width * img_num_per_row * num_per_img + gap[0] * (img_num_per_row-1),height * img_num_per_column + gap[1] * (img_num_per_column-1)), self.gap_color)
+                img = Image.new('RGBA', (width * img_num_per_row * num_per_img + gap[0] * (img_num_per_row-1), height * img_num_per_column + gap[1] * (img_num_per_column-1)), self.gap_color)
 
                 for iy in range(img_num_per_column):
 
@@ -301,16 +307,23 @@ class ImgManager(ImgDataset):
         return wx.Bitmap.FromBufferRGBA(width, height, image.tobytes())
 
     def img_preprocessing(self, img):
-        if self.img_stitch_mode==0:
-            pass
-        elif self.img_stitch_mode==1:
-            width,height = self.img_resolution
-            (left, upper, right, lower) = ((img.size[0]-width)/2,(img.size[1]-height)/2, (img.size[0]-width)/2+width, (img.size[1]-height)/2+height)
-            img = img.crop((left, upper, right, lower))
-        elif self.img_stitch_mode==2:
-            width,height = self.img_resolution
-            img = img.resize((width, height), Image.BICUBIC)
+        if self.custom_resolution:
+            # custom image resolution
+            width, height = self.img_resolution
+            img = img.resize((width, height), Image.BICUBIC)  
+        else:
+            if self.img_stitch_mode == 0:
+                pass
+            elif self.img_stitch_mode == 1:
+                width, height = self.img_resolution
+                (left, upper, right, lower) = (
+                    (img.size[0]-width)/2, (img.size[1]-height)/2, (img.size[0]-width)/2+width, (img.size[1]-height)/2+height)
+                img = img.crop((left, upper, right, lower))
+            elif self.img_stitch_mode == 2:
+                width, height = self.img_resolution
+                img = img.resize((width, height), Image.BICUBIC)          
         return img
+
     def change_img_alpha(self, img):
         img_array = np.array(img)
         temp = img_array[:, :, 0]

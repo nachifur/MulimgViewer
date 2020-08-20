@@ -11,6 +11,7 @@ class PathSelectFrame (PathSelectFrameGui):
         self.UpdateUI = UpdateUI
         self.get_type = get_type
         self.Bind(wx.EVT_CLOSE, self.Close)
+
     def Close(self, event):
         if self.get_type() == -1:
             self.Destroy()

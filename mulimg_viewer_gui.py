@@ -193,19 +193,6 @@ class MulimgViewerGui ( wx.Frame ):
 
 		fgSizer3.Add( bSizer5, 1, wx.EXPAND, 5 )
 
-		bSizer6 = wx.BoxSizer( wx.HORIZONTAL )
-
-		self.m_staticText7 = wx.StaticText( self.m_scrolledWindow2, wx.ID_ANY, u"output scale", wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.m_staticText7.Wrap( -1 )
-
-		bSizer6.Add( self.m_staticText7, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
-
-		self.output_scale = wx.TextCtrl( self.m_scrolledWindow2, wx.ID_ANY, u"1,1", wx.DefaultPosition, wx.DefaultSize, 0 )
-		bSizer6.Add( self.output_scale, 0, wx.ALL, 5 )
-
-
-		fgSizer3.Add( bSizer6, 1, wx.EXPAND, 5 )
-
 		bSizer7 = wx.BoxSizer( wx.HORIZONTAL )
 
 		self.m_staticText8 = wx.StaticText( self.m_scrolledWindow2, wx.ID_ANY, u"Resolution (w,h)", wx.DefaultPosition, wx.DefaultSize, 0 )
@@ -218,6 +205,19 @@ class MulimgViewerGui ( wx.Frame ):
 
 
 		fgSizer3.Add( bSizer7, 1, wx.EXPAND, 5 )
+
+		bSizer6 = wx.BoxSizer( wx.HORIZONTAL )
+
+		self.m_staticText7 = wx.StaticText( self.m_scrolledWindow2, wx.ID_ANY, u"output scale", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText7.Wrap( -1 )
+
+		bSizer6.Add( self.m_staticText7, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+
+		self.output_scale = wx.TextCtrl( self.m_scrolledWindow2, wx.ID_ANY, u"1,1", wx.DefaultPosition, wx.DefaultSize, 0 )
+		bSizer6.Add( self.output_scale, 0, wx.ALL, 5 )
+
+
+		fgSizer3.Add( bSizer6, 1, wx.EXPAND, 5 )
 
 		bSizer8 = wx.BoxSizer( wx.HORIZONTAL )
 
@@ -326,14 +326,14 @@ class MulimgViewerGui ( wx.Frame ):
 		self.m_menubar1 = wx.MenuBar( 0 )
 		self.m_menu1 = wx.Menu()
 		self.m_menu11 = wx.Menu()
+		self.menu_open_sequential = wx.MenuItem( self.m_menu11, wx.ID_ANY, u"Sequential"+ u"\t" + u"Ctrl+E", u"one dir mul limg", wx.ITEM_NORMAL )
+		self.m_menu11.Append( self.menu_open_sequential )
+
 		self.menu_open_auto = wx.MenuItem( self.m_menu11, wx.ID_ANY, u"Parallel auto"+ u"\t" + u"Ctrl+A", u"one dir mul dir", wx.ITEM_NORMAL )
 		self.m_menu11.Append( self.menu_open_auto )
 
 		self.menu_open_manual = wx.MenuItem( self.m_menu11, wx.ID_ANY, u"Parallel manual"+ u"\t" + u"Ctrl+M", u"one dir mul dir", wx.ITEM_NORMAL )
 		self.m_menu11.Append( self.menu_open_manual )
-
-		self.menu_open_sequential = wx.MenuItem( self.m_menu11, wx.ID_ANY, u"Sequential"+ u"\t" + u"Ctrl+E", u"one dir mul limg", wx.ITEM_NORMAL )
-		self.m_menu11.Append( self.menu_open_sequential )
 
 		self.m_menu1.AppendSubMenu( self.m_menu11, u"Open" )
 
@@ -392,9 +392,9 @@ class MulimgViewerGui ( wx.Frame ):
 		self.colourPicker_gap.Bind( wx.EVT_COLOURPICKER_CHANGED, self.colour_change )
 		self.background_slider.Bind( wx.EVT_SCROLL, self.background_alpha )
 		self.foreground_slider.Bind( wx.EVT_SCROLL, self.foreground_alpha )
+		self.Bind( wx.EVT_MENU, self.one_dir_mul_img, id = self.menu_open_sequential.GetId() )
 		self.Bind( wx.EVT_MENU, self.one_dir_mul_dir_auto, id = self.menu_open_auto.GetId() )
 		self.Bind( wx.EVT_MENU, self.one_dir_mul_dir_manual, id = self.menu_open_manual.GetId() )
-		self.Bind( wx.EVT_MENU, self.one_dir_mul_img, id = self.menu_open_sequential.GetId() )
 		self.Bind( wx.EVT_MENU, self.out_path, id = self.menu_output.GetId() )
 		self.Bind( wx.EVT_MENU, self.next_img, id = self.menu_next.GetId() )
 		self.Bind( wx.EVT_MENU, self.last_img, id = self.menu_last.GetId() )
@@ -444,13 +444,13 @@ class MulimgViewerGui ( wx.Frame ):
 	def foreground_alpha( self, event ):
 		event.Skip()
 
+	def one_dir_mul_img( self, event ):
+		event.Skip()
+
 	def one_dir_mul_dir_auto( self, event ):
 		event.Skip()
 
 	def one_dir_mul_dir_manual( self, event ):
-		event.Skip()
-
-	def one_dir_mul_img( self, event ):
 		event.Skip()
 
 	def out_path( self, event ):

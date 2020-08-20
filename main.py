@@ -3,6 +3,7 @@ from mulimg_viewer import MulimgViewer
 from path_select import PathSelectFrame
 import wx.lib.inspection
 
+
 class GuiManager():
     def __init__(self, UpdateUI, get_type):
         self.UpdateUI = UpdateUI

@@ -60,7 +60,7 @@ Mulimg_viewer可以轻松的完成纵向与横向的拼接，**支持自动拼�
     2.1. Sequential: 一个文件夹多张图片。
 
     2.2. Parallel auto: 一个文件夹多个子文件夹。一个文件夹下有n个子文件夹，子文件夹中为图片。
-    
+
     2.3. Parallel manual: 手动选择多个子文件夹。
 
 3. 这时图片显示在面板，可以使用**next、last**查看下一张，上一张图片
@@ -87,7 +87,9 @@ Both: 同时保存
 **图像尺寸归一化**
 
 Fill: 图像尺寸为一组图像中的最大尺寸，填充模式
+
 Crop: 图像尺寸为一组图像中的最小尺寸，裁剪模式
+
 Resize: 图像尺寸为一组图像中的平均尺寸，缩放模式
 
 ![image](https://github.com/nachifur/Mulimg_viewer/blob/master/img/f3.jpg)

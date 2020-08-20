@@ -321,7 +321,8 @@ class ImgManager(ImgDataset):
                 img = img.crop((left, upper, right, lower))
             elif self.img_stitch_mode == 2:
                 width, height = self.img_resolution
-                img = img.resize((width, height), Image.BICUBIC)          
+                img = img.resize((width, height), Image.BICUBIC)     
+        img = self.change_img_alpha(img)
         return img
 
     def change_img_alpha(self, img):

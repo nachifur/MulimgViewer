@@ -2,7 +2,7 @@
 
 Mulimg_viewer是**多图像**浏览器，在一个界面查看多个图像，方便图像的比较，方便的选出对比明显的**图像对**，同时可以方便的进行**图像的拼接**。
 
-下载地址：https://github.com/nachifur/Mulimg_viewer/releases/tag/v1.1
+下载地址：https://github.com/nachifur/Mulimg_viewer/releases/tag/v2.0
 
 测试图像地址：https://github.com/nachifur/Mulimg_viewer/blob/master/img/test_img.zip
 
@@ -66,7 +66,29 @@ Mulimg_viewer可以轻松的完成纵向与横向的拼接，**支持自动拼�
 3. 这时图片显示在面板，可以使用**next、last**查看下一张，上一张图片
 4. File->Out path, **选择输出的路径**。输出的文夹名称为输入的子文件夹名称。子文件夹名字相同时，保存时变为名称+数字。
 
-**输入模式**：
+## 2 快捷键
+输入路径：
+    Sequential: Ctrl+E
+
+    Parallel auto: Ctrl+A
+
+    arallel manual: Ctrl+M
+
+输出路径：Ctrl+O
+
+下一张：Ctrl+N
+
+上一张Ctrl+L
+
+保存：Ctrl+S
+
+刷新：Ctrl+R
+
+使用键盘的上下左右，可以移动图像面板里的图像。
+
+## 3 使用方法
+
+### 输入模式
 
 1是**串行浏览**模式，一个文件夹下有不同的图片，命名不同，用于这些图片的拼接。
 
@@ -74,7 +96,7 @@ Mulimg_viewer可以轻松的完成纵向与横向的拼接，**支持自动拼�
 
 ![image](https://github.com/nachifur/Mulimg_viewer/blob/master/img/f1.jpg)
 
-**输出模式**：
+### 输出模式：
 
 Stitch: 在**图像拼接**时使用，将拼接的图像保存到*stitch_images*目录下
 
@@ -84,7 +106,11 @@ Both: 同时保存
 
 ![image](https://github.com/nachifur/Mulimg_viewer/blob/master/img/f2.jpg)
 
-**图像尺寸归一化**
+### 自动保存
+
+勾选自动保存，点击保存💾️
+
+### 图像尺寸归一化
 
 Fill: 图像尺寸为一组图像中的最大尺寸，填充模式
 
@@ -94,18 +120,13 @@ Resize: 图像尺寸为一组图像中的平均尺寸，缩放模式
 
 ![image](https://github.com/nachifur/Mulimg_viewer/blob/master/img/f3.jpg)
 
-**图像间隔**
+### 图像间隔
 
 gap值可以控制间距x,y方向的间距。可以使用**负数**，这时可以达到**覆盖重叠**的效果。
 
-## 2 快捷键
-下一张：Ctrl+N
+### 图像填充
 
-上一张Ctrl+L
-
-保存：Ctrl+S
-
-使用键盘的上下左右，可以移动图像面板里的图像。
+支持多种颜色填充。支持背景填充**透明**。**同时支持前景透明度调节**。
 
 # 五、注意事项
 

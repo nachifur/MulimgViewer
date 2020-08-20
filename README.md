@@ -51,7 +51,7 @@ sudo chmod 777 * -R /home/liu/.local/share
 ## 例2：
 
 Mulimg_viewer可以轻松的完成纵向与横向的拼接，**支持自动拼接保存**！![image](https://github.com/nachifur/Mulimg_viewer/blob/master/img/f0.jpg)
-# 四、操作流程与快捷键操作
+# 四、使用说明
 
 ## 1 操作流程
 1. 在**Setting中填写布局参数**：num per row（一行有几张图片）, num per img（一个图片由几个子图片组成）, num per column（一列有几个图片）
@@ -86,7 +86,7 @@ Mulimg_viewer可以轻松的完成纵向与横向的拼接，**支持自动拼�
 
 使用键盘的上下左右，可以移动图像面板里的图像。
 
-## 3 使用方法
+## 3 功能介绍
 
 ### 输入模式
 

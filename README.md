@@ -72,7 +72,7 @@ Mulimg_viewer可以轻松的完成纵向与横向的拼接，**支持自动拼�
 
     Parallel auto: Ctrl+A
 
-    arallel manual: Ctrl+M
+    Parallel manual: Ctrl+M
 
 输出路径：Ctrl+O
 

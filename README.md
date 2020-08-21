@@ -107,6 +107,13 @@ Both: 同时保存
 
 ![image](https://github.com/nachifur/Mulimg_viewer/blob/master/img/f2.jpg)
 
+## 图像排列自动化
+
+默认：num per img = -1，这时为程序**自动布局模式**。num per img 的意思是几张图像合成一个图像。
+
+## 取消图像布局自动化
+当num per img = 1或者>1，图像布局为**手动模式**，这时可以调整 row 和 col。
+
 ### 自动保存
 
 勾选自动保存，点击保存💾️

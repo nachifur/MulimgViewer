@@ -218,7 +218,7 @@ class ImgManager(ImgDataset):
     def get_img_list(self):
         img_list = []
         for path in self.flist:
-            img_list.append(Image.open(path))
+            img_list.append(Image.open(path).convert('RGB'))
         # resolution
         width_ = []
         height_ = []
@@ -328,8 +328,14 @@ class ImgManager(ImgDataset):
     def change_img_alpha(self, img):
         img_array = np.array(img)
         temp = img_array[:, :, 0]
-        img = np.concatenate((img_array, np.ones_like(
-            temp[:, :, np.newaxis])*self.img_alpha), axis=2)
+        if img_array.shape[2]==3:
+            img = np.concatenate((img_array, np.ones_like(
+                temp[:, :, np.newaxis])*self.img_alpha), axis=2)
+        elif img_array.shape[2]==4:
+            img_array[:,:,3] = np.ones_like(temp)*self.img_alpha
+            img = img_array
+        else:
+            pass
         img = Image.fromarray(img.astype('uint8')).convert('RGBA')
         return img
 

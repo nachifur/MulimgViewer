@@ -341,7 +341,7 @@ class MulimgViewer (MulimgViewerGui):
                     self.Size = wx.Size((w, h))
 
                 self.scrolledWindow_img.SetMinSize(
-                    wx.Size((self.Size[0]-250, self.Size[1]-150)))
+                    wx.Size((self.Size[0]-300, self.Size[1]-150)))
 
         self.Layout()
         self.Refresh()

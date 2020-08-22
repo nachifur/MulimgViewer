@@ -2,7 +2,7 @@
 
 Mulimg_viewer是**多图像**浏览器，在一个界面查看多个图像，方便图像的比较，方便的选出对比明显的**图像对**，同时可以方便的进行**图像的拼接**。
 
-下载地址：https://github.com/nachifur/Mulimg_viewer/releases/tag/v2.0
+下载地址：https://github.com/nachifur/Mulimg_viewer/releases/tag/v2.1
 
 测试图像地址：https://github.com/nachifur/Mulimg_viewer/blob/master/img/test_img.zip
 

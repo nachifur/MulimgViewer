@@ -54,7 +54,7 @@ Mulimg_viewer可以轻松的完成纵向与横向的拼接，**支持自动拼�
 # 四、使用说明
 
 ## 1 操作流程
-1. 在**Setting中填写布局参数**：num per row（一行有几张图片）, num per img（一个图片由几个子图片组成）, num per column（一列有几个图片）
+1. 在**Setting中填写布局参数**：row（一行有几张图片）, num per img（一个图片由几个子图片组成）, col（一列有几个图片）
 2. File->Input path，选择**输入模式**（3种）
 
     2.1. Sequential: 一个文件夹多张图片。

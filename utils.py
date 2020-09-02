@@ -34,7 +34,6 @@ class ImgDataset():
             # one_dir_mul_dir_manual
             self.path_list = [path
                               for path in self.input_path if Path(path).is_dir()]
-            self.path_list = np.sort(self.path_list)
             if len(self.path_list) != 0:
                 name_list = [str(f.name) for f in Path(self.path_list[0]).iterdir(
                 ) if f.is_file() and f.suffix in format_group]

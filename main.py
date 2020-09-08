@@ -41,7 +41,6 @@ class MainAPP(wx.App):
     def UpdateUI(self, type, input_path=0):
         self.type = type
         if input_path != 0:
-            self.frame[0].input_paths = input_path
             if len(input_path) != 0:
                 self.frame[0].ImgManager = self.frame[0].create_ImgManager(
                     input_path, 1)
@@ -61,6 +60,7 @@ class MainAPP(wx.App):
 
 def main():
     app = MainAPP()
+    # debug
     # wx.lib.inspection.InspectionTool().Show()
     app.MainLoop()
 

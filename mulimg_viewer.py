@@ -30,6 +30,7 @@ class MulimgViewer (MulimgViewerGui):
         self.SetAcceleratorTable(acceltbl)
         # self.img_Sizer = self.scrolledWindow_img.GetSizer()
         self.Bind(wx.EVT_CLOSE, self.Close)
+        self.Bind(wx.EVT_PAINT, self.OnPaint)
 
         # parameter
         self.out_path_str = ""
@@ -41,21 +42,20 @@ class MulimgViewer (MulimgViewerGui):
         self.width = 1050
         self.height = 600
         self.start_flag = 0
-        self.Bind(wx.EVT_PAINT, self.OnPaint)
+        self.x = -1
+        self.x_0 = -1
+        self.y = -1
+        self.y_0 = -1
 
     def OnPaint(self, event):
-        if self.magnifier.Value != False:
-            try:
-                dc = wx.PaintDC(self.img_panel.Children[0])
-                pen = wx.Pen(wx.Colour(255, 0, 0))
-                dc.SetPen(pen)
-                dc.SetBrush(wx.Brush(wx.Colour(0, 0, 0), wx.TRANSPARENT))
-                for xy in self.ImgManager.xy_grid:
-                    dc.DrawRectangle(self.x_0+xy[0], self.y_0+xy[1], self.x -
-                                    self.x_0, self.y-self.y_0)
-                
-            except:
-                pass
+        if self.magnifier.Value != False and self.x_0 != -1 and len(self.img_panel.Children) != 0:
+            dc = wx.PaintDC(self.img_panel.Children[0])
+            pen = wx.Pen(wx.Colour(255, 0, 0))
+            dc.SetPen(pen)
+            dc.SetBrush(wx.Brush(wx.Colour(0, 0, 0), wx.TRANSPARENT))
+            for xy in self.ImgManager.xy_grid:
+                dc.DrawRectangle(self.x_0+xy[0], self.y_0+xy[1], self.x -
+                                 self.x_0, self.y-self.y_0)
 
     def frame_resize(self, event):
         self.auto_layout(mode=2)
@@ -309,38 +309,52 @@ class MulimgViewer (MulimgViewerGui):
 
             img_resolution = self.img_resolution.GetLineText(0).split(',')
             img_resolution = [int(x) for x in img_resolution]
+
+            magnifier_scale = self.magnifier_scale.GetLineText(0).split(',')
+            magnifier_scale = [float(x) for x in magnifier_scale]
         except:
             self.SetStatusText_(
                 ["-1", "-1", "***Error: setting***", "-1"])
             return False
         else:
-            return [img_num_per_row, num_per_img, img_num_per_column, gap, show_scale, output_scale, img_resolution, 1 if self.magnifier.Value else 0, self.checkBox_orientation.Value]
+            return [img_num_per_row, num_per_img, img_num_per_column, gap, show_scale, output_scale, img_resolution, 1 if self.magnifier.Value else 0, magnifier_scale, self.checkBox_orientation.Value]
 
     def select_point_release(self, event):
         if self.magnifier.Value != False:
             self.start_flag = 0
-            
+            self.refresh(event)
 
     def select_point(self, event):
         if self.magnifier.Value != False:
-            
             x_0, y_0 = event.GetPosition()
             self.x_0 = x_0
             self.y_0 = y_0
+            self.x = x_0
+            self.y = y_0
             self.start_flag = 1
 
     def point_move(self, event):
         # https://stackoverflow.com/questions/57342753/how-to-select-a-rectangle-of-the-screen-to-capture-by-dragging-mouse-on-transpar
-        if self.magnifier.Value != False and self.start_flag == 1:
+        if self.magnifier.Value != False and self.start_flag == 1 and self.x_0 < self.ImgManager.img_resolution[0] and self.y_0 < self.ImgManager.img_resolution[1]:
             x, y = event.GetPosition()
-            if x<self.ImgManager.img_resolution[0] and y<self.ImgManager.img_resolution[1] and self.x_0<self.ImgManager.img_resolution[0] and self.y_0<self.ImgManager.img_resolution[1]:
+            if x < self.ImgManager.img_resolution[0] and y < self.ImgManager.img_resolution[1]:
                 self.x = x
                 self.y = y
-                self.Refresh()
+            elif x > self.ImgManager.img_resolution[0] and y > self.ImgManager.img_resolution[1]:
+                self.x = self.ImgManager.img_resolution[0]
+                self.y = self.ImgManager.img_resolution[1]
+            elif x > self.ImgManager.img_resolution[0]:
+                self.x = self.ImgManager.img_resolution[0]
+                self.y = y
+            elif y > self.ImgManager.img_resolution[1]:
+                self.x = x
+                self.y = self.ImgManager.img_resolution[1]
+
+            self.Refresh()
 
     def magnifier_draw(self, event):
         self.start_flag = 0
-        if self.magnifier.Value!= False:
+        if self.magnifier.Value != False:
             self.SetCursor(wx.Cursor(wx.CURSOR_CROSS))
         else:
             self.SetCursor(wx.Cursor(wx.CURSOR_ARROW))
@@ -381,7 +395,8 @@ class MulimgViewer (MulimgViewerGui):
         if self.ImgManager.max_action_num > 0:
             self.slider_img.SetMax(self.ImgManager.max_action_num-1)
             self.ImgManager.get_flist()
-            flag = self.ImgManager.stitch_images()
+            flag = self.ImgManager.stitch_images(
+                (self.x_0, self.y_0, self.x, self.y))
             if flag != 1:
                 bmp = self.ImgManager.resize(
                     self.ImgManager.img, self.ImgManager.layout_params[4])
@@ -397,7 +412,7 @@ class MulimgViewer (MulimgViewerGui):
                 self.img_panel.Children[0].Bind(wx.EVT_MOTION, self.point_move)
                 self.img_panel.Children[0].Bind(
                     wx.EVT_LEFT_UP, self.select_point_release)
-                
+
             # status
             if self.ImgManager.type == 0 or self.ImgManager.type == 1:
                 self.SetStatusText_(
@@ -415,7 +430,7 @@ class MulimgViewer (MulimgViewerGui):
         else:
             self.SetStatusText_(
                 ["-1", "-1", "***Error: no image in this dir! Maybe you can choose parallel mode!***", "-1"])
-                
+
         self.auto_layout()
 
     def auto_layout(self, mode=1):

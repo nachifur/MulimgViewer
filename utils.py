@@ -151,6 +151,7 @@ class ImgManager(ImgDataset):
         self.img_stitch_mode = 0  # 0:"fill" 1:"crop" 2:"resize"
         self.img_resolution = [-1, -1]
         self.custom_resolution = False
+        self.get_img_mode = 0 # 0:"stitch show" 1:"stitch save" 2:"select save" 3:"magnifier save"
 
     def save_img(self, out_path_str, out_type):
         check = []
@@ -257,7 +258,7 @@ class ImgManager(ImgDataset):
 
         return img_list
 
-    def stitch_images(self):
+    def stitch_images(self, draw_points):
         xy_grid = []
         try:
             img_list = self.get_img_list()
@@ -266,7 +267,7 @@ class ImgManager(ImgDataset):
             num_per_img = self.layout_params[1]
             img_num_per_column = self.layout_params[2]
             gap = self.layout_params[3]
-            magnifier_flag = self.layout_params[7]
+            self.magnifier_flag = self.layout_params[7]
             if self.layout_params[-1]:
                 img_num_per_column = img_num_per_row
                 img_num_per_row = self.layout_params[2]
@@ -278,27 +279,29 @@ class ImgManager(ImgDataset):
 
                     for iyy in range(img_num_per_column):
                         for iy in range(num_per_img):
-                            y = (iyy*num_per_img+iy) * height+gap[0] * iyy+gap[2]*iy
+                            y = (iyy*num_per_img+iy) * \
+                                height+gap[0] * iyy+gap[2]*iy
                             if ix*(img_num_per_column * num_per_img)+iyy*num_per_img+iy < len(img_list):
                                 im = img_list[ix*(img_num_per_column *
                                                   num_per_img)+iyy*num_per_img+iy]
                                 im = self.img_preprocessing(im)
                                 img.paste(im, (x, y))
-                                xy_grid.append([x,y])
+                                xy_grid.append([x, y])
 
             else:
-                if magnifier_flag==0:
+                if self.magnifier_flag == 0:
                     img = Image.new('RGBA', (width * img_num_per_row * num_per_img + gap[0] * (
                         img_num_per_row-1)+gap[2]*(img_num_per_row-1)*(num_per_img-1), height * img_num_per_column + gap[1] * (img_num_per_column-1)), self.gap_color)
                 else:
                     img = Image.new('RGBA', (width * img_num_per_row * num_per_img + gap[0] * (
                         img_num_per_row-1)+gap[2]*(img_num_per_row-1)*(num_per_img-1), 2*(height * img_num_per_column + gap[1] * (img_num_per_column-1))+gap[3]*img_num_per_column), self.gap_color)
                 for iy in range(img_num_per_column):
-                    for iyy in range(img_num_per_column):
-                        if magnifier_flag==0:
+                    for iyy in range(2):
+                        if self.magnifier_flag == 0:
                             y = iy * height + gap[1] * iy
                         else:
-                            y = 2*iy * height + iyy * height + gap[1] * iy + gap[3] * iyy
+                            y = 2*iy * height + iyy * height + \
+                                gap[1] * iy + gap[3] * iyy
 
                         for ixx in range(img_num_per_row):
                             for ix in range(num_per_img):
@@ -306,10 +309,17 @@ class ImgManager(ImgDataset):
                                     width+gap[0]*ixx+gap[2]*ix
                                 if iy*(img_num_per_row * num_per_img)+ixx*num_per_img+ix < len(img_list):
                                     im = img_list[iy*(img_num_per_row *
-                                                    num_per_img)+ixx*num_per_img+ix]
+                                                      num_per_img)+ixx*num_per_img+ix]
                                     im = self.img_preprocessing(im)
-                                    img.paste(im, (x, y))
-                                    xy_grid.append([x,y])
+                                    if self.magnifier_flag != 0 and (iy*img_num_per_column+iyy+1) % 2 == 0:
+                                        if draw_points[2]>draw_points[0] and draw_points[3]>=draw_points[1]:
+                                            im,delta_x,delta_y = self.magnifier_preprocessing(
+                                                im, draw_points)
+                                            img.paste(im, (x+delta_x, y+delta_y))
+                                    else:
+                                        xy_grid.append([x, y])
+                                        img.paste(im, (x, y))
+
             # img = img.convert("RGBA")
 
             self.img = img
@@ -318,6 +328,10 @@ class ImgManager(ImgDataset):
             return 1
         else:
             return 0
+    def get_img(self,img_mode=0):
+        self.img_mode=img_mode
+
+
 
     def PIL2wx(self, image):
         width, height = image.size
@@ -340,7 +354,25 @@ class ImgManager(ImgDataset):
                 width, height = self.img_resolution
                 img = img.resize((width, height), Image.BICUBIC)
         img = self.change_img_alpha(img)
+
         return img
+
+    def magnifier_preprocessing(self, img, draw_points):
+        magnifier_scale = self.layout_params[8]
+        img = img.crop(draw_points)
+
+        width, height = img.size
+        if magnifier_scale[0]==-1 or magnifier_scale[1]==-1:
+            if width>height:
+                img = img.resize((self.img_resolution[0], int(height*self.img_resolution[0]/width)), Image.NEAREST)
+                delta_x = 0
+                delta_y = int((self.img_resolution[1]-img.size[1])/2)
+            else:
+                img = img.resize((int(width*self.img_resolution[1]/height), self.img_resolution[1]), Image.NEAREST)
+                delta_x = int((self.img_resolution[0]-img.size[0])/2)
+                delta_y = 0
+
+        return img,delta_x,delta_y
 
     def change_img_alpha(self, img):
         img_array = np.array(img)

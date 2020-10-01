@@ -279,9 +279,9 @@ class ImgManager(ImgDataset):
                 img_num_per_row = self.layout_params[2]
                 if self.magnifier_flag == 0:
                     img = Image.new('RGBA', ((width * img_num_per_row + gap[1] * (img_num_per_row-1)),height * img_num_per_column * num_per_img + gap[0] * (
-                        img_num_per_column-1)+gap[2]*(img_num_per_column-1)*(num_per_img-1)), self.gap_color)
+                        img_num_per_column-1)+gap[2]*(img_num_per_column)*(num_per_img-1)), self.gap_color)
                 else:
-                    img = Image.new('RGBA', ((2*(width * img_num_per_row + gap[1] * (img_num_per_row-1))+gap[3]*img_num_per_row), height * img_num_per_column * num_per_img + gap[0] * (img_num_per_column-1)+gap[2]*(img_num_per_column-1)*(num_per_img-1)),self.gap_color)
+                    img = Image.new('RGBA', (img_num_per_row*(2*width +gap[3])+ gap[1] * (img_num_per_row-1), height * img_num_per_column * num_per_img + gap[0] * (img_num_per_column-1)+gap[2]*(img_num_per_column)*(num_per_img-1)),self.gap_color)
 
                 for ix in range(img_num_per_row):
                     for ixx in range(2):
@@ -295,7 +295,7 @@ class ImgManager(ImgDataset):
                         for iyy in range(img_num_per_column):
                             for iy in range(num_per_img):
                                 y = (iyy*num_per_img+iy) * \
-                                    width+gap[0]*iyy+gap[2]*iy
+                                    height+gap[0]*iyy+gap[2]*iy+gap[2]*iyy*(num_per_img-1)
                                 if ix*(img_num_per_column * num_per_img)+iyy*num_per_img+iy < len(img_list):
                                     im = img_list[ix*(img_num_per_column *
                                                       num_per_img)+iyy*num_per_img+iy]
@@ -316,10 +316,10 @@ class ImgManager(ImgDataset):
                 # horizontal
                 if self.magnifier_flag == 0:
                     img = Image.new('RGBA', (width * img_num_per_row * num_per_img + gap[0] * (
-                        img_num_per_row-1)+gap[2]*(img_num_per_row-1)*(num_per_img-1), height * img_num_per_column + gap[1] * (img_num_per_column-1)), self.gap_color)
+                        img_num_per_row-1)+gap[2]*(img_num_per_row)*(num_per_img-1), height * img_num_per_column + gap[1] * (img_num_per_column-1)), self.gap_color)
                 else:
                     img = Image.new('RGBA', (width * img_num_per_row * num_per_img + gap[0] * (
-                        img_num_per_row-1)+gap[2]*(img_num_per_row-1)*(num_per_img-1), 2*(height * img_num_per_column + gap[1] * (img_num_per_column-1))+gap[3]*img_num_per_column), self.gap_color)
+                        img_num_per_row-1)+gap[2]*(img_num_per_row)*(num_per_img-1), img_num_per_column*(2*height +gap[3])+gap[1] * (img_num_per_column-1)), self.gap_color)
                 for iy in range(img_num_per_column):
                     for iyy in range(2):
                         if self.magnifier_flag != 0:
@@ -332,7 +332,7 @@ class ImgManager(ImgDataset):
                         for ixx in range(img_num_per_row):
                             for ix in range(num_per_img):
                                 x = (ixx*num_per_img+ix) * \
-                                    width+gap[0]*ixx+gap[2]*ix
+                                    width+gap[0]*ixx+gap[2]*ix+gap[2]*ixx*(num_per_img-1)
                                 if iy*(img_num_per_row * num_per_img)+ixx*num_per_img+ix < len(img_list):
                                     im = img_list[iy*(img_num_per_row *
                                                       num_per_img)+ixx*num_per_img+ix]
@@ -412,7 +412,7 @@ class ImgManager(ImgDataset):
 
         width, height = img.size
         if magnifier_scale[0] == -1 or magnifier_scale[1] == -1:
-            if width > height:
+            if self.img_resolution[0]/width < self.img_resolution[1]/height:
                 img = img.resize((self.img_resolution[0], int(
                     height*self.img_resolution[0]/width)), Image.NEAREST)
             else:
@@ -421,18 +421,15 @@ class ImgManager(ImgDataset):
         else:
             to_resize = [int(width*magnifier_scale[0]),
                          int(height*magnifier_scale[1])]
-            if to_resize[0] > to_resize[1]:
-                if to_resize[0] > self.img_resolution[0]:
+            if to_resize[0] > self.img_resolution[0] or to_resize[1]>self.img_resolution[1]:
+                if self.img_resolution[0]/width < self.img_resolution[1]/height:
                     img = img.resize((self.img_resolution[0], int(
                         height*self.img_resolution[0]/width)), Image.NEAREST)
                 else:
-                    img = img.resize(tuple(to_resize), Image.NEAREST)
-            else:
-                if to_resize[1] > self.img_resolution[1]:
                     img = img.resize(
                         (int(width*self.img_resolution[1]/height), self.img_resolution[1]), Image.NEAREST)
-                else:
-                    img = img.resize(tuple(to_resize), Image.NEAREST)
+            else:
+                img = img.resize(tuple(to_resize), Image.NEAREST)
 
         delta_x = int((self.img_resolution[0]-img.size[0])/2)
         delta_y = int((self.img_resolution[1]-img.size[1])/2)

@@ -16,7 +16,7 @@ class ImgDataset():
         self.init_flist()
         self.img_num = len(self.name_list)
         self.set_count_per_action(1)
-        self.format_group = [".png", ".jpg", ".jpeg", ".bmp", ".tif"]
+        
 
     def init_flist(self):
 
@@ -159,6 +159,8 @@ class ImgManager(ImgDataset):
         self.img_stitch_mode = 0  # 0:"fill" 1:"crop" 2:"resize"
         self.img_resolution = [-1, -1]
         self.custom_resolution = False
+        self.img_num = 0
+        self.format_group = [".png", ".jpg", ".jpeg", ".bmp", ".tif"]
 
     def save_img(self, out_path_str, out_type, img_mode):
         check = []

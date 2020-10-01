@@ -277,22 +277,40 @@ class ImgManager(ImgDataset):
                 # Vertical
                 img_num_per_column = img_num_per_row
                 img_num_per_row = self.layout_params[2]
-                img = Image.new('RGBA', (width * img_num_per_row + gap[1] * (img_num_per_row-1), height *
-                                         img_num_per_column * num_per_img + gap[0]*(img_num_per_column-1)+gap[2]*(img_num_per_column-1)*(num_per_img-1)), self.gap_color)
+                if self.magnifier_flag == 0:
+                    img = Image.new('RGBA', ((width * img_num_per_row + gap[1] * (img_num_per_row-1)),height * img_num_per_column * num_per_img + gap[0] * (
+                        img_num_per_column-1)+gap[2]*(img_num_per_column-1)*(num_per_img-1)), self.gap_color)
+                else:
+                    img = Image.new('RGBA', ((2*(width * img_num_per_row + gap[1] * (img_num_per_row-1))+gap[3]*img_num_per_row), height * img_num_per_column * num_per_img + gap[0] * (img_num_per_column-1)+gap[2]*(img_num_per_column-1)*(num_per_img-1)),self.gap_color)
 
                 for ix in range(img_num_per_row):
-                    x = ix * width + gap[1] * ix
+                    for ixx in range(2):
+                        if self.magnifier_flag != 0:
+                            x = 2*ix * width + ixx * width + \
+                                gap[3] * ixx + gap[1]*ix + gap[3]*ix
 
-                    for iyy in range(img_num_per_column):
-                        for iy in range(num_per_img):
-                            y = (iyy*num_per_img+iy) * \
-                                height+gap[0] * iyy+gap[2]*iy
-                            if ix*(img_num_per_column * num_per_img)+iyy*num_per_img+iy < len(img_list):
-                                im = img_list[ix*(img_num_per_column *
-                                                  num_per_img)+iyy*num_per_img+iy]
-                                im = self.img_preprocessing(im)
-                                img.paste(im, (x, y))
-                                xy_grid.append([x, y])
+                        else:
+                            x = ix * width + gap[1] * ix
+
+                        for iyy in range(img_num_per_column):
+                            for iy in range(num_per_img):
+                                y = (iyy*num_per_img+iy) * \
+                                    width+gap[0]*iyy+gap[2]*iy
+                                if ix*(img_num_per_column * num_per_img)+iyy*num_per_img+iy < len(img_list):
+                                    im = img_list[ix*(img_num_per_column *
+                                                      num_per_img)+iyy*num_per_img+iy]
+                                    im = self.img_preprocessing(im)
+                                    if self.magnifier_flag != 0 and (ixx+1) % 2 == 0:
+                                        if draw_points != 0 and np.abs(draw_points[2] - draw_points[0]) > 0 and np.abs(draw_points[3] - draw_points[1]) > 0:
+                                            crop_points = self.crop_points_process(
+                                                draw_points)
+                                            im, delta_x, delta_y = self.magnifier_preprocessing(
+                                                im, crop_points)
+                                            img.paste(
+                                                im, (x+delta_x, y+delta_y))
+                                    else:
+                                        xy_grid.append([x, y])
+                                        img.paste(im, (x, y))
 
             else:
                 # horizontal

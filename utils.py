@@ -16,6 +16,7 @@ class ImgDataset():
         self.init_flist()
         self.img_num = len(self.name_list)
         self.set_count_per_action(1)
+        self.format_group = [".png", ".jpg", ".jpeg", ".bmp", ".tif"]
 
     def init_flist(self):
 
@@ -49,7 +50,7 @@ class ImgDataset():
             self.name_list = []
 
     def get_name_list(self):
-        format_group = [".png", ".jpg", ".jpeg", ".bmp", ".tif"]
+        
         no_check_list = [str(f.name)
                          for f in Path(self.path_list[0]).iterdir()]
         if len(no_check_list) > 100:
@@ -58,7 +59,7 @@ class ImgDataset():
         else:
             self.dataset_mode = False
             return [str(f.name) for f in Path(self.path_list[0]).iterdir(
-            ) if f.is_file() and f.suffix in format_group]
+            ) if f.is_file() and f.suffix in self.format_group]
 
     def get_flist(self):
 
@@ -228,7 +229,11 @@ class ImgManager(ImgDataset):
     def get_img_list(self):
         img_list = []
         for path in self.flist:
-            img_list.append(Image.open(path).convert('RGB'))
+            path = Path(path)
+            if path.is_file() and path.suffix in self.format_group:
+                img_list.append(Image.open(path).convert('RGB'))
+            else:
+                pass
         # resolution
         width_ = []
         height_ = []

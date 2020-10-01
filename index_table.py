@@ -1,13 +1,21 @@
 from index_table_gui import IndexTableGui
 import wx
-
+import numpy as np
+from pathlib import Path
 
 class IndexTable (IndexTableGui):
-    def __init__(self, parent, flist, layout_params):
+    def __init__(self, parent, flist, layout_params,dataset_mode,out_path_str):
         super().__init__(parent)
         self.index_table.SetEditable(False)
         self.index_table.BeginFontSize(12)
+        self.dataset_mode=dataset_mode
+        self.out_path_str = out_path_str
+
         self.show_id_table(flist, layout_params)
+        if self.dataset_mode:
+            self.Show(False)
+        else:
+            self.Show(True)
 
     def frame_resize(self, event):
         # if self.index_table.Size>self.Size, the self.index_table display incomplete
@@ -28,31 +36,29 @@ class IndexTable (IndexTableGui):
         self.index_table.BeginBold()
         self.index_table.WriteText("Image index   /   Show index\n")
         self.index_table.EndBold()
+
+        show_list=""
         for i in range(len_flist):
-            self.index_table.BeginBold()
-            self.index_table.WriteText(str(i)+" : ")
-            self.index_table.EndBold()
-            self.index_table.WriteText(flist[i])
+            show_list+=str(i)+" : "
+            show_list+=flist[i]
 
             if interval*i < len_flist:
                 if interval*(i+1)-1 < len_flist:
-                    self.index_table.WriteText("   /   ")
-                    self.index_table.BeginBold()
-                    self.index_table.WriteText(
-                        str(i*interval)+"/"+str(interval*(i+1)-1)+" : ")
-                    self.index_table.EndBold()
-                    self.index_table.WriteText(
-                        flist[interval*i]+"-"+flist[interval*(i+1)-1]+"\n")
+                    show_list+="   /   "
+                    show_list+=str(i*interval)+"/"+str(interval*(i+1)-1)+" : "
+                    show_list+=flist[interval*i]+"-"+flist[interval*(i+1)-1]+"\n"
                 else:
-                    self.index_table.WriteText("   /   ")
-                    self.index_table.BeginBold()
-                    self.index_table.WriteText(
-                        str(i*interval)+"/"+str(len_flist-1)+" : ")
-                    self.index_table.EndBold()
-                    self.index_table.WriteText(
-                        flist[interval*i]+"-"+flist[-1]+"\n")
+                    show_list+="   /   "
+                    show_list+=str(i*interval)+"/"+str(len_flist-1)+" : "
+                    show_list+=flist[interval*i]+"-"+flist[-1]+"\n"
             else:
-                self.index_table.WriteText("\n")
+                show_list+="\n"
+
+        if self.dataset_mode:
+            np.savetxt(str(Path(self.out_path_str)/"index_table.txt"), [show_list], fmt='%s')
+        else:
+            self.index_table.WriteText(show_list)
+        
 
     def search_txt(self, event):
         self.id_list = []

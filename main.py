@@ -42,8 +42,8 @@ class MainAPP(wx.App):
         self.type = type
         if input_path != 0:
             if len(input_path) != 0:
-                self.frame[0].ImgManager = self.frame[0].create_ImgManager(
-                    input_path, 1)
+                self.frame[0].ImgManager.init(
+                    input_path, 1, self.frame[0].dataset_mode.Value)
                 self.frame[0].ImgManager.set_action_count(0)
                 self.frame[0].show_img()
         if type == -1:

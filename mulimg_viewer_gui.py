@@ -161,9 +161,9 @@ class MulimgViewerGui ( wx.Frame ):
 
 		bSizer15.Add( self.m_staticText19, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
-		self.choice_output = wx.TextCtrl( self.m_scrolledWindow2, wx.ID_ANY, u"1", wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.choice_output.SetHelpText( u"1:stitch\n2:select\n4:Magnifier\n\n1+2=3:stitch+select\n1+4=5:stitch+Magnifier\n2+4=6:select+Magnifier\n1+2+4=7:stitch+select+Magnifier\n" )
-
+		choice_outputChoices = [ u"1:stitch", u"2:select", u"3:1+2", u"4:magnifer", u"5:1+4", u"6:2+4", u"7:1+2+4" ]
+		self.choice_output = wx.Choice( self.m_scrolledWindow2, wx.ID_ANY, wx.DefaultPosition, wx.Size( -1,-1 ), choice_outputChoices, 0 )
+		self.choice_output.SetSelection( 0 )
 		bSizer15.Add( self.choice_output, 0, wx.ALL, 5 )
 
 
@@ -215,7 +215,7 @@ class MulimgViewerGui ( wx.Frame ):
 
 		bSizer4.Add( self.m_staticText5, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
-		self.gap = wx.TextCtrl( self.m_scrolledWindow2, wx.ID_ANY, u"10,10,2,5", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.gap = wx.TextCtrl( self.m_scrolledWindow2, wx.ID_ANY, u"10,10,2,10", wx.DefaultPosition, wx.DefaultSize, 0 )
 		bSizer4.Add( self.gap, 0, wx.ALL, 5 )
 
 
@@ -229,7 +229,7 @@ class MulimgViewerGui ( wx.Frame ):
 		bSizer9.Add( self.m_staticText10, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
 		self.checkBox_orientation = wx.CheckBox( self.m_scrolledWindow2, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
-		bSizer9.Add( self.checkBox_orientation, 0, wx.ALL, 5 )
+		bSizer9.Add( self.checkBox_orientation, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
 
 		fgSizer3.Add( bSizer9, 1, wx.EXPAND, 5 )
@@ -243,7 +243,7 @@ class MulimgViewerGui ( wx.Frame ):
 
 		self.auto_layout_check = wx.CheckBox( self.m_scrolledWindow2, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.auto_layout_check.SetValue(True)
-		bSizer10.Add( self.auto_layout_check, 0, wx.ALL, 5 )
+		bSizer10.Add( self.auto_layout_check, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
 
 		fgSizer3.Add( bSizer10, 1, wx.EXPAND, 5 )
@@ -256,7 +256,7 @@ class MulimgViewerGui ( wx.Frame ):
 		bSizer8.Add( self.m_staticText9, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
 		self.auto_save_all = wx.CheckBox( self.m_scrolledWindow2, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
-		bSizer8.Add( self.auto_save_all, 0, wx.ALL, 5 )
+		bSizer8.Add( self.auto_save_all, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
 
 		fgSizer3.Add( bSizer8, 1, wx.EXPAND, 5 )

@@ -1664,11 +1664,11 @@
                                                     <property name="wrap">-1</property>
                                                 </object>
                                             </object>
-                                            <object class="sizeritem" expanded="0">
+                                            <object class="sizeritem" expanded="1">
                                                 <property name="border">5</property>
                                                 <property name="flag">wxALL</property>
                                                 <property name="proportion">0</property>
-                                                <object class="wxTextCtrl" expanded="0">
+                                                <object class="wxChoice" expanded="1">
                                                     <property name="BottomDockable">1</property>
                                                     <property name="LeftDockable">1</property>
                                                     <property name="RightDockable">1</property>
@@ -1682,8 +1682,9 @@
                                                     <property name="caption"></property>
                                                     <property name="caption_visible">1</property>
                                                     <property name="center_pane">0</property>
+                                                    <property name="choices">&quot;1:stitch&quot; &quot;2:select&quot; &quot;3:1+2&quot; &quot;4:magnifer&quot; &quot;5:1+4&quot; &quot;6:2+4&quot; &quot;7:1+2+4&quot;</property>
                                                     <property name="close_button">1</property>
-                                                    <property name="context_help">1:stitch&#x0A;2:select&#x0A;4:Magnifier&#x0A;&#x0A;1+2=3:stitch+select&#x0A;1+4=5:stitch+Magnifier&#x0A;2+4=6:select+Magnifier&#x0A;1+2+4=7:stitch+select+Magnifier&#x0A;</property>
+                                                    <property name="context_help"></property>
                                                     <property name="context_menu">1</property>
                                                     <property name="default_pane">0</property>
                                                     <property name="dock">Dock</property>
@@ -1699,7 +1700,6 @@
                                                     <property name="max_size"></property>
                                                     <property name="maximize_button">0</property>
                                                     <property name="maximum_size"></property>
-                                                    <property name="maxlength"></property>
                                                     <property name="min_size"></property>
                                                     <property name="minimize_button">0</property>
                                                     <property name="minimum_size"></property>
@@ -1712,8 +1712,9 @@
                                                     <property name="pin_button">1</property>
                                                     <property name="pos"></property>
                                                     <property name="resize">Resizable</property>
+                                                    <property name="selection">0</property>
                                                     <property name="show">1</property>
-                                                    <property name="size"></property>
+                                                    <property name="size">-1,-1</property>
                                                     <property name="style"></property>
                                                     <property name="subclass">; ; forward_declare</property>
                                                     <property name="toolbar_pane">0</property>
@@ -1722,7 +1723,6 @@
                                                     <property name="validator_style">wxFILTER_NONE</property>
                                                     <property name="validator_type">wxDefaultValidator</property>
                                                     <property name="validator_variable"></property>
-                                                    <property name="value">1</property>
                                                     <property name="window_extra_style"></property>
                                                     <property name="window_name"></property>
                                                     <property name="window_style"></property>
@@ -2266,7 +2266,7 @@
                                                     <property name="validator_style">wxFILTER_NONE</property>
                                                     <property name="validator_type">wxDefaultValidator</property>
                                                     <property name="validator_variable"></property>
-                                                    <property name="value">10,10,2,5</property>
+                                                    <property name="value">10,10,2,10</property>
                                                     <property name="window_extra_style"></property>
                                                     <property name="window_name"></property>
                                                     <property name="window_style"></property>
@@ -2346,7 +2346,7 @@
                                             </object>
                                             <object class="sizeritem" expanded="0">
                                                 <property name="border">5</property>
-                                                <property name="flag">wxALL</property>
+                                                <property name="flag">wxALL|wxALIGN_CENTER_VERTICAL</property>
                                                 <property name="proportion">0</property>
                                                 <object class="wxCheckBox" expanded="0">
                                                     <property name="BottomDockable">1</property>
@@ -2482,7 +2482,7 @@
                                             </object>
                                             <object class="sizeritem" expanded="0">
                                                 <property name="border">5</property>
-                                                <property name="flag">wxALL</property>
+                                                <property name="flag">wxALL|wxALIGN_CENTER_VERTICAL</property>
                                                 <property name="proportion">0</property>
                                                 <object class="wxCheckBox" expanded="0">
                                                     <property name="BottomDockable">1</property>
@@ -2618,7 +2618,7 @@
                                             </object>
                                             <object class="sizeritem" expanded="0">
                                                 <property name="border">5</property>
-                                                <property name="flag">wxALL</property>
+                                                <property name="flag">wxALL|wxALIGN_CENTER_VERTICAL</property>
                                                 <property name="proportion">0</property>
                                                 <object class="wxCheckBox" expanded="0">
                                                     <property name="BottomDockable">1</property>

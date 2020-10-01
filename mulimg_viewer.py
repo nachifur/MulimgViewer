@@ -3,8 +3,6 @@ from mulimg_viewer_gui import MulimgViewerGui
 import numpy as np
 import os
 from about import About
-from shutil import copyfile
-from pathlib import Path
 from utils import ImgManager
 from PIL import Image
 from index_table import IndexTable
@@ -14,7 +12,7 @@ class MulimgViewer (MulimgViewerGui):
 
     def __init__(self, parent, UpdateUI, get_type):
         super().__init__(parent)
-        self.ImgManager = self.create_ImgManager(None, -1)
+        self.create_ImgManager()
         self.UpdateUI = UpdateUI
         self.get_type = get_type
 
@@ -46,9 +44,10 @@ class MulimgViewer (MulimgViewerGui):
         self.x_0 = -1
         self.y = -1
         self.y_0 = -1
+        self.draw_points = 0
 
     def OnPaint(self, event):
-        if self.magnifier.Value != False and self.x_0 != -1 and len(self.img_panel.Children) != 0:
+        if self.magnifier.Value != False and self.x_0 != -1 and len(self.img_panel.Children) != 0 and self.draw_points!=0:
             dc = wx.PaintDC(self.img_panel.Children[0])
             pen = wx.Pen(wx.Colour(255, 0, 0))
             dc.SetPen(pen)
@@ -167,7 +166,7 @@ class MulimgViewer (MulimgViewerGui):
                            wx.DD_DEFAULT_STYLE | wx.DD_DIR_MUST_EXIST)
 
         if dlg.ShowModal() == wx.ID_OK:
-            self.ImgManager = self.create_ImgManager(dlg.GetPath(), 0)
+            self.ImgManager.init(dlg.GetPath(), 0)
             self.show_img_init()
             self.ImgManager.set_action_count(0)
             self.show_img()
@@ -183,7 +182,7 @@ class MulimgViewer (MulimgViewerGui):
                            wx.DD_DEFAULT_STYLE | wx.DD_DIR_MUST_EXIST)
 
         if dlg.ShowModal() == wx.ID_OK:
-            self.ImgManager = self.create_ImgManager(dlg.GetPath(), 2)
+            self.ImgManager.init(dlg.GetPath(), 2)
             self.show_img_init()
             self.ImgManager.set_action_count(0)
             self.show_img()
@@ -335,20 +334,21 @@ class MulimgViewer (MulimgViewerGui):
 
     def point_move(self, event):
         # https://stackoverflow.com/questions/57342753/how-to-select-a-rectangle-of-the-screen-to-capture-by-dragging-mouse-on-transpar
-        if self.magnifier.Value != False and self.start_flag == 1 and self.x_0 < self.ImgManager.img_resolution[0] and self.y_0 < self.ImgManager.img_resolution[1]:
+        if self.magnifier.Value != False and self.start_flag == 1 and self.x_0 < self.ImgManager.img_resolution_show[0] and self.y_0 < self.ImgManager.img_resolution_show[1]:
+            self.draw_points = 1
             x, y = event.GetPosition()
-            if x < self.ImgManager.img_resolution[0] and y < self.ImgManager.img_resolution[1]:
+            if x < self.ImgManager.img_resolution_show[0] and y < self.ImgManager.img_resolution_show[1]:
                 self.x = x
                 self.y = y
-            elif x > self.ImgManager.img_resolution[0] and y > self.ImgManager.img_resolution[1]:
-                self.x = self.ImgManager.img_resolution[0]
-                self.y = self.ImgManager.img_resolution[1]
-            elif x > self.ImgManager.img_resolution[0]:
-                self.x = self.ImgManager.img_resolution[0]
+            elif x > self.ImgManager.img_resolution_show[0] and y > self.ImgManager.img_resolution_show[1]:
+                self.x = self.ImgManager.img_resolution_show[0]
+                self.y = self.ImgManager.img_resolution_show[1]
+            elif x > self.ImgManager.img_resolution_show[0]:
+                self.x = self.ImgManager.img_resolution_show[0]
                 self.y = y
-            elif y > self.ImgManager.img_resolution[1]:
+            elif y > self.ImgManager.img_resolution_show[1]:
                 self.x = x
-                self.y = self.ImgManager.img_resolution[1]
+                self.y = self.ImgManager.img_resolution_show[1]
 
             self.Refresh()
 
@@ -365,7 +365,7 @@ class MulimgViewer (MulimgViewerGui):
         try:
             if self.layout_params_old != self.ImgManager.layout_params[0:3]:
                 action_count = self.ImgManager.action_count
-                self.ImgManager = self.create_ImgManager(
+                self.ImgManager.init(
                     self.ImgManager.input_path, self.ImgManager.type)
                 self.show_img_init()
                 self.ImgManager.set_action_count(action_count)
@@ -373,7 +373,15 @@ class MulimgViewer (MulimgViewerGui):
                     self.ImgManager.name_list, self.ImgManager.layout_params)
         except:
             pass
+        try:
+            if self.show_scale_old != self.ImgManager.layout_params[4]:
+                self.draw_points = 0
+            else:
+                self.draw_points = (self.x_0, self.y_0, self.x, self.y)
+        except:
+            self.draw_points = 0        
 
+        self.show_scale_old = self.ImgManager.layout_params[4]
         self.layout_params_old = self.ImgManager.layout_params
         self.slider_img.SetValue(self.ImgManager.action_count)
         self.slider_value.SetValue(str(self.ImgManager.action_count))
@@ -395,11 +403,11 @@ class MulimgViewer (MulimgViewerGui):
         if self.ImgManager.max_action_num > 0:
             self.slider_img.SetMax(self.ImgManager.max_action_num-1)
             self.ImgManager.get_flist()
+
             flag = self.ImgManager.stitch_images(
-                (self.x_0, self.y_0, self.x, self.y))
+                0, self.draw_points)
             if flag != 1:
-                bmp = self.ImgManager.resize(
-                    self.ImgManager.img, self.ImgManager.layout_params[4])
+                bmp = self.ImgManager.img
                 self.img_size = bmp.size
                 bmp = self.ImgManager.PIL2wx(bmp)
 
@@ -471,15 +479,24 @@ class MulimgViewer (MulimgViewerGui):
 
     def index_table_gui(self, event):
         if self.ImgManager.img_num != 0:
-            self.index_table = IndexTable(
-                None, self.ImgManager.name_list, self.ImgManager.layout_params)
-            self.index_table.Show(True)
+            if self.ImgManager.dataset_mode and self.out_path_str == "":
+                self.SetStatusText_(
+                    ["-1", "-1", "***Error: First, need to select the output directory***", "-1"])
+            else:
+                if self.ImgManager.dataset_mode:
+                    self.SetStatusText_(
+                        ["-1", "-1", "index_table.txt saving...", "-1"])
+                self.index_table = IndexTable(
+                    None, self.ImgManager.name_list, self.ImgManager.layout_params, self.ImgManager.dataset_mode, self.out_path_str)
+                if self.ImgManager.dataset_mode:
+                    self.SetStatusText_(
+                        ["-1", "-1", "index_table.txt save in "+self.out_path_str, "-1"])
         else:
             self.SetStatusText_(
                 ["-1", "", "***Error: First, need to select the input directory***", "-1"])
 
-    def create_ImgManager(self, input_path, type):
-        self.ImgManager = ImgManager(input_path, type=type)
+    def create_ImgManager(self):
+        self.ImgManager = ImgManager()
         self.colour_change([])
         return self.ImgManager
 

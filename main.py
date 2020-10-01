@@ -41,10 +41,9 @@ class MainAPP(wx.App):
     def UpdateUI(self, type, input_path=0):
         self.type = type
         if input_path != 0:
-            self.frame[0].input_paths = input_path
             if len(input_path) != 0:
-                self.frame[0].ImgManager = self.frame[0].create_ImgManager(
-                    input_path, 1)
+                self.frame[0].ImgManager.init(
+                    input_path, 1, self.frame[0].dataset_mode.Value)
                 self.frame[0].ImgManager.set_action_count(0)
                 self.frame[0].show_img()
         if type == -1:
@@ -61,6 +60,7 @@ class MainAPP(wx.App):
 
 def main():
     app = MainAPP()
+    # debug
     # wx.lib.inspection.InspectionTool().Show()
     app.MainLoop()
 

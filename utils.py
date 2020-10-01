@@ -239,13 +239,13 @@ class ImgManager(ImgDataset):
         width_ = np.sort(width_)
         height_ = np.sort(height_)
 
-        if self.img_stitch_mode == 0:
+        if self.img_stitch_mode == 2:
             width = max(width_)
             height = max(height_)
         elif self.img_stitch_mode == 1:
             width = np.min(width_)
             height = np.min(height_)
-        elif self.img_stitch_mode == 2:
+        elif self.img_stitch_mode == 0:
             if len(width_) > 3:
                 width = np.mean(width_[1:-1])
                 height = np.mean(height_[1:-1])
@@ -362,18 +362,14 @@ class ImgManager(ImgDataset):
             width, height = self.img_resolution
             img = img.resize((width, height), Image.BICUBIC)
         else:
-            if self.img_stitch_mode == 0:
-                if self.layout_params[4][0] == 1 or self.layout_params[4][1] == 1:
-                    pass
-                else:
-                    width, height = self.img_resolution
-                    img = img.resize((width, height), Image.BICUBIC)
+            if self.img_stitch_mode == 2:
+                pass
             elif self.img_stitch_mode == 1:
                 width, height = self.img_resolution
                 (left, upper, right, lower) = (
                     (img.size[0]-width)/2, (img.size[1]-height)/2, (img.size[0]-width)/2+width, (img.size[1]-height)/2+height)
                 img = img.crop((left, upper, right, lower))
-            elif self.img_stitch_mode == 2:
+            elif self.img_stitch_mode == 0:
                 width, height = self.img_resolution
                 img = img.resize((width, height), Image.BICUBIC)
         img = self.change_img_alpha(img)

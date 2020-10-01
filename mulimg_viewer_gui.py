@@ -146,7 +146,7 @@ class MulimgViewerGui ( wx.Frame ):
 
 		bSizer16.Add( self.m_staticText21, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
-		choice_normalized_sizeChoices = [ u"Fill", u"Crop", u"Resize" ]
+		choice_normalized_sizeChoices = [ u"Resize", u"Crop", u"Fill" ]
 		self.choice_normalized_size = wx.Choice( self.m_scrolledWindow2, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, choice_normalized_sizeChoices, 0 )
 		self.choice_normalized_size.SetSelection( 0 )
 		bSizer16.Add( self.choice_normalized_size, 0, wx.ALL|wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL, 5 )

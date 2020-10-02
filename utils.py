@@ -1,3 +1,4 @@
+from numpy.lib.type_check import imag
 import wx
 import numpy as np
 import os
@@ -162,7 +163,7 @@ class ImgManager(ImgDataset):
         self.img_num = 0
         self.format_group = [".png", ".jpg", ".jpeg", ".bmp", ".tif"]
 
-    def save_img(self, out_path_str, out_type, img_mode):
+    def save_img(self, out_path_str, out_type):
         check = []
         check_1 = []
         img = self.img
@@ -359,11 +360,37 @@ class ImgManager(ImgDataset):
             # img = img.convert("RGBA")
             self.img_resolution = self.img_resolution_
             self.img = img
+            if self.magnifier_flag != 0 and draw_points != 0:
+                self.draw_rectangle(draw_points)
             self.xy_grid = xy_grid
         except:
             return 1
         else:
             return 0
+
+    def draw_rectangle(self,crop_points):
+        line_width = self.layout_params[10]
+        colour = self.layout_params[9]
+
+        x_0,y_0,x,y = crop_points
+        height = y-y_0
+        width = x -x_0
+        draw_colour = np.array([colour.red, colour.green, colour.blue, 255])
+        img_array = np.array(self.img)
+        for xy in self.xy_grid:
+            x_left_up = [x_0+xy[0],y_0+xy[1]]
+            x_left_down = [x_0+xy[0],y_0+xy[1]+height]
+            x_right_up = [x_0+xy[0]+width,y_0+xy[1]]
+            x_right_down = [x_0+xy[0]+width,y_0+xy[1]+height]
+
+            img_array[x_left_up[1]:x_left_down[1],x_left_up[0]:x_left_up[0]+line_width,:] = np.ones_like(img_array[x_left_up[1]:x_left_down[1],x_left_up[0]:x_left_up[0]+line_width,:])*draw_colour
+            img_array[x_left_up[1]:x_left_up[1]+line_width,x_left_up[0]:x_right_up[0],:] = np.ones_like(img_array[x_left_up[1]:x_left_up[1]+line_width,x_left_up[0]:x_right_up[0],:])*draw_colour
+            img_array[x_right_up[1]:x_right_down[1],x_right_up[0]-line_width:x_right_up[0],:] = np.ones_like(img_array[x_right_up[1]:x_right_down[1],x_right_up[0]-line_width:x_right_up[0],:])*draw_colour
+            img_array[x_left_down[1]-line_width:x_left_down[1],x_left_up[0]:x_right_up[0],:] = np.ones_like(img_array[x_left_down[1]-line_width:x_left_down[1],x_left_up[0]:x_right_up[0],:])*draw_colour
+
+            
+        img = Image.fromarray(img_array.astype('uint8')).convert('RGBA')
+        self.img = img
 
     def set_scale_mode(self, img_mode=0):
         """img_mode, 0: show, 1: save"""
@@ -402,7 +429,7 @@ class ImgManager(ImgDataset):
         return img
 
     def crop_points_process(self, crop_points):
-        crop_points = list(crop_points)
+        crop_points = crop_points
         if crop_points[2] < crop_points[0]:
             temp = crop_points[0]
             crop_points[0] = crop_points[2]
@@ -411,11 +438,11 @@ class ImgManager(ImgDataset):
             temp = crop_points[1]
             crop_points[1] = crop_points[3]
             crop_points[3] = temp
-        return tuple(crop_points)
+        return crop_points
 
     def magnifier_preprocessing(self, img, crop_points):
         magnifier_scale = self.layout_params[8]
-        img = img.crop(crop_points)
+        img = img.crop(tuple(crop_points))
 
         width, height = img.size
         if magnifier_scale[0] == -1 or magnifier_scale[1] == -1:

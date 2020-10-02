@@ -47,14 +47,38 @@ class MulimgViewer (MulimgViewerGui):
         self.draw_points = 0
 
     def OnPaint(self, event):
-        if self.magnifier.Value != False and self.x_0 != -1 and len(self.img_panel.Children) != 0 and self.draw_points!=0:
-            dc = wx.PaintDC(self.img_panel.Children[0])
-            pen = wx.Pen(wx.Colour(255, 0, 0))
-            dc.SetPen(pen)
-            dc.SetBrush(wx.Brush(wx.Colour(0, 0, 0), wx.TRANSPARENT))
-            for xy in self.ImgManager.xy_grid:
-                dc.DrawRectangle(self.x_0+xy[0], self.y_0+xy[1], self.x -
-                                 self.x_0, self.y-self.y_0)
+        pass
+        # if self.magnifier.Value != False and self.x_0 != -1 and len(self.img_panel.Children) != 0 and self.draw_points!=0:
+        #     dc = wx.PaintDC(self.img_panel.Children[0])
+        #     pen = wx.Pen(wx.Colour(255, 0, 0))
+        #     dc.SetPen(pen)
+        #     dc.SetBrush(wx.Brush(wx.Colour(0, 0, 0), wx.TRANSPARENT))
+        #     for xy in self.ImgManager.xy_grid:
+        #         dc.DrawRectangle(self.x_0+xy[0], self.y_0+xy[1], self.x -
+        #                          self.x_0, self.y-self.y_0)
+
+    def draw_rectangle_refresh(self):
+        try:
+            self.img_last.Destroy()
+        except:
+            pass
+        # show img
+        if self.ImgManager.max_action_num > 0:
+            bmp = self.ImgManager.img
+            self.img_size = bmp.size
+            bmp = self.ImgManager.PIL2wx(bmp)
+
+            self.img_panel.SetSize(
+                wx.Size(self.img_size[0]+100, self.img_size[1]+100))
+            self.img_last = wx.StaticBitmap(parent=self.img_panel,
+                                            bitmap=bmp)
+            self.img_panel.Children[0].Bind(
+                wx.EVT_LEFT_DOWN, self.select_point)
+            self.img_panel.Children[0].Bind(wx.EVT_MOTION, self.point_move)
+            self.img_panel.Children[0].Bind(
+                wx.EVT_LEFT_UP, self.select_point_release)
+
+        # self.Refresh()
 
     def frame_resize(self, event):
         self.auto_layout(mode=2)
@@ -122,7 +146,7 @@ class MulimgViewer (MulimgViewerGui):
         layout_params = self.set_img_layout()
         if layout_params != False:
             self.ImgManager.layout_params = layout_params
-        type_ = self.choice_output.Items[self.choice_output.GetSelection()]
+        type_ = self.choice_output.GetSelection()
         if self.auto_save_all.Value:
             last_count_img = self.ImgManager.action_count
             self.ImgManager.set_action_count(0)
@@ -311,17 +335,21 @@ class MulimgViewer (MulimgViewerGui):
 
             magnifier_scale = self.magnifier_scale.GetLineText(0).split(',')
             magnifier_scale = [float(x) for x in magnifier_scale]
+
+            color = self.colourPicker_draw.GetColour()
+            line_width=int(self.line_width.GetLineText(0))
         except:
             self.SetStatusText_(
                 ["-1", "-1", "***Error: setting***", "-1"])
             return False
         else:
-            return [img_num_per_row, num_per_img, img_num_per_column, gap, show_scale, output_scale, img_resolution, 1 if self.magnifier.Value else 0, magnifier_scale, self.checkBox_orientation.Value]
+            return [img_num_per_row, num_per_img, img_num_per_column, gap, show_scale, output_scale, img_resolution, 1 if self.magnifier.Value else 0, magnifier_scale,color ,line_width,self.checkBox_orientation.Value]
 
     def select_point_release(self, event):
         if self.magnifier.Value != False:
             self.start_flag = 0
             self.refresh(event)
+            self.draw_rectangle_refresh()
 
     def select_point(self, event):
         if self.magnifier.Value != False:
@@ -377,7 +405,7 @@ class MulimgViewer (MulimgViewerGui):
             if self.show_scale_old != self.ImgManager.layout_params[4]:
                 self.draw_points = 0
             else:
-                self.draw_points = (self.x_0, self.y_0, self.x, self.y)
+                self.draw_points = [self.x_0, self.y_0, self.x, self.y]
         except:
             self.draw_points = 0        
 

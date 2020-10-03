@@ -4,7 +4,7 @@ import os
 from PIL import Image
 from shutil import copyfile
 from pathlib import Path
-
+import csv
 
 class ImgDataset():
     def init(self, input_path, type):
@@ -18,7 +18,6 @@ class ImgDataset():
         self.set_count_per_action(1)
 
     def init_flist(self):
-
         if self.type == 0:
             # one_dir_mul_dir_auto
             cwd = Path(self.input_path)
@@ -44,12 +43,48 @@ class ImgDataset():
             self.path_list = np.sort(self.path_list)
             name_list = self.get_name_list()
             self.name_list = np.sort(name_list)
+        elif self.type == 3:
+            # read file list from a list file
+            # do somthing
+            self.path_list = self.get_flist_from_lf()
+            self.name_list = self.get_namelist_from_lf()
         else:
             self.path_list = []
             self.name_list = []
 
+    def get_flist_from_lf(self):
+        #format_group = [".txt", ".csv", ".xls", ".xlsx"]
+        methods={
+            '.txt':get_flist_from_txt,
+            '.csv':get_flist_from_csv
+            }
+        method = methods.get(Path(self.input_path).suffix,notfilelist)
+        return method(self)
+
+    def notfilelist(self):
+        return []
+
+    def get_namelist_from_lf(self):
+        dataset=np.array(self.path_list).ravel().tolist()
+        namelist=[Path(item).name for item in dataset]
+        return namelist
+
+    def get_flist_from_txt(self):
+        format_group = [".png", ".jpg", ".jpeg", ".bmp", ".tif", ".tiff"]
+        with open(self.input_path, "r") as f:
+            dataset=f.read().split('\n')
+        validdataset=[item for item in dataset if Path(item).is_file() and  Path(item).suffix in format_group]
+        return validdataset
+
+    def get_flist_from_csv(self):
+        format_group = [".png", ".jpg", ".jpeg", ".bmp", ".tif", ".tiff"]
+        with open(self.path_list, 'r', newline='') as csvfile:
+            spamreader = csv.reader(csvfile)
+            validdataset=[item[0] for item in spamreader if Path(item[0]).is_file() and  Path(item[0]).suffix in format_group]
+        return validdataset
+
     def get_name_list(self):
-        format_group = [".png", ".jpg", ".jpeg", ".bmp", ".tif"]
+        format_group = [".png", ".jpg", ".jpeg", ".bmp", ".tif", ".tiff"]
         no_check_list = [str(f.name)
                          for f in Path(self.path_list[0]).iterdir()]
         if len(no_check_list) > 100:
@@ -77,6 +112,14 @@ class ImgDataset():
                          for i in range(self.img_count, self.img_count+self.count_per_action)]
             except:
                 flist = [str(Path(self.input_path)/self.name_list[i])
+                         for i in range(self.img_count, self.img_num)]
+        elif self.type == 3:
+            # one_dir_mul_img
+            try:
+                flist = [str(Path(self.path_list)/self.name_list[i])
+                         for i in range(self.img_count, self.img_count+self.count_per_action)]
+            except:
+                flist = [str(Path(self.path_list)/self.name_list[i])
                          for i in range(self.img_count, self.img_num)]
         else:
             flist = []

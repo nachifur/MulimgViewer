@@ -359,11 +359,33 @@ class MulimgViewer (MulimgViewerGui):
     def change_rectangle_position(self, event):
         x, y = event.GetPosition()
         x_0, y_0, x_1, y_1 = self.ImgManager.crop_points
-        x_center_old = x_0+int((abs(x_0-x_1))/2)
-        y_center_old = y_0+int((abs(y_0-y_1))/2)
+        width = abs(x_0-x_1)
+        height = abs(y_0-y_1)
+        x_center_old = x_0+int((width)/2)
+        y_center_old = y_0+int((height)/2)
         delta_x = x-x_center_old
         delta_y = y-y_center_old
-        self.x_0, self.y_0, self.x, self.y = [x_0+delta_x, y_0+delta_y, x_1+delta_x, y_1+delta_y]
+
+        if x_1+delta_x > self.ImgManager.img_resolution_show[0]:
+            self.x = self.ImgManager.img_resolution_show[0]
+            self.x_0 = self.ImgManager.img_resolution_show[0]-width
+        elif x_0+delta_x <0:
+            self.x_0 = 0
+            self.x = width
+        else:
+            self.x_0 = x_0+delta_x
+            self.x = x_1+delta_x
+
+        if y_1+delta_y > self.ImgManager.img_resolution_show[1]:
+            self.y = self.ImgManager.img_resolution_show[1]
+            self.y_0 = self.ImgManager.img_resolution_show[1]-height
+        elif y_0+delta_y <0:
+            self.y_0 = 0
+            self.y = height
+        else:
+            self.y_0 = y_0+delta_y
+            self.y = y_1+delta_y
+
         self.refresh(event)
 
     def magnifier_draw(self, event):

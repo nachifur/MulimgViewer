@@ -57,29 +57,6 @@ class MulimgViewer (MulimgViewerGui):
         #         dc.DrawRectangle(self.x_0+xy[0], self.y_0+xy[1], self.x -
         #                          self.x_0, self.y-self.y_0)
 
-    def draw_rectangle_refresh(self):
-        try:
-            self.img_last.Destroy()
-        except:
-            pass
-        # show img
-        if self.ImgManager.max_action_num > 0:
-            bmp = self.ImgManager.img
-            self.img_size = bmp.size
-            bmp = self.ImgManager.PIL2wx(bmp)
-
-            self.img_panel.SetSize(
-                wx.Size(self.img_size[0]+100, self.img_size[1]+100))
-            self.img_last = wx.StaticBitmap(parent=self.img_panel,
-                                            bitmap=bmp)
-            self.img_panel.Children[0].Bind(
-                wx.EVT_LEFT_DOWN, self.select_point)
-            self.img_panel.Children[0].Bind(wx.EVT_MOTION, self.point_move)
-            self.img_panel.Children[0].Bind(
-                wx.EVT_LEFT_UP, self.select_point_release)
-
-        # self.Refresh()
-
     def frame_resize(self, event):
         self.auto_layout(mode=2)
 
@@ -349,7 +326,6 @@ class MulimgViewer (MulimgViewerGui):
         if self.magnifier.Value != False:
             self.start_flag = 0
             self.refresh(event)
-            self.draw_rectangle_refresh()
 
     def select_point(self, event):
         if self.magnifier.Value != False:
@@ -379,6 +355,16 @@ class MulimgViewer (MulimgViewerGui):
                 self.y = self.ImgManager.img_resolution_show[1]
 
             self.Refresh()
+
+    def change_rectangle_position(self, event):
+        x, y = event.GetPosition()
+        x_0, y_0, x_1, y_1 = self.ImgManager.crop_points
+        x_center_old = x_0+int((abs(x_0-x_1))/2)
+        y_center_old = y_0+int((abs(y_0-y_1))/2)
+        delta_x = x-x_center_old
+        delta_y = y-y_center_old
+        self.x_0, self.y_0, self.x, self.y = [x_0+delta_x, y_0+delta_y, x_1+delta_x, y_1+delta_y]
+        self.refresh(event)
 
     def magnifier_draw(self, event):
         self.start_flag = 0
@@ -448,6 +434,8 @@ class MulimgViewer (MulimgViewerGui):
                 self.img_panel.Children[0].Bind(wx.EVT_MOTION, self.point_move)
                 self.img_panel.Children[0].Bind(
                     wx.EVT_LEFT_UP, self.select_point_release)
+                self.img_panel.Children[0].Bind(
+                    wx.EVT_RIGHT_DOWN, self.change_rectangle_position)
 
             # status
             if self.ImgManager.type == 0 or self.ImgManager.type == 1:

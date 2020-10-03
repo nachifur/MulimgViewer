@@ -337,13 +337,13 @@ class MulimgViewer (MulimgViewerGui):
             magnifier_scale = [float(x) for x in magnifier_scale]
 
             color = self.colourPicker_draw.GetColour()
-            line_width=int(self.line_width.GetLineText(0))
+            line_width = int(self.line_width.GetLineText(0))
         except:
             self.SetStatusText_(
                 ["-1", "-1", "***Error: setting***", "-1"])
             return False
         else:
-            return [img_num_per_row, num_per_img, img_num_per_column, gap, show_scale, output_scale, img_resolution, 1 if self.magnifier.Value else 0, magnifier_scale,color ,line_width,self.checkBox_orientation.Value]
+            return [img_num_per_row, num_per_img, img_num_per_column, gap, show_scale, output_scale, img_resolution, 1 if self.magnifier.Value else 0, magnifier_scale, color, line_width, self.checkBox_orientation.Value]
 
     def select_point_release(self, event):
         if self.magnifier.Value != False:
@@ -407,7 +407,7 @@ class MulimgViewer (MulimgViewerGui):
             else:
                 self.draw_points = [self.x_0, self.y_0, self.x, self.y]
         except:
-            self.draw_points = 0        
+            self.draw_points = 0
 
         self.show_scale_old = self.ImgManager.layout_params[4]
         self.layout_params_old = self.ImgManager.layout_params

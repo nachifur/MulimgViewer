@@ -189,7 +189,7 @@ class MulimgViewerGui ( wx.Frame ):
 
 		bSizer2.Add( self.m_staticText3, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
-		self.num_per_img = wx.TextCtrl( self.m_scrolledWindow2, wx.ID_ANY, u"-1", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.num_per_img = wx.TextCtrl( self.m_scrolledWindow2, wx.ID_ANY, u"1", wx.DefaultPosition, wx.DefaultSize, 0 )
 		bSizer2.Add( self.num_per_img, 0, wx.ALL, 5 )
 
 
@@ -202,7 +202,7 @@ class MulimgViewerGui ( wx.Frame ):
 
 		bSizer3.Add( self.m_staticText4, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
-		self.img_num_per_row = wx.TextCtrl( self.m_scrolledWindow2, wx.ID_ANY, u"2", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.img_num_per_row = wx.TextCtrl( self.m_scrolledWindow2, wx.ID_ANY, u"1", wx.DefaultPosition, wx.DefaultSize, 0 )
 		bSizer3.Add( self.img_num_per_row, 0, wx.ALL, 5 )
 
 

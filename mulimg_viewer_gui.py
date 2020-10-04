@@ -171,7 +171,7 @@ class MulimgViewerGui ( wx.Frame ):
 
 		bSizer1 = wx.BoxSizer( wx.HORIZONTAL )
 
-		self.m_staticText2 = wx.StaticText( self.m_scrolledWindow2, wx.ID_ANY, u"row", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText2 = wx.StaticText( self.m_scrolledWindow2, wx.ID_ANY, u"Row", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText2.Wrap( -1 )
 
 		bSizer1.Add( self.m_staticText2, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
@@ -184,7 +184,7 @@ class MulimgViewerGui ( wx.Frame ):
 
 		bSizer2 = wx.BoxSizer( wx.HORIZONTAL )
 
-		self.m_staticText3 = wx.StaticText( self.m_scrolledWindow2, wx.ID_ANY, u"num per img", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText3 = wx.StaticText( self.m_scrolledWindow2, wx.ID_ANY, u"Num per img", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText3.Wrap( -1 )
 
 		bSizer2.Add( self.m_staticText3, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
@@ -197,7 +197,7 @@ class MulimgViewerGui ( wx.Frame ):
 
 		bSizer3 = wx.BoxSizer( wx.HORIZONTAL )
 
-		self.m_staticText4 = wx.StaticText( self.m_scrolledWindow2, wx.ID_ANY, u"col", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText4 = wx.StaticText( self.m_scrolledWindow2, wx.ID_ANY, u"Column", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText4.Wrap( -1 )
 
 		bSizer3.Add( self.m_staticText4, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
@@ -210,7 +210,7 @@ class MulimgViewerGui ( wx.Frame ):
 
 		bSizer4 = wx.BoxSizer( wx.HORIZONTAL )
 
-		self.m_staticText5 = wx.StaticText( self.m_scrolledWindow2, wx.ID_ANY, u"gap (x,y)", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText5 = wx.StaticText( self.m_scrolledWindow2, wx.ID_ANY, u"Gap (x,y)", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText5.Wrap( -1 )
 
 		bSizer4.Add( self.m_staticText5, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
@@ -279,13 +279,27 @@ class MulimgViewerGui ( wx.Frame ):
 		self.m_staticText24 = wx.StaticText( self.m_scrolledWindow2, wx.ID_ANY, u"Move file", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText24.Wrap( -1 )
 
-		bSizer19.Add( self.m_staticText24, 1, wx.ALL, 5 )
+		bSizer19.Add( self.m_staticText24, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
 		self.move_file = wx.CheckBox( self.m_scrolledWindow2, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
 		bSizer19.Add( self.move_file, 0, wx.ALL, 5 )
 
 
 		fgSizer3.Add( bSizer19, 1, wx.EXPAND, 5 )
+
+		bSizer20 = wx.BoxSizer( wx.HORIZONTAL )
+
+		self.m_staticText25 = wx.StaticText( self.m_scrolledWindow2, wx.ID_ANY, u"🔍️ Keep size", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText25.Wrap( -1 )
+
+		bSizer20.Add( self.m_staticText25, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+
+		self.keep_magnifer_size = wx.CheckBox( self.m_scrolledWindow2, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.keep_magnifer_size.SetValue(True)
+		bSizer20.Add( self.keep_magnifer_size, 0, wx.ALL, 5 )
+
+
+		fgSizer3.Add( bSizer20, 1, wx.EXPAND, 5 )
 
 		self.m_staticline1 = wx.StaticLine( self.m_scrolledWindow2, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_HORIZONTAL )
 		fgSizer3.Add( self.m_staticline1, 0, wx.EXPAND |wx.ALL, 5 )
@@ -315,7 +329,7 @@ class MulimgViewerGui ( wx.Frame ):
 
 		bSizer5 = wx.BoxSizer( wx.HORIZONTAL )
 
-		self.m_staticText6 = wx.StaticText( self.m_scrolledWindow2, wx.ID_ANY, u"show scale", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText6 = wx.StaticText( self.m_scrolledWindow2, wx.ID_ANY, u"Show scale", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText6.Wrap( -1 )
 
 		bSizer5.Add( self.m_staticText6, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
@@ -328,7 +342,7 @@ class MulimgViewerGui ( wx.Frame ):
 
 		bSizer6 = wx.BoxSizer( wx.HORIZONTAL )
 
-		self.m_staticText7 = wx.StaticText( self.m_scrolledWindow2, wx.ID_ANY, u"output scale", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText7 = wx.StaticText( self.m_scrolledWindow2, wx.ID_ANY, u"Output scale", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText7.Wrap( -1 )
 
 		bSizer6.Add( self.m_staticText7, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
@@ -341,7 +355,7 @@ class MulimgViewerGui ( wx.Frame ):
 
 		bSizer14 = wx.BoxSizer( wx.HORIZONTAL )
 
-		self.m_staticText18 = wx.StaticText( self.m_scrolledWindow2, wx.ID_ANY, u"🔍️ scale", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText18 = wx.StaticText( self.m_scrolledWindow2, wx.ID_ANY, u"🔍️ Scale", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText18.Wrap( -1 )
 
 		bSizer14.Add( self.m_staticText18, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )

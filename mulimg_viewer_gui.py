@@ -274,6 +274,19 @@ class MulimgViewerGui ( wx.Frame ):
 
 		fgSizer3.Add( bSizer8, 1, wx.EXPAND, 5 )
 
+		bSizer19 = wx.BoxSizer( wx.HORIZONTAL )
+
+		self.m_staticText24 = wx.StaticText( self.m_scrolledWindow2, wx.ID_ANY, u"Move file", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText24.Wrap( -1 )
+
+		bSizer19.Add( self.m_staticText24, 1, wx.ALL, 5 )
+
+		self.move_file = wx.CheckBox( self.m_scrolledWindow2, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
+		bSizer19.Add( self.move_file, 0, wx.ALL, 5 )
+
+
+		fgSizer3.Add( bSizer19, 1, wx.EXPAND, 5 )
+
 		self.m_staticline1 = wx.StaticLine( self.m_scrolledWindow2, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_HORIZONTAL )
 		fgSizer3.Add( self.m_staticline1, 0, wx.EXPAND |wx.ALL, 5 )
 

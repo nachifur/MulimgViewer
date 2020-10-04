@@ -3,7 +3,7 @@ import wx
 import numpy as np
 import os
 from PIL import Image
-from shutil import copyfile
+from shutil import copyfile,move
 from pathlib import Path
 
 
@@ -161,6 +161,7 @@ class ImgManager(ImgDataset):
         self.custom_resolution = False
         self.img_num = 0
         self.format_group = [".png", ".jpg", ".jpeg", ".bmp", ".tif"]
+        self.save_select_move = 0
 
     def save_img(self, out_path_str, out_type):
         self.check = []
@@ -219,17 +220,22 @@ class ImgManager(ImgDataset):
 
     def save_select(self, dir_name):
         for i in range(len(dir_name)):
-            if not (Path(self.out_path_str)/dir_name[i]).exists():
-                os.makedirs(Path(self.out_path_str) / dir_name[i])
+            if not (Path(self.out_path_str)/"select_images"/dir_name[i]).exists():
+                os.makedirs(Path(self.out_path_str) / "select_images" /dir_name[i])
 
             f_path = self.flist[i]
             try:
-                copyfile(f_path, Path(
-                    self.out_path_str) / dir_name[i] / self.name_list[self.action_count])
+                if self.layout_params[11]:
+                    move(f_path, Path(self.out_path_str) /"select_images"/ dir_name[i] / self.name_list[self.action_count])
+                else:
+                    copyfile(f_path, Path(self.out_path_str) /"select_images"/ dir_name[i] / self.name_list[self.action_count])
             except:
                 self.check.append(1)
             else:
                 self.check.append(0)
+        if self.layout_params[11]:
+            self.save_select_move = 1
+
 
     def save_stitch(self, dir_name, img):
         name_f = self.name_list[self.action_count]
@@ -237,7 +243,10 @@ class ImgManager(ImgDataset):
         f_path_output = Path(self.out_path_str) / dir_name / name_f
         if not (Path(self.out_path_str)/dir_name).is_dir():
             os.makedirs(Path(self.out_path_str) / dir_name)
-        self.check_1.append(self.stitch_images(1,self.crop_points))
+        if self.layout_params[7]:
+            self.check_1.append(self.stitch_images(1,self.crop_points))
+        else:
+            self.check_1.append(self.stitch_images(1))
 
         img.save(f_path_output)
         

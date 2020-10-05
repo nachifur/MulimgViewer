@@ -529,7 +529,7 @@ class MulimgViewer (MulimgViewerGui):
                     self.SetStatusText_(
                         ["-1", "-1", "index_table.txt saving...", "-1"])
                 self.index_table = IndexTable(
-                    None, self.ImgManager.name_list, self.ImgManager.layout_params, self.ImgManager.dataset_mode, self.out_path_str)
+                    None, self.ImgManager.name_list, self.ImgManager.layout_params, self.ImgManager.dataset_mode, self.out_path_str,self.ImgManager.type)
                 if self.ImgManager.dataset_mode:
                     self.SetStatusText_(
                         ["-1", "-1", "index_table.txt save in "+self.out_path_str, "-1"])

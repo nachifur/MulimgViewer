@@ -331,7 +331,7 @@ class ImgManager(ImgDataset):
                     img_num_per_column-1)+gap[2]*(img_num_per_column)*(num_per_img-1)), self.gap_color)
 
             for ix in range(img_num_per_row):
-                for ixx in range(2):
+                for ixx in range(self.magnifier_flag+1):
                     if self.magnifier_flag != 0:
                         x = 2*ix * width + ixx * width + \
                             gap[3] * ixx + gap[1]*ix + gap[3]*ix
@@ -348,8 +348,8 @@ class ImgManager(ImgDataset):
                                 im = self.img_list[ix*(img_num_per_column *
                                                         num_per_img)+iyy*num_per_img+iy]
                                 im = self.img_preprocessing(im)
-                                if self.magnifier_flag != 0 and (ixx+1) % 2 == 0:
-                                    if draw_points != 0 and np.abs(draw_points[2] - draw_points[0]) > 0 and np.abs(draw_points[3] - draw_points[1]) > 0:
+                                if (ixx+1) % 2 == 0:
+                                    if self.magnifier_flag != 0 and draw_points != 0 and np.abs(draw_points[2] - draw_points[0]) > 0 and np.abs(draw_points[3] - draw_points[1]) > 0:
                                         im, delta_x, delta_y = self.magnifier_preprocessing(
                                             im)
                                         img.paste(
@@ -366,8 +366,10 @@ class ImgManager(ImgDataset):
             else:
                 img = Image.new('RGBA', (width * img_num_per_row * num_per_img + gap[0] * (
                     img_num_per_row-1)+gap[2]*(img_num_per_row)*(num_per_img-1), img_num_per_column*(2*height + gap[3])+gap[1] * (img_num_per_column-1)), self.gap_color)
+
+                  
             for iy in range(img_num_per_column):
-                for iyy in range(2):
+                for iyy in range(self.magnifier_flag+1):  
                     if self.magnifier_flag != 0:
                         y = 2*iy * height + iyy * height + \
                             gap[3] * iyy + gap[1]*iy + gap[3]*iy
@@ -384,8 +386,8 @@ class ImgManager(ImgDataset):
                                 im = self.img_list[iy*(img_num_per_row *
                                                         num_per_img)+ixx*num_per_img+ix]
                                 im = self.img_preprocessing(im)
-                                if self.magnifier_flag != 0 and (iyy+1) % 2 == 0:
-                                    if draw_points != 0 and np.abs(draw_points[2] - draw_points[0]) > 0 and np.abs(draw_points[3] - draw_points[1]) > 0:
+                                if (iyy+1) % 2 == 0:
+                                    if self.magnifier_flag != 0 and draw_points != 0 and np.abs(draw_points[2] - draw_points[0]) > 0 and np.abs(draw_points[3] - draw_points[1]) > 0:
                                         im, delta_x, delta_y = self.magnifier_preprocessing(
                                             im)
                                         img.paste(
@@ -397,9 +399,9 @@ class ImgManager(ImgDataset):
         # img = img.convert("RGBA")
         self.img_resolution = self.img_resolution_
         self.img = img
+        self.xy_grid = xy_grid
         if self.magnifier_flag != 0 and draw_points != 0:
             self.draw_rectangle()
-        self.xy_grid = xy_grid
         # except:
         #     return 1
         # else:

@@ -354,7 +354,7 @@ class MulimgViewer (MulimgViewerGui):
                 self.x = x
                 self.y = self.ImgManager.img_resolution_show[1]
 
-            self.Refresh()
+            # self.Refresh()
 
     def change_rectangle_position(self, event):
         x, y = event.GetPosition()
@@ -507,9 +507,10 @@ class MulimgViewer (MulimgViewerGui):
                 else:
                     h = self.img_size[1]+200
                 self.Size = wx.Size((w, h))
-
+            self.scrolledWindow_set.SetMinSize(
+                wx.Size((300, -1)))
             self.scrolledWindow_img.SetMinSize(
-                wx.Size((self.Size[0]-250, self.Size[1]-150)))
+                wx.Size((self.Size[0]-300, self.Size[1]-150)))
 
         self.Layout()
         self.Refresh()

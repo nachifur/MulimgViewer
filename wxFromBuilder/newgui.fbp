@@ -1308,7 +1308,7 @@
                                 <property name="minimize_button">0</property>
                                 <property name="minimum_size">-1,-1</property>
                                 <property name="moveable">1</property>
-                                <property name="name">m_scrolledWindow2</property>
+                                <property name="name">scrolledWindow_set</property>
                                 <property name="pane_border">1</property>
                                 <property name="pane_position"></property>
                                 <property name="pane_size"></property>
@@ -1319,7 +1319,7 @@
                                 <property name="scroll_rate_x">5</property>
                                 <property name="scroll_rate_y">5</property>
                                 <property name="show">1</property>
-                                <property name="size">250,-1</property>
+                                <property name="size">-1,-1</property>
                                 <property name="subclass">; ; forward_declare</property>
                                 <property name="toolbar_pane">0</property>
                                 <property name="tooltip"></property>
@@ -1332,7 +1332,7 @@
                                     <property name="growablecols"></property>
                                     <property name="growablerows"></property>
                                     <property name="hgap">0</property>
-                                    <property name="minimum_size"></property>
+                                    <property name="minimum_size">-1,-1</property>
                                     <property name="name">fgSizer3</property>
                                     <property name="non_flexible_grow_mode">wxFLEX_GROWMODE_SPECIFIED</property>
                                     <property name="permission">none</property>

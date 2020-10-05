@@ -160,7 +160,7 @@ class ImgManager(ImgDataset):
         self.img_resolution = [-1, -1]
         self.custom_resolution = False
         self.img_num = 0
-        self.format_group = [".png", ".jpg", ".jpeg", ".bmp", ".tif"]
+        self.format_group = [".png", ".jpg", ".jpeg", ".bmp", ".tiff", ".tif"]
         self.save_select_move = 0
 
     def save_img(self, out_path_str, out_type):

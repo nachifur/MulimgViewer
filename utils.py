@@ -16,7 +16,7 @@ class ImgDataset():
         self.img_count = 0
         self.init_flist()
         self.img_num = len(self.name_list)
-        self.set_count_per_action(1)
+        # self.set_count_per_action(1)
 
     def init_flist(self):
 
@@ -61,30 +61,6 @@ class ImgDataset():
             return [str(f.name) for f in Path(self.path_list[0]).iterdir(
             ) if f.is_file() and f.suffix in self.format_group]
 
-    def get_flist(self):
-
-        if self.type == 0:
-            # one_dir_mul_dir_auto
-            flist = [str(Path(self.path_list[i])/self.name_list[self.img_count])
-                     for i in range(len(self.path_list))]
-        elif self.type == 1:
-            # one_dir_mul_dir_manual
-            flist = [str(Path(self.path_list[i])/self.name_list[self.img_count])
-                     for i in range(len(self.path_list))]
-        elif self.type == 2:
-            # one_dir_mul_img
-            try:
-                flist = [str(Path(self.input_path)/self.name_list[i])
-                         for i in range(self.img_count, self.img_count+self.count_per_action)]
-            except:
-                flist = [str(Path(self.input_path)/self.name_list[i])
-                         for i in range(self.img_count, self.img_num)]
-        else:
-            flist = []
-
-        self.flist = flist
-        return flist
-
     def add(self):
         if self.action_count < self.max_action_num-1:
             self.action_count += 1
@@ -97,15 +73,10 @@ class ImgDataset():
 
     def set_count_per_action(self, count_per_action):
         self.count_per_action = count_per_action
-        if self.type == 0:
-            self.max_action_num = self.img_num
-        elif self.type == 1:
-            self.max_action_num = self.img_num
-        elif self.type == 2:
-            if self.img_num % self.count_per_action:
-                self.max_action_num = int(self.img_num/self.count_per_action)+1
-            else:
-                self.max_action_num = int(self.img_num/self.count_per_action)
+        if self.img_num % self.count_per_action:
+            self.max_action_num = int(self.img_num/self.count_per_action)+1
+        else:
+            self.max_action_num = int(self.img_num/self.count_per_action)
 
     def set_action_count(self, action_count):
         if action_count < self.max_action_num:
@@ -162,6 +133,72 @@ class ImgManager(ImgDataset):
         self.img_num = 0
         self.format_group = [".png", ".jpg", ".jpeg", ".bmp", ".tiff", ".tif"]
         self.save_select_move = 0
+
+    def get_flist(self):
+
+        if self.type == 0 or self.type == 1:
+            # one_dir_mul_dir_auto, one_dir_mul_dir_manual
+            flist = []
+            for i in range(len(self.path_list)):
+                for k in range(self.img_count, self.img_count+self.count_per_action):
+                    try:
+                        flist += [str(Path(self.path_list[i])/self.name_list[k])]
+                    except:
+                        flist += [str(Path(self.path_list[i])/self.name_list[-1])]
+
+        elif self.type == 2:
+            # one_dir_mul_img
+            try:
+                flist = [str(Path(self.input_path)/self.name_list[i])
+                         for i in range(self.img_count, self.img_count+self.count_per_action)]
+            except:
+                flist = [str(Path(self.input_path)/self.name_list[i])
+                         for i in range(self.img_count, self.img_num)]
+        else:
+            flist = []
+
+        self.flist = flist
+        return flist
+
+    def get_img_list(self):
+        img_list = []
+        for path in self.flist:
+            path = Path(path)
+            if path.is_file() and path.suffix in self.format_group:
+                img_list.append(Image.open(path).convert('RGB'))
+            else:
+                pass
+        # resolution
+        width_ = []
+        height_ = []
+        for img in img_list:
+            width, height = img.size
+            width_.append(width)
+            height_.append(height)
+        width_ = np.sort(width_)
+        height_ = np.sort(height_)
+
+        if self.img_stitch_mode == 2:
+            width = max(width_)
+            height = max(height_)
+        elif self.img_stitch_mode == 1:
+            width = np.min(width_)
+            height = np.min(height_)
+        elif self.img_stitch_mode == 0:
+            if len(width_) > 3:
+                width = np.mean(width_[1:-1])
+                height = np.mean(height_[1:-1])
+            else:
+                width = np.mean(width_)
+                height = np.mean(height_)
+
+        if self.layout_params[6][0] == -1 or self.layout_params[6][1] == -1:
+            self.img_resolution = [int(width), int(height)]
+            self.custom_resolution = False
+        else:
+            self.img_resolution = [int(i) for i in self.layout_params[6]]
+            self.custom_resolution = True
+        self.img_list = img_list
 
     def save_img(self, out_path_str, out_type):
         self.check = []
@@ -265,46 +302,6 @@ class ImgManager(ImgDataset):
             img.save(f_path_output)
             i += 1
 
-    def get_img_list(self):
-        img_list = []
-        for path in self.flist:
-            path = Path(path)
-            if path.is_file() and path.suffix in self.format_group:
-                img_list.append(Image.open(path).convert('RGB'))
-            else:
-                pass
-        # resolution
-        width_ = []
-        height_ = []
-        for img in img_list:
-            width, height = img.size
-            width_.append(width)
-            height_.append(height)
-        width_ = np.sort(width_)
-        height_ = np.sort(height_)
-
-        if self.img_stitch_mode == 2:
-            width = max(width_)
-            height = max(height_)
-        elif self.img_stitch_mode == 1:
-            width = np.min(width_)
-            height = np.min(height_)
-        elif self.img_stitch_mode == 0:
-            if len(width_) > 3:
-                width = np.mean(width_[1:-1])
-                height = np.mean(height_[1:-1])
-            else:
-                width = np.mean(width_)
-                height = np.mean(height_)
-
-        if self.layout_params[6][0] == -1 or self.layout_params[6][1] == -1:
-            self.img_resolution = [int(width), int(height)]
-            self.custom_resolution = False
-        else:
-            self.img_resolution = [int(i) for i in self.layout_params[6]]
-            self.custom_resolution = True
-        self.img_list = img_list
-
     def stitch_images(self, img_mode, draw_points=0):
         xy_grid = []
         # try:
@@ -346,7 +343,7 @@ class ImgManager(ImgDataset):
                                 gap[2]*iyy*(num_per_img-1)
                             if ix*(img_num_per_column * num_per_img)+iyy*num_per_img+iy < len(self.img_list):
                                 im = self.img_list[ix*(img_num_per_column *
-                                                        num_per_img)+iyy*num_per_img+iy]
+                                                       num_per_img)+iyy*num_per_img+iy]
                                 im = self.img_preprocessing(im)
                                 if (ixx+1) % 2 == 0:
                                     if self.magnifier_flag != 0 and draw_points != 0 and np.abs(draw_points[2] - draw_points[0]) > 0 and np.abs(draw_points[3] - draw_points[1]) > 0:
@@ -367,9 +364,8 @@ class ImgManager(ImgDataset):
                 img = Image.new('RGBA', (width * img_num_per_row * num_per_img + gap[0] * (
                     img_num_per_row-1)+gap[2]*(img_num_per_row)*(num_per_img-1), img_num_per_column*(2*height + gap[3])+gap[1] * (img_num_per_column-1)), self.gap_color)
 
-                  
             for iy in range(img_num_per_column):
-                for iyy in range(self.magnifier_flag+1):  
+                for iyy in range(self.magnifier_flag+1):
                     if self.magnifier_flag != 0:
                         y = 2*iy * height + iyy * height + \
                             gap[3] * iyy + gap[1]*iy + gap[3]*iy
@@ -384,7 +380,7 @@ class ImgManager(ImgDataset):
                                 gap[2]*ixx*(num_per_img-1)
                             if iy*(img_num_per_row * num_per_img)+ixx*num_per_img+ix < len(self.img_list):
                                 im = self.img_list[iy*(img_num_per_row *
-                                                        num_per_img)+ixx*num_per_img+ix]
+                                                       num_per_img)+ixx*num_per_img+ix]
                                 im = self.img_preprocessing(im)
                                 if (iyy+1) % 2 == 0:
                                     if self.magnifier_flag != 0 and draw_points != 0 and np.abs(draw_points[2] - draw_points[0]) > 0 and np.abs(draw_points[3] - draw_points[1]) > 0:
@@ -478,18 +474,19 @@ class ImgManager(ImgDataset):
         if crop_points[3] < crop_points[1]:
             temp = crop_points[1]
             crop_points[1] = crop_points[3]
-            crop_points[3] = temp        
-        
-        
+            crop_points[3] = temp
+
         if self.layout_params[12]:
             width = crop_points[2]-crop_points[0]
             height = crop_points[3]-crop_points[1]
             center_x = crop_points[0]+int(width/2)
             center_y = crop_points[1]+int(height/2)
             if self.img_resolution[0]/width > self.img_resolution[1]/height:
-                height = int(width*self.img_resolution[1]/self.img_resolution[0])
+                height = int(
+                    width*self.img_resolution[1]/self.img_resolution[0])
             else:
-                width = int(height*self.img_resolution[0]/self.img_resolution[1])
+                width = int(
+                    height*self.img_resolution[0]/self.img_resolution[1])
             crop_points[0] = center_x - int(width/2)
             crop_points[2] = center_x + int(width/2)
 
@@ -502,8 +499,8 @@ class ImgManager(ImgDataset):
         img = img.crop(tuple(self.crop_points))
 
         width, height = img.size
-        if height==0 or width==0:
-            a=1
+        if height == 0 or width == 0:
+            a = 1
         if magnifier_scale[0] == -1 or magnifier_scale[1] == -1:
             if self.img_resolution[0]/width < self.img_resolution[1]/height:
                 img = img.resize((self.img_resolution[0], int(

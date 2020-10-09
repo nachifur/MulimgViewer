@@ -280,7 +280,7 @@ class MulimgViewer (MulimgViewerGui):
             # setting
             self.ImgManager.layout_params = layout_params
             if self.ImgManager.type == 0 or self.ImgManager.type == 1:
-                self.ImgManager.set_count_per_action(1)
+                self.ImgManager.set_count_per_action(layout_params[1])
             elif self.ImgManager.type == 2:
                 self.ImgManager.set_count_per_action(
                     layout_params[0]*layout_params[1]*layout_params[2])

@@ -142,9 +142,11 @@ class ImgManager(ImgDataset):
             for i in range(len(self.path_list)):
                 for k in range(self.img_count, self.img_count+self.count_per_action):
                     try:
-                        flist += [str(Path(self.path_list[i])/self.name_list[k])]
+                        flist += [str(Path(self.path_list[i]) /
+                                      self.name_list[k])]
                     except:
-                        flist += [str(Path(self.path_list[i])/self.name_list[-1])]
+                        flist += [str(Path(self.path_list[i]) /
+                                      self.name_list[-1])]
 
         elif self.type == 2:
             # one_dir_mul_img
@@ -203,8 +205,6 @@ class ImgManager(ImgDataset):
     def save_img(self, out_path_str, out_type):
         self.check = []
         self.check_1 = []
-        img = self.img
-        img = self.resize(img, self.layout_params[5])
         self.out_path_str = out_path_str
         if out_path_str != "" and Path(out_path_str).is_dir():
             dir_name = [Path(path)._parts[-1] for path in self.path_list]
@@ -229,21 +229,21 @@ class ImgManager(ImgDataset):
             if out_type == 2:
                 self.save_select(dir_name)
             elif out_type == 1:
-                self.save_stitch(dir_name[-1], img)
+                self.save_stitch(dir_name[-1])
             elif out_type == 3:
                 self.save_select(dir_name[0:-1])
-                self.save_stitch(dir_name[-1], img)
+                self.save_stitch(dir_name[-1])
             elif out_type == 4:
                 self.save_magnifier(dir_name[-1])
             elif out_type == 5:
-                self.save_stitch(dir_name[0], img)
+                self.save_stitch(dir_name[0])
                 self.save_magnifier(dir_name[-1])
             elif out_type == 6:
                 self.save_select(dir_name[0:-1])
                 self.save_magnifier(dir_name[-1])
             elif out_type == 7:
                 self.save_select(dir_name[0:-2])
-                self.save_stitch(dir_name[-2], img)
+                self.save_stitch(dir_name[-2])
                 self.save_magnifier(dir_name[-1])
             if sum(self.check) == 0:
                 if sum(self.check_1) == 0:
@@ -276,18 +276,18 @@ class ImgManager(ImgDataset):
         if self.layout_params[11]:
             self.save_select_move = 1
 
-    def save_stitch(self, dir_name, img):
+    def save_stitch(self, dir_name):
         name_f = self.name_list[self.action_count]
         name_f = Path(name_f).with_suffix(".png")
         f_path_output = Path(self.out_path_str) / dir_name / name_f
         if not (Path(self.out_path_str)/dir_name).is_dir():
             os.makedirs(Path(self.out_path_str) / dir_name)
         if self.layout_params[7]:
-            self.check_1.append(self.stitch_images(1, self.crop_points))
+            self.check_1.append(self.stitch_images(1, self.draw_points))
         else:
             self.check_1.append(self.stitch_images(1))
 
-        img.save(f_path_output)
+        self.img.save(f_path_output)
 
     def save_magnifier(self, dir_name):
         i = 0
@@ -303,6 +303,7 @@ class ImgManager(ImgDataset):
             i += 1
 
     def stitch_images(self, img_mode, draw_points=0):
+        self.draw_points = draw_points
         xy_grid = []
         # try:
         self.get_img_list()
@@ -315,7 +316,7 @@ class ImgManager(ImgDataset):
         self.magnifier_flag = self.layout_params[7]
         if self.magnifier_flag != 0 == 0 and draw_points != 0 and np.abs(draw_points[2] - draw_points[0]) > 0 and np.abs(draw_points[3] - draw_points[1]) > 0:
             self.crop_points_process(
-                draw_points)
+                draw_points, img_mode)
         if self.layout_params[-1]:
             # Vertical
             img_num_per_column = img_num_per_row
@@ -393,7 +394,7 @@ class ImgManager(ImgDataset):
                                     img.paste(im, (x, y))
 
         # img = img.convert("RGBA")
-        self.img_resolution = self.img_resolution_
+        self.img_resolution = self.img_resolution_  # set_scale_mode
         self.img = img
         self.xy_grid = xy_grid
         if self.magnifier_flag != 0 and draw_points != 0:
@@ -433,14 +434,20 @@ class ImgManager(ImgDataset):
     def set_scale_mode(self, img_mode=0):
         """img_mode, 0: show, 1: save"""
         self.img_resolution_ = self.img_resolution
+        self.img_resolution_show = self.img_resolution
         if img_mode == 0:
             self.img_resolution = (
                 np.array(self.img_resolution) * np.array(self.layout_params[4])).astype(np.int)
             self.img_resolution_show = self.img_resolution
+            self.scale = self.layout_params[4]
         elif img_mode == 1:
             self.img_resolution = (
                 np.array(self.img_resolution) * np.array(self.layout_params[5])).astype(np.int)
-            self.img_resolution_show = self.img_resolution_
+            self.scale = self.layout_params[5]
+        # self.gap = self.layout_params[3]
+        # self.gap[0] = int(self.layout_params[3][0]*self.scale[0])
+        # self.gap[1] = int(self.layout_params[3][1]*self.scale[1])
+        # self.gap[2:] = (np.array(self.layout_params[3][2:])*np.array(self.scale[0])).astype(np.int)
 
     def PIL2wx(self, image):
         width, height = image.size
@@ -453,7 +460,9 @@ class ImgManager(ImgDataset):
             img = img.resize((width, height), Image.BICUBIC)
         else:
             if self.img_stitch_mode == 2:
-                pass
+                width = int(self.scale[0]*img.size[0])
+                height = int(self.scale[1]*img.size[1])
+                img = img.resize((width, height), Image.BICUBIC)
             elif self.img_stitch_mode == 1:
                 width, height = self.img_resolution
                 (left, upper, right, lower) = (
@@ -466,7 +475,7 @@ class ImgManager(ImgDataset):
 
         return img
 
-    def crop_points_process(self, crop_points):
+    def crop_points_process(self, crop_points, img_mode):
         if crop_points[2] < crop_points[0]:
             temp = crop_points[0]
             crop_points[0] = crop_points[2]
@@ -492,6 +501,15 @@ class ImgManager(ImgDataset):
 
             crop_points[1] = center_y-int(height/2)
             crop_points[3] = center_y+int(height/2)
+
+        if img_mode == 1:
+            scale = np.array(
+                self.layout_params[5])/np.array(self.layout_params[4])
+            crop_points[0] = int(crop_points[0]*scale[0])
+            crop_points[1] = int(crop_points[1]*scale[1])
+            crop_points[2] = int(crop_points[2]*scale[0])
+            crop_points[3] = int(crop_points[3]*scale[1])
+
         self.crop_points = crop_points
 
     def magnifier_preprocessing(self, img):

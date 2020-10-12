@@ -131,13 +131,15 @@ class MulimgViewer (MulimgViewerGui):
             for i in range(self.ImgManager.max_action_num):
                 self.SetStatusText_(
                     ["-1", "-1", "***"+str(self.ImgManager.name_list[self.ImgManager.action_count])+", saving img***", "-1"])
+                self.ImgManager.get_flist()
                 self.ImgManager.save_img(self.out_path_str, type_)
                 self.ImgManager.add()
-
             self.ImgManager.set_action_count(last_count_img)
             self.SetStatusText_(
                 ["-1", "-1", "***Finish***", "-1"])
         else:
+            self.SetStatusText_(
+                ["-1", "-1", "***"+str(self.ImgManager.name_list[self.ImgManager.action_count])+", saving img...***", "-1"])
             flag = self.ImgManager.save_img(self.out_path_str, type_)
             if flag == 0:
                 self.SetStatusText_(
@@ -529,7 +531,7 @@ class MulimgViewer (MulimgViewerGui):
                     self.SetStatusText_(
                         ["-1", "-1", "index_table.txt saving...", "-1"])
                 self.index_table = IndexTable(
-                    None, self.ImgManager.name_list, self.ImgManager.layout_params, self.ImgManager.dataset_mode, self.out_path_str,self.ImgManager.type)
+                    None, self.ImgManager.name_list, self.ImgManager.layout_params, self.ImgManager.dataset_mode, self.out_path_str, self.ImgManager.type)
                 if self.ImgManager.dataset_mode:
                     self.SetStatusText_(
                         ["-1", "-1", "index_table.txt save in "+self.out_path_str, "-1"])

@@ -4,14 +4,14 @@ import numpy as np
 from pathlib import Path
 
 class IndexTable (IndexTableGui):
-    def __init__(self, parent, flist, layout_params,dataset_mode,out_path_str):
+    def __init__(self, parent, flist, layout_params,dataset_mode,out_path_str,type):
         super().__init__(parent)
         self.index_table.SetEditable(False)
         self.index_table.BeginFontSize(12)
         self.dataset_mode=dataset_mode
         self.out_path_str = out_path_str
 
-        self.show_id_table(flist, layout_params)
+        self.show_id_table(flist, layout_params,type)
         if self.dataset_mode:
             self.Show(False)
         else:
@@ -21,17 +21,20 @@ class IndexTable (IndexTableGui):
         # if self.index_table.Size>self.Size, the self.index_table display incomplete
         self.index_table.SetSize(wx.Size(self.Size[0], self.Size[1]-100))
 
-    def show_id_table(self, flist, layout_params):
+    def show_id_table(self, flist, layout_params,type):
         self.id_list = []
         self.flist = flist
         self.index_table.Clear()
         img_num_per_row = layout_params[0]
         num_per_img = layout_params[1]
         img_num_per_column = layout_params[2]
-        if num_per_img == -1:
-            interval = img_num_per_row*img_num_per_column
+        if type == 2:
+            if num_per_img == -1:
+                interval = img_num_per_row*img_num_per_column
+            else:
+                interval = img_num_per_row*img_num_per_column*num_per_img
         else:
-            interval = img_num_per_row*img_num_per_column*num_per_img
+            interval = 1
         len_flist = len(flist)
         self.index_table.BeginBold()
         self.index_table.WriteText("Image index   /   Show index\n")

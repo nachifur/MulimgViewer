@@ -157,3 +157,12 @@ https://www.gnu.org/licenses/gpl-3.0.en.html
 - [ ] 用于图像分类标注？
 ## 9. 致谢
 nothingeasy:改进意见-(输入方式，新增：路径文件的导入和存储)
+## 10. 引用
+如果您在研究中使用此项目，请使用以下BibTeX条目。
+```
+@misc{Mulimgviewer2020,
+  author =       {Jiawei Liu},
+  title =        {{Mulimg viewer: A multi-image viewer for image comparison and image stitching}},
+  howpublished = {\url{https://github.com/nachifur/Mulimg_viewer}},
+  year =         {2020}
+}

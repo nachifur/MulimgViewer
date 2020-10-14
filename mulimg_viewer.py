@@ -47,14 +47,15 @@ class MulimgViewer (MulimgViewerGui):
         self.draw_points = 0
 
     def OnPaint(self, event):
-        if self.magnifier.Value != False and self.x_0 != -1 and len(self.img_panel.Children) != 0 and self.draw_points!=0:
-            dc = wx.PaintDC(self.img_panel.Children[0])
-            pen = wx.Pen(wx.Colour(255, 0, 0))
-            dc.SetPen(pen)
-            dc.SetBrush(wx.Brush(wx.Colour(0, 0, 0), wx.TRANSPARENT))
-            for xy in self.ImgManager.xy_grid:
-                dc.DrawRectangle(self.x_0+xy[0], self.y_0+xy[1], self.x -
-                                 self.x_0, self.y-self.y_0)
+        pass
+        # if self.magnifier.Value != False and self.x_0 != -1 and len(self.img_panel.Children) != 0 and self.draw_points!=0:
+        #     dc = wx.PaintDC(self.img_panel.Children[0])
+        #     pen = wx.Pen(wx.Colour(255, 0, 0))
+        #     dc.SetPen(pen)
+        #     dc.SetBrush(wx.Brush(wx.Colour(0, 0, 0), wx.TRANSPARENT))
+        #     for xy in self.ImgManager.xy_grid:
+        #         dc.DrawRectangle(self.x_0+xy[0], self.y_0+xy[1], self.x -
+        #                          self.x_0, self.y-self.y_0)
 
     def frame_resize(self, event):
         self.auto_layout(mode=2)
@@ -124,7 +125,7 @@ class MulimgViewer (MulimgViewerGui):
         layout_params = self.set_img_layout()
         if layout_params != False:
             self.ImgManager.layout_params = layout_params
-        type_ = self.choice_output.Items[self.choice_output.GetSelection()]
+        type_ = self.choice_output.GetSelection()
         if self.auto_save_all.Value:
             last_count_img = self.ImgManager.action_count
             self.ImgManager.set_action_count(0)
@@ -132,13 +133,15 @@ class MulimgViewer (MulimgViewerGui):
             for i in range(self.ImgManager.max_action_num):
                 self.SetStatusText_(
                     ["-1", "-1", "***"+str(self.ImgManager.name_list[self.ImgManager.action_count])+", saving img***", "-1"])
+                self.ImgManager.get_flist()
                 self.ImgManager.save_img(self.out_path_str, type_)
                 self.ImgManager.add()
-
             self.ImgManager.set_action_count(last_count_img)
             self.SetStatusText_(
                 ["-1", "-1", "***Finish***", "-1"])
         else:
+            self.SetStatusText_(
+                ["-1", "-1", "***"+str(self.ImgManager.name_list[self.ImgManager.action_count])+", saving img...***", "-1"])
             flag = self.ImgManager.save_img(self.out_path_str, type_)
             if flag == 0:
                 self.SetStatusText_(
@@ -292,7 +295,7 @@ class MulimgViewer (MulimgViewerGui):
             # setting
             self.ImgManager.layout_params = layout_params
             if self.ImgManager.type == 0 or self.ImgManager.type == 1 or self.ImgManager.type == 3:
-                self.ImgManager.set_count_per_action(1)
+                self.ImgManager.set_count_per_action(layout_params[1])
             elif self.ImgManager.type == 2:
                 self.ImgManager.set_count_per_action(
                     layout_params[0]*layout_params[1]*layout_params[2])
@@ -324,12 +327,15 @@ class MulimgViewer (MulimgViewerGui):
 
             magnifier_scale = self.magnifier_scale.GetLineText(0).split(',')
             magnifier_scale = [float(x) for x in magnifier_scale]
+
+            color = self.colourPicker_draw.GetColour()
+            line_width = int(self.line_width.GetLineText(0))
         except:
             self.SetStatusText_(
                 ["-1", "-1", "***Error: setting***", "-1"])
             return False
         else:
-            return [img_num_per_row, num_per_img, img_num_per_column, gap, show_scale, output_scale, img_resolution, 1 if self.magnifier.Value else 0, magnifier_scale, self.checkBox_orientation.Value]
+            return [img_num_per_row, num_per_img, img_num_per_column, gap, show_scale, output_scale, img_resolution, 1 if self.magnifier.Value else 0, magnifier_scale, color, line_width, self.move_file.Value, self.keep_magnifer_size.Value, self.checkBox_orientation.Value]
 
     def select_point_release(self, event):
         if self.magnifier.Value != False:
@@ -363,7 +369,39 @@ class MulimgViewer (MulimgViewerGui):
                 self.x = x
                 self.y = self.ImgManager.img_resolution_show[1]
 
-            self.Refresh()
+            # self.Refresh()
+
+    def change_rectangle_position(self, event):
+        x, y = event.GetPosition()
+        x_0, y_0, x_1, y_1 = self.ImgManager.crop_points
+        width = abs(x_0-x_1)
+        height = abs(y_0-y_1)
+        x_center_old = x_0+int((width)/2)
+        y_center_old = y_0+int((height)/2)
+        delta_x = x-x_center_old
+        delta_y = y-y_center_old
+
+        if x_1+delta_x > self.ImgManager.img_resolution_show[0]:
+            self.x = self.ImgManager.img_resolution_show[0]
+            self.x_0 = self.ImgManager.img_resolution_show[0]-width
+        elif x_0+delta_x < 0:
+            self.x_0 = 0
+            self.x = width
+        else:
+            self.x_0 = x_0+delta_x
+            self.x = x_1+delta_x
+
+        if y_1+delta_y > self.ImgManager.img_resolution_show[1]:
+            self.y = self.ImgManager.img_resolution_show[1]
+            self.y_0 = self.ImgManager.img_resolution_show[1]-height
+        elif y_0+delta_y < 0:
+            self.y_0 = 0
+            self.y = height
+        else:
+            self.y_0 = y_0+delta_y
+            self.y = y_1+delta_y
+
+        self.refresh(event)
 
     def magnifier_draw(self, event):
         self.start_flag = 0
@@ -390,9 +428,9 @@ class MulimgViewer (MulimgViewerGui):
             if self.show_scale_old != self.ImgManager.layout_params[4]:
                 self.draw_points = 0
             else:
-                self.draw_points = (self.x_0, self.y_0, self.x, self.y)
+                self.draw_points = [self.x_0, self.y_0, self.x, self.y]
         except:
-            self.draw_points = 0        
+            self.draw_points = 0
 
         self.show_scale_old = self.ImgManager.layout_params[4]
         self.layout_params_old = self.ImgManager.layout_params
@@ -433,6 +471,12 @@ class MulimgViewer (MulimgViewerGui):
                 self.img_panel.Children[0].Bind(wx.EVT_MOTION, self.point_move)
                 self.img_panel.Children[0].Bind(
                     wx.EVT_LEFT_UP, self.select_point_release)
+                self.img_panel.Children[0].Bind(
+                    wx.EVT_RIGHT_DOWN, self.change_rectangle_position)
+
+            if self.ImgManager.layout_params[11] and flag != 1 and self.ImgManager.save_select_move:
+                self.ImgManager.subtract()
+                self.ImgManager.save_select_move = 0
 
             # status
             if self.ImgManager.type == 0 or self.ImgManager.type == 1 or self.ImgManager.type == 3:
@@ -451,7 +495,6 @@ class MulimgViewer (MulimgViewerGui):
         else:
             self.SetStatusText_(
                 ["-1", "-1", "***Error: no image in this dir! Maybe you can choose parallel mode!***", "-1"])
-
         self.auto_layout()
 
     def auto_layout(self, mode=1):
@@ -479,9 +522,10 @@ class MulimgViewer (MulimgViewerGui):
                 else:
                     h = self.img_size[1]+200
                 self.Size = wx.Size((w, h))
-
+            self.scrolledWindow_set.SetMinSize(
+                wx.Size((300, -1)))
             self.scrolledWindow_img.SetMinSize(
-                wx.Size((self.Size[0]-250, self.Size[1]-150)))
+                wx.Size((self.Size[0]-300, self.Size[1]-150)))
 
         self.Layout()
         self.Refresh()
@@ -500,7 +544,7 @@ class MulimgViewer (MulimgViewerGui):
                     self.SetStatusText_(
                         ["-1", "-1", "index_table.txt saving...", "-1"])
                 self.index_table = IndexTable(
-                    None, self.ImgManager.name_list, self.ImgManager.layout_params, self.ImgManager.dataset_mode, self.out_path_str)
+                    None, self.ImgManager.name_list, self.ImgManager.layout_params, self.ImgManager.dataset_mode, self.out_path_str, self.ImgManager.type)
                 if self.ImgManager.dataset_mode:
                     self.SetStatusText_(
                         ["-1", "-1", "index_table.txt save in "+self.out_path_str, "-1"])

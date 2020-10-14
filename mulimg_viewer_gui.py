@@ -34,9 +34,9 @@ class MulimgViewerGui ( wx.Frame ):
 
 		wSizer1.Add( self.button_open_all, 0, wx.ALL|wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
-		choice_input_modeChoices = [ u"Sequential", u"Parallel auto", u"Parallel manual" ]
+		choice_input_modeChoices = [ u"Sequential", u"Parallel auto", u"Parallel manual", u"Image File List" ]
 		self.choice_input_mode = wx.Choice( self.m_panel1, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, choice_input_modeChoices, 0 )
-		self.choice_input_mode.SetSelection( 0 )
+		self.choice_input_mode.SetSelection( 3 )
 		wSizer1.Add( self.choice_input_mode, 0, wx.ALL|wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
 		self.m_staticline4 = wx.StaticLine( self.m_panel1, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_VERTICAL )
@@ -457,6 +457,9 @@ class MulimgViewerGui ( wx.Frame ):
 		self.menu_open_manual = wx.MenuItem( self.m_menu11, wx.ID_ANY, u"Parallel manual"+ u"\t" + u"Ctrl+M", u"one dir mul dir", wx.ITEM_NORMAL )
 		self.m_menu11.Append( self.menu_open_manual )
 
+		self.menu_open_filelist = wx.MenuItem( self.m_menu11, wx.ID_ANY, u"Image File List"+ u"\t" + u"Ctrl+F", u"one dir mul dir", wx.ITEM_NORMAL )
+		self.m_menu11.Append( self.menu_open_filelist )
+
 		self.m_menu1.AppendSubMenu( self.m_menu11, u"Open" )
 
 		self.menu_output = wx.MenuItem( self.m_menu1, wx.ID_ANY, u"Select output path"+ u"\t" + u"Ctrl+O", wx.EmptyString, wx.ITEM_NORMAL )
@@ -529,6 +532,7 @@ class MulimgViewerGui ( wx.Frame ):
 		self.Bind( wx.EVT_MENU, self.one_dir_mul_img, id = self.menu_open_sequential.GetId() )
 		self.Bind( wx.EVT_MENU, self.one_dir_mul_dir_auto, id = self.menu_open_auto.GetId() )
 		self.Bind( wx.EVT_MENU, self.one_dir_mul_dir_manual, id = self.menu_open_manual.GetId() )
+		self.Bind( wx.EVT_MENU, self.onefilelist, id = self.menu_open_filelist.GetId() )
 		self.Bind( wx.EVT_MENU, self.out_path, id = self.menu_output.GetId() )
 		self.Bind( wx.EVT_MENU, self.next_img, id = self.menu_next.GetId() )
 		self.Bind( wx.EVT_MENU, self.last_img, id = self.menu_last.GetId() )
@@ -596,6 +600,10 @@ class MulimgViewerGui ( wx.Frame ):
 
 	def one_dir_mul_dir_manual( self, event ):
 		event.Skip()
+	
+	def onefilelist(self,event):
+		event.Skip()
+
 
 
 

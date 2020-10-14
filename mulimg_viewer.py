@@ -68,6 +68,8 @@ class MulimgViewer (MulimgViewerGui):
             self.one_dir_mul_dir_auto(event)
         elif input_mode == 2:
             self.one_dir_mul_dir_manual(event)
+        elif input_mode == 3:
+            self.onefilelist(event)
 
     def Close(self, event):
         if self.get_type() == -1:
@@ -189,6 +191,17 @@ class MulimgViewer (MulimgViewerGui):
             self.show_img_init()
             self.ImgManager.set_action_count(0)
             self.show_img()
+    def onefilelist(self, event):
+        self.SetStatusText_(["choose the File List", "", "", "-1"])
+        wildcard = "List file (*.txt; *.csv)|*.txt;*.csv|" \
+         "All files (*.*)|*.*"
+        dlg = wx.FileDialog(None,"choose the Images List","","",wildcard,wx.FD_DEFAULT_STYLE|wx.FD_FILE_MUST_EXIST)
+        
+        if dlg.ShowModal()==wx.ID_OK:
+            self.ImgManager.init(dlg.GetPath(), 3)
+            self.show_img_init()
+            self.ImgManager.set_action_count(0)
+            self.show_img()
 
     def out_path(self, event):
         if len(self.img_name) != 0:
@@ -281,7 +294,7 @@ class MulimgViewer (MulimgViewerGui):
         if layout_params != False:
             # setting
             self.ImgManager.layout_params = layout_params
-            if self.ImgManager.type == 0 or self.ImgManager.type == 1:
+            if self.ImgManager.type == 0 or self.ImgManager.type == 1 or self.ImgManager.type == 3:
                 self.ImgManager.set_count_per_action(layout_params[1])
             elif self.ImgManager.type == 2:
                 self.ImgManager.set_count_per_action(
@@ -466,7 +479,7 @@ class MulimgViewer (MulimgViewerGui):
                 self.ImgManager.save_select_move = 0
 
             # status
-            if self.ImgManager.type == 0 or self.ImgManager.type == 1:
+            if self.ImgManager.type == 0 or self.ImgManager.type == 1 or self.ImgManager.type == 3:
                 self.SetStatusText_(
                     ["-1", str(self.ImgManager.action_count), str(self.ImgManager.img_resolution[0])+"x"+str(self.ImgManager.img_resolution[1])+" pixels / "+str(self.ImgManager.name_list[self.ImgManager.action_count]), "-1"])
             elif self.ImgManager.type == 2:

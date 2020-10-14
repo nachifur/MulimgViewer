@@ -51,16 +51,18 @@ class ImgDataset():
         else:
             self.path_list = []
             self.name_list = []
-    def save_flist_to_txt(self):
-        index=0
+    def save_flist_to_txt(self,out_path_str):
+        #index=0
         if self.flist.count<1:
             return
-        for idx in range(1000):
-            savepath=self.out_path_str+idx+'.txt'#self.out_path_str should be changed to the real output path
-            if not Path(savepath).exists:
-                index=idx
-                break
-        
+        #for idx in range(1000):
+        #    savepath=out_path_str+'/'+idx+'.txt'#self.out_path_str should be changed to the real output path
+        #    if not Path(savepath).exists:
+        #        index=idx
+        #        break
+        dir_name = "stitch_images"
+        name_f="filelist"
+        savepath = Path(out_path_str) / dir_name / name_f
         with open(savepath, "wb+") as f:
             for imgfile in self.flist:
                 src_str=str(imgfile)+'\n'
@@ -133,7 +135,7 @@ class ImgDataset():
             flist = self.path_list
         else:
             flist = []
-        print(flist)
+        #print(flist)
         self.flist = flist
         return flist
 

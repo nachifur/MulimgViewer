@@ -5,7 +5,7 @@ import os
 from PIL import Image
 from shutil import copyfile, move
 from pathlib import Path
-
+import csv
 
 class ImgDataset():
     def init(self, input_path, type):
@@ -19,7 +19,6 @@ class ImgDataset():
         # self.set_count_per_action(1)
 
     def init_flist(self):
-
         if self.type == 0:
             # one_dir_mul_dir_auto
             cwd = Path(self.input_path)
@@ -45,12 +44,64 @@ class ImgDataset():
             self.path_list = np.sort(self.path_list)
             name_list = self.get_name_list()
             self.name_list = np.sort(name_list)
+        elif self.type == 3:
+            # read file list from a list file
+            # do somthing
+            self.path_list = self.get_flist_from_lf()
+            self.name_list = np.sort(self.get_namelist_from_lf())
         else:
             self.path_list = []
             self.name_list = []
+    def save_flist_to_txt(self,out_path_str):
+        #index=0
+        if self.flist.count<1:
+            return
+        #for idx in range(1000):
+        #    savepath=out_path_str+'/'+idx+'.txt'#self.out_path_str should be changed to the real output path
+        #    if not Path(savepath).exists:
+        #        index=idx
+        #        break
+        dir_name = "stitch_images"
+        name_f="filelist"
+        savepath = Path(out_path_str) / dir_name / name_f
+        with open(savepath, "wb+") as f:
+            for imgfile in self.flist:
+                src_str=str(imgfile)+'\n'
+                f.write(src_str.encode("utf-8"))
+    def get_flist_from_txt(self):
+        format_group = [".png", ".jpg", ".jpeg", ".bmp", ".tif", ".tiff"]
+        with open(self.input_path, "r") as f:
+            dataset=f.read().split('\n')
+        validdataset=[item for item in dataset if Path(item).is_file() and  Path(item).suffix in format_group]
+        return validdataset
+
+    def get_flist_from_csv(self):
+        format_group = [".png", ".jpg", ".jpeg", ".bmp", ".tif", ".tiff"]
+        with open(self.path_list, 'r', newline='') as csvfile:
+            spamreader = csv.reader(csvfile)
+            validdataset=[item[0] for item in spamreader if Path(item[0]).is_file() and  Path(item[0]).suffix in format_group]
+        return validdataset
+
+    def get_flist_from_lf(self):
+        if Path(self.input_path).suffix=='.txt':
+            return self.get_flist_from_txt()
+        elif Path(self.input_path).suffix=='.csv':
+            return self.get_flist_from_csv()
+        else:
+            return self.notfilelist
+
+    def notfilelist(self):
+        return []
+
+    def get_namelist_from_lf(self):
+        if self.path_list==[]:
+            return []
+        dataset=np.array(self.path_list).ravel().tolist()
+        namelist=[Path(item).name for item in dataset]
+        return namelist
+
 
     def get_name_list(self):
-
         no_check_list = [str(f.name)
                          for f in Path(self.path_list[0]).iterdir()]
         if len(no_check_list) > 100:
@@ -58,8 +109,7 @@ class ImgDataset():
             return no_check_list
         else:
             self.dataset_mode = False
-            return [str(f.name) for f in Path(self.path_list[0]).iterdir(
-            ) if f.is_file() and f.suffix in self.format_group]
+            return [str(f.name) for f in Path(self.path_list[0]).iterdir() if f.is_file() and f.suffix in self.format_group]
 
     def add(self):
         if self.action_count < self.max_action_num-1:
@@ -77,7 +127,6 @@ class ImgDataset():
             self.max_action_num = int(self.img_num/self.count_per_action)+1
         else:
             self.max_action_num = int(self.img_num/self.count_per_action)
-
     def set_action_count(self, action_count):
         if action_count < self.max_action_num:
             self.action_count = action_count
@@ -155,6 +204,15 @@ class ImgManager(ImgDataset):
                          for i in range(self.img_count, self.img_count+self.count_per_action)]
             except:
                 flist = [str(Path(self.input_path)/self.name_list[i])
+                         for i in range(self.img_count, self.img_num)]
+        elif self.type == 3:
+            # one file list
+            #flist = self.path_list
+            try:
+                flist = [str(Path(self.path_list[i]))
+                         for i in range(self.img_count, self.img_count+self.count_per_action)]
+            except:
+                flist = [str(Path(self.path_list[i]))
                          for i in range(self.img_count, self.img_num)]
         else:
             flist = []

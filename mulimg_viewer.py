@@ -67,6 +67,8 @@ class MulimgViewer (MulimgViewerGui):
             self.one_dir_mul_dir_auto(event)
         elif input_mode == 2:
             self.one_dir_mul_dir_manual(event)
+        elif input_mode == 3:
+            self.onefilelist(event)
 
     def Close(self, event):
         if self.get_type() == -1:
@@ -183,6 +185,17 @@ class MulimgViewer (MulimgViewerGui):
 
         if dlg.ShowModal() == wx.ID_OK:
             self.ImgManager.init(dlg.GetPath(), 2)
+            self.show_img_init()
+            self.ImgManager.set_action_count(0)
+            self.show_img()
+    def onefilelist(self, event):
+        self.SetStatusText_(["choose the File List", "", "", "-1"])
+        wildcard = "List file (*.txt; *.csv)|*.txt;*.csv|" \
+         "All files (*.*)|*.*"
+        dlg = wx.FileDialog(None,"choose the Images List","","",wildcard,wx.FD_DEFAULT_STYLE|wx.FD_FILE_MUST_EXIST)
+        
+        if dlg.ShowModal()==wx.ID_OK:
+            self.ImgManager.init(dlg.GetPath(), 3)
             self.show_img_init()
             self.ImgManager.set_action_count(0)
             self.show_img()

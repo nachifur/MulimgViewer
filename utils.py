@@ -47,28 +47,24 @@ class ImgDataset():
             # read file list from a list file
             # do somthing
             self.path_list = self.get_flist_from_lf()
-            self.name_list = self.get_namelist_from_lf()
+            self.name_list = np.sort(self.get_namelist_from_lf())
         else:
             self.path_list = []
             self.name_list = []
-
-    def get_flist_from_lf(self):
-        #format_group = [".txt", ".csv", ".xls", ".xlsx"]
-        methods={
-            '.txt':get_flist_from_txt,
-            '.csv':get_flist_from_csv
-            }
-        method = methods.get(Path(self.input_path).suffix,notfilelist)
-        return method(self)
-
-    def notfilelist(self):
-        return []
-
-    def get_namelist_from_lf(self):
-        dataset=np.array(self.path_list).ravel().tolist()
-        namelist=[Path(item).name for item in dataset]
-        return namelist
-
+    def save_flist_to_txt(self):
+        index=0
+        if self.flist.count<1:
+            return
+        for idx in range(1000):
+            savepath=self.out_path_str+idx+'.txt'#self.out_path_str should be changed to the real output path
+            if not Path(savepath).exists:
+                index=idx
+                break
+        
+        with open(savepath, "wb+") as f:
+            for imgfile in self.flist:
+                src_str=str(imgfile)+'\n'
+                f.write(src_str.encode("utf-8"))
     def get_flist_from_txt(self):
         format_group = [".png", ".jpg", ".jpeg", ".bmp", ".tif", ".tiff"]
         with open(self.input_path, "r") as f:
@@ -82,6 +78,25 @@ class ImgDataset():
             spamreader = csv.reader(csvfile)
             validdataset=[item[0] for item in spamreader if Path(item[0]).is_file() and  Path(item[0]).suffix in format_group]
         return validdataset
+
+    def get_flist_from_lf(self):
+        if Path(self.input_path).suffix=='.txt':
+            return self.get_flist_from_txt()
+        elif Path(self.input_path).suffix=='.csv':
+            return self.get_flist_from_csv()
+        else:
+            return self.notfilelist
+
+    def notfilelist(self):
+        return []
+
+    def get_namelist_from_lf(self):
+        if self.path_list==[]:
+            return []
+        dataset=np.array(self.path_list).ravel().tolist()
+        namelist=[Path(item).name for item in dataset]
+        return namelist
+
 
     def get_name_list(self):
         format_group = [".png", ".jpg", ".jpeg", ".bmp", ".tif", ".tiff"]
@@ -114,16 +129,11 @@ class ImgDataset():
                 flist = [str(Path(self.input_path)/self.name_list[i])
                          for i in range(self.img_count, self.img_num)]
         elif self.type == 3:
-            # one_dir_mul_img
-            try:
-                flist = [str(Path(self.path_list)/self.name_list[i])
-                         for i in range(self.img_count, self.img_count+self.count_per_action)]
-            except:
-                flist = [str(Path(self.path_list)/self.name_list[i])
-                         for i in range(self.img_count, self.img_num)]
+            # one file list
+            flist = self.path_list
         else:
             flist = []
-
+        print(flist)
         self.flist = flist
         return flist
 
@@ -148,7 +158,8 @@ class ImgDataset():
                 self.max_action_num = int(self.img_num/self.count_per_action)+1
             else:
                 self.max_action_num = int(self.img_num/self.count_per_action)
-
+        elif self.type == 3:
+            self.max_action_num = self.img_num
     def set_action_count(self, action_count):
         if action_count < self.max_action_num:
             self.action_count = action_count

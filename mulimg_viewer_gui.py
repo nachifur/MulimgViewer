@@ -478,7 +478,7 @@ class MulimgViewerGui ( wx.Frame ):
 		self.Bind( wx.EVT_MENU, self.one_dir_mul_img, id = self.menu_open_sequential.GetId() )
 		self.Bind( wx.EVT_MENU, self.one_dir_mul_dir_auto, id = self.menu_open_auto.GetId() )
 		self.Bind( wx.EVT_MENU, self.one_dir_mul_dir_manual, id = self.menu_open_manual.GetId() )
-		self.Bind( wx.EVT_MENU, self.one_dir_mul_dir_manual, id = self.menu_open_filelist.GetId() )
+		self.Bind( wx.EVT_MENU, self.onefilelist, id = self.menu_open_filelist.GetId() )
 		self.Bind( wx.EVT_MENU, self.out_path, id = self.menu_output.GetId() )
 		self.Bind( wx.EVT_MENU, self.next_img, id = self.menu_next.GetId() )
 		self.Bind( wx.EVT_MENU, self.last_img, id = self.menu_last.GetId() )
@@ -545,6 +545,9 @@ class MulimgViewerGui ( wx.Frame ):
 		event.Skip()
 
 	def one_dir_mul_dir_manual( self, event ):
+		event.Skip()
+	
+	def onefilelist(self,event):
 		event.Skip()
 
 

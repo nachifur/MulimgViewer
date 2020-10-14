@@ -291,7 +291,7 @@ class MulimgViewer (MulimgViewerGui):
         if layout_params != False:
             # setting
             self.ImgManager.layout_params = layout_params
-            if self.ImgManager.type == 0 or self.ImgManager.type == 1:
+            if self.ImgManager.type == 0 or self.ImgManager.type == 1 or self.ImgManager.type == 3:
                 self.ImgManager.set_count_per_action(1)
             elif self.ImgManager.type == 2:
                 self.ImgManager.set_count_per_action(
@@ -435,7 +435,7 @@ class MulimgViewer (MulimgViewerGui):
                     wx.EVT_LEFT_UP, self.select_point_release)
 
             # status
-            if self.ImgManager.type == 0 or self.ImgManager.type == 1:
+            if self.ImgManager.type == 0 or self.ImgManager.type == 1 or self.ImgManager.type == 3:
                 self.SetStatusText_(
                     ["-1", str(self.ImgManager.action_count), str(self.ImgManager.img_resolution[0])+"x"+str(self.ImgManager.img_resolution[1])+" pixels / "+str(self.ImgManager.name_list[self.ImgManager.action_count]), "-1"])
             elif self.ImgManager.type == 2:

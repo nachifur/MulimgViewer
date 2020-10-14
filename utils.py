@@ -207,7 +207,13 @@ class ImgManager(ImgDataset):
                          for i in range(self.img_count, self.img_num)]
         elif self.type == 3:
             # one file list
-            flist = self.path_list
+            #flist = self.path_list
+            try:
+                flist = [str(Path(self.path_list[i]))
+                         for i in range(self.img_count, self.img_count+self.count_per_action)]
+            except:
+                flist = [str(Path(self.path_list[i]))
+                         for i in range(self.img_count, self.img_num)]
         else:
             flist = []
 

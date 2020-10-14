@@ -36,7 +36,7 @@ class MulimgViewerGui ( wx.Frame ):
 
 		choice_input_modeChoices = [ u"Sequential", u"Parallel auto", u"Parallel manual", u"Image File List" ]
 		self.choice_input_mode = wx.Choice( self.m_panel1, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, choice_input_modeChoices, 0 )
-		self.choice_input_mode.SetSelection( 3 )
+		self.choice_input_mode.SetSelection( 0 )
 		wSizer1.Add( self.choice_input_mode, 0, wx.ALL|wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
 		self.m_staticline4 = wx.StaticLine( self.m_panel1, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_VERTICAL )
@@ -600,10 +600,9 @@ class MulimgViewerGui ( wx.Frame ):
 
 	def one_dir_mul_dir_manual( self, event ):
 		event.Skip()
-	
-	def onefilelist(self,event):
-		event.Skip()
 
+	def onefilelist( self, event ):
+		event.Skip()
 
 
 

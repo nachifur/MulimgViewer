@@ -325,13 +325,15 @@ class ImgManager(ImgDataset):
                 img = Image.new('RGBA', ((width * img_num_per_row + gap[1] * (img_num_per_row-1)), height * img_num_per_column * num_per_img + gap[0] * (
                     img_num_per_column-1)+gap[2]*(img_num_per_column)*(num_per_img-1)), self.gap_color)
             else:
-                img = Image.new('RGBA', (img_num_per_row*(2*width + gap[3]) + gap[1] * (img_num_per_row-1), height * img_num_per_column * num_per_img + gap[0] * (
+                im, delta_x, delta_y = self.magnifier_preprocessing(self.img_list[0])
+                magnifier_width = im.size[0]
+                img = Image.new('RGBA', (img_num_per_row*(magnifier_width+width + gap[3]) + gap[1] * (img_num_per_row-1), height * img_num_per_column * num_per_img + gap[0] * (
                     img_num_per_column-1)+gap[2]*(img_num_per_column)*(num_per_img-1)), self.gap_color)
 
             for ix in range(img_num_per_row):
                 for ixx in range(self.magnifier_flag+1):
                     if self.magnifier_flag != 0:
-                        x = 2*ix * width + ixx * width + \
+                        x = ix * (magnifier_width+width) + ixx * width + \
                             gap[3] * ixx + gap[1]*ix + gap[3]*ix
 
                     else:
@@ -351,7 +353,7 @@ class ImgManager(ImgDataset):
                                         im, delta_x, delta_y = self.magnifier_preprocessing(
                                             im)
                                         img.paste(
-                                            im, (x+delta_x, y+delta_y))
+                                            im, (x, y+delta_y))
                                 else:
                                     xy_grid.append([x, y])
                                     img.paste(im, (x, y))
@@ -362,13 +364,15 @@ class ImgManager(ImgDataset):
                 img = Image.new('RGBA', (width * img_num_per_row * num_per_img + gap[0] * (
                     img_num_per_row-1)+gap[2]*(img_num_per_row)*(num_per_img-1), height * img_num_per_column + gap[1] * (img_num_per_column-1)), self.gap_color)
             else:
+                im, delta_x, delta_y = self.magnifier_preprocessing(self.img_list[0])
+                magnifier_height = im.size[1]
                 img = Image.new('RGBA', (width * img_num_per_row * num_per_img + gap[0] * (
-                    img_num_per_row-1)+gap[2]*(img_num_per_row)*(num_per_img-1), img_num_per_column*(2*height + gap[3])+gap[1] * (img_num_per_column-1)), self.gap_color)
+                    img_num_per_row-1)+gap[2]*(img_num_per_row)*(num_per_img-1), img_num_per_column*(magnifier_height+height + gap[3])+gap[1] * (img_num_per_column-1)), self.gap_color)
 
             for iy in range(img_num_per_column):
                 for iyy in range(self.magnifier_flag+1):
                     if self.magnifier_flag != 0:
-                        y = 2*iy * height + iyy * height + \
+                        y = iy * (height+magnifier_height) + iyy * height + \
                             gap[3] * iyy + gap[1]*iy + gap[3]*iy
 
                     else:
@@ -388,7 +392,7 @@ class ImgManager(ImgDataset):
                                         im, delta_x, delta_y = self.magnifier_preprocessing(
                                             im)
                                         img.paste(
-                                            im, (x+delta_x, y+delta_y))
+                                            im, (x+delta_x, y))
                                 else:
                                     xy_grid.append([x, y])
                                     img.paste(im, (x, y))

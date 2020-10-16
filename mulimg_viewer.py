@@ -444,6 +444,7 @@ class MulimgViewer (MulimgViewerGui):
 
     def magnifier_draw(self, event):
         self.start_flag = 0
+        self.draw_points = 0
         if self.magnifier.Value != False:
             self.SetCursor(wx.Cursor(wx.CURSOR_CROSS))
         else:

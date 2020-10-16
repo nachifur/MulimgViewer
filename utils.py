@@ -176,7 +176,6 @@ class ImgManager(ImgDataset):
         self.custom_resolution = False
         self.img_num = 0
         self.format_group = [".png", ".jpg", ".jpeg", ".bmp", ".tiff", ".tif"]
-        self.save_select_move = 0
 
     def get_flist(self):
 
@@ -309,25 +308,50 @@ class ImgManager(ImgDataset):
             return 1
 
     def save_select(self, dir_name):
-        for i in range(len(dir_name)):
-            if not (Path(self.out_path_str)/"select_images"/dir_name[i]).exists():
+        if self.type == 3:
+            dir_name = ["from_file"]
+            if not (Path(self.out_path_str)/"select_images"/dir_name[0]).exists():
                 os.makedirs(Path(self.out_path_str) /
-                            "select_images" / dir_name[i])
+                            "select_images" / dir_name[0])
+            for i_ in range(self.count_per_action):
+                f_path = self.path_list[self.action_count+i_]
+                try:
+                    i = 0
+                    for stem in Path(f_path)._cparts:
+                        if i==0:
+                            str_ = str(self.action_count+i_)+"_"+stem
+                            i+=1
+                        else:
+                            str_ = str_+"_"+stem
 
-            f_path = self.flist[i]
-            try:
-                if self.layout_params[11]:
-                    move(f_path, Path(self.out_path_str) / "select_images" /
-                         dir_name[i] / self.name_list[self.action_count])
+                    if self.layout_params[11]:
+                        move(f_path, Path(self.out_path_str) / "select_images" /
+                            dir_name[0] / str_)
+                    else:
+                        copyfile(f_path, Path(self.out_path_str) / "select_images" /
+                                dir_name[0] / str_)
+                except:
+                    self.check.append(1)
                 else:
-                    copyfile(f_path, Path(self.out_path_str) / "select_images" /
-                             dir_name[i] / self.name_list[self.action_count])
-            except:
-                self.check.append(1)
-            else:
-                self.check.append(0)
-        if self.layout_params[11]:
-            self.save_select_move = 1
+                    self.check.append(0)
+        else:
+            for i in range(len(dir_name)):
+                if not (Path(self.out_path_str)/"select_images"/dir_name[i]).exists():
+                    os.makedirs(Path(self.out_path_str) /
+                                "select_images" / dir_name[i])
+
+                f_path = self.flist[i]
+                try:
+                    if self.layout_params[11]:
+                        move(f_path, Path(self.out_path_str) / "select_images" /
+                            dir_name[i] / self.name_list[self.action_count])
+                    else:
+                        copyfile(f_path, Path(self.out_path_str) / "select_images" /
+                                dir_name[i] / self.name_list[self.action_count])
+                except:
+                    self.check.append(1)
+                else:
+                    self.check.append(0)
 
     def save_stitch(self, dir_name):
         name_f = self.name_list[self.action_count]
@@ -343,20 +367,28 @@ class ImgManager(ImgDataset):
         self.img.save(f_path_output)
 
     def save_magnifier(self, dir_name):
-        i = 0
-        for img in self.img_list:
-            img, _, _ = self.magnifier_preprocessing(img)
-            path = (Path(self.flist[0]).parent).stem
-            f_path_output = Path(self.out_path_str) / dir_name / (Path(self.flist[i]).parent).stem / (
-                (Path(self.flist[i]).parent).stem+"_"+Path(self.flist[i]).stem+".png")
-            if not (Path(self.out_path_str)/dir_name/(Path(self.flist[i]).parent).stem).is_dir():
-                os.makedirs(Path(self.out_path_str) / dir_name /
-                            (Path(self.flist[i]).parent).stem)
-            img.save(f_path_output)
-            i += 1
+        try:
+            tmp = self.crop_points
+        except:
+            pass
+        else:
+            i = 0
+            for img in self.img_list:
+                img, _, _ = self.magnifier_preprocessing(img)
+                path = (Path(self.flist[0]).parent).stem
+                f_path_output = Path(self.out_path_str) / dir_name / (Path(self.flist[i]).parent).stem / (
+                    (Path(self.flist[i]).parent).stem+"_"+Path(self.flist[i]).stem+".png")
+                if not (Path(self.out_path_str)/dir_name/(Path(self.flist[i]).parent).stem).is_dir():
+                    os.makedirs(Path(self.out_path_str) / dir_name /
+                                (Path(self.flist[i]).parent).stem)
+                img.save(f_path_output)
+                i += 1
 
     def stitch_images(self, img_mode, draw_points=0):
-        self.draw_points = draw_points
+        if draw_points==0:
+            self.draw_points = 0
+        else:
+            self.draw_points = draw_points.copy()
         xy_grid = []
         # try:
         self.get_img_list()

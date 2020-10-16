@@ -75,12 +75,14 @@ class ImgDataset():
 
         if len(dataset) == 0:
             validdataset = []
+            self.dataset_mode = False
         elif len(dataset) < 100:
-            self.dataset_mode = True
             validdataset = [item for item in dataset if Path(
                 item).is_file() and Path(item).suffix in format_group]
+            self.dataset_mode = False
         else:
             validdataset = dataset
+            self.dataset_mode = True
         return validdataset
 
     def get_namelist_from_lf(self):

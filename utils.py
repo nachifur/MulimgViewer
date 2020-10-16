@@ -1,4 +1,3 @@
-from numpy.lib.type_check import imag
 import wx
 import numpy as np
 import os
@@ -6,6 +5,7 @@ from PIL import Image
 from shutil import copyfile, move
 from pathlib import Path
 import csv
+
 
 class ImgDataset():
     def init(self, input_path, type):
@@ -19,6 +19,7 @@ class ImgDataset():
         # self.set_count_per_action(1)
 
     def init_flist(self):
+        self.csv_flag = 0
         if self.type == 0:
             # one_dir_mul_dir_auto
             cwd = Path(self.input_path)
@@ -46,60 +47,48 @@ class ImgDataset():
             self.name_list = np.sort(name_list)
         elif self.type == 3:
             # read file list from a list file
-            # do somthing
             self.path_list = self.get_flist_from_lf()
-            self.name_list = np.sort(self.get_namelist_from_lf())
+            self.name_list = self.get_namelist_from_lf()
         else:
             self.path_list = []
             self.name_list = []
-    def save_flist_to_txt(self,out_path_str):
-        #index=0
-        if self.flist.count<1:
-            return
-        #for idx in range(1000):
-        #    savepath=out_path_str+'/'+idx+'.txt'#self.out_path_str should be changed to the real output path
-        #    if not Path(savepath).exists:
-        #        index=idx
-        #        break
-        dir_name = "stitch_images"
-        name_f="filelist"
-        savepath = Path(out_path_str) / dir_name / name_f
-        with open(savepath, "wb+") as f:
-            for imgfile in self.flist:
-                src_str=str(imgfile)+'\n'
-                f.write(src_str.encode("utf-8"))
-    def get_flist_from_txt(self):
-        format_group = [".png", ".jpg", ".jpeg", ".bmp", ".tif", ".tiff"]
-        with open(self.input_path, "r") as f:
-            dataset=f.read().split('\n')
-        validdataset=[item for item in dataset if Path(item).is_file() and  Path(item).suffix in format_group]
-        return validdataset
-
-    def get_flist_from_csv(self):
-        format_group = [".png", ".jpg", ".jpeg", ".bmp", ".tif", ".tiff"]
-        with open(self.path_list, 'r', newline='') as csvfile:
-            spamreader = csv.reader(csvfile)
-            validdataset=[item[0] for item in spamreader if Path(item[0]).is_file() and  Path(item[0]).suffix in format_group]
-        return validdataset
 
     def get_flist_from_lf(self):
-        if Path(self.input_path).suffix=='.txt':
-            return self.get_flist_from_txt()
-        elif Path(self.input_path).suffix=='.csv':
-            return self.get_flist_from_csv()
+        format_group = [".png", ".jpg", ".jpeg", ".bmp", ".tif", ".tiff"]
+        if Path(self.input_path).suffix == '.txt':
+            with open(self.input_path, "r") as f:
+                dataset = f.read().split('\n')
+        elif Path(self.input_path).suffix == '.csv':
+            with open(self.input_path, 'r', newline='') as csvfile:
+                dataset = list(csv.reader(csvfile))
+                dataset_ = []
+                row = len(dataset)
+                col = len(dataset[0])
+                for items in dataset:
+                    for item in items:
+                        dataset_.append(item)
+                dataset = dataset_
+                self.csv_flag = 1
+                self.csv_row_col = [row, col]
         else:
-            return self.notfilelist
+            dataset = []
 
-    def notfilelist(self):
-        return []
+        if len(dataset) == 0:
+            validdataset = []
+        elif len(dataset) < 100:
+            self.dataset_mode = True
+            validdataset = [item for item in dataset if Path(
+                item).is_file() and Path(item).suffix in format_group]
+        else:
+            validdataset = dataset
+        return validdataset
 
     def get_namelist_from_lf(self):
-        if self.path_list==[]:
+        if self.path_list == []:
             return []
-        dataset=np.array(self.path_list).ravel().tolist()
-        namelist=[Path(item).name for item in dataset]
+        dataset = np.array(self.path_list).ravel().tolist()
+        namelist = [Path(item).name for item in dataset]
         return namelist
-
 
     def get_name_list(self):
         no_check_list = [str(f.name)
@@ -127,32 +116,36 @@ class ImgDataset():
             self.max_action_num = int(self.img_num/self.count_per_action)+1
         else:
             self.max_action_num = int(self.img_num/self.count_per_action)
+
     def set_action_count(self, action_count):
         if action_count < self.max_action_num:
             self.action_count = action_count
             self.img_count = self.count_per_action*self.action_count
 
     def layout_advice(self):
-        if self.type == 2:
-            return [2, 1]
+        if self.csv_flag:
+            return self.csv_row_col
         else:
-            num_all = len(self.path_list)
-            list_factor = self.solve_factor(num_all)
-            list_factor = list(set(list_factor))
-            list_factor = np.sort(list_factor)
-            if len(list_factor) == 0:
-                return [num_all, 1]
+            if self.type == 2:
+                return [1, 2]
             else:
-                if len(list_factor) <= 2:
-                    row = list_factor[0]
+                num_all = len(self.path_list)
+                list_factor = self.solve_factor(num_all)
+                list_factor = list(set(list_factor))
+                list_factor = np.sort(list_factor)
+                if len(list_factor) == 0:
+                    return [1, num_all]
                 else:
-                    row = list_factor[int(len(list_factor)/2)-1]
-                row = int(row)
-                col = int(num_all/row)
-                if row < col:
-                    return [col, row]
-                else:
-                    return [row, col]
+                    if len(list_factor) <= 2:
+                        row = list_factor[0]
+                    else:
+                        row = list_factor[int(len(list_factor)/2)-1]
+                    row = int(row)
+                    col = int(num_all/row)
+                    if row < col:
+                        return [row, col]
+                    else:
+                        return [col, row]
 
     def solve_factor(self, num):
         list_factor = []
@@ -383,7 +376,8 @@ class ImgManager(ImgDataset):
                 img = Image.new('RGBA', ((width * img_num_per_row + gap[1] * (img_num_per_row-1)), height * img_num_per_column * num_per_img + gap[0] * (
                     img_num_per_column-1)+gap[2]*(img_num_per_column)*(num_per_img-1)), self.gap_color)
             else:
-                im, delta_x, delta_y = self.magnifier_preprocessing(self.img_list[0])
+                im, delta_x, delta_y = self.magnifier_preprocessing(
+                    self.img_list[0])
                 magnifier_width = im.size[0]
                 img = Image.new('RGBA', (img_num_per_row*(magnifier_width+width + gap[3]) + gap[1] * (img_num_per_row-1), height * img_num_per_column * num_per_img + gap[0] * (
                     img_num_per_column-1)+gap[2]*(img_num_per_column)*(num_per_img-1)), self.gap_color)
@@ -422,7 +416,8 @@ class ImgManager(ImgDataset):
                 img = Image.new('RGBA', (width * img_num_per_row * num_per_img + gap[0] * (
                     img_num_per_row-1)+gap[2]*(img_num_per_row)*(num_per_img-1), height * img_num_per_column + gap[1] * (img_num_per_column-1)), self.gap_color)
             else:
-                im, delta_x, delta_y = self.magnifier_preprocessing(self.img_list[0])
+                im, delta_x, delta_y = self.magnifier_preprocessing(
+                    self.img_list[0])
                 magnifier_height = im.size[1]
                 img = Image.new('RGBA', (width * img_num_per_row * num_per_img + gap[0] * (
                     img_num_per_row-1)+gap[2]*(img_num_per_row)*(num_per_img-1), img_num_per_column*(magnifier_height+height + gap[3])+gap[1] * (img_num_per_column-1)), self.gap_color)

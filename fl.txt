@@ -1,7 +1,0 @@
-D:\Repositories\Mulimg_viewer\test_input\01\03.jpg
-D:\Repositories\Mulimg_viewer\test_input\01\08.jpg
-D:\Repositories\Mulimg_viewer\test_input\02\00.jpg
-D:\Repositories\Mulimg_viewer\test_input\02\01.jpg
-D:\Repositories\Mulimg_viewer\test_input\02\08.jpg
-D:\Repositories\Mulimg_viewer\test_input\03\00.jpg
-D:\Repositories\Mulimg_viewer\test_input\03\01.jpg

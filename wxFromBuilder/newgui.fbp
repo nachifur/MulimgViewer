@@ -18,7 +18,7 @@
         <property name="internationalize">0</property>
         <property name="name">mulimg_viewer</property>
         <property name="namespace"></property>
-        <property name="path">D:\Repositories\Mulimg_viewer</property>
+        <property name="path">/home/liu/桌面/wxgui/Mulimg_viewer</property>
         <property name="precompiled_header"></property>
         <property name="relative_path">1</property>
         <property name="skip_lua_events">1</property>
@@ -4673,11 +4673,12 @@
                         <property name="help"></property>
                         <property name="id">wxID_ANY</property>
                         <property name="kind">wxITEM_NORMAL</property>
-                        <property name="label">Input path from file</property>
+                        <property name="label">Input flist - Parallel manual</property>
                         <property name="name">m_menuItem15</property>
                         <property name="permission">none</property>
                         <property name="shortcut">Ctrl+I</property>
                         <property name="unchecked_bitmap"></property>
+                        <event name="OnMenuSelection">input_flist_parallel_manual</event>
                     </object>
                     <object class="wxMenuItem" expanded="0">
                         <property name="bitmap"></property>
@@ -4686,12 +4687,12 @@
                         <property name="help"></property>
                         <property name="id">wxID_ANY</property>
                         <property name="kind">wxITEM_NORMAL</property>
-                        <property name="label">Save path file</property>
+                        <property name="label">Save flist - Parallel manual</property>
                         <property name="name">m_menuItem16</property>
                         <property name="permission">none</property>
                         <property name="shortcut">Ctrl+P</property>
                         <property name="unchecked_bitmap"></property>
-                        <event name="OnMenuSelection">save_flist_to_txt</event>
+                        <event name="OnMenuSelection">save_flist_parallel_manual</event>
                     </object>
                 </object>
                 <object class="wxMenu" expanded="1">

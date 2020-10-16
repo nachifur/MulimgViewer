@@ -465,10 +465,10 @@ class MulimgViewerGui ( wx.Frame ):
 		self.menu_output = wx.MenuItem( self.m_menu1, wx.ID_ANY, u"Select output path"+ u"\t" + u"Ctrl+O", wx.EmptyString, wx.ITEM_NORMAL )
 		self.m_menu1.Append( self.menu_output )
 
-		self.m_menuItem15 = wx.MenuItem( self.m_menu1, wx.ID_ANY, u"Input path from file"+ u"\t" + u"Ctrl+I", wx.EmptyString, wx.ITEM_NORMAL )
+		self.m_menuItem15 = wx.MenuItem( self.m_menu1, wx.ID_ANY, u"Input flist - Parallel manual"+ u"\t" + u"Ctrl+I", wx.EmptyString, wx.ITEM_NORMAL )
 		self.m_menu1.Append( self.m_menuItem15 )
 
-		self.m_menuItem16 = wx.MenuItem( self.m_menu1, wx.ID_ANY, u"Save path file"+ u"\t" + u"Ctrl+P", wx.EmptyString, wx.ITEM_NORMAL )
+		self.m_menuItem16 = wx.MenuItem( self.m_menu1, wx.ID_ANY, u"Save flist - Parallel manual"+ u"\t" + u"Ctrl+P", wx.EmptyString, wx.ITEM_NORMAL )
 		self.m_menu1.Append( self.m_menuItem16 )
 
 		self.m_menubar1.Append( self.m_menu1, u"File" )
@@ -534,6 +534,8 @@ class MulimgViewerGui ( wx.Frame ):
 		self.Bind( wx.EVT_MENU, self.one_dir_mul_dir_manual, id = self.menu_open_manual.GetId() )
 		self.Bind( wx.EVT_MENU, self.onefilelist, id = self.menu_open_filelist.GetId() )
 		self.Bind( wx.EVT_MENU, self.out_path, id = self.menu_output.GetId() )
+		self.Bind( wx.EVT_MENU, self.input_flist_parallel_manual, id = self.m_menuItem15.GetId() )
+		self.Bind( wx.EVT_MENU, self.save_flist_parallel_manual, id = self.m_menuItem16.GetId() )
 		self.Bind( wx.EVT_MENU, self.next_img, id = self.menu_next.GetId() )
 		self.Bind( wx.EVT_MENU, self.last_img, id = self.menu_last.GetId() )
 		self.Bind( wx.EVT_MENU, self.save_img, id = self.menu_save.GetId() )
@@ -604,6 +606,12 @@ class MulimgViewerGui ( wx.Frame ):
 	def onefilelist( self, event ):
 		event.Skip()
 
+
+	def input_flist_parallel_manual( self, event ):
+		event.Skip()
+
+	def save_flist_parallel_manual( self, event ):
+		event.Skip()
 
 
 

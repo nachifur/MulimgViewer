@@ -6,6 +6,7 @@ from about import About
 from utils import ImgManager
 from PIL import Image
 from index_table import IndexTable
+from pathlib import Path
 
 
 class MulimgViewer (MulimgViewerGui):
@@ -28,7 +29,7 @@ class MulimgViewer (MulimgViewerGui):
         self.SetAcceleratorTable(acceltbl)
         # self.img_Sizer = self.scrolledWindow_img.GetSizer()
         self.Bind(wx.EVT_CLOSE, self.Close)
-        self.Bind(wx.EVT_PAINT, self.OnPaint)
+        # self.Bind(wx.EVT_PAINT, self.OnPaint)
 
         # parameter
         self.out_path_str = ""
@@ -46,8 +47,8 @@ class MulimgViewer (MulimgViewerGui):
         self.y_0 = -1
         self.draw_points = 0
 
-    def OnPaint(self, event):
-        pass
+    # def OnPaint(self, event):
+        # pass
         # if self.magnifier.Value != False and self.x_0 != -1 and len(self.img_panel.Children) != 0 and self.draw_points!=0:
         #     dc = wx.PaintDC(self.img_panel.Children[0])
         #     pen = wx.Pen(wx.Colour(255, 0, 0))
@@ -140,8 +141,11 @@ class MulimgViewer (MulimgViewerGui):
             self.SetStatusText_(
                 ["-1", "-1", "***Finish***", "-1"])
         else:
-            self.SetStatusText_(
-                ["-1", "-1", "***"+str(self.ImgManager.name_list[self.ImgManager.action_count])+", saving img...***", "-1"])
+            try:
+                self.SetStatusText_(
+                    ["-1", "-1", "***"+str(self.ImgManager.name_list[self.ImgManager.action_count])+", saving img...***", "-1"])
+            except:
+                pass
             flag = self.ImgManager.save_img(self.out_path_str, type_)
             if flag == 0:
                 self.SetStatusText_(
@@ -175,10 +179,12 @@ class MulimgViewer (MulimgViewerGui):
             self.show_img_init()
             self.ImgManager.set_action_count(0)
             self.show_img()
+            self.choice_input_mode.SetSelection(1)
 
     def one_dir_mul_dir_manual(self, event):
         self.SetStatusText_(["input_path", "", "", "-1"])
         self.UpdateUI(1)
+        self.choice_input_mode.SetSelection(2)
 
     def one_dir_mul_img(self, event):
         self.SetStatusText_(
@@ -191,17 +197,50 @@ class MulimgViewer (MulimgViewerGui):
             self.show_img_init()
             self.ImgManager.set_action_count(0)
             self.show_img()
+            self.choice_input_mode.SetSelection(0)
+
     def onefilelist(self, event):
         self.SetStatusText_(["choose the File List", "", "", "-1"])
         wildcard = "List file (*.txt; *.csv)|*.txt;*.csv|" \
-         "All files (*.*)|*.*"
-        dlg = wx.FileDialog(None,"choose the Images List","","",wildcard,wx.FD_DEFAULT_STYLE|wx.FD_FILE_MUST_EXIST)
-        
-        if dlg.ShowModal()==wx.ID_OK:
+            "All files (*.*)|*.*"
+        dlg = wx.FileDialog(None, "choose the Images List", "", "",
+                            wildcard, wx.FD_DEFAULT_STYLE | wx.FD_FILE_MUST_EXIST)
+
+        if dlg.ShowModal() == wx.ID_OK:
             self.ImgManager.init(dlg.GetPath(), 3)
             self.show_img_init()
             self.ImgManager.set_action_count(0)
             self.show_img()
+            self.choice_input_mode.SetSelection(3)
+
+    def input_flist_parallel_manual(self, event):
+        wildcard = "List file (*.txt;)|*.txt;|" \
+            "All files (*.*)|*.*"
+        dlg = wx.FileDialog(None, "choose the Images List", "", "",
+                            wildcard, wx.FD_DEFAULT_STYLE | wx.FD_FILE_MUST_EXIST)
+
+        if dlg.ShowModal() == wx.ID_OK:
+            with open(dlg.GetPath(), "r") as f:
+                input_path = f.read().split('\n')
+            self.ImgManager.init(input_path, 1)
+            self.show_img_init()
+            self.ImgManager.set_action_count(0)
+            self.show_img()
+            self.choice_input_mode.SetSelection(2)
+
+    def save_flist_parallel_manual(self, event):
+        if self.out_path_str == "":
+            self.SetStatusText_(
+                ["-1", "-1", "***Error: First, need to select the output directory***", "-1"])
+        else:
+            try:
+                np.savetxt(Path(self.out_path_str)/"input_flist_parallel_manual_ubuntu.txt",self.ImgManager.input_path, fmt='%s')
+            except:
+                self.SetStatusText_(
+                    ["-1", "-1", "***Error: First, need to select parallel manual***", "-1"])
+            else:
+                self.SetStatusText_(
+                    ["-1", "-1", "Save"+ str(Path(self.out_path_str)/"input_flist_parallel_manual_ubuntu.txt")+" success!", "-1"])
 
     def out_path(self, event):
         if len(self.img_name) != 0:
@@ -306,8 +345,8 @@ class MulimgViewer (MulimgViewerGui):
             num_per_img = int(self.num_per_img.GetLineText(0))
             if num_per_img == -1:
                 row_col = self.ImgManager.layout_advice()
-                self.img_num_per_row.SetValue(str(row_col[0]))
-                self.img_num_per_column.SetValue(str(row_col[1]))
+                self.img_num_per_row.SetValue(str(row_col[1]))
+                self.img_num_per_column.SetValue(str(row_col[0]))
                 num_per_img = 1
 
             img_num_per_row = int(self.img_num_per_row.GetLineText(0))

@@ -4,5 +4,3 @@ __pycache__/
 .vscode/
 test_output/mag*
 test_output/select*
-*.txt
-*.csv

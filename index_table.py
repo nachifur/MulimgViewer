@@ -28,7 +28,7 @@ class IndexTable (IndexTableGui):
         img_num_per_row = layout_params[0]
         num_per_img = layout_params[1]
         img_num_per_column = layout_params[2]
-        if type == 2:
+        if type == 2 or type ==3:
             if num_per_img == -1:
                 interval = img_num_per_row*img_num_per_column
             else:

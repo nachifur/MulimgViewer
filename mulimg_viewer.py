@@ -234,13 +234,14 @@ class MulimgViewer (MulimgViewerGui):
                 ["-1", "-1", "***Error: First, need to select the output directory***", "-1"])
         else:
             try:
-                np.savetxt(Path(self.out_path_str)/"input_flist_parallel_manual_ubuntu.txt",self.ImgManager.input_path, fmt='%s')
+                np.savetxt(Path(self.out_path_str)/"input_flist_parallel_manual_ubuntu.txt",
+                           self.ImgManager.input_path, fmt='%s')
             except:
                 self.SetStatusText_(
                     ["-1", "-1", "***Error: First, need to select parallel manual***", "-1"])
             else:
                 self.SetStatusText_(
-                    ["-1", "-1", "Save"+ str(Path(self.out_path_str)/"input_flist_parallel_manual_ubuntu.txt")+" success!", "-1"])
+                    ["-1", "-1", "Save" + str(Path(self.out_path_str)/"input_flist_parallel_manual_ubuntu.txt")+" success!", "-1"])
 
     def out_path(self, event):
         if len(self.img_name) != 0:
@@ -583,8 +584,12 @@ class MulimgViewer (MulimgViewerGui):
                 if self.ImgManager.dataset_mode:
                     self.SetStatusText_(
                         ["-1", "-1", "index_table.txt saving...", "-1"])
-                self.index_table = IndexTable(
-                    None, self.ImgManager.name_list, self.ImgManager.layout_params, self.ImgManager.dataset_mode, self.out_path_str, self.ImgManager.type)
+                if self.ImgManager.type == 3:
+                    self.index_table = IndexTable(
+                        None, self.ImgManager.path_list, self.ImgManager.layout_params, self.ImgManager.dataset_mode, self.out_path_str, self.ImgManager.type)
+                else:
+                    self.index_table = IndexTable(
+                        None, self.ImgManager.name_list, self.ImgManager.layout_params, self.ImgManager.dataset_mode, self.out_path_str, self.ImgManager.type)
                 if self.ImgManager.dataset_mode:
                     self.SetStatusText_(
                         ["-1", "-1", "index_table.txt save in "+self.out_path_str, "-1"])

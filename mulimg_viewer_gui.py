@@ -301,6 +301,19 @@ class MulimgViewerGui ( wx.Frame ):
 
 		fgSizer3.Add( bSizer20, 1, wx.EXPAND, 5 )
 
+		bSizer21 = wx.BoxSizer( wx.HORIZONTAL )
+
+		self.m_staticText26 = wx.StaticText( self.scrolledWindow_set, wx.ID_ANY, u"Parallel+Sequential", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText26.Wrap( -1 )
+
+		bSizer21.Add( self.m_staticText26, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+
+		self.parallel_sequential = wx.CheckBox( self.scrolledWindow_set, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
+		bSizer21.Add( self.parallel_sequential, 0, wx.ALL, 5 )
+
+
+		fgSizer3.Add( bSizer21, 1, wx.EXPAND, 5 )
+
 		self.m_staticline1 = wx.StaticLine( self.scrolledWindow_set, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_HORIZONTAL )
 		fgSizer3.Add( self.m_staticline1, 0, wx.EXPAND |wx.ALL, 5 )
 

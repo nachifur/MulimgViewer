@@ -52,7 +52,9 @@ sudo chmod 777 * -R /home/liu/.local/share
 
 ### 例2：
 
-Mulimg_viewer可以轻松的完成纵向与横向的拼接，**支持自动拼接保存**！![image](https://github.com/nachifur/Mulimg_viewer/blob/master/img/f0.jpg)
+Mulimg_viewer可以轻松的完成纵向与横向的拼接，**支持自动拼接保存，支持并行放大**！
+
+![image](https://github.com/nachifur/Mulimg_viewer/blob/master/img/f0.jpg)
 ## 5. 使用说明
 
 ## 5.1 操作流程
@@ -65,6 +67,8 @@ Mulimg_viewer可以轻松的完成纵向与横向的拼接，**支持自动拼�
 
     2.3. Parallel manual: 手动选择多个子文件夹。
 
+    2.4. Image file list： 从文件导入图片列表文件
+
 3. 这时图片显示在面板，可以使用**next、last**查看下一张，上一张图片
 4. File->Out path, **选择输出的路径**。输出的文夹名称为输入的子文件夹名称。子文件夹名字相同时，保存时变为名称+数字。
 
@@ -76,6 +80,9 @@ Mulimg_viewer可以轻松的完成纵向与横向的拼接，**支持自动拼�
     Parallel auto: Ctrl+A
 
     Parallel manual: Ctrl+M
+
+    Image file list: Ctrl+F
+
 
 输出路径：Ctrl+O
 
@@ -97,30 +104,38 @@ Mulimg_viewer可以轻松的完成纵向与横向的拼接，**支持自动拼�
 
 2和3是**并行浏览**模式，需要确保各子文件夹下面的图片命名相同，用于不同图片的对比。
 
+4是从文件导入，支持txt, csv。支持csv文件多行多列显示，**实现自定义的图片并行显示**。需要自动排布，`Num per img`设为-1。
+
 ![image](https://github.com/nachifur/Mulimg_viewer/blob/master/img/f1.jpg)
 
 ### 5.3.2  输出模式：
 
-Stitch: 在**图像拼接**时使用，将拼接的图像保存到*stitch_images*目录下
+Stitch: 将拼接的图像保存到*stitch_images*目录下
 
-select: 在**图像挑选**时使用，分别保存当前浏览的图像到不同的文件夹
+Select: 分别保存当前浏览的图像到不同的文件夹，默认为copy模式，选中`Move file`为剪切模式。
 
-Both: 同时保存
+Magnifer: 单独保存放大图像，方便用户的后期处理。
 
 ![image](https://github.com/nachifur/Mulimg_viewer/blob/master/img/f2.jpg)
 
 ### 5.3.3 图像排列自动化
 
-默认：num per img = -1，这时为程序**自动布局模式**。num per img 的意思是几张图像合成一个图像。
+默认：`Num per img` = -1，这时为程序**自动布局模式**。`Num per img` 的意思是几张图像合成一个图像。
 
 ### 5.3.4 取消图像排列自动化
-当num per img = 1或者>1，图像布局为**手动模式**，这时可以调整 row 和 col。
 
-### 5.3.5 自动保存
+当`num per img` = 1或者>1，图像布局为**手动模式**，这时可以调整 `row` 和 `col`。
+
+### 5.3.5. 并行模式下的串行显示
+
+此时需要选中`Parallel+Sequential`，可以同时显示文件夹1-12的前n张图片，n可由`Num per img`设定。
+
+
+### 5.3.6 自动保存
 
 勾选自动保存，点击保存💾️
 
-### 5.3.6 图像尺寸归一化
+### 5.3.7 图像尺寸归一化
 
 Fill: 图像尺寸为一组图像中的最大尺寸，填充模式(保持原始像素分辨率)
 
@@ -130,13 +145,35 @@ Resize: 图像尺寸为一组图像中的平均尺寸，缩放模式(不保持�
 
 ![image](https://github.com/nachifur/Mulimg_viewer/blob/master/img/f3.jpg)
 
-### 5.3.7 图像间隔
+### 5.3.8 图像间隔
 
-gap值可以控制间距x,y方向的间距。可以使用**负数**，这时可以达到**覆盖重叠**的效果。
+`gap`值可以控制间距x,y方向的间距。可以使用**负数**，这时可以达到**覆盖重叠**的效果。
 
-### 5.3.8 图像填充
+### 5.3.9 图像填充
 
 支持多种颜色填充。支持背景填充**透明**。**同时支持前景透明度调节**。
+
+### 5.3.10 并行手动模式支持路径导入保存
+
+![image](https://github.com/nachifur/Mulimg_viewer/blob/master/img/f4.jpg)
+
+### 5.3.11 显示、输出尺寸独立
+
+此功能可以保证显示的scale与输出独立。应用场景：同时浏览显示100张图像，屏幕放不下，使用`Show scale`缩放即可。100张拼接造成的保存图片很大，使用`Output scale`可以方便控制文件大小。
+
+### 5.3.12 并行放大
+点击放大按钮
+
+![image](https://github.com/nachifur/Mulimg_viewer/blob/master/img/f5.jpg)
+
+然后鼠标变为十字光标，在左上角第一张图片划框，按住鼠标左键，选择放大区域，释放鼠标左键，显示放大结果。
+
+Tip:
+
+1. **鼠标右键可以移动框的位置**。默认放大结果的尺寸与原始图片一样，关闭`Keep size`，即可获得任意长宽比的放大结果。
+2. 放大`Scale`，默认为自动`-1,1`，支持自定义倍数放大，最大不超过原图尺寸。例如：`3,3`，长宽3倍的放大。
+3. 框的线宽，可以设为0，这样即可隐藏框。线宽单位为pixel，在所有缩放下保持不变。注意：如果在`Show scale`为`-1,1`视觉上框的宽度合适，`Output scale`为`1,1`，输出的框的宽度相比图片尺寸可能偏小。
+
 
 ## 6. 注意事项
 
@@ -150,9 +187,9 @@ https://www.gnu.org/licenses/gpl-3.0.en.html
 感谢各位提供意见！大家可以在issues中发表意见，采用的会致谢大家！如果大家希望可以和我一起合作开发，请联系我！
 - [x] 增加精确定位（目前已经有slider）
 - [x] 增加图片索引查看，方便进行精确定位
-- [ ] 并行的局部放大功能（用于论文中的对比实验图片**急需！**）
-- [ ] 输入方式，新增：路径文件的导入和存储（@nothingeasy提供改进意见）
-- [ ] 增加删除功能（完善筛选功能）
+- [x] 并行的局部放大功能（用于论文中的对比实验图片**急需！**）
+- [x] 输入方式，新增：路径文件的导入和存储（@nothingeasy提供改进意见）
+- [x] 增加删除功能（完善筛选功能）
 - [ ] 任意图像数量的多模板拼图，每个图点击后可旋转，平移
 - [ ] 用于图像分类标注？
 ## 9. 致谢

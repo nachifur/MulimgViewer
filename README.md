@@ -175,6 +175,8 @@ Resize: 图像尺寸为一组图像中的平均尺寸，缩放模式(不保持�
 2. 鼠标变为十字光标，在左上角第一张图片划框
 3. 按住鼠标左键，选择放大区域，释放鼠标左键，显示放大结果
 
+![image](https://github.com/nachifur/Mulimg_viewer/blob/master/img/f6.gif)
+
 **Tip**:
 
 1. **鼠标右键可以移动框的位置**

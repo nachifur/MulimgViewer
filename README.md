@@ -3,6 +3,8 @@
 
 Mulimg_viewer是**多图像**浏览器，在一个界面查看多个图像，方便图像的比较，方便的选出对比明显的**图像对**，同时可以方便的进行**图像的拼接**。
 
+![image](https://github.com/nachifur/Mulimg_viewer/blob/master/img/f6.gif)
+
 下载地址：https://github.com/nachifur/Mulimg_viewer/releases/tag/v2.1
 
 测试图像地址：https://github.com/nachifur/Mulimg_viewer/blob/master/img/test_img.zip
@@ -174,8 +176,6 @@ Resize: 图像尺寸为一组图像中的平均尺寸，缩放模式(不保持�
 
 2. 鼠标变为十字光标，在左上角第一张图片划框
 3. 按住鼠标左键，选择放大区域，释放鼠标左键，显示放大结果
-
-![image](https://github.com/nachifur/Mulimg_viewer/blob/master/img/f6.gif)
 
 **Tip**:
 

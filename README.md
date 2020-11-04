@@ -5,7 +5,7 @@ Mulimg_viewer是**多图像**浏览器，在一个界面查看多个图像，方
 
 ![image](https://github.com/nachifur/Mulimg_viewer/blob/master/img/f6.gif)
 
-下载地址：https://github.com/nachifur/Mulimg_viewer/releases/tag/v2.1
+下载地址：https://github.com/nachifur/Mulimg_viewer/releases
 
 测试图像地址：https://github.com/nachifur/Mulimg_viewer/blob/master/img/test_img.zip
 
@@ -194,11 +194,22 @@ Resize: 图像尺寸为一组图像中的平均尺寸，缩放模式(不保持�
 5. `Draw line width`设为0，即可隐藏框
 6. `Draw line width`单位为pixel，在所有缩放下保持不变。注意：如果在`Show scale`为`0.1,0.1`，`Output scale`为`1,1`时，显示的框的宽度合适，那么输出框的宽度可能相比图片尺寸偏小
 
+### 5.3.13 窗口大小自动化调节
 
-## 6. 注意事项
+关闭`Auto layout`即可。
 
-1. 使用多图浏览模式（输入路径为模式1和2），对比的文件夹里面的图像命名需要一样！
+## 6. 注意事项以及使用技巧
+
+### 6.1 并行模式
+
+1. 使用多图浏览模式（Parallel manual和Parallel auto），对比的文件夹里面的图像命名需要一样！
 2. 子文件夹的命名。如果是0,1,2...10,11，需要改为00,01,02,...10,11。因为排序时会变为：0,1,10,11,2...
+
+### 6.2 多图拼接，超大像素，窗口大小问题
+
+1. 可以最大化窗口，或者关闭`Auto layout`
+2. 调节`Show scale`，`0.2,0.2`缩小，`2,2`放大
+3. 更改`Truth resolution`,将所有照片resize到同一尺寸，**对于浏览及其友好**
 
 ## 7. 许可证
 https://www.gnu.org/licenses/gpl-3.0.en.html

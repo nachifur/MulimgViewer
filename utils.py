@@ -55,10 +55,10 @@ class ImgDataset():
 
     def get_flist_from_lf(self):
         format_group = [".png", ".jpg", ".jpeg", ".bmp", ".tif", ".tiff"]
-        if Path(self.input_path).suffix == '.txt':
+        if Path(self.input_path).suffix.lower() == '.txt':
             with open(self.input_path, "r") as f:
                 dataset = f.read().split('\n')
-        elif Path(self.input_path).suffix == '.csv':
+        elif Path(self.input_path).suffix.lower() == '.csv':
             with open(self.input_path, 'r', newline='') as csvfile:
                 dataset = list(csv.reader(csvfile))
                 dataset_ = []
@@ -78,7 +78,7 @@ class ImgDataset():
             self.dataset_mode = False
         elif len(dataset) < 100:
             validdataset = [item for item in dataset if Path(
-                item).is_file() and Path(item).suffix in format_group]
+                item).is_file() and Path(item).suffix.lower() in format_group]
             self.dataset_mode = False
         else:
             validdataset = dataset
@@ -100,7 +100,7 @@ class ImgDataset():
             return no_check_list
         else:
             self.dataset_mode = False
-            return [str(f.name) for f in Path(self.path_list[0]).iterdir() if f.is_file() and f.suffix in self.format_group]
+            return [str(f.name) for f in Path(self.path_list[0]).iterdir() if f.is_file() and f.suffix.lower() in self.format_group]
 
     def add(self):
         if self.action_count < self.max_action_num-1:
@@ -218,7 +218,7 @@ class ImgManager(ImgDataset):
         img_list = []
         for path in self.flist:
             path = Path(path)
-            if path.is_file() and path.suffix in self.format_group:
+            if path.is_file() and path.suffix.lower() in self.format_group:
                 img_list.append(Image.open(path).convert('RGB'))
             else:
                 pass

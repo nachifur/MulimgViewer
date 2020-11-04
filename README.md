@@ -43,20 +43,28 @@ sudo chmod 777 * -R /home/liu/.local/share
 目前已经打包一个exe，已经在win10下测试。也可以下载源码运行`main.py`。
 
 ## 4. 应用场景
-### 例1：
-
-在深度学习中，你可能遇到以下问题：一个模型或者多个模型对比时，产生多个输出文件夹。如果你已经通过指标判断出哪个模型是最优的，你需要你选出相应的*图像对***用于实验结果的对比**。
+### 例1：并行浏览、挑选、保存
 
 **以前**你可能需要打开多个图像，逐个对比，再到文件夹找到图像，复制到别的地方。
 
 **现在**只需使用Mulimg_viewer多图像浏览器，输入各个需要对比的目录，**一键保存对比图像对到本地**！
 
 
-### 例2：
+### 例2：并行放大
 
 Mulimg_viewer可以轻松的完成纵向与横向的拼接，**支持自动拼接保存，支持并行放大**！
 
 ![image](https://github.com/nachifur/Mulimg_viewer/blob/master/img/f0.jpg)
+
+![image](https://github.com/nachifur/Mulimg_viewer/blob/master/img/f7.jpg)
+
+### 例3：数据库浏览、成对数据
+浏览一个1000张图片的数据库，需要多长时间？一次显示100张，只需点击10次即可完成！同样Mulimg_viewer可以方便的进行成对的数据的浏览、比较。
+
+![image](https://github.com/nachifur/Mulimg_viewer/blob/master/img/f8.jpg)
+
+
+
 ## 5. 使用说明
 
 ## 5.1 操作流程

@@ -234,3 +234,6 @@ nothingeasy:改进意见-(输入方式，新增：路径文件的导入和存储
   howpublished = {\url{https://github.com/nachifur/Mulimg_viewer}},
   year =         {2020}
 }
+```
+
+[![HitCount](http://hits.dwyl.com/nachifur/Mulimg_viewer.svg)](http://hits.dwyl.com/nachifur/Mulimg_viewer)

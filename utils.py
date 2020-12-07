@@ -363,7 +363,7 @@ class ImgManager(ImgDataset):
             for stem in Path(name_f)._cparts:
                 if i == 0:
                     str_ = str(self.action_count *
-                            self.count_per_action)+"_"+stem
+                               self.count_per_action)+"_"+stem
                     i += 1
                 else:
                     str_ = str_+"_"+stem
@@ -433,12 +433,13 @@ class ImgManager(ImgDataset):
                                 dir_name/sub_dir_name)
                 i = 0
                 for img in self.img_list:
-                    img = self.draw_rectangle(self,img,single=True)
-                    f_path_output = Path(self.out_path_str) / dir_name / (Path(self.flist[i]).parent).stem / (
+                    img = self.add_alpha(img)
+                    img = self.draw_rectangle(img, single=True)
+                    f_path_output = Path(self.out_path_str)/dir_name/sub_dir_name/(Path(self.flist[i]).parent).stem / (
                         (Path(self.flist[i]).parent).stem+"_"+Path(self.flist[i]).stem+".png")
-                    if not (Path(self.out_path_str)/dir_name/(Path(self.flist[i]).parent).stem).is_dir():
-                        os.makedirs(Path(self.out_path_str) / dir_name /
-                                    (Path(self.flist[i]).parent).stem)
+                    if not (Path(self.out_path_str)/dir_name/sub_dir_name/(Path(self.flist[i]).parent).stem).is_dir():
+                        os.makedirs(Path(self.out_path_str)/dir_name /
+                                    sub_dir_name/(Path(self.flist[i]).parent).stem)
                     img.save(f_path_output)
                     i += 1
 
@@ -490,7 +491,7 @@ class ImgManager(ImgDataset):
                                     gap[2]*iyy*(num_per_img-1)
                                 if ix*(img_num_per_column * num_per_img)+iyy*num_per_img+iy < len(self.img_list):
                                     im = self.img_list[ix*(img_num_per_column *
-                                                        num_per_img)+iyy*num_per_img+iy]
+                                                           num_per_img)+iyy*num_per_img+iy]
                                     im = self.img_preprocessing(im)
                                     if (ixx+1) % 2 == 0:
                                         if self.magnifier_flag != 0 and draw_points != 0 and np.abs(draw_points[2] - draw_points[0]) > 0 and np.abs(draw_points[3] - draw_points[1]) > 0:
@@ -530,7 +531,7 @@ class ImgManager(ImgDataset):
                                     gap[2]*ixx*(num_per_img-1)
                                 if iy*(img_num_per_row * num_per_img)+ixx*num_per_img+ix < len(self.img_list):
                                     im = self.img_list[iy*(img_num_per_row *
-                                                        num_per_img)+ixx*num_per_img+ix]
+                                                           num_per_img)+ixx*num_per_img+ix]
                                     im = self.img_preprocessing(im)
                                     if (iyy+1) % 2 == 0:
                                         if self.magnifier_flag != 0 and draw_points != 0 and np.abs(draw_points[2] - draw_points[0]) > 0 and np.abs(draw_points[3] - draw_points[1]) > 0:
@@ -553,9 +554,9 @@ class ImgManager(ImgDataset):
         else:
             return 0
 
-    def draw_rectangle(self,img,single=False):
+    def draw_rectangle(self, img, single=False):
         if single:
-            xy_grid = self.xy_grid[0]
+            xy_grid = [self.xy_grid[0]]
         else:
             xy_grid = self.xy_grid
         line_width = self.layout_params[10]
@@ -572,8 +573,7 @@ class ImgManager(ImgDataset):
             x_right_up = [x_0+xy[0]+width, y_0+xy[1]]
             x_right_down = [x_0+xy[0]+width, y_0+xy[1]+height]
 
-            img_array[x_left_up[1]:x_left_down[1], x_left_up[0]:x_left_up[0]+line_width, :] = np.ones_like(
-                img_array[x_left_up[1]:x_left_down[1], x_left_up[0]:x_left_up[0]+line_width, :])*draw_colour
+            img_array[x_left_up[1]:x_left_down[1], x_left_up[0]:x_left_up[0]+line_width, :] = np.ones_like(img_array[x_left_up[1]:x_left_down[1], x_left_up[0]:x_left_up[0]+line_width, :])*draw_colour
             img_array[x_left_up[1]:x_left_up[1]+line_width, x_left_up[0]:x_right_up[0], :] = np.ones_like(
                 img_array[x_left_up[1]:x_left_up[1]+line_width, x_left_up[0]:x_right_up[0], :])*draw_colour
             img_array[x_right_up[1]:x_right_down[1], x_right_up[0]-line_width:x_right_up[0], :] = np.ones_like(
@@ -624,7 +624,7 @@ class ImgManager(ImgDataset):
             elif self.img_stitch_mode == 0:
                 width, height = self.img_resolution
                 img = img.resize((width, height), Image.BICUBIC)
-        img = self.change_img_alpha(img)
+        img = self.add_alpha(img)
 
         return img
 
@@ -696,7 +696,7 @@ class ImgManager(ImgDataset):
         delta_y = int((self.img_resolution[1]-img.size[1])/2)
         return img, delta_x, delta_y
 
-    def change_img_alpha(self, img):
+    def add_alpha(self, img):
         img_array = np.array(img)
         temp = img_array[:, :, 0]
         if img_array.shape[2] == 3:

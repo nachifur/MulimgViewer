@@ -226,7 +226,7 @@ class MulimgViewer (MulimgViewerGui):
         if dlg.ShowModal() == wx.ID_OK:
             with open(dlg.GetPath(), "r") as f:
                 input_path = f.read().split('\n')
-            self.ImgManager.init(input_path, 1)
+            self.ImgManager.init(input_path[0:-1], 1)
             self.show_img_init()
             self.ImgManager.set_action_count(0)
             self.show_img()

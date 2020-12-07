@@ -35,24 +35,39 @@ class MainAPP(wx.App):
         self.frame.append(self.manager.GetFrame(1))
         self.frame[0].Show()
         self.SetTopWindow(self.frame[0])
-        self.type = 0
+        self.type = 0 # init show MulimgViewer
         return True
 
-    def UpdateUI(self, type, input_path=0):
+    def UpdateUI(self, type, input_path=None):
+        # type=1: PathSelectFrame
+        # type=0: MulimgViewer
+        # type=-1: Close
         self.type = type
-        if input_path != 0:
+
+        if input_path != None:
             if len(input_path) != 0:
+                # refresh one_dir_mul_dir_manual path
                 self.frame[0].ImgManager.init(
                     input_path, 1)
+                self.frame[1].refresh_txt(input_path)  
+
                 self.frame[0].show_img_init()
                 self.frame[0].ImgManager.set_action_count(0)
-                self.frame[0].show_img()
+                self.frame[0].show_img() 
+                 
+
         if type == -1:
+            # close window
             self.frame[0].Close(None)
             self.frame[1].Close(None)
         elif type == 0:
+            # hidden PathSelectFrame, show MulimgViewer
             self.frame[1].Show(False)
-        self.frame[type].Show(True)
+            self.frame[type].Show(True)
+        elif type == 1:
+            # show PathSelectFrame        
+            self.frame[type].Show(True)
+
         return True
 
     def get_type(self):

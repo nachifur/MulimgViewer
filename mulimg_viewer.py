@@ -183,7 +183,11 @@ class MulimgViewer (MulimgViewerGui):
 
     def one_dir_mul_dir_manual(self, event):
         self.SetStatusText_(["input_path", "", "", "-1"])
-        self.UpdateUI(1)
+        if self.ImgManager.type == 1:
+            input_path = self.ImgManager.input_path
+        else:
+            input_path = None
+        self.UpdateUI(1,input_path)
         self.choice_input_mode.SetSelection(2)
 
     def one_dir_mul_img(self, event):

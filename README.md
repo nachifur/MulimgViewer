@@ -63,7 +63,11 @@ Mulimg_viewer可以轻松的完成纵向与横向的拼接，**支持自动拼�
 
 ![image](https://github.com/nachifur/Mulimg_viewer/blob/master/img/f8.jpg)
 
+### 例4：支持远程挂载目录图片浏览
+将远程服务器的目录挂载后，在Mulimg_viewer中选择目录即可，完成图片浏览。
+例如：使用ubuntu的文件管理器`nautilus`，stfp://10.8.0.4连接到服务器。
 
+![image](https://github.com/nachifur/Mulimg_viewer/blob/master/img/f9.jpg)
 
 ## 5. 使用说明
 

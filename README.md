@@ -54,8 +54,6 @@ sudo chmod 777 * -R /home/liu/.local/share
 
 Mulimg_viewer可以轻松的完成纵向与横向的拼接，**支持自动拼接保存，支持并行放大**！
 
-![image](https://github.com/nachifur/Mulimg_viewer/blob/master/img/f0.jpg)
-
 ![image](https://github.com/nachifur/Mulimg_viewer/blob/master/img/f7.jpg)
 
 ### 例3：数据库浏览、成对数据

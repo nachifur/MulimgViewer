@@ -33,7 +33,7 @@ python3 main.py
 sudo chmod 777 * -R /home/liu/.local/share
 ```
 ### 2.2
-目前已经发布一个deb包（release中可以找到），在Ubuntu18.04(amd64)测试可用，安装之后运行：
+目前已经发布一个deb包（release中可以找到），在Ubuntu18.04(v3以前)或者ubuntu20.04(v3.1以后)测试可用，安装之后运行：
 ```bash
 /etc/Mulimg_viewer/main
 ```

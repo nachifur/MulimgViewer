@@ -54,9 +54,11 @@ sudo chmod 777 * -R /home/liu/.local/share
 
 Mulimg_viewer可以轻松的完成纵向与横向的拼接，**支持自动拼接保存，支持并行放大**！
 
+![image](https://github.com/nachifur/Mulimg_viewer/blob/master/img/f7.jpg)
+
 同时支持任意位置画框（鼠标左键按住移动），移动框的位置（鼠标右键点击）。
 
-![image](https://github.com/nachifur/Mulimg_viewer/blob/master/img/f7.jpg)
+![image](https://github.com/nachifur/Mulimg_viewer/blob/master/img/f11.gif)
 
 ### 例3：数据库浏览、成对数据
 浏览一个1000张图片的数据库，需要多长时间？一次显示100张，只需点击10次即可完成！Mulimg_viewer可以方便的进行成对的数据的浏览、比较。

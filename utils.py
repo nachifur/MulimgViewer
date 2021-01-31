@@ -444,13 +444,14 @@ class ImgManager(ImgDataset):
                     i += 1
 
     def stitch_images(self, img_mode, draw_points=0):
+        """img_mode, 0: show, 1: save"""
         if draw_points == 0:
             self.draw_points = 0
         else:
             self.draw_points = draw_points.copy()
         xy_grid = []
         try:
-            self.get_img_list()
+            self.get_img_list() # Generate image list
             self.set_scale_mode(img_mode=img_mode)
             width, height = self.img_resolution
             img_num_per_row = self.layout_params[0]
@@ -573,7 +574,8 @@ class ImgManager(ImgDataset):
             x_right_up = [x_0+xy[0]+width, y_0+xy[1]]
             x_right_down = [x_0+xy[0]+width, y_0+xy[1]+height]
 
-            img_array[x_left_up[1]:x_left_down[1], x_left_up[0]:x_left_up[0]+line_width, :] = np.ones_like(img_array[x_left_up[1]:x_left_down[1], x_left_up[0]:x_left_up[0]+line_width, :])*draw_colour
+            img_array[x_left_up[1]:x_left_down[1], x_left_up[0]:x_left_up[0]+line_width, :] = np.ones_like(
+                img_array[x_left_up[1]:x_left_down[1], x_left_up[0]:x_left_up[0]+line_width, :])*draw_colour
             img_array[x_left_up[1]:x_left_up[1]+line_width, x_left_up[0]:x_right_up[0], :] = np.ones_like(
                 img_array[x_left_up[1]:x_left_up[1]+line_width, x_left_up[0]:x_right_up[0], :])*draw_colour
             img_array[x_right_up[1]:x_right_down[1], x_right_up[0]-line_width:x_right_up[0], :] = np.ones_like(
@@ -629,6 +631,7 @@ class ImgManager(ImgDataset):
         return img
 
     def crop_points_process(self, crop_points, img_mode):
+        """img_mode, 0: show, 1: save"""
         if crop_points[2] < crop_points[0]:
             temp = crop_points[0]
             crop_points[0] = crop_points[2]
@@ -715,3 +718,7 @@ class ImgManager(ImgDataset):
         height = int(img.size[1]*scale[1])
         img = img.resize((width, height), Image.BICUBIC)
         return img
+    
+    def rotate(self, id):
+        img = Image.open(self.flist[id]).convert('RGB').rotate(90)
+        img.save(self.flist[id])

@@ -7,7 +7,7 @@ from utils import ImgManager
 from PIL import Image
 from index_table import IndexTable
 from pathlib import Path
-
+import time
 
 class MulimgViewer (MulimgViewerGui):
 
@@ -38,7 +38,7 @@ class MulimgViewer (MulimgViewerGui):
         self.Uint = self.scrolledWindow_img.GetScrollPixelsPerUnit()
         self.Status_number = self.m_statusBar1.GetFieldsCount()
         self.img_size = [-1, -1]
-        self.width = 1050
+        self.width = 950
         self.height = 600
         self.start_flag = 0
         self.x = -1
@@ -46,17 +46,6 @@ class MulimgViewer (MulimgViewerGui):
         self.y = -1
         self.y_0 = -1
         self.draw_points = 0
-
-    # def OnPaint(self, event):
-        # pass
-        # if self.magnifier.Value != False and self.x_0 != -1 and len(self.img_panel.Children) != 0 and self.draw_points!=0:
-        #     dc = wx.PaintDC(self.img_panel.Children[0])
-        #     pen = wx.Pen(wx.Colour(255, 0, 0))
-        #     dc.SetPen(pen)
-        #     dc.SetBrush(wx.Brush(wx.Colour(0, 0, 0), wx.TRANSPARENT))
-        #     for xy in self.ImgManager.xy_grid:
-        #         dc.DrawRectangle(self.x_0+xy[0], self.y_0+xy[1], self.x -
-        #                          self.x_0, self.y-self.y_0)
 
     def frame_resize(self, event):
         self.auto_layout(mode=2)
@@ -390,10 +379,20 @@ class MulimgViewer (MulimgViewerGui):
     def select_point_release(self, event):
         if self.magnifier.Value != False:
             self.start_flag = 0
-            self.refresh(event)
+
+            id = self.get_img_id_from_point([self.x_0,self.y_0])
+            xy_grid = self.ImgManager.xy_grid[id]
+            self.x = self.x-xy_grid[0]
+            self.y = self.y-xy_grid[1]
+            self.x_0 = self.x_0 - xy_grid[0]
+            self.y_0 = self.y_0 - xy_grid[1]
+
+            if np.abs(self.x-self.x_0)>5 and np.abs(self.y-self.y_0)>5:
+                self.refresh(event)
 
     def select_point(self, event):
-        if self.magnifier.Value != False:
+        # magnifier
+        if self.magnifier.Value:
             x_0, y_0 = event.GetPosition()
             self.x_0 = x_0
             self.y_0 = y_0
@@ -401,63 +400,103 @@ class MulimgViewer (MulimgViewerGui):
             self.y = y_0
             self.start_flag = 1
 
+        # rotation
+        if self.rotation.Value:
+            x, y = event.GetPosition()
+            self.ImgManager.rotate(self.get_img_id_from_point([x,y]))
+            self.refresh(event)
+
+    def get_img_id_from_point(self, xy):
+        # get img_id from grid points
+        xy_grid = np.array(self.ImgManager.xy_grid)
+        xy_cur = np.array([xy])
+        xy_cur = np.repeat(xy_cur,xy_grid.shape[0],axis=0)
+        res_ = xy_cur - xy_grid
+        id_list = []
+        for i in range(xy_grid.shape[0]):
+            if res_[i][0]>=0 and res_[i][1]>=0:
+                id_list.append(i)
+            else:
+                id_list.append(0)     
+        return max(id_list)
+
     def point_move(self, event):
         # https://stackoverflow.com/questions/57342753/how-to-select-a-rectangle-of-the-screen-to-capture-by-dragging-mouse-on-transpar
-        if self.magnifier.Value != False and self.start_flag == 1 and self.x_0 < self.ImgManager.img_resolution_show[0] and self.y_0 < self.ImgManager.img_resolution_show[1]:
-            self.draw_points = 1
-            x, y = event.GetPosition()
-            if x < self.ImgManager.img_resolution_show[0] and y < self.ImgManager.img_resolution_show[1]:
-                self.x = x
-                self.y = y
-            elif x > self.ImgManager.img_resolution_show[0] and y > self.ImgManager.img_resolution_show[1]:
-                self.x = self.ImgManager.img_resolution_show[0]
-                self.y = self.ImgManager.img_resolution_show[1]
-            elif x > self.ImgManager.img_resolution_show[0]:
-                self.x = self.ImgManager.img_resolution_show[0]
-                self.y = y
-            elif y > self.ImgManager.img_resolution_show[1]:
-                self.x = x
-                self.y = self.ImgManager.img_resolution_show[1]
-
-            # self.Refresh()
-
-    def change_rectangle_position(self, event):
         x, y = event.GetPosition()
-        x_0, y_0, x_1, y_1 = self.ImgManager.crop_points
-        width = abs(x_0-x_1)
-        height = abs(y_0-y_1)
-        x_center_old = x_0+int((width)/2)
-        y_center_old = y_0+int((height)/2)
-        delta_x = x-x_center_old
-        delta_y = y-y_center_old
+        id = self.get_img_id_from_point([self.x_0,self.y_0])
+        xy_grid = self.ImgManager.xy_grid[id]
+        xy_limit = xy_grid + self.ImgManager.img_resolution_show   
 
-        if x_1+delta_x > self.ImgManager.img_resolution_show[0]:
-            self.x = self.ImgManager.img_resolution_show[0]
-            self.x_0 = self.ImgManager.img_resolution_show[0]-width
-        elif x_0+delta_x < 0:
-            self.x_0 = 0
-            self.x = width
-        else:
-            self.x_0 = x_0+delta_x
-            self.x = x_1+delta_x
+        if self.magnifier.Value != False and self.start_flag == 1 and self.x_0 < xy_limit[0] and self.y_0 < xy_limit[1]:
+            self.draw_points = 1
 
-        if y_1+delta_y > self.ImgManager.img_resolution_show[1]:
-            self.y = self.ImgManager.img_resolution_show[1]
-            self.y_0 = self.ImgManager.img_resolution_show[1]-height
-        elif y_0+delta_y < 0:
-            self.y_0 = 0
-            self.y = height
-        else:
-            self.y_0 = y_0+delta_y
-            self.y = y_1+delta_y
+            if x < xy_limit[0] and y < xy_limit[1]:
+                self.x = x
+                self.y = y
+            elif x > xy_limit[0] and y > xy_limit[1]:
+                self.x = xy_limit[0]
+                self.y = xy_limit[1]
+            elif x > xy_limit[0]:
+                self.x = xy_limit[0]
+                self.y = y
+            elif y > xy_limit[1]:
+                self.x = x
+                self.y = xy_limit[1]
+
+    def img_right_click(self, event):
+        x, y = event.GetPosition()
+        id = self.get_img_id_from_point([x,y])
+        xy_grid = self.ImgManager.xy_grid[id]
+        x = x-xy_grid[0]
+        y = y-xy_grid[1]
+        # magnifier
+        if self.magnifier.Value:
+            x_0, y_0, x_1, y_1 = self.ImgManager.crop_points
+            width = abs(x_0-x_1)
+            height = abs(y_0-y_1)
+            x_center_old = x_0+int((width)/2)
+            y_center_old = y_0+int((height)/2)
+            delta_x = x-x_center_old
+            delta_y = y-y_center_old
+
+            if x_1+delta_x > self.ImgManager.img_resolution_show[0]:
+                self.x = self.ImgManager.img_resolution_show[0]
+                self.x_0 = self.ImgManager.img_resolution_show[0]-width
+            elif x_0+delta_x < 0:
+                self.x_0 = 0
+                self.x = width
+            else:
+                self.x_0 = x_0+delta_x
+                self.x = x_1+delta_x
+
+            if y_1+delta_y > self.ImgManager.img_resolution_show[1]:
+                self.y = self.ImgManager.img_resolution_show[1]
+                self.y_0 = self.ImgManager.img_resolution_show[1]-height
+            elif y_0+delta_y < 0:
+                self.y_0 = 0
+                self.y = height
+            else:
+                self.y_0 = y_0+delta_y
+                self.y = y_1+delta_y
 
         self.refresh(event)
 
-    def magnifier_draw(self, event):
+    def magnifier_fc(self, event):
         self.start_flag = 0
         self.draw_points = 0
         if self.magnifier.Value != False:
             self.SetCursor(wx.Cursor(wx.CURSOR_CROSS))
+            if self.rotation.Value != False:
+                self.rotation.Value = False
+        else:
+            self.SetCursor(wx.Cursor(wx.CURSOR_ARROW))
+        self.Refresh()
+
+    def rotation_fc(self, event):
+        if self.rotation.Value != False:
+            self.SetCursor(wx.Cursor(wx.CURSOR_POINT_RIGHT))
+            if self.magnifier.Value != False:
+                self.magnifier.Value = False
         else:
             self.SetCursor(wx.Cursor(wx.CURSOR_ARROW))
         self.Refresh()
@@ -523,7 +562,7 @@ class MulimgViewer (MulimgViewerGui):
                 self.img_panel.Children[0].Bind(
                     wx.EVT_LEFT_UP, self.select_point_release)
                 self.img_panel.Children[0].Bind(
-                    wx.EVT_RIGHT_DOWN, self.change_rectangle_position)
+                    wx.EVT_RIGHT_DOWN, self.img_right_click)
 
             if self.ImgManager.layout_params[11] and flag != 1 and self.ImgManager.save_select_move:
                 self.ImgManager.subtract()
@@ -614,3 +653,4 @@ class MulimgViewer (MulimgViewerGui):
 
     def change_img_stitch_mode(self, event):
         self.ImgManager.img_stitch_mode = self.choice_normalized_size.GetSelection()
+

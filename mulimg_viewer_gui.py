@@ -92,6 +92,11 @@ class MulimgViewerGui ( wx.Frame ):
 
 		wSizer1.Add( self.magnifier, 0, wx.ALL|wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
+		self.rotation = wx.ToggleButton( self.m_panel1, wx.ID_ANY, u"↷", wx.DefaultPosition, wx.Size( 50,-1 ), 0 )
+		self.rotation.SetFont( wx.Font( 18, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL, False, wx.EmptyString ) )
+
+		wSizer1.Add( self.rotation, 0, wx.ALL, 5 )
+
 
 		self.m_panel1.SetSizer( wSizer1 )
 		self.m_panel1.Layout()
@@ -102,7 +107,7 @@ class MulimgViewerGui ( wx.Frame ):
 		fgSizer5.SetFlexibleDirection( wx.BOTH )
 		fgSizer5.SetNonFlexibleGrowMode( wx.FLEX_GROWMODE_SPECIFIED )
 
-		fgSizer5.SetMinSize( wx.Size( 900,600 ) )
+		fgSizer5.SetMinSize( wx.Size( 950,600 ) )
 		self.scrolledWindow_img = wx.ScrolledWindow( self, wx.ID_ANY, wx.DefaultPosition, wx.Size( -1,-1 ), wx.HSCROLL|wx.VSCROLL )
 		self.scrolledWindow_img.SetScrollRate( 5, 5 )
 		fgSizer4 = wx.FlexGridSizer( 2, 1, 0, 0 )
@@ -537,7 +542,8 @@ class MulimgViewerGui ( wx.Frame ):
 		self.m_button5.Bind( wx.EVT_BUTTON, self.refresh )
 		self.slider_value.Bind( wx.EVT_TEXT_ENTER, self.slider_value_change )
 		self.slider_img.Bind( wx.EVT_SCROLL, self.skip_to_n_img )
-		self.magnifier.Bind( wx.EVT_TOGGLEBUTTON, self.magnifier_draw )
+		self.magnifier.Bind( wx.EVT_TOGGLEBUTTON, self.magnifier_fc )
+		self.rotation.Bind( wx.EVT_TOGGLEBUTTON, self.rotation_fc )
 		self.choice_normalized_size.Bind( wx.EVT_CHOICE, self.change_img_stitch_mode )
 		self.colourPicker_gap.Bind( wx.EVT_COLOURPICKER_CHANGED, self.colour_change )
 		self.background_slider.Bind( wx.EVT_SCROLL, self.background_alpha )
@@ -592,7 +598,10 @@ class MulimgViewerGui ( wx.Frame ):
 	def skip_to_n_img( self, event ):
 		event.Skip()
 
-	def magnifier_draw( self, event ):
+	def magnifier_fc( self, event ):
+		event.Skip()
+
+	def rotation_fc( self, event ):
 		event.Skip()
 
 	def change_img_stitch_mode( self, event ):

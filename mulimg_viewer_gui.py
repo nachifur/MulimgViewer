@@ -220,7 +220,7 @@ class MulimgViewerGui ( wx.Frame ):
 
 		bSizer4.Add( self.m_staticText5, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
-		self.gap = wx.TextCtrl( self.scrolledWindow_set, wx.ID_ANY, u"10,10,2,10", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.gap = wx.TextCtrl( self.scrolledWindow_set, wx.ID_ANY, u"10,10,2,10,2", wx.DefaultPosition, wx.DefaultSize, 0 )
 		bSizer4.Add( self.gap, 0, wx.ALL, 5 )
 
 
@@ -278,6 +278,20 @@ class MulimgViewerGui ( wx.Frame ):
 
 
 		fgSizer3.Add( bSizer8, 1, wx.EXPAND, 5 )
+
+		bSizer22 = wx.BoxSizer( wx.HORIZONTAL )
+
+		self.m_staticText27 = wx.StaticText( self.scrolledWindow_set, wx.ID_ANY, u"Auto draw color", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText27.Wrap( -1 )
+
+		bSizer22.Add( self.m_staticText27, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+
+		self.checkBox_auto_draw_color = wx.CheckBox( self.scrolledWindow_set, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.checkBox_auto_draw_color.SetValue(True)
+		bSizer22.Add( self.checkBox_auto_draw_color, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+
+
+		fgSizer3.Add( bSizer22, 1, wx.EXPAND, 5 )
 
 		bSizer19 = wx.BoxSizer( wx.HORIZONTAL )
 

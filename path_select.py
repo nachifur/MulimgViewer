@@ -10,7 +10,7 @@ class PathSelectFrame (PathSelectFrameGui):
         self.title = title
         self.UpdateUI = UpdateUI
         self.get_type = get_type
-        self.Bind(wx.EVT_CLOSE, self.Close)
+        self.Bind(wx.EVT_CLOSE, self.close)
 
     def refresh_txt(self,input_path=None):
         if input_path==None:
@@ -21,7 +21,7 @@ class PathSelectFrame (PathSelectFrameGui):
                 str_ = str_+path+"\n"
             self.m_richText1.Value=str_
 
-    def Close(self, event):
+    def close(self, event):
         if self.get_type() == -1:
             self.Destroy()
         else:

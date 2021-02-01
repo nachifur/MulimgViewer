@@ -9,6 +9,7 @@ from index_table import IndexTable
 from pathlib import Path
 import time
 
+
 class MulimgViewer (MulimgViewerGui):
 
     def __init__(self, parent, UpdateUI, get_type):
@@ -28,7 +29,7 @@ class MulimgViewer (MulimgViewerGui):
                                         ])
         self.SetAcceleratorTable(acceltbl)
         # self.img_Sizer = self.scrolledWindow_img.GetSizer()
-        self.Bind(wx.EVT_CLOSE, self.Close)
+        self.Bind(wx.EVT_CLOSE, self.close)
         # self.Bind(wx.EVT_PAINT, self.OnPaint)
 
         # parameter
@@ -45,7 +46,7 @@ class MulimgViewer (MulimgViewerGui):
         self.x_0 = -1
         self.y = -1
         self.y_0 = -1
-        self.draw_points = 0
+        self.color_list = []
 
     def frame_resize(self, event):
         self.auto_layout(mode=2)
@@ -61,7 +62,7 @@ class MulimgViewer (MulimgViewerGui):
         elif input_mode == 3:
             self.onefilelist(event)
 
-    def Close(self, event):
+    def close(self, event):
         if self.get_type() == -1:
             self.Destroy()
         else:
@@ -179,7 +180,7 @@ class MulimgViewer (MulimgViewerGui):
                 input_path = None
         except:
             input_path = None
-        self.UpdateUI(1,input_path)
+        self.UpdateUI(1, input_path)
         self.choice_input_mode.SetSelection(2)
 
     def one_dir_mul_img(self, event):
@@ -325,6 +326,125 @@ class MulimgViewer (MulimgViewerGui):
             if texts[i] != '-1':
                 self.m_statusBar1.SetStatusText(texts[i], i)
 
+    def img_left_click(self, event):
+        # magnifier
+        if self.magnifier.Value:
+            x_0, y_0 = event.GetPosition()
+            self.x_0 = x_0
+            self.y_0 = y_0
+            self.x = x_0
+            self.y = y_0
+            self.start_flag = 1
+            self.xy_magnifier = 0
+            self.color_list = []
+
+        # rotation
+        if self.rotation.Value:
+            x, y = event.GetPosition()
+            self.ImgManager.rotate(self.get_img_id_from_point([x, y]))
+            self.refresh(event)
+
+    def img_left_move(self, event):
+        # https://stackoverflow.com/questions/57342753/how-to-select-a-rectangle-of-the-screen-to-capture-by-dragging-mouse-on-transpar
+        x, y = event.GetPosition()
+        id = self.get_img_id_from_point([self.x_0, self.y_0])
+        xy_grid = self.ImgManager.xy_grid[id]
+        xy_limit = xy_grid + self.ImgManager.img_resolution_show
+
+        if self.magnifier.Value != False and self.start_flag == 1 and self.x_0 < xy_limit[0] and self.y_0 < xy_limit[1]:
+
+            if x < xy_limit[0] and y < xy_limit[1]:
+                self.x = x
+                self.y = y
+            elif x > xy_limit[0] and y > xy_limit[1]:
+                self.x = xy_limit[0]
+                self.y = xy_limit[1]
+            elif x > xy_limit[0]:
+                self.x = xy_limit[0]
+                self.y = y
+            elif y > xy_limit[1]:
+                self.x = x
+                self.y = xy_limit[1]
+
+    def img_left_release(self, event):
+        if self.magnifier.Value != False:
+            self.start_flag = 0
+
+            id = self.get_img_id_from_point([self.x_0, self.y_0])
+            xy_grid = self.ImgManager.xy_grid[id]
+            x = self.x-xy_grid[0]
+            y = self.y-xy_grid[1]
+            x_0 = self.x_0 - xy_grid[0]
+            y_0 = self.y_0 - xy_grid[1]
+
+            width = np.abs(x-x_0)
+            height = np.abs(y-y_0)
+            if width > 5 and height > 5:
+                self.xy_magnifier = []
+                self.color_list.append(self.colourPicker_draw.GetColour())
+                self.xy_magnifier.append([x, y, x_0, y_0])
+                self.refresh(event)
+
+    def img_right_click(self, event):
+        x, y = event.GetPosition()
+        id = self.get_img_id_from_point([x, y])
+        xy_grid = self.ImgManager.xy_grid[id]
+        x = x-xy_grid[0]
+        y = y-xy_grid[1]
+        # magnifier
+        if self.magnifier.Value:
+            x_0, y_0, x_1, y_1 = self.ImgManager.crop_points[0]
+            width = abs(x_0-x_1)
+            height = abs(y_0-y_1)
+            x_center_old = x_0+int((width)/2)
+            y_center_old = y_0+int((height)/2)
+            delta_x = x-x_center_old
+            delta_y = y-y_center_old
+
+            if x_1+delta_x > self.ImgManager.img_resolution_show[0]:
+                x = self.ImgManager.img_resolution_show[0]
+                x_0 = self.ImgManager.img_resolution_show[0]-width
+            elif x_0+delta_x < 0:
+                x_0 = 0
+                x = width
+            else:
+                x_0 = x_0+delta_x
+                x = x_1+delta_x
+
+            if y_1+delta_y > self.ImgManager.img_resolution_show[1]:
+                y = self.ImgManager.img_resolution_show[1]
+                y_0 = self.ImgManager.img_resolution_show[1]-height
+            elif y_0+delta_y < 0:
+                y_0 = 0
+                y = height
+            else:
+                y_0 = y_0+delta_y
+                y = y_1+delta_y
+
+            self.color_list.append(self.colourPicker_draw.GetColour())
+            self.xy_magnifier.append([x, y, x_0, y_0])
+
+        self.refresh(event)
+
+    def magnifier_fc(self, event):
+        self.start_flag = 0
+        if self.magnifier.Value != False:
+            self.SetCursor(wx.Cursor(wx.CURSOR_CROSS))
+            if self.rotation.Value != False:
+                self.rotation.Value = False
+        else:
+            self.SetCursor(wx.Cursor(wx.CURSOR_ARROW))
+        self.Refresh()
+
+    def rotation_fc(self, event):
+        if self.rotation.Value != False:
+            self.SetCursor(wx.Cursor(wx.CURSOR_POINT_RIGHT))
+            if self.magnifier.Value != False:
+                self.magnifier.Value = False
+        else:
+            self.SetCursor(wx.Cursor(wx.CURSOR_ARROW))
+        self.Refresh()
+
     def show_img_init(self):
         layout_params = self.set_img_layout()
         if layout_params != False:
@@ -367,139 +487,15 @@ class MulimgViewer (MulimgViewerGui):
             magnifier_scale = self.magnifier_scale.GetLineText(0).split(',')
             magnifier_scale = [float(x) for x in magnifier_scale]
 
-            color = self.colourPicker_draw.GetColour()
+            color = self.color_list
             line_width = int(self.line_width.GetLineText(0))
+
         except:
             self.SetStatusText_(
                 ["-1", "-1", "***Error: setting***", "-1"])
             return False
         else:
-            return [img_num_per_row, num_per_img, img_num_per_column, gap, show_scale, output_scale, img_resolution, 1 if self.magnifier.Value else 0, magnifier_scale, color, line_width, self.move_file.Value, self.keep_magnifer_size.Value, self.checkBox_orientation.Value]
-
-    def select_point_release(self, event):
-        if self.magnifier.Value != False:
-            self.start_flag = 0
-
-            id = self.get_img_id_from_point([self.x_0,self.y_0])
-            xy_grid = self.ImgManager.xy_grid[id]
-            self.x = self.x-xy_grid[0]
-            self.y = self.y-xy_grid[1]
-            self.x_0 = self.x_0 - xy_grid[0]
-            self.y_0 = self.y_0 - xy_grid[1]
-
-            if np.abs(self.x-self.x_0)>5 and np.abs(self.y-self.y_0)>5:
-                self.refresh(event)
-
-    def select_point(self, event):
-        # magnifier
-        if self.magnifier.Value:
-            x_0, y_0 = event.GetPosition()
-            self.x_0 = x_0
-            self.y_0 = y_0
-            self.x = x_0
-            self.y = y_0
-            self.start_flag = 1
-
-        # rotation
-        if self.rotation.Value:
-            x, y = event.GetPosition()
-            self.ImgManager.rotate(self.get_img_id_from_point([x,y]))
-            self.refresh(event)
-
-    def get_img_id_from_point(self, xy):
-        # get img_id from grid points
-        xy_grid = np.array(self.ImgManager.xy_grid)
-        xy_cur = np.array([xy])
-        xy_cur = np.repeat(xy_cur,xy_grid.shape[0],axis=0)
-        res_ = xy_cur - xy_grid
-        id_list = []
-        for i in range(xy_grid.shape[0]):
-            if res_[i][0]>=0 and res_[i][1]>=0:
-                id_list.append(i)
-            else:
-                id_list.append(0)     
-        return max(id_list)
-
-    def point_move(self, event):
-        # https://stackoverflow.com/questions/57342753/how-to-select-a-rectangle-of-the-screen-to-capture-by-dragging-mouse-on-transpar
-        x, y = event.GetPosition()
-        id = self.get_img_id_from_point([self.x_0,self.y_0])
-        xy_grid = self.ImgManager.xy_grid[id]
-        xy_limit = xy_grid + self.ImgManager.img_resolution_show   
-
-        if self.magnifier.Value != False and self.start_flag == 1 and self.x_0 < xy_limit[0] and self.y_0 < xy_limit[1]:
-            self.draw_points = 1
-
-            if x < xy_limit[0] and y < xy_limit[1]:
-                self.x = x
-                self.y = y
-            elif x > xy_limit[0] and y > xy_limit[1]:
-                self.x = xy_limit[0]
-                self.y = xy_limit[1]
-            elif x > xy_limit[0]:
-                self.x = xy_limit[0]
-                self.y = y
-            elif y > xy_limit[1]:
-                self.x = x
-                self.y = xy_limit[1]
-
-    def img_right_click(self, event):
-        x, y = event.GetPosition()
-        id = self.get_img_id_from_point([x,y])
-        xy_grid = self.ImgManager.xy_grid[id]
-        x = x-xy_grid[0]
-        y = y-xy_grid[1]
-        # magnifier
-        if self.magnifier.Value:
-            x_0, y_0, x_1, y_1 = self.ImgManager.crop_points
-            width = abs(x_0-x_1)
-            height = abs(y_0-y_1)
-            x_center_old = x_0+int((width)/2)
-            y_center_old = y_0+int((height)/2)
-            delta_x = x-x_center_old
-            delta_y = y-y_center_old
-
-            if x_1+delta_x > self.ImgManager.img_resolution_show[0]:
-                self.x = self.ImgManager.img_resolution_show[0]
-                self.x_0 = self.ImgManager.img_resolution_show[0]-width
-            elif x_0+delta_x < 0:
-                self.x_0 = 0
-                self.x = width
-            else:
-                self.x_0 = x_0+delta_x
-                self.x = x_1+delta_x
-
-            if y_1+delta_y > self.ImgManager.img_resolution_show[1]:
-                self.y = self.ImgManager.img_resolution_show[1]
-                self.y_0 = self.ImgManager.img_resolution_show[1]-height
-            elif y_0+delta_y < 0:
-                self.y_0 = 0
-                self.y = height
-            else:
-                self.y_0 = y_0+delta_y
-                self.y = y_1+delta_y
-
-        self.refresh(event)
-
-    def magnifier_fc(self, event):
-        self.start_flag = 0
-        self.draw_points = 0
-        if self.magnifier.Value != False:
-            self.SetCursor(wx.Cursor(wx.CURSOR_CROSS))
-            if self.rotation.Value != False:
-                self.rotation.Value = False
-        else:
-            self.SetCursor(wx.Cursor(wx.CURSOR_ARROW))
-        self.Refresh()
-
-    def rotation_fc(self, event):
-        if self.rotation.Value != False:
-            self.SetCursor(wx.Cursor(wx.CURSOR_POINT_RIGHT))
-            if self.magnifier.Value != False:
-                self.magnifier.Value = False
-        else:
-            self.SetCursor(wx.Cursor(wx.CURSOR_ARROW))
-        self.Refresh()
+            return [img_num_per_row, num_per_img, img_num_per_column, gap, show_scale, output_scale, img_resolution, 1 if self.magnifier.Value else 0, magnifier_scale, color, line_width, self.move_file.Value, self.keep_magnifer_size.Value, self.checkBox_auto_draw_color.Value, self.checkBox_orientation.Value]
 
     def show_img(self):
         # check layout_params change
@@ -516,11 +512,11 @@ class MulimgViewer (MulimgViewerGui):
             pass
         try:
             if self.show_scale_old != self.ImgManager.layout_params[4]:
-                self.draw_points = 0
+                draw_points = 0
             else:
-                self.draw_points = [self.x_0, self.y_0, self.x, self.y]
+                draw_points = self.xy_magnifier
         except:
-            self.draw_points = 0
+            draw_points = 0
 
         self.show_scale_old = self.ImgManager.layout_params[4]
         self.layout_params_old = self.ImgManager.layout_params
@@ -546,7 +542,7 @@ class MulimgViewer (MulimgViewerGui):
             self.ImgManager.get_flist()
 
             flag = self.ImgManager.stitch_images(
-                0, self.draw_points)
+                0, draw_points)
             if flag != 1:
                 bmp = self.ImgManager.img
                 self.img_size = bmp.size
@@ -557,10 +553,11 @@ class MulimgViewer (MulimgViewerGui):
                 self.img_last = wx.StaticBitmap(parent=self.img_panel,
                                                 bitmap=bmp)
                 self.img_panel.Children[0].Bind(
-                    wx.EVT_LEFT_DOWN, self.select_point)
-                self.img_panel.Children[0].Bind(wx.EVT_MOTION, self.point_move)
+                    wx.EVT_LEFT_DOWN, self.img_left_click)
                 self.img_panel.Children[0].Bind(
-                    wx.EVT_LEFT_UP, self.select_point_release)
+                    wx.EVT_MOTION, self.img_left_move)
+                self.img_panel.Children[0].Bind(
+                    wx.EVT_LEFT_UP, self.img_left_release)
                 self.img_panel.Children[0].Bind(
                     wx.EVT_RIGHT_DOWN, self.img_right_click)
 
@@ -654,3 +651,16 @@ class MulimgViewer (MulimgViewerGui):
     def change_img_stitch_mode(self, event):
         self.ImgManager.img_stitch_mode = self.choice_normalized_size.GetSelection()
 
+    def get_img_id_from_point(self, xy):
+        # get img_id from grid points
+        xy_grid = np.array(self.ImgManager.xy_grid)
+        xy_cur = np.array([xy])
+        xy_cur = np.repeat(xy_cur, xy_grid.shape[0], axis=0)
+        res_ = xy_cur - xy_grid
+        id_list = []
+        for i in range(xy_grid.shape[0]):
+            if res_[i][0] >= 0 and res_[i][1] >= 0:
+                id_list.append(i)
+            else:
+                id_list.append(0)
+        return max(id_list)

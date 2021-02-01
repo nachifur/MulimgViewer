@@ -170,7 +170,7 @@ Resize: 图像尺寸为一组图像中的平均尺寸，缩放模式(不保持�
 
 ### 5.3.8 图像间隔
 
-`gap`值可以控制间距x,y方向的间距。可以使用**负数**，这时可以达到**覆盖重叠**的效果。
+![image](https://github.com/nachifur/Mulimg_viewer/blob/master/img/f12.jpg)
 
 ### 5.3.9 图像填充
 

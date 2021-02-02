@@ -502,7 +502,10 @@ class ImgManager(ImgDataset):
                                                 im)
                                             i = 0
                                             res_ = (height - len(im_magnifier_list)*im_magnifier_list[0].size[1] - (len(im_magnifier_list)-1)*gap[4])
-                                            res_a = res_/(len(im_magnifier_list)-1)
+                                            if len(im_magnifier_list)==1:
+                                                res_a = 0
+                                            else:
+                                                res_a = res_/(len(im_magnifier_list)-1)
                                             add_ = 0
                                             add_gap = 0
                                             y_ = 0
@@ -510,7 +513,7 @@ class ImgManager(ImgDataset):
                                                 if i==0:
                                                     y_ = y+delta_y
                                                 else:
-                                                    y_ = y_+im_magnifier.size[y]+gap[4]+add_gap
+                                                    y_ = y_+im_magnifier.size[1]+gap[4]+add_gap
                                                 img.paste(
                                                     im_magnifier, (x, y_))
                                                 i += 1
@@ -560,7 +563,10 @@ class ImgManager(ImgDataset):
                                                 im)
                                             i = 0
                                             res_ = (width - len(im_magnifier_list)*im_magnifier_list[0].size[0] - (len(im_magnifier_list)-1)*gap[4])
-                                            res_a = res_/(len(im_magnifier_list)-1)
+                                            if len(im_magnifier_list)==1:
+                                                res_a = 0
+                                            else:
+                                                res_a = res_/(len(im_magnifier_list)-1)
                                             add_ = 0
                                             add_gap = 0
                                             x_ = 0
@@ -740,41 +746,41 @@ class ImgManager(ImgDataset):
         gap = self.layout_params[3][4]
         width, height = img_list[0].size
 
-        if magnifier_scale[0] == -1 or magnifier_scale[1] == -1:
-            if self.layout_params[-1]:
-                to_height = int(
-                    (self.img_resolution[1]-len(self.crop_points)*gap)/len(self.crop_points))
-                to_resize = [int(to_height/height*width), to_height]
-            else:
-                to_width = int(
-                    (self.img_resolution[0]-len(self.crop_points)*gap)/len(self.crop_points))
-                to_resize = [to_width, int(to_width/width*height)]
-            i = 0
-            for img in img_list:
-                if len(img_list) == 1:
-                    img_list[i] = img.resize(
-                        tuple(self.img_resolution), Image.NEAREST)
-                else:
-                    img_list[i] = img.resize(tuple(to_resize), Image.NEAREST)
-                i += 1
-            delta_x = 0
-            delta_y = 0
-        else:
+        if not (magnifier_scale[0] == -1 or magnifier_scale[1] == -1):
             to_resize = [int(width*magnifier_scale[0]),
-                         int(height*magnifier_scale[1])]
-
-            if to_resize[0] > self.img_resolution[0] or to_resize[1] > self.img_resolution[1]:
-                if self.img_resolution[0]/width < self.img_resolution[1]/height:
-                    img = img.resize((self.img_resolution[0], int(
-                        height*self.img_resolution[0]/width)), Image.NEAREST)
-                else:
-                    img = img.resize(
-                        (int(width*self.img_resolution[1]/height), self.img_resolution[1]), Image.NEAREST)
+                            int(height*magnifier_scale[1])]
+            if self.layout_params[-1]:
+                delta_x = 0
+                delta_y = int((self.img_resolution[1]-to_resize[1]*len(self.crop_points)-(len(self.crop_points)-1)*gap)/2)
             else:
-                img = img.resize(tuple(to_resize), Image.NEAREST)
+                delta_x = int((self.img_resolution[0]-to_resize[0]*len(self.crop_points)-(len(self.crop_points)-1)*gap)/2)
+                delta_y = 0
+        else:
+            if self.layout_params[-1]==1:
+                to_height = int((self.img_resolution[1]-gap*(len(self.crop_points)-1))/len(self.crop_points))
+                to_width = int(to_height/height*width)
+                delta_x = 0
+                delta_y = 0  
+                if to_width > self.img_resolution[0]:
+                    to_height = int(self.img_resolution[0]/to_width*to_height)
+                    to_width = self.img_resolution[0]
+                    delta_y = int((self.img_resolution[1]-to_height*len(self.crop_points)-(len(self.crop_points)-1)*gap)/2)
+            else:       
+                to_width = int((self.img_resolution[0]-gap*(len(self.crop_points)-1))/len(self.crop_points))
+                to_height = int(to_width/width*height)
+                delta_x = 0
+                delta_y = 0  
+                if to_height > self.img_resolution[1]:
+                    to_width = int(self.img_resolution[1]/to_height*to_width)
+                    to_height = self.img_resolution[1]
+                    delta_x = int((self.img_resolution[0]-to_width*len(self.crop_points)-(len(self.crop_points)-1)*gap)/2)
 
-            delta_x = int((self.img_resolution[0]-img_list[0].size[0])/2)
-            delta_y = int((self.img_resolution[1]-img_list[0].size[1])/2)
+            to_resize = [to_width, to_height]          
+
+        i = 0
+        for img in img_list:
+            img_list[i] = img.resize(tuple(to_resize), Image.NEAREST)
+            i += 1
 
         return img_list, delta_x, delta_y
 

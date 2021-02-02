@@ -487,7 +487,21 @@ class MulimgViewer (MulimgViewerGui):
             magnifier_scale = self.magnifier_scale.GetLineText(0).split(',')
             magnifier_scale = [float(x) for x in magnifier_scale]
 
-            color = self.color_list
+            if self.checkBox_auto_draw_color.Value:
+                # 10 colors built into the software
+                color = [wx.Colour(217, 26, 42, 85/100*255),
+                            wx.Colour(147, 81, 166, 65/100*255),
+                            wx.Colour(85, 166, 73, 65/100*255),
+                            wx.Colour(242, 229, 48, 95/100*255),
+                            wx.Colour(242, 116, 5, 95/100*255),
+                            wx.Colour(242, 201, 224, 95/100*255),
+                            wx.Colour(36, 132, 191, 75/100*255),
+                            wx.Colour(65, 166, 90, 65/100*255),
+                            wx.Colour(214, 242, 206, 95/100*255),
+                            wx.Colour(242, 163, 94, 95/100*255)]
+            else:
+                color = self.color_list
+
             line_width = int(self.line_width.GetLineText(0))
 
         except:
@@ -495,7 +509,7 @@ class MulimgViewer (MulimgViewerGui):
                 ["-1", "-1", "***Error: setting***", "-1"])
             return False
         else:
-            return [img_num_per_row, num_per_img, img_num_per_column, gap, show_scale, output_scale, img_resolution, 1 if self.magnifier.Value else 0, magnifier_scale, color, line_width, self.move_file.Value, self.keep_magnifer_size.Value, self.checkBox_auto_draw_color.Value, self.checkBox_orientation.Value]
+            return [img_num_per_row, num_per_img, img_num_per_column, gap, show_scale, output_scale, img_resolution, 1 if self.magnifier.Value else 0, magnifier_scale, color, line_width, self.move_file.Value, self.keep_magnifer_size.Value, self.checkBox_orientation.Value]
 
     def show_img(self):
         # check layout_params change

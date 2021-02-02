@@ -1,13 +1,10 @@
 import wx
 from mulimg_viewer_gui import MulimgViewerGui
 import numpy as np
-import os
 from about import About
 from utils import ImgManager
-from PIL import Image
 from index_table import IndexTable
 from pathlib import Path
-import time
 
 
 class MulimgViewer (MulimgViewerGui):
@@ -350,7 +347,8 @@ class MulimgViewer (MulimgViewerGui):
             x, y = event.GetPosition()
             id = self.get_img_id_from_point([self.x_0, self.y_0])
             xy_grid = self.ImgManager.xy_grid[id]
-            xy_limit = np.array(xy_grid) + np.array(self.ImgManager.img_resolution_show)
+            xy_limit = np.array(xy_grid) + \
+                np.array(self.ImgManager.img_resolution_show)
 
             if self.x_0 < xy_limit[0] and self.y_0 < xy_limit[1]:
 
@@ -491,15 +489,15 @@ class MulimgViewer (MulimgViewerGui):
             if self.checkBox_auto_draw_color.Value:
                 # 10 colors built into the software
                 color = [wx.Colour(217, 26, 42, 85/100*255),
-                            wx.Colour(147, 81, 166, 65/100*255),
-                            wx.Colour(85, 166, 73, 65/100*255),
-                            wx.Colour(242, 229, 48, 95/100*255),
-                            wx.Colour(242, 116, 5, 95/100*255),
-                            wx.Colour(242, 201, 224, 95/100*255),
-                            wx.Colour(36, 132, 191, 75/100*255),
-                            wx.Colour(65, 166, 90, 65/100*255),
-                            wx.Colour(214, 242, 206, 95/100*255),
-                            wx.Colour(242, 163, 94, 95/100*255)]
+                         wx.Colour(147, 81, 166, 65/100*255),
+                         wx.Colour(85, 166, 73, 65/100*255),
+                         wx.Colour(242, 229, 48, 95/100*255),
+                         wx.Colour(242, 116, 5, 95/100*255),
+                         wx.Colour(242, 201, 224, 95/100*255),
+                         wx.Colour(36, 132, 191, 75/100*255),
+                         wx.Colour(65, 166, 90, 65/100*255),
+                         wx.Colour(214, 242, 206, 95/100*255),
+                         wx.Colour(242, 163, 94, 95/100*255)]
             else:
                 color = self.color_list
 

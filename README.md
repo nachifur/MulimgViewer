@@ -56,6 +56,7 @@ sudo chmod 777 * -R /home/liu/.local/share
 **现在**只需使用Mulimg_viewer多图像浏览器，输入各个需要对比的目录，**一键保存对比图像对到本地**！
 
 图片挑选默认使用复制，选中`Move file`为剪切。
+图片挑选：`Parallel auto` or `Parallel manual`，关闭`Parallel+Sequential`。
 
 ### 例2：并行放大
 

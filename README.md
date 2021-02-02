@@ -236,7 +236,7 @@ https://www.gnu.org/licenses/gpl-3.0.en.html
 - [x] 增加删除功能（完善筛选功能）
 - [x] 保存带框的原始图像（@JuZiSYJ提供改进意见）
 - [x] 拼图过程中，点击可旋转图片
-- [ ] 多框放大功能（@JuZiSYJ提供改进意见）
+- [x] 多框放大功能（@JuZiSYJ提供改进意见）
 
 ## 9. 致谢
 nothingeasy:改进意见-(输入方式，新增：路径文件的导入和存储)

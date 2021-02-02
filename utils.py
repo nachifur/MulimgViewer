@@ -406,35 +406,37 @@ class ImgManager(ImgDataset):
                                 str_ = str(self.action_count *
                                            self.count_per_action+i_)+"_"+stem
                             else:
-                                if i==len(Path(f_path)._cparts)-1:
+                                if i == len(Path(f_path)._cparts)-1:
                                     img_name = stem
                                 else:
                                     str_ = str_+"_"+stem
                             i += 1
 
                         img = self.img_list[i_]
-                        img_list, _, _ = self.magnifier_preprocessing(self.add_alpha(img),img_mode=1)
+                        img_list, _, _ = self.magnifier_preprocessing(
+                            self.add_alpha(img), img_mode=1)
                         i = 0
                         for img in img_list:
                             f_path_output = Path(
-                                self.out_path_str) / dir_name/sub_dir_name / (str_+"_"+Path(img_name).stem+"_magnifier_"+str(i)+".png")                           
+                                self.out_path_str) / dir_name/sub_dir_name / (str_+"_"+Path(img_name).stem+"_magnifier_"+str(i)+".png")
                             img.save(f_path_output)
-                            i+=1    
+                            i += 1
                 # origin image with square
-                self.save_origin_img_magnifier(dir_name)                                            
+                self.save_origin_img_magnifier(dir_name)
             else:
                 i = 0
                 for img in self.img_list:
-                    img_list, _, _ = self.magnifier_preprocessing(self.add_alpha(img),img_mode=1)
+                    img_list, _, _ = self.magnifier_preprocessing(
+                        self.add_alpha(img), img_mode=1)
                     if not (Path(self.out_path_str)/dir_name/(Path(self.flist[i]).parent).stem).is_dir():
                         os.makedirs(Path(self.out_path_str) / dir_name /
                                     (Path(self.flist[i]).parent).stem)
                     ii = 0
                     for img in img_list:
                         f_path_output = Path(self.out_path_str) / dir_name / (Path(self.flist[i]).parent).stem / (
-                            (Path(self.flist[i]).parent).stem+"_"+Path(self.flist[i]).stem+"_magnifier_"+str(ii)+".png")                               
+                            (Path(self.flist[i]).parent).stem+"_"+Path(self.flist[i]).stem+"_magnifier_"+str(ii)+".png")
                         img.save(f_path_output)
-                        ii+=1
+                        ii += 1
                     i += 1
                 # origin image with square
                 self.save_origin_img_magnifier(dir_name)
@@ -446,16 +448,16 @@ class ImgManager(ImgDataset):
             os.makedirs(Path(self.out_path_str) / dir_name)
         if not (Path(self.out_path_str)/dir_name/sub_dir_name).exists():
             os.makedirs(Path(self.out_path_str) /
-                                dir_name/sub_dir_name)
+                        dir_name/sub_dir_name)
         i = 0
         for img in self.img_list:
             img = self.add_alpha(img)
             img = self.draw_rectangle(img, single=True)
             f_path_output = Path(self.out_path_str)/dir_name/sub_dir_name/(Path(self.flist[i]).parent).stem / (
-                        (Path(self.flist[i]).parent).stem+"_"+Path(self.flist[i]).stem+".png")
+                (Path(self.flist[i]).parent).stem+"_"+Path(self.flist[i]).stem+".png")
             if not (Path(self.out_path_str)/dir_name/sub_dir_name/(Path(self.flist[i]).parent).stem).is_dir():
                 os.makedirs(Path(self.out_path_str)/dir_name /
-                                    sub_dir_name/(Path(self.flist[i]).parent).stem)
+                            sub_dir_name/(Path(self.flist[i]).parent).stem)
             img.save(f_path_output)
             i += 1
 
@@ -507,7 +509,7 @@ class ImgManager(ImgDataset):
                                     gap[2]*iyy*(num_per_img-1)
                                 if ix*(img_num_per_column * num_per_img)+iyy*num_per_img+iy < len(self.img_list):
                                     im = self.img_list[ix*(img_num_per_column *
-                                                            num_per_img)+iyy*num_per_img+iy]
+                                                           num_per_img)+iyy*num_per_img+iy]
                                     im = self.img_preprocessing(im)
                                     if (ixx+1) % 2 == 0:
                                         if self.magnifier_flag != 0:
@@ -516,7 +518,7 @@ class ImgManager(ImgDataset):
                                             # adjust magnifier image gap
                                             i = 0
                                             res_ = (height - len(im_magnifier_list)*im_magnifier_list[0].size[1] - (
-                                                len(im_magnifier_list)-1)*gap[4])
+                                                len(im_magnifier_list)-1)*gap[4]-2*delta_y)
                                             if len(im_magnifier_list) == 1:
                                                 res_a = 0
                                             else:
@@ -573,7 +575,7 @@ class ImgManager(ImgDataset):
                                     gap[2]*ixx*(num_per_img-1)
                                 if iy*(img_num_per_row * num_per_img)+ixx*num_per_img+ix < len(self.img_list):
                                     im = self.img_list[iy*(img_num_per_row *
-                                                            num_per_img)+ixx*num_per_img+ix]
+                                                           num_per_img)+ixx*num_per_img+ix]
                                     im = self.img_preprocessing(im)
                                     if (iyy+1) % 2 == 0:
                                         if self.magnifier_flag != 0:
@@ -582,7 +584,7 @@ class ImgManager(ImgDataset):
                                             # adjust magnifier image gap
                                             i = 0
                                             res_ = (width - len(im_magnifier_list)*im_magnifier_list[0].size[0] - (
-                                                len(im_magnifier_list)-1)*gap[4])
+                                                len(im_magnifier_list)-1)*gap[4] - 2*delta_x)
                                             if len(im_magnifier_list) == 1:
                                                 res_a = 0
                                             else:
@@ -655,7 +657,7 @@ class ImgManager(ImgDataset):
                 img_array[x_left_down[1]-line_width:x_left_down[1], x_left_up[0]:x_right_up[0], :] = np.ones_like(
                     img_array[x_left_down[1]-line_width:x_left_down[1], x_left_up[0]:x_right_up[0], :])*draw_colour
             i += 1
-            k+=1
+            k += 1
             if k == len(color_list):
                 k = 0
         img = Image.fromarray(img_array.astype('uint8')).convert('RGBA')
@@ -756,46 +758,94 @@ class ImgManager(ImgDataset):
             img_list.append(img.crop(tuple(crop_point)))
         gap = self.layout_params[3][4]
         width, height = img_list[0].size
-
+        delta_x = 0
+        delta_y = 0
         # get to_resize
-        if not (magnifier_scale[0] == -1 or magnifier_scale[1] == -1):
-            # custom magnifier scale
-            to_resize = [int(width*magnifier_scale[0]),
-                         int(height*magnifier_scale[1])]
-            if self.layout_params[-1]:
-                delta_x = 0
-                delta_y = int(
-                    (self.img_resolution[1]-to_resize[1]*len(self.crop_points)-(len(self.crop_points)-1)*gap)/2)
+        if self.layout_params[-1] == 1:
+            # vertical
+            if not (magnifier_scale[0] == -1 or magnifier_scale[1] == -1):
+                # custom magnifier scale
+                to_height = int(height*magnifier_scale[1])
+                to_width = int(width*magnifier_scale[0])
+                height_all = (to_height*len(self.crop_points) +
+                              (len(self.crop_points)-1)*gap)
+                width_all = to_width
+
+                if self.img_resolution[1]/height_all > self.img_resolution[0]/width_all:
+                    if to_width > self.img_resolution[0]:
+                        to_height = int(
+                            self.img_resolution[0]/to_width*to_height)
+                        to_width = self.img_resolution[0]
+                    height_all = (to_height*len(self.crop_points) +
+                                  (len(self.crop_points)-1)*gap)
+                    delta_y = int((self.img_resolution[0]-height_all)/2)
+                elif self.img_resolution[1]/height_all == self.img_resolution[0]/width_all:
+                    pass
+                else:
+                    if height_all >= self.img_resolution[1]:
+                        to_width = int(
+                            self.img_resolution[1]/height_all*to_width)
+                        to_height = int(
+                            (self.img_resolution[1]-gap*(len(self.crop_points)-1))/len(self.crop_points))
+                    else:
+                        height_all = (to_height*len(self.crop_points) +
+                                      (len(self.crop_points)-1)*gap)
+                        delta_y = int((self.img_resolution[0]-height_all)/2)
             else:
-                delta_x = int(
-                    (self.img_resolution[0]-to_resize[0]*len(self.crop_points)-(len(self.crop_points)-1)*gap)/2)
-                delta_y = 0
-        else:
-            # auto magnifier scale
-            if self.layout_params[-1] == 1:
+                # auto magnifier scale
                 to_height = int(
                     (self.img_resolution[1]-gap*(len(self.crop_points)-1))/len(self.crop_points))
                 to_width = int(to_height/height*width)
-                delta_x = 0
-                delta_y = 0
                 if to_width > self.img_resolution[0]:
                     to_height = int(self.img_resolution[0]/to_width*to_height)
                     to_width = self.img_resolution[0]
-                    delta_y = int(
-                        (self.img_resolution[1]-to_height*len(self.crop_points)-(len(self.crop_points)-1)*gap)/2)
+                    height_all = (to_height*len(self.crop_points) +
+                                  (len(self.crop_points)-1)*gap)
+                    delta_y = int((self.img_resolution[0]-height_all)/2)
+        else:
+            # horizontal
+            if not (magnifier_scale[0] == -1 or magnifier_scale[1] == -1):
+                # custom magnifier scale
+                to_height = int(height*magnifier_scale[1])
+                to_width = int(width*magnifier_scale[0])
+                width_all = (to_width*len(self.crop_points) +
+                             (len(self.crop_points)-1)*gap)
+                height_all = to_height
+
+                if self.img_resolution[0]/width_all > self.img_resolution[1]/height_all:
+                    if to_height > self.img_resolution[1]:
+                        to_width = int(
+                            self.img_resolution[1]/to_height*to_width)
+                        to_height = self.img_resolution[1]
+                    width_all = (to_width*len(self.crop_points) +
+                                 (len(self.crop_points)-1)*gap)
+                    delta_x = int((self.img_resolution[0]-width_all)/2)
+                elif self.img_resolution[0]/width_all == self.img_resolution[1]/height_all:
+                    pass
+                else:
+                    if width_all >= self.img_resolution[0]:
+                        to_height = int(
+                            self.img_resolution[0]/width_all*to_height)
+                        to_width = int(
+                            (self.img_resolution[0]-gap*(len(self.crop_points)-1))/len(self.crop_points))
+                    else:
+                        width_all = (to_width*len(self.crop_points) +
+                                     (len(self.crop_points)-1)*gap)
+                        delta_x = int((self.img_resolution[0]-width_all)/2)
             else:
+                # auto magnifier scale
                 to_width = int(
                     (self.img_resolution[0]-gap*(len(self.crop_points)-1))/len(self.crop_points))
                 to_height = int(to_width/width*height)
-                delta_x = 0
-                delta_y = 0
                 if to_height > self.img_resolution[1]:
                     to_width = int(self.img_resolution[1]/to_height*to_width)
                     to_height = self.img_resolution[1]
-                    delta_x = int(
-                        (self.img_resolution[0]-to_width*len(self.crop_points)-(len(self.crop_points)-1)*gap)/2)
+                    width_all = (to_width*len(self.crop_points) +
+                                 (len(self.crop_points)-1)*gap)
+                    delta_x = int((self.img_resolution[0]-width_all)/2)
 
-            to_resize = [to_width, to_height]
+        to_resize = [to_width, to_height]
+
         if img_mode:
             to_width = self.img_resolution[0]
             to_height = int(to_width/width*height)
@@ -805,7 +855,7 @@ class ImgManager(ImgDataset):
 
             delta_x = 0
             delta_y = 0
-            to_resize = [to_width, to_height]  
+            to_resize = [to_width, to_height]
 
         # resize images
         line_width = self.layout_params[10]
@@ -836,7 +886,7 @@ class ImgManager(ImgDataset):
             img_list[i] = Image.fromarray(
                 img_array.astype('uint8')).convert('RGBA')
             i += 1
-            k+=1
+            k += 1
             if k == len(color_list):
                 k = 0
 

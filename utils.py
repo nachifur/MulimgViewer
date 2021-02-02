@@ -400,48 +400,64 @@ class ImgManager(ImgDataset):
                         f_path = self.path_list[self.action_count *
                                                 self.count_per_action+i_]
                         i = 0
+                        img_name = ""
                         for stem in Path(f_path)._cparts:
                             if i == 0:
                                 str_ = str(self.action_count *
                                            self.count_per_action+i_)+"_"+stem
-                                i += 1
                             else:
-                                str_ = str_+"_"+stem
-                        f_path_output = Path(
-                            self.out_path_str) / dir_name/sub_dir_name / str_
+                                if i==len(Path(f_path)._cparts)-1:
+                                    img_name = stem
+                                else:
+                                    str_ = str_+"_"+stem
+                            i += 1
 
                         img = self.img_list[i_]
-                        img, _, _ = self.magnifier_preprocessing(img)
-                        img.save(f_path_output)
+                        img_list, _, _ = self.magnifier_preprocessing(self.add_alpha(img),img_mode=1)
+                        i = 0
+                        for img in img_list:
+                            f_path_output = Path(
+                                self.out_path_str) / dir_name/sub_dir_name / (str_+"_"+Path(img_name).stem+"_magnifier_"+str(i)+".png")                           
+                            img.save(f_path_output)
+                            i+=1    
+                # origin image with square
+                self.save_origin_img_magnifier(dir_name)                                            
             else:
                 i = 0
                 for img in self.img_list:
-                    img, _, _ = self.magnifier_preprocessing(img)
-                    f_path_output = Path(self.out_path_str) / dir_name / (Path(self.flist[i]).parent).stem / (
-                        (Path(self.flist[i]).parent).stem+"_"+Path(self.flist[i]).stem+".png")
+                    img_list, _, _ = self.magnifier_preprocessing(self.add_alpha(img),img_mode=1)
                     if not (Path(self.out_path_str)/dir_name/(Path(self.flist[i]).parent).stem).is_dir():
                         os.makedirs(Path(self.out_path_str) / dir_name /
                                     (Path(self.flist[i]).parent).stem)
-                    img.save(f_path_output)
+                    ii = 0
+                    for img in img_list:
+                        f_path_output = Path(self.out_path_str) / dir_name / (Path(self.flist[i]).parent).stem / (
+                            (Path(self.flist[i]).parent).stem+"_"+Path(self.flist[i]).stem+"_magnifier_"+str(ii)+".png")                               
+                        img.save(f_path_output)
+                        ii+=1
                     i += 1
-                # origin image
-                sub_dir_name = "origin_img"
-                if not (Path(self.out_path_str)/dir_name).exists():
-                    os.makedirs(Path(self.out_path_str) / dir_name)
-                if not (Path(self.out_path_str)/dir_name/sub_dir_name).exists():
-                    os.makedirs(Path(self.out_path_str) /
+                # origin image with square
+                self.save_origin_img_magnifier(dir_name)
+
+    def save_origin_img_magnifier(self, dir_name):
+        # save origin image
+        sub_dir_name = "origin_img"
+        if not (Path(self.out_path_str)/dir_name).exists():
+            os.makedirs(Path(self.out_path_str) / dir_name)
+        if not (Path(self.out_path_str)/dir_name/sub_dir_name).exists():
+            os.makedirs(Path(self.out_path_str) /
                                 dir_name/sub_dir_name)
-                i = 0
-                for img in self.img_list:
-                    img = self.add_alpha(img)
-                    img = self.draw_rectangle(img, single=True)
-                    f_path_output = Path(self.out_path_str)/dir_name/sub_dir_name/(Path(self.flist[i]).parent).stem / (
+        i = 0
+        for img in self.img_list:
+            img = self.add_alpha(img)
+            img = self.draw_rectangle(img, single=True)
+            f_path_output = Path(self.out_path_str)/dir_name/sub_dir_name/(Path(self.flist[i]).parent).stem / (
                         (Path(self.flist[i]).parent).stem+"_"+Path(self.flist[i]).stem+".png")
-                    if not (Path(self.out_path_str)/dir_name/sub_dir_name/(Path(self.flist[i]).parent).stem).is_dir():
-                        os.makedirs(Path(self.out_path_str)/dir_name /
+            if not (Path(self.out_path_str)/dir_name/sub_dir_name/(Path(self.flist[i]).parent).stem).is_dir():
+                os.makedirs(Path(self.out_path_str)/dir_name /
                                     sub_dir_name/(Path(self.flist[i]).parent).stem)
-                    img.save(f_path_output)
-                    i += 1
+            img.save(f_path_output)
+            i += 1
 
     def stitch_images(self, img_mode, draw_points=0):
         """img_mode, 0: show, 1: save"""
@@ -500,6 +516,7 @@ class ImgManager(ImgDataset):
                                         if self.magnifier_flag != 0:
                                             im_magnifier_list, delta_x, delta_y = self.magnifier_preprocessing(
                                                 im)
+                                            # adjust magnifier image gap
                                             i = 0
                                             res_ = (height - len(im_magnifier_list)*im_magnifier_list[0].size[1] - (
                                                 len(im_magnifier_list)-1)*gap[4])
@@ -565,6 +582,7 @@ class ImgManager(ImgDataset):
                                         if self.magnifier_flag != 0:
                                             im_magnifier_list, delta_x, delta_y = self.magnifier_preprocessing(
                                                 im)
+                                            # adjust magnifier image gap
                                             i = 0
                                             res_ = (width - len(im_magnifier_list)*im_magnifier_list[0].size[0] - (
                                                 len(im_magnifier_list)-1)*gap[4])
@@ -690,7 +708,7 @@ class ImgManager(ImgDataset):
 
         return img
 
-    def crop_points_process(self, crop_points, img_mode):
+    def crop_points_process(self, crop_points, img_mode=0):
         """img_mode, 0: show, 1: save"""
         crop_points_ = []
         for crop_point in crop_points:
@@ -732,7 +750,9 @@ class ImgManager(ImgDataset):
 
         self.crop_points = crop_points_
 
-    def magnifier_preprocessing(self, img):
+    def magnifier_preprocessing(self, img, img_mode=0):
+        """img_mode, 0: show, 1: save"""
+        # crop images
         magnifier_scale = self.layout_params[8]
         img_list = []
         for crop_point in self.crop_points:
@@ -740,6 +760,7 @@ class ImgManager(ImgDataset):
         gap = self.layout_params[3][4]
         width, height = img_list[0].size
 
+        # get to_resize
         if not (magnifier_scale[0] == -1 or magnifier_scale[1] == -1):
             # custom magnifier scale
             to_resize = [int(width*magnifier_scale[0]),
@@ -778,7 +799,18 @@ class ImgManager(ImgDataset):
                         (self.img_resolution[0]-to_width*len(self.crop_points)-(len(self.crop_points)-1)*gap)/2)
 
             to_resize = [to_width, to_height]
+        if img_mode:
+            to_width = self.img_resolution[0]
+            to_height = int(to_width/width*height)
+            if to_height > self.img_resolution[1]:
+                to_width = int(self.img_resolution[1]/to_height*to_width)
+                to_height = self.img_resolution[1]
 
+            delta_x = 0
+            delta_y = 0
+            to_resize = [to_width, to_height]  
+
+        # resize images
         line_width = self.layout_params[10]
         color_list = self.layout_params[9]
         i = 0
@@ -790,6 +822,7 @@ class ImgManager(ImgDataset):
             draw_colour = np.array(
                 [color.red, color.green, color.blue, color.alpha])
 
+            # magnifier image with square
             x_left_up = [0, 0]
             x_left_down = [0, img_list[i].size[1]]
             x_right_up = [img_list[i].size[0], 0]

@@ -335,7 +335,7 @@ class MulimgViewer (MulimgViewerGui):
             self.x = x_0
             self.y = y_0
             self.start_flag = 1
-            self.xy_magnifier = 0
+            self.xy_magnifier = []
             self.color_list = []
 
         # rotation
@@ -346,25 +346,26 @@ class MulimgViewer (MulimgViewerGui):
 
     def img_left_move(self, event):
         # https://stackoverflow.com/questions/57342753/how-to-select-a-rectangle-of-the-screen-to-capture-by-dragging-mouse-on-transpar
-        x, y = event.GetPosition()
-        id = self.get_img_id_from_point([self.x_0, self.y_0])
-        xy_grid = self.ImgManager.xy_grid[id]
-        xy_limit = xy_grid + self.ImgManager.img_resolution_show
+        if self.magnifier.Value != False and self.start_flag == 1:
+            x, y = event.GetPosition()
+            id = self.get_img_id_from_point([self.x_0, self.y_0])
+            xy_grid = self.ImgManager.xy_grid[id]
+            xy_limit = np.array(xy_grid) + np.array(self.ImgManager.img_resolution_show)
 
-        if self.magnifier.Value != False and self.start_flag == 1 and self.x_0 < xy_limit[0] and self.y_0 < xy_limit[1]:
+            if self.x_0 < xy_limit[0] and self.y_0 < xy_limit[1]:
 
-            if x < xy_limit[0] and y < xy_limit[1]:
-                self.x = x
-                self.y = y
-            elif x > xy_limit[0] and y > xy_limit[1]:
-                self.x = xy_limit[0]
-                self.y = xy_limit[1]
-            elif x > xy_limit[0]:
-                self.x = xy_limit[0]
-                self.y = y
-            elif y > xy_limit[1]:
-                self.x = x
-                self.y = xy_limit[1]
+                if x < xy_limit[0] and y < xy_limit[1]:
+                    self.x = x
+                    self.y = y
+                elif x > xy_limit[0] and y > xy_limit[1]:
+                    self.x = xy_limit[0]
+                    self.y = xy_limit[1]
+                elif x > xy_limit[0]:
+                    self.x = xy_limit[0]
+                    self.y = y
+                elif y > xy_limit[1]:
+                    self.x = x
+                    self.y = xy_limit[1]
 
     def img_left_release(self, event):
         if self.magnifier.Value != False:
@@ -526,11 +527,11 @@ class MulimgViewer (MulimgViewerGui):
             pass
         try:
             if self.show_scale_old != self.ImgManager.layout_params[4]:
-                draw_points = 0
+                draw_points = []
             else:
                 draw_points = self.xy_magnifier
         except:
-            draw_points = 0
+            draw_points = []
 
         self.show_scale_old = self.ImgManager.layout_params[4]
         self.layout_params_old = self.ImgManager.layout_params

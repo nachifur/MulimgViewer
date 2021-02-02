@@ -58,8 +58,8 @@ class MainAPP(wx.App):
 
         if type == -1:
             # close window
-            self.frame[0].Close(None)
-            self.frame[1].Close(None)
+            self.frame[0].close(None)
+            self.frame[1].close(None)
         elif type == 0:
             # hidden PathSelectFrame, show MulimgViewer
             self.frame[1].Show(False)

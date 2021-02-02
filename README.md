@@ -9,7 +9,7 @@ Mulimg_viewer是**多图像**浏览器，在一个界面查看多个图像，方
 
 测试图像地址：https://github.com/nachifur/Mulimg_viewer/blob/master/img/test_img.zip
 
-目前处于测试阶段，需要改进的部分或者bug可以告诉我。邮箱：nachifur@mail.ustc.edu.cn
+您的star是我开发完善该项目最大的支持！
 
 ## 2. ubuntu
 提供Ubuntu和Windows的包（amd64）。其他环境可以使用源码运行。建议使用Python3.6以上。

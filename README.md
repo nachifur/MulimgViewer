@@ -17,7 +17,7 @@ Mulimg_viewer**多图像浏览器**，在一个界面显示多个图像，方便
 
 您的star是我开发完善该项目最大的支持！
 交流群：
-https://github.com/nachifur/Mulimg_viewer/blob/master/img/qrcode.jpg
+![image](https://github.com/nachifur/Mulimg_viewer/blob/master/img/qrcode.jpg)
 
 ## 2. ubuntu
 提供Ubuntu和Windows的包（amd64）。其他环境可以使用源码运行。建议使用Python3.6以上。

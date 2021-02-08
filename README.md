@@ -1,4 +1,5 @@
 # Mulimg viewer
+[**English page**](https://github.com/nachifur/Mulimg_viewer/wiki)
 ## 1. 介绍
 
 Mulimg_viewer**多图像浏览器**，在一个界面显示多个图像，方便图像的比较、筛选。 

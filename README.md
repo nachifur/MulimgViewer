@@ -260,7 +260,7 @@ https://www.gnu.org/licenses/gpl-3.0.en.html
 
 ## 9. 致谢
 nothingeasy:改进意见-(输入方式，新增：路径文件的导入和存储)
-uZiSYJ:改进意见-(保存带框的原始图像)
+JuZiSYJ:改进意见-(保存带框的原始图像+并行放大)
 ## 10. 引用
 如果您在研究中使用此项目，请使用以下BibTeX条目。
 ```

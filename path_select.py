@@ -35,7 +35,15 @@ class PathSelectFrame (PathSelectFrameGui):
         if self.m_dirPicker1.GetPath()=="":
             pass
         else:
-            self.m_richText1.AppendText(self.m_dirPicker1.GetPath()+"\n")
+            texts = self.m_richText1.Value
+            strlist = texts.split('\n')
+            strlist = [i for i in strlist if i != ""]
+            strlist.append(self.m_dirPicker1.GetPath())
+
+            str_ = ""
+            for path in strlist:
+                str_ = str_+path+"\n"
+            self.m_richText1.Value=str_
 
     def clear_all_path(self, event):
         self.m_richText1.Clear()

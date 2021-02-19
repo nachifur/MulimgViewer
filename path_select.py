@@ -12,14 +12,14 @@ class PathSelectFrame (PathSelectFrameGui):
         self.get_type = get_type
         self.Bind(wx.EVT_CLOSE, self.close)
 
-    def refresh_txt(self,input_path=None):
-        if input_path==None:
+    def refresh_txt(self, input_path=None):
+        if input_path == None:
             pass
         else:
             str_ = ""
             for path in input_path:
                 str_ = str_+path+"\n"
-            self.m_richText1.Value=str_
+            self.m_richText1.Value = str_
 
     def close(self, event):
         if self.get_type() == -1:
@@ -32,7 +32,7 @@ class PathSelectFrame (PathSelectFrameGui):
             self.UpdateUI(0, input_path=strlist)
 
     def add_dir(self, event):
-        if self.m_dirPicker1.GetPath()=="":
+        if self.m_dirPicker1.GetPath() == "":
             pass
         else:
             texts = self.m_richText1.Value
@@ -43,7 +43,7 @@ class PathSelectFrame (PathSelectFrameGui):
             str_ = ""
             for path in strlist:
                 str_ = str_+path+"\n"
-            self.m_richText1.Value=str_
+            self.m_richText1.Value = str_
 
     def clear_all_path(self, event):
         self.m_richText1.Clear()

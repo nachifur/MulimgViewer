@@ -913,5 +913,5 @@ class ImgManager(ImgDataset):
         return img
 
     def rotate(self, id):
-        img = Image.open(self.flist[id]).convert('RGB').rotate(-90)
+        img = Image.open(self.flist[id]).convert('RGB').transpose(Image.ROTATE_270)
         img.save(self.flist[id])

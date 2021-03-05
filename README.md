@@ -267,7 +267,7 @@ JuZiSYJ:改进意见-(保存带框的原始图像+并行放大)
 @misc{Mulimgviewer2020,
   author =       {Jiawei Liu},
   title =        {{Mulimg viewer: A multi-image viewer for image comparison and image stitching}},
-  howpublished = {\url{https://github.com/nachifur/Mulimg_viewer}},
+  howpublished = {\url{https://github.com/nachifur/MulimgViewer}},
   year =         {2020}
 }
 ```

@@ -1,4 +1,4 @@
-# Mulimg viewer
+# MulimgViewer
 [**English page**](https://github.com/nachifur/MulimgViewer/wiki)
 ## 1. 介绍
 
@@ -264,9 +264,9 @@ JuZiSYJ:改进意见-(保存带框的原始图像+并行放大)
 ## 10. 引用
 如果您在研究中使用此项目，请使用以下BibTeX条目。
 ```
-@misc{Mulimgviewer2020,
+@misc{MulimgViewer2020,
   author =       {Jiawei Liu},
-  title =        {{Mulimg viewer: A multi-image viewer for image comparison and image stitching}},
+  title =        {{MulimgViewer: A multi-image viewer for image comparison and image stitching}},
   howpublished = {\url{https://github.com/nachifur/MulimgViewer}},
   year =         {2020}
 }

@@ -1,8 +1,8 @@
 # Mulimg viewer
-[**English page**](https://github.com/nachifur/Mulimg_viewer/wiki)
+[**English page**](https://github.com/nachifur/MulimgViewer/wiki)
 ## 1. 介绍
 
-Mulimg_viewer**多图像浏览器**，在一个界面显示多个图像，方便图像的比较、筛选。 
+MulimgViewer**多图像浏览器**，在一个界面显示多个图像，方便图像的比较、筛选。 
 
 **功能**
 * 多路径并行显示
@@ -10,11 +10,11 @@ Mulimg_viewer**多图像浏览器**，在一个界面显示多个图像，方便
 * 点按旋转
 * 支持远程目录
 
-![image](https://github.com/nachifur/Mulimg_viewer/blob/master/img/f6.gif)
+![image](https://github.com/nachifur/MulimgViewer/blob/master/img/f6.gif)
 
-下载地址：https://github.com/nachifur/Mulimg_viewer/releases
+下载地址：https://github.com/nachifur/MulimgViewer/releases
 
-测试图像地址：https://github.com/nachifur/Mulimg_viewer/blob/master/img/test_img.zip
+测试图像地址：https://github.com/nachifur/MulimgViewer/blob/master/img/test_img.zip
 
 您的star是我开发完善该项目最大的支持！
 qq交流群：945669929
@@ -44,7 +44,7 @@ sudo chmod 777 * -R /home/liu/.local/share
 ### 2.2
 目前已经发布一个deb包（release中可以找到），在Ubuntu18.04(v3以前)或者ubuntu20.04(v3.1以后)测试可用，安装之后运行：
 ```bash
-/etc/Mulimg_viewer/main
+/etc/MulimgViewer/main
 ```
 这个不含测试图像，可以从code中直接下载。
 
@@ -56,37 +56,37 @@ sudo chmod 777 * -R /home/liu/.local/share
 
 **以前**你可能需要打开多个图像，逐个对比，再到文件夹找到图像，复制到别的地方。
 
-**现在**只需使用Mulimg_viewer多图像浏览器，输入各个需要对比的目录，**一键保存对比图像对到本地**！
+**现在**只需使用MulimgViewer多图像浏览器，输入各个需要对比的目录，**一键保存对比图像对到本地**！
 
 图片挑选默认使用复制，选中`Move file`为剪切。
 图片挑选：`Parallel auto` or `Parallel manual`，关闭`Parallel+Sequential`。
 
 ### 例2：并行放大
 
-Mulimg_viewer可以轻松的完成纵向与横向的拼接，**支持自动拼接保存，支持并行放大**！
+MulimgViewer可以轻松的完成纵向与横向的拼接，**支持自动拼接保存，支持并行放大**！
 
-![image](https://github.com/nachifur/Mulimg_viewer/blob/master/img/f7.jpg)
+![image](https://github.com/nachifur/MulimgViewer/blob/master/img/f7.jpg)
 
 同时支持**任意位置**划框（鼠标左键按住移动），**多框**并行放大（鼠标右键点击，生成新的框）。
 
-![image](https://github.com/nachifur/Mulimg_viewer/blob/master/img/f11.gif)
+![image](https://github.com/nachifur/MulimgViewer/blob/master/img/f11.gif)
 
 ### 例3：数据库浏览、成对数据
-浏览一个1000张图片的数据库，需要多长时间？一次显示100张，只需点击10次即可完成！Mulimg_viewer可以方便的进行成对的数据的浏览、比较。
+浏览一个1000张图片的数据库，需要多长时间？一次显示100张，只需点击10次即可完成！MulimgViewer可以方便的进行成对的数据的浏览、比较。
 
-![image](https://github.com/nachifur/Mulimg_viewer/blob/master/img/f8.jpg)
+![image](https://github.com/nachifur/MulimgViewer/blob/master/img/f8.jpg)
 
 ### 例4：支持远程挂载目录图片浏览
-将远程服务器的目录挂载后，在Mulimg_viewer中选择目录即可，完成图片浏览。
+将远程服务器的目录挂载后，在MulimgViewer中选择目录即可，完成图片浏览。
 例如：使用ubuntu的文件管理器`nautilus`，stfp://10.8.0.4连接到服务器。
 
-![image](https://github.com/nachifur/Mulimg_viewer/blob/master/img/f9.jpg)
+![image](https://github.com/nachifur/MulimgViewer/blob/master/img/f9.jpg)
 
 ### 例5：支持点按旋转
 
 显示多张图片的同时，鼠标左键点击即可完成图片旋转。
 
-![image](https://github.com/nachifur/Mulimg_viewer/blob/master/img/f10.gif)
+![image](https://github.com/nachifur/MulimgViewer/blob/master/img/f10.gif)
 
 ## 5. 使用说明
 
@@ -139,7 +139,7 @@ Mulimg_viewer可以轻松的完成纵向与横向的拼接，**支持自动拼�
 
 4是**自定义模式**，从txt, csv文件导入图片列表。支持csv文件多行多列显示。需要自动排布，`Num per img`设为-1。
 
-![image](https://github.com/nachifur/Mulimg_viewer/blob/master/img/f1.jpg)
+![image](https://github.com/nachifur/MulimgViewer/blob/master/img/f1.jpg)
 
 ### 5.3.2  输出模式：
 
@@ -149,7 +149,7 @@ Select: 分别保存当前浏览的图像到不同的文件夹，默认为copy�
 
 Magnifer: 单独保存放大图像，方便用户的后期处理。
 
-![image](https://github.com/nachifur/Mulimg_viewer/blob/master/img/f2.jpg)
+![image](https://github.com/nachifur/MulimgViewer/blob/master/img/f2.jpg)
 
 ### 5.3.3 图像排列自动化
 
@@ -177,11 +177,11 @@ Crop: 图像尺寸为一组图像中的最小尺寸，裁剪模式(保持原始�
 
 Resize: 图像尺寸为一组图像中的平均尺寸，缩放模式(不保持原始像素分辨率)
 
-![image](https://github.com/nachifur/Mulimg_viewer/blob/master/img/f3.jpg)
+![image](https://github.com/nachifur/MulimgViewer/blob/master/img/f3.jpg)
 
 ### 5.3.8 图像间隔
 
-![image](https://github.com/nachifur/Mulimg_viewer/blob/master/img/f12.jpg)
+![image](https://github.com/nachifur/MulimgViewer/blob/master/img/f12.jpg)
 
 ### 5.3.9 图像填充
 
@@ -189,7 +189,7 @@ Resize: 图像尺寸为一组图像中的平均尺寸，缩放模式(不保持�
 
 ### 5.3.10 并行手动模式支持路径导入保存
 
-![image](https://github.com/nachifur/Mulimg_viewer/blob/master/img/f4.jpg)
+![image](https://github.com/nachifur/MulimgViewer/blob/master/img/f4.jpg)
 
 ### 5.3.11 显示、输出尺寸独立
 
@@ -204,7 +204,7 @@ Resize: 图像尺寸为一组图像中的平均尺寸，缩放模式(不保持�
 
 1. 点击放大按钮
 
-![image](https://github.com/nachifur/Mulimg_viewer/blob/master/img/f5.jpg)
+![image](https://github.com/nachifur/MulimgViewer/blob/master/img/f5.jpg)
 
 2. 鼠标变为十字光标，在任意图片位置划框
 3. 按住鼠标左键，移动鼠标，选择放大区域，释放鼠标左键，显示放大结果
@@ -229,7 +229,7 @@ Resize: 图像尺寸为一组图像中的平均尺寸，缩放模式(不保持�
 2. 查看图片显示序号
 3. 输入序号，回车
 
-![image](https://github.com/nachifur/Mulimg_viewer/blob/master/img/f13.jpg)
+![image](https://github.com/nachifur/MulimgViewer/blob/master/img/f13.jpg)
 
 ## 6. 注意事项以及使用技巧
 
@@ -272,4 +272,4 @@ JuZiSYJ:改进意见-(保存带框的原始图像+并行放大)
 }
 ```
 
-[![HitCount](http://hits.dwyl.com/nachifur/Mulimg_viewer.svg)](http://hits.dwyl.com/nachifur/Mulimg_viewer)
+[![HitCount](http://hits.dwyl.com/nachifur/MulimgViewer.svg)](http://hits.dwyl.com/nachifur/MulimgViewer)

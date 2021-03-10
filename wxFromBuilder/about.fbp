@@ -257,7 +257,7 @@
                                 <property name="subclass">; ; forward_declare</property>
                                 <property name="toolbar_pane">0</property>
                                 <property name="tooltip"></property>
-                                <property name="url">https://github.com/nachifur/Mulimg_viewer/blob/master/LICENSE</property>
+                                <property name="url">https://github.com/nachifur/MulimgViewer/blob/master/LICENSE</property>
                                 <property name="visited_color"></property>
                                 <property name="window_extra_style"></property>
                                 <property name="window_name"></property>

@@ -18,7 +18,7 @@
         <property name="internationalize">0</property>
         <property name="name">MyProject2</property>
         <property name="namespace"></property>
-        <property name="path">/home/liu/桌面/wxgui/Mulimg_viewer</property>
+        <property name="path">/home/ljw/Desktop/wxgui/MulimgViewer</property>
         <property name="precompiled_header"></property>
         <property name="relative_path">1</property>
         <property name="skip_lua_events">1</property>
@@ -194,7 +194,7 @@
                                 <property name="subclass">; ; forward_declare</property>
                                 <property name="toolbar_pane">0</property>
                                 <property name="tooltip"></property>
-                                <property name="url">https://github.com/nachifur/Mulimg_viewer</property>
+                                <property name="url">https://github.com/nachifur/MulimgViewer</property>
                                 <property name="visited_color"></property>
                                 <property name="window_extra_style"></property>
                                 <property name="window_name"></property>

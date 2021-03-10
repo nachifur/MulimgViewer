@@ -18,7 +18,7 @@
         <property name="internationalize">0</property>
         <property name="name">mulimg_viewer</property>
         <property name="namespace"></property>
-        <property name="path">/home/ljw/Desktop/Mulimg_viewer</property>
+        <property name="path">/home/ljw/Desktop/wxgui/MulimgViewer</property>
         <property name="precompiled_header"></property>
         <property name="relative_path">1</property>
         <property name="skip_lua_events">1</property>
@@ -48,7 +48,7 @@
             <property name="size">-1,-1</property>
             <property name="style">wxDEFAULT_FRAME_STYLE</property>
             <property name="subclass">; ; forward_declare</property>
-            <property name="title">Mulimg viewer</property>
+            <property name="title">MulimgViewer</property>
             <property name="tooltip"></property>
             <property name="window_extra_style"></property>
             <property name="window_name"></property>

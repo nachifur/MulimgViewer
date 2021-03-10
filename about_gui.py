@@ -32,7 +32,7 @@ class AboutGui ( wx.Frame ):
 
 		wSizer1 = wx.WrapSizer( wx.HORIZONTAL, wx.WRAPSIZER_DEFAULT_FLAGS )
 
-		self.m_hyperlink1 = wx.adv.HyperlinkCtrl( self, wx.ID_ANY, u"Github", u"https://github.com/nachifur/Mulimg_viewer", wx.DefaultPosition, wx.DefaultSize, wx.adv.HL_DEFAULT_STYLE )
+		self.m_hyperlink1 = wx.adv.HyperlinkCtrl( self, wx.ID_ANY, u"Github", u"https://github.com/nachifur/MulimgViewer", wx.DefaultPosition, wx.DefaultSize, wx.adv.HL_DEFAULT_STYLE )
 		wSizer1.Add( self.m_hyperlink1, 0, wx.ALL, 5 )
 
 		self.m_hyperlink2 = wx.adv.HyperlinkCtrl( self, wx.ID_ANY, u"License", u"https://github.com/nachifur/Mulimg_viewer/blob/master/LICENSE", wx.DefaultPosition, wx.DefaultSize, wx.adv.HL_DEFAULT_STYLE )

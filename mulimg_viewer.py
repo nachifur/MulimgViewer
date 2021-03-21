@@ -46,7 +46,7 @@ class MulimgViewer (MulimgViewerGui):
         self.color_list = []
 
     def frame_resize(self, event):
-        self.auto_layout(mode=2)
+        self.auto_layout()
 
     def open_all_img(self, event):
         input_mode = self.choice_input_mode.GetSelection()
@@ -597,35 +597,34 @@ class MulimgViewer (MulimgViewerGui):
                 ["-1", "-1", "***Error: no image in this dir! Maybe you can choose parallel mode!***", "-1"])
         self.auto_layout()
 
-    def auto_layout(self, mode=1):
+    def auto_layout(self):
         # Auto Layout
         self.displaySize = wx.Size(wx.DisplaySize())
         if self.auto_layout_check.Value:
-            if mode == 1:
-                if self.img_size[0] < self.width:
-                    if self.img_size[0]+300 < self.width:
-                        w = self.width
-                    else:
-                        w = self.img_size[0]+300
-                elif self.img_size[0]+300 > self.displaySize[0]:
-                    w = self.displaySize[0]
+            if self.img_size[0] < self.width:
+                if self.img_size[0]+300 < self.width:
+                    w = self.width
                 else:
                     w = self.img_size[0]+300
+            elif self.img_size[0]+300 > self.displaySize[0]:
+                w = self.displaySize[0]
+            else:
+                w = self.img_size[0]+300
 
-                if self.img_size[1] < self.height:
-                    if self.img_size[1]+200 < self.height:
-                        h = self.height
-                    else:
-                        h = self.img_size[1]+200
-                elif self.img_size[1]+200 > self.displaySize[1]:
-                    h = self.displaySize[1]
+            if self.img_size[1] < self.height:
+                if self.img_size[1]+200 < self.height:
+                    h = self.height
                 else:
                     h = self.img_size[1]+200
-                self.Size = wx.Size((w, h))
-            self.scrolledWindow_set.SetMinSize(
-                wx.Size((300, -1)))
-            self.scrolledWindow_img.SetMinSize(
-                wx.Size((self.Size[0]-300, self.Size[1]-150)))
+            elif self.img_size[1]+200 > self.displaySize[1]:
+                h = self.displaySize[1]
+            else:
+                h = self.img_size[1]+200
+            self.Size = wx.Size((w, h))
+        self.scrolledWindow_set.SetMinSize(
+            wx.Size((300, -1)))
+        self.scrolledWindow_img.SetMinSize(
+            wx.Size((self.Size[0]-300, self.Size[1]-150)))
 
         self.Layout()
         self.Refresh()

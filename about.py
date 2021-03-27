@@ -41,6 +41,6 @@ class About (AboutGui):
         self.about_txt.WriteText("Description: ")
         self.about_txt.EndBold()
         self.about_txt.WriteText(
-            "Mulimg viewer is a multi-image viewer that can open multiple images in one interface, which is convenient for image comparison and image stitching.\n")
+            "MulimgViewer is a multi-image viewer that can open multiple images in one interface, which is convenient for image comparison and image stitching.\n")
 
         self.about_txt.EndFontSize()

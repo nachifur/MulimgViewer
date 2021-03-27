@@ -95,7 +95,7 @@ class MulimgViewerGui ( wx.Frame ):
 		self.rotation = wx.ToggleButton( self.m_panel1, wx.ID_ANY, u"↷", wx.DefaultPosition, wx.Size( 50,-1 ), 0 )
 		self.rotation.SetFont( wx.Font( 18, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL, False, wx.EmptyString ) )
 
-		wSizer1.Add( self.rotation, 0, wx.ALL, 5 )
+		wSizer1.Add( self.rotation, 0, wx.ALL|wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
 
 		self.m_panel1.SetSizer( wSizer1 )

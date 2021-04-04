@@ -9,6 +9,7 @@ MulimgViewer**多图像浏览器**，在一个界面显示多个图像，方便�
 * 多框并行放大
 * 点按旋转
 * 支持远程目录
+* 批量化resize图片
 
 ![image](https://github.com/nachifur/MulimgViewer/blob/master/img/f6.gif)
 
@@ -87,6 +88,17 @@ MulimgViewer可以轻松的完成纵向与横向的拼接，**支持自动拼接
 显示多张图片的同时，鼠标左键点击即可完成图片旋转。
 
 ![image](https://github.com/nachifur/MulimgViewer/blob/master/img/f10.gif)
+
+### 例6：批量化resize图片
+利用自动保存功能，可以实现批量化resize图片。
+操作：
+1. 输入模式选择：Sequential，选择输入文件夹
+2. 选择保存文件的输出目录
+3. 勾选自动保存`Auto save all`
+4. 设置`Truth resolution`为固定的大小，例如：`256,256`
+5. 点击保存💾️
+
+![image](https://github.com/nachifur/MulimgViewer/blob/master/img/f14.jpg)
 
 ## 5. 使用说明
 
@@ -167,7 +179,7 @@ Magnifer: 单独保存放大图像，方便用户的后期处理。
 
 ### 5.3.6 自动保存
 
-勾选自动保存，点击保存💾️
+勾选自动保存`Auto save all`，点击保存💾️
 
 ### 5.3.7 图像尺寸归一化
 

@@ -98,7 +98,7 @@ MulimgViewer可以轻松的完成纵向与横向的拼接，**支持自动拼接
 4. 设置`Truth resolution`为固定的大小，例如：`256,256`
 5. 点击保存💾️
 
-![image](https://github.com/nachifur/MulimgViewer/blob/master/img/f14.jpg)
+<img width="512" height="512" src="https://github.com/nachifur/MulimgViewer/blob/master/img/f14.jpg"/>
 
 ## 5. 使用说明
 

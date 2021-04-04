@@ -46,7 +46,7 @@ class MulimgViewer (MulimgViewerGui):
         self.color_list = []
 
     def frame_resize(self, event):
-        self.auto_layout()
+        self.auto_layout(frame_resize=True)
 
     def open_all_img(self, event):
         input_mode = self.choice_input_mode.GetSelection()
@@ -597,10 +597,10 @@ class MulimgViewer (MulimgViewerGui):
                 ["-1", "-1", "***Error: no image in this dir! Maybe you can choose parallel mode!***", "-1"])
         self.auto_layout()
 
-    def auto_layout(self):
+    def auto_layout(self,frame_resize=False):
         # Auto Layout
         self.displaySize = wx.Size(wx.DisplaySize())
-        if self.auto_layout_check.Value:
+        if self.auto_layout_check.Value and (not frame_resize):
             if self.img_size[0] < self.width:
                 if self.img_size[0]+300 < self.width:
                     w = self.width

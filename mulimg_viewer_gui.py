@@ -260,7 +260,6 @@ class MulimgViewerGui ( wx.Frame ):
 		bSizer10.Add( self.m_staticText11, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
 		self.auto_layout_check = wx.CheckBox( self.scrolledWindow_set, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.auto_layout_check.SetValue(True)
 		bSizer10.Add( self.auto_layout_check, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
 

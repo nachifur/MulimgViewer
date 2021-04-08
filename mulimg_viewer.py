@@ -117,16 +117,23 @@ class MulimgViewer (MulimgViewerGui):
         if self.auto_save_all.Value:
             last_count_img = self.ImgManager.action_count
             self.ImgManager.set_action_count(0)
-
-            for i in range(self.ImgManager.max_action_num):
+            if Path(self.out_path_str).is_dir():
+                continue_ = True
+            else:
+                continue_ = False
+            if continue_:
+                for i in range(self.ImgManager.max_action_num):
+                    self.SetStatusText_(
+                        ["-1", "-1", "***"+str(self.ImgManager.name_list[self.ImgManager.action_count])+", saving img***", "-1"])
+                    self.ImgManager.get_flist()
+                    self.ImgManager.save_img(self.out_path_str, type_)
+                    self.ImgManager.add()
+                self.ImgManager.set_action_count(last_count_img)
                 self.SetStatusText_(
-                    ["-1", "-1", "***"+str(self.ImgManager.name_list[self.ImgManager.action_count])+", saving img***", "-1"])
-                self.ImgManager.get_flist()
-                self.ImgManager.save_img(self.out_path_str, type_)
-                self.ImgManager.add()
-            self.ImgManager.set_action_count(last_count_img)
-            self.SetStatusText_(
-                ["-1", "-1", "***Finish***", "-1"])
+                    ["-1", "-1", "***Finish***", "-1"])
+            else:
+                self.SetStatusText_(
+                    ["-1", "-1", "***Error: First, need to select the output directory***", "-1"])                
         else:
             try:
                 self.SetStatusText_(

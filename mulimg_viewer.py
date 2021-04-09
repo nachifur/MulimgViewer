@@ -586,16 +586,17 @@ class MulimgViewer (MulimgViewerGui):
                 self.ImgManager.save_select_move = 0
 
             # status
-            if self.ImgManager.type == 0 or self.ImgManager.type == 1 or self.ImgManager.type == 3:
-                self.SetStatusText_(
-                    ["-1", str(self.ImgManager.action_count), str(self.ImgManager.img_resolution[0])+"x"+str(self.ImgManager.img_resolution[1])+" pixels / "+str(self.ImgManager.name_list[self.ImgManager.action_count]), "-1"])
-            elif self.ImgManager.type == 2:
+            if self.ImgManager.type == 2 or ((self.ImgManager.type==0 or self.ImgManager.type==1) and self.parallel_sequential.Value):
                 try:
                     self.SetStatusText_(
                         ["-1", str(self.ImgManager.action_count), str(self.ImgManager.img_resolution[0])+"x"+str(self.ImgManager.img_resolution[1])+" pixels / "+str(self.ImgManager.name_list[self.ImgManager.img_count])+"-"+str(self.ImgManager.name_list[self.ImgManager.img_count+self.ImgManager.count_per_action-1]), "-1"])
                 except:
                     self.SetStatusText_(
                         ["-1", str(self.ImgManager.action_count), str(self.ImgManager.img_resolution[0])+"x"+str(self.ImgManager.img_resolution[1])+" pixels / "+str(self.ImgManager.name_list[self.ImgManager.img_count])+"-"+str(self.ImgManager.name_list[self.ImgManager.img_num-1]), "-1"])
+            else:
+                self.SetStatusText_(
+                    ["-1", str(self.ImgManager.action_count), str(self.ImgManager.img_resolution[0])+"x"+str(self.ImgManager.img_resolution[1])+" pixels / "+str(self.ImgManager.name_list[self.ImgManager.action_count]), "-1"])                
+
             if flag == 1:
                 self.SetStatusText_(
                     ["-1", str(self.ImgManager.action_count)+' image', "***Error: "+str(self.ImgManager.name_list[self.ImgManager.action_count]) + ", during stitching images***", "-1"])
@@ -651,10 +652,10 @@ class MulimgViewer (MulimgViewerGui):
                         ["-1", "-1", "index_table.txt saving...", "-1"])
                 if self.ImgManager.type == 3:
                     self.index_table = IndexTable(
-                        None, self.ImgManager.path_list, self.ImgManager.layout_params, self.ImgManager.dataset_mode, self.out_path_str, self.ImgManager.type)
+                        None, self.ImgManager.path_list, self.ImgManager.layout_params, self.ImgManager.dataset_mode, self.out_path_str, self.ImgManager.type,self.parallel_sequential.Value)
                 else:
                     self.index_table = IndexTable(
-                        None, self.ImgManager.name_list, self.ImgManager.layout_params, self.ImgManager.dataset_mode, self.out_path_str, self.ImgManager.type)
+                        None, self.ImgManager.name_list, self.ImgManager.layout_params, self.ImgManager.dataset_mode, self.out_path_str, self.ImgManager.type,self.parallel_sequential.Value)
                 if self.ImgManager.dataset_mode:
                     self.SetStatusText_(
                         ["-1", "-1", "index_table.txt save in "+self.out_path_str, "-1"])

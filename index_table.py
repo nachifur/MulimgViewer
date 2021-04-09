@@ -4,12 +4,13 @@ import numpy as np
 from pathlib import Path
 
 class IndexTable (IndexTableGui):
-    def __init__(self, parent, flist, layout_params,dataset_mode,out_path_str,type):
+    def __init__(self, parent, flist, layout_params,dataset_mode,out_path_str,type,parallel_sequential):
         super().__init__(parent)
         self.index_table.SetEditable(False)
         self.index_table.BeginFontSize(12)
         self.dataset_mode=dataset_mode
         self.out_path_str = out_path_str
+        self.parallel_sequential=parallel_sequential
 
         self.show_id_table(flist, layout_params,type)
         if self.dataset_mode:
@@ -34,7 +35,10 @@ class IndexTable (IndexTableGui):
             else:
                 interval = img_num_per_row*img_num_per_column*num_per_img
         else:
-            interval = 1
+            if self.parallel_sequential:
+                interval = num_per_img
+            else:
+                interval = 1
         len_flist = len(flist)
         self.index_table.BeginBold()
         self.index_table.WriteText("Image index   /   Show index\n")

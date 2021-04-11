@@ -860,10 +860,17 @@ class ImgManager(ImgDataset):
         # resize images
         line_width = self.layout_params[10]
         color_list = self.layout_params[9]
+        image_interp = self.layout_params[13]
+        if image_interp==1:
+            interp_ = Image.LINEAR
+        elif image_interp==2:
+            interp_ = Image.CUBIC
+        else:
+            interp_ = Image.NEAREST
         i = 0
         k = 0
         for img in img_list:
-            img_list[i] = img.resize(tuple(to_resize), Image.NEAREST)
+            img_list[i] = img.resize(tuple(to_resize), interp_)
             img_array = np.array(img_list[i])
             color = color_list[k]
             draw_colour = np.array(

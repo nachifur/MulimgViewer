@@ -174,6 +174,21 @@ class MulimgViewerGui ( wx.Frame ):
 
 		fgSizer3.Add( bSizer15, 1, wx.EXPAND, 5 )
 
+		bSizer23 = wx.BoxSizer( wx.HORIZONTAL )
+
+		self.m_staticText28 = wx.StaticText( self.scrolledWindow_set, wx.ID_ANY, u"Image interp", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText28.Wrap( -1 )
+
+		bSizer23.Add( self.m_staticText28, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+
+		image_interpChoices = [ u"Nearest", u"Cubic", u"Linear" ]
+		self.image_interp = wx.Choice( self.scrolledWindow_set, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, image_interpChoices, 0 )
+		self.image_interp.SetSelection( 0 )
+		bSizer23.Add( self.image_interp, 0, wx.ALL, 5 )
+
+
+		fgSizer3.Add( bSizer23, 1, wx.EXPAND, 5 )
+
 		bSizer1 = wx.BoxSizer( wx.HORIZONTAL )
 
 		self.m_staticText2 = wx.StaticText( self.scrolledWindow_set, wx.ID_ANY, u"Row", wx.DefaultPosition, wx.DefaultSize, 0 )

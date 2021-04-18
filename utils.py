@@ -473,6 +473,7 @@ class ImgManager(ImgDataset):
         img_num_per_column = self.layout_params[2]
         gap = self.layout_params[3]
         self.magnifier_flag = self.layout_params[7]
+        self.show_box = self.layout_params[14]
         self.draw_points = draw_points
         if self.magnifier_flag != 0 and len(draw_points) != 0:
             self.crop_points_process(draw_points, img_mode)
@@ -617,7 +618,7 @@ class ImgManager(ImgDataset):
             self.img_resolution = self.img_resolution_  # set_scale_mode
             self.img = img
             self.xy_grid = xy_grid
-            if self.magnifier_flag != 0 and len(draw_points) != 0:
+            if self.show_box and len(draw_points) != 0:
                 self.img = self.draw_rectangle(self.img)
         except:
             return 1

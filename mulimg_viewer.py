@@ -133,7 +133,7 @@ class MulimgViewer (MulimgViewerGui):
                     ["-1", "-1", "***Finish***", "-1"])
             else:
                 self.SetStatusText_(
-                    ["-1", "-1", "***Error: First, need to select the output directory***", "-1"])                
+                    ["-1", "-1", "***Error: First, need to select the output directory***", "-1"])
         else:
             try:
                 self.SetStatusText_(
@@ -515,7 +515,7 @@ class MulimgViewer (MulimgViewerGui):
                 ["-1", "-1", "***Error: setting***", "-1"])
             return False
         else:
-            return [img_num_per_row, num_per_img, img_num_per_column, gap, show_scale, output_scale, img_resolution, 1 if self.magnifier.Value else 0, magnifier_scale, color, line_width, self.move_file.Value, self.keep_magnifer_size.Value, self.image_interp.GetSelection(), self.checkBox_orientation.Value]
+            return [img_num_per_row, num_per_img, img_num_per_column, gap, show_scale, output_scale, img_resolution, 1 if self.magnifier.Value else 0, magnifier_scale, color, line_width, self.move_file.Value, self.keep_magnifer_size.Value, self.image_interp.GetSelection(), self.show_box.Value, self.checkBox_orientation.Value]
 
     def show_img(self):
         # check layout_params change
@@ -586,7 +586,7 @@ class MulimgViewer (MulimgViewerGui):
                 self.ImgManager.save_select_move = 0
 
             # status
-            if self.ImgManager.type == 2 or ((self.ImgManager.type==0 or self.ImgManager.type==1) and self.parallel_sequential.Value):
+            if self.ImgManager.type == 2 or ((self.ImgManager.type == 0 or self.ImgManager.type == 1) and self.parallel_sequential.Value):
                 try:
                     self.SetStatusText_(
                         ["-1", str(self.ImgManager.action_count), str(self.ImgManager.img_resolution[0])+"x"+str(self.ImgManager.img_resolution[1])+" pixels / "+str(self.ImgManager.name_list[self.ImgManager.img_count])+"-"+str(self.ImgManager.name_list[self.ImgManager.img_count+self.ImgManager.count_per_action-1]), "-1"])
@@ -595,7 +595,7 @@ class MulimgViewer (MulimgViewerGui):
                         ["-1", str(self.ImgManager.action_count), str(self.ImgManager.img_resolution[0])+"x"+str(self.ImgManager.img_resolution[1])+" pixels / "+str(self.ImgManager.name_list[self.ImgManager.img_count])+"-"+str(self.ImgManager.name_list[self.ImgManager.img_num-1]), "-1"])
             else:
                 self.SetStatusText_(
-                    ["-1", str(self.ImgManager.action_count), str(self.ImgManager.img_resolution[0])+"x"+str(self.ImgManager.img_resolution[1])+" pixels / "+str(self.ImgManager.name_list[self.ImgManager.action_count]), "-1"])                
+                    ["-1", str(self.ImgManager.action_count), str(self.ImgManager.img_resolution[0])+"x"+str(self.ImgManager.img_resolution[1])+" pixels / "+str(self.ImgManager.name_list[self.ImgManager.action_count]), "-1"])
 
             if flag == 1:
                 self.SetStatusText_(
@@ -605,7 +605,7 @@ class MulimgViewer (MulimgViewerGui):
                 ["-1", "-1", "***Error: no image in this dir! Maybe you can choose parallel mode!***", "-1"])
         self.auto_layout()
 
-    def auto_layout(self,frame_resize=False):
+    def auto_layout(self, frame_resize=False):
         # Auto Layout
         self.displaySize = wx.Size(wx.DisplaySize())
         if self.auto_layout_check.Value and (not frame_resize):
@@ -652,10 +652,10 @@ class MulimgViewer (MulimgViewerGui):
                         ["-1", "-1", "index_table.txt saving...", "-1"])
                 if self.ImgManager.type == 3:
                     self.index_table = IndexTable(
-                        None, self.ImgManager.path_list, self.ImgManager.layout_params, self.ImgManager.dataset_mode, self.out_path_str, self.ImgManager.type,self.parallel_sequential.Value)
+                        None, self.ImgManager.path_list, self.ImgManager.layout_params, self.ImgManager.dataset_mode, self.out_path_str, self.ImgManager.type, self.parallel_sequential.Value)
                 else:
                     self.index_table = IndexTable(
-                        None, self.ImgManager.name_list, self.ImgManager.layout_params, self.ImgManager.dataset_mode, self.out_path_str, self.ImgManager.type,self.parallel_sequential.Value)
+                        None, self.ImgManager.name_list, self.ImgManager.layout_params, self.ImgManager.dataset_mode, self.out_path_str, self.ImgManager.type, self.parallel_sequential.Value)
                 if self.ImgManager.dataset_mode:
                     self.SetStatusText_(
                         ["-1", "-1", "index_table.txt save in "+self.out_path_str, "-1"])

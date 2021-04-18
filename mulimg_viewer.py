@@ -6,7 +6,7 @@ from about import About
 from utils import ImgManager
 from index_table import IndexTable
 from pathlib import Path
-
+import copy
 
 class MulimgViewer (MulimgViewerGui):
 
@@ -46,6 +46,7 @@ class MulimgViewer (MulimgViewerGui):
         self.y_0 = -1
         self.color_list = []
         self.box_id = -1
+        self.xy_magnifier=[]
 
     def frame_resize(self, event):
         self.auto_layout(frame_resize=True)
@@ -606,15 +607,7 @@ class MulimgViewer (MulimgViewerGui):
                     self.ImgManager.name_list, self.ImgManager.layout_params)
         except:
             pass
-        try:
-            if self.show_scale_old != self.ImgManager.layout_params[4]:
-                draw_points = []
-            else:
-                draw_points = self.xy_magnifier
-        except:
-            draw_points = []
 
-        self.show_scale_old = self.ImgManager.layout_params[4]
         self.layout_params_old = self.ImgManager.layout_params
         self.slider_img.SetValue(self.ImgManager.action_count)
         self.slider_value.SetValue(str(self.ImgManager.action_count))
@@ -638,7 +631,7 @@ class MulimgViewer (MulimgViewerGui):
             self.ImgManager.get_flist()
 
             flag = self.ImgManager.stitch_images(
-                0, draw_points)
+                0, copy.deepcopy(self.xy_magnifier))
             if flag != 1:
                 bmp = self.ImgManager.img
                 self.img_size = bmp.size

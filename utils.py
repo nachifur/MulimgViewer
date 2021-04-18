@@ -5,7 +5,7 @@ from PIL import Image
 from shutil import copyfile, move
 from pathlib import Path
 import csv
-
+import copy
 
 class ImgDataset():
     def init(self, input_path, type):
@@ -176,6 +176,9 @@ class ImgManager(ImgDataset):
         self.custom_resolution = False
         self.img_num = 0
         self.format_group = [".png", ".jpg", ".jpeg", ".bmp", ".tiff", ".tif"]
+        self.old_show_parm = [-1,-1,1,1]
+        self.crop_points=[]
+        self.old_img_resolution = [-1,-1]
 
     def get_flist(self):
 
@@ -252,6 +255,7 @@ class ImgManager(ImgDataset):
         else:
             self.img_resolution = [int(i) for i in self.layout_params[6]]
             self.custom_resolution = True
+
         self.img_list = img_list
 
     def save_img(self, out_path_str, out_type):
@@ -375,7 +379,7 @@ class ImgManager(ImgDataset):
         if not (Path(self.out_path_str)/dir_name).is_dir():
             os.makedirs(Path(self.out_path_str) / dir_name)
         if self.layout_params[7]:
-            self.check_1.append(self.stitch_images(1, self.draw_points))
+            self.check_1.append(self.stitch_images(1, self.crop_points))
         else:
             self.check_1.append(self.stitch_images(1))
 
@@ -474,7 +478,7 @@ class ImgManager(ImgDataset):
         gap = self.layout_params[3]
         self.magnifier_flag = self.layout_params[7]
         self.show_box = self.layout_params[14]
-        self.draw_points = draw_points
+        
         if len(draw_points) == 0:
             self.magnifier_flag = 0
         if self.magnifier_flag != 0:
@@ -617,7 +621,7 @@ class ImgManager(ImgDataset):
                                         img.paste(im, (x, y))
 
             # img = img.convert("RGBA")
-            self.img_resolution = self.img_resolution_  # set_scale_mode
+            self.img_resolution = self.img_resolution_copy  # set_scale_mode
             self.img = img
             self.xy_grid = xy_grid
             if self.show_box and len(draw_points) != 0:
@@ -668,7 +672,7 @@ class ImgManager(ImgDataset):
 
     def set_scale_mode(self, img_mode=0):
         """img_mode, 0: show, 1: save"""
-        self.img_resolution_ = self.img_resolution
+        self.img_resolution_copy = self.img_resolution
         self.img_resolution_show = self.img_resolution
         if img_mode == 0:
             self.img_resolution = (
@@ -743,10 +747,12 @@ class ImgManager(ImgDataset):
             if img_mode == 1:
                 scale = np.array(
                     self.layout_params[5])/np.array(self.layout_params[4])
-                crop_point[0] = int(crop_point[0]*scale[0])
-                crop_point[1] = int(crop_point[1]*scale[1])
-                crop_point[2] = int(crop_point[2]*scale[0])
-                crop_point[3] = int(crop_point[3]*scale[1])
+            else:
+                scale = self.layout_params[4]
+            crop_point[0] = int(crop_point[0]*scale[0])
+            crop_point[1] = int(crop_point[1]*scale[1])
+            crop_point[2] = int(crop_point[2]*scale[0])
+            crop_point[3] = int(crop_point[3]*scale[1])
 
             crop_points_.append(crop_point)
 

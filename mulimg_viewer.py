@@ -1,4 +1,5 @@
 import wx
+from wx.core import App
 from mulimg_viewer_gui import MulimgViewerGui
 import numpy as np
 from about import About
@@ -44,6 +45,7 @@ class MulimgViewer (MulimgViewerGui):
         self.y = -1
         self.y_0 = -1
         self.color_list = []
+        self.box_id = -1
 
     def frame_resize(self, event):
         self.auto_layout(frame_resize=True)
@@ -272,57 +274,89 @@ class MulimgViewer (MulimgViewerGui):
         self.ImgManager.img_alpha = self.foreground_slider.GetValue()
 
     def up_img(self, event):
-        size = self.scrolledWindow_img.GetSize()
-        self.position[0] = int(
-            self.scrolledWindow_img.GetScrollPos(wx.HORIZONTAL)/self.Uint[0])
-        self.position[1] = int(
-            self.scrolledWindow_img.GetScrollPos(wx.VERTICAL)/self.Uint[1])
-        if self.position[1] > 0:
-            self.position[1] -= 1
-        self.scrolledWindow_img.Scroll(
-            self.position[0]*self.Uint[0], self.position[1]*self.Uint[1])
+        if self.move_img_box.Value:
+            if self.box_id != -1:
+                x,y = self.get_center_box(self.ImgManager.crop_points[self.box_id])
+                x=x+0
+                y=y-1
+                self.xy_magnifier[self.box_id] = self.move_box_point(x, y)
+                self.refresh(event)
+        else:
+            size = self.scrolledWindow_img.GetSize()
+            self.position[0] = int(
+                self.scrolledWindow_img.GetScrollPos(wx.HORIZONTAL)/self.Uint[0])
+            self.position[1] = int(
+                self.scrolledWindow_img.GetScrollPos(wx.VERTICAL)/self.Uint[1])
+            if self.position[1] > 0:
+                self.position[1] -= 1
+            self.scrolledWindow_img.Scroll(
+                self.position[0]*self.Uint[0], self.position[1]*self.Uint[1])
         self.SetStatusText_(["up",  "-1", "-1", "-1"])
 
     def down_img(self, event):
-        size = self.scrolledWindow_img.GetSize()
-        self.position[0] = int(
-            self.scrolledWindow_img.GetScrollPos(wx.HORIZONTAL)/self.Uint[0])
-        self.position[1] = int(
-            self.scrolledWindow_img.GetScrollPos(wx.VERTICAL)/self.Uint[1])
-        if (self.position[1]-1)*self.Uint[1] < size[1]:
-            self.position[1] += 1
-            self.scrolledWindow_img.Scroll(
-                self.position[0]*self.Uint[0], self.position[1]*self.Uint[1])
+        if self.move_img_box.Value:
+            if self.box_id != -1:
+                x,y = self.get_center_box(self.ImgManager.crop_points[self.box_id])
+                x=x+0
+                y=y+1
+                self.xy_magnifier[self.box_id] = self.move_box_point(x, y)
+                self.refresh(event)
         else:
-            self.scrolledWindow_img.Scroll(
-                self.position[0]*self.Uint[0], size[1])
+            size = self.scrolledWindow_img.GetSize()
+            self.position[0] = int(
+                self.scrolledWindow_img.GetScrollPos(wx.HORIZONTAL)/self.Uint[0])
+            self.position[1] = int(
+                self.scrolledWindow_img.GetScrollPos(wx.VERTICAL)/self.Uint[1])
+            if (self.position[1]-1)*self.Uint[1] < size[1]:
+                self.position[1] += 1
+                self.scrolledWindow_img.Scroll(
+                    self.position[0]*self.Uint[0], self.position[1]*self.Uint[1])
+            else:
+                self.scrolledWindow_img.Scroll(
+                    self.position[0]*self.Uint[0], size[1])
         self.SetStatusText_(["down",  "-1", "-1", "-1"])
 
     def right_img(self, event):
-        size = self.scrolledWindow_img.GetSize()
-        self.position[0] = int(
-            self.scrolledWindow_img.GetScrollPos(wx.HORIZONTAL)/self.Uint[0])
-        self.position[1] = int(
-            self.scrolledWindow_img.GetScrollPos(wx.VERTICAL)/self.Uint[1])
-        if (self.position[0]-1)*self.Uint[0] < size[0]:
-            self.position[0] += 1
-            self.scrolledWindow_img.Scroll(
-                self.position[0]*self.Uint[0], self.position[1]*self.Uint[1])
+        if self.move_img_box.Value:
+            if self.box_id != -1:
+                x,y = self.get_center_box(self.ImgManager.crop_points[self.box_id])
+                x=x+1
+                y=y+0
+                self.xy_magnifier[self.box_id] = self.move_box_point(x, y)
+                self.refresh(event)
         else:
-            self.scrolledWindow_img.Scroll(
-                self.position[0]*self.Uint[0], size[0])
+            size = self.scrolledWindow_img.GetSize()
+            self.position[0] = int(
+                self.scrolledWindow_img.GetScrollPos(wx.HORIZONTAL)/self.Uint[0])
+            self.position[1] = int(
+                self.scrolledWindow_img.GetScrollPos(wx.VERTICAL)/self.Uint[1])
+            if (self.position[0]-1)*self.Uint[0] < size[0]:
+                self.position[0] += 1
+                self.scrolledWindow_img.Scroll(
+                    self.position[0]*self.Uint[0], self.position[1]*self.Uint[1])
+            else:
+                self.scrolledWindow_img.Scroll(
+                    self.position[0]*self.Uint[0], size[0])
         self.SetStatusText_(["right",  "-1", "-1", "-1"])
 
     def left_img(self, event):
-        size = self.scrolledWindow_img.GetSize()
-        self.position[0] = int(
-            self.scrolledWindow_img.GetScrollPos(wx.HORIZONTAL)/self.Uint[0])
-        self.position[1] = int(
-            self.scrolledWindow_img.GetScrollPos(wx.VERTICAL)/self.Uint[1])
-        if self.position[0] > 0:
-            self.position[0] -= 1
-            self.scrolledWindow_img.Scroll(
-                self.position[0]*self.Uint[0], self.position[1]*self.Uint[1])
+        if self.move_img_box.Value:
+            if self.box_id != -1:
+                x,y = self.get_center_box(self.ImgManager.crop_points[self.box_id])
+                x=x-1
+                y=y+0
+                self.xy_magnifier[self.box_id] = self.move_box_point(x, y)
+                self.refresh(event)
+        else:
+            size = self.scrolledWindow_img.GetSize()
+            self.position[0] = int(
+                self.scrolledWindow_img.GetScrollPos(wx.HORIZONTAL)/self.Uint[0])
+            self.position[1] = int(
+                self.scrolledWindow_img.GetScrollPos(wx.VERTICAL)/self.Uint[1])
+            if self.position[0] > 0:
+                self.position[0] -= 1
+                self.scrolledWindow_img.Scroll(
+                    self.position[0]*self.Uint[0], self.position[1]*self.Uint[1])
         self.SetStatusText_(["left",  "-1", "-1", "-1"])
 
     def SetStatusText_(self, texts):
@@ -331,22 +365,51 @@ class MulimgViewer (MulimgViewerGui):
                 self.m_statusBar1.SetStatusText(texts[i], i)
 
     def img_left_click(self, event):
-        # magnifier
+
         if self.magnifier.Value:
             x_0, y_0 = event.GetPosition()
             self.x_0 = x_0
             self.y_0 = y_0
             self.x = x_0
             self.y = y_0
-            self.start_flag = 1
-            self.xy_magnifier = []
-            self.color_list = []
+
+        if self.move_img_box.Value:
+            # select box
+            x, y = event.GetPosition()
+            id = self.get_img_id_from_point([x, y])
+            xy_grid = self.ImgManager.xy_grid[id]
+            x = x-xy_grid[0]
+            y = y-xy_grid[1]
+            x_y_array = []
+            for i in range(len(self.ImgManager.crop_points)):
+                x_y_array.append(self.get_center_box(self.ImgManager.crop_points[i]))
+            x_y_array = np.array(x_y_array)
+            dist = (x_y_array[:, 0]-x)**2+(x_y_array[:, 1]-y)**2
+            self.box_id = np.array(dist).argmin()
+            str_ = str(self.box_id)
+            self.SetStatusText_(["select "+str_+"-th box",  "-1", "-1", "-1"])    
+
+            self.start_flag = 0
+        else:
+            # magnifier
+            if self.magnifier.Value:
+                self.start_flag = 1
+            else:
+                self.start_flag = 0
 
         # rotation
         if self.rotation.Value:
             x, y = event.GetPosition()
             self.ImgManager.rotate(self.get_img_id_from_point([x, y]))
             self.refresh(event)
+
+    def img_left_dclick(self, event):
+        if self.move_img_box.Value:
+            pass
+        else:
+            self.start_flag = 0
+            self.xy_magnifier = []
+            self.color_list = []
 
     def img_left_move(self, event):
         # https://stackoverflow.com/questions/57342753/how-to-select-a-rectangle-of-the-screen-to-capture-by-dragging-mouse-on-transpar
@@ -399,38 +462,51 @@ class MulimgViewer (MulimgViewerGui):
         y = y-xy_grid[1]
         # magnifier
         if self.magnifier.Value:
-            x_0, y_0, x_1, y_1 = self.ImgManager.crop_points[0]
-            width = abs(x_0-x_1)
-            height = abs(y_0-y_1)
-            x_center_old = x_0+int((width)/2)
-            y_center_old = y_0+int((height)/2)
-            delta_x = x-x_center_old
-            delta_y = y-y_center_old
-
-            if x_1+delta_x > self.ImgManager.img_resolution_show[0]:
-                x = self.ImgManager.img_resolution_show[0]
-                x_0 = self.ImgManager.img_resolution_show[0]-width
-            elif x_0+delta_x < 0:
-                x_0 = 0
-                x = width
-            else:
-                x_0 = x_0+delta_x
-                x = x_1+delta_x
-
-            if y_1+delta_y > self.ImgManager.img_resolution_show[1]:
-                y = self.ImgManager.img_resolution_show[1]
-                y_0 = self.ImgManager.img_resolution_show[1]-height
-            elif y_0+delta_y < 0:
-                y_0 = 0
-                y = height
-            else:
-                y_0 = y_0+delta_y
-                y = y_1+delta_y
-
             self.color_list.append(self.colourPicker_draw.GetColour())
-            self.xy_magnifier.append([x, y, x_0, y_0])
-
+            try:
+                self.xy_magnifier.append(self.move_box_point(x, y))
+            except:
+                self.SetStatusText_(["-1",  "Drawing a box need click left mouse button!", "-1", "-1"])   
         self.refresh(event)
+
+    def move_box_point(self, x, y):
+        x_0, y_0, x_1, y_1 = self.ImgManager.crop_points[0]
+        x_center_old, y_center_old, width, height = self.get_center_box(
+            [x_0, y_0, x_1, y_1], more=True)
+        delta_x = x-x_center_old
+        delta_y = y-y_center_old
+
+        if x_1+delta_x > self.ImgManager.img_resolution_show[0]:
+            x = self.ImgManager.img_resolution_show[0]
+            x_0 = self.ImgManager.img_resolution_show[0]-width
+        elif x_0+delta_x < 0:
+            x_0 = 0
+            x = width
+        else:
+            x_0 = x_0+delta_x
+            x = x_1+delta_x
+
+        if y_1+delta_y > self.ImgManager.img_resolution_show[1]:
+            y = self.ImgManager.img_resolution_show[1]
+            y_0 = self.ImgManager.img_resolution_show[1]-height
+        elif y_0+delta_y < 0:
+            y_0 = 0
+            y = height
+        else:
+            y_0 = y_0+delta_y
+            y = y_1+delta_y
+        return [x, y, x_0, y_0]
+
+    def get_center_box(self, box, more=False):
+        x_0, y_0, x_1, y_1 = box
+        width = abs(x_0-x_1)
+        height = abs(y_0-y_1)
+        x_center_old = x_0+int((width)/2)
+        y_center_old = y_0+int((height)/2)
+        if more:
+            return [x_center_old, y_center_old, width, height]
+        else:
+            return [x_center_old, y_center_old]
 
     def magnifier_fc(self, event):
         self.start_flag = 0
@@ -574,6 +650,8 @@ class MulimgViewer (MulimgViewerGui):
                                                 bitmap=bmp)
                 self.img_panel.Children[0].Bind(
                     wx.EVT_LEFT_DOWN, self.img_left_click)
+                self.img_panel.Children[0].Bind(
+                    wx.EVT_LEFT_DCLICK, self.img_left_dclick)
                 self.img_panel.Children[0].Bind(
                     wx.EVT_MOTION, self.img_left_move)
                 self.img_panel.Children[0].Bind(

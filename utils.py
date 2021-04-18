@@ -475,7 +475,9 @@ class ImgManager(ImgDataset):
         self.magnifier_flag = self.layout_params[7]
         self.show_box = self.layout_params[14]
         self.draw_points = draw_points
-        if self.magnifier_flag != 0 and len(draw_points) != 0:
+        if len(draw_points) == 0:
+            self.magnifier_flag = 0
+        if self.magnifier_flag != 0:
             self.crop_points_process(draw_points, img_mode)
 
         # stitch img

@@ -363,10 +363,10 @@ class MulimgViewerGui ( wx.Frame ):
 
 		bSizer25 = wx.BoxSizer( wx.HORIZONTAL )
 
-		self.m_staticText30 = wx.StaticText( self.scrolledWindow_set, wx.ID_ANY, u"Move box", wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.m_staticText30.Wrap( -1 )
+		self.move_img_box_label = wx.StaticText( self.scrolledWindow_set, wx.ID_ANY, u"Move box", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.move_img_box_label.Wrap( -1 )
 
-		bSizer25.Add( self.m_staticText30, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+		bSizer25.Add( self.move_img_box_label, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
 		self.move_img_box = wx.CheckBox( self.scrolledWindow_set, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
 		bSizer25.Add( self.move_img_box, 0, wx.ALL, 5 )

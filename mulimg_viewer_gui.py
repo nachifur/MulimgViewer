@@ -176,7 +176,7 @@ class MulimgViewerGui ( wx.Frame ):
 
 		bSizer23 = wx.BoxSizer( wx.HORIZONTAL )
 
-		self.m_staticText28 = wx.StaticText( self.scrolledWindow_set, wx.ID_ANY, u"Image interp", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText28 = wx.StaticText( self.scrolledWindow_set, wx.ID_ANY, u"Image interp🔍️", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText28.Wrap( -1 )
 
 		bSizer23.Add( self.m_staticText28, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )

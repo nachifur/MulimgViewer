@@ -347,6 +347,20 @@ class MulimgViewerGui ( wx.Frame ):
 
 		fgSizer3.Add( bSizer21, 1, wx.EXPAND, 5 )
 
+		bSizer24 = wx.BoxSizer( wx.HORIZONTAL )
+
+		self.m_staticText29 = wx.StaticText( self.scrolledWindow_set, wx.ID_ANY, u"show 🔍️ img", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText29.Wrap( -1 )
+
+		bSizer24.Add( self.m_staticText29, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+
+		self.show_magnifier_img = wx.CheckBox( self.scrolledWindow_set, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.show_magnifier_img.SetValue(True)
+		bSizer24.Add( self.show_magnifier_img, 0, wx.ALL, 5 )
+
+
+		fgSizer3.Add( bSizer24, 1, wx.EXPAND, 5 )
+
 		self.m_staticline1 = wx.StaticLine( self.scrolledWindow_set, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_HORIZONTAL )
 		fgSizer3.Add( self.m_staticline1, 0, wx.EXPAND |wx.ALL, 5 )
 

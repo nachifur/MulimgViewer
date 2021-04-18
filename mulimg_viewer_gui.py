@@ -600,6 +600,7 @@ class MulimgViewerGui ( wx.Frame ):
 		self.magnifier.Bind( wx.EVT_TOGGLEBUTTON, self.magnifier_fc )
 		self.rotation.Bind( wx.EVT_TOGGLEBUTTON, self.rotation_fc )
 		self.choice_normalized_size.Bind( wx.EVT_CHOICE, self.change_img_stitch_mode )
+		self.move_img_box.Bind( wx.EVT_CHECKBOX, self.move_img_box_func )
 		self.colourPicker_gap.Bind( wx.EVT_COLOURPICKER_CHANGED, self.colour_change )
 		self.background_slider.Bind( wx.EVT_SCROLL, self.background_alpha )
 		self.foreground_slider.Bind( wx.EVT_SCROLL, self.foreground_alpha )
@@ -660,6 +661,9 @@ class MulimgViewerGui ( wx.Frame ):
 		event.Skip()
 
 	def change_img_stitch_mode( self, event ):
+		event.Skip()
+
+	def move_img_box_func( self, event ):
 		event.Skip()
 
 	def colour_change( self, event ):

@@ -349,7 +349,7 @@ class MulimgViewerGui ( wx.Frame ):
 
 		bSizer24 = wx.BoxSizer( wx.HORIZONTAL )
 
-		self.m_staticText29 = wx.StaticText( self.scrolledWindow_set, wx.ID_ANY, u"show box", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText29 = wx.StaticText( self.scrolledWindow_set, wx.ID_ANY, u"Show box", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText29.Wrap( -1 )
 
 		bSizer24.Add( self.m_staticText29, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
@@ -360,6 +360,19 @@ class MulimgViewerGui ( wx.Frame ):
 
 
 		fgSizer3.Add( bSizer24, 1, wx.EXPAND, 5 )
+
+		bSizer25 = wx.BoxSizer( wx.HORIZONTAL )
+
+		self.m_staticText30 = wx.StaticText( self.scrolledWindow_set, wx.ID_ANY, u"Move box", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText30.Wrap( -1 )
+
+		bSizer25.Add( self.m_staticText30, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+
+		self.move_img_box = wx.CheckBox( self.scrolledWindow_set, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
+		bSizer25.Add( self.move_img_box, 0, wx.ALL, 5 )
+
+
+		fgSizer3.Add( bSizer25, 1, wx.EXPAND, 5 )
 
 		self.m_staticline1 = wx.StaticLine( self.scrolledWindow_set, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_HORIZONTAL )
 		fgSizer3.Add( self.m_staticline1, 0, wx.EXPAND |wx.ALL, 5 )
@@ -587,6 +600,7 @@ class MulimgViewerGui ( wx.Frame ):
 		self.magnifier.Bind( wx.EVT_TOGGLEBUTTON, self.magnifier_fc )
 		self.rotation.Bind( wx.EVT_TOGGLEBUTTON, self.rotation_fc )
 		self.choice_normalized_size.Bind( wx.EVT_CHOICE, self.change_img_stitch_mode )
+		self.move_img_box.Bind( wx.EVT_CHECKBOX, self.move_img_box_func )
 		self.colourPicker_gap.Bind( wx.EVT_COLOURPICKER_CHANGED, self.colour_change )
 		self.background_slider.Bind( wx.EVT_SCROLL, self.background_alpha )
 		self.foreground_slider.Bind( wx.EVT_SCROLL, self.foreground_alpha )
@@ -647,6 +661,9 @@ class MulimgViewerGui ( wx.Frame ):
 		event.Skip()
 
 	def change_img_stitch_mode( self, event ):
+		event.Skip()
+
+	def move_img_box_func( self, event ):
 		event.Skip()
 
 	def colour_change( self, event ):

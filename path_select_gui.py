@@ -66,6 +66,7 @@ class PathSelectFrameGui ( wx.Frame ):
 		self.Centre( wx.BOTH )
 
 		# Connect Events
+		self.Bind( wx.EVT_SIZE, self.frame_resize )
 		self.m_dirPicker1.Bind( wx.EVT_DIRPICKER_CHANGED, self.add_dir )
 		self.button_clear_all.Bind( wx.EVT_BUTTON, self.clear_all_path )
 		self.button_clear_last.Bind( wx.EVT_BUTTON, self.clear_last_path )
@@ -78,6 +79,9 @@ class PathSelectFrameGui ( wx.Frame ):
 
 
 	# Virtual event handlers, overide them in your derived class
+	def frame_resize( self, event ):
+		event.Skip()
+
 	def add_dir( self, event ):
 		event.Skip()
 

@@ -12,6 +12,11 @@ class PathSelectFrame (PathSelectFrameGui):
         self.get_type = get_type
         self.Bind(wx.EVT_CLOSE, self.close)
 
+    def frame_resize(self, event):
+        self.m_richText1.SetMinSize(wx.Size((self.Size.Width, self.Size.Height)))
+        self.Layout()
+        self.Refresh()
+
     def refresh_txt(self, input_path=None):
         if input_path == None:
             pass

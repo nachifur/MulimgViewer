@@ -145,11 +145,13 @@ MulimgViewer可以轻松的完成纵向与横向的拼接，**支持自动拼接
 
 ### 5.3.1 输入模式
 
-1是**串行浏览**模式，一个文件夹下有不同的图片，命名不同，用于这些图片的拼接。
+`Sequential`是**串行浏览**模式，一个文件夹下有不同的图片，命名不同，用于这些图片的拼接。
 
-2和3是**并行浏览**模式，需要确保各子文件夹下面的图片命名相同，用于不同图片的对比。
+`Parallel auto`和`Parallel manual`是**并行浏览**模式，需要确保各子文件夹下面的图片命名相同，用于不同图片的对比。
 
-4是**自定义模式**，从txt, csv文件导入图片列表。支持csv文件多行多列显示。需要自动排布，`Num per img`设为-1。
+`Image file list`是**自定义模式**，从txt, csv文件导入图片列表。支持csv文件多行多列显示。
+
+如果需要自动排布，`Num per img`设为-1。
 
 ![image](https://github.com/nachifur/MulimgViewer/blob/master/img/f1.jpg)
 
@@ -157,7 +159,7 @@ MulimgViewer可以轻松的完成纵向与横向的拼接，**支持自动拼接
 
 Stitch: 将拼接的图像保存到*stitch_images*目录下
 
-Select: 分别保存当前浏览的图像到不同的文件夹，默认为copy模式，选中`Move file`为剪切模式。
+Select: 分别保存当前浏览的图像到不同的文件夹，默认为copy模式，选中`Move file`为剪切模式。（推荐的输入模式为`Parallel auto`或`Parallel manual`，关闭`Parallel+Sequential`）
 
 Magnifer: 单独保存放大图像，方便用户的后期处理。
 

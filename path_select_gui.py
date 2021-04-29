@@ -18,7 +18,7 @@ import wx.richtext
 class PathSelectFrameGui ( wx.Frame ):
 
 	def __init__( self, parent ):
-		wx.Frame.__init__ ( self, parent, id = wx.ID_ANY, title = u"Parallel manual choose input directory", pos = wx.DefaultPosition, size = wx.Size( 500,300 ), style = wx.DEFAULT_FRAME_STYLE|wx.TAB_TRAVERSAL )
+		wx.Frame.__init__ ( self, parent, id = wx.ID_ANY, title = u"Parallel manual choose input directory", pos = wx.DefaultPosition, size = wx.Size( -1,-1 ), style = wx.DEFAULT_FRAME_STYLE|wx.TAB_TRAVERSAL )
 
 		self.SetSizeHints( wx.DefaultSize, wx.DefaultSize )
 
@@ -46,6 +46,7 @@ class PathSelectFrameGui ( wx.Frame ):
 
 		self.SetSizer( fgSizer1 )
 		self.Layout()
+		fgSizer1.Fit( self )
 		self.m_menubar1 = wx.MenuBar( 0 )
 		self.m_menu1 = wx.Menu()
 		self.m_menuItem1 = wx.MenuItem( self.m_menu1, wx.ID_ANY, u"Clear all path"+ u"\t" + u"CTRL+A", wx.EmptyString, wx.ITEM_NORMAL )

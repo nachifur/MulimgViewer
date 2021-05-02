@@ -173,7 +173,7 @@
                                     <property name="maximum_size"></property>
                                     <property name="min_size"></property>
                                     <property name="minimize_button">0</property>
-                                    <property name="minimum_size">50,-1</property>
+                                    <property name="minimum_size">-1,-1</property>
                                     <property name="moveable">1</property>
                                     <property name="name">button_open_all</property>
                                     <property name="pane_border">1</property>
@@ -186,7 +186,7 @@
                                     <property name="pressed"></property>
                                     <property name="resize">Resizable</property>
                                     <property name="show">1</property>
-                                    <property name="size">50,-1</property>
+                                    <property name="size">50,30</property>
                                     <property name="style">wxBORDER_NONE</property>
                                     <property name="subclass">; ; forward_declare</property>
                                     <property name="toolbar_pane">0</property>
@@ -239,7 +239,7 @@
                                     <property name="maximum_size"></property>
                                     <property name="min_size"></property>
                                     <property name="minimize_button">0</property>
-                                    <property name="minimum_size"></property>
+                                    <property name="minimum_size">-1,-1</property>
                                     <property name="moveable">1</property>
                                     <property name="name">choice_input_mode</property>
                                     <property name="pane_border">1</property>
@@ -251,7 +251,7 @@
                                     <property name="resize">Resizable</property>
                                     <property name="selection">0</property>
                                     <property name="show">1</property>
-                                    <property name="size"></property>
+                                    <property name="size">-1,30</property>
                                     <property name="style"></property>
                                     <property name="subclass">; ; forward_declare</property>
                                     <property name="toolbar_pane">0</property>
@@ -368,7 +368,7 @@
                                     <property name="maximum_size"></property>
                                     <property name="min_size"></property>
                                     <property name="minimize_button">0</property>
-                                    <property name="minimum_size"></property>
+                                    <property name="minimum_size">50,30</property>
                                     <property name="moveable">1</property>
                                     <property name="name">m_button6</property>
                                     <property name="pane_border">1</property>
@@ -381,7 +381,7 @@
                                     <property name="pressed"></property>
                                     <property name="resize">Resizable</property>
                                     <property name="show">1</property>
-                                    <property name="size">50,-1</property>
+                                    <property name="size">50,30</property>
                                     <property name="style">wxBORDER_NONE</property>
                                     <property name="subclass">; ; forward_declare</property>
                                     <property name="toolbar_pane">0</property>
@@ -441,7 +441,7 @@
                                     <property name="maximum_size"></property>
                                     <property name="min_size"></property>
                                     <property name="minimize_button">0</property>
-                                    <property name="minimum_size">50,-1</property>
+                                    <property name="minimum_size">-1,-1</property>
                                     <property name="moveable">1</property>
                                     <property name="name">save_butoon</property>
                                     <property name="pane_border">1</property>
@@ -454,7 +454,7 @@
                                     <property name="pressed"></property>
                                     <property name="resize">Resizable</property>
                                     <property name="show">1</property>
-                                    <property name="size">-1,-1</property>
+                                    <property name="size">50,30</property>
                                     <property name="style">wxBORDER_NONE</property>
                                     <property name="subclass">; ; forward_declare</property>
                                     <property name="toolbar_pane">0</property>
@@ -560,7 +560,7 @@
                                     <property name="fg"></property>
                                     <property name="floatable">1</property>
                                     <property name="focus"></property>
-                                    <property name="font">,90,90,12,70,0</property>
+                                    <property name="font">,90,90,20,70,0</property>
                                     <property name="gripper">0</property>
                                     <property name="hidden">0</property>
                                     <property name="id">wxID_ANY</property>
@@ -585,7 +585,7 @@
                                     <property name="pressed"></property>
                                     <property name="resize">Resizable</property>
                                     <property name="show">1</property>
-                                    <property name="size">50,-1</property>
+                                    <property name="size">50,30</property>
                                     <property name="style"></property>
                                     <property name="subclass">; ; forward_declare</property>
                                     <property name="toolbar_pane">0</property>
@@ -633,7 +633,7 @@
                                     <property name="fg"></property>
                                     <property name="floatable">1</property>
                                     <property name="focus"></property>
-                                    <property name="font">,90,90,12,70,0</property>
+                                    <property name="font">,90,90,20,70,0</property>
                                     <property name="gripper">0</property>
                                     <property name="hidden">0</property>
                                     <property name="id">wxID_ANY</property>
@@ -645,7 +645,7 @@
                                     <property name="maximum_size"></property>
                                     <property name="min_size"></property>
                                     <property name="minimize_button">0</property>
-                                    <property name="minimum_size">50,-1</property>
+                                    <property name="minimum_size">-1,-1</property>
                                     <property name="moveable">1</property>
                                     <property name="name">m_button4</property>
                                     <property name="pane_border">1</property>
@@ -658,7 +658,7 @@
                                     <property name="pressed"></property>
                                     <property name="resize">Resizable</property>
                                     <property name="show">1</property>
-                                    <property name="size"></property>
+                                    <property name="size">50,30</property>
                                     <property name="style"></property>
                                     <property name="subclass">; ; forward_declare</property>
                                     <property name="toolbar_pane">0</property>
@@ -706,7 +706,7 @@
                                     <property name="fg"></property>
                                     <property name="floatable">1</property>
                                     <property name="focus"></property>
-                                    <property name="font">,90,90,16,70,0</property>
+                                    <property name="font">,90,90,20,70,0</property>
                                     <property name="gripper">0</property>
                                     <property name="hidden">0</property>
                                     <property name="id">wxID_ANY</property>
@@ -718,7 +718,7 @@
                                     <property name="maximum_size"></property>
                                     <property name="min_size"></property>
                                     <property name="minimize_button">0</property>
-                                    <property name="minimum_size">50,-1</property>
+                                    <property name="minimum_size">-1,-1</property>
                                     <property name="moveable">1</property>
                                     <property name="name">m_button5</property>
                                     <property name="pane_border">1</property>
@@ -731,7 +731,7 @@
                                     <property name="pressed"></property>
                                     <property name="resize">Resizable</property>
                                     <property name="show">1</property>
-                                    <property name="size"></property>
+                                    <property name="size">50,30</property>
                                     <property name="style"></property>
                                     <property name="subclass">; ; forward_declare</property>
                                     <property name="toolbar_pane">0</property>
@@ -795,7 +795,7 @@
                                     <property name="pos"></property>
                                     <property name="resize">Resizable</property>
                                     <property name="show">1</property>
-                                    <property name="size">50,-1</property>
+                                    <property name="size">50,30</property>
                                     <property name="style">wxTE_PROCESS_ENTER</property>
                                     <property name="subclass">; ; forward_declare</property>
                                     <property name="toolbar_pane">0</property>
@@ -861,7 +861,7 @@
                                     <property name="pos"></property>
                                     <property name="resize">Resizable</property>
                                     <property name="show">1</property>
-                                    <property name="size">150,-1</property>
+                                    <property name="size">150,30</property>
                                     <property name="style">wxSL_HORIZONTAL</property>
                                     <property name="subclass">; ; forward_declare</property>
                                     <property name="toolbar_pane">0</property>
@@ -927,7 +927,7 @@
                                     <property name="pos"></property>
                                     <property name="resize">Resizable</property>
                                     <property name="show">1</property>
-                                    <property name="size"></property>
+                                    <property name="size">-1,-1</property>
                                     <property name="style"></property>
                                     <property name="subclass">; ; forward_declare</property>
                                     <property name="toolbar_pane">0</property>
@@ -1024,7 +1024,7 @@
                                     <property name="enabled">1</property>
                                     <property name="fg"></property>
                                     <property name="floatable">1</property>
-                                    <property name="font">,90,90,18,70,0</property>
+                                    <property name="font">,90,90,20,70,0</property>
                                     <property name="gripper">0</property>
                                     <property name="hidden">0</property>
                                     <property name="id">wxID_ANY</property>
@@ -1045,7 +1045,7 @@
                                     <property name="pos"></property>
                                     <property name="resize">Resizable</property>
                                     <property name="show">1</property>
-                                    <property name="size">50,-1</property>
+                                    <property name="size">50,30</property>
                                     <property name="subclass">; ; forward_declare</property>
                                     <property name="toolbar_pane">0</property>
                                     <property name="tooltip"></property>
@@ -1088,7 +1088,7 @@
                                     <property name="enabled">1</property>
                                     <property name="fg"></property>
                                     <property name="floatable">1</property>
-                                    <property name="font">,90,90,18,70,0</property>
+                                    <property name="font">,90,90,20,70,0</property>
                                     <property name="gripper">0</property>
                                     <property name="hidden">0</property>
                                     <property name="id">wxID_ANY</property>
@@ -1109,7 +1109,7 @@
                                     <property name="pos"></property>
                                     <property name="resize">Resizable</property>
                                     <property name="show">1</property>
-                                    <property name="size">50,-1</property>
+                                    <property name="size">50,30</property>
                                     <property name="subclass">; ; forward_declare</property>
                                     <property name="toolbar_pane">0</property>
                                     <property name="tooltip"></property>

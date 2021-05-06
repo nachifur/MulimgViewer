@@ -652,9 +652,8 @@ class MulimgViewer (MulimgViewerGui):
                 self.img_panel.Children[0].Bind(
                     wx.EVT_RIGHT_DOWN, self.img_right_click)
 
-            if self.ImgManager.layout_params[11] and flag != 1 and self.ImgManager.save_select_move:
+            if self.ImgManager.layout_params[11] and flag != 1:
                 self.ImgManager.subtract()
-                self.ImgManager.save_select_move = 0
 
             # status
             if self.ImgManager.type == 2 or ((self.ImgManager.type == 0 or self.ImgManager.type == 1) and self.parallel_sequential.Value):

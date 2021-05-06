@@ -251,7 +251,7 @@
                                     <property name="resize">Resizable</property>
                                     <property name="selection">0</property>
                                     <property name="show">1</property>
-                                    <property name="size">-1,30</property>
+                                    <property name="size">-1,-1</property>
                                     <property name="style"></property>
                                     <property name="subclass">; ; forward_declare</property>
                                     <property name="toolbar_pane">0</property>
@@ -706,7 +706,7 @@
                                     <property name="fg"></property>
                                     <property name="floatable">1</property>
                                     <property name="focus"></property>
-                                    <property name="font">,90,90,20,70,0</property>
+                                    <property name="font">,90,90,12,70,0</property>
                                     <property name="gripper">0</property>
                                     <property name="hidden">0</property>
                                     <property name="id">wxID_ANY</property>
@@ -795,7 +795,7 @@
                                     <property name="pos"></property>
                                     <property name="resize">Resizable</property>
                                     <property name="show">1</property>
-                                    <property name="size">50,30</property>
+                                    <property name="size">50,-1</property>
                                     <property name="style">wxTE_PROCESS_ENTER</property>
                                     <property name="subclass">; ; forward_declare</property>
                                     <property name="toolbar_pane">0</property>
@@ -1088,7 +1088,7 @@
                                     <property name="enabled">1</property>
                                     <property name="fg"></property>
                                     <property name="floatable">1</property>
-                                    <property name="font">,90,90,20,70,0</property>
+                                    <property name="font">,90,90,12,70,0</property>
                                     <property name="gripper">0</property>
                                     <property name="hidden">0</property>
                                     <property name="id">wxID_ANY</property>

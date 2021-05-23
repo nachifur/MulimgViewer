@@ -717,7 +717,9 @@ class ImgManager(ImgDataset):
     def crop_points_process(self, crop_points, img_mode=0):
         """img_mode, 0: show, 1: save"""
         crop_points_ = []
-        for crop_point in crop_points:
+        for crop_point_scale in crop_points:
+            crop_point = crop_point_scale[0:4]
+            show_scale_old = crop_point_scale[4:6]
             if crop_point[2] < crop_point[0]:
                 temp = crop_point[0]
                 crop_point[0] = crop_point[2]
@@ -748,7 +750,9 @@ class ImgManager(ImgDataset):
                 scale = np.array(
                     self.layout_params[5])/np.array(self.layout_params[4])
             else:
-                scale = self.layout_params[4]
+                show_scale = self.layout_params[4]
+                scale = [show_scale[0]/show_scale_old[0],show_scale[1]/show_scale_old[1]]
+
             crop_point[0] = int(crop_point[0]*scale[0])
             crop_point[1] = int(crop_point[1]*scale[1])
             crop_point[2] = int(crop_point[2]*scale[0])

@@ -47,6 +47,9 @@ class MulimgViewer (MulimgViewerGui):
         self.color_list = []
         self.box_id = -1
         self.xy_magnifier=[]
+        show_scale = self.show_scale.GetLineText(0).split(',')
+        show_scale = [float(x) for x in show_scale]
+        self.show_scale_old=show_scale
 
     def frame_resize(self, event):
         self.auto_layout(frame_resize=True)
@@ -280,7 +283,7 @@ class MulimgViewer (MulimgViewerGui):
                 x,y = self.get_center_box(self.ImgManager.crop_points[self.box_id])
                 x=x+0
                 y=y-1
-                self.xy_magnifier[self.box_id] = self.move_box_point(x, y)
+                self.xy_magnifier[self.box_id][0:3] = self.move_box_point(x, y)
                 self.refresh(event)
         else:
             size = self.scrolledWindow_img.GetSize()
@@ -300,7 +303,7 @@ class MulimgViewer (MulimgViewerGui):
                 x,y = self.get_center_box(self.ImgManager.crop_points[self.box_id])
                 x=x+0
                 y=y+1
-                self.xy_magnifier[self.box_id] = self.move_box_point(x, y)
+                self.xy_magnifier[self.box_id][0:3] = self.move_box_point(x, y)
                 self.refresh(event)
         else:
             size = self.scrolledWindow_img.GetSize()
@@ -323,7 +326,7 @@ class MulimgViewer (MulimgViewerGui):
                 x,y = self.get_center_box(self.ImgManager.crop_points[self.box_id])
                 x=x+1
                 y=y+0
-                self.xy_magnifier[self.box_id] = self.move_box_point(x, y)
+                self.xy_magnifier[self.box_id][0:3] = self.move_box_point(x, y)
                 self.refresh(event)
         else:
             size = self.scrolledWindow_img.GetSize()
@@ -346,7 +349,7 @@ class MulimgViewer (MulimgViewerGui):
                 x,y = self.get_center_box(self.ImgManager.crop_points[self.box_id])
                 x=x-1
                 y=y+0
-                self.xy_magnifier[self.box_id] = self.move_box_point(x, y)
+                self.xy_magnifier[self.box_id][0:3] = self.move_box_point(x, y)
                 self.refresh(event)
         else:
             size = self.scrolledWindow_img.GetSize()
@@ -452,7 +455,10 @@ class MulimgViewer (MulimgViewerGui):
             if width > 5 and height > 5:
                 self.xy_magnifier = []
                 self.color_list.append(self.colourPicker_draw.GetColour())
-                self.xy_magnifier.append([x, y, x_0, y_0])
+
+                show_scale = self.show_scale.GetLineText(0).split(',')
+                show_scale = [float(x) for x in show_scale]
+                self.xy_magnifier.append([x, y, x_0, y_0]+show_scale)
                 self.refresh(event)
 
     def img_right_click(self, event):
@@ -465,7 +471,11 @@ class MulimgViewer (MulimgViewerGui):
         if self.magnifier.Value:
             self.color_list.append(self.colourPicker_draw.GetColour())
             try:
-                self.xy_magnifier.append(self.move_box_point(x, y))
+                show_scale = self.show_scale.GetLineText(0).split(',')
+                show_scale = [float(x) for x in show_scale]
+                points = self.move_box_point(x, y)
+                points_show_scale = points+show_scale
+                self.xy_magnifier.append(points_show_scale)
             except:
                 self.SetStatusText_(["-1",  "Drawing a box need click left mouse button!", "-1", "-1"])   
         self.refresh(event)
@@ -597,7 +607,7 @@ class MulimgViewer (MulimgViewerGui):
     def show_img(self):
         # check layout_params change
         try:
-            if self.layout_params_old != self.ImgManager.layout_params[0:3]:
+            if self.layout_params_old[0:3] != self.ImgManager.layout_params[0:3]:
                 action_count = self.ImgManager.action_count
                 self.ImgManager.init(
                     self.ImgManager.input_path, self.ImgManager.type)

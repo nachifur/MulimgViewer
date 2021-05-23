@@ -47,9 +47,6 @@ class MulimgViewer (MulimgViewerGui):
         self.color_list = []
         self.box_id = -1
         self.xy_magnifier=[]
-        show_scale = self.show_scale.GetLineText(0).split(',')
-        show_scale = [float(x) for x in show_scale]
-        self.show_scale_old=show_scale
 
     def frame_resize(self, event):
         self.auto_layout(frame_resize=True)

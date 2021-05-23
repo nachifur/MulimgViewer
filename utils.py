@@ -176,9 +176,7 @@ class ImgManager(ImgDataset):
         self.custom_resolution = False
         self.img_num = 0
         self.format_group = [".png", ".jpg", ".jpeg", ".bmp", ".tiff", ".tif"]
-        self.old_show_parm = [-1,-1,1,1]
         self.crop_points=[]
-        self.old_img_resolution = [-1,-1]
 
     def get_flist(self):
 
@@ -250,10 +248,10 @@ class ImgManager(ImgDataset):
                 height = np.mean(height_)
 
         if self.layout_params[6][0] == -1 or self.layout_params[6][1] == -1:
-            self.img_resolution = [int(width), int(height)]
+            self.img_resolution_origin = [int(width), int(height)]
             self.custom_resolution = False
         else:
-            self.img_resolution = [int(i) for i in self.layout_params[6]]
+            self.img_resolution_origin = [int(i) for i in self.layout_params[6]]
             self.custom_resolution = True
 
         self.img_list = img_list
@@ -262,6 +260,7 @@ class ImgManager(ImgDataset):
         self.check = []
         self.check_1 = []
         self.out_path_str = out_path_str
+        self.set_scale_mode(img_mode=1)
         if out_path_str != "" and Path(out_path_str).is_dir():
             dir_name = [Path(path)._parts[-1] for path in self.path_list]
             out_type = out_type+1
@@ -301,6 +300,9 @@ class ImgManager(ImgDataset):
                 self.save_select(dir_name[0:-2])
                 self.save_stitch(dir_name[-2])
                 self.save_magnifier(dir_name[-1])
+                
+            self.stitch_images(0,copy.deepcopy(self.draw_points))
+
             if sum(self.check) == 0:
                 if sum(self.check_1) == 0:
                     return 0
@@ -379,7 +381,7 @@ class ImgManager(ImgDataset):
         if not (Path(self.out_path_str)/dir_name).is_dir():
             os.makedirs(Path(self.out_path_str) / dir_name)
         if self.layout_params[7]:
-            self.check_1.append(self.stitch_images(1, self.crop_points))
+            self.check_1.append(self.stitch_images(1, copy.deepcopy(self.draw_points)))
         else:
             self.check_1.append(self.stitch_images(1))
 
@@ -391,6 +393,7 @@ class ImgManager(ImgDataset):
         except:
             pass
         else:
+            self.crop_points_process(copy.deepcopy(self.draw_points), 1)
             if self.type == 3:
                 sub_dir_name = "from_file"
                 if not (Path(self.out_path_str)/dir_name).exists():
@@ -418,7 +421,7 @@ class ImgManager(ImgDataset):
 
                         img = self.img_list[i_]
                         img_list, _, _ = self.magnifier_preprocessing(
-                            self.add_alpha(img), img_mode=1)
+                            self.img_preprocessing(img), img_mode=1)
                         i = 0
                         for img in img_list:
                             f_path_output = Path(
@@ -426,12 +429,12 @@ class ImgManager(ImgDataset):
                             img.save(f_path_output)
                             i += 1
                 # origin image with square
-                self.save_origin_img_magnifier(dir_name)
+                self.save_origin_img_magnifier()
             else:
                 i = 0
                 for img in self.img_list:
                     img_list, _, _ = self.magnifier_preprocessing(
-                        self.add_alpha(img), img_mode=1)
+                        self.img_preprocessing(img), img_mode=1)
                     if not (Path(self.out_path_str)/dir_name/(Path(self.flist[i]).parent).stem).is_dir():
                         os.makedirs(Path(self.out_path_str) / dir_name /
                                     (Path(self.flist[i]).parent).stem)
@@ -443,24 +446,24 @@ class ImgManager(ImgDataset):
                         ii += 1
                     i += 1
                 # origin image with square
-                self.save_origin_img_magnifier(dir_name)
+                self.save_origin_img_magnifier()
 
-    def save_origin_img_magnifier(self, dir_name):
+    def save_origin_img_magnifier(self):
         # save origin image
-        sub_dir_name = "origin_img"
-        if not (Path(self.out_path_str)/dir_name).exists():
-            os.makedirs(Path(self.out_path_str) / dir_name)
-        if not (Path(self.out_path_str)/dir_name/sub_dir_name).exists():
+        sub_dir_name = "origin_img_with_box"
+        if not (Path(self.out_path_str)).exists():
+            os.makedirs(Path(self.out_path_str))
+        if not (Path(self.out_path_str)/sub_dir_name).exists():
             os.makedirs(Path(self.out_path_str) /
-                        dir_name/sub_dir_name)
+                        sub_dir_name)
         i = 0
         for img in self.img_list:
-            img = self.add_alpha(img)
+            img = self.img_preprocessing(img)
             img = self.draw_rectangle(img, single=True)
-            f_path_output = Path(self.out_path_str)/dir_name/sub_dir_name/(Path(self.flist[i]).parent).stem / (
+            f_path_output = Path(self.out_path_str)/sub_dir_name/(Path(self.flist[i]).parent).stem / (
                 (Path(self.flist[i]).parent).stem+"_"+Path(self.flist[i]).stem+".png")
-            if not (Path(self.out_path_str)/dir_name/sub_dir_name/(Path(self.flist[i]).parent).stem).is_dir():
-                os.makedirs(Path(self.out_path_str)/dir_name /
+            if not (Path(self.out_path_str)/sub_dir_name/(Path(self.flist[i]).parent).stem).is_dir():
+                os.makedirs(Path(self.out_path_str) /
                             sub_dir_name/(Path(self.flist[i]).parent).stem)
             img.save(f_path_output)
             i += 1
@@ -470,14 +473,16 @@ class ImgManager(ImgDataset):
         # init
         xy_grid = []
         self.get_img_list()  # Generate image list
-        self.set_scale_mode(img_mode=img_mode)
-        width, height = self.img_resolution
+        img_resolution = self.set_scale_mode(img_mode=img_mode)
+        width, height = img_resolution
         img_num_per_row = self.layout_params[0]
         num_per_img = self.layout_params[1]
         img_num_per_column = self.layout_params[2]
         gap = self.layout_params[3]
         self.magnifier_flag = self.layout_params[7]
         self.show_box = self.layout_params[14]
+        if img_mode==0:
+            self.draw_points = draw_points
         
         if len(draw_points) == 0:
             self.magnifier_flag = 0
@@ -621,11 +626,10 @@ class ImgManager(ImgDataset):
                                         img.paste(im, (x, y))
 
             # img = img.convert("RGBA")
-            self.img_resolution = self.img_resolution_copy  # set_scale_mode
             self.img = img
             self.xy_grid = xy_grid
             if self.show_box and len(draw_points) != 0:
-                self.img = self.draw_rectangle(self.img)
+                self.img = self.draw_rectangle(img)
         except:
             return 1
         else:
@@ -672,17 +676,19 @@ class ImgManager(ImgDataset):
 
     def set_scale_mode(self, img_mode=0):
         """img_mode, 0: show, 1: save"""
-        self.img_resolution_copy = self.img_resolution
-        self.img_resolution_show = self.img_resolution
         if img_mode == 0:
-            self.img_resolution = (
-                np.array(self.img_resolution) * np.array(self.layout_params[4])).astype(np.int)
-            self.img_resolution_show = self.img_resolution
             self.scale = self.layout_params[4]
         elif img_mode == 1:
-            self.img_resolution = (
-                np.array(self.img_resolution) * np.array(self.layout_params[5])).astype(np.int)
             self.scale = self.layout_params[5]
+        self.img_resolution = (
+            np.array(self.img_resolution_origin) * np.array(self.scale)).astype(np.int)
+
+        if img_mode == 0:
+            self.img_resolution_show = self.img_resolution
+        elif img_mode == 1:
+            self.img_resolution_save = self.img_resolution
+
+        return self.img_resolution
         # self.gap = self.layout_params[3]
         # self.gap[0] = int(self.layout_params[3][0]*self.scale[0])
         # self.gap[1] = int(self.layout_params[3][1]*self.scale[1])
@@ -747,11 +753,10 @@ class ImgManager(ImgDataset):
                 crop_point[3] = center_y+int(height/2)
 
             if img_mode == 1:
-                scale = np.array(
-                    self.layout_params[5])/np.array(self.layout_params[4])
+                show_scale = self.layout_params[5]
             else:
                 show_scale = self.layout_params[4]
-                scale = [show_scale[0]/show_scale_old[0],show_scale[1]/show_scale_old[1]]
+            scale = [show_scale[0]/show_scale_old[0],show_scale[1]/show_scale_old[1]]
 
             crop_point[0] = int(crop_point[0]*scale[0])
             crop_point[1] = int(crop_point[1]*scale[1])
@@ -889,7 +894,7 @@ class ImgManager(ImgDataset):
             draw_colour = np.array(
                 [color.red, color.green, color.blue, color.alpha])
 
-            # magnifier image with square
+            # magnifier image with box
             x_left_up = [0, 0]
             x_left_down = [0, img_list[i].size[1]]
             x_right_up = [img_list[i].size[0], 0]

@@ -20,7 +20,7 @@ class About (AboutGui):
         self.about_txt.BeginBold()
         self.about_txt.WriteText("Version: ")
         self.about_txt.EndBold()
-        self.about_txt.WriteText("3.7\n")
+        self.about_txt.WriteText("3.8\n")
 
         self.about_txt.BeginBold()
         self.about_txt.WriteText("Platform: ")

@@ -280,7 +280,7 @@ class MulimgViewer (MulimgViewerGui):
                 x,y = self.get_center_box(self.ImgManager.crop_points[self.box_id])
                 x=x+0
                 y=y-1
-                self.xy_magnifier[self.box_id][0:3] = self.move_box_point(x, y)
+                self.xy_magnifier[self.box_id][0:4] = self.move_box_point(x, y)
                 self.refresh(event)
         else:
             size = self.scrolledWindow_img.GetSize()
@@ -300,7 +300,7 @@ class MulimgViewer (MulimgViewerGui):
                 x,y = self.get_center_box(self.ImgManager.crop_points[self.box_id])
                 x=x+0
                 y=y+1
-                self.xy_magnifier[self.box_id][0:3] = self.move_box_point(x, y)
+                self.xy_magnifier[self.box_id][0:4] = self.move_box_point(x, y)
                 self.refresh(event)
         else:
             size = self.scrolledWindow_img.GetSize()
@@ -323,7 +323,7 @@ class MulimgViewer (MulimgViewerGui):
                 x,y = self.get_center_box(self.ImgManager.crop_points[self.box_id])
                 x=x+1
                 y=y+0
-                self.xy_magnifier[self.box_id][0:3] = self.move_box_point(x, y)
+                self.xy_magnifier[self.box_id][0:4] = self.move_box_point(x, y)
                 self.refresh(event)
         else:
             size = self.scrolledWindow_img.GetSize()
@@ -346,7 +346,7 @@ class MulimgViewer (MulimgViewerGui):
                 x,y = self.get_center_box(self.ImgManager.crop_points[self.box_id])
                 x=x-1
                 y=y+0
-                self.xy_magnifier[self.box_id][0:3] = self.move_box_point(x, y)
+                self.xy_magnifier[self.box_id][0:4] = self.move_box_point(x, y)
                 self.refresh(event)
         else:
             size = self.scrolledWindow_img.GetSize()

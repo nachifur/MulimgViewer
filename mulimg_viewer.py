@@ -238,14 +238,14 @@ class MulimgViewer (MulimgViewerGui):
                 ["-1", "-1", "***Error: First, need to select the output directory***", "-1"])
         else:
             try:
-                np.savetxt(Path(self.out_path_str)/"input_flist_parallel_manual_ubuntu.txt",
+                np.savetxt(Path(self.out_path_str)/"input_flist_parallel_manual.txt",
                            self.ImgManager.input_path, fmt='%s')
             except:
                 self.SetStatusText_(
                     ["-1", "-1", "***Error: First, need to select parallel manual***", "-1"])
             else:
                 self.SetStatusText_(
-                    ["-1", "-1", "Save" + str(Path(self.out_path_str)/"input_flist_parallel_manual_ubuntu.txt")+" success!", "-1"])
+                    ["-1", "-1", "Save" + str(Path(self.out_path_str)/"input_flist_parallel_manual.txt")+" success!", "-1"])
 
     def out_path(self, event):
         if len(self.img_name) != 0:
@@ -599,7 +599,22 @@ class MulimgViewer (MulimgViewerGui):
                 ["-1", "-1", "***Error: setting***", "-1"])
             return False
         else:
-            return [img_num_per_row, num_per_img, img_num_per_column, gap, show_scale, output_scale, img_resolution, 1 if self.magnifier.Value else 0, magnifier_scale, color, line_width, self.move_file.Value, self.keep_magnifer_size.Value, self.image_interp.GetSelection(), self.show_box.Value, self.checkBox_orientation.Value]
+            return [img_num_per_row, 
+            num_per_img, 
+            img_num_per_column, 
+            gap, 
+            show_scale, 
+            output_scale, 
+            img_resolution, 
+            1 if self.magnifier.Value else 0, 
+            magnifier_scale, 
+            color, 
+            line_width, 
+            self.move_file.Value, 
+            self.keep_magnifer_size.Value, 
+            self.image_interp.GetSelection(), 
+            self.show_box.Value, 
+            self.checkBox_orientation.Value]
 
     def show_img(self):
         # check layout_params change

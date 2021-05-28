@@ -7,16 +7,23 @@ from pathlib import Path
 import csv
 import copy
 
+
 class ImgDataset():
-    def init(self, input_path, type):
+    def init(self, input_path, type, action_count=None, img_count=None):
         self.input_path = input_path
         self.type = type
-
-        self.action_count = 0
-        self.img_count = 0
+        
         self.init_flist()
         self.img_num = len(self.name_list)
         # self.set_count_per_action(1)
+        if img_count:
+            self.img_count = img_count
+        else:
+            self.img_count = 0
+        if action_count:
+            self.action_count = action_count
+        else:
+            self.action_count = 0
 
     def init_flist(self):
         self.csv_flag = 0
@@ -176,7 +183,8 @@ class ImgManager(ImgDataset):
         self.custom_resolution = False
         self.img_num = 0
         self.format_group = [".png", ".jpg", ".jpeg", ".bmp", ".tiff", ".tif"]
-        self.crop_points=[]
+        self.crop_points = []
+        self.draw_points = []
 
     def get_flist(self):
 
@@ -251,7 +259,8 @@ class ImgManager(ImgDataset):
             self.img_resolution_origin = [int(width), int(height)]
             self.custom_resolution = False
         else:
-            self.img_resolution_origin = [int(i) for i in self.layout_params[6]]
+            self.img_resolution_origin = [int(i)
+                                          for i in self.layout_params[6]]
             self.custom_resolution = True
 
         self.img_list = img_list
@@ -300,8 +309,8 @@ class ImgManager(ImgDataset):
                 self.save_select(dir_name[0:-2])
                 self.save_stitch(dir_name[-2])
                 self.save_magnifier(dir_name[-1])
-                
-            self.stitch_images(0,copy.deepcopy(self.draw_points))
+
+            # self.stitch_images(0,copy.deepcopy(self.draw_points))
 
             if sum(self.check) == 0:
                 if sum(self.check_1) == 0:
@@ -362,6 +371,10 @@ class ImgManager(ImgDataset):
                 else:
                     self.check.append(0)
 
+        if self.layout_params[11]:
+            self.init(self.input_path, self.type, self.action_count, self.img_count)
+            self.get_flist()
+
     def save_stitch(self, dir_name):
         if self.type == 3:
             name_f = self.path_list[self.action_count*self.count_per_action]
@@ -381,7 +394,8 @@ class ImgManager(ImgDataset):
         if not (Path(self.out_path_str)/dir_name).is_dir():
             os.makedirs(Path(self.out_path_str) / dir_name)
         if self.layout_params[7]:
-            self.check_1.append(self.stitch_images(1, copy.deepcopy(self.draw_points)))
+            self.check_1.append(self.stitch_images(
+                1, copy.deepcopy(self.draw_points)))
         else:
             self.check_1.append(self.stitch_images(1))
 
@@ -481,9 +495,9 @@ class ImgManager(ImgDataset):
         gap = self.layout_params[3]
         self.magnifier_flag = self.layout_params[7]
         self.show_box = self.layout_params[14]
-        if img_mode==0:
+        if img_mode == 0:
             self.draw_points = draw_points
-        
+
         if len(draw_points) == 0:
             self.magnifier_flag = 0
         if self.magnifier_flag != 0:
@@ -756,7 +770,8 @@ class ImgManager(ImgDataset):
                 show_scale = self.layout_params[5]
             else:
                 show_scale = self.layout_params[4]
-            scale = [show_scale[0]/show_scale_old[0],show_scale[1]/show_scale_old[1]]
+            scale = [show_scale[0]/show_scale_old[0],
+                     show_scale[1]/show_scale_old[1]]
 
             crop_point[0] = int(crop_point[0]*scale[0])
             crop_point[1] = int(crop_point[1]*scale[1])
@@ -879,9 +894,9 @@ class ImgManager(ImgDataset):
         line_width = self.layout_params[10]
         color_list = self.layout_params[9]
         image_interp = self.layout_params[13]
-        if image_interp==1:
+        if image_interp == 1:
             interp_ = Image.LINEAR
-        elif image_interp==2:
+        elif image_interp == 2:
             interp_ = Image.CUBIC
         else:
             interp_ = Image.NEAREST
@@ -938,5 +953,6 @@ class ImgManager(ImgDataset):
         return img
 
     def rotate(self, id):
-        img = Image.open(self.flist[id]).convert('RGB').transpose(Image.ROTATE_270)
+        img = Image.open(self.flist[id]).convert(
+            'RGB').transpose(Image.ROTATE_270)
         img.save(self.flist[id])

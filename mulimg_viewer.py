@@ -8,6 +8,7 @@ from index_table import IndexTable
 from pathlib import Path
 import copy
 
+
 class MulimgViewer (MulimgViewerGui):
 
     def __init__(self, parent, UpdateUI, get_type):
@@ -46,7 +47,7 @@ class MulimgViewer (MulimgViewerGui):
         self.y_0 = -1
         self.color_list = []
         self.box_id = -1
-        self.xy_magnifier=[]
+        self.xy_magnifier = []
 
     def frame_resize(self, event):
         self.auto_layout(frame_resize=True)
@@ -156,6 +157,8 @@ class MulimgViewer (MulimgViewerGui):
             elif flag == 3:
                 self.SetStatusText_(
                     ["-1", str(self.ImgManager.action_count)+' image', "***Error: "+str(self.ImgManager.name_list[self.ImgManager.action_count]) + ", the number of img in sub folders is different***", "-1"])
+
+        self.refresh(event)
 
     def refresh(self, event):
         self.SetStatusText_(["Refresh", "-1", "-1", "-1"])
@@ -277,9 +280,10 @@ class MulimgViewer (MulimgViewerGui):
     def up_img(self, event):
         if self.move_img_box.Value:
             if self.box_id != -1:
-                x,y = self.get_center_box(self.ImgManager.crop_points[self.box_id])
-                x=x+0
-                y=y-1
+                x, y = self.get_center_box(
+                    self.ImgManager.crop_points[self.box_id])
+                x = x+0
+                y = y-1
                 self.xy_magnifier[self.box_id][0:4] = self.move_box_point(x, y)
                 self.refresh(event)
         else:
@@ -297,9 +301,10 @@ class MulimgViewer (MulimgViewerGui):
     def down_img(self, event):
         if self.move_img_box.Value:
             if self.box_id != -1:
-                x,y = self.get_center_box(self.ImgManager.crop_points[self.box_id])
-                x=x+0
-                y=y+1
+                x, y = self.get_center_box(
+                    self.ImgManager.crop_points[self.box_id])
+                x = x+0
+                y = y+1
                 self.xy_magnifier[self.box_id][0:4] = self.move_box_point(x, y)
                 self.refresh(event)
         else:
@@ -320,9 +325,10 @@ class MulimgViewer (MulimgViewerGui):
     def right_img(self, event):
         if self.move_img_box.Value:
             if self.box_id != -1:
-                x,y = self.get_center_box(self.ImgManager.crop_points[self.box_id])
-                x=x+1
-                y=y+0
+                x, y = self.get_center_box(
+                    self.ImgManager.crop_points[self.box_id])
+                x = x+1
+                y = y+0
                 self.xy_magnifier[self.box_id][0:4] = self.move_box_point(x, y)
                 self.refresh(event)
         else:
@@ -343,9 +349,10 @@ class MulimgViewer (MulimgViewerGui):
     def left_img(self, event):
         if self.move_img_box.Value:
             if self.box_id != -1:
-                x,y = self.get_center_box(self.ImgManager.crop_points[self.box_id])
-                x=x-1
-                y=y+0
+                x, y = self.get_center_box(
+                    self.ImgManager.crop_points[self.box_id])
+                x = x-1
+                y = y+0
                 self.xy_magnifier[self.box_id][0:4] = self.move_box_point(x, y)
                 self.refresh(event)
         else:
@@ -383,12 +390,13 @@ class MulimgViewer (MulimgViewerGui):
             y = y-xy_grid[1]
             x_y_array = []
             for i in range(len(self.ImgManager.crop_points)):
-                x_y_array.append(self.get_center_box(self.ImgManager.crop_points[i]))
+                x_y_array.append(self.get_center_box(
+                    self.ImgManager.crop_points[i]))
             x_y_array = np.array(x_y_array)
             dist = (x_y_array[:, 0]-x)**2+(x_y_array[:, 1]-y)**2
             self.box_id = np.array(dist).argmin()
             str_ = str(self.box_id)
-            self.SetStatusText_(["select "+str_+"-th box",  "-1", "-1", "-1"])    
+            self.SetStatusText_(["select "+str_+"-th box",  "-1", "-1", "-1"])
 
             self.start_flag = 0
         else:
@@ -474,7 +482,8 @@ class MulimgViewer (MulimgViewerGui):
                 points_show_scale = points+show_scale
                 self.xy_magnifier.append(points_show_scale)
             except:
-                self.SetStatusText_(["-1",  "Drawing a box need click left mouse button!", "-1", "-1"])   
+                self.SetStatusText_(
+                    ["-1",  "Drawing a box need click left mouse button!", "-1", "-1"])
         self.refresh(event)
 
     def move_box_point(self, x, y):
@@ -599,22 +608,22 @@ class MulimgViewer (MulimgViewerGui):
                 ["-1", "-1", "***Error: setting***", "-1"])
             return False
         else:
-            return [img_num_per_row, 
-            num_per_img, 
-            img_num_per_column, 
-            gap, 
-            show_scale, 
-            output_scale, 
-            img_resolution, 
-            1 if self.magnifier.Value else 0, 
-            magnifier_scale, 
-            color, 
-            line_width, 
-            self.move_file.Value, 
-            self.keep_magnifer_size.Value, 
-            self.image_interp.GetSelection(), 
-            self.show_box.Value, 
-            self.checkBox_orientation.Value]
+            return [img_num_per_row,
+                    num_per_img,
+                    img_num_per_column,
+                    gap,
+                    show_scale,
+                    output_scale,
+                    img_resolution,
+                    1 if self.magnifier.Value else 0,
+                    magnifier_scale,
+                    color,
+                    line_width,
+                    self.move_file.Value,
+                    self.keep_magnifer_size.Value,
+                    self.image_interp.GetSelection(),
+                    self.show_box.Value,
+                    self.checkBox_orientation.Value]
 
     def show_img(self):
         # check layout_params change
@@ -673,9 +682,6 @@ class MulimgViewer (MulimgViewerGui):
                     wx.EVT_LEFT_UP, self.img_left_release)
                 self.img_panel.Children[0].Bind(
                     wx.EVT_RIGHT_DOWN, self.img_right_click)
-
-            if self.ImgManager.layout_params[11] and flag != 1:
-                self.ImgManager.subtract()
 
             # status
             if self.ImgManager.type == 2 or ((self.ImgManager.type == 0 or self.ImgManager.type == 1) and self.parallel_sequential.Value):

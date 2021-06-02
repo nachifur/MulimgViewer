@@ -280,11 +280,13 @@ class MulimgViewer (MulimgViewerGui):
     def up_img(self, event):
         if self.move_img_box.Value:
             if self.box_id != -1:
-                x, y = self.get_center_box(
-                    self.ImgManager.crop_points[self.box_id])
+                box_point = self.xy_magnifier[self.box_id][0:4]
+                show_scale = self.xy_magnifier[self.box_id][4:6]
+                x, y = self.get_center_box(box_point)
                 x = x+0
                 y = y-1
-                self.xy_magnifier[self.box_id][0:4] = self.move_box_point(x, y)
+                self.xy_magnifier[self.box_id][0:4] = self.move_box_point(
+                    x, y, show_scale)
                 self.refresh(event)
         else:
             size = self.scrolledWindow_img.GetSize()
@@ -301,11 +303,13 @@ class MulimgViewer (MulimgViewerGui):
     def down_img(self, event):
         if self.move_img_box.Value:
             if self.box_id != -1:
-                x, y = self.get_center_box(
-                    self.ImgManager.crop_points[self.box_id])
+                box_point = self.xy_magnifier[self.box_id][0:4]
+                show_scale = self.xy_magnifier[self.box_id][4:6]
+                x, y = self.get_center_box(box_point)
                 x = x+0
                 y = y+1
-                self.xy_magnifier[self.box_id][0:4] = self.move_box_point(x, y)
+                self.xy_magnifier[self.box_id][0:4] = self.move_box_point(
+                    x, y, show_scale)
                 self.refresh(event)
         else:
             size = self.scrolledWindow_img.GetSize()
@@ -325,11 +329,13 @@ class MulimgViewer (MulimgViewerGui):
     def right_img(self, event):
         if self.move_img_box.Value:
             if self.box_id != -1:
-                x, y = self.get_center_box(
-                    self.ImgManager.crop_points[self.box_id])
+                box_point = self.xy_magnifier[self.box_id][0:4]
+                show_scale = self.xy_magnifier[self.box_id][4:6]
+                x, y = self.get_center_box(box_point)
                 x = x+1
                 y = y+0
-                self.xy_magnifier[self.box_id][0:4] = self.move_box_point(x, y)
+                self.xy_magnifier[self.box_id][0:4] = self.move_box_point(
+                    x, y, show_scale)
                 self.refresh(event)
         else:
             size = self.scrolledWindow_img.GetSize()
@@ -349,11 +355,13 @@ class MulimgViewer (MulimgViewerGui):
     def left_img(self, event):
         if self.move_img_box.Value:
             if self.box_id != -1:
-                x, y = self.get_center_box(
-                    self.ImgManager.crop_points[self.box_id])
+                box_point = self.xy_magnifier[self.box_id][0:4]
+                show_scale = self.xy_magnifier[self.box_id][4:6]
+                x, y = self.get_center_box(box_point)
                 x = x-1
                 y = y+0
-                self.xy_magnifier[self.box_id][0:4] = self.move_box_point(x, y)
+                self.xy_magnifier[self.box_id][0:4] = self.move_box_point(
+                    x, y, show_scale)
                 self.refresh(event)
         else:
             size = self.scrolledWindow_img.GetSize()
@@ -463,7 +471,8 @@ class MulimgViewer (MulimgViewerGui):
 
                 show_scale = self.show_scale.GetLineText(0).split(',')
                 show_scale = [float(x) for x in show_scale]
-                self.xy_magnifier.append([x, y, x_0, y_0]+show_scale)
+                self.xy_magnifier.append(
+                    self.ImgManager.sort_box_point([x, y, x_0, y_0])+show_scale)
                 self.refresh(event)
 
     def img_right_click(self, event):
@@ -478,24 +487,31 @@ class MulimgViewer (MulimgViewerGui):
             try:
                 show_scale = self.show_scale.GetLineText(0).split(',')
                 show_scale = [float(x) for x in show_scale]
-                points = self.move_box_point(x, y)
-                points_show_scale = points+show_scale
+                points = self.move_box_point(x, y, show_scale)
+                points_show_scale = self.ImgManager.sort_box_point(
+                    points)+show_scale
                 self.xy_magnifier.append(points_show_scale)
             except:
                 self.SetStatusText_(
                     ["-1",  "Drawing a box need click left mouse button!", "-1", "-1"])
         self.refresh(event)
 
-    def move_box_point(self, x, y):
-        x_0, y_0, x_1, y_1 = self.ImgManager.crop_points[0]
+    def move_box_point(self, x, y, show_scale):
+        x_0, y_0, x_1, y_1 = self.xy_magnifier[0][0:4]
+        x_0 = int(x_0*show_scale[0])
+        x_1 = int(x_1*show_scale[0])
+        y_0 = int(y_0*show_scale[1])
+        y_1 = int(y_1*show_scale[1])
         x_center_old, y_center_old, width, height = self.get_center_box(
             [x_0, y_0, x_1, y_1], more=True)
         delta_x = x-x_center_old
         delta_y = y-y_center_old
 
-        if x_1+delta_x > self.ImgManager.img_resolution_show[0]:
-            x = self.ImgManager.img_resolution_show[0]
-            x_0 = self.ImgManager.img_resolution_show[0]-width
+        img_resolution = (np.array(self.ImgManager.img_resolution_origin) * np.array(show_scale)).astype(np.int)
+
+        if x_1+delta_x > img_resolution[0]:
+            x = img_resolution[0]
+            x_0 = img_resolution[0]-width
         elif x_0+delta_x < 0:
             x_0 = 0
             x = width
@@ -503,16 +519,17 @@ class MulimgViewer (MulimgViewerGui):
             x_0 = x_0+delta_x
             x = x_1+delta_x
 
-        if y_1+delta_y > self.ImgManager.img_resolution_show[1]:
-            y = self.ImgManager.img_resolution_show[1]
-            y_0 = self.ImgManager.img_resolution_show[1]-height
+        if y_1+delta_y > img_resolution[1]:
+            y = img_resolution[1]
+            y_0 = img_resolution[1]-height
         elif y_0+delta_y < 0:
             y_0 = 0
             y = height
         else:
             y_0 = y_0+delta_y
             y = y_1+delta_y
-        return [x, y, x_0, y_0]
+
+        return [x_0, y_0, x, y]
 
     def get_center_box(self, box, more=False):
         x_0, y_0, x_1, y_1 = box

@@ -740,14 +740,6 @@ class ImgManager(ImgDataset):
         for crop_point_scale in crop_points:
             crop_point = crop_point_scale[0:4]
             show_scale_old = crop_point_scale[4:6]
-            if crop_point[2] < crop_point[0]:
-                temp = crop_point[0]
-                crop_point[0] = crop_point[2]
-                crop_point[2] = temp
-            if crop_point[3] < crop_point[1]:
-                temp = crop_point[1]
-                crop_point[1] = crop_point[3]
-                crop_point[3] = temp
 
             if self.layout_params[12]:
                 width = crop_point[2]-crop_point[0]
@@ -781,6 +773,17 @@ class ImgManager(ImgDataset):
             crop_points_.append(crop_point)
 
         self.crop_points = crop_points_
+
+    def sort_box_point(self, box_point):
+        if box_point[2] < box_point[0]:
+            temp = box_point[0]
+            box_point[0] = box_point[2]
+            box_point[2] = temp
+        if box_point[3] < box_point[1]:
+            temp = box_point[1]
+            box_point[1] = box_point[3]
+            box_point[3] = temp
+        return box_point
 
     def magnifier_preprocessing(self, img, img_mode=0):
         """img_mode, 0: show, 1: save"""

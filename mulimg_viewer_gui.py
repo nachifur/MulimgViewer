@@ -325,7 +325,6 @@ class MulimgViewerGui ( wx.Frame ):
 		bSizer20.Add( self.m_staticText25, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
 		self.keep_magnifer_size = wx.CheckBox( self.scrolledWindow_set, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.keep_magnifer_size.SetValue(True)
 		bSizer20.Add( self.keep_magnifer_size, 0, wx.ALL, 5 )
 
 

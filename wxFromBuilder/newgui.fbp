@@ -18,7 +18,7 @@
         <property name="internationalize">0</property>
         <property name="name">mulimg_viewer</property>
         <property name="namespace"></property>
-        <property name="path">/home/ljw/Desktop/wxgui/MulimgViewer</property>
+        <property name="path">D:\ncfey\Desktop\MulimgViewer</property>
         <property name="precompiled_header"></property>
         <property name="relative_path">1</property>
         <property name="skip_lua_events">1</property>
@@ -3378,7 +3378,7 @@
                                                     <property name="caption"></property>
                                                     <property name="caption_visible">1</property>
                                                     <property name="center_pane">0</property>
-                                                    <property name="checked">1</property>
+                                                    <property name="checked">0</property>
                                                     <property name="close_button">1</property>
                                                     <property name="context_help"></property>
                                                     <property name="context_menu">1</property>

@@ -498,10 +498,13 @@ class MulimgViewer (MulimgViewerGui):
 
     def move_box_point(self, x, y, show_scale):
         x_0, y_0, x_1, y_1 = self.xy_magnifier[0][0:4]
-        x_0 = int(x_0*show_scale[0])
-        x_1 = int(x_1*show_scale[0])
-        y_0 = int(y_0*show_scale[1])
-        y_1 = int(y_1*show_scale[1])
+        show_scale_old = self.xy_magnifier[0][4:6]
+        scale = [show_scale[0]/show_scale_old[0],
+                    show_scale[1]/show_scale_old[1]]
+        x_0 = int(x_0*scale[0])
+        x_1 = int(x_1*scale[0])
+        y_0 = int(y_0*scale[1])
+        y_1 = int(y_1*scale[1])
         x_center_old, y_center_old, width, height = self.get_center_box(
             [x_0, y_0, x_1, y_1], more=True)
         delta_x = x-x_center_old

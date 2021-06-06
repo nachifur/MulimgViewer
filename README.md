@@ -20,37 +20,21 @@ MulimgViewer**多图像浏览器**，在一个界面显示多个图像，方便�
 您的star是我开发完善该项目最大的支持！
 qq交流群：945669929
 
-
-## 2. ubuntu
-提供Ubuntu和Windows的包（amd64）。其他环境可以使用源码运行。建议使用Python3.6以上。
-### 2.1
+## 2. python源码运行
+v3.9.1以后仅提供Windows-10的包（amd64）。其他环境可以使用源码运行。建议使用Python3.6以上。
 安装：
 推荐使用conda安装，pip安装wxpython可能会失败。
 pip：
 ```bash
-sudo apt-get install build-essential libgtk-3-dev
 /usr/bin/pip3 install wxpython pillow pytest-shutil
 ```
 运行：
 ```python
 python3 main.py
 ```
-注：
-错误 Failed to open file “/home/liu/.local/share/recently-used.xbel”: 权限不够
 
-解决：
-```bash
-sudo chmod 777 * -R /home/liu/.local/share
-```
-### 2.2
-目前已经发布一个deb包（release中可以找到），在Ubuntu18.04(v3以前)或者ubuntu20.04(v3.1以后)测试可用，安装之后运行：
-```bash
-/etc/MulimgViewer/main
-```
-这个不含测试图像，可以从code中直接下载。
-
-## 3. Windows
-目前已经打包一个exe，已经在win10下测试。也可以下载源码运行`main.py`。
+## 3. Windows-10
+直接运行exe文件。也可以下载源码运行`main.py`。
 
 ## 4. 应用场景
 ### 例1：并行浏览、挑选、保存

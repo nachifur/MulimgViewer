@@ -22,6 +22,7 @@ qq交流群：945669929
 
 ## 2. python源码运行
 v3.9.1以后仅提供Windows-10的包（amd64）。其他环境可以使用源码运行。建议使用Python3.6以上。
+
 pip安装：
 ```bash
 pip install wxpython pillow pytest-shutil

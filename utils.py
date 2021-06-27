@@ -774,7 +774,8 @@ class ImgManager(ImgDataset):
 
         self.crop_points = crop_points_
 
-    def sort_box_point(self, box_point):
+    def sort_box_point(self, box_point, show_scale, first_point=False):
+        # box_point = [x_0,y_0,x_1,y_1]
         if box_point[2] < box_point[0]:
             temp = box_point[0]
             box_point[0] = box_point[2]
@@ -783,6 +784,40 @@ class ImgManager(ImgDataset):
             temp = box_point[1]
             box_point[1] = box_point[3]
             box_point[3] = temp
+
+        img_resolution = (np.array(self.img_resolution_origin) * np.array(show_scale)).astype(np.int)
+
+        width = abs(box_point[0]-box_point[2])
+        height = abs(box_point[1]-box_point[3])
+
+        # limit box boundary 
+        if first_point:
+            if box_point[2] > img_resolution[0]:
+                box_point[2] = img_resolution[0]
+
+            if box_point[0] < 0:
+                box_point[0] = 0
+
+            if box_point[3] > img_resolution[1]:
+                box_point[3] = img_resolution[1]
+
+            if box_point[1]< 0:
+                box_point[1] = 0      
+        else: 
+            if box_point[2] > img_resolution[0]:
+                box_point[2] = img_resolution[0]
+                box_point[0] = img_resolution[0]-width
+            elif box_point[0] < 0:
+                box_point[0] = 0
+                box_point[2] = width
+
+            if box_point[3] > img_resolution[1]:
+                box_point[3] = img_resolution[1]
+                box_point[1] = img_resolution[1]-height
+            elif box_point[1]< 0:
+                box_point[1] = 0
+                box_point[3] = height
+
         return box_point
 
     def magnifier_preprocessing(self, img, img_mode=0):

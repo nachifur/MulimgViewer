@@ -471,8 +471,9 @@ class MulimgViewer (MulimgViewerGui):
 
                 show_scale = self.show_scale.GetLineText(0).split(',')
                 show_scale = [float(x) for x in show_scale]
-                self.xy_magnifier.append(
-                    self.ImgManager.sort_box_point([x, y, x_0, y_0])+show_scale)
+                points = self.ImgManager.sort_box_point(
+                    [x_0, y_0, x, y], show_scale, first_point=True)
+                self.xy_magnifier.append(points+show_scale)
                 self.refresh(event)
 
     def img_right_click(self, event):
@@ -488,9 +489,7 @@ class MulimgViewer (MulimgViewerGui):
                 show_scale = self.show_scale.GetLineText(0).split(',')
                 show_scale = [float(x) for x in show_scale]
                 points = self.move_box_point(x, y, show_scale)
-                points_show_scale = self.ImgManager.sort_box_point(
-                    points)+show_scale
-                self.xy_magnifier.append(points_show_scale)
+                self.xy_magnifier.append(points+show_scale)
             except:
                 self.SetStatusText_(
                     ["-1",  "Drawing a box need click left mouse button!", "-1", "-1"])
@@ -500,39 +499,16 @@ class MulimgViewer (MulimgViewerGui):
         x_0, y_0, x_1, y_1 = self.xy_magnifier[0][0:4]
         show_scale_old = self.xy_magnifier[0][4:6]
         scale = [show_scale[0]/show_scale_old[0],
-                    show_scale[1]/show_scale_old[1]]
+                 show_scale[1]/show_scale_old[1]]
         x_0 = int(x_0*scale[0])
         x_1 = int(x_1*scale[0])
         y_0 = int(y_0*scale[1])
         y_1 = int(y_1*scale[1])
-        x_center_old, y_center_old, width, height = self.get_center_box(
-            [x_0, y_0, x_1, y_1], more=True)
+        x_center_old, y_center_old = self.get_center_box(
+            [x_0, y_0, x_1, y_1])
         delta_x = x-x_center_old
         delta_y = y-y_center_old
-
-        img_resolution = (np.array(self.ImgManager.img_resolution_origin) * np.array(show_scale)).astype(np.int)
-
-        if x_1+delta_x > img_resolution[0]:
-            x = img_resolution[0]
-            x_0 = img_resolution[0]-width
-        elif x_0+delta_x < 0:
-            x_0 = 0
-            x = width
-        else:
-            x_0 = x_0+delta_x
-            x = x_1+delta_x
-
-        if y_1+delta_y > img_resolution[1]:
-            y = img_resolution[1]
-            y_0 = img_resolution[1]-height
-        elif y_0+delta_y < 0:
-            y_0 = 0
-            y = height
-        else:
-            y_0 = y_0+delta_y
-            y = y_1+delta_y
-
-        return [x_0, y_0, x, y]
+        return self.ImgManager.sort_box_point([x_0+delta_x, y_0+delta_y, x_1+delta_x, y_1+delta_y], show_scale)
 
     def get_center_box(self, box, more=False):
         x_0, y_0, x_1, y_1 = box

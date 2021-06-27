@@ -62,9 +62,11 @@ MulimgViewer可以轻松的完成纵向与横向的拼接，**支持自动拼接
 4. 关闭`Select box`。
 
 清除放大框：
+
 方法1：
 1. 选中`Select box`，键盘`Del`，删除特定`box`
 2. 关闭`Select box`，键盘`Del`，删除所有`box`
+
 方法2：
 1. 关闭`Select box`
 2. 鼠标左键双击图片

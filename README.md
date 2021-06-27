@@ -55,14 +55,18 @@ MulimgViewer可以轻松的完成纵向与横向的拼接，**支持自动拼接
 
 ![image](https://github.com/nachifur/MulimgViewer/blob/master/img/f11.gif)
 
-微调box:（注意：开启`Move box`后，使用鼠标左键不能划框）
-1. 选中`Move box`
+微调box:（注意：开启`Select box`后，使用鼠标左键不能划框）
+1. 选中`Select box`
 2. 鼠标左键单击，选中已有的放大框
 3. 然后使用键盘上下左右，微调放大框
-4. 关闭`Move box`。
+4. 关闭`Select box`。
 
 清除放大框：
-1. 关闭`Move box`
+方法1：
+1. 选中`Select box`，键盘`Del`，删除特定`box`
+2. 关闭`Select box`，键盘`Del`，删除所有`box`
+方法2：
+1. 关闭`Select box`
 2. 鼠标左键双击图片
 3. `Ctrl+R`刷新显示。
 

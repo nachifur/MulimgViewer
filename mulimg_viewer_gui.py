@@ -359,13 +359,13 @@ class MulimgViewerGui ( wx.Frame ):
 
 		bSizer25 = wx.BoxSizer( wx.HORIZONTAL )
 
-		self.m_staticText30 = wx.StaticText( self.scrolledWindow_set, wx.ID_ANY, u"Move box", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText30 = wx.StaticText( self.scrolledWindow_set, wx.ID_ANY, u"Select box", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText30.Wrap( -1 )
 
 		bSizer25.Add( self.m_staticText30, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
-		self.move_img_box = wx.CheckBox( self.scrolledWindow_set, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
-		bSizer25.Add( self.move_img_box, 0, wx.ALL, 5 )
+		self.select_img_box = wx.CheckBox( self.scrolledWindow_set, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
+		bSizer25.Add( self.select_img_box, 0, wx.ALL, 5 )
 
 
 		fgSizer3.Add( bSizer25, 1, wx.EXPAND, 5 )
@@ -567,6 +567,9 @@ class MulimgViewerGui ( wx.Frame ):
 		self.menu_left = wx.MenuItem( self.m_menu2, wx.ID_ANY, u"left", wx.EmptyString, wx.ITEM_NORMAL )
 		self.m_menu2.Append( self.menu_left )
 
+		self.menu_delete_box = wx.MenuItem( self.m_menu2, wx.ID_ANY, u"delete_box", wx.EmptyString, wx.ITEM_NORMAL )
+		self.m_menu2.Append( self.menu_delete_box )
+
 		self.m_menubar1.Append( self.m_menu2, u"Edit" )
 
 		self.m_menu3 = wx.Menu()
@@ -596,7 +599,7 @@ class MulimgViewerGui ( wx.Frame ):
 		self.magnifier.Bind( wx.EVT_TOGGLEBUTTON, self.magnifier_fc )
 		self.rotation.Bind( wx.EVT_TOGGLEBUTTON, self.rotation_fc )
 		self.choice_normalized_size.Bind( wx.EVT_CHOICE, self.change_img_stitch_mode )
-		self.move_img_box.Bind( wx.EVT_CHECKBOX, self.move_img_box_func )
+		self.select_img_box.Bind( wx.EVT_CHECKBOX, self.select_img_box_func )
 		self.colourPicker_gap.Bind( wx.EVT_COLOURPICKER_CHANGED, self.colour_change )
 		self.background_slider.Bind( wx.EVT_SCROLL, self.background_alpha )
 		self.foreground_slider.Bind( wx.EVT_SCROLL, self.foreground_alpha )
@@ -615,6 +618,7 @@ class MulimgViewerGui ( wx.Frame ):
 		self.Bind( wx.EVT_MENU, self.down_img, id = self.menu_down.GetId() )
 		self.Bind( wx.EVT_MENU, self.right_img, id = self.menu_right.GetId() )
 		self.Bind( wx.EVT_MENU, self.left_img, id = self.menu_left.GetId() )
+		self.Bind( wx.EVT_MENU, self.delete_box, id = self.menu_delete_box.GetId() )
 		self.Bind( wx.EVT_MENU, self.index_table_gui, id = self.index_table.GetId() )
 		self.Bind( wx.EVT_MENU, self.about_gui, id = self.menu_about.GetId() )
 
@@ -659,7 +663,7 @@ class MulimgViewerGui ( wx.Frame ):
 	def change_img_stitch_mode( self, event ):
 		event.Skip()
 
-	def move_img_box_func( self, event ):
+	def select_img_box_func( self, event ):
 		event.Skip()
 
 	def colour_change( self, event ):
@@ -704,6 +708,9 @@ class MulimgViewerGui ( wx.Frame ):
 		event.Skip()
 
 	def left_img( self, event ):
+		event.Skip()
+
+	def delete_box( self, event ):
 		event.Skip()
 
 	def index_table_gui( self, event ):

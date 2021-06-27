@@ -24,7 +24,9 @@ class MulimgViewer (MulimgViewerGui):
                                         (wx.ACCEL_NORMAL, wx.WXK_RIGHT,
                                          self.menu_right.GetId()),
                                         (wx.ACCEL_NORMAL, wx.WXK_LEFT,
-                                         self.menu_left.GetId())
+                                         self.menu_left.GetId()),
+                                        (wx.ACCEL_NORMAL, wx.WXK_DELETE,
+                                         self.menu_delete_box.GetId())
                                         ])
         self.SetAcceleratorTable(acceltbl)
         # self.img_Sizer = self.scrolledWindow_img.GetSizer()
@@ -277,8 +279,20 @@ class MulimgViewer (MulimgViewerGui):
     def foreground_alpha(self, event):
         self.ImgManager.img_alpha = self.foreground_slider.GetValue()
 
+    def delete_box(self, event):
+        if self.select_img_box.Value:
+            if self.box_id != -1:
+                self.xy_magnifier.pop(self.box_id)
+                self.refresh(event)
+                self.SetStatusText_(
+                    ["delete "+str(self.box_id)+"-th box",  "-1", "-1", "-1"])
+        else:
+            self.xy_magnifier = []
+            self.refresh(event)
+            self.SetStatusText_(["delete all box",  "-1", "-1", "-1"])
+
     def up_img(self, event):
-        if self.move_img_box.Value:
+        if self.select_img_box.Value:
             if self.box_id != -1:
                 box_point = self.xy_magnifier[self.box_id][0:4]
                 show_scale = self.xy_magnifier[self.box_id][4:6]
@@ -301,7 +315,7 @@ class MulimgViewer (MulimgViewerGui):
         self.SetStatusText_(["up",  "-1", "-1", "-1"])
 
     def down_img(self, event):
-        if self.move_img_box.Value:
+        if self.select_img_box.Value:
             if self.box_id != -1:
                 box_point = self.xy_magnifier[self.box_id][0:4]
                 show_scale = self.xy_magnifier[self.box_id][4:6]
@@ -327,7 +341,7 @@ class MulimgViewer (MulimgViewerGui):
         self.SetStatusText_(["down",  "-1", "-1", "-1"])
 
     def right_img(self, event):
-        if self.move_img_box.Value:
+        if self.select_img_box.Value:
             if self.box_id != -1:
                 box_point = self.xy_magnifier[self.box_id][0:4]
                 show_scale = self.xy_magnifier[self.box_id][4:6]
@@ -353,7 +367,7 @@ class MulimgViewer (MulimgViewerGui):
         self.SetStatusText_(["right",  "-1", "-1", "-1"])
 
     def left_img(self, event):
-        if self.move_img_box.Value:
+        if self.select_img_box.Value:
             if self.box_id != -1:
                 box_point = self.xy_magnifier[self.box_id][0:4]
                 show_scale = self.xy_magnifier[self.box_id][4:6]
@@ -389,7 +403,7 @@ class MulimgViewer (MulimgViewerGui):
             self.x = x_0
             self.y = y_0
 
-        if self.move_img_box.Value:
+        if self.select_img_box.Value:
             # select box
             x, y = event.GetPosition()
             id = self.get_img_id_from_point([x, y])
@@ -421,7 +435,7 @@ class MulimgViewer (MulimgViewerGui):
             self.refresh(event)
 
     def img_left_dclick(self, event):
-        if self.move_img_box.Value:
+        if self.select_img_box.Value:
             pass
         else:
             self.start_flag = 0

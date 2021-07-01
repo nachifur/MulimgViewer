@@ -275,9 +275,11 @@ https://www.gnu.org/licenses/gpl-3.0.en.html
 - [ ] 高清图像的对比，放大图像1:1输出（@Faberman提供改进意见）
 
 ## 9. 致谢
-nothingeasy:改进意见-(输入方式，新增：路径文件的导入和存储)
-JuZiSYJ:改进意见-(保存带框的原始图像+并行放大)
-Faberman:改进意见-(为图像添加titile+放大图像1:1输出)
+* nothingeasy:改进意见-(输入方式，新增：路径文件的导入和存储)
+* JuZiSYJ:改进意见-(保存带框的原始图像+并行放大)
+* Faberman:改进意见-(为图像添加titile+放大图像1:1输出)
+
+
 ## 10. 引用
 如果您在研究中使用此项目，请使用以下BibTeX条目。
 ```

@@ -1,3 +1,4 @@
+import wx
 from about_gui import AboutGui
 
 
@@ -44,3 +45,6 @@ class About (AboutGui):
             "MulimgViewer is a multi-image viewer that can open multiple images in one interface, which is convenient for image comparison and image stitching.\n")
 
         self.about_txt.EndFontSize()
+
+        self.icon = wx.Icon('mulimgviewer.ico', wx.BITMAP_TYPE_ICO)
+        self.SetIcon(self.icon)

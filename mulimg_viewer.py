@@ -50,6 +50,8 @@ class MulimgViewer (MulimgViewerGui):
         self.color_list = []
         self.box_id = -1
         self.xy_magnifier = []
+        self.icon = wx.Icon('mulimgviewer.ico', wx.BITMAP_TYPE_ICO)
+        self.SetIcon(self.icon)
 
     def frame_resize(self, event):
         self.auto_layout(frame_resize=True)

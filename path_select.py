@@ -11,7 +11,9 @@ class PathSelectFrame (PathSelectFrameGui):
         self.UpdateUI = UpdateUI
         self.get_type = get_type
         self.Bind(wx.EVT_CLOSE, self.close)
-
+        self.icon = wx.Icon('mulimgviewer.ico', wx.BITMAP_TYPE_ICO)
+        self.SetIcon(self.icon)
+        
     def frame_resize(self, event):
         self.m_richText1.SetMinSize(wx.Size((self.Size.Width, self.Size.Height)))
         self.Layout()

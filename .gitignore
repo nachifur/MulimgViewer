@@ -7,4 +7,4 @@ build/
 test_output/mag*
 test_output/select*
 *.csv
-main.spec
+*.spec

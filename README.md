@@ -44,11 +44,11 @@ pip install wxpython pillow pytest-shutil
 ```
 运行：
 ```python
-python3 main.py
+python3 MulimgViewer.py
 ```
 
 ## 3. Windows-10
-直接运行exe文件。也可以下载源码运行`main.py`。
+直接运行exe文件。也可以下载源码运行`MulimgViewer.py`。
 
 v3.9.3以后，`Windows 10`提供安装版`_Setup.exe`和便携版`_Portable.exe`（安装版`_Setup.exe`启动速度更快）。
 

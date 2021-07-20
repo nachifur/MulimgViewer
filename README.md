@@ -53,7 +53,11 @@ python3 MulimgViewer.py
 v3.9.3以后，`Windows 10`提供安装版`_Setup.exe`和便携版`_Portable.exe`（安装版`_Setup.exe`启动速度更快）。
 
 ## 4. 应用场景
-### 例1：并行浏览、挑选、保存
+### 例1：多图像浏览
+浏览202,599张图片的数据库CelebA，需要多长时间？一次显示1000张，只需点击200多次即可完成！
+![image](https://github.com/nachifur/MulimgViewer/blob/master/img/f15.jpg)
+
+### 例2：并行挑选
 
 **以前**你可能需要打开多个图像，逐个对比，再到文件夹找到图像，复制到别的地方。
 
@@ -61,7 +65,7 @@ v3.9.3以后，`Windows 10`提供安装版`_Setup.exe`和便携版`_Portable.exe
 
 图片挑选（默认使用复制，选中`Move file`为剪切）：`Parallel auto` or `Parallel manual`，关闭`Parallel+Sequential`。
 
-### 例2：并行放大
+### 例3：并行放大
 
 MulimgViewer可以轻松的完成纵向与横向的拼接，**支持自动拼接保存，支持并行放大**！
 
@@ -88,18 +92,18 @@ MulimgViewer可以轻松的完成纵向与横向的拼接，**支持自动拼接
 2. 鼠标左键双击图片
 3. `Ctrl+R`刷新显示。
 
-### 例3：数据库浏览、成对数据
-浏览一个1000张图片的数据库，需要多长时间？一次显示100张，只需点击10次即可完成！MulimgViewer可以方便的进行成对的数据的浏览、比较。
+### 例4：成对数据浏览
+MulimgViewer可以方便的进行成对的数据的浏览、比较。
 
 ![image](https://github.com/nachifur/MulimgViewer/blob/master/img/f8.jpg)
 
-### 例4：支持远程挂载目录图片浏览
+### 例5：支持远程挂载目录图片浏览
 将远程服务器的目录挂载后，在MulimgViewer中选择目录即可，完成图片浏览。
 例如：使用ubuntu的文件管理器`nautilus`，stfp://10.8.0.4连接到服务器。
 
 ![image](https://github.com/nachifur/MulimgViewer/blob/master/img/f9.jpg)
 
-### 例5：支持点按旋转
+### 例6：支持点按旋转
 
 显示多张图片的同时，鼠标左键点击即可完成图片旋转。
 

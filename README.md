@@ -36,7 +36,7 @@ MulimgViewer**多图像浏览器**，在一个界面显示多个图像，方便�
 qq交流群：945669929
 
 ## 2. python源码运行
-v3.9.1以后仅提供Windows-10的包（amd64）。其他环境可以使用源码运行。建议使用Python3.6以上。
+v3.9.1以后仅提供`Windows 10`的包（`amd64`）。其他环境可以使用源码运行。建议使用Python3.6以上。
 
 pip安装：
 ```bash
@@ -49,6 +49,8 @@ python3 main.py
 
 ## 3. Windows-10
 直接运行exe文件。也可以下载源码运行`main.py`。
+
+v3.9.3以后，`Windows 10`提供安装版`_Setup.exe`和便携版`_Portable.exe`（安装版`_Setup.exe`启动速度更快）。
 
 ## 4. 应用场景
 ### 例1：并行浏览、挑选、保存

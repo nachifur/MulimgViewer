@@ -7,6 +7,7 @@ from utils import ImgManager
 from index_table import IndexTable
 from pathlib import Path
 import copy
+from utils import get_resource_path
 
 
 class MulimgViewer (MulimgViewerGui):
@@ -50,7 +51,7 @@ class MulimgViewer (MulimgViewerGui):
         self.color_list = []
         self.box_id = -1
         self.xy_magnifier = []
-        self.icon = wx.Icon(str(Path.cwd()/'mulimgviewer.ico'), wx.BITMAP_TYPE_ICO)
+        self.icon = wx.Icon(get_resource_path('mulimgviewer.ico'), wx.BITMAP_TYPE_ICO)
         self.SetIcon(self.icon)
 
     def frame_resize(self, event):

@@ -6,7 +6,12 @@ from shutil import copyfile, move
 from pathlib import Path
 import csv
 import copy
+import sys
 
+def get_resource_path(relative_path):
+    if hasattr(sys, '_MEIPASS'):
+        return str(Path(sys._MEIPASS)/relative_path)
+    return  str(Path(relative_path).absolute())
 
 class ImgDataset():
     def init(self, input_path, type, action_count=None, img_count=None):

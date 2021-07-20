@@ -36,7 +36,7 @@ MulimgViewer**多图像浏览器**，在一个界面显示多个图像，方便�
 qq交流群：945669929
 
 ## 2. python源码运行
-v3.9.1以后仅提供Windows-10的包（amd64）。其他环境可以使用源码运行。建议使用Python3.6以上。
+v3.9.1以后仅提供`Windows 10`的包（`amd64`）。其他环境可以使用源码运行。建议使用Python3.6以上。
 
 pip安装：
 ```bash
@@ -49,6 +49,8 @@ python3 main.py
 
 ## 3. Windows-10
 直接运行exe文件。也可以下载源码运行`main.py`。
+
+v3.9.3以后，`Windows 10`提供安装版`_Setup.exe`和便携版`_Portable.exe`（安装版`_Setup.exe`启动速度更快）。
 
 ## 4. 应用场景
 ### 例1：并行浏览、挑选、保存
@@ -272,10 +274,7 @@ Resize: 图像尺寸为一组图像中的平均尺寸，缩放模式(不保持�
 2. 调节`Show scale`，`0.2,0.2`缩小，`2,2`放大
 3. 更改`Truth resolution`,将所有照片resize到同一尺寸，**对于浏览及其友好**
 
-## 7. 许可证
-https://www.gnu.org/licenses/gpl-3.0.en.html
-
-## 8. 未来增强功能
+## 7. 未来增强功能
 感谢各位提供意见！大家可以在issues中发表意见，采用的会致谢大家！如果大家希望可以和我一起合作开发，请联系我！
 - [x] 增加精确定位（目前已经有slider）
 - [x] 增加图片索引查看，方便进行精确定位
@@ -288,13 +287,13 @@ https://www.gnu.org/licenses/gpl-3.0.en.html
 - [ ] 为图像添加titile（@Faberman提供改进意见）
 - [ ] 高清图像的对比，放大图像1:1输出（@Faberman提供改进意见）
 
-## 9. 致谢
+## 8. 致谢
 * nothingeasy:改进意见-(输入方式，新增：路径文件的导入和存储)
 * JuZiSYJ:改进意见-(保存带框的原始图像+并行放大)
 * Faberman:改进意见-(为图像添加titile+放大图像1:1输出)
 
 
-## 10. 引用
+## 9. 引用
 如果您在研究中使用此项目，请使用以下BibTeX条目。
 ```
 @misc{MulimgViewer2020,
@@ -305,4 +304,12 @@ https://www.gnu.org/licenses/gpl-3.0.en.html
 }
 ```
 
-[![HitCount](http://hits.dwyl.com/nachifur/MulimgViewer.svg)](http://hits.dwyl.com/nachifur/MulimgViewer)
+## 10. 使用条款
+**许可证**
+
+GPL-3.0 License：https://www.gnu.org/licenses/gpl-3.0.en.html
+
+**额外条款**
+
+- 允许个人使用
+- 商业使用请联系 - liujiawei18@mails.ucas.ac.cn.

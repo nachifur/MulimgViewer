@@ -1,3 +1,18 @@
+<p align="center">
+<a href="https://github.com/nachifur/MulimgViewer" target="_blank">
+<img align="center" alt="multiple images viewer" src="https://github.com/nachifur/MulimgViewer/blob/master/mulimgviewer.ico" />
+</a>
+</p>
+
+<p align="center">
+<a href="https://github.com/nachifur/MulimgViewer/stargazers" target="_blank">
+ <img alt="GitHub stars" src="https://img.shields.io/github/stars/nachifur/MulimgViewer.svg" />
+</a>
+<a href="https://github.com/nachifur/MulimgViewer/releases" target="_blank">
+ <img alt="All releases" src="https://img.shields.io/github/downloads/nachifur/MulimgViewer/total.svg" />
+</a>
+</p>
+
 # MulimgViewer
 [**English page (Thanks @Faberman for the translation and polishing.)**](https://github.com/nachifur/MulimgViewer/wiki)
 ## 1. 介绍

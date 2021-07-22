@@ -35,6 +35,7 @@ MulimgViewer**多图像浏览器**，在一个界面显示多个图像，方便�
 您的star是我开发完善该项目最大的支持！
 qq交流群：945669929
 
+<img width="250" height="355" src="https://github.com/nachifur/MulimgViewer/blob/master/img/f14.jpg"/>
 ![image](https://github.com/nachifur/MulimgViewer/blob/master/img/qrcode.jpg)
 
 ## 2. python源码运行

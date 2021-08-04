@@ -2,6 +2,8 @@ import wx
 from main import MulimgViewer
 from path_select import PathSelectFrame
 import wx.lib.inspection
+from PIL import ImageFile
+ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 
 class GuiManager():
@@ -35,7 +37,7 @@ class MainAPP(wx.App):
         self.frame.append(self.manager.GetFrame(1))
         self.frame[0].Show()
         self.SetTopWindow(self.frame[0])
-        self.type = 0 # init show MulimgViewer
+        self.type = 0  # init show MulimgViewer
         return True
 
     def UpdateUI(self, type, input_path=None):
@@ -49,12 +51,11 @@ class MainAPP(wx.App):
                 # refresh one_dir_mul_dir_manual path
                 self.frame[0].ImgManager.init(
                     input_path, 1)
-                self.frame[1].refresh_txt(input_path)  
+                self.frame[1].refresh_txt(input_path)
 
                 self.frame[0].show_img_init()
                 self.frame[0].ImgManager.set_action_count(0)
-                self.frame[0].show_img() 
-                 
+                self.frame[0].show_img()
 
         if type == -1:
             # close window
@@ -65,7 +66,7 @@ class MainAPP(wx.App):
             self.frame[1].Show(False)
             self.frame[type].Show(True)
         elif type == 1:
-            # show PathSelectFrame        
+            # show PathSelectFrame
             self.frame[type].Show(True)
 
         return True

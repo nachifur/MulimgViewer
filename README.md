@@ -88,11 +88,11 @@ MulimgViewer可以方便的进行成对的数据的浏览、比较。[详细见]
 将远程服务器的目录挂载后，在MulimgViewer中选择目录即可，完成图片浏览。
 1. Ubuntu: 使用ubuntu的文件管理器`nautilus`，stfp://10.8.0.4连接到服务器。
 
-![image](https://github.com/nachifur/MulimgViewer/blob/master/img/f9.jpg)
+<img width="500" height="200" src="https://github.com/nachifur/MulimgViewer/blob/master/img/f9.jpg"/>
 
 2. win10: 安装WinFsp和SSHFS-Win之后，文件资源管理器中填写远程服务器ip，例如：`\\sshfs\user@ip!port`
 
-![image](https://github.com/nachifur/MulimgViewer/blob/master/img/f16.jpg)
+<img width="500" height="200" src="https://github.com/nachifur/MulimgViewer/blob/master/img/f16.jpg"/>
 
 ### 例6：支持点按旋转
 
@@ -109,7 +109,7 @@ MulimgViewer可以方便的进行成对的数据的浏览、比较。[详细见]
 4. 设置`Truth resolution`为固定的大小，例如：`256,256`
 5. 点击保存💾️
 
-<img width="512" height="512" src="https://github.com/nachifur/MulimgViewer/blob/master/img/f14.jpg"/>
+<img width="512" height="256" src="https://github.com/nachifur/MulimgViewer/blob/master/img/f14.jpg"/>
 
 ## 5. 使用说明
 

@@ -61,49 +61,38 @@ v3.9.3以后，`Windows 10`提供安装版`_Setup.exe`和便携版`_Portable.exe
 
 ### 例2：并行挑选
 
-**以前**你可能需要打开多个图像，逐个对比，再到文件夹找到图像，复制到别的地方。
+**以前**你可能需要在多个窗口打开多个图像，逐个对比，再到文件夹找到对应的图像，复制到别的地方。
 
-**现在**只需使用MulimgViewer多图像浏览器，输入各个需要对比的目录，**一键保存对比图像对到本地**！
+**现在**使用MulimgViewer多图像浏览器，输入各个需要对比的目录，**一键保存需要对比的多张图像到本地**！
 
-图片挑选（默认使用复制，选中`Move file`为剪切）：`Parallel auto` or `Parallel manual`，关闭`Parallel+Sequential`。
+![image](https://github.com/nachifur/MulimgViewer/blob/master/img/Parallel_select.jpg)
 
-### 例3：并行放大
+图片并行挑选：`Parallel auto` or `Parallel manual`，关闭`Parallel+Sequential`（默认使用复制，选中`Move file`为剪切）。
+
+### 例3：并行放大 
 
 MulimgViewer可以轻松的完成纵向与横向的拼接，**支持自动拼接保存，支持并行放大**！
 
-![image](https://github.com/nachifur/MulimgViewer/blob/master/img/f7.jpg)
+<img width="400" height="600" src="https://github.com/nachifur/MulimgViewer/blob/master/img/f7.jpg"/>
 
-同时支持**任意位置**划框（鼠标左键按住移动），**多框**并行放大（鼠标右键点击，生成新的框）。
+同时支持**任意位置**划框（鼠标左键按住移动），**多框**并行放大（鼠标右键点击，生成新的框）。[详细见](#5.4.12)
 
 ![image](https://github.com/nachifur/MulimgViewer/blob/master/img/f11.gif)
 
-微调box:（注意：开启`Select box`后，使用鼠标左键不能划框）
-1. 选中`Select box`
-2. 鼠标左键单击，选中已有的放大框
-3. 然后使用键盘上下左右，微调放大框
-4. 关闭`Select box`。
-
-清除放大框：
-
-方法1：
-1. 选中`Select box`，键盘`Del`，删除特定`box`
-2. 关闭`Select box`，键盘`Del`，删除所有`box`
-
-方法2：
-1. 关闭`Select box`
-2. 鼠标左键双击图片
-3. `Ctrl+R`刷新显示。
-
 ### 例4：成对数据浏览
-MulimgViewer可以方便的进行成对的数据的浏览、比较。
+MulimgViewer可以方便的进行成对的数据的浏览、比较。[详细见](#5.4.5)
 
 ![image](https://github.com/nachifur/MulimgViewer/blob/master/img/f8.jpg)
 
 ### 例5：支持远程挂载目录图片浏览
 将远程服务器的目录挂载后，在MulimgViewer中选择目录即可，完成图片浏览。
-例如：使用ubuntu的文件管理器`nautilus`，stfp://10.8.0.4连接到服务器。
+1. Ubuntu: 使用ubuntu的文件管理器`nautilus`，stfp://10.8.0.4连接到服务器。
 
 ![image](https://github.com/nachifur/MulimgViewer/blob/master/img/f9.jpg)
+
+2. win10: 安装WinFsp和SSHFS-Win之后，文件资源管理器中填写远程服务器ip，例如：`\\sshfs\user@ip!port`
+
+![image](https://github.com/nachifur/MulimgViewer/blob/master/img/f16.jpg)
 
 ### 例6：支持点按旋转
 
@@ -130,7 +119,7 @@ MulimgViewer可以方便的进行成对的数据的浏览、比较。
 
 ## 5.2 操作流程
 1. 在**Setting中填写布局参数**：row（一行有几张图片）, num per img（一个图片由几个子图片组成）, col（一列有几个图片）
-2. File->Input path，选择**输入模式**
+2. File->Open，选择**输入模式**
 
     2.1. Sequential: 一个文件夹多张图片。
 
@@ -141,10 +130,12 @@ MulimgViewer可以方便的进行成对的数据的浏览、比较。
     2.4. Image file list： 从文件导入图片列表文件
 
 3. 这时图片显示在面板，可以使用**next、last**查看下一张，上一张图片
-4. File->Out path, **选择输出的路径**。
+4. File->Select output path, **选择输出的路径**。
+5. Setting->Output mode, 选择输出模式
+6. 点击保存💾️
 
 ## 5.3 快捷键
-输入路径：
+1. 输入路径：
 
     Sequential: Ctrl+E
 
@@ -154,18 +145,12 @@ MulimgViewer可以方便的进行成对的数据的浏览、比较。
 
     Image file list: Ctrl+F
 
-
-输出路径：Ctrl+O
-
-下一张：Ctrl+N
-
-上一张Ctrl+L
-
-保存：Ctrl+S
-
-刷新：Ctrl+R
-
-使用键盘的上下左右，可以移动图像面板里的图像。
+2. 输出路径：Ctrl+O
+3. 下一张：Ctrl+N
+4. 上一张Ctrl+L
+5. 保存：Ctrl+S
+6. 刷新：Ctrl+R
+7. 使用键盘的上下左右，可以移动图像面板里的图像。
 
 ## 5.4 功能介绍
 
@@ -199,15 +184,19 @@ Magnifer: 单独保存放大图像，方便用户的后期处理。
 
 当`num per img` = 1或者>1，图像布局为**手动模式**，这时可以调整 `row` 和 `col`。
 
-### 5.4.5. 并行模式下的串行显示
+### 5.4.5. 并行模式下的串行显示  <a name="5.4.5"></a> 
 
-此时需要选中`Parallel+Sequential`，可以同时显示文件夹1-12的前n张图片，n可由`Num per img`设定。
-例如：`row=5` ,`Num per img=4`, `col=1`, 一次分别读取5个并行目录的4张图片，共20张。
-`Vertical`可以调整串行方向。`row=5` , `col=1`, 可以控制并行的二维排布。
+在`Parallel auto`和`Parallel manual`模式下，可以并行显示多个文件夹。选中`Parallel+Sequential`，在并行显示的同时，可以串行浏览每个文件夹中的前n张图片，n可由`Num per img`设定。
+
+例如：`row=5` ,`Num per img=4`, `col=1`, 一次分别读取5个并行目录的4张图片，共20张。`Vertical`可以调整串行方向。
+
+修改`row`和`col`, 可以控制并行文件夹的二维排布。
+
+![image](https://github.com/nachifur/MulimgViewer/blob/master/img/Parallel_Sequential.jpg)
 
 ### 5.4.6 自动保存
 
-勾选自动保存`Auto save all`，点击保存💾️
+勾选自动保存`Auto save all`，点击保存💾️，实现批量化操作。
 
 ### 5.4.7 图像尺寸归一化
 
@@ -239,7 +228,7 @@ Resize: 图像尺寸为一组图像中的平均尺寸，缩放模式(不保持�
 1. 同时浏览显示100张图像，屏幕放不下，使用`Show scale`缩放即可
 2. 100张拼接造成的保存图片很大，使用`Output scale`可以方便控制文件大小
 
-### 5.4.12 并行放大
+### 5.4.12 并行放大 <a name="5.4.12"></a> 
 **操作**:
 
 1. 点击放大按钮
@@ -258,6 +247,25 @@ Resize: 图像尺寸为一组图像中的平均尺寸，缩放模式(不保持�
 4. `🔍️Scale`，支持自定义倍数放大，最大不超过原图尺寸。例如：`3,3`，长宽3倍的放大。
 5. `Draw line width`设为0，即可隐藏框。
 6. `Draw line width`单位为pixel，在所有缩放下线宽保持不变。如果在`Show scale`为`0.1,0.1`，`Output scale`为`1,1`时，显示的框的宽度合适，那么输出框的宽度可能相比图片尺寸偏小。
+
+**微调box**:
+
+（注意：开启`Select box`后，使用鼠标左键不能划框）
+1. 选中`Select box`
+2. 鼠标左键单击，选中已有的放大框
+3. 然后使用键盘上下左右，微调放大框
+4. 关闭`Select box`。
+
+**清除放大框**：
+
+方法1：
+1. 选中`Select box`，键盘`Del`，删除特定`box`
+2. 关闭`Select box`，键盘`Del`，删除所有`box`
+
+方法2：
+1. 关闭`Select box`
+2. 鼠标左键双击图片
+3. `Ctrl+R`刷新显示。
 
 ### 5.4.13 窗口大小自动化调节
 

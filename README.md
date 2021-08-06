@@ -56,7 +56,7 @@ v3.9.3以后，`Windows 10`提供安装版`_Setup.exe`和便携版`_Portable.exe
 
 ## 4. 应用场景
 ### 例1：多图像浏览
-浏览202,599张图片的数据库CelebA，需要多长时间？一次显示1000张，只需点击200多次即可完成！
+浏览202,599张图片的数据库CelebA，需要多长时间？一次显示1000张，只需点击200多次即可完成！[详细见](#5.2)
 ![image](https://github.com/nachifur/MulimgViewer/blob/master/img/f15.jpg)
 
 ### 例2：并行挑选
@@ -115,7 +115,7 @@ MulimgViewer可以方便的进行成对的数据的浏览、比较。[详细见]
 
 ![image](https://github.com/nachifur/MulimgViewer/blob/master/img/Shortcut_bar.jpg)
 
-## 5.2 操作流程
+## 5.2 操作流程 <a name="5.2"></a> 
 1. 在**Setting中填写布局参数**：row（一行有几张图片）, num per img（一个图片由几个子图片组成）, col（一列有几个图片）
 2. File->Open，选择**输入模式**
 

@@ -73,7 +73,7 @@ v3.9.3以后，`Windows 10`提供安装版`_Setup.exe`和便携版`_Portable.exe
 
 MulimgViewer可以轻松的完成纵向与横向的拼接，**支持自动拼接保存，支持并行放大**！
 
-<img width="400" height="600" src="https://github.com/nachifur/MulimgViewer/blob/master/img/f7.jpg"/>
+<img src="https://github.com/nachifur/MulimgViewer/blob/master/img/f7.jpg"/>
 
 同时支持**任意位置**划框（鼠标左键按住移动），**多框**并行放大（鼠标右键点击，生成新的框）。[详细见](#5.4.12)
 
@@ -100,7 +100,7 @@ MulimgViewer可以方便的进行成对的数据的浏览、比较。[详细见]
 
 ![image](https://github.com/nachifur/MulimgViewer/blob/master/img/f10.gif)
 
-### 例6：批量化resize图片
+### 例7：批量化resize图片
 利用自动保存功能，可以实现批量化resize图片。
 操作：
 1. 输入模式选择：Sequential，选择输入文件夹
@@ -108,8 +108,6 @@ MulimgViewer可以方便的进行成对的数据的浏览、比较。[详细见]
 3. 勾选自动保存`Auto save all`
 4. 设置`Truth resolution`为固定的大小，例如：`256,256`
 5. 点击保存💾️
-
-<img width="512" height="256" src="https://github.com/nachifur/MulimgViewer/blob/master/img/f14.jpg"/>
 
 ## 5. 使用说明
 
@@ -164,7 +162,7 @@ MulimgViewer可以方便的进行成对的数据的浏览、比较。[详细见]
 
 如果需要自动排布，`Num per img`设为-1。
 
-![image](https://github.com/nachifur/MulimgViewer/blob/master/img/f1.jpg)
+<img width="250" height="150" src="https://github.com/nachifur/MulimgViewer/blob/master/img/f1.jpg"/>
 
 ### 5.4.2  输出模式：
 
@@ -174,7 +172,7 @@ Select: 分别保存当前浏览的图像到不同的文件夹，默认为copy�
 
 Magnifer: 单独保存放大图像，方便用户的后期处理。
 
-![image](https://github.com/nachifur/MulimgViewer/blob/master/img/f2.jpg)
+<img width="250" height="200" src="https://github.com/nachifur/MulimgViewer/blob/master/img/f2.jpg"/>
 
 ### 5.4.3 图像排列自动化
 
@@ -206,7 +204,7 @@ Crop: 图像尺寸为一组图像中的最小尺寸，裁剪模式(保持原始�
 
 Resize: 图像尺寸为一组图像中的平均尺寸，缩放模式(不保持原始像素分辨率)
 
-![image](https://github.com/nachifur/MulimgViewer/blob/master/img/f3.jpg)
+<img width="250" height="150" src="https://github.com/nachifur/MulimgViewer/blob/master/img/f3.jpg"/>
 
 ### 5.4.8 图像间隔
 
@@ -218,7 +216,7 @@ Resize: 图像尺寸为一组图像中的平均尺寸，缩放模式(不保持�
 
 ### 5.4.10 并行手动模式支持路径导入保存
 
-![image](https://github.com/nachifur/MulimgViewer/blob/master/img/f4.jpg)
+<img width="250" height="200" src="https://github.com/nachifur/MulimgViewer/blob/master/img/f4.jpg"/>
 
 ### 5.4.11 显示、输出尺寸独立
 
@@ -233,7 +231,7 @@ Resize: 图像尺寸为一组图像中的平均尺寸，缩放模式(不保持�
 
 1. 点击放大按钮
 
-![image](https://github.com/nachifur/MulimgViewer/blob/master/img/f5.jpg)
+<img width="50" height="50" src="https://github.com/nachifur/MulimgViewer/blob/master/img/f5.jpg"/>
 
 2. 鼠标变为十字光标，在任意图片位置划框
 3. 选择放大区域：按住鼠标左键，移动鼠标，释放鼠标左键，显示放大结果
@@ -272,12 +270,14 @@ Resize: 图像尺寸为一组图像中的平均尺寸，缩放模式(不保持�
 开启`Auto layout`，即可实现窗口自动大小调节。
 
 ### 5.4.14 浏览图片，精确定位
-移动slider，可实现粗定位。
+**粗定位：** 移动slider。
+
+**精确定位：**
+
+<img width="100" height="50" src="https://github.com/nachifur/MulimgViewer/blob/master/img/f13.jpg"/>
 1. `Help`->`Index table`
 2. 查看图片显示序号
 3. 输入序号，回车
-
-![image](https://github.com/nachifur/MulimgViewer/blob/master/img/f13.jpg)
 
 ## 6. 注意事项以及使用技巧
 

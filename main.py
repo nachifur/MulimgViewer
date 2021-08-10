@@ -636,6 +636,7 @@ class MulimgViewer (MulimgViewerGui):
                     self.keep_magnifer_size.Value,
                     self.image_interp.GetSelection(),
                     self.show_box.Value,
+                    self.show_box_in_crop.Value,
                     self.checkBox_orientation.Value]
 
     def show_img(self):

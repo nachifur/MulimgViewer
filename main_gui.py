@@ -345,7 +345,7 @@ class MulimgViewerGui ( wx.Frame ):
 
 		bSizer24 = wx.BoxSizer( wx.HORIZONTAL )
 
-		self.m_staticText29 = wx.StaticText( self.scrolledWindow_set, wx.ID_ANY, u"Show box", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText29 = wx.StaticText( self.scrolledWindow_set, wx.ID_ANY, u"Show box in original", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText29.Wrap( -1 )
 
 		bSizer24.Add( self.m_staticText29, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
@@ -356,6 +356,19 @@ class MulimgViewerGui ( wx.Frame ):
 
 
 		fgSizer3.Add( bSizer24, 1, wx.EXPAND, 5 )
+
+		bSizer26 = wx.BoxSizer( wx.HORIZONTAL )
+
+		self.m_staticText31 = wx.StaticText( self.scrolledWindow_set, wx.ID_ANY, u"Show box in 🔍️", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText31.Wrap( -1 )
+
+		bSizer26.Add( self.m_staticText31, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+
+		self.show_box_in_crop = wx.CheckBox( self.scrolledWindow_set, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
+		bSizer26.Add( self.show_box_in_crop, 0, wx.ALL, 5 )
+
+
+		fgSizer3.Add( bSizer26, 1, wx.EXPAND, 5 )
 
 		bSizer25 = wx.BoxSizer( wx.HORIZONTAL )
 

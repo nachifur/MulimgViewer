@@ -365,6 +365,7 @@ class MulimgViewerGui ( wx.Frame ):
 		bSizer26.Add( self.m_staticText31, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
 		self.show_box_in_crop = wx.CheckBox( self.scrolledWindow_set, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.show_box_in_crop.SetValue(True)
 		bSizer26.Add( self.show_box_in_crop, 0, wx.ALL, 5 )
 
 

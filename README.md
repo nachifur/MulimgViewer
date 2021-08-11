@@ -90,7 +90,7 @@ MulimgViewer可以方便的进行成对的数据的浏览、比较。[详细见]
 
 <img width="500" height="200" src="https://github.com/nachifur/MulimgViewer/blob/master/img/f9.jpg"/>
 
-2. win10: 安装WinFsp和SSHFS-Win之后，文件资源管理器中填写远程服务器ip，例如：`\\sshfs\user@ip!port`
+2. win10: 安装WinFsp和[SSHFS-Win](https://github.com/billziss-gh/sshfs-win)之后，文件资源管理器中填写远程服务器ip，例如：`\\sshfs\user@ip!port`
 
 <img width="500" height="200" src="https://github.com/nachifur/MulimgViewer/blob/master/img/f16.jpg"/>
 

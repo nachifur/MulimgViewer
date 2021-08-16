@@ -3,7 +3,7 @@ from wx.core import App
 from main_gui import MulimgViewerGui
 import numpy as np
 from about import About
-from utils import ImgManager
+from utils_img import ImgManager
 from index_table import IndexTable
 from pathlib import Path
 import copy
@@ -637,6 +637,7 @@ class MulimgViewer (MulimgViewerGui):
                     self.image_interp.GetSelection(),
                     self.show_box.Value,
                     self.show_box_in_crop.Value,
+                    self.show_original.Value,
                     self.checkBox_orientation.Value]
 
     def show_img(self):

@@ -290,20 +290,6 @@ class MulimgViewerGui ( wx.Frame ):
 
 		fgSizer3.Add( bSizer8, 1, wx.EXPAND, 5 )
 
-		bSizer22 = wx.BoxSizer( wx.HORIZONTAL )
-
-		self.m_staticText27 = wx.StaticText( self.scrolledWindow_set, wx.ID_ANY, u"Auto draw color", wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.m_staticText27.Wrap( -1 )
-
-		bSizer22.Add( self.m_staticText27, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
-
-		self.checkBox_auto_draw_color = wx.CheckBox( self.scrolledWindow_set, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.checkBox_auto_draw_color.SetValue(True)
-		bSizer22.Add( self.checkBox_auto_draw_color, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
-
-
-		fgSizer3.Add( bSizer22, 1, wx.EXPAND, 5 )
-
 		bSizer19 = wx.BoxSizer( wx.HORIZONTAL )
 
 		self.m_staticText24 = wx.StaticText( self.scrolledWindow_set, wx.ID_ANY, u"Move file", wx.DefaultPosition, wx.DefaultSize, 0 )
@@ -317,19 +303,6 @@ class MulimgViewerGui ( wx.Frame ):
 
 		fgSizer3.Add( bSizer19, 1, wx.EXPAND, 5 )
 
-		bSizer20 = wx.BoxSizer( wx.HORIZONTAL )
-
-		self.m_staticText25 = wx.StaticText( self.scrolledWindow_set, wx.ID_ANY, u"🔍️ Keep size", wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.m_staticText25.Wrap( -1 )
-
-		bSizer20.Add( self.m_staticText25, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
-
-		self.keep_magnifer_size = wx.CheckBox( self.scrolledWindow_set, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
-		bSizer20.Add( self.keep_magnifer_size, 0, wx.ALL, 5 )
-
-
-		fgSizer3.Add( bSizer20, 1, wx.EXPAND, 5 )
-
 		bSizer21 = wx.BoxSizer( wx.HORIZONTAL )
 
 		self.m_staticText26 = wx.StaticText( self.scrolledWindow_set, wx.ID_ANY, u"Parallel+Sequential", wx.DefaultPosition, wx.DefaultSize, 0 )
@@ -342,6 +315,20 @@ class MulimgViewerGui ( wx.Frame ):
 
 
 		fgSizer3.Add( bSizer21, 1, wx.EXPAND, 5 )
+
+		bSizer27 = wx.BoxSizer( wx.HORIZONTAL )
+
+		self.m_staticText32 = wx.StaticText( self.scrolledWindow_set, wx.ID_ANY, u"Show original", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText32.Wrap( -1 )
+
+		bSizer27.Add( self.m_staticText32, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+
+		self.show_original = wx.CheckBox( self.scrolledWindow_set, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.show_original.SetValue(True)
+		bSizer27.Add( self.show_original, 0, wx.ALL, 5 )
+
+
+		fgSizer3.Add( bSizer27, 1, wx.EXPAND, 5 )
 
 		bSizer24 = wx.BoxSizer( wx.HORIZONTAL )
 
@@ -449,6 +436,19 @@ class MulimgViewerGui ( wx.Frame ):
 
 		fgSizer3.Add( bSizer14, 1, wx.EXPAND, 5 )
 
+		bSizer20 = wx.BoxSizer( wx.HORIZONTAL )
+
+		self.m_staticText25 = wx.StaticText( self.scrolledWindow_set, wx.ID_ANY, u"🔍️ Keep size", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText25.Wrap( -1 )
+
+		bSizer20.Add( self.m_staticText25, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+
+		self.keep_magnifer_size = wx.CheckBox( self.scrolledWindow_set, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
+		bSizer20.Add( self.keep_magnifer_size, 0, wx.ALL, 5 )
+
+
+		fgSizer3.Add( bSizer20, 1, wx.EXPAND, 5 )
+
 		self.m_staticline7 = wx.StaticLine( self.scrolledWindow_set, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_HORIZONTAL )
 		fgSizer3.Add( self.m_staticline7, 0, wx.EXPAND |wx.ALL, 5 )
 
@@ -461,6 +461,20 @@ class MulimgViewerGui ( wx.Frame ):
 
 		self.m_staticline2 = wx.StaticLine( self.scrolledWindow_set, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_HORIZONTAL )
 		fgSizer3.Add( self.m_staticline2, 0, wx.EXPAND |wx.ALL, 5 )
+
+		bSizer22 = wx.BoxSizer( wx.HORIZONTAL )
+
+		self.m_staticText27 = wx.StaticText( self.scrolledWindow_set, wx.ID_ANY, u"Auto draw color", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText27.Wrap( -1 )
+
+		bSizer22.Add( self.m_staticText27, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+
+		self.checkBox_auto_draw_color = wx.CheckBox( self.scrolledWindow_set, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.checkBox_auto_draw_color.SetValue(True)
+		bSizer22.Add( self.checkBox_auto_draw_color, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+
+
+		fgSizer3.Add( bSizer22, 1, wx.EXPAND, 5 )
 
 		bSizer17 = wx.BoxSizer( wx.HORIZONTAL )
 

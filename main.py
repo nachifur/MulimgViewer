@@ -719,7 +719,16 @@ class MulimgViewer (MulimgViewerGui):
 
     def auto_layout(self, frame_resize=False):
         # Auto Layout
-        self.displaySize = wx.Size(wx.DisplaySize())
+
+        # Get current window size
+        ## Get current window id
+        displays = (wx.Display(i) for i in range(wx.Display.GetCount()))
+        displays_list = [display for display in displays]
+        sizes = [display.GetGeometry().GetSize() for display in displays_list]
+        screen_id = wx.Display.GetFromWindow(self)
+        self.displaySize = sizes[screen_id]
+        # self.displaySize = wx.Size(wx.DisplaySize()) # get main window size
+
         if self.auto_layout_check.Value and (not frame_resize):
             if self.img_size[0] < self.width:
                 if self.img_size[0]+300 < self.width:

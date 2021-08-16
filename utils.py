@@ -8,16 +8,18 @@ import csv
 import copy
 import sys
 
+
 def get_resource_path(relative_path):
     if hasattr(sys, '_MEIPASS'):
         return str(Path(sys._MEIPASS)/relative_path)
-    return  str(Path(relative_path).absolute())
+    return str(Path(relative_path).absolute())
+
 
 class ImgDataset():
     def init(self, input_path, type, action_count=None, img_count=None):
         self.input_path = input_path
         self.type = type
-        
+
         self.init_flist()
         self.img_num = len(self.name_list)
         # self.set_count_per_action(1)
@@ -141,39 +143,51 @@ class ImgDataset():
             return self.csv_row_col
         else:
             if self.type == 2:
-                return [1, 2]
+                num_all = len(self.name_list)
             else:
                 num_all = len(self.path_list)
-                list_factor = self.solve_factor(num_all)
-                list_factor = list(set(list_factor))
-                list_factor = np.sort(list_factor)
-                if len(list_factor) == 0:
-                    return [1, num_all]
+
+            list_factor = self.solve_factor(num_all)
+
+            if len(list_factor) == 0:
+                row_col = [1, num_all]
+            else:
+                if len(list_factor) <= 1:
+                    num_all = num_all+1
+                    list_factor = self.solve_factor(num_all)
+                row = list_factor[int(len(list_factor)/2)-1]
+                row = int(row)
+                col = int(num_all/row)
+                if row < col:
+                    row_col = [row, col]
                 else:
-                    if len(list_factor) <= 2:
-                        row = list_factor[0]
-                    else:
-                        row = list_factor[int(len(list_factor)/2)-1]
-                    row = int(row)
-                    col = int(num_all/row)
-                    if row < col:
-                        return [row, col]
-                    else:
-                        return [col, row]
+                    row_col = [col, row]
+
+            if row_col[0]>=100:
+                row_col[0] = 50
+
+            if row_col[1]>=100:
+                row_col[1] = 50
+
+            return row_col 
 
     def solve_factor(self, num):
+        # solve factors for a number
         list_factor = []
         i = 1
-        if num >= 2:
+        if num > 2:
             while i <= num:
                 i += 1
                 if num % i == 0:
                     list_factor.append(i)
                 else:
                     pass
-            return list_factor
         else:
-            return []
+            pass
+
+        list_factor = list(set(list_factor))
+        list_factor = np.sort(list_factor)
+        return list_factor
 
 
 class ImgManager(ImgDataset):
@@ -377,7 +391,8 @@ class ImgManager(ImgDataset):
                     self.check.append(0)
 
         if self.layout_params[11]:
-            self.init(self.input_path, self.type, self.action_count, self.img_count)
+            self.init(self.input_path, self.type,
+                      self.action_count, self.img_count)
             self.get_flist()
 
     def save_stitch(self, dir_name):
@@ -790,12 +805,13 @@ class ImgManager(ImgDataset):
             box_point[1] = box_point[3]
             box_point[3] = temp
 
-        img_resolution = (np.array(self.img_resolution_origin) * np.array(show_scale)).astype(np.int)
+        img_resolution = (np.array(self.img_resolution_origin)
+                          * np.array(show_scale)).astype(np.int)
 
         width = abs(box_point[0]-box_point[2])
         height = abs(box_point[1]-box_point[3])
 
-        # limit box boundary 
+        # limit box boundary
         if first_point:
             if box_point[2] > img_resolution[0]:
                 box_point[2] = img_resolution[0]
@@ -806,9 +822,9 @@ class ImgManager(ImgDataset):
             if box_point[3] > img_resolution[1]:
                 box_point[3] = img_resolution[1]
 
-            if box_point[1]< 0:
-                box_point[1] = 0      
-        else: 
+            if box_point[1] < 0:
+                box_point[1] = 0
+        else:
             if box_point[2] > img_resolution[0]:
                 box_point[2] = img_resolution[0]
                 box_point[0] = img_resolution[0]-width
@@ -819,7 +835,7 @@ class ImgManager(ImgDataset):
             if box_point[3] > img_resolution[1]:
                 box_point[3] = img_resolution[1]
                 box_point[1] = img_resolution[1]-height
-            elif box_point[1]< 0:
+            elif box_point[1] < 0:
                 box_point[1] = 0
                 box_point[3] = height
 

@@ -721,24 +721,27 @@ class MulimgViewer (MulimgViewerGui):
         # Auto Layout
 
         # Get current window size
+        # self.displaySize = wx.Size(wx.DisplaySize()) # get main window size
         ## Get current window id
         displays = (wx.Display(i) for i in range(wx.Display.GetCount()))
         displays_list = [display for display in displays]
         sizes = [display.GetGeometry().GetSize() for display in displays_list]
         screen_id = wx.Display.GetFromWindow(self)
         self.displaySize = sizes[screen_id]
-        # self.displaySize = wx.Size(wx.DisplaySize()) # get main window size
-
+        # leave some free space 
+        self.displaySize[0] = self.displaySize[0]-50
+        self.displaySize[1] = self.displaySize[1]-50
+        
         if self.auto_layout_check.Value and (not frame_resize):
             if self.img_size[0] < self.width:
-                if self.img_size[0]+300 < self.width:
+                if self.img_size[0]+320 < self.width:
                     w = self.width
                 else:
-                    w = self.img_size[0]+300
-            elif self.img_size[0]+300 > self.displaySize[0]:
+                    w = self.img_size[0]+320
+            elif self.img_size[0]+320 > self.displaySize[0]:
                 w = self.displaySize[0]
             else:
-                w = self.img_size[0]+300
+                w = self.img_size[0]+320
 
             if self.img_size[1] < self.height:
                 if self.img_size[1]+200 < self.height:
@@ -750,6 +753,7 @@ class MulimgViewer (MulimgViewerGui):
             else:
                 h = self.img_size[1]+200
             self.Size = wx.Size((w, h))
+
         self.scrolledWindow_set.SetMinSize(
             wx.Size((300, -1)))
         self.scrolledWindow_img.SetMinSize(

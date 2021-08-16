@@ -491,7 +491,10 @@ class ImgManager(ImgDataset):
         gap = self.layout_params[3]
         self.magnifier_flag = self.layout_params[7]
         self.show_box = self.layout_params[14]
-        show_original = self.layout_params[16]
+        if img_mode:
+            show_original = True
+        else:
+            show_original = self.layout_params[16]
         if img_mode == 0:
             self.draw_points = draw_points
 

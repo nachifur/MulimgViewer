@@ -660,12 +660,7 @@ class MulimgViewer (MulimgViewerGui):
         self.slider_value_max.SetLabel(
             str(self.ImgManager.max_action_num-1))
 
-        # # Destroy the window to avoid memory leaks
-        # try:
-        #     for i in range(self.img_Sizer.ItemCount):
-        #         self.img_Sizer.Children[0].GetWindow().Destroy()
-        # except:
-        #     pass
+        # Destroy the window to avoid memory leaks
         try:
             self.img_last.Destroy()
         except:
@@ -681,7 +676,7 @@ class MulimgViewer (MulimgViewerGui):
             if flag != 1:
                 bmp = self.ImgManager.img
                 self.img_size = bmp.size
-                bmp = self.ImgManager.PIL2wx(bmp)
+                bmp = self.ImgManager.ImgF.PIL2wx(bmp)
 
                 self.img_panel.SetSize(
                     wx.Size(self.img_size[0]+100, self.img_size[1]+100))

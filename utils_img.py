@@ -1,3 +1,4 @@
+from types import DynamicClassAttribute
 import wx
 import numpy as np
 import os
@@ -75,6 +76,265 @@ class ImgUtils():
             if k == len(color_list):
                 k = 0
         img = Image.fromarray(img_array.astype('uint8')).convert('RGBA')
+        return img
+
+    def cal_magnifier_size(self, magnifier_scale, crop_size, img_mode, gap, img_size, num_box, vertical=False):
+        delta_x = 0
+        delta_y = 0
+        if vertical:
+            magnifier_scale.reverse()
+            crop_size.reverse()
+            img_size.reverse()
+        height, width = crop_size
+        img_width, img_height = img_size
+
+        if img_mode:
+            gap = 0
+            num_box = 1
+
+        if not (magnifier_scale[0] == -1 or magnifier_scale[1] == -1):
+            # custom magnifier scale
+            to_height = int(height*magnifier_scale[1])
+            to_width = int(width*magnifier_scale[0])
+            width_all = to_width*num_box + (num_box-1)*gap
+            height_all = to_height
+
+            if img_width/width_all > img_height/height_all:
+                if to_height > img_height:
+                    to_width = int(
+                        img_height/to_height*to_width)
+                    to_height = img_height
+                width_all = (to_width*num_box +
+                             (num_box-1)*gap)
+                delta_x = int((img_width-width_all)/2)
+            elif img_width/width_all == img_height/height_all:
+                pass
+            else:
+                if width_all >= img_width:
+                    to_height = int(
+                        img_width/width_all*to_height)
+                    to_width = int(
+                        (img_width-gap*(num_box-1))/num_box)
+                else:
+                    width_all = (to_width*num_box +
+                                 (num_box-1)*gap)
+                    delta_x = int((img_width-width_all)/2)
+        else:
+            # auto magnifier scale
+            to_width = int(
+                (img_width-gap*(num_box-1))/num_box)
+            to_height = int(to_width/width*height)
+            if to_height > img_height:
+                to_width = int(img_height/to_height*to_width)
+                to_height = img_height
+                width_all = (to_width*num_box +
+                             (num_box-1)*gap)
+                delta_x = int((img_width-width_all)/2)
+
+        if to_height < img_height:
+            magnifier_img_all_size = [img_width, to_height]
+        else:
+            magnifier_img_all_size = [img_width, img_height]
+
+        to_resize = [to_width, to_height]
+        delta = [delta_x, delta_y]
+        if vertical:
+            to_resize.reverse()
+            delta.reverse()
+            magnifier_img_all_size.reverse()
+        return to_resize, delta, magnifier_img_all_size
+
+    def adjust_gap(self, target_length, number, length, gap):
+        """Adjust image gap. target_length>=sum(length)+sum(gap[0:-1])"""
+        number = len(length)
+
+        length_all = 0
+        for i in range(number):
+            length_all = length_all + length[i]
+            if i == number-1:
+                length_all = length_all + gap[i]
+
+        x_offset = int((target_length-length_all)/2)
+
+        res_ = (target_length - sum(length) - sum(gap[0:-1]) - 2*x_offset)
+        if number == 1:
+            res_a = 0
+        else:
+            res_a = res_ / (number-1)
+
+        # Quantitative change causes qualitative change
+        add_ = 0
+        add_gap = 0
+        for i in range(number):
+            gap[i] = gap[i]+add_gap
+
+            add_ = add_+res_a
+            if add_ >= 1:
+                add_ -= 1
+                add_gap = 1
+            else:
+                add_gap = 0
+
+        return gap
+
+    def get_xy_grid(self, width, height, row, col, gap_x, gap_y, target_width, target_height):
+        xy_grid = np.zeros((2, row, col)).astype(int)
+
+        gap_x = self.adjust_gap(target_width, col, width, gap_x)
+        gap_y = self.adjust_gap(target_height, row, height, gap_y)
+
+        y = 0
+        for iy in range(row):
+            x = 0
+            for ix in range(col):
+                xy_grid[:, iy, ix] = [x, y]
+
+                x = x + width[ix] + gap_x[ix]
+
+            y = y + height[iy] + gap_y[iy]
+
+        return xy_grid
+
+    def reshape_higher_dim(self,row_cols,img_list,vertical):
+        """It is currently in 4 dimensions, and can be expanded to higher dimensions by simply modifying the code."""
+        id = 0
+        size = []
+        for i in range(len(row_cols)):
+            row_col = row_cols[i]
+            size = size+row_col
+        output = np.zeros(tuple(size)).astype(object)
+
+        for i in range(len(row_cols)):
+            row_col = row_cols[i]
+            if vertical:
+                row_col.reverse()
+
+        # level 0
+        for iy_0 in range(row_cols[0][0]):
+            for ix_0 in range(row_cols[0][1]):
+                id_0 = [iy_0, ix_0]
+                if vertical:
+                    id_0.reverse()
+                # level 1
+                for iy_1 in range(row_cols[1][0]):
+                    for ix_1 in range(row_cols[1][1]):
+                        id_1 = [iy_1, ix_1]
+                        if vertical:
+                            id_1.reverse()
+                        output[id_0[0],id_0[1],id_1[0],id_1[1]] = img_list[id]
+                        id += 1
+        return output
+
+    def layout_2d(self, layout_list, gap_color, img_list, img_preprocessing, img_preprocessing_sub, vertical):
+        # Two-dimensional arrangement
+        # layout_list = [
+        #                 [[row_2,col_2],[gap_x_2,gap_y_2],[width_2,height_2],[target_width_2, target_height_2],discard_table_2],
+        #                 [[row_1,col_1],[gap_x_1,gap_y_1],[width_1,height_1],[target_width_1, target_height_1],discard_table_1],
+        #                 [[row_0,col_0],[gap_x_0,gap_y_0],[width_0,height_0],[target_width_0, target_height_0],discard_table_0],
+        #                ]
+
+        # Construct a two-dimensional grid
+        # when i >=1, width layout[2] and layout[6] can be empty
+        i = 0
+        xy_grids = []
+        for layout in layout_list:
+            row, col = layout[0]
+            gap_x, gap_y = layout[1]
+
+            gap_x = [gap_x for i in range(col)]
+            gap_y = [gap_y for i in range(row)]
+
+            if i >= 1:
+                width = [target_width for i in range(col)]
+                height = [target_height for i in range(row)]
+                layout[2] = [width, height]
+
+                target_width = target_width*col+sum(gap_x[0:-1])
+                target_height = target_height*row+sum(gap_y[0:-1])
+                layout[3] = [target_width, target_height]
+            else:
+                width, height = layout[2]
+                target_width, target_height = layout[3]
+
+            xy_grids.append(self.get_xy_grid(
+                width, height, row, col, gap_x, gap_y, target_width, target_height))
+
+            i += 1
+
+        # Construct a blank image
+        img = Image.new('RGBA', (target_width, target_height), gap_color)
+
+        # Fill the image
+        layout_list.reverse()
+        xy_grids.reverse()
+        Row = dict()
+        Col = dict()
+        Discard_table = dict()
+        for level in range(len(layout_list)):
+            Row['level_{}'.format(level)] = layout_list[level][0][0]
+            Col['level_{}'.format(level)] = layout_list[level][0][1]
+            Discard_table['level_{}'.format(level)] = layout_list[level][4]
+
+        # The number of img that a blank img can hold
+        image_num_capacity = Row['level_0'] * \
+            Col['level_0']*Row['level_1']*Col['level_1']
+        if len(img_list) < image_num_capacity:
+            empty_ = [[] for i in range(image_num_capacity-len(img_list))]
+            img_list = img_list+empty_
+
+        img_list = self.reshape_higher_dim([[Row['level_0'], Col['level_0']], [Row['level_1'], Col['level_1']]],img_list,vertical)
+
+        xy_grids_output = []
+        # level_0
+        for iy_0 in range(Row['level_0']):
+            for ix_0 in range(Col['level_0']):
+                level = 0
+                x_offset_0 = xy_grids[level][0, iy_0, ix_0]
+                y_offset_0 = xy_grids[level][1, iy_0, ix_0]
+
+                # level_1
+                for iy_1 in range(Row['level_1']):
+                    for ix_1 in range(Col['level_1']):
+                        level = 1
+                        x_offset_1 = xy_grids[level][0, iy_1, ix_1]
+                        y_offset_1 = xy_grids[level][1, iy_1, ix_1]
+                        xy_grids_output.append(
+                            [x_offset_0+x_offset_1, y_offset_0+y_offset_1])
+
+                        if Discard_table['level_0'][iy_0, ix_0] and Discard_table['level_1'][iy_1, ix_1]:
+                            im = None
+                        else:
+                            # img preprocessing
+                            if img_list[iy_0, ix_0, iy_1, ix_1]:
+                                im = img_list[iy_0, ix_0, iy_1, ix_1]
+                                im = img_preprocessing(im)
+                            else:
+                                im = None
+
+                        if im:
+                            # level_2
+                            i = 0
+                            for iy_2 in range(Row['level_2']):
+                                for ix_2 in range(Col['level_2']):
+                                    level = 2
+                                    x_offset_2 = xy_grids[level][0, iy_2, ix_2]
+                                    y_offset_2 = xy_grids[level][1, iy_2, ix_2]
+
+                                    x = x_offset_0+x_offset_1+x_offset_2
+                                    y = y_offset_0+y_offset_1+y_offset_2
+
+                                    # img preprocessing
+                                    if Discard_table['level_2'][iy_2, ix_2]:
+                                        pass
+                                    else:
+                                        im = img_preprocessing_sub[iy_2, ix_2](
+                                            im)
+                                        img.paste(im, (x, y))
+                                    i += 1
+
+        return img, xy_grids_output
+
+    def identity_transformation(self, img):
         return img
 
 
@@ -336,7 +596,7 @@ class ImgManager(ImgDatabase):
 
         self.img_list = img_list
 
-    def stitch_images(self, img_mode, draw_points=[]):
+    def stitch_images_s(self, img_mode, draw_points=[]):
         """img_mode, 0: show, 1: save"""
         # init
         xy_grid = []
@@ -548,6 +808,115 @@ class ImgManager(ImgDatabase):
         else:
             return 0
 
+    def stitch_images(self, img_mode, draw_points=[]):
+        """img_mode, 0: show, 1: save"""
+        # init
+        self.get_img_list()  # Generate image list
+        self.set_scale_mode(img_mode=img_mode)
+
+        if img_mode == 0:
+            self.draw_points = draw_points
+
+        img_preprocessing_sub = []
+        width_2, height_2 = [[], []]
+        self.vertical = self.layout_params[-1]
+
+        layout_level_2 = [0, 0, 0]
+        # show title
+        self.title = self.layout_params[17]
+        if self.title:
+            layout_level_2[0] = 1
+            img_preprocessing_sub.append(self.title_preprocessing)
+            # width_2.append()
+
+        # show original img
+        if img_mode:
+            self.show_original = True
+        else:
+            self.show_original = self.layout_params[16]
+        if self.show_original:
+            layout_level_2[1] = 1
+            img_preprocessing_sub.append(self.ImgF.identity_transformation)
+            width_2.append(self.img_resolution[0])
+            height_2.append(self.img_resolution[1])
+
+        # show magnifier img
+        self.magnifier_flag = self.layout_params[7]
+        if len(draw_points) == 0:
+            self.magnifier_flag = 0
+        if self.magnifier_flag:
+            layout_level_2[2] = 1
+            self.crop_points_process(draw_points, img_mode)
+            # get magnifier size
+            crop_width = self.crop_points[0][2]-self.crop_points[0][0]
+            crop_height = self.crop_points[0][2]-self.crop_points[0][0]
+            _, _, magnifier_img_all_size = self.ImgF.cal_magnifier_size(
+                self.layout_params[8], [crop_width, crop_height], img_mode, self.layout_params[3][4], self.img_resolution, len(self.crop_points), vertical=self.vertical)
+            img_preprocessing_sub.append(self.magnifier_preprocessing)
+            width_2.append(magnifier_img_all_size[0])
+            height_2.append(magnifier_img_all_size[1])
+        # Two-dimensional arrangement
+        row_col2 = [1, sum(layout_level_2)]
+        row_col1 = [1, self.layout_params[1]]  # num_per_img
+        # img_num_per_column,img_num_per_row
+        row_col0 = [self.layout_params[2], self.layout_params[0]]
+
+        gap_x_y_2 = [self.layout_params[3][3], 0]
+        gap_x_y_1 = [self.layout_params[3][2], 0]
+        gap_x_y_0 = [self.layout_params[3][0], self.layout_params[3][1]]
+
+        if self.vertical:
+            row_col2.reverse()
+            row_col1.reverse()
+            row_col0.reverse()
+
+            gap_x_y_2.reverse()
+            gap_x_y_1.reverse()
+            gap_x_y_0.reverse()
+
+        # width_2,height_2 = [[],[]]
+        width_1, height_1 = [[], []]
+        width_0, height_0 = [[], []]
+
+        if self.vertical:
+            target_width_2, target_height_2 = [
+                sum(width_2)+gap_x_y_2[0]*(sum(layout_level_2)-1), height_2[0]]
+        else:
+            target_width_2, target_height_2 = [width_2[0], sum(
+                height_2)+gap_x_y_2[0]*(sum(layout_level_2)-1)]
+        target_width_1, target_height_1 = [0, 0]
+        target_width_0, target_height_0 = [0, 0]
+
+        discard_table_2 = np.zeros(tuple(row_col2))
+        discard_table_1 = np.zeros(tuple(row_col1))
+        discard_table_0 = np.zeros(tuple(row_col0))
+        layout_list = [
+            [row_col2, gap_x_y_2, [width_2, height_2], [
+                target_width_2, target_height_2], discard_table_2],
+            [row_col1, gap_x_y_1, [width_1, height_1], [
+                target_width_1, target_height_1], discard_table_1],
+            [row_col0, gap_x_y_0, [width_0, height_0], [
+                target_width_0, target_height_0], discard_table_0],
+        ]
+        img_preprocessing_sub = np.array(
+            img_preprocessing_sub).reshape(row_col2[0], row_col2[1])
+        # stitch img
+        # try:
+        # Two-dimensional arrangement
+        self.img, self.xy_grid = self.ImgF.layout_2d(
+            layout_list, self.gap_color, self.img_list, self.img_preprocessing, img_preprocessing_sub, self.vertical)
+
+        self.show_box = self.layout_params[14]
+        if self.show_box and len(draw_points) != 0:
+            self.img = self.ImgF.draw_rectangle(
+                self.img, self.xy_grid, self.crop_points, self.layout_params[9], line_width=self.layout_params[10])
+        try:
+            pass
+        except:
+            return 1
+        else:
+            return 0
+
     def set_scale_mode(self, img_mode=0):
         """img_mode, 0: show, 1: save"""
         if img_mode == 0:
@@ -567,6 +936,9 @@ class ImgManager(ImgDatabase):
         # self.gap[0] = int(self.layout_params[3][0]*self.scale[0])
         # self.gap[1] = int(self.layout_params[3][1]*self.scale[1])
         # self.gap[2:] = (np.array(self.layout_params[3][2:])*np.array(self.scale[0])).astype(np.int)
+
+    def title_preprocessing(self):
+        pass
 
     def img_preprocessing(self, img):
         if self.custom_resolution:
@@ -686,19 +1058,10 @@ class ImgManager(ImgDatabase):
             img_list.append(img.crop(tuple(crop_point)))
         gap = self.layout_params[3][4]
         width, height = img_list[0].size
-        delta_x = 0
-        delta_y = 0
 
         # get to_resize
-        if self.layout_params[-1] == 1:
-            # vertical
-            to_resize, delta_y = self.cal_magnifier_size(
-                [magnifier_scale[1], magnifier_scale[0]], width, height, img_mode, gap, self.img_resolution[1], self.img_resolution[0])
-            to_resize = [to_resize[1], to_resize[0]]
-        else:
-            # horizontal
-            to_resize, delta_x = self.cal_magnifier_size(
-                magnifier_scale, height, width, img_mode, gap, self.img_resolution[0], self.img_resolution[1])
+        to_resize, delta = self.ImgF.cal_magnifier_size(
+            magnifier_scale, img_list[0].size, img_mode, gap, self.img_resolution, len(self.crop_points), vertical=self.vertical)
 
         # resize images
         line_width = self.layout_params[10]
@@ -742,58 +1105,7 @@ class ImgManager(ImgDatabase):
             if k == len(color_list):
                 k = 0
 
-        return img_list, delta_x, delta_y
-
-    def cal_magnifier_size(self, magnifier_scale, height, width, img_mode, gap, img_width, img_height):
-        delta_x = 0
-        num_box = len(self.crop_points)
-
-        if img_mode:
-            gap = 0
-            num_box = 1
-
-        if not (magnifier_scale[0] == -1 or magnifier_scale[1] == -1):
-            # custom magnifier scale
-            to_height = int(height*magnifier_scale[1])
-            to_width = int(width*magnifier_scale[0])
-            width_all = (to_width*num_box +
-                         (num_box-1)*gap)
-            height_all = to_height
-
-            if img_width/width_all > img_height/height_all:
-                if to_height > img_height:
-                    to_width = int(
-                        img_height/to_height*to_width)
-                    to_height = img_height
-                width_all = (to_width*num_box +
-                             (num_box-1)*gap)
-                delta_x = int((img_width-width_all)/2)
-            elif img_width/width_all == img_height/height_all:
-                pass
-            else:
-                if width_all >= img_width:
-                    to_height = int(
-                        img_width/width_all*to_height)
-                    to_width = int(
-                        (img_width-gap*(num_box-1))/num_box)
-                else:
-                    width_all = (to_width*num_box +
-                                 (num_box-1)*gap)
-                    delta_x = int((img_width-width_all)/2)
-        else:
-            # auto magnifier scale
-            to_width = int(
-                (img_width-gap*(num_box-1))/num_box)
-            to_height = int(to_width/width*height)
-            if to_height > img_height:
-                to_width = int(img_height/to_height*to_width)
-                to_height = img_height
-                width_all = (to_width*num_box +
-                             (num_box-1)*gap)
-                delta_x = int((img_width-width_all)/2)
-
-        to_resize = [to_width, to_height]
-        return to_resize, delta_x
+        return img_list, delta
 
     def rotate(self, id):
         img = Image.open(self.flist[id]).convert(

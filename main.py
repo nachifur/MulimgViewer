@@ -51,7 +51,8 @@ class MulimgViewer (MulimgViewerGui):
         self.color_list = []
         self.box_id = -1
         self.xy_magnifier = []
-        self.icon = wx.Icon(get_resource_path('mulimgviewer.ico'), wx.BITMAP_TYPE_ICO)
+        self.icon = wx.Icon(get_resource_path(
+            'mulimgviewer.ico'), wx.BITMAP_TYPE_ICO)
         self.SetIcon(self.icon)
 
     def frame_resize(self, event):
@@ -621,24 +622,25 @@ class MulimgViewer (MulimgViewerGui):
                 ["-1", "-1", "***Error: setting***", "-1"])
             return False
         else:
-            return [img_num_per_row,
-                    num_per_img,
-                    img_num_per_column,
-                    gap,
-                    show_scale,
-                    output_scale,
-                    img_resolution,
-                    1 if self.magnifier.Value else 0,
-                    magnifier_scale,
-                    color,
-                    line_width,
-                    self.move_file.Value,
-                    self.keep_magnifer_size.Value,
-                    self.image_interp.GetSelection(),
-                    self.show_box.Value,
-                    self.show_box_in_crop.Value,
-                    self.show_original.Value,
-                    self.checkBox_orientation.Value]
+            return [img_num_per_row,                        # 0
+                    num_per_img,                            # 1
+                    img_num_per_column,                     # 2
+                    gap,                                    # 3
+                    show_scale,                             # 4
+                    output_scale,                           # 5
+                    img_resolution,                         # 6
+                    1 if self.magnifier.Value else 0,       # 7
+                    magnifier_scale,                        # 8
+                    color,                                  # 9
+                    line_width,                             # 10
+                    self.move_file.Value,                   # 11
+                    self.keep_magnifer_size.Value,          # 12
+                    self.image_interp.GetSelection(),       # 13
+                    self.show_box.Value,                    # 14
+                    self.show_box_in_crop.Value,            # 15
+                    self.show_original.Value,               # 16
+                    self.show_title.Value,                  # 17
+                    self.checkBox_orientation.Value]        
 
     def show_img(self):
         # check layout_params change
@@ -718,16 +720,16 @@ class MulimgViewer (MulimgViewerGui):
 
         # Get current window size
         # self.displaySize = wx.Size(wx.DisplaySize()) # get main window size
-        ## Get current window id
+        # Get current window id
         displays = (wx.Display(i) for i in range(wx.Display.GetCount()))
         displays_list = [display for display in displays]
         sizes = [display.GetGeometry().GetSize() for display in displays_list]
         screen_id = wx.Display.GetFromWindow(self)
         self.displaySize = sizes[screen_id]
-        # leave some free space 
+        # leave some free space
         self.displaySize[0] = self.displaySize[0]-50
         self.displaySize[1] = self.displaySize[1]-50
-        
+
         if self.auto_layout_check.Value and (not frame_resize):
             if self.img_size[0] < self.width:
                 if self.img_size[0]+320 < self.width:

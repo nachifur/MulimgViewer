@@ -316,6 +316,20 @@ class MulimgViewerGui ( wx.Frame ):
 
 		fgSizer3.Add( bSizer21, 1, wx.EXPAND, 5 )
 
+		bSizer28 = wx.BoxSizer( wx.HORIZONTAL )
+
+		self.m_staticText33 = wx.StaticText( self.scrolledWindow_set, wx.ID_ANY, u"Show title", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText33.Wrap( -1 )
+
+		bSizer28.Add( self.m_staticText33, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+
+		self.show_title = wx.CheckBox( self.scrolledWindow_set, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.show_title.SetValue(True)
+		bSizer28.Add( self.show_title, 0, wx.ALL, 5 )
+
+
+		fgSizer3.Add( bSizer28, 1, wx.EXPAND, 5 )
+
 		bSizer27 = wx.BoxSizer( wx.HORIZONTAL )
 
 		self.m_staticText32 = wx.StaticText( self.scrolledWindow_set, wx.ID_ANY, u"Show original", wx.DefaultPosition, wx.DefaultSize, 0 )

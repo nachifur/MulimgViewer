@@ -602,17 +602,16 @@ class ImgManager(ImgDatabase):
             img_mode, draw_points)
 
         # stitch img
-        # try:
-        # Two-dimensional arrangement
-        self.img, self.xy_grid = self.ImgF.layout_2d(
-            layout_list, self.gap_color, self.img_list, self.img_preprocessing, img_preprocessing_sub, self.vertical)
-
-        self.show_box = self.layout_params[14]
-        if self.show_box and len(draw_points) != 0:
-            self.img = self.ImgF.draw_rectangle(
-                self.img, self.xy_grid, self.crop_points, self.layout_params[9], line_width=self.layout_params[10])
         try:
-            pass
+            # Two-dimensional arrangement
+            self.img, self.xy_grid = self.ImgF.layout_2d(
+                layout_list, self.gap_color, self.img_list, self.img_preprocessing, img_preprocessing_sub, self.vertical)
+
+            self.show_box = self.layout_params[14]
+            if self.show_original and self.show_box and len(draw_points) != 0:
+                self.img = self.ImgF.draw_rectangle(
+                    self.img, self.xy_grid, self.crop_points, self.layout_params[9], line_width=self.layout_params[10])
+            
         except:
             return 1
         else:
@@ -638,10 +637,7 @@ class ImgManager(ImgDatabase):
             # width_2.append()
 
         # show original img
-        if img_mode:
-            self.show_original = True
-        else:
-            self.show_original = self.layout_params[16]
+        self.show_original = self.layout_params[16]
         if self.show_original:
             layout_level_2[1] = 1
             img_preprocessing_sub.append(self.ImgF.identity_transformation)
@@ -654,12 +650,12 @@ class ImgManager(ImgDatabase):
             self.magnifier_flag = 0
         if self.magnifier_flag:
             layout_level_2[2] = 1
-            self.crop_points_process(draw_points, img_mode)
+            self.crop_points_process(draw_points, 0)
             # get magnifier size
             crop_width = self.crop_points[0][2]-self.crop_points[0][0]
             crop_height = self.crop_points[0][3]-self.crop_points[0][1]
             _, _, magnifier_img_all_size = self.ImgF.cal_magnifier_size(
-                self.layout_params[8], [crop_width, crop_height], img_mode, self.layout_params[3][4], self.img_resolution, len(self.crop_points), vertical=self.vertical)
+                self.layout_params[8], [crop_width, crop_height], 0, self.layout_params[3][4], self.img_resolution, len(self.crop_points), vertical=self.vertical)
             img_preprocessing_sub.append(self.magnifier_preprocessing)
             width_2.append(magnifier_img_all_size[0])
             height_2.append(magnifier_img_all_size[1])
@@ -926,7 +922,10 @@ class ImgManager(ImgDatabase):
             x = x + gap_x[i]+width[i]
             y = y + gap_y[i]+height[i]
 
-        return img
+        if img_mode:
+            return img_list
+        else:
+            return img
 
     def rotate(self, id):
         img = Image.open(self.flist[id]).convert(
@@ -1103,7 +1102,7 @@ class ImgManager(ImgDatabase):
                             i += 1
 
                         img = self.img_list[i_]
-                        img_list, _, _ = self.magnifier_preprocessing(
+                        img_list = self.magnifier_preprocessing(
                             self.img_preprocessing(img), img_mode=1)
                         i = 0
                         for img in img_list:
@@ -1116,7 +1115,7 @@ class ImgManager(ImgDatabase):
             else:
                 i = 0
                 for img in self.img_list:
-                    img_list, _, _ = self.magnifier_preprocessing(
+                    img_list = self.magnifier_preprocessing(
                         self.img_preprocessing(img), img_mode=1)
                     if not (Path(self.out_path_str)/dir_name/(Path(self.flist[i]).parent).stem).is_dir():
                         os.makedirs(Path(self.out_path_str) / dir_name /
@@ -1142,8 +1141,9 @@ class ImgManager(ImgDatabase):
         i = 0
         for img in self.img_list:
             img = self.img_preprocessing(img)
-            img = self.ImgF.draw_rectangle(img, self.xy_grids, self.crop_points,
-                                           self.layout_params[9], line_width=self.layout_params[10], single=True)
+            if self.show_box:
+                img = self.ImgF.draw_rectangle(img, self.xy_grid, self.crop_points,
+                                            self.layout_params[9], line_width=self.layout_params[10], single_box=True)
             f_path_output = Path(self.out_path_str)/sub_dir_name/(Path(self.flist[i]).parent).stem / (
                 (Path(self.flist[i]).parent).stem+"_"+Path(self.flist[i]).stem+".png")
             if not (Path(self.out_path_str)/sub_dir_name/(Path(self.flist[i]).parent).stem).is_dir():

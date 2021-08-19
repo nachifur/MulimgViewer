@@ -7,6 +7,8 @@ from shutil import copyfile, move
 from pathlib import Path
 import csv
 import copy
+
+from wx.core import Height
 from utils import solve_factor, change_order
 
 
@@ -85,7 +87,7 @@ class ImgUtils():
             magnifier_scale.reverse()
             crop_size.reverse()
             img_size.reverse()
-        height, width = crop_size
+        width, height = crop_size
         img_width, img_height = img_size
 
         if img_mode:
@@ -144,7 +146,7 @@ class ImgUtils():
             magnifier_img_all_size.reverse()
         return to_resize, delta, magnifier_img_all_size
 
-    def adjust_gap(self, target_length, number, length, gap):
+    def adjust_gap(self, target_length, number, length, gap,delta):
         """Adjust image gap. target_length>=sum(length)+sum(gap[0:-1])"""
         number = len(length)
 
@@ -154,9 +156,7 @@ class ImgUtils():
             if i == number-1:
                 length_all = length_all + gap[i]
 
-        x_offset = int((target_length-length_all)/2)
-
-        res_ = (target_length - sum(length) - sum(gap[0:-1]) - 2*x_offset)
+        res_ = (target_length - sum(length) - sum(gap[0:-1]) - 2*delta)
         if number == 1:
             res_a = 0
         else:
@@ -177,12 +177,8 @@ class ImgUtils():
 
         return gap
 
-    def get_xy_grid(self, width, height, row, col, gap_x, gap_y, target_width, target_height):
+    def get_xy_grid(self, width, height, row, col, gap_x, gap_y):
         xy_grid = np.zeros((2, row, col)).astype(int)
-
-        gap_x = self.adjust_gap(target_width, col, width, gap_x)
-        gap_y = self.adjust_gap(target_height, row, height, gap_y)
-
         y = 0
         for iy in range(row):
             x = 0
@@ -195,7 +191,7 @@ class ImgUtils():
 
         return xy_grid
 
-    def reshape_higher_dim(self,row_cols,img_list,vertical):
+    def reshape_higher_dim(self, row_cols, img_list, vertical):
         """It is currently in 4 dimensions, and can be expanded to higher dimensions by simply modifying the code."""
         id = 0
         size = []
@@ -221,7 +217,8 @@ class ImgUtils():
                         id_1 = [iy_1, ix_1]
                         if vertical:
                             id_1.reverse()
-                        output[id_0[0],id_0[1],id_1[0],id_1[1]] = img_list[id]
+                        output[id_0[0], id_0[1], id_1[0],
+                               id_1[1]] = img_list[id]
                         id += 1
         return output
 
@@ -257,7 +254,7 @@ class ImgUtils():
                 target_width, target_height = layout[3]
 
             xy_grids.append(self.get_xy_grid(
-                width, height, row, col, gap_x, gap_y, target_width, target_height))
+                width, height, row, col, gap_x, gap_y))
 
             i += 1
 
@@ -282,7 +279,9 @@ class ImgUtils():
             empty_ = [[] for i in range(image_num_capacity-len(img_list))]
             img_list = img_list+empty_
 
-        img_list = self.reshape_higher_dim([[Row['level_0'], Col['level_0']], [Row['level_1'], Col['level_1']]],img_list,vertical)
+        # Change the order of the image list
+        img_list = self.reshape_higher_dim([[Row['level_0'], Col['level_0']], [
+                                           Row['level_1'], Col['level_1']]], img_list, vertical)
 
         xy_grids_output = []
         # level_0
@@ -596,232 +595,41 @@ class ImgManager(ImgDatabase):
 
         self.img_list = img_list
 
-    def stitch_images_s(self, img_mode, draw_points=[]):
+    def stitch_images(self, img_mode, draw_points=[]):
         """img_mode, 0: show, 1: save"""
         # init
-        xy_grid = []
-        self.get_img_list()  # Generate image list
-        img_resolution = self.set_scale_mode(img_mode=img_mode)
-        width, height = img_resolution
-        img_num_per_row = self.layout_params[0]
-        num_per_img = self.layout_params[1]
-        img_num_per_column = self.layout_params[2]
-        gap = self.layout_params[3]
-        self.magnifier_flag = self.layout_params[7]
-        self.show_box = self.layout_params[14]
-        if img_mode:
-            show_original = True
-        else:
-            show_original = self.layout_params[16]
-        if img_mode == 0:
-            self.draw_points = draw_points
-
-        if len(draw_points) == 0:
-            self.magnifier_flag = 0
-        if self.magnifier_flag != 0:
-            self.crop_points_process(draw_points, img_mode)
+        layout_list, img_preprocessing_sub = self.stitch_img_init(
+            img_mode, draw_points)
 
         # stitch img
+        # try:
+        # Two-dimensional arrangement
+        self.img, self.xy_grid = self.ImgF.layout_2d(
+            layout_list, self.gap_color, self.img_list, self.img_preprocessing, img_preprocessing_sub, self.vertical)
+
+        self.show_box = self.layout_params[14]
+        if self.show_box and len(draw_points) != 0:
+            self.img = self.ImgF.draw_rectangle(
+                self.img, self.xy_grid, self.crop_points, self.layout_params[9], line_width=self.layout_params[10])
         try:
-            if self.layout_params[-1]:
-                # Vertical
-                img_num_per_column = img_num_per_row
-                img_num_per_row = self.layout_params[2]
-                if self.magnifier_flag == 0:
-                    img = Image.new('RGBA', ((width * img_num_per_row + gap[1] * (img_num_per_row-1)), height * img_num_per_column * num_per_img + gap[0] * (
-                        img_num_per_column-1)+gap[2]*(img_num_per_column)*(num_per_img-1)), self.gap_color)
-                else:
-                    im_magnifier_list, delta_x, delta_y = self.magnifier_preprocessing(
-                        self.img_preprocessing(self.img_list[0]))
-                    magnifier_width = im_magnifier_list[0].size[0]
-                    magnifier_height = im_magnifier_list[0].size[1]
-
-                    if show_original:
-                        img = Image.new('RGBA', (img_num_per_row*(magnifier_width+width + gap[3]) + gap[1] * (img_num_per_row-1), height * img_num_per_column * num_per_img + gap[0] * (
-                            img_num_per_column-1)+gap[2]*(img_num_per_column)*(num_per_img-1)), self.gap_color)
-                    else:
-                        width = magnifier_width
-                        height = magnifier_height
-                        num_per_img = len(self.crop_points)
-                        img = Image.new('RGBA', ((width * img_num_per_row + gap[1] * (img_num_per_row-1)), height * img_num_per_column * num_per_img + gap[0] * (
-                            img_num_per_column-1)+gap[2]*(img_num_per_column)*(num_per_img-1)), self.gap_color)
-
-                for ix in range(img_num_per_row):
-                    for ixx in range(self.magnifier_flag+1):
-                        if self.magnifier_flag != 0 and show_original:
-                            x = ix * (magnifier_width+width) + ixx * width + \
-                                gap[3] * ixx + gap[1]*ix + gap[3]*ix
-
-                        else:
-                            x = ix * width + gap[1] * ix
-
-                        for iyy in range(img_num_per_column):
-                            for iy in range(num_per_img):
-                                y = (iyy*num_per_img+iy) * \
-                                    height+gap[0]*iyy+gap[2]*iy + \
-                                    gap[2]*iyy*(num_per_img-1)
-                                if show_original:
-                                    if ix*(img_num_per_column * num_per_img)+iyy*num_per_img+iy < len(self.img_list):
-                                        im = self.img_list[ix*(img_num_per_column *
-                                                               num_per_img)+iyy*num_per_img+iy]
-                                        im = self.img_preprocessing(im)
-                                        if (ixx+1) % 2 == 0:
-                                            if self.magnifier_flag != 0:
-                                                im_magnifier_list, delta_x, delta_y = self.magnifier_preprocessing(
-                                                    im)
-                                                # adjust magnifier image gap
-                                                i = 0
-                                                res_ = (height - len(im_magnifier_list)*im_magnifier_list[0].size[1] - (
-                                                    len(im_magnifier_list)-1)*gap[4]-2*delta_y)
-                                                if len(im_magnifier_list) == 1:
-                                                    res_a = 0
-                                                else:
-                                                    res_a = res_ / \
-                                                        (len(im_magnifier_list)-1)
-                                                add_ = 0
-                                                add_gap = 0
-                                                y_ = 0
-                                                for im_magnifier in im_magnifier_list:
-                                                    if i == 0:
-                                                        y_ = y+delta_y
-                                                    else:
-                                                        y_ = y_ + \
-                                                            im_magnifier.size[1] + \
-                                                            gap[4]+add_gap
-                                                    img.paste(
-                                                        im_magnifier, (x, y_))
-                                                    i += 1
-                                                    add_ = add_+res_a
-                                                    if add_ >= 1:
-                                                        add_ -= 1
-                                                        add_gap = 1
-                                                    else:
-                                                        add_gap = 0
-                                        else:
-                                            xy_grid.append([x, y])
-                                            img.paste(im, (x, y))
-
-                                else:
-                                    if self.magnifier_flag != 0:
-                                        im = self.img_list[ix *
-                                                           (img_num_per_column)+iyy]
-                                        im = self.img_preprocessing(im)
-
-                                        im_magnifier_list, delta_x, delta_y = self.magnifier_preprocessing(
-                                            im)
-                                        img.paste(
-                                            im_magnifier_list[iy], (x, y))
-            else:
-                # horizontal
-                if self.magnifier_flag == 0:
-                    img = Image.new('RGBA', (width * img_num_per_row * num_per_img + gap[0] * (
-                        img_num_per_row-1)+gap[2]*(img_num_per_row)*(num_per_img-1), height * img_num_per_column + gap[1] * (img_num_per_column-1)), self.gap_color)
-                else:
-                    im_magnifier_list, delta_x, delta_y = self.magnifier_preprocessing(
-                        self.img_preprocessing(self.img_list[0]))
-                    magnifier_width = im_magnifier_list[0].size[0]
-                    magnifier_height = im_magnifier_list[0].size[1]
-
-                    if show_original:
-                        img = Image.new('RGBA', (width * img_num_per_row * num_per_img + gap[0] * (
-                            img_num_per_row-1)+gap[2]*(img_num_per_row)*(num_per_img-1), img_num_per_column*(magnifier_height+height + gap[3])+gap[1] * (img_num_per_column-1)), self.gap_color)
-                    else:
-                        width = magnifier_width
-                        height = magnifier_height
-                        num_per_img = len(self.crop_points)
-                        img = Image.new('RGBA', (width * img_num_per_row * num_per_img + gap[0] * (
-                            img_num_per_row-1)+gap[2]*(img_num_per_row)*(num_per_img-1), height * img_num_per_column + gap[1] * (img_num_per_column-1)), self.gap_color)
-
-                for iy in range(img_num_per_column):
-                    for iyy in range(self.magnifier_flag+1):
-                        if self.magnifier_flag != 0 and show_original:
-                            y = iy * (height+magnifier_height) + iyy * height + \
-                                gap[3] * iyy + gap[1]*iy + gap[3]*iy
-                        else:
-                            y = iy * height + gap[1] * iy
-
-                        for ixx in range(img_num_per_row):
-                            for ix in range(num_per_img):
-                                x = (ixx*num_per_img+ix) * \
-                                    width+gap[0]*ixx+gap[2]*ix + \
-                                    gap[2]*ixx*(num_per_img-1)
-                                if show_original:
-                                    if iy*(img_num_per_row * num_per_img)+ixx*num_per_img+ix < len(self.img_list):
-                                        im = self.img_list[iy*(img_num_per_row *
-                                                               num_per_img)+ixx*num_per_img+ix]
-                                        im = self.img_preprocessing(im)
-
-                                        if (iyy+1) % 2 == 0:
-                                            if self.magnifier_flag != 0:
-                                                im_magnifier_list, delta_x, delta_y = self.magnifier_preprocessing(
-                                                    im)
-                                                # adjust magnifier image gap
-                                                i = 0
-                                                res_ = (width - len(im_magnifier_list)*im_magnifier_list[0].size[0] - (
-                                                    len(im_magnifier_list)-1)*gap[4] - 2*delta_x)
-                                                if len(im_magnifier_list) == 1:
-                                                    res_a = 0
-                                                else:
-                                                    res_a = res_ / \
-                                                        (len(im_magnifier_list)-1)
-                                                add_ = 0
-                                                add_gap = 0
-                                                x_ = 0
-                                                for im_magnifier in im_magnifier_list:
-                                                    if i == 0:
-                                                        x_ = x+delta_x
-                                                    else:
-                                                        x_ = x_ + \
-                                                            im_magnifier.size[0] + \
-                                                            gap[4]+add_gap
-                                                    img.paste(
-                                                        im_magnifier, (x_, y))
-                                                    i += 1
-                                                    add_ = add_+res_a
-                                                    if add_ >= 1:
-                                                        add_ -= 1
-                                                        add_gap = 1
-                                                    else:
-                                                        add_gap = 0
-                                        else:
-                                            xy_grid.append([x, y])
-                                            img.paste(im, (x, y))
-                                else:
-                                    if self.magnifier_flag != 0:
-                                        im = self.img_list[iy *
-                                                           (img_num_per_row)+ixx]
-                                        im = self.img_preprocessing(im)
-
-                                        im_magnifier_list, delta_x, delta_y = self.magnifier_preprocessing(
-                                            im)
-                                        img.paste(
-                                            im_magnifier_list[ix], (x, y))
-
-            # img = img.convert("RGBA")
-            self.img = img
-            self.xy_grid = xy_grid
-            if self.show_box and len(draw_points) != 0:
-                self.img = self.ImgF.draw_rectangle(
-                    img, self.xy_grid, self.crop_points, self.layout_params[9], line_width=self.layout_params[10])
+            pass
         except:
             return 1
         else:
             return 0
 
-    def stitch_images(self, img_mode, draw_points=[]):
+    def stitch_img_init(self, img_mode, draw_points):
         """img_mode, 0: show, 1: save"""
         # init
         self.get_img_list()  # Generate image list
         self.set_scale_mode(img_mode=img_mode)
-
         if img_mode == 0:
             self.draw_points = draw_points
-
         img_preprocessing_sub = []
         width_2, height_2 = [[], []]
         self.vertical = self.layout_params[-1]
-
         layout_level_2 = [0, 0, 0]
+
         # show title
         self.title = self.layout_params[17]
         if self.title:
@@ -849,19 +657,22 @@ class ImgManager(ImgDatabase):
             self.crop_points_process(draw_points, img_mode)
             # get magnifier size
             crop_width = self.crop_points[0][2]-self.crop_points[0][0]
-            crop_height = self.crop_points[0][2]-self.crop_points[0][0]
+            crop_height = self.crop_points[0][3]-self.crop_points[0][1]
             _, _, magnifier_img_all_size = self.ImgF.cal_magnifier_size(
                 self.layout_params[8], [crop_width, crop_height], img_mode, self.layout_params[3][4], self.img_resolution, len(self.crop_points), vertical=self.vertical)
             img_preprocessing_sub.append(self.magnifier_preprocessing)
             width_2.append(magnifier_img_all_size[0])
             height_2.append(magnifier_img_all_size[1])
+
         # Two-dimensional arrangement
-        row_col2 = [1, sum(layout_level_2)]
-        row_col1 = [1, self.layout_params[1]]  # num_per_img
+        # arrangement of sub-images, title image, original image, magnifier image
+        row_col2 = [sum(layout_level_2), 1]
+        # num_per_img
+        row_col1 = [1, self.layout_params[1]]
         # img_num_per_column,img_num_per_row
         row_col0 = [self.layout_params[2], self.layout_params[0]]
 
-        gap_x_y_2 = [self.layout_params[3][3], 0]
+        gap_x_y_2 = [0,self.layout_params[3][3]]
         gap_x_y_1 = [self.layout_params[3][2], 0]
         gap_x_y_0 = [self.layout_params[3][0], self.layout_params[3][1]]
 
@@ -883,7 +694,7 @@ class ImgManager(ImgDatabase):
                 sum(width_2)+gap_x_y_2[0]*(sum(layout_level_2)-1), height_2[0]]
         else:
             target_width_2, target_height_2 = [width_2[0], sum(
-                height_2)+gap_x_y_2[0]*(sum(layout_level_2)-1)]
+                height_2)+gap_x_y_2[1]*(sum(layout_level_2)-1)]
         target_width_1, target_height_1 = [0, 0]
         target_width_0, target_height_0 = [0, 0]
 
@@ -900,22 +711,7 @@ class ImgManager(ImgDatabase):
         ]
         img_preprocessing_sub = np.array(
             img_preprocessing_sub).reshape(row_col2[0], row_col2[1])
-        # stitch img
-        # try:
-        # Two-dimensional arrangement
-        self.img, self.xy_grid = self.ImgF.layout_2d(
-            layout_list, self.gap_color, self.img_list, self.img_preprocessing, img_preprocessing_sub, self.vertical)
-
-        self.show_box = self.layout_params[14]
-        if self.show_box and len(draw_points) != 0:
-            self.img = self.ImgF.draw_rectangle(
-                self.img, self.xy_grid, self.crop_points, self.layout_params[9], line_width=self.layout_params[10])
-        try:
-            pass
-        except:
-            return 1
-        else:
-            return 0
+        return layout_list, img_preprocessing_sub
 
     def set_scale_mode(self, img_mode=0):
         """img_mode, 0: show, 1: save"""
@@ -931,6 +727,7 @@ class ImgManager(ImgDatabase):
         elif img_mode == 1:
             self.img_resolution_save = self.img_resolution
 
+        self.img_resolution = self.img_resolution.tolist()
         return self.img_resolution
         # self.gap = self.layout_params[3]
         # self.gap[0] = int(self.layout_params[3][0]*self.scale[0])
@@ -1057,11 +854,10 @@ class ImgManager(ImgDatabase):
         for crop_point in self.crop_points:
             img_list.append(img.crop(tuple(crop_point)))
         gap = self.layout_params[3][4]
-        width, height = img_list[0].size
 
-        # get to_resize
-        to_resize, delta = self.ImgF.cal_magnifier_size(
-            magnifier_scale, img_list[0].size, img_mode, gap, self.img_resolution, len(self.crop_points), vertical=self.vertical)
+        # get the size of magnifier img
+        to_resize, delta, magnifier_img_all_size = self.ImgF.cal_magnifier_size(
+            magnifier_scale, list(img_list[0].size), img_mode, gap, self.img_resolution, len(self.crop_points), vertical=self.vertical)
 
         # resize images
         line_width = self.layout_params[10]
@@ -1105,7 +901,32 @@ class ImgManager(ImgDatabase):
             if k == len(color_list):
                 k = 0
 
-        return img_list, delta
+        # stitch magnifier img
+        img = Image.new('RGBA', tuple(magnifier_img_all_size), self.gap_color)
+        gap = [gap for i in range(len(img_list))]
+        width = [to_resize[0] for i in range(len(img_list))]
+        height = [to_resize[1] for i in range(len(img_list))]
+        if self.vertical:
+            width = [0 for i in range(len(img_list))]
+            height = [to_resize[1] for i in range(len(img_list))]
+            gap_x = [0 for i in range(len(img_list))]
+            gap_y = self.ImgF.adjust_gap(
+                magnifier_img_all_size[1], len(img_list), height, gap, delta[1])
+        else:
+            width = [to_resize[0] for i in range(len(img_list))]
+            height = [0 for i in range(len(img_list))]
+            gap_x = self.ImgF.adjust_gap(
+                magnifier_img_all_size[0], len(img_list), width, gap, delta[0])
+            gap_y = [0 for i in range(len(img_list))]
+
+        x = delta[0]
+        y = delta[1]
+        for i in range(len(img_list)):
+            img.paste(img_list[i], (x, y))
+            x = x + gap_x[i]+width[i]
+            y = y + gap_y[i]+height[i]
+
+        return img
 
     def rotate(self, id):
         img = Image.open(self.flist[id]).convert(

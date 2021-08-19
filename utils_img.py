@@ -297,8 +297,6 @@ class ImgUtils():
                         level = 1
                         x_offset_1 = xy_grids[level][0, iy_1, ix_1]
                         y_offset_1 = xy_grids[level][1, iy_1, ix_1]
-                        xy_grids_output.append(
-                            [x_offset_0+x_offset_1, y_offset_0+y_offset_1])
 
                         if Discard_table['level_0'][iy_0, ix_0] and Discard_table['level_1'][iy_1, ix_1]:
                             im = None
@@ -307,6 +305,9 @@ class ImgUtils():
                             if img_list[iy_0, ix_0, iy_1, ix_1]:
                                 im = img_list[iy_0, ix_0, iy_1, ix_1]
                                 im = img_preprocessing(im)
+
+                                xy_grids_output.append(
+                                    [x_offset_0+x_offset_1, y_offset_0+y_offset_1])
                             else:
                                 im = None
 

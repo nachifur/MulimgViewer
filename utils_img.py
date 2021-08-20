@@ -852,20 +852,19 @@ class ImgManager(ImgDatabase):
             img_mode, draw_points)
 
         # stitch img
-        # try:
-        # Two-dimensional arrangement
-        self.img, self.xy_grid = self.ImgF.layout_2d(
-            layout_list, self.gap_color, self.img_list, self.img_preprocessing, img_preprocessing_sub, self.vertical)
+        try:
+            # Two-dimensional arrangement
+            self.img, self.xy_grid = self.ImgF.layout_2d(
+                layout_list, self.gap_color, copy.deepcopy(self.img_list), self.img_preprocessing, img_preprocessing_sub, self.vertical)
 
-        self.show_box = self.layout_params[14]
-        if self.show_original and self.show_box and len(draw_points) != 0:
-            self.img = self.ImgF.draw_rectangle(
-                self.img, self.xy_grid, self.crop_points, self.layout_params[9], line_width=self.layout_params[10])
-
-        # except:
-        #     return 1
-        # else:
-        #     return 0
+            self.show_box = self.layout_params[14]
+            if self.show_original and self.show_box and len(draw_points) != 0:
+                self.img = self.ImgF.draw_rectangle(
+                    self.img, self.xy_grid, self.crop_points, self.layout_params[9], line_width=self.layout_params[10])
+        except:
+            return 1
+        else:
+            return 0
 
     def title_preprocessing(self, img, id):
         img = Image.new('RGBA', tuple(self.title_max_size), self.gap_color)
@@ -1074,9 +1073,10 @@ class ImgManager(ImgDatabase):
     def save_img(self, out_path_str, out_type):
         self.check = []
         self.check_1 = []
+        self.check_2 = []
         self.out_path_str = out_path_str
-        self.set_scale_mode(img_mode=1)
         if out_path_str != "" and Path(out_path_str).is_dir():
+            self.set_scale_mode(img_mode=1)
             dir_name = [Path(path)._parts[-1] for path in self.path_list]
             out_type = out_type+1
             if out_type == 2:
@@ -1118,13 +1118,16 @@ class ImgManager(ImgDatabase):
 
             # self.stitch_images(0,copy.deepcopy(self.draw_points))
 
-            if sum(self.check) == 0:
-                if sum(self.check_1) == 0:
-                    return 0
-                else:
-                    return 2
-            else:
+            if sum(self.check) != 0:
                 return 3
+
+            if sum(self.check_1) != 0:
+                return 2
+
+            if sum(self.check_2) != 0:
+                return 4
+                
+            return 0
         else:
             return 1
 
@@ -1214,61 +1217,65 @@ class ImgManager(ImgDatabase):
         except:
             pass
         else:
-            self.crop_points_process(copy.deepcopy(self.draw_points), 1)
-            if self.type == 3:
-                sub_dir_name = "from_file"
-                if not (Path(self.out_path_str)/dir_name).exists():
-                    os.makedirs(Path(self.out_path_str) / dir_name)
-                if not (Path(self.out_path_str)/dir_name/sub_dir_name).exists():
-                    os.makedirs(Path(self.out_path_str) /
-                                dir_name/sub_dir_name)
+            try:
+                self.crop_points_process(copy.deepcopy(self.draw_points), 1)
+                if self.type == 3:
+                    sub_dir_name = "from_file"
+                    if not (Path(self.out_path_str)/dir_name).exists():
+                        os.makedirs(Path(self.out_path_str) / dir_name)
+                    if not (Path(self.out_path_str)/dir_name/sub_dir_name).exists():
+                        os.makedirs(Path(self.out_path_str) /
+                                    dir_name/sub_dir_name)
 
-                for i_ in range(self.count_per_action):
-                    if self.action_count*self.count_per_action+i_ < len(self.path_list):
-                        f_path = self.path_list[self.action_count *
-                                                self.count_per_action+i_]
-                        i = 0
-                        img_name = ""
-                        for stem in Path(f_path)._cparts:
-                            if i == 0:
-                                str_ = str(self.action_count *
-                                           self.count_per_action+i_)+"_"+stem
-                            else:
-                                if i == len(Path(f_path)._cparts)-1:
-                                    img_name = stem
+                    for i_ in range(self.count_per_action):
+                        if self.action_count*self.count_per_action+i_ < len(self.path_list):
+                            f_path = self.path_list[self.action_count *
+                                                    self.count_per_action+i_]
+                            i = 0
+                            img_name = ""
+                            for stem in Path(f_path)._cparts:
+                                if i == 0:
+                                    str_ = str(self.action_count *
+                                            self.count_per_action+i_)+"_"+stem
                                 else:
-                                    str_ = str_+"_"+stem
-                            i += 1
+                                    if i == len(Path(f_path)._cparts)-1:
+                                        img_name = stem
+                                    else:
+                                        str_ = str_+"_"+stem
+                                i += 1
 
-                        img = self.img_list[i_]
+                            img = self.img_list[i_]
+                            img_list = self.magnifier_preprocessing(
+                                self.img_preprocessing(img), img_mode=1)
+                            i = 0
+                            for img in img_list:
+                                f_path_output = Path(
+                                    self.out_path_str) / dir_name/sub_dir_name / (str_+"_"+Path(img_name).stem+"_magnifier_"+str(i)+".png")
+                                img.save(f_path_output)
+                                i += 1
+                    # origin image with square
+                    self.save_origin_img_magnifier()
+                else:
+                    i = 0
+                    for img in self.img_list:
                         img_list = self.magnifier_preprocessing(
                             self.img_preprocessing(img), img_mode=1)
-                        i = 0
+                        if not (Path(self.out_path_str)/dir_name/(Path(self.flist[i]).parent).stem).is_dir():
+                            os.makedirs(Path(self.out_path_str) / dir_name /
+                                        (Path(self.flist[i]).parent).stem)
+                        ii = 0
                         for img in img_list:
-                            f_path_output = Path(
-                                self.out_path_str) / dir_name/sub_dir_name / (str_+"_"+Path(img_name).stem+"_magnifier_"+str(i)+".png")
+                            f_path_output = Path(self.out_path_str) / dir_name / (Path(self.flist[i]).parent).stem / (
+                                (Path(self.flist[i]).parent).stem+"_"+Path(self.flist[i]).stem+"_magnifier_"+str(ii)+".png")
                             img.save(f_path_output)
-                            i += 1
-                # origin image with square
-                self.save_origin_img_magnifier()
+                            ii += 1
+                        i += 1
+                    # origin image with square
+                    self.save_origin_img_magnifier()
+            except:
+                self.check_2.append(1)
             else:
-                i = 0
-                for img in self.img_list:
-                    img_list = self.magnifier_preprocessing(
-                        self.img_preprocessing(img), img_mode=1)
-                    if not (Path(self.out_path_str)/dir_name/(Path(self.flist[i]).parent).stem).is_dir():
-                        os.makedirs(Path(self.out_path_str) / dir_name /
-                                    (Path(self.flist[i]).parent).stem)
-                    ii = 0
-                    for img in img_list:
-                        f_path_output = Path(self.out_path_str) / dir_name / (Path(self.flist[i]).parent).stem / (
-                            (Path(self.flist[i]).parent).stem+"_"+Path(self.flist[i]).stem+"_magnifier_"+str(ii)+".png")
-                        img.save(f_path_output)
-                        ii += 1
-                    i += 1
-                # origin image with square
-                self.save_origin_img_magnifier()
-
+                self.check_2.append(0)
     def save_origin_img_magnifier(self):
         # save origin image
         sub_dir_name = "origin_img_with_box"

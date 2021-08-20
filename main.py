@@ -167,20 +167,22 @@ class MulimgViewer (MulimgViewerGui):
             except:
                 pass
             flag = self.ImgManager.save_img(self.out_path_str, type_)
+            self.refresh(event)
             if flag == 0:
                 self.SetStatusText_(
-                    ["Save", str(self.ImgManager.action_count)+' image', "Save "+str(self.ImgManager.name_list[self.ImgManager.action_count]) + " success!", "-1"])
+                    ["Save", str(self.ImgManager.action_count), "Save success for "+str(self.ImgManager.name_list[self.ImgManager.action_count])+"!", "-1"])
             elif flag == 1:
                 self.SetStatusText_(
                     ["-1", "-1", "***Error: First, need to select the output dir***", "-1"])
             elif flag == 2:
                 self.SetStatusText_(
-                    ["-1", str(self.ImgManager.action_count)+' image', "***Error: "+str(self.ImgManager.name_list[self.ImgManager.action_count]) + ", during stitching images***", "-1"])
+                    ["-1", str(self.ImgManager.action_count), "***Error: "+str(self.ImgManager.name_list[self.ImgManager.action_count]) + ", during stitching images***", "-1"])
             elif flag == 3:
                 self.SetStatusText_(
-                    ["-1", str(self.ImgManager.action_count)+' image', "***Error: "+str(self.ImgManager.name_list[self.ImgManager.action_count]) + ", the number of img in sub folders is different***", "-1"])
-
-        self.refresh(event)
+                    ["-1", str(self.ImgManager.action_count), "***Error: "+str(self.ImgManager.name_list[self.ImgManager.action_count]) + ", the number of img in sub folders is different***", "-1"])
+            elif flag == 4:
+                self.SetStatusText_(
+                    ["-1", str(self.ImgManager.action_count), "***Error: No magnification box, the magnified image should not be saved***", "-1"])
         self.SetStatusText_(["Save", "-1", "-1", "-1"])
 
     def refresh(self, event):

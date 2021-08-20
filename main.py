@@ -54,6 +54,19 @@ class MulimgViewer (MulimgViewerGui):
         self.icon = wx.Icon(get_resource_path(
             'mulimgviewer.ico'), wx.BITMAP_TYPE_ICO)
         self.SetIcon(self.icon)
+        self.m_statusBar1.SetStatusWidths([-2, -1, -4, -4])
+        self.set_title_font()
+
+    def set_title_font(self):
+        font_path = Path("font")/"using"
+        font_path = Path(get_resource_path(str(font_path)))
+        files_name = [f.stem for f in font_path.iterdir()]
+        for file_name in files_name:
+            file_name = file_name.split("_", 1)[1]
+            file_name = file_name.replace("-", " ")
+            self.title_font.Append(file_name)
+        self.title_font.SetSelection(0)
+        self.font_paths = [str(f) for f in font_path.iterdir()]
 
     def frame_resize(self, event):
         self.auto_layout(frame_resize=True)
@@ -76,24 +89,24 @@ class MulimgViewer (MulimgViewerGui):
             self.UpdateUI(-1)
 
     def next_img(self, event):
-        self.SetStatusText_(["Next", "-1", "-1", "-1"])
         if self.ImgManager.img_num != 0:
             self.show_img_init()
             self.ImgManager.add()
             self.show_img()
         else:
             self.SetStatusText_(
-                ["-1", "", "***Error: First, need to select the input directory***", "-1"])
+                ["-1", "", "***Error: First, need to select the input dir***", "-1"])
+        self.SetStatusText_(["Next", "-1", "-1", "-1"])
 
     def last_img(self, event):
-        self.SetStatusText_(["Last", "-1", "-1", "-1"])
         if self.ImgManager.img_num != 0:
             self.show_img_init()
             self.ImgManager.subtract()
             self.show_img()
         else:
             self.SetStatusText_(
-                ["-1",  "", "***Error: First, need to select the input directory***", "-1"])
+                ["-1",  "", "***Error: First, need to select the input dir***", "-1"])
+        self.SetStatusText_(["Last", "-1", "-1", "-1"])
 
     def skip_to_n_img(self, event):
         if self.ImgManager.img_num != 0:
@@ -102,7 +115,9 @@ class MulimgViewer (MulimgViewerGui):
             self.show_img()
         else:
             self.SetStatusText_(
-                ["-1", "", "***Error: First, need to select the input directory***", "-1"])
+                ["-1", "", "***Error: First, need to select the input dir***", "-1"])
+
+        self.SetStatusText_(["Skip", "-1", "-1", "-1"])
 
     def slider_value_change(self, event):
         try:
@@ -117,7 +132,8 @@ class MulimgViewer (MulimgViewerGui):
                 self
             else:
                 self.SetStatusText_(
-                    ["-1", "", "***Error: First, need to select the input directory***", "-1"])
+                    ["-1", "", "***Error: First, need to select the input dir***", "-1"])
+        self.SetStatusText_(["Skip", "-1", "-1", "-1"])
 
     def save_img(self, event):
         layout_params = self.set_img_layout()
@@ -143,7 +159,7 @@ class MulimgViewer (MulimgViewerGui):
                     ["-1", "-1", "***Finish***", "-1"])
             else:
                 self.SetStatusText_(
-                    ["-1", "-1", "***Error: First, need to select the output directory***", "-1"])
+                    ["-1", "-1", "***Error: First, need to select the output dir***", "-1"])
         else:
             try:
                 self.SetStatusText_(
@@ -156,7 +172,7 @@ class MulimgViewer (MulimgViewerGui):
                     ["Save", str(self.ImgManager.action_count)+' image', "Save "+str(self.ImgManager.name_list[self.ImgManager.action_count]) + " success!", "-1"])
             elif flag == 1:
                 self.SetStatusText_(
-                    ["-1", "-1", "***Error: First, need to select the output directory***", "-1"])
+                    ["-1", "-1", "***Error: First, need to select the output dir***", "-1"])
             elif flag == 2:
                 self.SetStatusText_(
                     ["-1", str(self.ImgManager.action_count)+' image', "***Error: "+str(self.ImgManager.name_list[self.ImgManager.action_count]) + ", during stitching images***", "-1"])
@@ -165,30 +181,31 @@ class MulimgViewer (MulimgViewerGui):
                     ["-1", str(self.ImgManager.action_count)+' image', "***Error: "+str(self.ImgManager.name_list[self.ImgManager.action_count]) + ", the number of img in sub folders is different***", "-1"])
 
         self.refresh(event)
+        self.SetStatusText_(["Save", "-1", "-1", "-1"])
 
     def refresh(self, event):
-        self.SetStatusText_(["Refresh", "-1", "-1", "-1"])
         if self.ImgManager.img_num != 0:
             self.show_img_init()
             self.show_img()
         else:
             self.SetStatusText_(
-                ["-1", "", "***Error: First, need to select the input directory***", "-1"])
+                ["-1", "", "***Error: First, need to select the input dir***", "-1"])
+        self.SetStatusText_(["Refresh", "-1", "-1", "-1"])
 
     def one_dir_mul_dir_auto(self, event):
-        self.SetStatusText_(["input_path", "", "", "-1"])
-        dlg = wx.DirDialog(None, "Parallel auto choose input directory", "",
+        self.SetStatusText_(["Input", "", "", "-1"])
+        dlg = wx.DirDialog(None, "Parallel auto choose input dir", "",
                            wx.DD_DEFAULT_STYLE | wx.DD_DIR_MUST_EXIST)
-
         if dlg.ShowModal() == wx.ID_OK:
             self.ImgManager.init(dlg.GetPath(), 0)
             self.show_img_init()
             self.ImgManager.set_action_count(0)
             self.show_img()
             self.choice_input_mode.SetSelection(1)
+        self.SetStatusText_(["Input", "-1", "-1", "-1"])
 
     def one_dir_mul_dir_manual(self, event):
-        self.SetStatusText_(["input_path", "", "", "-1"])
+        self.SetStatusText_(["Input", "", "", "-1"])
         try:
             if self.ImgManager.type == 1:
                 input_path = self.ImgManager.input_path
@@ -198,11 +215,12 @@ class MulimgViewer (MulimgViewerGui):
             input_path = None
         self.UpdateUI(1, input_path)
         self.choice_input_mode.SetSelection(2)
+        self.SetStatusText_(["Input", "-1", "-1", "-1"])
 
     def one_dir_mul_img(self, event):
         self.SetStatusText_(
-            ["Sequential choose input directory", "", "", "-1"])
-        dlg = wx.DirDialog(None, "Choose input directory", "",
+            ["Sequential choose input dir", "", "", "-1"])
+        dlg = wx.DirDialog(None, "Choose input dir", "",
                            wx.DD_DEFAULT_STYLE | wx.DD_DIR_MUST_EXIST)
 
         if dlg.ShowModal() == wx.ID_OK:
@@ -212,8 +230,11 @@ class MulimgViewer (MulimgViewerGui):
             self.show_img()
             self.choice_input_mode.SetSelection(0)
 
+        self.SetStatusText_(
+            ["Sequential choose input dir", "-1", "-1", "-1"])
+
     def onefilelist(self, event):
-        self.SetStatusText_(["choose the File List", "", "", "-1"])
+        self.SetStatusText_(["Choose the File List", "", "", "-1"])
         wildcard = "List file (*.txt; *.csv)|*.txt;*.csv|" \
             "All files (*.*)|*.*"
         dlg = wx.FileDialog(None, "choose the Images List", "", "",
@@ -225,6 +246,7 @@ class MulimgViewer (MulimgViewerGui):
             self.ImgManager.set_action_count(0)
             self.show_img()
             self.choice_input_mode.SetSelection(3)
+        self.SetStatusText_(["Choose the File List", "-1", "-1", "-1"])
 
     def input_flist_parallel_manual(self, event):
         wildcard = "List file (*.txt;)|*.txt;|" \
@@ -244,7 +266,7 @@ class MulimgViewer (MulimgViewerGui):
     def save_flist_parallel_manual(self, event):
         if self.out_path_str == "":
             self.SetStatusText_(
-                ["-1", "-1", "***Error: First, need to select the output directory***", "-1"])
+                ["-1", "-1", "***Error: First, need to select the output dir***", "-1"])
         else:
             try:
                 np.savetxt(Path(self.out_path_str)/"input_flist_parallel_manual.txt",
@@ -259,10 +281,10 @@ class MulimgViewer (MulimgViewerGui):
     def out_path(self, event):
         if len(self.img_name) != 0:
             self.SetStatusText_(
-                ["out_path", str(self.ImgManager.action_count), self.img_name[self.ImgManager.action_count], "-1"])
+                ["Choose out dir", str(self.ImgManager.action_count), self.img_name[self.ImgManager.action_count], "-1"])
         else:
-            self.SetStatusText_(["out_path", "-1", "-1", "-1"])
-        dlg = wx.DirDialog(None, "Choose out directory", "",
+            self.SetStatusText_(["Choose out dir", "-1", "-1", "-1"])
+        dlg = wx.DirDialog(None, "Choose out dir", "",
                            wx.DD_DEFAULT_STYLE | wx.DD_DIR_MUST_EXIST)
 
         if dlg.ShowModal() == wx.ID_OK:
@@ -316,7 +338,7 @@ class MulimgViewer (MulimgViewerGui):
                 self.position[1] -= 1
             self.scrolledWindow_img.Scroll(
                 self.position[0]*self.Uint[0], self.position[1]*self.Uint[1])
-        self.SetStatusText_(["up",  "-1", "-1", "-1"])
+        self.SetStatusText_(["Up",  "-1", "-1", "-1"])
 
     def down_img(self, event):
         if self.select_img_box.Value:
@@ -342,7 +364,7 @@ class MulimgViewer (MulimgViewerGui):
             else:
                 self.scrolledWindow_img.Scroll(
                     self.position[0]*self.Uint[0], size[1])
-        self.SetStatusText_(["down",  "-1", "-1", "-1"])
+        self.SetStatusText_(["Down",  "-1", "-1", "-1"])
 
     def right_img(self, event):
         if self.select_img_box.Value:
@@ -368,7 +390,7 @@ class MulimgViewer (MulimgViewerGui):
             else:
                 self.scrolledWindow_img.Scroll(
                     self.position[0]*self.Uint[0], size[0])
-        self.SetStatusText_(["right",  "-1", "-1", "-1"])
+        self.SetStatusText_(["Right",  "-1", "-1", "-1"])
 
     def left_img(self, event):
         if self.select_img_box.Value:
@@ -391,7 +413,7 @@ class MulimgViewer (MulimgViewerGui):
                 self.position[0] -= 1
                 self.scrolledWindow_img.Scroll(
                     self.position[0]*self.Uint[0], self.position[1]*self.Uint[1])
-        self.SetStatusText_(["left",  "-1", "-1", "-1"])
+        self.SetStatusText_(["Left",  "-1", "-1", "-1"])
 
     def SetStatusText_(self, texts):
         for i in range(self.Status_number):
@@ -422,7 +444,7 @@ class MulimgViewer (MulimgViewerGui):
             dist = (x_y_array[:, 0]-x)**2+(x_y_array[:, 1]-y)**2
             self.box_id = np.array(dist).argmin()
             str_ = str(self.box_id)
-            self.SetStatusText_(["select "+str_+"-th box",  "-1", "-1", "-1"])
+            self.SetStatusText_(["Select "+str_+"-th box",  "-1", "-1", "-1"])
 
             self.start_flag = 0
         else:
@@ -432,11 +454,15 @@ class MulimgViewer (MulimgViewerGui):
             else:
                 self.start_flag = 0
 
+            self.SetStatusText_(["Magnifier", "-1", "-1", "-1"])
+
         # rotation
         if self.rotation.Value:
             x, y = event.GetPosition()
             self.ImgManager.rotate(self.get_img_id_from_point([x, y]))
             self.refresh(event)
+
+            self.SetStatusText_(["Rotate", "-1", "-1", "-1"])
 
     def img_left_dclick(self, event):
         if self.select_img_box.Value:
@@ -489,8 +515,8 @@ class MulimgViewer (MulimgViewerGui):
 
                 show_scale = self.show_scale.GetLineText(0).split(',')
                 show_scale = [float(x) for x in show_scale]
-                points = self.ImgManager.sort_box_point(
-                    [x_0, y_0, x, y], show_scale, first_point=True)
+                points = self.ImgManager.ImgF.sort_box_point(
+                    [x_0, y_0, x, y], show_scale, self.ImgManager.img_resolution_origin, first_point=True)
                 self.xy_magnifier.append(points+show_scale)
                 self.refresh(event)
 
@@ -513,6 +539,8 @@ class MulimgViewer (MulimgViewerGui):
                     ["-1",  "Drawing a box need click left mouse button!", "-1", "-1"])
         self.refresh(event)
 
+        self.SetStatusText_(["Magnifier", "-1", "-1", "-1"])
+
     def move_box_point(self, x, y, show_scale):
         x_0, y_0, x_1, y_1 = self.xy_magnifier[0][0:4]
         show_scale_old = self.xy_magnifier[0][4:6]
@@ -526,7 +554,7 @@ class MulimgViewer (MulimgViewerGui):
             [x_0, y_0, x_1, y_1])
         delta_x = x-x_center_old
         delta_y = y-y_center_old
-        return self.ImgManager.sort_box_point([x_0+delta_x, y_0+delta_y, x_1+delta_x, y_1+delta_y], show_scale)
+        return self.ImgManager.ImgF.sort_box_point([x_0+delta_x, y_0+delta_y, x_1+delta_x, y_1+delta_y], self.ImgManager.img_resolution_origin, show_scale)
 
     def get_center_box(self, box, more=False):
         x_0, y_0, x_1, y_1 = box
@@ -545,6 +573,7 @@ class MulimgViewer (MulimgViewerGui):
             self.SetCursor(wx.Cursor(wx.CURSOR_CROSS))
             if self.rotation.Value != False:
                 self.rotation.Value = False
+            self.SetStatusText_(["Magnifier", "-1", "-1", "-1"])
         else:
             self.SetCursor(wx.Cursor(wx.CURSOR_ARROW))
         self.Refresh()
@@ -554,6 +583,7 @@ class MulimgViewer (MulimgViewerGui):
             self.SetCursor(wx.Cursor(wx.CURSOR_POINT_RIGHT))
             if self.magnifier.Value != False:
                 self.magnifier.Value = False
+            self.SetStatusText_(["Rotate", "-1", "-1", "-1"])
         else:
             self.SetCursor(wx.Cursor(wx.CURSOR_ARROW))
         self.Refresh()
@@ -617,6 +647,27 @@ class MulimgViewer (MulimgViewerGui):
 
             line_width = int(self.line_width.GetLineText(0))
 
+            title_setting = [self.title_auto.Value,                     # 0
+                             self.title_show.Value,                     # 1
+                             self.title_down_up.Value,                  # 2
+                             self.title_show_parent.Value,              # 3
+                             self.title_show_name.Value,                # 4
+                             self.title_show_suffix.Value,              # 5
+                             self.title_font.GetSelection(),            # 6
+                             self.title_font_size.Value,                # 7
+                             self.font_paths]                           # 8
+
+            if title_setting[0]:
+                if self.ImgManager.type == 0 or self.ImgManager.type == 1:
+                    # one_dir_mul_dir_auto / one_dir_mul_dir_manual
+                    title_setting[2:6] = [False, True, False, False]
+                elif self.ImgManager.type == 2:
+                    # one_dir_mul_img
+                    title_setting[2:6] = [False, False, True, False]
+                elif self.ImgManager.type == 3:
+                    # read file list from a list file
+                    title_setting[2:6] = [False, True, True, False]
+
         except:
             self.SetStatusText_(
                 ["-1", "-1", "***Error: setting***", "-1"])
@@ -639,8 +690,8 @@ class MulimgViewer (MulimgViewerGui):
                     self.show_box.Value,                    # 14
                     self.show_box_in_crop.Value,            # 15
                     self.show_original.Value,               # 16
-                    self.show_title.Value,                  # 17
-                    self.checkBox_orientation.Value]        
+                    title_setting,                          # 17
+                    self.checkBox_orientation.Value]
 
     def show_img(self):
         # check layout_params change
@@ -709,11 +760,12 @@ class MulimgViewer (MulimgViewerGui):
 
             if flag == 1:
                 self.SetStatusText_(
-                    ["-1", str(self.ImgManager.action_count)+' image', "***Error: "+str(self.ImgManager.name_list[self.ImgManager.action_count]) + ", during stitching images***", "-1"])
+                    ["-1", str(self.ImgManager.action_count), "***Error: "+str(self.ImgManager.name_list[self.ImgManager.action_count]) + ", during stitching images***", "-1"])
         else:
             self.SetStatusText_(
                 ["-1", "-1", "***Error: no image in this dir! Maybe you can choose parallel mode!***", "-1"])
         self.auto_layout()
+        self.SetStatusText_(["Stitch", "-1", "-1", "-1"])
 
     def auto_layout(self, frame_resize=False):
         # Auto Layout
@@ -768,7 +820,7 @@ class MulimgViewer (MulimgViewerGui):
         if self.ImgManager.img_num != 0:
             if self.ImgManager.dataset_mode and self.out_path_str == "":
                 self.SetStatusText_(
-                    ["-1", "-1", "***Error: First, need to select the output directory***", "-1"])
+                    ["-1", "-1", "***Error: First, need to select the output dir***", "-1"])
             else:
                 if self.ImgManager.dataset_mode:
                     self.SetStatusText_(
@@ -784,7 +836,7 @@ class MulimgViewer (MulimgViewerGui):
                         ["-1", "-1", "index_table.txt save in "+self.out_path_str, "-1"])
         else:
             self.SetStatusText_(
-                ["-1", "", "***Error: First, need to select the input directory***", "-1"])
+                ["-1", "", "***Error: First, need to select the input dir***", "-1"])
 
     def create_ImgManager(self):
         self.ImgManager = ImgManager()
@@ -807,3 +859,9 @@ class MulimgViewer (MulimgViewerGui):
             else:
                 id_list.append(0)
         return max(id_list)
+
+    def title_down_up_func(self, event):
+        if self.title_down_up.Value:
+            self.title_down_up.SetLabel('Up  ')
+        else:
+            self.title_down_up.SetLabel('Down')

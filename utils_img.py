@@ -1,15 +1,16 @@
 from types import DynamicClassAttribute
+from numpy.lib.shape_base import split
 import wx
 import numpy as np
 import os
-from PIL import Image
+from PIL import Image, ImageDraw, ImageFont
 from shutil import copyfile, move
 from pathlib import Path
 import csv
 import copy
 
 from wx.core import Height
-from utils import solve_factor, change_order
+from utils import solve_factor, change_order, rgb2hex
 
 
 class ImgUtils():
@@ -35,6 +36,53 @@ class ImgUtils():
             pass
         img = Image.fromarray(img.astype('uint8')).convert('RGBA')
         return img
+
+    def sort_box_point(self, box_point, show_scale, img_resolution_origin, first_point=False):
+        # box_point = [x_0,y_0,x_1,y_1]
+        if box_point[2] < box_point[0]:
+            temp = box_point[0]
+            box_point[0] = box_point[2]
+            box_point[2] = temp
+        if box_point[3] < box_point[1]:
+            temp = box_point[1]
+            box_point[1] = box_point[3]
+            box_point[3] = temp
+
+        img_resolution = (np.array(img_resolution_origin)
+                          * np.array(show_scale)).astype(np.int)
+
+        width = abs(box_point[0]-box_point[2])
+        height = abs(box_point[1]-box_point[3])
+
+        # limit box boundary
+        if first_point:
+            if box_point[2] > img_resolution[0]:
+                box_point[2] = img_resolution[0]
+
+            if box_point[0] < 0:
+                box_point[0] = 0
+
+            if box_point[3] > img_resolution[1]:
+                box_point[3] = img_resolution[1]
+
+            if box_point[1] < 0:
+                box_point[1] = 0
+        else:
+            if box_point[2] > img_resolution[0]:
+                box_point[2] = img_resolution[0]
+                box_point[0] = img_resolution[0]-width
+            elif box_point[0] < 0:
+                box_point[0] = 0
+                box_point[2] = width
+
+            if box_point[3] > img_resolution[1]:
+                box_point[3] = img_resolution[1]
+                box_point[1] = img_resolution[1]-height
+            elif box_point[1] < 0:
+                box_point[1] = 0
+                box_point[3] = height
+
+        return box_point
 
     def draw_rectangle(self, img, xy_grids, bounding_boxs, color_list, line_width=2, single_box=False):
         """img
@@ -146,7 +194,7 @@ class ImgUtils():
             magnifier_img_all_size.reverse()
         return to_resize, delta, magnifier_img_all_size
 
-    def adjust_gap(self, target_length, number, length, gap,delta):
+    def adjust_gap(self, target_length, number, length, gap, delta):
         """Adjust image gap. target_length>=sum(length)+sum(gap[0:-1])"""
         number = len(length)
 
@@ -275,6 +323,10 @@ class ImgUtils():
         # The number of img that a blank img can hold
         image_num_capacity = Row['level_0'] * \
             Col['level_0']*Row['level_1']*Col['level_1']
+
+        for i in range(len(img_list)):
+            img_list[i] = [img_list[i], i]
+
         if len(img_list) < image_num_capacity:
             empty_ = [[] for i in range(image_num_capacity-len(img_list))]
             img_list = img_list+empty_
@@ -302,8 +354,8 @@ class ImgUtils():
                             im = None
                         else:
                             # img preprocessing
-                            if img_list[iy_0, ix_0, iy_1, ix_1]:
-                                im = img_list[iy_0, ix_0, iy_1, ix_1]
+                            if img_list[iy_0, ix_0, iy_1, ix_1] != []:
+                                im = img_list[iy_0, ix_0, iy_1, ix_1][0]
                                 im = img_preprocessing(im)
 
                                 xy_grids_output.append(
@@ -327,15 +379,61 @@ class ImgUtils():
                                     if Discard_table['level_2'][iy_2, ix_2]:
                                         pass
                                     else:
-                                        im = img_preprocessing_sub[iy_2, ix_2](
-                                            im)
-                                        img.paste(im, (x, y))
+                                        if img_preprocessing_sub[iy_2, ix_2] != []:
+                                            im_ = img_preprocessing_sub[iy_2, ix_2](
+                                                im, id=img_list[iy_0, ix_0, iy_1, ix_1][1])
+                                            img.paste(im_, (x, y))
                                     i += 1
 
         return img, xy_grids_output
 
-    def identity_transformation(self, img):
+    def identity_transformation(self, img, id=0):
         return img
+
+    def cal_txt_size(self, title_list, img_resolution, font, font_size):
+        im = Image.new('RGBA', (256, 256), 0)
+        draw = ImageDraw.Draw(im)
+        title_size = []
+        for title in title_list:
+            title_size.append(draw.multiline_textsize(title, font))
+        title_size = np.array(title_size)
+        title_size = title_size.reshape(-1, 2)
+        # adjust title names
+        for i in range(len(title_list)):
+            split_num = 2
+            title = title_list[i]
+            str_ = title_list[i]
+            while title_size[i, 0] > img_resolution[0]:
+                ids = [0] + [(i+1)*int(len(title)/split_num)
+                             for i in range(split_num-1)]
+                str_ = ""
+                k = 0
+                for id in ids:
+                    if k == 0:
+                        str_ = str_ + title[id:ids[k+1]]
+                    elif k+1 < len(ids):
+                        str_ = str_ + "\n" + title[id:ids[k+1]]
+                    else:
+                        str_ = str_ + "\n"+title[id:]
+                    k += 1
+                size_edit = draw.multiline_textsize(str_, font)
+                title_size[i, :] = size_edit
+                split_num = split_num+1
+                if split_num > len(title):
+                    break
+            title_list[i] = str_
+        # re-calculate title size
+        title_size = []
+        for title in title_list:
+            title_size.append(draw.multiline_textsize(title, font))
+        title_size = np.array(title_size)
+        title_size = title_size.reshape(-1, 2)
+        # final title list
+        title_list = title_list
+
+        title_max_size = [img_resolution[0],
+                          (title_size[:, 1]).max()+int(font_size/4)]
+        return title_size, title_list, title_max_size
 
 
 class ImgDatabase():
@@ -596,27 +694,22 @@ class ImgManager(ImgDatabase):
 
         self.img_list = img_list
 
-    def stitch_images(self, img_mode, draw_points=[]):
+    def set_scale_mode(self, img_mode=0):
         """img_mode, 0: show, 1: save"""
-        # init
-        layout_list, img_preprocessing_sub = self.stitch_img_init(
-            img_mode, draw_points)
+        if img_mode == 0:
+            self.scale = self.layout_params[4]
+        elif img_mode == 1:
+            self.scale = self.layout_params[5]
+        self.img_resolution = (
+            np.array(self.img_resolution_origin) * np.array(self.scale)).astype(np.int)
 
-        # stitch img
-        try:
-            # Two-dimensional arrangement
-            self.img, self.xy_grid = self.ImgF.layout_2d(
-                layout_list, self.gap_color, self.img_list, self.img_preprocessing, img_preprocessing_sub, self.vertical)
+        if img_mode == 0:
+            self.img_resolution_show = self.img_resolution
+        elif img_mode == 1:
+            self.img_resolution_save = self.img_resolution
 
-            self.show_box = self.layout_params[14]
-            if self.show_original and self.show_box and len(draw_points) != 0:
-                self.img = self.ImgF.draw_rectangle(
-                    self.img, self.xy_grid, self.crop_points, self.layout_params[9], line_width=self.layout_params[10])
-            
-        except:
-            return 1
-        else:
-            return 0
+        self.img_resolution = self.img_resolution.tolist()
+        return self.img_resolution
 
     def stitch_img_init(self, img_mode, draw_points):
         """img_mode, 0: show, 1: save"""
@@ -628,29 +721,24 @@ class ImgManager(ImgDatabase):
         img_preprocessing_sub = []
         width_2, height_2 = [[], []]
         self.vertical = self.layout_params[-1]
-        layout_level_2 = [0, 0, 0]
-
-        # show title
-        self.title = self.layout_params[17]
-        if self.title:
-            layout_level_2[0] = 1
-            img_preprocessing_sub.append(self.title_preprocessing)
-            # width_2.append()
+        layout_level_2 = []
 
         # show original img
         self.show_original = self.layout_params[16]
         if self.show_original:
-            layout_level_2[1] = 1
+            layout_level_2.append(1)
             img_preprocessing_sub.append(self.ImgF.identity_transformation)
             width_2.append(self.img_resolution[0])
             height_2.append(self.img_resolution[1])
+        else:
+            layout_level_2.append(0)
 
         # show magnifier img
         self.magnifier_flag = self.layout_params[7]
         if len(draw_points) == 0:
             self.magnifier_flag = 0
         if self.magnifier_flag:
-            layout_level_2[2] = 1
+            layout_level_2.append(1)
             self.crop_points_process(draw_points, 0)
             # get magnifier size
             crop_width = self.crop_points[0][2]-self.crop_points[0][0]
@@ -660,18 +748,56 @@ class ImgManager(ImgDatabase):
             img_preprocessing_sub.append(self.magnifier_preprocessing)
             width_2.append(magnifier_img_all_size[0])
             height_2.append(magnifier_img_all_size[1])
+        else:
+            layout_level_2.append(0)
 
         # Two-dimensional arrangement
         # arrangement of sub-images, title image, original image, magnifier image
-        row_col2 = [sum(layout_level_2), 1]
+        # row_col2 = [sum(layout_level_2), 1]
         # num_per_img
         row_col1 = [1, self.layout_params[1]]
         # img_num_per_column,img_num_per_row
         row_col0 = [self.layout_params[2], self.layout_params[0]]
 
-        gap_x_y_2 = [0,self.layout_params[3][3]]
+        gap_x_y_2 = [0, self.layout_params[3][3]]
         gap_x_y_1 = [self.layout_params[3][2], 0]
         gap_x_y_0 = [self.layout_params[3][0], self.layout_params[3][1]]
+
+        # show title
+        self.title_setting = self.layout_params[17]
+        if self.title_setting[1]:
+            if self.vertical:
+                row_col2 = [sum(layout_level_2), 2]
+                target_width_2 = sum(width_2)+self.layout_params[3][3]*1
+                flag = False
+            else:
+                flag = True
+
+            title_width_height = self.title_init()
+            if self.title_setting[2]:
+                # up
+                width_2 = [title_width_height[0]]+width_2
+                height_2 = [title_width_height[1]]+height_2
+                img_preprocessing_sub = [
+                    self.title_preprocessing] + img_preprocessing_sub
+                layout_level_2 = [1]+layout_level_2
+            else:
+                # down
+                width_2.append(title_width_height[0])
+                height_2.append(title_width_height[1])
+                img_preprocessing_sub.append(self.title_preprocessing)
+                layout_level_2.append(1)
+
+            if flag:
+                row_col2 = [sum(layout_level_2), 1]
+            else:
+                gap_x_y_2 = [self.layout_params[3]
+                             [3], self.layout_params[3][3]]
+                target_height_2 = height_2[0] + \
+                    self.layout_params[3][3]*1 + title_width_height[1]
+        else:
+            layout_level_2.append(0)
+            row_col2 = [sum(layout_level_2), 1]
 
         if self.vertical:
             row_col2.reverse()
@@ -687,8 +813,9 @@ class ImgManager(ImgDatabase):
         width_0, height_0 = [[], []]
 
         if self.vertical:
-            target_width_2, target_height_2 = [
-                sum(width_2)+gap_x_y_2[0]*(sum(layout_level_2)-1), height_2[0]]
+            if not self.title_setting[1]:
+                target_width_2, target_height_2 = [
+                    sum(width_2)+gap_x_y_2[0]*(sum(layout_level_2)-1), height_2[0]]
         else:
             target_width_2, target_height_2 = [width_2[0], sum(
                 height_2)+gap_x_y_2[1]*(sum(layout_level_2)-1)]
@@ -706,33 +833,96 @@ class ImgManager(ImgDatabase):
             [row_col0, gap_x_y_0, [width_0, height_0], [
                 target_width_0, target_height_0], discard_table_0],
         ]
-        img_preprocessing_sub = np.array(
-            img_preprocessing_sub).reshape(row_col2[0], row_col2[1])
+
+        if len(img_preprocessing_sub) < row_col2[0]*row_col2[1]:
+            empty_ = [[] for i in range(
+                row_col2[0]*row_col2[1]-len(img_preprocessing_sub))]
+            img_preprocessing_sub = img_preprocessing_sub+empty_
+        temp_ = np.array(
+            list(range(len(img_preprocessing_sub)))).astype(object)
+        for i in range(len(img_preprocessing_sub)):
+            temp_[i] = img_preprocessing_sub[i]
+        img_preprocessing_sub = temp_.reshape(row_col2[0], row_col2[1])
         return layout_list, img_preprocessing_sub
 
-    def set_scale_mode(self, img_mode=0):
+    def stitch_images(self, img_mode, draw_points=[]):
         """img_mode, 0: show, 1: save"""
-        if img_mode == 0:
-            self.scale = self.layout_params[4]
-        elif img_mode == 1:
-            self.scale = self.layout_params[5]
-        self.img_resolution = (
-            np.array(self.img_resolution_origin) * np.array(self.scale)).astype(np.int)
+        # init
+        layout_list, img_preprocessing_sub = self.stitch_img_init(
+            img_mode, draw_points)
 
-        if img_mode == 0:
-            self.img_resolution_show = self.img_resolution
-        elif img_mode == 1:
-            self.img_resolution_save = self.img_resolution
+        # stitch img
+        # try:
+        # Two-dimensional arrangement
+        self.img, self.xy_grid = self.ImgF.layout_2d(
+            layout_list, self.gap_color, self.img_list, self.img_preprocessing, img_preprocessing_sub, self.vertical)
 
-        self.img_resolution = self.img_resolution.tolist()
-        return self.img_resolution
-        # self.gap = self.layout_params[3]
-        # self.gap[0] = int(self.layout_params[3][0]*self.scale[0])
-        # self.gap[1] = int(self.layout_params[3][1]*self.scale[1])
-        # self.gap[2:] = (np.array(self.layout_params[3][2:])*np.array(self.scale[0])).astype(np.int)
+        self.show_box = self.layout_params[14]
+        if self.show_original and self.show_box and len(draw_points) != 0:
+            self.img = self.ImgF.draw_rectangle(
+                self.img, self.xy_grid, self.crop_points, self.layout_params[9], line_width=self.layout_params[10])
 
-    def title_preprocessing(self):
-        pass
+        # except:
+        #     return 1
+        # else:
+        #     return 0
+
+    def title_preprocessing(self, img, id):
+        img = Image.new('RGBA', tuple(self.title_max_size), self.gap_color)
+        draw = ImageDraw.Draw(img)
+        title_size = self.title_size[id, :]
+        delta_x = int((self.title_max_size[0]-title_size[0])/2)
+        if self.title_setting[2]:
+            # up
+            draw.multiline_text(
+                (delta_x, 0), self.title_list[id], font=self.font, fill=self.text_color)
+        else:
+            # down
+            draw.multiline_text(
+                (delta_x, 0), self.title_list[id], font=self.font, fill=self.text_color)
+
+        return img
+
+    def title_init(self):
+        # self.title_setting = self.layout_params[17]
+        # title_setting = [self.title_auto.Value,                     # 0
+        #                     self.title_show.Value,                     # 1
+        #                     self.title_down_up.Value,                  # 2
+        #                     self.title_show_parent.Value,              # 3
+        #                     self.title_show_name.Value,                # 4
+        #                     self.title_show_suffix.Value,              # 5
+        #                     self.title_font.GetSelection(),            # 6
+        #                     self.title_font_size.Value,                # 7
+        #                     self.font_paths]                           # 8
+
+        # get title
+        title_list = []
+        for path in self.flist:
+            path = Path(path)
+            if path.is_file() and path.suffix.lower() in self.format_group:
+                title = ""
+                if self.title_setting[3]:
+                    title = title+path.parent.name
+                if self.title_setting[4]:
+                    if self.title_setting[3]:
+                        title = title+"/"
+                    title = title+path.stem
+                if self.title_setting[5]:
+                    title = title+path.suffix
+                title_list.append(title)
+        # get title color
+        text_color = [255-self.gap_color[0], 255 -
+                      self.gap_color[1], 255-self.gap_color[2]]
+        text_color = ['%d' % i + "," for i in text_color]
+        self.text_color = rgb2hex(("".join(text_color))[0:-1])
+        # calculate title size
+        font_size = int(self.title_setting[7])
+        self.font = ImageFont.truetype(
+            self.title_setting[8][self.title_setting[6]], font_size)
+        self.title_size, self.title_list, self.title_max_size = self.ImgF.cal_txt_size(
+            title_list, self.img_resolution, self.font, font_size)
+
+        return self.title_max_size
 
     def img_preprocessing(self, img):
         if self.custom_resolution:
@@ -796,54 +986,7 @@ class ImgManager(ImgDatabase):
 
         self.crop_points = crop_points_
 
-    def sort_box_point(self, box_point, show_scale, first_point=False):
-        # box_point = [x_0,y_0,x_1,y_1]
-        if box_point[2] < box_point[0]:
-            temp = box_point[0]
-            box_point[0] = box_point[2]
-            box_point[2] = temp
-        if box_point[3] < box_point[1]:
-            temp = box_point[1]
-            box_point[1] = box_point[3]
-            box_point[3] = temp
-
-        img_resolution = (np.array(self.img_resolution_origin)
-                          * np.array(show_scale)).astype(np.int)
-
-        width = abs(box_point[0]-box_point[2])
-        height = abs(box_point[1]-box_point[3])
-
-        # limit box boundary
-        if first_point:
-            if box_point[2] > img_resolution[0]:
-                box_point[2] = img_resolution[0]
-
-            if box_point[0] < 0:
-                box_point[0] = 0
-
-            if box_point[3] > img_resolution[1]:
-                box_point[3] = img_resolution[1]
-
-            if box_point[1] < 0:
-                box_point[1] = 0
-        else:
-            if box_point[2] > img_resolution[0]:
-                box_point[2] = img_resolution[0]
-                box_point[0] = img_resolution[0]-width
-            elif box_point[0] < 0:
-                box_point[0] = 0
-                box_point[2] = width
-
-            if box_point[3] > img_resolution[1]:
-                box_point[3] = img_resolution[1]
-                box_point[1] = img_resolution[1]-height
-            elif box_point[1] < 0:
-                box_point[1] = 0
-                box_point[3] = height
-
-        return box_point
-
-    def magnifier_preprocessing(self, img, img_mode=0):
+    def magnifier_preprocessing(self, img, img_mode=0, id=0):
         """img_mode, 0: show, 1: save"""
         # crop images
         magnifier_scale = self.layout_params[8]
@@ -927,11 +1070,6 @@ class ImgManager(ImgDatabase):
             return img_list
         else:
             return img
-
-    def rotate(self, id):
-        img = Image.open(self.flist[id]).convert(
-            'RGB').transpose(Image.ROTATE_270)
-        img.save(self.flist[id])
 
     def save_img(self, out_path_str, out_type):
         self.check = []
@@ -1144,7 +1282,7 @@ class ImgManager(ImgDatabase):
             img = self.img_preprocessing(img)
             if self.show_box:
                 img = self.ImgF.draw_rectangle(img, self.xy_grid, self.crop_points,
-                                            self.layout_params[9], line_width=self.layout_params[10], single_box=True)
+                                               self.layout_params[9], line_width=self.layout_params[10], single_box=True)
             f_path_output = Path(self.out_path_str)/sub_dir_name/(Path(self.flist[i]).parent).stem / (
                 (Path(self.flist[i]).parent).stem+"_"+Path(self.flist[i]).stem+".png")
             if not (Path(self.out_path_str)/sub_dir_name/(Path(self.flist[i]).parent).stem).is_dir():
@@ -1152,3 +1290,8 @@ class ImgManager(ImgDatabase):
                             sub_dir_name/(Path(self.flist[i]).parent).stem)
             img.save(f_path_output)
             i += 1
+
+    def rotate(self, id):
+        img = Image.open(self.flist[id]).convert(
+            'RGB').transpose(Image.ROTATE_270)
+        img.save(self.flist[id])

@@ -316,19 +316,31 @@ class MulimgViewerGui ( wx.Frame ):
 
 		fgSizer3.Add( bSizer21, 1, wx.EXPAND, 5 )
 
-		bSizer28 = wx.BoxSizer( wx.HORIZONTAL )
+		bSizer25 = wx.BoxSizer( wx.HORIZONTAL )
 
-		self.m_staticText33 = wx.StaticText( self.scrolledWindow_set, wx.ID_ANY, u"Show title", wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.m_staticText33.Wrap( -1 )
+		self.m_staticText30 = wx.StaticText( self.scrolledWindow_set, wx.ID_ANY, u"Select box", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText30.Wrap( -1 )
 
-		bSizer28.Add( self.m_staticText33, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+		bSizer25.Add( self.m_staticText30, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
-		self.show_title = wx.CheckBox( self.scrolledWindow_set, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.show_title.SetValue(True)
-		bSizer28.Add( self.show_title, 0, wx.ALL, 5 )
+		self.select_img_box = wx.CheckBox( self.scrolledWindow_set, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
+		bSizer25.Add( self.select_img_box, 0, wx.ALL, 5 )
 
 
-		fgSizer3.Add( bSizer28, 1, wx.EXPAND, 5 )
+		fgSizer3.Add( bSizer25, 1, wx.EXPAND, 5 )
+
+		self.m_staticline9 = wx.StaticLine( self.scrolledWindow_set, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_HORIZONTAL )
+		fgSizer3.Add( self.m_staticline9, 0, wx.EXPAND |wx.ALL, 5 )
+
+		self.m_staticText35 = wx.StaticText( self.scrolledWindow_set, wx.ID_ANY, u"Show", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText35.Wrap( -1 )
+
+		self.m_staticText35.SetFont( wx.Font( 12, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL, False, wx.EmptyString ) )
+
+		fgSizer3.Add( self.m_staticText35, 0, wx.ALL, 5 )
+
+		self.m_staticline10 = wx.StaticLine( self.scrolledWindow_set, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_HORIZONTAL )
+		fgSizer3.Add( self.m_staticline10, 0, wx.EXPAND |wx.ALL, 5 )
 
 		bSizer27 = wx.BoxSizer( wx.HORIZONTAL )
 
@@ -372,18 +384,55 @@ class MulimgViewerGui ( wx.Frame ):
 
 		fgSizer3.Add( bSizer26, 1, wx.EXPAND, 5 )
 
-		bSizer25 = wx.BoxSizer( wx.HORIZONTAL )
+		wSizer2 = wx.WrapSizer( wx.HORIZONTAL, wx.WRAPSIZER_DEFAULT_FLAGS )
 
-		self.m_staticText30 = wx.StaticText( self.scrolledWindow_set, wx.ID_ANY, u"Select box", wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.m_staticText30.Wrap( -1 )
+		self.m_staticText33 = wx.StaticText( self.scrolledWindow_set, wx.ID_ANY, u"Title", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText33.Wrap( -1 )
 
-		bSizer25.Add( self.m_staticText30, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+		wSizer2.Add( self.m_staticText33, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
-		self.select_img_box = wx.CheckBox( self.scrolledWindow_set, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
-		bSizer25.Add( self.select_img_box, 0, wx.ALL, 5 )
+		self.m_staticline11 = wx.StaticLine( self.scrolledWindow_set, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_VERTICAL )
+		wSizer2.Add( self.m_staticline11, 0, wx.EXPAND |wx.ALL, 5 )
+
+		self.title_auto = wx.CheckBox( self.scrolledWindow_set, wx.ID_ANY, u"Auto", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.title_auto.SetValue(True)
+		wSizer2.Add( self.title_auto, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+
+		self.title_show = wx.CheckBox( self.scrolledWindow_set, wx.ID_ANY, u"Show", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.title_show.SetValue(True)
+		wSizer2.Add( self.title_show, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+
+		self.title_down_up = wx.CheckBox( self.scrolledWindow_set, wx.ID_ANY, u"Down", wx.DefaultPosition, wx.DefaultSize, 0 )
+		wSizer2.Add( self.title_down_up, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+
+		self.title_show_parent = wx.CheckBox( self.scrolledWindow_set, wx.ID_ANY, u"Parent", wx.DefaultPosition, wx.DefaultSize, 0 )
+		wSizer2.Add( self.title_show_parent, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+
+		self.title_show_name = wx.CheckBox( self.scrolledWindow_set, wx.ID_ANY, u"Name", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.title_show_name.SetValue(True)
+		wSizer2.Add( self.title_show_name, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+
+		self.title_show_suffix = wx.CheckBox( self.scrolledWindow_set, wx.ID_ANY, u"Suffix", wx.DefaultPosition, wx.DefaultSize, 0 )
+		wSizer2.Add( self.title_show_suffix, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+
+		self.m_staticline12 = wx.StaticLine( self.scrolledWindow_set, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_VERTICAL )
+		wSizer2.Add( self.m_staticline12, 0, wx.EXPAND |wx.ALL, 5 )
+
+		self.m_staticText351 = wx.StaticText( self.scrolledWindow_set, wx.ID_ANY, u"Font", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText351.Wrap( -1 )
+
+		wSizer2.Add( self.m_staticText351, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+
+		self.title_font_size = wx.TextCtrl( self.scrolledWindow_set, wx.ID_ANY, u"20", wx.DefaultPosition, wx.Size( 40,-1 ), 0 )
+		wSizer2.Add( self.title_font_size, 0, wx.ALL, 5 )
+
+		title_fontChoices = []
+		self.title_font = wx.Choice( self.scrolledWindow_set, wx.ID_ANY, wx.DefaultPosition, wx.Size( -1,-1 ), title_fontChoices, 0 )
+		self.title_font.SetSelection( 0 )
+		wSizer2.Add( self.title_font, 0, wx.ALL, 5 )
 
 
-		fgSizer3.Add( bSizer25, 1, wx.EXPAND, 5 )
+		fgSizer3.Add( wSizer2, 1, wx.EXPAND, 5 )
 
 		self.m_staticline1 = wx.StaticLine( self.scrolledWindow_set, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_HORIZONTAL )
 		fgSizer3.Add( self.m_staticline1, 0, wx.EXPAND |wx.ALL, 5 )
@@ -642,6 +691,7 @@ class MulimgViewerGui ( wx.Frame ):
 		self.rotation.Bind( wx.EVT_TOGGLEBUTTON, self.rotation_fc )
 		self.choice_normalized_size.Bind( wx.EVT_CHOICE, self.change_img_stitch_mode )
 		self.select_img_box.Bind( wx.EVT_CHECKBOX, self.select_img_box_func )
+		self.title_down_up.Bind( wx.EVT_CHECKBOX, self.title_down_up_func )
 		self.colourPicker_gap.Bind( wx.EVT_COLOURPICKER_CHANGED, self.colour_change )
 		self.background_slider.Bind( wx.EVT_SCROLL, self.background_alpha )
 		self.foreground_slider.Bind( wx.EVT_SCROLL, self.foreground_alpha )
@@ -706,6 +756,9 @@ class MulimgViewerGui ( wx.Frame ):
 		event.Skip()
 
 	def select_img_box_func( self, event ):
+		event.Skip()
+
+	def title_down_up_func( self, event ):
 		event.Skip()
 
 	def colour_change( self, event ):

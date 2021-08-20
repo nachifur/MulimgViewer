@@ -9,3 +9,6 @@ test_output/select*
 *.csv
 *.spec
 *.pptx
+font/all/
+
+

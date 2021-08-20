@@ -660,7 +660,10 @@ class MulimgViewer (MulimgViewerGui):
             if title_setting[0]:
                 if self.ImgManager.type == 0 or self.ImgManager.type == 1:
                     # one_dir_mul_dir_auto / one_dir_mul_dir_manual
-                    title_setting[2:6] = [False, True, False, False]
+                    if self.parallel_sequential.Value:
+                        title_setting[2:6] = [False, True, True, False]
+                    else:
+                        title_setting[2:6] = [False, True, False, False]
                 elif self.ImgManager.type == 2:
                     # one_dir_mul_img
                     title_setting[2:6] = [False, False, True, False]

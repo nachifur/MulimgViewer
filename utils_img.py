@@ -861,19 +861,19 @@ class ImgManager(ImgDatabase):
             img_mode, draw_points)
 
         # stitch img
-        # try:
+        try:
             # Two-dimensional arrangement
-        self.img, self.xy_grid = self.ImgF.layout_2d(
-            layout_list, self.gap_color, copy.deepcopy(self.img_list), self.img_preprocessing, img_preprocessing_sub, self.vertical)
+            self.img, self.xy_grid = self.ImgF.layout_2d(
+                layout_list, self.gap_color, copy.deepcopy(self.img_list), self.img_preprocessing, img_preprocessing_sub, self.vertical)
 
-        self.show_box = self.layout_params[14]
-        if self.show_original and self.show_box and len(draw_points) != 0:
-            self.img = self.ImgF.draw_rectangle(
-                self.img, self.xy_grid, self.crop_points, self.layout_params[9], line_width=self.layout_params[10])
-        # except:
-        #     return 1
-        # else:
-        #     return 0
+            self.show_box = self.layout_params[14]
+            if self.show_original and self.show_box and len(draw_points) != 0:
+                self.img = self.ImgF.draw_rectangle(
+                    self.img, self.xy_grid, self.crop_points, self.layout_params[9], line_width=self.layout_params[10])
+        except:
+            return 1
+        else:
+            return 0
 
     def title_preprocessing(self, img, id):
         title_max_size = copy.deepcopy(self.title_max_size)
@@ -964,6 +964,10 @@ class ImgManager(ImgDatabase):
 
     def crop_points_process(self, crop_points,title_up=False, img_mode=0):
         """img_mode, 0: show, 1: save"""
+        if title_up:
+            self.count_correct_crop_point = 1
+        else:
+            self.count_correct_crop_point = 0
         crop_points_ = []
         for crop_point_scale in crop_points:
             crop_point = crop_point_scale[0:4]
@@ -1017,14 +1021,19 @@ class ImgManager(ImgDatabase):
         img_list = []
         for crop_point in self.crop_points:
             crop_point = copy.deepcopy(crop_point)
-            if self.layout_params[17][2]:
-                if self.vertical:
-                    crop_point[0] = crop_point[0]-self.title_max_size[0]-self.layout_params[3][3]
-                    crop_point[2] = crop_point[2]-self.title_max_size[0]-self.layout_params[3][3]
-                else:
-                    crop_point[1] = crop_point[1]-self.title_max_size[1]-self.layout_params[3][3]
-                    crop_point[3] = crop_point[3]-self.title_max_size[1]-self.layout_params[3][3]
+            if self.count_correct_crop_point ==1:
+                if self.layout_params[17][2]:
+                    if self.vertical:
+                        crop_point[0] = crop_point[0]-self.title_max_size[0]-self.layout_params[3][3]
+                        crop_point[2] = crop_point[2]-self.title_max_size[0]-self.layout_params[3][3]
+                    else:
+                        crop_point[1] = crop_point[1]-self.title_max_size[1]-self.layout_params[3][3]
+                        crop_point[3] = crop_point[3]-self.title_max_size[1]-self.layout_params[3][3]
             img_list.append(img.crop(tuple(crop_point)))
+
+        if self.layout_params[17][2]:
+            self.count_correct_crop_point = 0
+
         gap = self.layout_params[3][4]
 
         # get the size of magnifier img
@@ -1251,7 +1260,7 @@ class ImgManager(ImgDatabase):
             pass
         else:
             try:
-                self.crop_points_process(copy.deepcopy(self.draw_points), 1)
+                self.crop_points_process(copy.deepcopy(self.draw_points), img_mode=1)
                 if self.type == 3:
                     sub_dir_name = "from_file"
                     if not (Path(self.out_path_str)/dir_name).exists():
@@ -1286,7 +1295,7 @@ class ImgManager(ImgDatabase):
                                     self.out_path_str) / dir_name/sub_dir_name / (str_+"_"+Path(img_name).stem+"_magnifier_"+str(i)+".png")
                                 img.save(f_path_output)
                                 i += 1
-                    # origin image with square
+                    # origin image with box
                     self.save_origin_img_magnifier()
                 else:
                     i = 0
@@ -1303,7 +1312,7 @@ class ImgManager(ImgDatabase):
                             img.save(f_path_output)
                             ii += 1
                         i += 1
-                    # origin image with square
+                    # origin image with box
                     self.save_origin_img_magnifier()
             except:
                 self.check_2.append(1)

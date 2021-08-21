@@ -390,7 +390,7 @@ class ImgUtils():
     def identity_transformation(self, img, id=0):
         return img
 
-    def cal_txt_size(self, title_list, img_resolution, font, font_size):
+    def cal_txt_size(self, title_list, standard_size, font, font_size,vertical):
         im = Image.new('RGBA', (256, 256), 0)
         draw = ImageDraw.Draw(im)
         title_size = []
@@ -403,7 +403,7 @@ class ImgUtils():
             split_num = 2
             title = title_list[i]
             str_ = title_list[i]
-            while title_size[i, 0] > img_resolution[0]:
+            while title_size[i, 0] > standard_size:
                 ids = [0] + [(i+1)*int(len(title)/split_num)
                              for i in range(split_num-1)]
                 str_ = ""
@@ -431,8 +431,10 @@ class ImgUtils():
         # final title list
         title_list = title_list
 
-        title_max_size = [img_resolution[0],
+        title_max_size = [standard_size,
                           (title_size[:, 1]).max()+int(font_size/4)]
+        if vertical:
+            title_max_size.reverse()
         return title_size, title_list, title_max_size
 
 
@@ -718,10 +720,11 @@ class ImgManager(ImgDatabase):
         self.set_scale_mode(img_mode=img_mode)
         if img_mode == 0:
             self.draw_points = draw_points
-        img_preprocessing_sub = []
-        width_2, height_2 = [[], []]
         self.vertical = self.layout_params[-1]
+
+        img_preprocessing_sub = []
         layout_level_2 = []
+        width_2, height_2 = [[], []]
 
         # show original img
         self.show_original = self.layout_params[16]
@@ -751,29 +754,10 @@ class ImgManager(ImgDatabase):
         else:
             layout_level_2.append(0)
 
-        # Two-dimensional arrangement
-        # arrangement of sub-images, title image, original image, magnifier image
-        # row_col2 = [sum(layout_level_2), 1]
-        # num_per_img
-        row_col1 = [1, self.layout_params[1]]
-        # img_num_per_column,img_num_per_row
-        row_col0 = [self.layout_params[2], self.layout_params[0]]
-
-        gap_x_y_2 = [0, self.layout_params[3][3]]
-        gap_x_y_1 = [self.layout_params[3][2], 0]
-        gap_x_y_0 = [self.layout_params[3][0], self.layout_params[3][1]]
-
         # show title
         self.title_setting = self.layout_params[17]
         if self.title_setting[1]:
-            if self.vertical:
-                row_col2 = [sum(layout_level_2), 2]
-                target_width_2 = sum(width_2)+self.layout_params[3][3]*1
-                flag = False
-            else:
-                flag = True
-
-            title_width_height = self.title_init()
+            title_width_height = self.title_init(width_2,height_2)
             if self.title_setting[2]:
                 # up
                 width_2 = [title_width_height[0]]+width_2
@@ -787,17 +771,20 @@ class ImgManager(ImgDatabase):
                 height_2.append(title_width_height[1])
                 img_preprocessing_sub.append(self.title_preprocessing)
                 layout_level_2.append(1)
-
-            if flag:
-                row_col2 = [sum(layout_level_2), 1]
-            else:
-                gap_x_y_2 = [self.layout_params[3]
-                             [3], self.layout_params[3][3]]
-                target_height_2 = height_2[0] + \
-                    self.layout_params[3][3]*1 + title_width_height[1]
         else:
             layout_level_2.append(0)
-            row_col2 = [sum(layout_level_2), 1]
+
+        # Two-dimensional arrangement
+        # arrangement of sub-images, title image, original image, magnifier image
+        row_col2 = [sum(layout_level_2), 1]
+        # num_per_img
+        row_col1 = [1, self.layout_params[1]]
+        # img_num_per_column,img_num_per_row
+        row_col0 = [self.layout_params[2], self.layout_params[0]]
+
+        gap_x_y_2 = [0, self.layout_params[3][3]]
+        gap_x_y_1 = [self.layout_params[3][2], 0]
+        gap_x_y_0 = [self.layout_params[3][0], self.layout_params[3][1]]
 
         if self.vertical:
             row_col2.reverse()
@@ -813,9 +800,8 @@ class ImgManager(ImgDatabase):
         width_0, height_0 = [[], []]
 
         if self.vertical:
-            if not self.title_setting[1]:
-                target_width_2, target_height_2 = [
-                    sum(width_2)+gap_x_y_2[0]*(sum(layout_level_2)-1), height_2[0]]
+            target_width_2, target_height_2 = [
+                sum(width_2)+gap_x_y_2[0]*(sum(layout_level_2)-1), height_2[0]]
         else:
             target_width_2, target_height_2 = [width_2[0], sum(
                 height_2)+gap_x_y_2[1]*(sum(layout_level_2)-1)]
@@ -852,25 +838,28 @@ class ImgManager(ImgDatabase):
             img_mode, draw_points)
 
         # stitch img
-        try:
+        # try:
             # Two-dimensional arrangement
-            self.img, self.xy_grid = self.ImgF.layout_2d(
-                layout_list, self.gap_color, copy.deepcopy(self.img_list), self.img_preprocessing, img_preprocessing_sub, self.vertical)
+        self.img, self.xy_grid = self.ImgF.layout_2d(
+            layout_list, self.gap_color, copy.deepcopy(self.img_list), self.img_preprocessing, img_preprocessing_sub, self.vertical)
 
-            self.show_box = self.layout_params[14]
-            if self.show_original and self.show_box and len(draw_points) != 0:
-                self.img = self.ImgF.draw_rectangle(
-                    self.img, self.xy_grid, self.crop_points, self.layout_params[9], line_width=self.layout_params[10])
-        except:
-            return 1
-        else:
-            return 0
+        self.show_box = self.layout_params[14]
+        if self.show_original and self.show_box and len(draw_points) != 0:
+            self.img = self.ImgF.draw_rectangle(
+                self.img, self.xy_grid, self.crop_points, self.layout_params[9], line_width=self.layout_params[10])
+        # except:
+        #     return 1
+        # else:
+        #     return 0
 
     def title_preprocessing(self, img, id):
-        img = Image.new('RGBA', tuple(self.title_max_size), self.gap_color)
+        title_max_size = copy.deepcopy(self.title_max_size)
+        if self.vertical:
+            title_max_size.reverse()
+        img = Image.new('RGBA', tuple(title_max_size), self.gap_color)
         draw = ImageDraw.Draw(img)
         title_size = self.title_size[id, :]
-        delta_x = int((self.title_max_size[0]-title_size[0])/2)
+        delta_x = int((title_max_size[0]-title_size[0])/2)
         if self.title_setting[2]:
             # up
             draw.multiline_text(
@@ -879,10 +868,11 @@ class ImgManager(ImgDatabase):
             # down
             draw.multiline_text(
                 (delta_x, 0), self.title_list[id], font=self.font, fill=self.text_color)
-
+        if self.vertical:
+            img = img.transpose(Image.ROTATE_90)
         return img
 
-    def title_init(self):
+    def title_init(self,width_2,height_2):
         # self.title_setting = self.layout_params[17]
         # title_setting = [self.title_auto.Value,                     # 0
         #                     self.title_show.Value,                     # 1
@@ -918,8 +908,12 @@ class ImgManager(ImgDatabase):
         font_size = int(self.title_setting[7])
         self.font = ImageFont.truetype(
             self.title_setting[8][self.title_setting[6]], font_size)
+        if self.vertical:
+            standard_size = height_2[0]
+        else:
+            standard_size = width_2[0]
         self.title_size, self.title_list, self.title_max_size = self.ImgF.cal_txt_size(
-            title_list, self.img_resolution, self.font, font_size)
+            title_list, standard_size, self.font, font_size,self.vertical)
 
         return self.title_max_size
 

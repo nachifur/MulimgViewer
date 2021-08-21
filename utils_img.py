@@ -128,7 +128,7 @@ class ImgUtils():
         img = Image.fromarray(img_array.astype('uint8')).convert('RGBA')
         return img
 
-    def cal_magnifier_size(self, magnifier_scale, crop_size, img_mode, gap, img_size, num_box, vertical=False):
+    def cal_magnifier_size(self, magnifier_scale, crop_size, img_mode, gap, img_size, num_box, show_original, vertical=False):
         delta_x = 0
         delta_y = 0
         if vertical:
@@ -146,29 +146,34 @@ class ImgUtils():
             # custom magnifier scale
             to_height = int(height*magnifier_scale[1])
             to_width = int(width*magnifier_scale[0])
-            width_all = to_width*num_box + (num_box-1)*gap
-            height_all = to_height
+            if show_original:
+                width_all = to_width*num_box + (num_box-1)*gap
+                height_all = to_height
 
-            if img_width/width_all > img_height/height_all:
-                if to_height > img_height:
-                    to_width = int(
-                        img_height/to_height*to_width)
-                    to_height = img_height
-                width_all = (to_width*num_box +
-                             (num_box-1)*gap)
-                delta_x = int((img_width-width_all)/2)
-            elif img_width/width_all == img_height/height_all:
-                pass
-            else:
-                if width_all >= img_width:
-                    to_height = int(
-                        img_width/width_all*to_height)
-                    to_width = int(
-                        (img_width-gap*(num_box-1))/num_box)
-                else:
+                if img_width/width_all > img_height/height_all:
+                    if to_height > img_height:
+                        to_width = int(
+                            img_height/to_height*to_width)
+                        to_height = img_height
                     width_all = (to_width*num_box +
-                                 (num_box-1)*gap)
+                                (num_box-1)*gap)
                     delta_x = int((img_width-width_all)/2)
+                elif img_width/width_all == img_height/height_all:
+                    width_all = img_width
+                    delta_x = 0
+                else:
+                    if width_all >= img_width:
+                        to_height = int(
+                            img_width/width_all*to_height)
+                        to_width = int(
+                            (img_width-gap*(num_box-1))/num_box)
+                    width_all = (to_width*num_box +
+                                (num_box-1)*gap)
+                    delta_x = int((img_width-width_all)/2)
+            else:
+                width_all = (to_width*num_box +
+                            (num_box-1)*gap)
+                delta_x = 0
         else:
             # auto magnifier scale
             to_width = int(
@@ -177,14 +182,18 @@ class ImgUtils():
             if to_height > img_height:
                 to_width = int(img_height/to_height*to_width)
                 to_height = img_height
-                width_all = (to_width*num_box +
-                             (num_box-1)*gap)
-                delta_x = int((img_width-width_all)/2)
+            width_all = (to_width*num_box +
+                            (num_box-1)*gap)
+            delta_x = int((img_width-width_all)/2)
 
-        if to_height < img_height:
-            magnifier_img_all_size = [img_width, to_height]
+        if not show_original:
+            magnifier_img_all_size=[width_all,to_height]
+            delta_x=0
         else:
-            magnifier_img_all_size = [img_width, img_height]
+            if to_height < img_height:
+                magnifier_img_all_size = [img_width, to_height]   
+            else:         
+                magnifier_img_all_size = [img_width, img_height]   
 
         to_resize = [to_width, to_height]
         delta = [delta_x, delta_y]
@@ -747,7 +756,7 @@ class ImgManager(ImgDatabase):
             crop_width = self.crop_points[0][2]-self.crop_points[0][0]
             crop_height = self.crop_points[0][3]-self.crop_points[0][1]
             _, _, magnifier_img_all_size = self.ImgF.cal_magnifier_size(
-                self.layout_params[8], [crop_width, crop_height], 0, self.layout_params[3][4], self.img_resolution, len(self.crop_points), vertical=self.vertical)
+                self.layout_params[8], [crop_width, crop_height], 0, self.layout_params[3][4], self.img_resolution, len(self.crop_points), self.show_original, vertical=self.vertical)
             img_preprocessing_sub.append(self.magnifier_preprocessing)
             width_2.append(magnifier_img_all_size[0])
             height_2.append(magnifier_img_all_size[1])
@@ -838,19 +847,19 @@ class ImgManager(ImgDatabase):
             img_mode, draw_points)
 
         # stitch img
-        # try:
+        try:
             # Two-dimensional arrangement
-        self.img, self.xy_grid = self.ImgF.layout_2d(
-            layout_list, self.gap_color, copy.deepcopy(self.img_list), self.img_preprocessing, img_preprocessing_sub, self.vertical)
+            self.img, self.xy_grid = self.ImgF.layout_2d(
+                layout_list, self.gap_color, copy.deepcopy(self.img_list), self.img_preprocessing, img_preprocessing_sub, self.vertical)
 
-        self.show_box = self.layout_params[14]
-        if self.show_original and self.show_box and len(draw_points) != 0:
-            self.img = self.ImgF.draw_rectangle(
-                self.img, self.xy_grid, self.crop_points, self.layout_params[9], line_width=self.layout_params[10])
-        # except:
-        #     return 1
-        # else:
-        #     return 0
+            self.show_box = self.layout_params[14]
+            if self.show_original and self.show_box and len(draw_points) != 0:
+                self.img = self.ImgF.draw_rectangle(
+                    self.img, self.xy_grid, self.crop_points, self.layout_params[9], line_width=self.layout_params[10])
+        except:
+            return 1
+        else:
+            return 0
 
     def title_preprocessing(self, img, id):
         title_max_size = copy.deepcopy(self.title_max_size)
@@ -990,7 +999,7 @@ class ImgManager(ImgDatabase):
 
         # get the size of magnifier img
         to_resize, delta, magnifier_img_all_size = self.ImgF.cal_magnifier_size(
-            magnifier_scale, list(img_list[0].size), img_mode, gap, self.img_resolution, len(self.crop_points), vertical=self.vertical)
+            magnifier_scale, list(img_list[0].size), img_mode, gap, self.img_resolution, len(self.crop_points),self.show_original, vertical=self.vertical)
 
         # resize images
         line_width = self.layout_params[10]

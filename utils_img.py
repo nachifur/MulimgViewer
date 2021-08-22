@@ -101,7 +101,7 @@ class ImgUtils():
         i = 0
         k = 0
         for bounding_box in bounding_boxs:
-            x_0, y_0, x, y = bounding_box
+            x_0, y_0, x, y = bounding_box[0:4]
             height = y-y_0
             width = x - x_0
             color = color_list[k]
@@ -761,7 +761,7 @@ class ImgManager(ImgDatabase):
             self.magnifier_flag = 0
         if self.magnifier_flag:
             layout_level_2.append(1)
-            self.crop_points_process(draw_points)
+            self.crop_points_process(copy.deepcopy(draw_points))
             # get magnifier size
             crop_width = self.crop_points[0][2]-self.crop_points[0][0]
             crop_height = self.crop_points[0][3]-self.crop_points[0][1]
@@ -795,7 +795,7 @@ class ImgManager(ImgDatabase):
 
         # Since the title is up, we need to correct crop_points
         if self.magnifier_flag:
-            self.crop_points_process(draw_points,title_up = self.title_setting[2])
+            self.crop_points_process(copy.deepcopy(draw_points),title_up = self.title_setting[2])
 
         # Two-dimensional arrangement
         # arrangement of sub-images, title image, original image, magnifier image
@@ -998,14 +998,20 @@ class ImgManager(ImgDatabase):
             crop_point[2] = int(crop_point[2]*scale[0])
             crop_point[3] = int(crop_point[3]*scale[1])
 
-            if title_up:
+            if title_up and (not crop_point_scale[6]):
                 if self.vertical:
                     crop_point[0] = crop_point[0]+self.title_max_size[0]+self.layout_params[3][3]
                     crop_point[2] = crop_point[2]+self.title_max_size[0]+self.layout_params[3][3]
                 else:
                     crop_point[1] = crop_point[1]+self.title_max_size[1]+self.layout_params[3][3]
                     crop_point[3] = crop_point[3]+self.title_max_size[1]+self.layout_params[3][3]
-
+            if (not title_up) and crop_point_scale[6]:
+                if self.vertical:
+                    crop_point[0] = crop_point[0]-self.title_max_size[0]-self.layout_params[3][3]
+                    crop_point[2] = crop_point[2]-self.title_max_size[0]-self.layout_params[3][3]
+                else:
+                    crop_point[1] = crop_point[1]-self.title_max_size[1]-self.layout_params[3][3]
+                    crop_point[3] = crop_point[3]-self.title_max_size[1]-self.layout_params[3][3]
             crop_points_.append(crop_point)
 
         self.crop_points = crop_points_
@@ -1024,7 +1030,7 @@ class ImgManager(ImgDatabase):
                 else:
                     crop_point[1] = crop_point[1]-self.title_max_size[1]-self.layout_params[3][3]
                     crop_point[3] = crop_point[3]-self.title_max_size[1]-self.layout_params[3][3]
-            img_list.append(img.crop(tuple(crop_point)))
+            img_list.append(img.crop(tuple(crop_point[0:4])))
 
         gap = self.layout_params[3][4]
 

@@ -964,10 +964,6 @@ class ImgManager(ImgDatabase):
 
     def crop_points_process(self, crop_points,title_up=False, img_mode=0):
         """img_mode, 0: show, 1: save"""
-        if title_up:
-            self.count_correct_crop_point = 1
-        else:
-            self.count_correct_crop_point = 0
         crop_points_ = []
         for crop_point_scale in crop_points:
             crop_point = crop_point_scale[0:4]
@@ -1021,18 +1017,14 @@ class ImgManager(ImgDatabase):
         img_list = []
         for crop_point in self.crop_points:
             crop_point = copy.deepcopy(crop_point)
-            if self.count_correct_crop_point ==1:
-                if self.layout_params[17][2]:
-                    if self.vertical:
-                        crop_point[0] = crop_point[0]-self.title_max_size[0]-self.layout_params[3][3]
-                        crop_point[2] = crop_point[2]-self.title_max_size[0]-self.layout_params[3][3]
-                    else:
-                        crop_point[1] = crop_point[1]-self.title_max_size[1]-self.layout_params[3][3]
-                        crop_point[3] = crop_point[3]-self.title_max_size[1]-self.layout_params[3][3]
+            if self.layout_params[17][2] and img_mode!=1:
+                if self.vertical:
+                    crop_point[0] = crop_point[0]-self.title_max_size[0]-self.layout_params[3][3]
+                    crop_point[2] = crop_point[2]-self.title_max_size[0]-self.layout_params[3][3]
+                else:
+                    crop_point[1] = crop_point[1]-self.title_max_size[1]-self.layout_params[3][3]
+                    crop_point[3] = crop_point[3]-self.title_max_size[1]-self.layout_params[3][3]
             img_list.append(img.crop(tuple(crop_point)))
-
-        if self.layout_params[17][2]:
-            self.count_correct_crop_point = 0
 
         gap = self.layout_params[3][4]
 

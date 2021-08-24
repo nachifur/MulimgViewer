@@ -757,9 +757,10 @@ class ImgManager(ImgDatabase):
 
         # show magnifier img
         self.magnifier_flag = self.layout_params[7]
+        self.show_crop=self.layout_params[18]
         if len(draw_points) == 0:
-            self.magnifier_flag = 0
-        if self.magnifier_flag:
+            self.show_crop = 0
+        if self.show_crop:
             layout_level_2.append(1)
             self.crop_points_process(copy.deepcopy(draw_points),img_mode=img_mode)
             # get magnifier size
@@ -776,115 +777,125 @@ class ImgManager(ImgDatabase):
         # show title
         self.title_setting = self.layout_params[17]
         if self.title_setting[1]:
-            title_width_height = self.title_init(width_2,height_2)
-            if self.title_setting[2]:
-                # up
-                width_2 = [title_width_height[0]]+width_2
-                height_2 = [title_width_height[1]]+height_2
-                img_preprocessing_sub = [
-                    self.title_preprocessing] + img_preprocessing_sub
-                layout_level_2 = [1]+layout_level_2
+            if len(width_2)!=0:
+                title_width_height = self.title_init(width_2,height_2)
+                if self.title_setting[2]:
+                    # up
+                    width_2 = [title_width_height[0]]+width_2
+                    height_2 = [title_width_height[1]]+height_2
+                    img_preprocessing_sub = [
+                        self.title_preprocessing] + img_preprocessing_sub
+                    layout_level_2 = [1]+layout_level_2
+                else:
+                    # down
+                    width_2.append(title_width_height[0])
+                    height_2.append(title_width_height[1])
+                    img_preprocessing_sub.append(self.title_preprocessing)
+                    layout_level_2.append(1)
             else:
-                # down
-                width_2.append(title_width_height[0])
-                height_2.append(title_width_height[1])
-                img_preprocessing_sub.append(self.title_preprocessing)
-                layout_level_2.append(1)
+                layout_level_2.append(0)
         else:
             layout_level_2.append(0)
+        if sum(layout_level_2)!=0:
+            # Since the title is up, we need to correct crop_points
+            if self.magnifier_flag:
+                self.crop_points_process(copy.deepcopy(draw_points),title_up = self.title_setting[2],img_mode=img_mode)
 
-        # Since the title is up, we need to correct crop_points
-        if self.magnifier_flag:
-            self.crop_points_process(copy.deepcopy(draw_points),title_up = self.title_setting[2],img_mode=img_mode)
+            # Two-dimensional arrangement
+            # arrangement of sub-images, title image, original image, magnifier image
+            row_col2 = [sum(layout_level_2), 1]
+            # num_per_img
+            row_col1 = [1, self.layout_params[1]]
+            # img_num_per_column,img_num_per_row
+            row_col0 = [self.layout_params[2], self.layout_params[0]]
 
-        # Two-dimensional arrangement
-        # arrangement of sub-images, title image, original image, magnifier image
-        row_col2 = [sum(layout_level_2), 1]
-        # num_per_img
-        row_col1 = [1, self.layout_params[1]]
-        # img_num_per_column,img_num_per_row
-        row_col0 = [self.layout_params[2], self.layout_params[0]]
+            gap_x_y_2 = [0, self.layout_params[3][3]]
+            gap_x_y_1 = [self.layout_params[3][2], 0]
+            gap_x_y_0 = [self.layout_params[3][0], self.layout_params[3][1]]
 
-        gap_x_y_2 = [0, self.layout_params[3][3]]
-        gap_x_y_1 = [self.layout_params[3][2], 0]
-        gap_x_y_0 = [self.layout_params[3][0], self.layout_params[3][1]]
+            if self.vertical:
+                row_col2.reverse()
+                row_col1.reverse()
+                row_col0.reverse()
 
-        if self.vertical:
-            row_col2.reverse()
-            row_col1.reverse()
-            row_col0.reverse()
+                gap_x_y_2.reverse()
+                gap_x_y_1.reverse()
+                gap_x_y_0.reverse()
 
-            gap_x_y_2.reverse()
-            gap_x_y_1.reverse()
-            gap_x_y_0.reverse()
+            # width_2,height_2 = [[],[]]
+            width_1, height_1 = [[], []]
+            width_0, height_0 = [[], []]
 
-        # width_2,height_2 = [[],[]]
-        width_1, height_1 = [[], []]
-        width_0, height_0 = [[], []]
+            if self.vertical:
+                target_width_2, target_height_2 = [
+                    sum(width_2)+gap_x_y_2[0]*(sum(layout_level_2)-1), height_2[0]]
+            else:
+                target_width_2, target_height_2 = [width_2[0], sum(
+                    height_2)+gap_x_y_2[1]*(sum(layout_level_2)-1)]
+            target_width_1, target_height_1 = [0, 0]
+            target_width_0, target_height_0 = [0, 0]
 
-        if self.vertical:
-            target_width_2, target_height_2 = [
-                sum(width_2)+gap_x_y_2[0]*(sum(layout_level_2)-1), height_2[0]]
+            discard_table_2 = np.zeros(tuple(row_col2))
+            discard_table_1 = np.zeros(tuple(row_col1))
+            discard_table_0 = np.zeros(tuple(row_col0))
+            layout_list = [
+                [row_col2, gap_x_y_2, [width_2, height_2], [
+                    target_width_2, target_height_2], discard_table_2],
+                [row_col1, gap_x_y_1, [width_1, height_1], [
+                    target_width_1, target_height_1], discard_table_1],
+                [row_col0, gap_x_y_0, [width_0, height_0], [
+                    target_width_0, target_height_0], discard_table_0],
+            ]
+
+            if len(img_preprocessing_sub) < row_col2[0]*row_col2[1]:
+                empty_ = [[] for i in range(
+                    row_col2[0]*row_col2[1]-len(img_preprocessing_sub))]
+                img_preprocessing_sub = img_preprocessing_sub+empty_
+            temp_ = np.array(
+                list(range(len(img_preprocessing_sub)))).astype(object)
+            for i in range(len(img_preprocessing_sub)):
+                temp_[i] = img_preprocessing_sub[i]
+            img_preprocessing_sub = temp_.reshape(row_col2[0], row_col2[1])
+            show_img = True
         else:
-            target_width_2, target_height_2 = [width_2[0], sum(
-                height_2)+gap_x_y_2[1]*(sum(layout_level_2)-1)]
-        target_width_1, target_height_1 = [0, 0]
-        target_width_0, target_height_0 = [0, 0]
-
-        discard_table_2 = np.zeros(tuple(row_col2))
-        discard_table_1 = np.zeros(tuple(row_col1))
-        discard_table_0 = np.zeros(tuple(row_col0))
-        layout_list = [
-            [row_col2, gap_x_y_2, [width_2, height_2], [
-                target_width_2, target_height_2], discard_table_2],
-            [row_col1, gap_x_y_1, [width_1, height_1], [
-                target_width_1, target_height_1], discard_table_1],
-            [row_col0, gap_x_y_0, [width_0, height_0], [
-                target_width_0, target_height_0], discard_table_0],
-        ]
-
-        if len(img_preprocessing_sub) < row_col2[0]*row_col2[1]:
-            empty_ = [[] for i in range(
-                row_col2[0]*row_col2[1]-len(img_preprocessing_sub))]
-            img_preprocessing_sub = img_preprocessing_sub+empty_
-        temp_ = np.array(
-            list(range(len(img_preprocessing_sub)))).astype(object)
-        for i in range(len(img_preprocessing_sub)):
-            temp_[i] = img_preprocessing_sub[i]
-        img_preprocessing_sub = temp_.reshape(row_col2[0], row_col2[1])
-        return layout_list, img_preprocessing_sub
+            layout_list = []
+            show_img = False
+            img_preprocessing_sub = []
+        return layout_list, img_preprocessing_sub, show_img
 
     def stitch_images(self, img_mode, draw_points=[]):
         """img_mode, 0: show, 1: save"""
         # init
-        layout_list, img_preprocessing_sub = self.stitch_img_init(
+        layout_list, img_preprocessing_sub, show_img = self.stitch_img_init(
             img_mode, draw_points)
+        if show_img:
+            # stitch img
+            try:
+                # Two-dimensional arrangement
+                self.img, self.xy_grid = self.ImgF.layout_2d(
+                    layout_list, self.gap_color, copy.deepcopy(self.img_list), self.img_preprocessing, img_preprocessing_sub, self.vertical)
 
-        # stitch img
-        try:
-            # Two-dimensional arrangement
-            self.img, self.xy_grid = self.ImgF.layout_2d(
-                layout_list, self.gap_color, copy.deepcopy(self.img_list), self.img_preprocessing, img_preprocessing_sub, self.vertical)
-
-            self.show_box = self.layout_params[14]
-            if self.show_original and self.show_box and len(draw_points) != 0:
-                crop_points = self.crop_points
-                offset = [self.title_max_size[0]+self.layout_params[3][3],self.title_max_size[1]+self.layout_params[3][3]]
-                for crop_point in crop_points:
-                    up = crop_point[-1] # down(False) or up(True)
-                    if (up and self.title_setting[2] and self.title_setting[1]) or ((not up) and self.title_setting[2] and self.title_setting[1]):
-                        if self.vertical:
-                            crop_point[0] = crop_point[0]+offset[0]
-                            crop_point[2] = crop_point[2]+offset[0]
-                        else:
-                            crop_point[1] = crop_point[1]+offset[1]
-                            crop_point[3] = crop_point[3]+offset[1]
-                self.img = self.ImgF.draw_rectangle(
-                    self.img, self.xy_grid, crop_points, self.layout_params[9], line_width=self.layout_params[10])
-        except:
-            return 1
+                self.show_box = self.layout_params[14]
+                if self.show_original and self.show_box and len(draw_points) != 0:
+                    crop_points = self.crop_points
+                    offset = [self.title_max_size[0]+self.layout_params[3][3],self.title_max_size[1]+self.layout_params[3][3]]
+                    for crop_point in crop_points:
+                        up = crop_point[-1] # down(False) or up(True)
+                        if (up and self.title_setting[2] and self.title_setting[1]) or ((not up) and self.title_setting[2] and self.title_setting[1]):
+                            if self.vertical:
+                                crop_point[0] = crop_point[0]+offset[0]
+                                crop_point[2] = crop_point[2]+offset[0]
+                            else:
+                                crop_point[1] = crop_point[1]+offset[1]
+                                crop_point[3] = crop_point[3]+offset[1]
+                    self.img = self.ImgF.draw_rectangle(
+                        self.img, self.xy_grid, crop_points, self.layout_params[9], line_width=self.layout_params[10])
+            except:
+                return 1
+            else:
+                return 0
         else:
-            return 0
+            return 2
 
     def title_preprocessing(self, img, id):
         title_max_size = copy.deepcopy(self.title_max_size)

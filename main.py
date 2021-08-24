@@ -696,6 +696,7 @@ class MulimgViewer (MulimgViewerGui):
                     self.show_box_in_crop.Value,            # 15
                     self.show_original.Value,               # 16
                     title_setting,                          # 17
+                    self.show_crop.Value,                   # 18
                     self.checkBox_orientation.Value]
 
     def show_img(self):
@@ -731,7 +732,7 @@ class MulimgViewer (MulimgViewerGui):
 
             flag = self.ImgManager.stitch_images(
                 0, copy.deepcopy(self.xy_magnifier))
-            if flag != 1:
+            if flag == 0:
                 bmp = self.ImgManager.img
                 self.img_size = bmp.size
                 bmp = self.ImgManager.ImgF.PIL2wx(bmp)
@@ -766,6 +767,9 @@ class MulimgViewer (MulimgViewerGui):
             if flag == 1:
                 self.SetStatusText_(
                     ["-1", str(self.ImgManager.action_count), "***Error: "+str(self.ImgManager.name_list[self.ImgManager.action_count]) + ", during stitching images***", "-1"])
+            if flag == 2:
+                self.SetStatusText_(
+                    ["-1", "-1","No image is displayed! Check Show orignal/Show 🔍️/Show title.", "-1"])
         else:
             self.SetStatusText_(
                 ["-1", "-1", "***Error: no image in this dir! Maybe you can choose parallel mode!***", "-1"])

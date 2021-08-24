@@ -761,7 +761,7 @@ class ImgManager(ImgDatabase):
             self.magnifier_flag = 0
         if self.magnifier_flag:
             layout_level_2.append(1)
-            self.crop_points_process(copy.deepcopy(draw_points))
+            self.crop_points_process(copy.deepcopy(draw_points),img_mode=img_mode)
             # get magnifier size
             crop_width = self.crop_points[0][2]-self.crop_points[0][0]
             crop_height = self.crop_points[0][3]-self.crop_points[0][1]
@@ -795,7 +795,7 @@ class ImgManager(ImgDatabase):
 
         # Since the title is up, we need to correct crop_points
         if self.magnifier_flag:
-            self.crop_points_process(copy.deepcopy(draw_points),title_up = self.title_setting[2])
+            self.crop_points_process(copy.deepcopy(draw_points),title_up = self.title_setting[2],img_mode=img_mode)
 
         # Two-dimensional arrangement
         # arrangement of sub-images, title image, original image, magnifier image

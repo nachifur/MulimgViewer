@@ -1247,7 +1247,10 @@ class ImgManager(ImgDatabase):
             self.check_1.append(self.stitch_images(
                 1, copy.deepcopy(self.draw_points)))
         else:
-            self.check_1.append(self.stitch_images(1))
+            if self.show_box:
+                self.check_1.append(self.stitch_images(1, copy.deepcopy(self.draw_points)))
+            else:
+                self.check_1.append(self.stitch_images(1))
 
         self.img.save(f_path_output)
 

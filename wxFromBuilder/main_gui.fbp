@@ -1201,7 +1201,7 @@
                         <property name="growablecols"></property>
                         <property name="growablerows"></property>
                         <property name="hgap">0</property>
-                        <property name="minimum_size">950,600</property>
+                        <property name="minimum_size">1000,600</property>
                         <property name="name">fgSizer5</property>
                         <property name="non_flexible_grow_mode">wxFLEX_GROWMODE_SPECIFIED</property>
                         <property name="permission">none</property>

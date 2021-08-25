@@ -885,15 +885,30 @@ class MulimgViewer (MulimgViewerGui):
     def get_img_id_from_point(self, xy):
         # get img_id from grid points
         xy_grid = np.array(self.ImgManager.xy_grid)
+        xy_grid_x = xy_grid[:,0].reshape(2,2)
+        xy_grid_y = xy_grid[:,1].reshape(2,2)
+
         xy_cur = np.array([xy])
         xy_cur = np.repeat(xy_cur, xy_grid.shape[0], axis=0)
-        res_ = xy_cur - xy_grid
+        xy_cur_x = xy_cur[:,0].reshape(2,2)
+        xy_cur_y = xy_cur[:,1].reshape(2,2)
+
+        if self.checkBox_orientation.Value:
+            xy_grid_x = xy_grid_x.T
+            xy_grid_y = xy_grid_y.T
+
+        res_x = xy_cur_x - xy_grid_x
+        res_y = xy_cur_y - xy_grid_y
+
+        res_x = res_x.reshape(-1)
+        res_y = res_y.reshape(-1)
+
         id_list = []
         for i in range(xy_grid.shape[0]):
-            if res_[i][0] >= 0 and res_[i][1] >= 0:
+            if res_x[i] >= 0 and res_y[i] >= 0:
                 id_list.append(i)
             else:
-                id_list.append(0)
+                id_list.append(-1)
         return max(id_list)
 
     def title_down_up_func(self, event):

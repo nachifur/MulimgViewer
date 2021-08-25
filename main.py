@@ -41,7 +41,7 @@ class MulimgViewer (MulimgViewerGui):
         self.Uint = self.scrolledWindow_img.GetScrollPixelsPerUnit()
         self.Status_number = self.m_statusBar1.GetFieldsCount()
         self.img_size = [-1, -1]
-        self.width = 950
+        self.width = 1000
         self.height = 600
         self.start_flag = 0
         self.x = -1

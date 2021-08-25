@@ -61,12 +61,14 @@ class MulimgViewer (MulimgViewerGui):
         font_path = Path("font")/"using"
         font_path = Path(get_resource_path(str(font_path)))
         files_name = [f.stem for f in font_path.iterdir()]
+        files_name = np.sort(np.array(files_name)).tolist()
         for file_name in files_name:
             file_name = file_name.split("_", 1)[1]
             file_name = file_name.replace("-", " ")
             self.title_font.Append(file_name)
         self.title_font.SetSelection(0)
-        self.font_paths = [str(f) for f in font_path.iterdir()]
+        font_paths = [str(f) for f in font_path.iterdir()]
+        self.font_paths = np.sort(np.array(font_paths)).tolist()
 
     def frame_resize(self, event):
         self.auto_layout(frame_resize=True)

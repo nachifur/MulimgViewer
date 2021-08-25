@@ -616,7 +616,8 @@ class MulimgViewer (MulimgViewerGui):
         i_cur = 2
         status_toggle = [self.magnifier, self.rotation, self.flip]
         if status_toggle[i_cur].Value:
-            flip_cursor_path = get_resource_path(str(Path("img")/"flip_cursor.png"))
+            flip_cursor_path = Path(get_resource_path(str(Path("img"))))
+            flip_cursor_path = str(flip_cursor_path/"flip_cursor.png")
             self.SetCursor(
                 wx.Cursor((wx.Image(flip_cursor_path, wx.BITMAP_TYPE_PNG))))
             for i in range(len(status_toggle)):

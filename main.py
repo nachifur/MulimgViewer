@@ -186,20 +186,21 @@ class MulimgViewer (MulimgViewerGui):
         self.SetStatusText_(["Save", "-1", "-1", "-1"])
 
     def refresh(self, event):
+        self.SetStatusText_(["Refresh", "-1", "-1", "-1"])
         if self.ImgManager.img_num != 0:
             self.show_img_init()
             self.show_img()
         else:
             self.SetStatusText_(
                 ["-1", "", "***Error: First, need to select the input dir***", "-1"])
-        self.SetStatusText_(["Refresh", "-1", "-1", "-1"])
 
     def one_dir_mul_dir_auto(self, event):
         self.SetStatusText_(["Input", "", "", "-1"])
         dlg = wx.DirDialog(None, "Parallel auto choose input dir", "",
                            wx.DD_DEFAULT_STYLE | wx.DD_DIR_MUST_EXIST)
         if dlg.ShowModal() == wx.ID_OK:
-            self.ImgManager.init(dlg.GetPath(), 0)
+            self.ImgManager.init(
+                dlg.GetPath(), 0, self.parallel_to_sequential.Value)
             self.show_img_init()
             self.ImgManager.set_action_count(0)
             self.show_img()
@@ -215,7 +216,7 @@ class MulimgViewer (MulimgViewerGui):
                 input_path = None
         except:
             input_path = None
-        self.UpdateUI(1, input_path)
+        self.UpdateUI(1, input_path, self.parallel_to_sequential.Value)
         self.choice_input_mode.SetSelection(2)
         self.SetStatusText_(["Input", "-1", "-1", "-1"])
 
@@ -259,7 +260,8 @@ class MulimgViewer (MulimgViewerGui):
         if dlg.ShowModal() == wx.ID_OK:
             with open(dlg.GetPath(), "r") as f:
                 input_path = f.read().split('\n')
-            self.ImgManager.init(input_path[0:-1], 1)
+            self.ImgManager.init(
+                input_path[0:-1], 1, self.parallel_to_sequential.Value)
             self.show_img_init()
             self.ImgManager.set_action_count(0)
             self.show_img()
@@ -469,7 +471,8 @@ class MulimgViewer (MulimgViewerGui):
         # flip
         if self.flip.Value:
             x, y = event.GetPosition()
-            self.ImgManager.flip(self.get_img_id_from_point([x, y]),FLIP_TOP_BOTTOM = self.checkBox_orientation.Value)
+            self.ImgManager.flip(self.get_img_id_from_point(
+                [x, y]), FLIP_TOP_BOTTOM=self.checkBox_orientation.Value)
             self.refresh(event)
 
             self.SetStatusText_(["Flip", "-1", "-1", "-1"])
@@ -527,7 +530,8 @@ class MulimgViewer (MulimgViewerGui):
                 show_scale = [float(x) for x in show_scale]
                 points = self.ImgManager.ImgF.sort_box_point(
                     [x_0, y_0, x, y], show_scale, self.ImgManager.img_resolution_origin, first_point=True)
-                self.xy_magnifier.append(points+show_scale+[self.title_down_up.Value and self.title_show.Value])
+                self.xy_magnifier.append(
+                    points+show_scale+[self.title_down_up.Value and self.title_show.Value])
                 self.refresh(event)
 
     def img_right_click(self, event):
@@ -543,7 +547,8 @@ class MulimgViewer (MulimgViewerGui):
                 show_scale = self.show_scale.GetLineText(0).split(',')
                 show_scale = [float(x) for x in show_scale]
                 points = self.move_box_point(x, y, show_scale)
-                self.xy_magnifier.append(points+show_scale+[self.title_down_up.Value and self.title_show.Value])
+                self.xy_magnifier.append(
+                    points+show_scale+[self.title_down_up.Value and self.title_show.Value])
             except:
                 self.SetStatusText_(
                     ["-1",  "Drawing a box need click left mouse button!", "-1", "-1"])
@@ -580,11 +585,11 @@ class MulimgViewer (MulimgViewerGui):
     def magnifier_fc(self, event):
         self.start_flag = 0
         i_cur = 0
-        status_toggle = [self.magnifier,self.rotation,self.flip]
+        status_toggle = [self.magnifier, self.rotation, self.flip]
         if status_toggle[i_cur].Value:
             self.SetCursor(wx.Cursor(wx.CURSOR_CROSS))
             for i in range(len(status_toggle)):
-                if i!=i_cur and status_toggle[i].Value:
+                if i != i_cur and status_toggle[i].Value:
                     status_toggle[i].Value = False
             self.SetStatusText_(["Magnifier", "-1", "-1", "-1"])
         else:
@@ -593,11 +598,11 @@ class MulimgViewer (MulimgViewerGui):
 
     def rotation_fc(self, event):
         i_cur = 1
-        status_toggle = [self.magnifier,self.rotation,self.flip]
+        status_toggle = [self.magnifier, self.rotation, self.flip]
         if status_toggle[i_cur].Value:
             self.SetCursor(wx.Cursor(wx.CURSOR_POINT_RIGHT))
             for i in range(len(status_toggle)):
-                if i!=i_cur and status_toggle[i].Value:
+                if i != i_cur and status_toggle[i].Value:
                     status_toggle[i].Value = False
             self.SetStatusText_(["Rotate", "-1", "-1", "-1"])
         else:
@@ -606,11 +611,12 @@ class MulimgViewer (MulimgViewerGui):
 
     def flip_fc(self, event):
         i_cur = 2
-        status_toggle = [self.magnifier,self.rotation,self.flip]
+        status_toggle = [self.magnifier, self.rotation, self.flip]
         if status_toggle[i_cur].Value:
-            self.SetCursor(wx.Cursor((wx.Image(str(Path("img")/"flip_cursor.png"),wx.BITMAP_TYPE_PNG))))
+            self.SetCursor(
+                wx.Cursor((wx.Image(str(Path("img")/"flip_cursor.png"), wx.BITMAP_TYPE_PNG))))
             for i in range(len(status_toggle)):
-                if i!=i_cur and status_toggle[i].Value:
+                if i != i_cur and status_toggle[i].Value:
                     status_toggle[i].Value = False
             self.SetStatusText_(["Flip", "-1", "-1", "-1"])
         else:
@@ -623,10 +629,14 @@ class MulimgViewer (MulimgViewerGui):
             # setting
             self.ImgManager.layout_params = layout_params
             if self.ImgManager.type == 0 or self.ImgManager.type == 1:
-                if self.parallel_sequential.Value:
-                    self.ImgManager.set_count_per_action(layout_params[1])
+                if self.parallel_to_sequential.Value:
+                    self.ImgManager.set_count_per_action(
+                        layout_params[0]*layout_params[1]*layout_params[2])
                 else:
-                    self.ImgManager.set_count_per_action(1)
+                    if self.parallel_sequential.Value:
+                        self.ImgManager.set_count_per_action(layout_params[1])
+                    else:
+                        self.ImgManager.set_count_per_action(1)
             elif self.ImgManager.type == 2 or self.ImgManager.type == 3:
                 self.ImgManager.set_count_per_action(
                     layout_params[0]*layout_params[1]*layout_params[2])
@@ -689,10 +699,11 @@ class MulimgViewer (MulimgViewerGui):
             if title_setting[0]:
                 if self.ImgManager.type == 0 or self.ImgManager.type == 1:
                     # one_dir_mul_dir_auto / one_dir_mul_dir_manual
-                    if self.parallel_sequential.Value:
+                    if self.parallel_sequential.Value or self.parallel_to_sequential.Value:
                         title_setting[2:6] = [False, True, True, False]
                     else:
                         title_setting[2:6] = [False, True, False, False]
+                        
                 elif self.ImgManager.type == 2:
                     # one_dir_mul_img
                     title_setting[2:6] = [False, False, True, False]
@@ -724,15 +735,20 @@ class MulimgViewer (MulimgViewerGui):
                     self.show_original.Value,               # 16
                     title_setting,                          # 17
                     self.show_crop.Value,                   # 18
+                    self.parallel_to_sequential.Value,      # 19
                     self.checkBox_orientation.Value]
 
     def show_img(self):
         # check layout_params change
         try:
-            if self.layout_params_old[0:3] != self.ImgManager.layout_params[0:3]:
+            if self.layout_params_old[0:3] != self.ImgManager.layout_params[0:3] or (self.layout_params_old[19] != self.ImgManager.layout_params[19]):
                 action_count = self.ImgManager.action_count
+                if self.ImgManager.type == 0 or self.ImgManager.type == 1:
+                    parallel_to_sequential = self.parallel_to_sequential.Value
+                else:
+                    parallel_to_sequential = False
                 self.ImgManager.init(
-                    self.ImgManager.input_path, self.ImgManager.type)
+                    self.ImgManager.input_path, self.ImgManager.type, parallel_to_sequential)
                 self.show_img_init()
                 self.ImgManager.set_action_count(action_count)
                 self.index_table.show_id_table(
@@ -789,14 +805,14 @@ class MulimgViewer (MulimgViewerGui):
                         ["-1", str(self.ImgManager.action_count), str(self.ImgManager.img_resolution[0])+"x"+str(self.ImgManager.img_resolution[1])+" pixels / "+str(self.ImgManager.name_list[self.ImgManager.img_count])+"-"+str(self.ImgManager.name_list[self.ImgManager.img_num-1]), "-1"])
             else:
                 self.SetStatusText_(
-                    ["-1", str(self.ImgManager.action_count), str(self.ImgManager.img_resolution[0])+"x"+str(self.ImgManager.img_resolution[1])+" pixels / "+str(self.ImgManager.name_list[self.ImgManager.action_count]), "-1"])
+                    ["-1", str(self.ImgManager.action_count), str(self.ImgManager.img_resolution[0])+"x"+str(self.ImgManager.img_resolution[1])+" pixels / "+self.ImgManager.get_stitch_name(), "-1"])
 
             if flag == 1:
                 self.SetStatusText_(
                     ["-1", str(self.ImgManager.action_count), "***Error: "+str(self.ImgManager.name_list[self.ImgManager.action_count]) + ", during stitching images***", "-1"])
             if flag == 2:
                 self.SetStatusText_(
-                    ["-1", "-1","No image is displayed! Check Show orignal/Show 🔍️/Show title.", "-1"])
+                    ["-1", "-1", "No image is displayed! Check Show orignal/Show 🔍️/Show title.", "-1"])
         else:
             self.SetStatusText_(
                 ["-1", "-1", "***Error: no image in this dir! Maybe you can choose parallel mode!***", "-1"])
@@ -885,13 +901,18 @@ class MulimgViewer (MulimgViewerGui):
     def get_img_id_from_point(self, xy):
         # get img_id from grid points
         xy_grid = np.array(self.ImgManager.xy_grid)
-        xy_grid_x = xy_grid[:,0].reshape(2,2)
-        xy_grid_y = xy_grid[:,1].reshape(2,2)
+        num_per_img = int(self.num_per_img.GetLineText(0))
+        img_num_per_row = int(self.img_num_per_row.GetLineText(0))
+        img_num_per_column = int(self.img_num_per_column.GetLineText(0))
+        col = num_per_img*img_num_per_row
+        row = img_num_per_column
+        xy_grid_x = xy_grid[:, 0].reshape(row, col)
+        xy_grid_y = xy_grid[:, 1].reshape(row, col)
 
         xy_cur = np.array([xy])
         xy_cur = np.repeat(xy_cur, xy_grid.shape[0], axis=0)
-        xy_cur_x = xy_cur[:,0].reshape(2,2)
-        xy_cur_y = xy_cur[:,1].reshape(2,2)
+        xy_cur_x = xy_cur[:, 0].reshape(row, col)
+        xy_cur_y = xy_cur[:, 1].reshape(row, col)
 
         if self.checkBox_orientation.Value:
             xy_grid_x = xy_grid_x.T
@@ -911,8 +932,16 @@ class MulimgViewer (MulimgViewerGui):
                 id_list.append(-1)
         return max(id_list)
 
-    def title_down_up_func(self, event):
+    def title_down_up_fc(self, event):
         if self.title_down_up.Value:
             self.title_down_up.SetLabel('Up  ')
         else:
             self.title_down_up.SetLabel('Down')
+
+    def parallel_sequential_fc(self,event):
+        if self.parallel_sequential.Value:
+            self.parallel_to_sequential.Value=False
+
+    def parallel_to_sequential_fc( self, event ):
+        if self.parallel_to_sequential.Value:
+            self.parallel_sequential.Value=False

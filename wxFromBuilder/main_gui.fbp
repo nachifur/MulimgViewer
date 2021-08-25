@@ -3350,6 +3350,7 @@
                                                     <property name="window_extra_style"></property>
                                                     <property name="window_name"></property>
                                                     <property name="window_style"></property>
+                                                    <event name="OnCheckBox">parallel_sequential_fc</event>
                                                 </object>
                                             </object>
                                         </object>
@@ -3486,6 +3487,7 @@
                                                     <property name="window_extra_style"></property>
                                                     <property name="window_name"></property>
                                                     <property name="window_style"></property>
+                                                    <event name="OnCheckBox">parallel_to_sequential_fc</event>
                                                 </object>
                                             </object>
                                         </object>
@@ -4667,7 +4669,7 @@
                                                     <property name="window_extra_style"></property>
                                                     <property name="window_name"></property>
                                                     <property name="window_style"></property>
-                                                    <event name="OnCheckBox">title_down_up_func</event>
+                                                    <event name="OnCheckBox">title_down_up_fc</event>
                                                 </object>
                                             </object>
                                             <object class="sizeritem" expanded="0">

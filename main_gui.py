@@ -723,8 +723,10 @@ class MulimgViewerGui ( wx.Frame ):
 		self.rotation.Bind( wx.EVT_TOGGLEBUTTON, self.rotation_fc )
 		self.flip.Bind( wx.EVT_TOGGLEBUTTON, self.flip_fc )
 		self.choice_normalized_size.Bind( wx.EVT_CHOICE, self.change_img_stitch_mode )
+		self.parallel_sequential.Bind( wx.EVT_CHECKBOX, self.parallel_sequential_fc )
+		self.parallel_to_sequential.Bind( wx.EVT_CHECKBOX, self.parallel_to_sequential_fc )
 		self.select_img_box.Bind( wx.EVT_CHECKBOX, self.select_img_box_func )
-		self.title_down_up.Bind( wx.EVT_CHECKBOX, self.title_down_up_func )
+		self.title_down_up.Bind( wx.EVT_CHECKBOX, self.title_down_up_fc )
 		self.colourPicker_gap.Bind( wx.EVT_COLOURPICKER_CHANGED, self.colour_change )
 		self.background_slider.Bind( wx.EVT_SCROLL, self.background_alpha )
 		self.foreground_slider.Bind( wx.EVT_SCROLL, self.foreground_alpha )
@@ -791,10 +793,16 @@ class MulimgViewerGui ( wx.Frame ):
 	def change_img_stitch_mode( self, event ):
 		event.Skip()
 
+	def parallel_sequential_fc( self, event ):
+		event.Skip()
+
+	def parallel_to_sequential_fc( self, event ):
+		event.Skip()
+
 	def select_img_box_func( self, event ):
 		event.Skip()
 
-	def title_down_up_func( self, event ):
+	def title_down_up_fc( self, event ):
 		event.Skip()
 
 	def colour_change( self, event ):

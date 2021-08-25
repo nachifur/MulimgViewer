@@ -159,20 +159,20 @@ class ImgUtils():
                             (img_height-gap*(num_box-1))/num_box)
             else:
                 # auto magnifier scale
-                to_height= int((img_height-gap*(num_box-1))/num_box)
+                to_height = int((img_height-gap*(num_box-1))/num_box)
                 to_width = int(to_height/height*width)
                 if to_width > img_width:
                     to_width = img_width
-                    to_height = int(img_width/width*height) 
+                    to_height = int(img_width/width*height)
             height_all = (to_height*num_box +
-                            (num_box-1)*gap)
+                          (num_box-1)*gap)
             delta_y = int((img_height-height_all)/2)
 
-            magnifier_img_all_size = [to_width, img_height] 
+            magnifier_img_all_size = [to_width, img_height]
 
             if not show_original:
-                magnifier_img_all_size=[to_width,height_all]
-                delta_y=0
+                magnifier_img_all_size = [to_width, height_all]
+                delta_y = 0
         else:
             if not (magnifier_scale[0] == -1 or magnifier_scale[1] == -1):
                 # custom magnifier scale
@@ -198,16 +198,16 @@ class ImgUtils():
                 to_height = int(to_width/width*height)
                 if to_height > img_height:
                     to_height = img_height
-                    to_width = int(img_height/height*width) 
+                    to_width = int(img_height/height*width)
             width_all = (to_width*num_box +
-                            (num_box-1)*gap)
+                         (num_box-1)*gap)
             delta_x = int((img_width-width_all)/2)
 
-            magnifier_img_all_size = [img_width, to_height] 
+            magnifier_img_all_size = [img_width, to_height]
 
             if not show_original:
-                magnifier_img_all_size=[width_all,to_height]
-                delta_x=0
+                magnifier_img_all_size = [width_all, to_height]
+                delta_x = 0
 
         to_resize = [to_width, to_height]
         delta = [delta_x, delta_y]
@@ -409,7 +409,7 @@ class ImgUtils():
     def identity_transformation(self, img, id=0):
         return img
 
-    def cal_txt_size(self, title_list, standard_size, font, font_size,vertical):
+    def cal_txt_size(self, title_list, standard_size, font, font_size, vertical):
         im = Image.new('RGBA', (256, 256), 0)
         draw = ImageDraw.Draw(im)
         title_size = []
@@ -461,12 +461,19 @@ class ImgDatabase():
     """Multi-image database.  
     Multi-image browsing, path management, loading multi-image data, automatic layout layout, etc. """
 
-    def init(self, input_path, type, action_count=None, img_count=None):
+    def init(self, input_path, type, parallel_to_sequential=False, action_count=None, img_count=None):
         self.input_path = input_path
         self.type = type
+        self.parallel_to_sequential = parallel_to_sequential
 
         self.init_flist()
-        self.img_num = len(self.name_list)
+        if self.parallel_to_sequential:
+            list_ = []
+            for name_list in self.name_list:
+                list_ = list_+name_list.tolist()
+            self.img_num = len(list_)
+        else:
+            self.img_num = len(self.name_list)
         # self.set_count_per_action(1)
         if img_count:
             self.img_count = img_count
@@ -487,23 +494,21 @@ class ImgDatabase():
             if len(self.path_list) == 0:
                 self.path_list = [self.input_path]
             self.path_list = np.sort(self.path_list)
-            name_list = self.get_name_list()
-            self.name_list = np.sort(name_list)
+            self.name_list = self.get_name_list()
         elif self.type == 1:
             # one_dir_mul_dir_manual
             self.path_list = [path
                               for path in self.input_path if Path(path).is_dir()]
             if len(self.path_list) != 0:
-                name_list = self.get_name_list()
-                self.name_list = np.sort(name_list)
+                self.name_list = self.get_name_list()
             else:
                 self.name_list = []
         elif self.type == 2:
             # one_dir_mul_img
             self.path_list = [self.input_path]
             self.path_list = np.sort(self.path_list)
-            name_list = self.get_name_list()
-            self.name_list = np.sort(name_list)
+            self.name_list = self.get_name_list()
+
         elif self.type == 3:
             # read file list from a list file
             self.path_list = self.get_path_list_from_lf()
@@ -552,14 +557,30 @@ class ImgDatabase():
         return namelist
 
     def get_name_list(self):
-        no_check_list = [str(f.name)
-                         for f in Path(self.path_list[0]).iterdir()]
-        if len(no_check_list) > 100:
-            self.dataset_mode = True
-            return no_check_list
+        i = 0
+        output = []
+        for path_ in self.path_list:
+            no_check_list = [str(f.name)
+                             for f in Path(path_).iterdir()]
+            if len(no_check_list) > 100:
+                self.dataset_mode = True
+                no_check_list = np.sort(no_check_list)
+                output.append(no_check_list)
+            else:
+                self.dataset_mode = False
+                check_list = [str(f.name) for f in Path(path_).iterdir(
+                ) if f.is_file() and f.suffix.lower() in self.format_group]
+                check_list = np.sort(check_list)
+                output.append(check_list)
+            if not self.parallel_to_sequential:
+                if i == 0:
+                    break
+            i += 1
+
+        if self.parallel_to_sequential:
+            return output
         else:
-            self.dataset_mode = False
-            return [str(f.name) for f in Path(self.path_list[0]).iterdir() if f.is_file() and f.suffix.lower() in self.format_group]
+            return output[0]
 
     def add(self):
         if self.action_count < self.max_action_num-1:
@@ -587,10 +608,7 @@ class ImgDatabase():
         if self.csv_flag:
             return self.csv_row_col
         else:
-            if self.type == 2:
-                num_all = len(self.name_list)
-            else:
-                num_all = len(self.path_list)
+            num_all = self.img_num
 
             list_factor = solve_factor(num_all)
 
@@ -608,10 +626,10 @@ class ImgDatabase():
                 else:
                     row_col = [col, row]
 
-            if row_col[0] >= 100:
+            if row_col[0] >= 50:
                 row_col[0] = 50
 
-            if row_col[1] >= 100:
+            if row_col[1] >= 50:
                 row_col[1] = 50
 
             return row_col
@@ -620,23 +638,38 @@ class ImgDatabase():
 
         if self.type == 0 or self.type == 1:
             # one_dir_mul_dir_auto, one_dir_mul_dir_manual
-            flist = []
-            for i in range(len(self.path_list)):
-                for k in range(self.img_count, self.img_count+self.count_per_action):
-                    try:
-                        flist += [str(Path(self.path_list[i]) /
-                                      self.name_list[k])]
-                    except:
-                        flist += [str(Path(self.path_list[i]) /
-                                      self.name_list[-1])]
+            if self.parallel_to_sequential:
+                flist_all = []
+                for i in range(len(self.path_list)):
+                    flist_all = flist_all + \
+                        [str(Path(self.path_list[i])/self.name_list[i][k])
+                         for k in range(len(self.name_list[i]))]
+
+                try:
+                    flist = [flist_all[k] for k in range(
+                        self.img_count, self.img_count+self.count_per_action)]
+                except:
+                    flist = [flist_all[k]
+                             for k in range(self.img_count, self.img_num)]
+
+            else:
+                flist = []
+                for i in range(len(self.path_list)):
+                    for k in range(self.img_count, self.img_count+self.count_per_action):
+                        try:
+                            flist += [str(Path(self.path_list[i]) /
+                                          self.name_list[k])]
+                        except:
+                            flist += [str(Path(self.path_list[i]) /
+                                          self.name_list[-1])]
 
         elif self.type == 2:
             # one_dir_mul_img
             try:
-                flist = [str(Path(self.input_path)/self.name_list[i])
+                flist = [str(Path(self.path_list[0])/self.name_list[i])
                          for i in range(self.img_count, self.img_count+self.count_per_action)]
             except:
-                flist = [str(Path(self.input_path)/self.name_list[i])
+                flist = [str(Path(self.path_list[0])/self.name_list[i])
                          for i in range(self.img_count, self.img_num)]
         elif self.type == 3:
             # one file list
@@ -757,12 +790,13 @@ class ImgManager(ImgDatabase):
 
         # show magnifier img
         self.magnifier_flag = self.layout_params[7]
-        self.show_crop=self.layout_params[18]
+        self.show_crop = self.layout_params[18]
         if len(draw_points) == 0:
             self.show_crop = 0
         if self.show_crop:
             layout_level_2.append(1)
-            self.crop_points_process(copy.deepcopy(draw_points),img_mode=img_mode)
+            self.crop_points_process(copy.deepcopy(
+                draw_points), img_mode=img_mode)
             # get magnifier size
             crop_width = self.crop_points[0][2]-self.crop_points[0][0]
             crop_height = self.crop_points[0][3]-self.crop_points[0][1]
@@ -777,8 +811,8 @@ class ImgManager(ImgDatabase):
         # show title
         self.title_setting = self.layout_params[17]
         if self.title_setting[1]:
-            if len(width_2)!=0:
-                title_width_height = self.title_init(width_2,height_2)
+            if len(width_2) != 0:
+                title_width_height = self.title_init(width_2, height_2)
                 if self.title_setting[2]:
                     # up
                     width_2 = [title_width_height[0]]+width_2
@@ -796,10 +830,11 @@ class ImgManager(ImgDatabase):
                 layout_level_2.append(0)
         else:
             layout_level_2.append(0)
-        if sum(layout_level_2)!=0:
+        if sum(layout_level_2) != 0:
             # Since the title is up, we need to correct crop_points
             if self.magnifier_flag:
-                self.crop_points_process(copy.deepcopy(draw_points),img_mode=img_mode)
+                self.crop_points_process(copy.deepcopy(
+                    draw_points), img_mode=img_mode)
 
             # Two-dimensional arrangement
             # arrangement of sub-images, title image, original image, magnifier image
@@ -878,9 +913,10 @@ class ImgManager(ImgDatabase):
                 self.show_box = self.layout_params[14]
                 if self.show_original and self.show_box and len(draw_points) != 0:
                     crop_points = self.crop_points
-                    offset = [self.title_max_size[0]+self.layout_params[3][3],self.title_max_size[1]+self.layout_params[3][3]]
+                    offset = [self.title_max_size[0]+self.layout_params[3]
+                              [3], self.title_max_size[1]+self.layout_params[3][3]]
                     for crop_point in crop_points:
-                        up = crop_point[-1] # down(False) or up(True)
+                        up = crop_point[-1]  # down(False) or up(True)
                         if (up and self.title_setting[2] and self.title_setting[1]) or ((not up) and self.title_setting[2] and self.title_setting[1]):
                             if self.vertical:
                                 crop_point[0] = crop_point[0]+offset[0]
@@ -917,7 +953,7 @@ class ImgManager(ImgDatabase):
             img = img.transpose(Image.ROTATE_90)
         return img
 
-    def title_init(self,width_2,height_2):
+    def title_init(self, width_2, height_2):
         # self.title_setting = self.layout_params[17]
         # title_setting = [self.title_auto.Value,                     # 0
         #                     self.title_show.Value,                     # 1
@@ -936,7 +972,7 @@ class ImgManager(ImgDatabase):
             if path.is_file() and path.suffix.lower() in self.format_group:
                 title = ""
                 if self.title_setting[3]:
-                    title = title+path.parent.name
+                    title = title+path.parent.stem
                 if self.title_setting[4]:
                     if self.title_setting[3]:
                         title = title+"/"
@@ -958,7 +994,7 @@ class ImgManager(ImgDatabase):
         else:
             standard_size = width_2[0]
         self.title_size, self.title_list, self.title_max_size = self.ImgF.cal_txt_size(
-            title_list, standard_size, self.font, font_size,self.vertical)
+            title_list, standard_size, self.font, font_size, self.vertical)
 
         return self.title_max_size
 
@@ -1016,7 +1052,8 @@ class ImgManager(ImgDatabase):
             scale = [show_scale[0]/show_scale_old[0],
                      show_scale[1]/show_scale_old[1]]
 
-            offset = [self.title_max_size[0]+self.layout_params[3][3],self.title_max_size[1]+self.layout_params[3][3]]
+            offset = [self.title_max_size[0]+self.layout_params[3]
+                      [3], self.title_max_size[1]+self.layout_params[3][3]]
 
             if crop_point_scale[6]:
                 if self.vertical:
@@ -1029,7 +1066,7 @@ class ImgManager(ImgDatabase):
             crop_point[0] = int(crop_point[0]*scale[0])
             crop_point[1] = int(crop_point[1]*scale[1])
             crop_point[2] = int(crop_point[2]*scale[0])
-            crop_point[3] = int(crop_point[3]*scale[1])                
+            crop_point[3] = int(crop_point[3]*scale[1])
             crop_points_.append(crop_point+[crop_point_scale[6]])
 
         self.crop_points = crop_points_
@@ -1047,7 +1084,7 @@ class ImgManager(ImgDatabase):
 
         # get the size of magnifier img
         to_resize, delta, magnifier_img_all_size = self.ImgF.cal_magnifier_size(
-            magnifier_scale, list(img_list[0].size), img_mode, gap, self.img_resolution, len(self.crop_points),self.show_original, vertical=self.vertical)
+            magnifier_scale, list(img_list[0].size), img_mode, gap, self.img_resolution, len(self.crop_points), self.show_original, vertical=self.vertical)
 
         # resize images
         line_width = self.layout_params[10]
@@ -1177,7 +1214,7 @@ class ImgManager(ImgDatabase):
 
             if sum(self.check_2) != 0:
                 return 4
-                
+
             return 0
         else:
             return 1
@@ -1213,23 +1250,24 @@ class ImgManager(ImgDatabase):
                     else:
                         self.check.append(0)
         else:
-            for i in range(len(dir_name)):
-                if not (Path(self.out_path_str)/"select_images"/dir_name[i]).exists():
-                    os.makedirs(Path(self.out_path_str) /
-                                "select_images" / dir_name[i])
+            if not self.parallel_to_sequential:
+                for i in range(len(dir_name)):
+                    if not (Path(self.out_path_str)/"select_images"/dir_name[i]).exists():
+                        os.makedirs(Path(self.out_path_str) /
+                                    "select_images" / dir_name[i])
 
-                f_path = self.flist[i]
-                try:
-                    if self.layout_params[11]:
-                        move(f_path, Path(self.out_path_str) / "select_images" /
-                             dir_name[i] / self.name_list[self.action_count])
+                    f_path = self.flist[i]
+                    try:
+                        if self.layout_params[11]:
+                            move(f_path, Path(self.out_path_str) / "select_images" /
+                                dir_name[i] / self.name_list[self.action_count])
+                        else:
+                            copyfile(f_path, Path(self.out_path_str) / "select_images" /
+                                    dir_name[i] / self.name_list[self.action_count])
+                    except:
+                        self.check.append(1)
                     else:
-                        copyfile(f_path, Path(self.out_path_str) / "select_images" /
-                                 dir_name[i] / self.name_list[self.action_count])
-                except:
-                    self.check.append(1)
-                else:
-                    self.check.append(0)
+                        self.check.append(0)
 
         if self.layout_params[11]:
             self.init(self.input_path, self.type,
@@ -1248,9 +1286,9 @@ class ImgManager(ImgDatabase):
                 else:
                     str_ = str_+"_"+stem
             name_f = str_
+            name_f = str(Path(name_f).with_suffix(".png"))
         else:
-            name_f = self.name_list[self.action_count]
-        name_f = Path(name_f).with_suffix(".png")
+            name_f = self.get_stitch_name()
         f_path_output = Path(self.out_path_str) / dir_name / name_f
         if not (Path(self.out_path_str)/dir_name).is_dir():
             os.makedirs(Path(self.out_path_str) / dir_name)
@@ -1259,11 +1297,28 @@ class ImgManager(ImgDatabase):
                 1, copy.deepcopy(self.draw_points)))
         else:
             if self.show_box:
-                self.check_1.append(self.stitch_images(1, copy.deepcopy(self.draw_points)))
+                self.check_1.append(self.stitch_images(
+                    1, copy.deepcopy(self.draw_points)))
             else:
                 self.check_1.append(self.stitch_images(1))
 
         self.img.save(f_path_output)
+
+    def get_stitch_name(self):
+        name_f = ""
+        i = 0
+        for name in self.flist:
+            if self.type == 0 or self.type == 1:
+                cur_name = Path(name).parent.stem+"_"+Path(name).stem
+            else:
+                cur_name = Path(name).stem
+            if i < len(self.flist)-1:
+                name_f = name_f+cur_name+"-"
+            else:
+                name_f = name_f+cur_name
+            i+=1
+        name_f = Path(name_f).with_suffix(".png")
+        return str(name_f)
 
     def save_magnifier(self, dir_name):
         try:
@@ -1272,7 +1327,8 @@ class ImgManager(ImgDatabase):
             pass
         else:
             try:
-                self.crop_points_process(copy.deepcopy(self.draw_points), img_mode=1)
+                self.crop_points_process(
+                    copy.deepcopy(self.draw_points), img_mode=1)
                 if self.type == 3:
                     sub_dir_name = "from_file"
                     if not (Path(self.out_path_str)/dir_name).exists():
@@ -1292,7 +1348,7 @@ class ImgManager(ImgDatabase):
                             for stem in Path(f_path)._cparts:
                                 if i == 0:
                                     str_ = str(self.action_count *
-                                            self.count_per_action+i_)+"_"+stem
+                                               self.count_per_action+i_)+"_"+stem
                                 else:
                                     if i == len(Path(f_path)._cparts)-1:
                                         img_name = stem
@@ -1330,6 +1386,7 @@ class ImgManager(ImgDatabase):
                 self.check_2.append(1)
             else:
                 self.check_2.append(0)
+
     def save_origin_img_magnifier(self):
         # save origin image
         sub_dir_name = "origin_img_with_box"

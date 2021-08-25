@@ -355,6 +355,7 @@ class ImgUtils():
                                            Row['level_1'], Col['level_1']]], img_list, vertical)
 
         xy_grids_output = []
+        xy_grids_id_list = []
         # level_0
         for iy_0 in range(Row['level_0']):
             for ix_0 in range(Col['level_0']):
@@ -379,6 +380,7 @@ class ImgUtils():
 
                                 xy_grids_output.append(
                                     [x_offset_0+x_offset_1, y_offset_0+y_offset_1])
+                                xy_grids_id_list.append(img_list[iy_0, ix_0, iy_1, ix_1][1])
                             else:
                                 im = None
 
@@ -404,7 +406,7 @@ class ImgUtils():
                                             img.paste(im_, (x, y))
                                     i += 1
 
-        return img, xy_grids_output
+        return img, xy_grids_output,xy_grids_id_list
 
     def identity_transformation(self, img, id=0):
         return img
@@ -907,7 +909,7 @@ class ImgManager(ImgDatabase):
             # stitch img
             try:
                 # Two-dimensional arrangement
-                self.img, self.xy_grid = self.ImgF.layout_2d(
+                self.img, self.xy_grid,self.xy_grids_id_list = self.ImgF.layout_2d(
                     layout_list, self.gap_color, copy.deepcopy(self.img_list), self.img_preprocessing, img_preprocessing_sub, self.vertical)
 
                 self.show_box = self.layout_params[14]

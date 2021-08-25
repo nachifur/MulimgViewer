@@ -465,7 +465,8 @@ class MulimgViewer (MulimgViewerGui):
         # rotation
         if self.rotation.Value:
             x, y = event.GetPosition()
-            self.ImgManager.rotate(self.get_img_id_from_point([x, y]))
+            self.ImgManager.rotate(
+                self.get_img_id_from_point([x, y], img=True))
             self.refresh(event)
 
             self.SetStatusText_(["Rotate", "-1", "-1", "-1"])
@@ -474,7 +475,7 @@ class MulimgViewer (MulimgViewerGui):
         if self.flip.Value:
             x, y = event.GetPosition()
             self.ImgManager.flip(self.get_img_id_from_point(
-                [x, y]), FLIP_TOP_BOTTOM=self.checkBox_orientation.Value)
+                [x, y], img=True), FLIP_TOP_BOTTOM=self.checkBox_orientation.Value)
             self.refresh(event)
 
             self.SetStatusText_(["Flip", "-1", "-1", "-1"])
@@ -705,7 +706,7 @@ class MulimgViewer (MulimgViewerGui):
                         title_setting[2:6] = [False, True, True, False]
                     else:
                         title_setting[2:6] = [False, True, False, False]
-                        
+
                 elif self.ImgManager.type == 2:
                     # one_dir_mul_img
                     title_setting[2:6] = [False, False, True, False]
@@ -900,39 +901,22 @@ class MulimgViewer (MulimgViewerGui):
     def change_img_stitch_mode(self, event):
         self.ImgManager.img_stitch_mode = self.choice_normalized_size.GetSelection()
 
-    def get_img_id_from_point(self, xy):
+    def get_img_id_from_point(self, xy, img=False):
         # get img_id from grid points
         xy_grid = np.array(self.ImgManager.xy_grid)
-        num_per_img = int(self.num_per_img.GetLineText(0))
-        img_num_per_row = int(self.img_num_per_row.GetLineText(0))
-        img_num_per_column = int(self.img_num_per_column.GetLineText(0))
-        col = num_per_img*img_num_per_row
-        row = img_num_per_column
-        xy_grid_x = xy_grid[:, 0].reshape(row, col)
-        xy_grid_y = xy_grid[:, 1].reshape(row, col)
-
         xy_cur = np.array([xy])
         xy_cur = np.repeat(xy_cur, xy_grid.shape[0], axis=0)
-        xy_cur_x = xy_cur[:, 0].reshape(row, col)
-        xy_cur_y = xy_cur[:, 1].reshape(row, col)
-
-        if self.checkBox_orientation.Value:
-            xy_grid_x = xy_grid_x.T
-            xy_grid_y = xy_grid_y.T
-
-        res_x = xy_cur_x - xy_grid_x
-        res_y = xy_cur_y - xy_grid_y
-
-        res_x = res_x.reshape(-1)
-        res_y = res_y.reshape(-1)
-
+        res_ = xy_cur - xy_grid
         id_list = []
         for i in range(xy_grid.shape[0]):
-            if res_x[i] >= 0 and res_y[i] >= 0:
+            if res_[i][0] >= 0 and res_[i][1] >= 0:
                 id_list.append(i)
             else:
-                id_list.append(-1)
-        return max(id_list)
+                id_list.append(0)
+        if img:
+            return self.ImgManager.xy_grids_id_list[max(id_list)]
+        else:
+            return max(id_list)
 
     def title_down_up_fc(self, event):
         if self.title_down_up.Value:
@@ -940,10 +924,10 @@ class MulimgViewer (MulimgViewerGui):
         else:
             self.title_down_up.SetLabel('Down')
 
-    def parallel_sequential_fc(self,event):
+    def parallel_sequential_fc(self, event):
         if self.parallel_sequential.Value:
-            self.parallel_to_sequential.Value=False
+            self.parallel_to_sequential.Value = False
 
-    def parallel_to_sequential_fc( self, event ):
+    def parallel_to_sequential_fc(self, event):
         if self.parallel_to_sequential.Value:
-            self.parallel_sequential.Value=False
+            self.parallel_sequential.Value = False

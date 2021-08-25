@@ -94,6 +94,11 @@ class MulimgViewerGui ( wx.Frame ):
 
 		wSizer1.Add( self.rotation, 0, wx.ALL|wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
+		self.flip = wx.ToggleButton( self.m_panel1, wx.ID_ANY, u"⏃", wx.DefaultPosition, wx.Size( 50,30 ), 0 )
+		self.flip.SetFont( wx.Font( 20, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL, False, wx.EmptyString ) )
+
+		wSizer1.Add( self.flip, 0, wx.ALL, 5 )
+
 
 		self.m_panel1.SetSizer( wSizer1 )
 		self.m_panel1.Layout()
@@ -315,6 +320,19 @@ class MulimgViewerGui ( wx.Frame ):
 
 
 		fgSizer3.Add( bSizer21, 1, wx.EXPAND, 5 )
+
+		bSizer29 = wx.BoxSizer( wx.HORIZONTAL )
+
+		self.m_staticText37 = wx.StaticText( self.scrolledWindow_set, wx.ID_ANY, u"Parallel->Sequential", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText37.Wrap( -1 )
+
+		bSizer29.Add( self.m_staticText37, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+
+		self.parallel_to_sequential = wx.CheckBox( self.scrolledWindow_set, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
+		bSizer29.Add( self.parallel_to_sequential, 0, wx.ALL, 5 )
+
+
+		fgSizer3.Add( bSizer29, 1, wx.EXPAND, 5 )
 
 		bSizer25 = wx.BoxSizer( wx.HORIZONTAL )
 
@@ -703,6 +721,7 @@ class MulimgViewerGui ( wx.Frame ):
 		self.slider_img.Bind( wx.EVT_SCROLL, self.skip_to_n_img )
 		self.magnifier.Bind( wx.EVT_TOGGLEBUTTON, self.magnifier_fc )
 		self.rotation.Bind( wx.EVT_TOGGLEBUTTON, self.rotation_fc )
+		self.flip.Bind( wx.EVT_TOGGLEBUTTON, self.flip_fc )
 		self.choice_normalized_size.Bind( wx.EVT_CHOICE, self.change_img_stitch_mode )
 		self.select_img_box.Bind( wx.EVT_CHECKBOX, self.select_img_box_func )
 		self.title_down_up.Bind( wx.EVT_CHECKBOX, self.title_down_up_func )
@@ -764,6 +783,9 @@ class MulimgViewerGui ( wx.Frame ):
 		event.Skip()
 
 	def rotation_fc( self, event ):
+		event.Skip()
+
+	def flip_fc( self, event ):
 		event.Skip()
 
 	def change_img_stitch_mode( self, event ):

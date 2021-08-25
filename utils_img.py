@@ -799,7 +799,7 @@ class ImgManager(ImgDatabase):
         if sum(layout_level_2)!=0:
             # Since the title is up, we need to correct crop_points
             if self.magnifier_flag:
-                self.crop_points_process(copy.deepcopy(draw_points),title_up = self.title_setting[2],img_mode=img_mode)
+                self.crop_points_process(copy.deepcopy(draw_points),img_mode=img_mode)
 
             # Two-dimensional arrangement
             # arrangement of sub-images, title image, original image, magnifier image
@@ -984,7 +984,7 @@ class ImgManager(ImgDatabase):
 
         return img
 
-    def crop_points_process(self, crop_points,title_up=False, img_mode=0):
+    def crop_points_process(self, crop_points, img_mode=0):
         """img_mode, 0: show, 1: save"""
         crop_points_ = []
         for crop_point_scale in crop_points:
@@ -1272,7 +1272,7 @@ class ImgManager(ImgDatabase):
             pass
         else:
             try:
-                self.crop_points_process(copy.deepcopy(self.draw_points),title_up=self.title_setting[2], img_mode=1)
+                self.crop_points_process(copy.deepcopy(self.draw_points), img_mode=1)
                 if self.type == 3:
                     sub_dir_name = "from_file"
                     if not (Path(self.out_path_str)/dir_name).exists():
@@ -1355,4 +1355,13 @@ class ImgManager(ImgDatabase):
     def rotate(self, id):
         img = Image.open(self.flist[id]).convert(
             'RGB').transpose(Image.ROTATE_270)
+        img.save(self.flist[id])
+
+    def flip(self, id, FLIP_TOP_BOTTOM=False):
+        if FLIP_TOP_BOTTOM:
+            img = Image.open(self.flist[id]).convert(
+                'RGB').transpose(Image.FLIP_TOP_BOTTOM)
+        else:
+            img = Image.open(self.flist[id]).convert(
+                'RGB').transpose(Image.FLIP_LEFT_RIGHT)
         img.save(self.flist[id])

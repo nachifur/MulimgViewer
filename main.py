@@ -466,6 +466,14 @@ class MulimgViewer (MulimgViewerGui):
 
             self.SetStatusText_(["Rotate", "-1", "-1", "-1"])
 
+        # flip
+        if self.flip.Value:
+            x, y = event.GetPosition()
+            self.ImgManager.flip(self.get_img_id_from_point([x, y]),FLIP_TOP_BOTTOM = self.checkBox_orientation.Value)
+            self.refresh(event)
+
+            self.SetStatusText_(["Flip", "-1", "-1", "-1"])
+
     def img_left_dclick(self, event):
         if self.select_img_box.Value:
             pass
@@ -571,21 +579,40 @@ class MulimgViewer (MulimgViewerGui):
 
     def magnifier_fc(self, event):
         self.start_flag = 0
-        if self.magnifier.Value != False:
+        i_cur = 0
+        status_toggle = [self.magnifier,self.rotation,self.flip]
+        if status_toggle[i_cur].Value:
             self.SetCursor(wx.Cursor(wx.CURSOR_CROSS))
-            if self.rotation.Value != False:
-                self.rotation.Value = False
+            for i in range(len(status_toggle)):
+                if i!=i_cur and status_toggle[i].Value:
+                    status_toggle[i].Value = False
             self.SetStatusText_(["Magnifier", "-1", "-1", "-1"])
         else:
             self.SetCursor(wx.Cursor(wx.CURSOR_ARROW))
         self.Refresh()
 
     def rotation_fc(self, event):
-        if self.rotation.Value != False:
+        i_cur = 1
+        status_toggle = [self.magnifier,self.rotation,self.flip]
+        if status_toggle[i_cur].Value:
             self.SetCursor(wx.Cursor(wx.CURSOR_POINT_RIGHT))
-            if self.magnifier.Value != False:
-                self.magnifier.Value = False
+            for i in range(len(status_toggle)):
+                if i!=i_cur and status_toggle[i].Value:
+                    status_toggle[i].Value = False
             self.SetStatusText_(["Rotate", "-1", "-1", "-1"])
+        else:
+            self.SetCursor(wx.Cursor(wx.CURSOR_ARROW))
+        self.Refresh()
+
+    def flip_fc(self, event):
+        i_cur = 2
+        status_toggle = [self.magnifier,self.rotation,self.flip]
+        if status_toggle[i_cur].Value:
+            self.SetCursor(wx.Cursor((wx.Image(str(Path("img")/"flip_cursor.png"),wx.BITMAP_TYPE_PNG))))
+            for i in range(len(status_toggle)):
+                if i!=i_cur and status_toggle[i].Value:
+                    status_toggle[i].Value = False
+            self.SetStatusText_(["Flip", "-1", "-1", "-1"])
         else:
             self.SetCursor(wx.Cursor(wx.CURSOR_ARROW))
         self.Refresh()

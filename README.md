@@ -315,7 +315,7 @@ Resize: 图像尺寸为一组图像中的平均尺寸，缩放模式(不保持�
 - [x] 多框放大功能（@JuZiSYJ提供改进意见）
 - [x] 去除放大图像的box（@stefanklut提供改进意见）
 - [x] 高清图像的对比，放大图像1:1输出（@Faberman提供改进意见）
-- [ ] 为图像添加titile（@Faberman提供改进意见）
+- [X] 为图像添加titile（@Faberman提供改进意见）
 
 ## 8. 致谢
 * nothingeasy:改进意见-(输入方式，新增：路径文件的导入和存储)

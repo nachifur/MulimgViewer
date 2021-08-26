@@ -275,6 +275,7 @@ Resize: 图像尺寸为一组图像中的平均尺寸，缩放模式(不保持�
 **精确定位：**
 
 <img width="100" height="50" src="https://github.com/nachifur/MulimgViewer/blob/master/img/f13.jpg"/>
+
 1. `Help`->`Index table`
 2. 查看图片显示序号
 3. 输入序号，回车

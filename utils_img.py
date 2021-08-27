@@ -1307,20 +1307,19 @@ class ImgManager(ImgDatabase):
         self.img.save(f_path_output)
 
     def get_stitch_name(self):
-        name_f = ""
-        i = 0
-        for name in self.flist:
-            if self.type == 0 or self.type == 1:
-                cur_name = Path(name).parent.stem+"_"+Path(name).stem
-            else:
-                cur_name = Path(name).stem
-            if i < len(self.flist)-1:
-                name_f = name_f+cur_name+"-"
-            else:
-                name_f = name_f+cur_name
-            i+=1
-        name_f = Path(name_f).with_suffix(".png")
-        return str(name_f)
+        name_first = self.flist[0]
+        name_end = self.flist[-1]
+        if self.type == 0 or self.type == 1:
+            name_first = Path(name_first).parent.stem+"_"+Path(name_first).stem
+        else:
+            name_first = Path(name_first).stem
+        if self.type == 0 or self.type == 1:
+            name_end = Path(name_end).parent.stem+"_"+Path(name_end).stem
+        else:
+            name_end = Path(name_end).stem
+        name = name_first + "-" + name_end
+        name = Path(name).with_suffix(".png")
+        return str(name)
 
     def save_magnifier(self, dir_name):
         try:

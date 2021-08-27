@@ -172,7 +172,7 @@ class MulimgViewer (MulimgViewerGui):
             self.refresh(event)
             if flag == 0:
                 self.SetStatusText_(
-                    ["Save", str(self.ImgManager.action_count), "Save success for "+str(self.ImgManager.name_list[self.ImgManager.action_count])+"!", "-1"])
+                    ["Save", str(self.ImgManager.action_count), "Save success!", "-1"])
             elif flag == 1:
                 self.SetStatusText_(
                     ["-1", "-1", "***Error: First, need to select the output dir***", "-1"])

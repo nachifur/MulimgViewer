@@ -188,13 +188,13 @@ class MulimgViewer (MulimgViewerGui):
         self.SetStatusText_(["Save", "-1", "-1", "-1"])
 
     def refresh(self, event):
-        self.SetStatusText_(["Refresh", "-1", "-1", "-1"])
         if self.ImgManager.img_num != 0:
             self.show_img_init()
             self.show_img()
         else:
             self.SetStatusText_(
                 ["-1", "", "***Error: First, need to select the input dir***", "-1"])
+        self.SetStatusText_(["Refresh", "-1", "-1", "-1"])
 
     def one_dir_mul_dir_auto(self, event):
         self.SetStatusText_(["Input", "", "", "-1"])
@@ -555,9 +555,13 @@ class MulimgViewer (MulimgViewerGui):
             except:
                 self.SetStatusText_(
                     ["-1",  "Drawing a box need click left mouse button!", "-1", "-1"])
-        self.refresh(event)
 
-        self.SetStatusText_(["Magnifier", "-1", "-1", "-1"])
+            self.refresh(event)
+            self.SetStatusText_(["Magnifier", "-1", "-1", "-1"])
+        else:
+            self.refresh(event)
+
+        
 
     def move_box_point(self, x, y, show_scale):
         x_0, y_0, x_1, y_1 = self.xy_magnifier[0][0:4]

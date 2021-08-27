@@ -42,7 +42,7 @@ v3.9.1以后仅提供`Windows 10`的包（`amd64`）。其他环境可以使用�
 
 pip安装：
 ```bash
-pip install wxpython pillow pytest-shutil
+pip install wxpython pillow pytest-shutil numpy
 ```
 运行：
 ```python
@@ -275,6 +275,7 @@ Resize: 图像尺寸为一组图像中的平均尺寸，缩放模式(不保持�
 **精确定位：**
 
 <img width="100" height="50" src="https://github.com/nachifur/MulimgViewer/blob/master/img/f13.jpg"/>
+
 1. `Help`->`Index table`
 2. 查看图片显示序号
 3. 输入序号，回车
@@ -314,7 +315,7 @@ Resize: 图像尺寸为一组图像中的平均尺寸，缩放模式(不保持�
 - [x] 多框放大功能（@JuZiSYJ提供改进意见）
 - [x] 去除放大图像的box（@stefanklut提供改进意见）
 - [x] 高清图像的对比，放大图像1:1输出（@Faberman提供改进意见）
-- [ ] 为图像添加titile（@Faberman提供改进意见）
+- [X] 为图像添加titile（@Faberman提供改进意见）
 
 ## 8. 致谢
 * nothingeasy:改进意见-(输入方式，新增：路径文件的导入和存储)

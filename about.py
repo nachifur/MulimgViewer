@@ -21,7 +21,7 @@ class About (AboutGui):
         self.about_txt.BeginBold()
         self.about_txt.WriteText("Version: ")
         self.about_txt.EndBold()
-        self.about_txt.WriteText("3.9.4\n")
+        self.about_txt.WriteText("3.9.5\n")
 
         self.about_txt.BeginBold()
         self.about_txt.WriteText("Platform: ")

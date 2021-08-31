@@ -967,11 +967,12 @@ class ImgManager(ImgDatabase):
         #                     self.title_show.Value,                     # 1
         #                     self.title_down_up.Value,                  # 2
         #                     self.title_show_parent.Value,              # 3
-        #                     self.title_show_name.Value,                # 4
-        #                     self.title_show_suffix.Value,              # 5
-        #                     self.title_font.GetSelection(),            # 6
-        #                     self.title_font_size.Value,                # 7
-        #                     self.font_paths]                           # 8
+        #                     self.title_show_prefix.Value,              # 4
+        #                     self.title_show_name.Value,                # 5
+        #                     self.title_show_suffix.Value,              # 6
+        #                     self.title_font.GetSelection(),            # 7
+        #                     self.title_font_size.Value,                # 8
+        #                     self.font_paths]                           # 9
 
         # get title
         title_list = []
@@ -981,11 +982,14 @@ class ImgManager(ImgDatabase):
                 title = ""
                 if self.title_setting[3]:
                     title = title+path.parent.stem
-                if self.title_setting[4]:
+                if self.title_setting[5]:
                     if self.title_setting[3]:
                         title = title+"/"
-                    title = title+path.stem
-                if self.title_setting[5]:
+                    name = path.stem
+                    if not self.title_setting[4]:
+                        name = name.split("_", 1)[1]
+                    title = title+name
+                if self.title_setting[6]:
                     title = title+path.suffix
                 title_list.append(title)
         # get title color
@@ -994,9 +998,9 @@ class ImgManager(ImgDatabase):
         text_color = ['%d' % i + "," for i in text_color]
         self.text_color = rgb2hex(("".join(text_color))[0:-1])
         # calculate title size
-        font_size = int(self.title_setting[7])
+        font_size = int(self.title_setting[8])
         self.font = ImageFont.truetype(
-            self.title_setting[8][self.title_setting[6]], font_size)
+            self.title_setting[9][self.title_setting[7]], font_size)
         if self.vertical:
             standard_size = height_2[0]
         else:

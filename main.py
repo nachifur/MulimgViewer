@@ -561,8 +561,6 @@ class MulimgViewer (MulimgViewerGui):
         else:
             self.refresh(event)
 
-        
-
     def move_box_point(self, x, y, show_scale):
         x_0, y_0, x_1, y_1 = self.xy_magnifier[0][0:4]
         show_scale_old = self.xy_magnifier[0][4:6]
@@ -699,26 +697,27 @@ class MulimgViewer (MulimgViewerGui):
                              self.title_show.Value,                     # 1
                              self.title_down_up.Value,                  # 2
                              self.title_show_parent.Value,              # 3
-                             self.title_show_name.Value,                # 4
-                             self.title_show_suffix.Value,              # 5
-                             self.title_font.GetSelection(),            # 6
-                             self.title_font_size.Value,                # 7
-                             self.font_paths]                           # 8
+                             self.title_show_prefix.Value,              # 4
+                             self.title_show_name.Value,                # 5
+                             self.title_show_suffix.Value,              # 6
+                             self.title_font.GetSelection(),            # 7
+                             self.title_font_size.Value,                # 8
+                             self.font_paths]                           # 9
 
             if title_setting[0]:
                 if self.ImgManager.type == 0 or self.ImgManager.type == 1:
                     # one_dir_mul_dir_auto / one_dir_mul_dir_manual
                     if self.parallel_sequential.Value or self.parallel_to_sequential.Value:
-                        title_setting[2:6] = [False, True, True, False]
+                        title_setting[2:7] = [False, True, True, True, False]
                     else:
-                        title_setting[2:6] = [False, True, False, False]
+                        title_setting[2:7] = [False, True, True, False, False]
 
                 elif self.ImgManager.type == 2:
                     # one_dir_mul_img
-                    title_setting[2:6] = [False, False, True, False]
+                    title_setting[2:7] = [False, False, True, True, False]
                 elif self.ImgManager.type == 3:
                     # read file list from a list file
-                    title_setting[2:6] = [False, True, True, False]
+                    title_setting[2:7] = [False, True, True, True, False]
 
         except:
             self.SetStatusText_(
@@ -937,3 +936,12 @@ class MulimgViewer (MulimgViewerGui):
     def parallel_to_sequential_fc(self, event):
         if self.parallel_to_sequential.Value:
             self.parallel_sequential.Value = False
+
+    def title_auto_fc(self, event):
+        titles = [self.title_down_up,self.title_show_parent,self.title_show_name,self.title_show_suffix,self.title_show_prefix]
+        if self.title_auto.Value:
+            for title in titles:
+                title.Enabled=False
+        else:
+            for title in titles:
+                title.Enabled=True

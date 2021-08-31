@@ -435,16 +435,30 @@ class MulimgViewerGui ( wx.Frame ):
 		wSizer2.Add( self.title_show, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
 		self.title_down_up = wx.CheckBox( self.scrolledWindow_set, wx.ID_ANY, u"Down", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.title_down_up.Enable( False )
+
 		wSizer2.Add( self.title_down_up, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
 		self.title_show_parent = wx.CheckBox( self.scrolledWindow_set, wx.ID_ANY, u"Parent", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.title_show_parent.Enable( False )
+
 		wSizer2.Add( self.title_show_parent, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+
+		self.title_show_prefix = wx.CheckBox( self.scrolledWindow_set, wx.ID_ANY, u"Prefix", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.title_show_prefix.SetValue(True)
+		self.title_show_prefix.Enable( False )
+
+		wSizer2.Add( self.title_show_prefix, 0, wx.ALL, 5 )
 
 		self.title_show_name = wx.CheckBox( self.scrolledWindow_set, wx.ID_ANY, u"Name", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.title_show_name.SetValue(True)
+		self.title_show_name.Enable( False )
+
 		wSizer2.Add( self.title_show_name, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
 		self.title_show_suffix = wx.CheckBox( self.scrolledWindow_set, wx.ID_ANY, u"Suffix", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.title_show_suffix.Enable( False )
+
 		wSizer2.Add( self.title_show_suffix, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
 		self.m_staticline12 = wx.StaticLine( self.scrolledWindow_set, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_VERTICAL )
@@ -726,6 +740,7 @@ class MulimgViewerGui ( wx.Frame ):
 		self.parallel_sequential.Bind( wx.EVT_CHECKBOX, self.parallel_sequential_fc )
 		self.parallel_to_sequential.Bind( wx.EVT_CHECKBOX, self.parallel_to_sequential_fc )
 		self.select_img_box.Bind( wx.EVT_CHECKBOX, self.select_img_box_func )
+		self.title_auto.Bind( wx.EVT_CHECKBOX, self.title_auto_fc )
 		self.title_down_up.Bind( wx.EVT_CHECKBOX, self.title_down_up_fc )
 		self.colourPicker_gap.Bind( wx.EVT_COLOURPICKER_CHANGED, self.colour_change )
 		self.background_slider.Bind( wx.EVT_SCROLL, self.background_alpha )
@@ -800,6 +815,9 @@ class MulimgViewerGui ( wx.Frame ):
 		event.Skip()
 
 	def select_img_box_func( self, event ):
+		event.Skip()
+
+	def title_auto_fc( self, event ):
 		event.Skip()
 
 	def title_down_up_fc( self, event ):

@@ -987,7 +987,10 @@ class ImgManager(ImgDatabase):
                         title = title+"/"
                     name = path.stem
                     if not self.title_setting[4]:
-                        name = name.split("_", 1)[1]
+                        try:
+                            name = name.split("_", 1)[1]
+                        except:
+                            pass
                     title = title+name
                 if self.title_setting[6]:
                     title = title+path.suffix

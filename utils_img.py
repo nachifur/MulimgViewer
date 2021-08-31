@@ -610,7 +610,13 @@ class ImgDatabase():
         if self.csv_flag:
             return self.csv_row_col
         else:
-            num_all = self.img_num
+            if self.type == 0 or self.type == 1:
+                if self.parallel_to_sequential:
+                    num_all = len(self.name_list[0])
+                else:
+                    num_all = len(self.path_list)
+            else:
+                num_all = self.img_num
 
             list_factor = solve_factor(num_all)
 

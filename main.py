@@ -1,5 +1,5 @@
 import wx
-from wx.core import App
+from wx.core import App, Width
 from main_gui import MulimgViewerGui
 import numpy as np
 from about import About
@@ -842,16 +842,20 @@ class MulimgViewer (MulimgViewerGui):
         self.displaySize[0] = self.displaySize[0]-50
         self.displaySize[1] = self.displaySize[1]-50
 
+        # Different platforms may need to adjust the width of the scrolledWindow_set
+        width_setting = 300 
+        offset_width_img_show = 20
+
         if self.auto_layout_check.Value and (not frame_resize):
             if self.img_size[0] < self.width:
-                if self.img_size[0]+320 < self.width:
+                if self.img_size[0]+width_setting+offset_width_img_show < self.width:
                     w = self.width
                 else:
-                    w = self.img_size[0]+320
-            elif self.img_size[0]+320 > self.displaySize[0]:
+                    w = self.img_size[0]+width_setting+offset_width_img_show
+            elif self.img_size[0]+width_setting+offset_width_img_show > self.displaySize[0]:
                 w = self.displaySize[0]
             else:
-                w = self.img_size[0]+320
+                w = self.img_size[0]+width_setting+offset_width_img_show
 
             if self.img_size[1] < self.height:
                 if self.img_size[1]+200 < self.height:
@@ -865,9 +869,9 @@ class MulimgViewer (MulimgViewerGui):
             self.Size = wx.Size((w, h))
 
         self.scrolledWindow_set.SetMinSize(
-            wx.Size((300, -1)))
+            wx.Size((width_setting, -1)))
         self.scrolledWindow_img.SetMinSize(
-            wx.Size((self.Size[0]-300, self.Size[1]-150)))
+            wx.Size((self.Size[0]-width_setting, self.Size[1]-150)))
 
         self.Layout()
         self.Refresh()

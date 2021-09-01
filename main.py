@@ -8,6 +8,7 @@ from index_table import IndexTable
 from pathlib import Path
 import copy
 from utils import get_resource_path
+import platform
 
 
 class MulimgViewer (MulimgViewerGui):
@@ -843,7 +844,16 @@ class MulimgViewer (MulimgViewerGui):
         self.displaySize[1] = self.displaySize[1]-50
 
         # Different platforms may need to adjust the width of the scrolledWindow_set
-        width_setting = 300 
+        sys_platform = platform.system()
+        if sys_platform.find("Windows")>=0:
+            width_setting = 300 
+        elif sys_platform.find("Linux")>=0:
+            width_setting = 280
+        elif sys_platform.find("Darwin")>=0:
+            width_setting = 350 
+        else:
+            width_setting = 300 
+
         offset_width_img_show = 20
 
         if self.auto_layout_check.Value and (not frame_resize):

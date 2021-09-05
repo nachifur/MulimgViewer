@@ -139,7 +139,11 @@ class ImgUtils():
             num_box = 1
 
         if vertical:
-            if not (magnifier_scale[0] == -1 or magnifier_scale[1] == -1):
+            if magnifier_scale[0] != -1 or magnifier_scale[1] != -1:
+                if magnifier_scale[0] == -1:
+                    magnifier_scale[0] = magnifier_scale[1]
+                if magnifier_scale[1] == -1:
+                    magnifier_scale[1] = magnifier_scale[0]
                 # custom magnifier scale
                 to_height = int(height*magnifier_scale[1])
                 to_width = int(width*magnifier_scale[0])
@@ -174,7 +178,11 @@ class ImgUtils():
                 magnifier_img_all_size = [to_width, height_all]
                 delta_y = 0
         else:
-            if not (magnifier_scale[0] == -1 or magnifier_scale[1] == -1):
+            if magnifier_scale[0] != -1 or magnifier_scale[1] != -1:
+                if magnifier_scale[0] == -1:
+                    magnifier_scale[0] = magnifier_scale[1]
+                if magnifier_scale[1] == -1:
+                    magnifier_scale[1] = magnifier_scale[0]
                 # custom magnifier scale
                 to_height = int(height*magnifier_scale[1])
                 to_width = int(width*magnifier_scale[0])
@@ -747,7 +755,12 @@ class ImgManager(ImgDatabase):
                 height = np.mean(height_)
 
         if self.layout_params[6][0] == -1 or self.layout_params[6][1] == -1:
-            self.img_resolution_origin = [int(width), int(height)]
+            if self.layout_params[6][0] == -1 and self.layout_params[6][1] == -1:
+                self.img_resolution_origin = [int(width), int(height)]
+            elif self.layout_params[6][0] == -1 and self.layout_params[6][1] != -1:
+                self.img_resolution_origin = [int(width*self.layout_params[6][1]/height), int(self.layout_params[6][1])]
+            elif self.layout_params[6][0] != -1 and self.layout_params[6][1] == -1:
+                self.img_resolution_origin = [int(self.layout_params[6][0]), int(height*self.layout_params[6][0]/width)]
             self.custom_resolution = False
         else:
             self.img_resolution_origin = [int(i)

@@ -14,7 +14,10 @@
 </p>
 
 # MulimgViewer
-[**English page (Thanks @Faberman for the translation and polishing.)**](https://github.com/nachifur/MulimgViewer/wiki)
+[**English readme (Thanks @Faberman for the translation and polishing.)**](https://github.com/nachifur/MulimgViewer/wiki)
+
+[**国内Trustie镜像项目（欢迎大家star、fork、issue，我们将大力支持国内开源社区发展！)**](https://forgeplus.trustie.net/nachifur/MulimgViewer)
+
 ## 1. 介绍
 
 MulimgViewer**多图像浏览器**，在一个界面显示多个图像，方便图像的比较、筛选。 

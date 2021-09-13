@@ -19,6 +19,7 @@
 [**国内gitee镜像项目**](https://gitee.com/nachifur/MulimgViewer)
 
 <!-- https://github.com/nachifur/MulimgViewer/blob/->https://gitee.com/nachifur/MulimgViewer/raw/ -->
+<!-- https://github.com/nachifur/MulimgViewer/releases->https://gitee.com/nachifur/MulimgViewer/releases -->
 
 ## 1. 介绍
 

@@ -16,6 +16,10 @@
 # MulimgViewer
 [**English readme (Thanks @Faberman for the translation and polishing.)**](https://github.com/nachifur/MulimgViewer/wiki)
 
+[**国内gitee镜像项目**](https://gitee.com/nachifur/MulimgViewer)
+
+<!-- https://github.com/nachifur/MulimgViewer/blob/->https://gitee.com/nachifur/MulimgViewer/raw/ -->
+
 ## 1. 介绍
 
 MulimgViewer**多图像浏览器**，在一个界面显示多个图像，方便图像的比较、筛选。 

@@ -26,4 +26,4 @@ jobs:
           conda install pylint wxpython pillow pytest-shutil numpy
       - name: Analysing the code with pylint
         run: |
-          pylint `ls -R|grep .py$|xargs`
+          pylint `ls -L|grep .py$|xargs`

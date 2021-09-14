@@ -388,7 +388,8 @@ class ImgUtils():
 
                                 xy_grids_output.append(
                                     [x_offset_0+x_offset_1, y_offset_0+y_offset_1])
-                                xy_grids_id_list.append(img_list[iy_0, ix_0, iy_1, ix_1][1])
+                                xy_grids_id_list.append(
+                                    img_list[iy_0, ix_0, iy_1, ix_1][1])
                             else:
                                 im = None
 
@@ -414,7 +415,7 @@ class ImgUtils():
                                             img.paste(im_, (x, y))
                                     i += 1
 
-        return img, xy_grids_output,xy_grids_id_list
+        return img, xy_grids_output, xy_grids_id_list
 
     def identity_transformation(self, img, id=0):
         return img
@@ -758,9 +759,11 @@ class ImgManager(ImgDatabase):
             if self.layout_params[6][0] == -1 and self.layout_params[6][1] == -1:
                 self.img_resolution_origin = [int(width), int(height)]
             elif self.layout_params[6][0] == -1 and self.layout_params[6][1] != -1:
-                self.img_resolution_origin = [int(width*self.layout_params[6][1]/height), int(self.layout_params[6][1])]
+                self.img_resolution_origin = [
+                    int(width*self.layout_params[6][1]/height), int(self.layout_params[6][1])]
             elif self.layout_params[6][0] != -1 and self.layout_params[6][1] == -1:
-                self.img_resolution_origin = [int(self.layout_params[6][0]), int(height*self.layout_params[6][0]/width)]
+                self.img_resolution_origin = [int(self.layout_params[6][0]), int(
+                    height*self.layout_params[6][0]/width)]
             self.custom_resolution = False
         else:
             self.img_resolution_origin = [int(i)
@@ -928,7 +931,7 @@ class ImgManager(ImgDatabase):
             # stitch img
             try:
                 # Two-dimensional arrangement
-                self.img, self.xy_grid,self.xy_grids_id_list = self.ImgF.layout_2d(
+                self.img, self.xy_grid, self.xy_grids_id_list = self.ImgF.layout_2d(
                     layout_list, self.gap_color, copy.deepcopy(self.img_list), self.img_preprocessing, img_preprocessing_sub, self.vertical)
 
                 self.show_box = self.layout_params[14]
@@ -1288,10 +1291,10 @@ class ImgManager(ImgDatabase):
                     try:
                         if self.layout_params[11]:
                             move(f_path, Path(self.out_path_str) / "select_images" /
-                                dir_name[i] / self.name_list[self.action_count])
+                                 dir_name[i] / self.name_list[self.action_count])
                         else:
                             copyfile(f_path, Path(self.out_path_str) / "select_images" /
-                                    dir_name[i] / self.name_list[self.action_count])
+                                     dir_name[i] / self.name_list[self.action_count])
                     except:
                         self.check.append(1)
                     else:

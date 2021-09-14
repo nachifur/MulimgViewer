@@ -2,6 +2,7 @@ import wx
 from path_select_gui import PathSelectFrameGui
 from utils import get_resource_path
 
+
 class PathSelectFrame (PathSelectFrameGui):
 
     def __init__(self, parent, UpdateUI, get_type, title="Parallel manual choose input directory"):
@@ -11,11 +12,13 @@ class PathSelectFrame (PathSelectFrameGui):
         self.UpdateUI = UpdateUI
         self.get_type = get_type
         self.Bind(wx.EVT_CLOSE, self.close)
-        self.icon = wx.Icon(get_resource_path('mulimgviewer.ico'), wx.BITMAP_TYPE_ICO)
+        self.icon = wx.Icon(get_resource_path(
+            'mulimgviewer.ico'), wx.BITMAP_TYPE_ICO)
         self.SetIcon(self.icon)
 
     def frame_resize(self, event):
-        self.m_richText1.SetMinSize(wx.Size((self.Size.Width, self.Size.Height)))
+        self.m_richText1.SetMinSize(
+            wx.Size((self.Size.Width, self.Size.Height)))
         self.Layout()
         self.Refresh()
 

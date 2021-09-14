@@ -845,14 +845,14 @@ class MulimgViewer (MulimgViewerGui):
 
         # Different platforms may need to adjust the width of the scrolledWindow_set
         sys_platform = platform.system()
-        if sys_platform.find("Windows")>=0:
-            width_setting = 300 
-        elif sys_platform.find("Linux")>=0:
+        if sys_platform.find("Windows") >= 0:
+            width_setting = 300
+        elif sys_platform.find("Linux") >= 0:
             width_setting = 280
-        elif sys_platform.find("Darwin")>=0:
-            width_setting = 350 
+        elif sys_platform.find("Darwin") >= 0:
+            width_setting = 350
         else:
-            width_setting = 300 
+            width_setting = 300
 
         offset_width_img_show = 20
 
@@ -952,10 +952,11 @@ class MulimgViewer (MulimgViewerGui):
             self.parallel_sequential.Value = False
 
     def title_auto_fc(self, event):
-        titles = [self.title_down_up,self.title_show_parent,self.title_show_name,self.title_show_suffix,self.title_show_prefix]
+        titles = [self.title_down_up, self.title_show_parent,
+                  self.title_show_name, self.title_show_suffix, self.title_show_prefix]
         if self.title_auto.Value:
             for title in titles:
-                title.Enabled=False
+                title.Enabled = False
         else:
             for title in titles:
-                title.Enabled=True
+                title.Enabled = True

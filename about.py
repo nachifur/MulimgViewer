@@ -2,6 +2,7 @@ import wx
 from about_gui import AboutGui
 from utils import get_resource_path
 
+
 class About (AboutGui):
     def __init__(self, parent):
         super().__init__(parent)
@@ -46,5 +47,6 @@ class About (AboutGui):
 
         self.about_txt.EndFontSize()
 
-        self.icon = wx.Icon(get_resource_path('mulimgviewer.ico'), wx.BITMAP_TYPE_ICO)
+        self.icon = wx.Icon(get_resource_path(
+            'mulimgviewer.ico'), wx.BITMAP_TYPE_ICO)
         self.SetIcon(self.icon)

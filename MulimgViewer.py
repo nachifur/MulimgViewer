@@ -50,7 +50,7 @@ class MainAPP(wx.App):
             if len(input_path) != 0:
                 # refresh one_dir_mul_dir_manual path
                 self.frame[0].ImgManager.init(
-                    input_path, 1,parallel_to_sequential)
+                    input_path, 1, parallel_to_sequential)
                 self.frame[1].refresh_txt(input_path)
 
                 self.frame[0].show_img_init()

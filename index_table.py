@@ -3,16 +3,17 @@ import wx
 import numpy as np
 from pathlib import Path
 
+
 class IndexTable (IndexTableGui):
-    def __init__(self, parent, flist, layout_params,dataset_mode,out_path_str,type,parallel_sequential):
+    def __init__(self, parent, flist, layout_params, dataset_mode, out_path_str, type, parallel_sequential):
         super().__init__(parent)
         self.index_table.SetEditable(False)
         self.index_table.BeginFontSize(12)
-        self.dataset_mode=dataset_mode
+        self.dataset_mode = dataset_mode
         self.out_path_str = out_path_str
-        self.parallel_sequential=parallel_sequential
+        self.parallel_sequential = parallel_sequential
 
-        self.show_id_table(flist, layout_params,type)
+        self.show_id_table(flist, layout_params, type)
         if self.dataset_mode:
             self.Show(False)
         else:
@@ -22,14 +23,14 @@ class IndexTable (IndexTableGui):
         # if self.index_table.Size>self.Size, the self.index_table display incomplete
         self.index_table.SetSize(wx.Size(self.Size[0], self.Size[1]-100))
 
-    def show_id_table(self, flist, layout_params,type):
+    def show_id_table(self, flist, layout_params, type):
         self.id_list = []
         self.flist = flist
         self.index_table.Clear()
         img_num_per_row = layout_params[0]
         num_per_img = layout_params[1]
         img_num_per_column = layout_params[2]
-        if type == 2 or type ==3:
+        if type == 2 or type == 3:
             if num_per_img == -1:
                 interval = img_num_per_row*img_num_per_column
             else:
@@ -44,28 +45,30 @@ class IndexTable (IndexTableGui):
         self.index_table.WriteText("Image index   /   Show index\n")
         self.index_table.EndBold()
 
-        show_list=""
+        show_list = ""
         for i in range(len_flist):
-            show_list+=str(i)+" : "
-            show_list+=flist[i]
+            show_list += str(i)+" : "
+            show_list += flist[i]
 
             if interval*i < len_flist:
                 if interval*(i+1)-1 < len_flist:
-                    show_list+="   /   "
-                    show_list+=str(i*interval)+"/"+str(interval*(i+1)-1)+" : "
-                    show_list+=flist[interval*i]+"-"+flist[interval*(i+1)-1]+"\n"
+                    show_list += "   /   "
+                    show_list += str(i*interval)+"/" + \
+                        str(interval*(i+1)-1)+" : "
+                    show_list += flist[interval*i] + \
+                        "-"+flist[interval*(i+1)-1]+"\n"
                 else:
-                    show_list+="   /   "
-                    show_list+=str(i*interval)+"/"+str(len_flist-1)+" : "
-                    show_list+=flist[interval*i]+"-"+flist[-1]+"\n"
+                    show_list += "   /   "
+                    show_list += str(i*interval)+"/"+str(len_flist-1)+" : "
+                    show_list += flist[interval*i]+"-"+flist[-1]+"\n"
             else:
-                show_list+="\n"
+                show_list += "\n"
 
         if self.dataset_mode:
-            np.savetxt(str(Path(self.out_path_str)/"index_table.txt"), [show_list], fmt='%s')
+            np.savetxt(str(Path(self.out_path_str) /
+                       "index_table.txt"), [show_list], fmt='%s')
         else:
             self.index_table.WriteText(show_list)
-        
 
     def search_txt(self, event):
         self.id_list = []

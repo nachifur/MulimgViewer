@@ -9,8 +9,7 @@ from pathlib import Path
 import csv
 import copy
 
-from wx.core import Height, NO
-from utils import solve_factor, change_order, rgb2hex
+from utils import solve_factor, rgb2hex
 
 
 class ImgUtils():

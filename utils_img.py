@@ -1300,8 +1300,12 @@ class ImgManager(ImgDatabase):
                         self.check.append(0)
 
         if self.layout_params[11]:
+            if self.action_count==0:
+                action_count = 0
+            else:
+                action_count = self.action_count-1
             self.init(self.input_path, self.type,
-                      self.action_count, self.img_count)
+                      action_count=action_count, img_count=self.img_count-1)
             self.get_flist()
 
     def save_stitch(self, dir_name):

@@ -52,6 +52,7 @@ class MulimgViewer (MulimgViewerGui):
         self.color_list = []
         self.box_id = -1
         self.xy_magnifier = []
+        self.show_scale_proportion = 0
         self.icon = wx.Icon(get_resource_path(
             'mulimgviewer.ico'), wx.BITMAP_TYPE_ICO)
         self.SetIcon(self.icon)
@@ -588,8 +589,25 @@ class MulimgViewer (MulimgViewerGui):
         else:
             return [x_center_old, y_center_old]
 
+    def img_wheel(self, event):
+        # https://wxpython.org/Phoenix/docs/html/wx.MouseEvent.html
+        i_cur = 0
+        status_toggle = [self.magnifier, self.rotation, self.flip]
+        if status_toggle[i_cur].Value:
+            if event.GetWheelDelta()>=120:
+                if event.GetWheelRotation()>0:
+                    self.show_scale_proportion = self.show_scale_proportion+0.1
+                else:
+                    self.show_scale_proportion = self.show_scale_proportion-0.1
+                self.refresh(event)
+            else:
+                pass
+        else:
+            pass
+
     def magnifier_fc(self, event):
         self.start_flag = 0
+        self.show_scale_proportion=0
         i_cur = 0
         status_toggle = [self.magnifier, self.rotation, self.flip]
         if status_toggle[i_cur].Value:
@@ -667,6 +685,13 @@ class MulimgViewer (MulimgViewerGui):
 
             show_scale = self.show_scale.GetLineText(0).split(',')
             show_scale = [float(x) for x in show_scale]
+            if self.show_scale_proportion>0:
+                show_scale = [show_scale[0]*(1+self.show_scale_proportion),show_scale[1]*(1+self.show_scale_proportion)]
+            elif self.show_scale_proportion<0:
+                show_scale = [show_scale[0]/(1-self.show_scale_proportion),show_scale[1]/(1-self.show_scale_proportion)]
+            else:
+                pass
+
 
             output_scale = self.output_scale.GetLineText(0).split(',')
             output_scale = [float(x) for x in output_scale]
@@ -803,6 +828,8 @@ class MulimgViewer (MulimgViewerGui):
                     wx.EVT_LEFT_UP, self.img_left_release)
                 self.img_panel.Children[0].Bind(
                     wx.EVT_RIGHT_DOWN, self.img_right_click)
+                self.img_panel.Children[0].Bind(
+                    wx.EVT_MOUSEWHEEL, self.img_wheel)
 
             # status
             if self.ImgManager.type == 2 or ((self.ImgManager.type == 0 or self.ImgManager.type == 1) and self.parallel_sequential.Value):

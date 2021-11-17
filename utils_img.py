@@ -702,6 +702,9 @@ class ImgDatabase():
         self.flist = flist
         return flist
 
+    def get_dir_num(self):
+        num = (self.path_list).shape
+        return num[0]
 
 class ImgManager(ImgDatabase):
     """Multi-image manager.  

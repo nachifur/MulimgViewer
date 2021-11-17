@@ -482,6 +482,13 @@ class MulimgViewer (MulimgViewerGui):
             self.refresh(event)
 
             self.SetStatusText_(["Flip", "-1", "-1", "-1"])
+        
+        # show dir_id
+        x, y = event.GetPosition()
+        id = self.get_img_id_from_point([x, y])
+        second_txt = self.m_statusBar1.GetStatusText(1)
+        second_txt = second_txt.split("/")[0]
+        self.m_statusBar1.SetStatusText(second_txt+"/"+str(id)+"-th dir", 1)
 
     def img_left_dclick(self, event):
         if self.select_img_box.Value:
@@ -853,17 +860,17 @@ class MulimgViewer (MulimgViewerGui):
             if self.ImgManager.type == 2 or ((self.ImgManager.type == 0 or self.ImgManager.type == 1) and self.parallel_sequential.Value):
                 try:
                     self.SetStatusText_(
-                        ["-1", str(self.ImgManager.action_count), str(self.ImgManager.img_resolution[0])+"x"+str(self.ImgManager.img_resolution[1])+" pixels / "+str(self.ImgManager.name_list[self.ImgManager.img_count])+"-"+str(self.ImgManager.name_list[self.ImgManager.img_count+self.ImgManager.count_per_action-1]), "-1"])
+                        ["-1", str(self.ImgManager.action_count)+"/"+str(self.ImgManager.get_dir_num())+" dir", str(self.ImgManager.img_resolution[0])+"x"+str(self.ImgManager.img_resolution[1])+" pixels / "+str(self.ImgManager.name_list[self.ImgManager.img_count])+"-"+str(self.ImgManager.name_list[self.ImgManager.img_count+self.ImgManager.count_per_action-1]), "-1"])
                 except:
                     self.SetStatusText_(
-                        ["-1", str(self.ImgManager.action_count), str(self.ImgManager.img_resolution[0])+"x"+str(self.ImgManager.img_resolution[1])+" pixels / "+str(self.ImgManager.name_list[self.ImgManager.img_count])+"-"+str(self.ImgManager.name_list[self.ImgManager.img_num-1]), "-1"])
+                        ["-1", str(self.ImgManager.action_count)+"/"+str(self.ImgManager.get_dir_num())+" dir", str(self.ImgManager.img_resolution[0])+"x"+str(self.ImgManager.img_resolution[1])+" pixels / "+str(self.ImgManager.name_list[self.ImgManager.img_count])+"-"+str(self.ImgManager.name_list[self.ImgManager.img_num-1]), "-1"])
             else:
                 self.SetStatusText_(
-                    ["-1", str(self.ImgManager.action_count), str(self.ImgManager.img_resolution[0])+"x"+str(self.ImgManager.img_resolution[1])+" pixels / "+self.ImgManager.get_stitch_name(), "-1"])
+                    ["-1", str(self.ImgManager.action_count)+"/"+str(self.ImgManager.get_dir_num())+" dir", str(self.ImgManager.img_resolution[0])+"x"+str(self.ImgManager.img_resolution[1])+" pixels / "+self.ImgManager.get_stitch_name(), "-1"])
 
             if flag == 1:
                 self.SetStatusText_(
-                    ["-1", str(self.ImgManager.action_count), "***Error: "+str(self.ImgManager.name_list[self.ImgManager.action_count]) + ", during stitching images***", "-1"])
+                    ["-1", str(self.ImgManager.action_count)+"/"+str(self.ImgManager.get_dir_num())+" dir", "***Error: "+str(self.ImgManager.name_list[self.ImgManager.action_count]) + ", during stitching images***", "-1"])
             if flag == 2:
                 self.SetStatusText_(
                     ["-1", "-1", "No image is displayed! Check Show orignal/Show 🔍️/Show title.", "-1"])

@@ -462,7 +462,8 @@ class MulimgViewer (MulimgViewerGui):
             else:
                 self.start_flag = 0
 
-            self.SetStatusText_(["Magnifier", "-1", "-1", "-1"])
+            if self.magnifier.Value:
+                self.SetStatusText_(["Magnifier", "-1", "-1", "-1"])
 
         # rotation
         if self.rotation.Value:
@@ -520,7 +521,8 @@ class MulimgViewer (MulimgViewerGui):
         xy_grid = self.ImgManager.xy_grid[id]
         x = x-xy_grid[0]
         y = y-xy_grid[1]
-        self.m_statusBar1.SetStatusText(str(x)+","+str(y), 0)
+        RGBA = self.ImgManager.img.getpixel((int(x),int(y)))
+        self.m_statusBar1.SetStatusText(str(x)+","+str(y)+"/"+str(RGBA), 0)
 
     def img_left_release(self, event):
         if self.magnifier.Value != False:

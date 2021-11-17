@@ -545,23 +545,31 @@ class MulimgViewer (MulimgViewerGui):
         xy_grid = self.ImgManager.xy_grid[id]
         x = x-xy_grid[0]
         y = y-xy_grid[1]
-        # magnifier
-        if self.magnifier.Value:
-            self.color_list.append(self.colourPicker_draw.GetColour())
-            try:
-                show_scale = self.show_scale.GetLineText(0).split(',')
-                show_scale = [float(x) for x in show_scale]
-                points = self.move_box_point(x, y, show_scale)
-                self.xy_magnifier.append(
-                    points+show_scale+[self.title_down_up.Value and self.title_show.Value])
-            except:
-                self.SetStatusText_(
-                    ["-1",  "Drawing a box need click left mouse button!", "-1", "-1"])
-
-            self.refresh(event)
-            self.SetStatusText_(["Magnifier", "-1", "-1", "-1"])
+        if self.select_img_box.Value:
+            # move box
+            if self.box_id != -1:
+                show_scale = self.xy_magnifier[self.box_id][4:6]
+                self.xy_magnifier[self.box_id][0:4] = self.move_box_point(
+                    x, y, show_scale)
+                self.refresh(event)
         else:
-            self.refresh(event)
+            # new box
+            if self.magnifier.Value:
+                self.color_list.append(self.colourPicker_draw.GetColour())
+                try:
+                    show_scale = self.show_scale.GetLineText(0).split(',')
+                    show_scale = [float(x) for x in show_scale]
+                    points = self.move_box_point(x, y, show_scale)
+                    self.xy_magnifier.append(
+                        points+show_scale+[self.title_down_up.Value and self.title_show.Value])
+                except:
+                    self.SetStatusText_(
+                        ["-1",  "Drawing a box need click left mouse button!", "-1", "-1"])
+
+                self.refresh(event)
+                self.SetStatusText_(["Magnifier", "-1", "-1", "-1"])
+            else:
+                self.refresh(event)
 
     def move_box_point(self, x, y, show_scale):
         x_0, y_0, x_1, y_1 = self.xy_magnifier[0][0:4]

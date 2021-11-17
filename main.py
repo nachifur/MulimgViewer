@@ -513,6 +513,14 @@ class MulimgViewer (MulimgViewerGui):
                 elif y > xy_limit[1]:
                     self.x = x
                     self.y = xy_limit[1]
+        
+        # show mouse position
+        x, y = event.GetPosition()
+        id = self.get_img_id_from_point([x, y])
+        xy_grid = self.ImgManager.xy_grid[id]
+        x = x-xy_grid[0]
+        y = y-xy_grid[1]
+        self.m_statusBar1.SetStatusText(str(x)+","+str(y), 0)
 
     def img_left_release(self, event):
         if self.magnifier.Value != False:

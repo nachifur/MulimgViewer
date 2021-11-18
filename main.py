@@ -553,7 +553,7 @@ class MulimgViewer (MulimgViewerGui):
                 points = self.ImgManager.ImgF.sort_box_point(
                     [x_0, y_0, x, y], show_scale, self.ImgManager.img_resolution_origin, first_point=True)
                 self.xy_magnifier.append(
-                    points+show_scale+[self.title_down_up.Value and self.title_show.Value])
+                    points+show_scale+[self.ImgManager.title_setting[2] and self.ImgManager.title_setting[1]])
                 self.refresh(event)
 
     def img_right_click(self, event):
@@ -578,7 +578,7 @@ class MulimgViewer (MulimgViewerGui):
                     show_scale = [float(x) for x in show_scale]
                     points = self.move_box_point(x, y, show_scale)
                     self.xy_magnifier.append(
-                        points+show_scale+[self.title_down_up.Value and self.title_show.Value])
+                        points+show_scale+[self.ImgManager.title_setting[2] and self.ImgManager.title_setting[1]])
                 except:
                     self.SetStatusText_(
                         ["-1",  "Drawing a box need click left mouse button!", "-1", "-1"])

@@ -624,7 +624,19 @@ class MulimgViewer (MulimgViewerGui):
                     self.show_scale_proportion = self.show_scale_proportion+0.1
                 else:
                     self.show_scale_proportion = self.show_scale_proportion-0.1
+
+
+                if self.show_scale_proportion>0:
+                    show_scale = [1*(1+self.show_scale_proportion),1*(1+self.show_scale_proportion)]
+                elif self.show_scale_proportion<0:
+                    show_scale = [1/(1-self.show_scale_proportion),1/(1-self.show_scale_proportion)]
+                else:
+                    show_scale=[1,1]
+
+                self.show_scale.Value=str(round(show_scale[0],2))+","+str(round(show_scale[1],2))
+
                 self.refresh(event)
+
             else:
                 pass
         else:
@@ -632,7 +644,7 @@ class MulimgViewer (MulimgViewerGui):
 
     def magnifier_fc(self, event):
         self.start_flag = 0
-        self.show_scale_proportion=0
+        self.show_scale.Value="1,1"
         i_cur = 0
         status_toggle = [self.magnifier, self.rotation, self.flip]
         if status_toggle[i_cur].Value:
@@ -710,13 +722,6 @@ class MulimgViewer (MulimgViewerGui):
 
             show_scale = self.show_scale.GetLineText(0).split(',')
             show_scale = [float(x) for x in show_scale]
-            if self.show_scale_proportion>0:
-                show_scale = [show_scale[0]*(1+self.show_scale_proportion),show_scale[1]*(1+self.show_scale_proportion)]
-            elif self.show_scale_proportion<0:
-                show_scale = [show_scale[0]/(1-self.show_scale_proportion),show_scale[1]/(1-self.show_scale_proportion)]
-            else:
-                pass
-
 
             output_scale = self.output_scale.GetLineText(0).split(',')
             output_scale = [float(x) for x in output_scale]

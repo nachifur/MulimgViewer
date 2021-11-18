@@ -383,7 +383,7 @@ class ImgUtils():
                             # img preprocessing
                             if img_list[iy_0, ix_0, iy_1, ix_1] != []:
                                 im = img_list[iy_0, ix_0, iy_1, ix_1][0]
-                                im = img_preprocessing(im)
+                                im = img_preprocessing(im,id=iy_1*Col['level_1']+ix_1)
 
                                 xy_grids_output.append(
                                     [x_offset_0+x_offset_1, y_offset_0+y_offset_1])
@@ -806,11 +806,15 @@ class ImgManager(ImgDatabase):
 
         # show original img
         self.show_original = self.layout_params[16]
+        self.one_img = self.layout_params[20]
+        num_per_img = self.layout_params[1] if self.one_img else 1
+        self.to_size = [int(self.img_resolution[0]/num_per_img),self.img_resolution[1]]
         if self.show_original:
             layout_level_2.append(1)
             img_preprocessing_sub.append(self.ImgF.identity_transformation)
-            width_2.append(self.img_resolution[0])
-            height_2.append(self.img_resolution[1])
+
+            width_2.append(self.to_size[0])
+            height_2.append(self.to_size[1])
         else:
             layout_level_2.append(0)
 
@@ -827,7 +831,7 @@ class ImgManager(ImgDatabase):
             crop_width = self.crop_points[0][2]-self.crop_points[0][0]
             crop_height = self.crop_points[0][3]-self.crop_points[0][1]
             _, _, magnifier_img_all_size = self.ImgF.cal_magnifier_size(
-                self.layout_params[8], [crop_width, crop_height], 0, self.layout_params[3][4], self.img_resolution, len(self.crop_points), self.show_original, vertical=self.vertical)
+                self.layout_params[8], [crop_width, crop_height], 0, self.layout_params[3][4], self.to_size, len(self.crop_points), self.show_original, vertical=self.vertical)
             img_preprocessing_sub.append(self.magnifier_preprocessing)
             width_2.append(magnifier_img_all_size[0])
             height_2.append(magnifier_img_all_size[1])
@@ -1031,7 +1035,7 @@ class ImgManager(ImgDatabase):
 
         return self.title_max_size
 
-    def img_preprocessing(self, img):
+    def img_preprocessing(self, img, id=None):
         if self.custom_resolution:
             # custom image resolution
             width, height = self.img_resolution
@@ -1050,6 +1054,13 @@ class ImgManager(ImgDatabase):
                 width, height = self.img_resolution
                 img = img.resize((width, height), Image.BICUBIC)
         img = self.ImgF.add_alpha(img, self.img_alpha)
+
+        # n img -> one img, split width
+        if id!=None and self.one_img:
+            sub_img_width = int(width/self.layout_params[1])
+            img = np.array(img)
+            img = img[:,id*sub_img_width:(id+1)*sub_img_width,:]
+            img = Image.fromarray(np.uint8(img))
 
         return img
 
@@ -1117,7 +1128,7 @@ class ImgManager(ImgDatabase):
 
         # get the size of magnifier img
         to_resize, delta, magnifier_img_all_size = self.ImgF.cal_magnifier_size(
-            magnifier_scale, list(img_list[0].size), img_mode, gap, self.img_resolution, len(self.crop_points), self.show_original, vertical=self.vertical)
+            magnifier_scale, list(img_list[0].size), img_mode, gap, self.to_size, len(self.crop_points), self.show_original, vertical=self.vertical)
 
         # resize images
         line_width = self.layout_params[10]

@@ -1457,7 +1457,7 @@ class ImgManager(ImgDatabase):
             i += 1
 
     def get_img_id(self,i):
-        if i!=None:
+        if i!=None and self.one_img:
             row = self.layout_params[0]
             numperimg = self.layout_params[1]
             col = self.layout_params[2]

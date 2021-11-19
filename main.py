@@ -482,7 +482,7 @@ class MulimgViewer (MulimgViewerGui):
             self.refresh(event)
 
             self.SetStatusText_(["Flip", "-1", "-1", "-1"])
-        
+
         # show dir_id
         x, y = event.GetPosition()
         id = self.get_img_id_from_point([x, y])
@@ -521,14 +521,14 @@ class MulimgViewer (MulimgViewerGui):
                 elif y > xy_limit[1]:
                     self.x = x
                     self.y = xy_limit[1]
-        
+
         # show mouse position
         x, y = event.GetPosition()
         id = self.get_img_id_from_point([x, y])
         xy_grid = self.ImgManager.xy_grid[id]
         x = x-xy_grid[0]
         y = y-xy_grid[1]
-        RGBA = self.ImgManager.img.getpixel((int(x),int(y)))
+        RGBA = self.ImgManager.img.getpixel((int(x), int(y)))
         self.m_statusBar1.SetStatusText(str(x)+","+str(y)+"/"+str(RGBA), 0)
 
     def img_left_release(self, event):
@@ -619,12 +619,26 @@ class MulimgViewer (MulimgViewerGui):
         i_cur = 0
         status_toggle = [self.magnifier, self.rotation, self.flip]
         if status_toggle[i_cur].Value:
-            if event.GetWheelDelta()>=120:
-                if event.GetWheelRotation()>0:
+            if event.GetWheelDelta() >= 120:
+                if event.GetWheelRotation() > 0:
                     self.show_scale_proportion = self.show_scale_proportion+0.1
                 else:
                     self.show_scale_proportion = self.show_scale_proportion-0.1
+
+                if self.show_scale_proportion > 0:
+                    show_scale = [1*(1+self.show_scale_proportion),
+                                  1*(1+self.show_scale_proportion)]
+                elif self.show_scale_proportion < 0:
+                    show_scale = [1/(1-self.show_scale_proportion),
+                                  1/(1-self.show_scale_proportion)]
+                else:
+                    show_scale = [1, 1]
+
+                self.show_scale.Value = str(
+                    round(show_scale[0], 2))+","+str(round(show_scale[1], 2))
+
                 self.refresh(event)
+
             else:
                 pass
         else:
@@ -632,7 +646,8 @@ class MulimgViewer (MulimgViewerGui):
 
     def magnifier_fc(self, event):
         self.start_flag = 0
-        self.show_scale_proportion=0
+        self.show_scale.Value = "1,1"
+        self.show_scale_proportion = 0
         i_cur = 0
         status_toggle = [self.magnifier, self.rotation, self.flip]
         if status_toggle[i_cur].Value:
@@ -710,13 +725,6 @@ class MulimgViewer (MulimgViewerGui):
 
             show_scale = self.show_scale.GetLineText(0).split(',')
             show_scale = [float(x) for x in show_scale]
-            if self.show_scale_proportion>0:
-                show_scale = [show_scale[0]*(1+self.show_scale_proportion),show_scale[1]*(1+self.show_scale_proportion)]
-            elif self.show_scale_proportion<0:
-                show_scale = [show_scale[0]/(1-self.show_scale_proportion),show_scale[1]/(1-self.show_scale_proportion)]
-            else:
-                pass
-
 
             output_scale = self.output_scale.GetLineText(0).split(',')
             output_scale = [float(x) for x in output_scale]
@@ -795,6 +803,7 @@ class MulimgViewer (MulimgViewerGui):
                     title_setting,                          # 17
                     self.show_crop.Value,                   # 18
                     self.parallel_to_sequential.Value,      # 19
+                    self.one_img.Value,                     # 20
                     self.checkBox_orientation.Value]
 
     def show_img(self):

@@ -1405,7 +1405,7 @@ class ImgManager(ImgDatabase):
 
                             img = self.img_list[i_]
                             img_list = self.magnifier_preprocessing(
-                                self.img_preprocessing(img), img_mode=1)
+                                self.img_preprocessing(img,id=self.get_img_id(i_)), img_mode=1)
                             i = 0
                             for img in img_list:
                                 f_path_output = Path(
@@ -1418,7 +1418,7 @@ class ImgManager(ImgDatabase):
                     i = 0
                     for img in self.img_list:
                         img_list = self.magnifier_preprocessing(
-                            self.img_preprocessing(img), img_mode=1)
+                            self.img_preprocessing(img,id=self.get_img_id(i)), img_mode=1)
                         if not (Path(self.out_path_str)/dir_name/(Path(self.flist[i]).parent).stem).is_dir():
                             os.makedirs(Path(self.out_path_str) / dir_name /
                                         (Path(self.flist[i]).parent).stem)
@@ -1444,7 +1444,7 @@ class ImgManager(ImgDatabase):
                         sub_dir_name)
         i = 0
         for img in self.img_list:
-            img = self.img_preprocessing(img)
+            img = self.img_preprocessing(img,id=self.get_img_id(i))
             if self.show_box:
                 img = self.ImgF.draw_rectangle(img, self.xy_grid, self.crop_points,
                                                self.layout_params[9], line_width=self.layout_params[10], single_box=True)
@@ -1455,6 +1455,19 @@ class ImgManager(ImgDatabase):
                             sub_dir_name/(Path(self.flist[i]).parent).stem)
             img.save(f_path_output)
             i += 1
+
+    def get_img_id(self,i):
+        if i!=None:
+            row = self.layout_params[0]
+            numperimg = self.layout_params[1]
+            col = self.layout_params[2]
+            kernel = list(range(numperimg))
+            L = []
+            for k in range(row*col):
+                L=L+kernel
+            return L[i]
+        else:
+            return None
 
     def rotate(self, id):
         img = Image.open(self.flist[id]).convert(

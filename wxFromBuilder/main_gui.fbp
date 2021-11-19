@@ -1207,11 +1207,11 @@
                         <property name="permission">none</property>
                         <property name="rows">1</property>
                         <property name="vgap">0</property>
-                        <object class="sizeritem" expanded="0">
+                        <object class="sizeritem" expanded="1">
                             <property name="border">5</property>
                             <property name="flag">wxALL|wxEXPAND</property>
                             <property name="proportion">1</property>
-                            <object class="wxScrolledWindow" expanded="0">
+                            <object class="wxScrolledWindow" expanded="1">
                                 <property name="BottomDockable">1</property>
                                 <property name="LeftDockable">1</property>
                                 <property name="RightDockable">1</property>
@@ -1264,7 +1264,7 @@
                                 <property name="window_extra_style"></property>
                                 <property name="window_name"></property>
                                 <property name="window_style">wxHSCROLL|wxVSCROLL</property>
-                                <object class="wxFlexGridSizer" expanded="0">
+                                <object class="wxFlexGridSizer" expanded="1">
                                     <property name="cols">1</property>
                                     <property name="flexible_direction">wxBOTH</property>
                                     <property name="growablecols"></property>
@@ -1391,7 +1391,7 @@
                                             <property name="tooltip"></property>
                                             <property name="window_extra_style"></property>
                                             <property name="window_name"></property>
-                                            <property name="window_style">wxTAB_TRAVERSAL</property>
+                                            <property name="window_style">wxBORDER_NONE</property>
                                         </object>
                                     </object>
                                 </object>

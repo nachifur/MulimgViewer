@@ -121,7 +121,7 @@ class MulimgViewerGui ( wx.Frame ):
 
 		fgSizer4.Add( self.m_staticText1, 0, wx.ALL, 5 )
 
-		self.img_panel = wx.Panel( self.scrolledWindow_img, wx.ID_ANY, wx.DefaultPosition, wx.Size( -1,-1 ), wx.TAB_TRAVERSAL )
+		self.img_panel = wx.Panel( self.scrolledWindow_img, wx.ID_ANY, wx.DefaultPosition, wx.Size( -1,-1 ), wx.BORDER_NONE )
 		fgSizer4.Add( self.img_panel, 1, wx.EXPAND |wx.ALL, 5 )
 
 

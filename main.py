@@ -53,6 +53,7 @@ class MulimgViewer (MulimgViewerGui):
         self.box_id = -1
         self.xy_magnifier = []
         self.show_scale_proportion = 0
+        self.key_status = {"shift":0,"ctrl":0,"alt":0}
         self.icon = wx.Icon(get_resource_path(
             'mulimgviewer.ico'), wx.BITMAP_TYPE_ICO)
         self.SetIcon(self.icon)
@@ -531,6 +532,9 @@ class MulimgViewer (MulimgViewerGui):
         RGBA = self.ImgManager.img.getpixel((int(x), int(y)))
         self.m_statusBar1.SetStatusText(str(x)+","+str(y)+"/"+str(RGBA), 0)
 
+        # focus img
+        self.img_panel.Children[0].SetFocus()
+
     def img_left_release(self, event):
         if self.magnifier.Value != False:
             self.start_flag = 0
@@ -616,33 +620,56 @@ class MulimgViewer (MulimgViewerGui):
 
     def img_wheel(self, event):
         # https://wxpython.org/Phoenix/docs/html/wx.MouseEvent.html
-        i_cur = 0
-        status_toggle = [self.magnifier, self.rotation, self.flip]
-        if status_toggle[i_cur].Value:
-            if event.GetWheelDelta() >= 120:
-                if event.GetWheelRotation() > 0:
-                    self.show_scale_proportion = self.show_scale_proportion+0.1
+
+        if self.key_status["ctrl"]==1:
+            # zoom
+            i_cur = 0
+            status_toggle = [self.magnifier, self.rotation, self.flip]
+            if status_toggle[i_cur].Value:
+                if event.GetWheelDelta() >= 120:
+                    if event.GetWheelRotation() > 0:
+                        self.show_scale_proportion = self.show_scale_proportion+0.1
+                    else:
+                        self.show_scale_proportion = self.show_scale_proportion-0.1
+
+                    if self.show_scale_proportion > 0:
+                        show_scale = [1*(1+self.show_scale_proportion),
+                                    1*(1+self.show_scale_proportion)]
+                    elif self.show_scale_proportion < 0:
+                        show_scale = [1/(1-self.show_scale_proportion),
+                                    1/(1-self.show_scale_proportion)]
+                    else:
+                        show_scale = [1, 1]
+
+                    self.show_scale.Value = str(
+                        round(show_scale[0], 2))+","+str(round(show_scale[1], 2))
+
+                    self.refresh(event)
                 else:
-                    self.show_scale_proportion = self.show_scale_proportion-0.1
-
-                if self.show_scale_proportion > 0:
-                    show_scale = [1*(1+self.show_scale_proportion),
-                                  1*(1+self.show_scale_proportion)]
-                elif self.show_scale_proportion < 0:
-                    show_scale = [1/(1-self.show_scale_proportion),
-                                  1/(1-self.show_scale_proportion)]
-                else:
-                    show_scale = [1, 1]
-
-                self.show_scale.Value = str(
-                    round(show_scale[0], 2))+","+str(round(show_scale[1], 2))
-
-                self.refresh(event)
-
+                    pass
             else:
                 pass
         else:
-            pass
+            # move 
+            if event.GetWheelDelta() >= 120:
+                if event.WheelAxis==0:
+                    if event.GetWheelRotation() > 0:
+                        self.up_img(event)
+                    else:
+                        self.down_img(event)
+                else:
+                    if event.GetWheelRotation() > 0:
+                        self.right_img(event)
+                    else:
+                        self.left_img(event)
+
+    def key_down_detect(self,event):
+        if event.GetKeyCode()==wx.WXK_CONTROL:
+            self.key_status["ctrl"]=1
+
+    def key_up_detect(self,event):
+        if event.GetKeyCode()==wx.WXK_CONTROL:
+            self.key_status["ctrl"]=0
 
     def magnifier_fc(self, event):
         self.start_flag = 0
@@ -852,6 +879,7 @@ class MulimgViewer (MulimgViewerGui):
                     wx.Size(self.img_size[0]+100, self.img_size[1]+100))
                 self.img_last = wx.StaticBitmap(parent=self.img_panel,
                                                 bitmap=bmp)
+                self.img_panel.Children[0].SetFocus()
                 self.img_panel.Children[0].Bind(
                     wx.EVT_LEFT_DOWN, self.img_left_click)
                 self.img_panel.Children[0].Bind(
@@ -864,6 +892,10 @@ class MulimgViewer (MulimgViewerGui):
                     wx.EVT_RIGHT_DOWN, self.img_right_click)
                 self.img_panel.Children[0].Bind(
                     wx.EVT_MOUSEWHEEL, self.img_wheel)
+                self.img_panel.Children[0].Bind(
+                    wx.EVT_KEY_DOWN, self.key_down_detect)
+                self.img_panel.Children[0].Bind(
+                    wx.EVT_KEY_UP, self.key_up_detect)
 
             # status
             if self.ImgManager.type == 2 or ((self.ImgManager.type == 0 or self.ImgManager.type == 1) and self.parallel_sequential.Value):

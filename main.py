@@ -54,6 +54,8 @@ class MulimgViewer (MulimgViewerGui):
         self.xy_magnifier = []
         self.show_scale_proportion = 0
         self.key_status = {"shift": 0, "ctrl": 0, "alt": 0}
+        self.indextablegui = None
+        self.aboutgui = None
         self.icon = wx.Icon(get_resource_path(
             'mulimgviewer.ico'), wx.BITMAP_TYPE_ICO)
         self.SetIcon(self.icon)
@@ -541,7 +543,10 @@ class MulimgViewer (MulimgViewerGui):
         self.m_statusBar1.SetStatusText(str(x)+","+str(y)+"/"+str(RGBA), 0)
 
         # focus img
-        self.img_panel.Children[0].SetFocus()
+        if self.indextablegui or self.aboutgui:
+            pass
+        else:
+            self.img_panel.Children[0].SetFocus()
 
     def img_left_release(self, event):
         if self.magnifier.Value != False:
@@ -877,8 +882,9 @@ class MulimgViewer (MulimgViewerGui):
                     self.ImgManager.input_path, self.ImgManager.type, parallel_to_sequential)
                 self.show_img_init()
                 self.ImgManager.set_action_count(action_count)
-                self.index_table.show_id_table(
-                    self.ImgManager.name_list, self.ImgManager.layout_params)
+                if self.index_table_gui:
+                    self.index_table_gui.show_id_table(
+                        self.ImgManager.name_list, self.ImgManager.layout_params)
         except:
             pass
 
@@ -1011,8 +1017,8 @@ class MulimgViewer (MulimgViewerGui):
         self.Refresh()
 
     def about_gui(self, event):
-        about = About(None)
-        about.Show(True)
+        self.aboutgui = About(None)
+        self.aboutgui.Show(True)
 
     def index_table_gui(self, event):
         if self.ImgManager.img_num != 0:
@@ -1024,10 +1030,10 @@ class MulimgViewer (MulimgViewerGui):
                     self.SetStatusText_(
                         ["-1", "-1", "index_table.txt saving...", "-1"])
                 if self.ImgManager.type == 3:
-                    self.index_table = IndexTable(
+                    self.indextablegui = IndexTable(
                         None, self.ImgManager.path_list, self.ImgManager.layout_params, self.ImgManager.dataset_mode, self.out_path_str, self.ImgManager.type, self.parallel_sequential.Value)
                 else:
-                    self.index_table = IndexTable(
+                    self.indextablegui = IndexTable(
                         None, self.ImgManager.name_list, self.ImgManager.layout_params, self.ImgManager.dataset_mode, self.out_path_str, self.ImgManager.type, self.parallel_sequential.Value)
                 if self.ImgManager.dataset_mode:
                     self.SetStatusText_(

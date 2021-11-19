@@ -324,10 +324,12 @@ Resize: 图像尺寸为一组图像中的平均尺寸，缩放模式(不保持�
 - [X] 为图像添加titile（@Faberman提供改进意见）
 
 ## 8. 致谢
-* nothingeasy:改进意见-(输入方式，新增：路径文件的导入和存储)
-* JuZiSYJ:改进意见-(保存带框的原始图像+并行放大)
-* Faberman:改进意见-(为图像添加titile+放大图像1:1输出)
-* stefanklut:改进意见-(不显示放大图像的边界框)
+* Everyone in the QQ group;
+* nothingeasy:改进意见-(输入方式，新增：路径文件的导入和存储);
+* JuZiSYJ:改进意见-(保存带框的原始图像+并行放大);
+* Faberman:改进意见-(为图像添加titile+放大图像1:1输出);
+* stefanklut:改进意见-(不显示放大图像的边界框);
+* FunkyKoki:改进意见-(显示一半的图像+新增放大图像排布方式).
 
 ## 9. 引用
 如果您在研究中使用此项目，请使用以下BibTeX条目。

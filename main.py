@@ -867,6 +867,7 @@ class MulimgViewer (MulimgViewerGui):
                     self.show_crop.Value,                   # 18
                     self.parallel_to_sequential.Value,      # 19
                     self.one_img.Value,                     # 20
+                    self.box_position,                      # 21
                     self.checkBox_orientation.Value]
 
     def show_img(self):

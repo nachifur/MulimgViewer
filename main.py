@@ -53,6 +53,9 @@ class MulimgViewer (MulimgViewerGui):
         self.box_id = -1
         self.xy_magnifier = []
         self.show_scale_proportion = 0
+        self.key_status = {"shift": 0, "ctrl": 0, "alt": 0}
+        self.indextablegui = None
+        self.aboutgui = None
         self.icon = wx.Icon(get_resource_path(
             'mulimgviewer.ico'), wx.BITMAP_TYPE_ICO)
         self.SetIcon(self.icon)
@@ -326,13 +329,15 @@ class MulimgViewer (MulimgViewerGui):
             self.SetStatusText_(["delete all box",  "-1", "-1", "-1"])
 
     def up_img(self, event):
+        speed = self.get_speed(name="pixel")
+
         if self.select_img_box.Value:
             if self.box_id != -1:
                 box_point = self.xy_magnifier[self.box_id][0:4]
                 show_scale = self.xy_magnifier[self.box_id][4:6]
                 x, y = self.get_center_box(box_point)
                 x = x+0
-                y = y-1
+                y = y-speed
                 self.xy_magnifier[self.box_id][0:4] = self.move_box_point(
                     x, y, show_scale)
                 self.refresh(event)
@@ -343,19 +348,21 @@ class MulimgViewer (MulimgViewerGui):
             self.position[1] = int(
                 self.scrolledWindow_img.GetScrollPos(wx.VERTICAL)/self.Uint[1])
             if self.position[1] > 0:
-                self.position[1] -= 1
+                self.position[1] -= speed
             self.scrolledWindow_img.Scroll(
                 self.position[0]*self.Uint[0], self.position[1]*self.Uint[1])
         self.SetStatusText_(["Up",  "-1", "-1", "-1"])
 
     def down_img(self, event):
+        speed = self.get_speed(name="pixel")
+
         if self.select_img_box.Value:
             if self.box_id != -1:
                 box_point = self.xy_magnifier[self.box_id][0:4]
                 show_scale = self.xy_magnifier[self.box_id][4:6]
                 x, y = self.get_center_box(box_point)
                 x = x+0
-                y = y+1
+                y = y+speed
                 self.xy_magnifier[self.box_id][0:4] = self.move_box_point(
                     x, y, show_scale)
                 self.refresh(event)
@@ -366,7 +373,7 @@ class MulimgViewer (MulimgViewerGui):
             self.position[1] = int(
                 self.scrolledWindow_img.GetScrollPos(wx.VERTICAL)/self.Uint[1])
             if (self.position[1]-1)*self.Uint[1] < size[1]:
-                self.position[1] += 1
+                self.position[1] += speed
                 self.scrolledWindow_img.Scroll(
                     self.position[0]*self.Uint[0], self.position[1]*self.Uint[1])
             else:
@@ -375,12 +382,14 @@ class MulimgViewer (MulimgViewerGui):
         self.SetStatusText_(["Down",  "-1", "-1", "-1"])
 
     def right_img(self, event):
+        speed = self.get_speed(name="pixel")
+
         if self.select_img_box.Value:
             if self.box_id != -1:
                 box_point = self.xy_magnifier[self.box_id][0:4]
                 show_scale = self.xy_magnifier[self.box_id][4:6]
                 x, y = self.get_center_box(box_point)
-                x = x+1
+                x = x+speed
                 y = y+0
                 self.xy_magnifier[self.box_id][0:4] = self.move_box_point(
                     x, y, show_scale)
@@ -392,7 +401,7 @@ class MulimgViewer (MulimgViewerGui):
             self.position[1] = int(
                 self.scrolledWindow_img.GetScrollPos(wx.VERTICAL)/self.Uint[1])
             if (self.position[0]-1)*self.Uint[0] < size[0]:
-                self.position[0] += 1
+                self.position[0] += speed
                 self.scrolledWindow_img.Scroll(
                     self.position[0]*self.Uint[0], self.position[1]*self.Uint[1])
             else:
@@ -401,12 +410,14 @@ class MulimgViewer (MulimgViewerGui):
         self.SetStatusText_(["Right",  "-1", "-1", "-1"])
 
     def left_img(self, event):
+        speed = self.get_speed(name="pixel")
+
         if self.select_img_box.Value:
             if self.box_id != -1:
                 box_point = self.xy_magnifier[self.box_id][0:4]
                 show_scale = self.xy_magnifier[self.box_id][4:6]
                 x, y = self.get_center_box(box_point)
-                x = x-1
+                x = x-speed
                 y = y+0
                 self.xy_magnifier[self.box_id][0:4] = self.move_box_point(
                     x, y, show_scale)
@@ -418,7 +429,7 @@ class MulimgViewer (MulimgViewerGui):
             self.position[1] = int(
                 self.scrolledWindow_img.GetScrollPos(wx.VERTICAL)/self.Uint[1])
             if self.position[0] > 0:
-                self.position[0] -= 1
+                self.position[0] -= speed
                 self.scrolledWindow_img.Scroll(
                     self.position[0]*self.Uint[0], self.position[1]*self.Uint[1])
         self.SetStatusText_(["Left",  "-1", "-1", "-1"])
@@ -531,6 +542,12 @@ class MulimgViewer (MulimgViewerGui):
         RGBA = self.ImgManager.img.getpixel((int(x), int(y)))
         self.m_statusBar1.SetStatusText(str(x)+","+str(y)+"/"+str(RGBA), 0)
 
+        # focus img
+        if self.indextablegui or self.aboutgui:
+            pass
+        else:
+            self.img_panel.Children[0].SetFocus()
+
     def img_left_release(self, event):
         if self.magnifier.Value != False:
             self.start_flag = 0
@@ -616,14 +633,18 @@ class MulimgViewer (MulimgViewerGui):
 
     def img_wheel(self, event):
         # https://wxpython.org/Phoenix/docs/html/wx.MouseEvent.html
+
+        # zoom
         i_cur = 0
         status_toggle = [self.magnifier, self.rotation, self.flip]
-        if status_toggle[i_cur].Value:
+        if status_toggle[i_cur].Value and (self.key_status["ctrl"] == 1):
             if event.GetWheelDelta() >= 120:
+                speed = self.get_speed(name="scale")
+
                 if event.GetWheelRotation() > 0:
-                    self.show_scale_proportion = self.show_scale_proportion+0.1
+                    self.show_scale_proportion = self.show_scale_proportion+speed
                 else:
-                    self.show_scale_proportion = self.show_scale_proportion-0.1
+                    self.show_scale_proportion = self.show_scale_proportion-speed
 
                 if self.show_scale_proportion > 0:
                     show_scale = [1*(1+self.show_scale_proportion),
@@ -638,11 +659,53 @@ class MulimgViewer (MulimgViewerGui):
                     round(show_scale[0], 2))+","+str(round(show_scale[1], 2))
 
                 self.refresh(event)
-
             else:
                 pass
         else:
             pass
+
+        # move
+        if self.key_status["ctrl"] == 0 and event.GetWheelDelta() >= 120:
+            if event.WheelAxis == 0:
+                if event.GetWheelRotation() > 0:
+                    self.up_img(event)
+                else:
+                    self.down_img(event)
+            else:
+                if event.GetWheelRotation() > 0:
+                    self.right_img(event)
+                else:
+                    self.left_img(event)
+
+    def key_down_detect(self, event):
+        if event.GetKeyCode() == wx.WXK_CONTROL:
+            self.key_status["ctrl"] = 1
+        elif event.GetKeyCode() == wx.WXK_SHIFT:
+            if self.key_status["shift"] == 0:
+                self.key_status["shift"] = 1
+            elif self.key_status["shift"] == 1:
+                self.key_status["shift"] = 0
+
+    def key_up_detect(self, event):
+        if event.GetKeyCode() == wx.WXK_CONTROL:
+            self.key_status["ctrl"] = 0
+        elif event.GetKeyCode() == wx.WXK_SHIFT:
+            pass
+
+    def get_speed(self, name="pixel"):
+        if name == "pixel":
+            if self.key_status["shift"] == 1:
+                speed = 5
+            else:
+                speed = 1
+        elif name == "scale":
+            if self.key_status["shift"] == 1:
+                speed = 0.5
+            else:
+                speed = 0.1
+        else:
+            speed = None
+        return speed
 
     def magnifier_fc(self, event):
         self.start_flag = 0
@@ -804,6 +867,7 @@ class MulimgViewer (MulimgViewerGui):
                     self.show_crop.Value,                   # 18
                     self.parallel_to_sequential.Value,      # 19
                     self.one_img.Value,                     # 20
+                    self.box_position,                      # 21
                     self.checkBox_orientation.Value]
 
     def show_img(self):
@@ -819,8 +883,9 @@ class MulimgViewer (MulimgViewerGui):
                     self.ImgManager.input_path, self.ImgManager.type, parallel_to_sequential)
                 self.show_img_init()
                 self.ImgManager.set_action_count(action_count)
-                self.index_table.show_id_table(
-                    self.ImgManager.name_list, self.ImgManager.layout_params)
+                if self.index_table_gui:
+                    self.index_table_gui.show_id_table(
+                        self.ImgManager.name_list, self.ImgManager.layout_params)
         except:
             pass
 
@@ -852,6 +917,7 @@ class MulimgViewer (MulimgViewerGui):
                     wx.Size(self.img_size[0]+100, self.img_size[1]+100))
                 self.img_last = wx.StaticBitmap(parent=self.img_panel,
                                                 bitmap=bmp)
+                self.img_panel.Children[0].SetFocus()
                 self.img_panel.Children[0].Bind(
                     wx.EVT_LEFT_DOWN, self.img_left_click)
                 self.img_panel.Children[0].Bind(
@@ -864,6 +930,10 @@ class MulimgViewer (MulimgViewerGui):
                     wx.EVT_RIGHT_DOWN, self.img_right_click)
                 self.img_panel.Children[0].Bind(
                     wx.EVT_MOUSEWHEEL, self.img_wheel)
+                self.img_panel.Children[0].Bind(
+                    wx.EVT_KEY_DOWN, self.key_down_detect)
+                self.img_panel.Children[0].Bind(
+                    wx.EVT_KEY_UP, self.key_up_detect)
 
             # status
             if self.ImgManager.type == 2 or ((self.ImgManager.type == 0 or self.ImgManager.type == 1) and self.parallel_sequential.Value):
@@ -948,8 +1018,8 @@ class MulimgViewer (MulimgViewerGui):
         self.Refresh()
 
     def about_gui(self, event):
-        about = About(None)
-        about.Show(True)
+        self.aboutgui = About(None)
+        self.aboutgui.Show(True)
 
     def index_table_gui(self, event):
         if self.ImgManager.img_num != 0:
@@ -961,10 +1031,10 @@ class MulimgViewer (MulimgViewerGui):
                     self.SetStatusText_(
                         ["-1", "-1", "index_table.txt saving...", "-1"])
                 if self.ImgManager.type == 3:
-                    self.index_table = IndexTable(
+                    self.indextablegui = IndexTable(
                         None, self.ImgManager.path_list, self.ImgManager.layout_params, self.ImgManager.dataset_mode, self.out_path_str, self.ImgManager.type, self.parallel_sequential.Value)
                 else:
-                    self.index_table = IndexTable(
+                    self.indextablegui = IndexTable(
                         None, self.ImgManager.name_list, self.ImgManager.layout_params, self.ImgManager.dataset_mode, self.out_path_str, self.ImgManager.type, self.parallel_sequential.Value)
                 if self.ImgManager.dataset_mode:
                     self.SetStatusText_(

@@ -121,7 +121,7 @@ class MulimgViewerGui ( wx.Frame ):
 
 		fgSizer4.Add( self.m_staticText1, 0, wx.ALL, 5 )
 
-		self.img_panel = wx.Panel( self.scrolledWindow_img, wx.ID_ANY, wx.DefaultPosition, wx.Size( -1,-1 ), wx.TAB_TRAVERSAL )
+		self.img_panel = wx.Panel( self.scrolledWindow_img, wx.ID_ANY, wx.DefaultPosition, wx.Size( -1,-1 ), wx.BORDER_NONE )
 		fgSizer4.Add( self.img_panel, 1, wx.EXPAND |wx.ALL, 5 )
 
 
@@ -348,6 +348,11 @@ class MulimgViewerGui ( wx.Frame ):
 
 		self.line_width = wx.TextCtrl( self.scrolledWindow_set, wx.ID_ANY, u"2", wx.DefaultPosition, wx.Size( 40,-1 ), 0 )
 		wSizer7.Add( self.line_width, 0, wx.ALL, 5 )
+
+		box_positionChoices = [ u"middle bottom", u"left bottom", u"right bottom", u"left top", u"right top" ]
+		self.box_position = wx.Choice( self.scrolledWindow_set, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, box_positionChoices, 0 )
+		self.box_position.SetSelection( 0 )
+		wSizer7.Add( self.box_position, 0, wx.ALL, 5 )
 
 
 		fgSizer3.Add( wSizer7, 1, wx.EXPAND, 5 )

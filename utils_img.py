@@ -127,7 +127,7 @@ class ImgUtils():
         img = Image.fromarray(img_array.astype('uint8')).convert('RGBA')
         return img
 
-    def cal_magnifier_size(self, magnifier_scale, crop_size, img_mode, gap, img_size, num_box, show_original, vertical=False):
+    def cal_magnifier_size(self, magnifier_scale, crop_size, img_mode, gap, img_size, num_box, show_original, box_position=0, vertical=False):
         delta_x = 0
         delta_y = 0
         width, height = crop_size
@@ -383,7 +383,8 @@ class ImgUtils():
                             # img preprocessing
                             if img_list[iy_0, ix_0, iy_1, ix_1] != []:
                                 im = img_list[iy_0, ix_0, iy_1, ix_1][0]
-                                im = img_preprocessing(im,id=iy_1*Col['level_1']+ix_1)
+                                im = img_preprocessing(
+                                    im, id=iy_1*Col['level_1']+ix_1)
 
                                 xy_grids_output.append(
                                     [x_offset_0+x_offset_1, y_offset_0+y_offset_1])
@@ -706,6 +707,7 @@ class ImgDatabase():
         num = (self.path_list).shape
         return num[0]
 
+
 class ImgManager(ImgDatabase):
     """Multi-image manager.  
     Multi-image parallel magnification, stitching, saving, rotation"""
@@ -808,7 +810,8 @@ class ImgManager(ImgDatabase):
         self.show_original = self.layout_params[16]
         self.one_img = self.layout_params[20]
         num_per_img = self.layout_params[1] if self.one_img else 1
-        self.to_size = [int(self.img_resolution[0]/num_per_img),self.img_resolution[1]]
+        self.to_size = [
+            int(self.img_resolution[0]/num_per_img), self.img_resolution[1]]
         if self.show_original:
             layout_level_2.append(1)
             img_preprocessing_sub.append(self.ImgF.identity_transformation)
@@ -831,7 +834,7 @@ class ImgManager(ImgDatabase):
             crop_width = self.crop_points[0][2]-self.crop_points[0][0]
             crop_height = self.crop_points[0][3]-self.crop_points[0][1]
             _, _, magnifier_img_all_size = self.ImgF.cal_magnifier_size(
-                self.layout_params[8], [crop_width, crop_height], 0, self.layout_params[3][4], self.to_size, len(self.crop_points), self.show_original, vertical=self.vertical)
+                self.layout_params[8], [crop_width, crop_height], 0, self.layout_params[3][4], self.to_size, len(self.crop_points), self.show_original, box_position=self.layout_params[21], vertical=self.vertical)
             img_preprocessing_sub.append(self.magnifier_preprocessing)
             width_2.append(magnifier_img_all_size[0])
             height_2.append(magnifier_img_all_size[1])
@@ -1056,10 +1059,10 @@ class ImgManager(ImgDatabase):
         img = self.ImgF.add_alpha(img, self.img_alpha)
 
         # n img -> one img, split width
-        if id!=None and self.one_img:
+        if id != None and self.one_img:
             sub_img_width = int(width/self.layout_params[1])
             img = np.array(img)
-            img = img[:,id*sub_img_width:(id+1)*sub_img_width,:]
+            img = img[:, id*sub_img_width:(id+1)*sub_img_width, :]
             img = Image.fromarray(np.uint8(img))
 
         return img
@@ -1128,7 +1131,7 @@ class ImgManager(ImgDatabase):
 
         # get the size of magnifier img
         to_resize, delta, magnifier_img_all_size = self.ImgF.cal_magnifier_size(
-            magnifier_scale, list(img_list[0].size), img_mode, gap, self.to_size, len(self.crop_points), self.show_original, vertical=self.vertical)
+            magnifier_scale, list(img_list[0].size), img_mode, gap, self.to_size, len(self.crop_points), self.show_original, box_position=self.layout_params[21], vertical=self.vertical)
 
         # resize images
         line_width = self.layout_params[10]
@@ -1314,7 +1317,7 @@ class ImgManager(ImgDatabase):
                         self.check.append(0)
 
         if self.layout_params[11]:
-            if self.action_count==0:
+            if self.action_count == 0:
                 action_count = 0
             else:
                 action_count = self.action_count-1
@@ -1405,7 +1408,7 @@ class ImgManager(ImgDatabase):
 
                             img = self.img_list[i_]
                             img_list = self.magnifier_preprocessing(
-                                self.img_preprocessing(img,id=self.get_img_id(i_)), img_mode=1)
+                                self.img_preprocessing(img, id=self.get_img_id(i_)), img_mode=1)
                             i = 0
                             for img in img_list:
                                 f_path_output = Path(
@@ -1418,7 +1421,7 @@ class ImgManager(ImgDatabase):
                     i = 0
                     for img in self.img_list:
                         img_list = self.magnifier_preprocessing(
-                            self.img_preprocessing(img,id=self.get_img_id(i)), img_mode=1)
+                            self.img_preprocessing(img, id=self.get_img_id(i)), img_mode=1)
                         if not (Path(self.out_path_str)/dir_name/(Path(self.flist[i]).parent).stem).is_dir():
                             os.makedirs(Path(self.out_path_str) / dir_name /
                                         (Path(self.flist[i]).parent).stem)
@@ -1444,7 +1447,7 @@ class ImgManager(ImgDatabase):
                         sub_dir_name)
         i = 0
         for img in self.img_list:
-            img = self.img_preprocessing(img,id=self.get_img_id(i))
+            img = self.img_preprocessing(img, id=self.get_img_id(i))
             if self.show_box:
                 img = self.ImgF.draw_rectangle(img, self.xy_grid, self.crop_points,
                                                self.layout_params[9], line_width=self.layout_params[10], single_box=True)
@@ -1456,15 +1459,15 @@ class ImgManager(ImgDatabase):
             img.save(f_path_output)
             i += 1
 
-    def get_img_id(self,i):
-        if i!=None and self.one_img:
+    def get_img_id(self, i):
+        if i != None and self.one_img:
             row = self.layout_params[0]
             numperimg = self.layout_params[1]
             col = self.layout_params[2]
             kernel = list(range(numperimg))
             L = []
             for k in range(row*col):
-                L=L+kernel
+                L = L+kernel
             return L[i]
         else:
             return None

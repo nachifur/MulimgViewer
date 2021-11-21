@@ -923,6 +923,10 @@ class ImgManager(ImgDatabase):
         # show magnifier img
         self.magnifier_flag = self.layout_params[7]
         self.show_crop = self.layout_params[18]
+        if layout_level_2[0]==0:
+            self.box_position=0
+        else:
+            self.box_position=self.layout_params[21]
         if len(draw_points) == 0:
             self.show_crop = 0
         if self.show_crop:
@@ -933,17 +937,23 @@ class ImgManager(ImgDatabase):
             crop_width = self.crop_points[0][2]-self.crop_points[0][0]
             crop_height = self.crop_points[0][3]-self.crop_points[0][1]
             _, delta, magnifier_img_all_size = self.ImgF.cal_magnifier_size(
-                self.layout_params[8], [crop_width, crop_height], 0, self.layout_params[3][4], self.to_size, len(self.crop_points), self.show_original, self.layout_params[3][3], box_position=self.layout_params[21], vertical=self.vertical)
+                self.layout_params[8], [crop_width, crop_height], 0, self.layout_params[3][4], self.to_size, len(self.crop_points), self.show_original, self.layout_params[3][3], box_position=self.box_position, vertical=self.vertical)
             img_preprocessing_sub.append(self.magnifier_preprocessing)
-            if self.layout_params[21] == 0:
+
+            if layout_level_2[0]==0:
+                gap_x_y_2[0].append(0)
+                gap_x_y_2[1].append(0)
                 width_2.append(magnifier_img_all_size[0])
                 height_2.append(magnifier_img_all_size[1])
             else:
-                width_2.append(0)
-                height_2.append(0)
-
-            gap_x_y_2[0].append(delta[0])
-            gap_x_y_2[1].append(delta[1])
+                gap_x_y_2[0].append(delta[0])
+                gap_x_y_2[1].append(delta[1])
+                if self.layout_params[21] == 0:
+                    width_2.append(magnifier_img_all_size[0])
+                    height_2.append(magnifier_img_all_size[1])
+                else:
+                    width_2.append(0)
+                    height_2.append(0)
         else:
             layout_level_2.append(0)
 
@@ -1101,7 +1111,7 @@ class ImgManager(ImgDatabase):
                 if self.show_original and self.show_box and len(draw_points) != 0:
                     crop_points = self.crop_points
                     offset = [self.title_max_size[0]+self.layout_params[3]
-                              [3], self.title_max_size[1]+self.layout_params[3][3]]
+                                [3], self.title_max_size[1]+self.layout_params[3][3]]
                     for crop_point in crop_points:
                         up = crop_point[-1]  # down(False) or up(True)
                         if (up and self.title_setting[2] and self.title_setting[1]) or ((not up) and self.title_setting[2] and self.title_setting[1]):
@@ -1288,7 +1298,7 @@ class ImgManager(ImgDatabase):
 
         # get the size of magnifier img
         to_resize, delta, magnifier_img_all_size = self.ImgF.cal_magnifier_size(
-            magnifier_scale, list(img_list[0].size), img_mode, gap, self.to_size, len(self.crop_points), self.show_original, self.layout_params[3][3], box_position=self.layout_params[21], vertical=self.vertical)
+            magnifier_scale, list(img_list[0].size), img_mode, gap, self.to_size, len(self.crop_points), self.show_original, self.layout_params[3][3], box_position=self.box_position, vertical=self.vertical)
 
         # resize images
         line_width = self.layout_params[10]

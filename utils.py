@@ -1,6 +1,7 @@
 import sys
 from pathlib import Path
 import numpy as np
+import copy
 
 
 def get_resource_path(relative_path):
@@ -29,7 +30,10 @@ def solve_factor(num):
 
 
 def change_order(list_):
-    temp = list_[1]
+    if isinstance(list_[1],list):
+        temp =  copy.deepcopy(list_[0])
+    else:
+        temp = list_[0]
     list_[0] = list_[1]
     list_[1] = temp
     return list_

@@ -9,7 +9,7 @@ from pathlib import Path
 import csv
 import copy
 
-from utils import solve_factor, rgb2hex
+from utils import solve_factor, rgb2hex, change_order
 
 
 class ImgUtils():
@@ -86,7 +86,7 @@ class ImgUtils():
     def draw_rectangle(self, img, xy_grids, bounding_boxs, color_list, line_width=2, single_box=False):
         """img
         xy_grids: the position of bounding_boxs (list)
-        boxs_points: the four points that make up a bounding boxs 
+        boxs_points: the four points that make up a bounding boxs
         color_list: the color of bounding_boxs
         """
 
@@ -171,7 +171,24 @@ class ImgUtils():
                           (num_box-1)*gap)
             delta_y = int((img_height-height_all)/2)
 
-            magnifier_img_all_size = [to_width, img_height]
+            magnifier_img_all_size = [to_width, height_all]
+
+            # adjust box position
+            if box_position == 0:  # middle bottom
+                delta_y = int((img_height-height_all)/2)
+                delta_x = gap_box_img
+            elif box_position == 2:  # right bottom
+                delta_y = 0
+                delta_x = -to_width
+            elif box_position == 1:  # left bottom
+                delta_y = img_height-height_all
+                delta_x = -to_width
+            elif box_position == 4:  # right top
+                delta_y = 0
+                delta_x = -img_width
+            elif box_position == 3:  # left top
+                delta_y = img_height-height_all
+                delta_x = -img_width
 
             if not show_original:
                 magnifier_img_all_size = [to_width, height_all]
@@ -356,7 +373,10 @@ class ImgUtils():
         # when i >=1, width layout[2] and layout[6] can be empty
         i = 0
         xy_grids = []
-        grid = ["row", "col", "rowcol"]
+        if vertical:
+            grid = ["col", "row", "rowcol"]
+        else:
+            grid = ["row", "col", "rowcol"]
         for layout in layout_list:
             row, col = layout[0]
             gap_x, gap_y = layout[1]
@@ -486,7 +506,8 @@ class ImgUtils():
                                         if img_preprocessing_sub[iy_2, ix_2] != []:
                                             im_ = img_preprocessing_sub[iy_2, ix_2](
                                                 im, id=img_list[iy_0, ix_0, iy_1, ix_1][1])
-                                            img.paste(im_, (x, y))
+                                            if im_:
+                                                img.paste(im_, (x, y))
                                     i += 1
 
         return img, xy_grids_output, xy_grids_id_list
@@ -764,7 +785,7 @@ class ImgDatabase():
                          for i in range(self.img_count, self.img_num)]
         elif self.type == 3:
             # one file list
-            #flist = self.path_list
+            # flist = self.path_list
             try:
                 flist = [str(Path(self.path_list[i]))
                          for i in range(self.img_count, self.img_count+self.count_per_action)]
@@ -939,8 +960,13 @@ class ImgManager(ImgDatabase):
                         self.title_preprocessing] + img_preprocessing_sub
                     layout_level_2 = [1]+layout_level_2
 
+                    if self.vertical:
+                        gap_x_y_2[0][0] = self.layout_params[3][3]
+                    else:
+                        gap_x_y_2[1][0] = self.layout_params[3][3]
                     gap_x_y_2[0] = [0]+gap_x_y_2[0]
-                    gap_x_y_2[1] = [self.layout_params[3][3]]+gap_x_y_2[1]
+                    gap_x_y_2[1] = [0]+gap_x_y_2[1]
+
                 else:
                     # down
                     width_2.append(title_width_height[0])
@@ -948,17 +974,50 @@ class ImgManager(ImgDatabase):
                     img_preprocessing_sub.append(self.title_preprocessing)
                     layout_level_2.append(1)
 
-                    gap_x_y_2[0].append(0)
-                    if gap_x_y_2[1][-1] >= 0:
-                        gap_x_y_2[1].append(self.layout_params[3][3])
+                    if self.vertical:
+                        gap_x_y_2[1].append(0)
+
+                        if gap_x_y_2[0][-1] >= 0:
+                            gap_x_y_2[0].append(self.layout_params[3][3])
+                        else:
+                            gap_x_y_2[0].append(-gap_x_y_2[0]
+                                                [-1]+self.layout_params[3][3])
                     else:
-                        gap_x_y_2[1].append(-gap_x_y_2[1]
-                                            [-1]+self.layout_params[3][3])
+                        gap_x_y_2[0].append(0)
+
+                        if gap_x_y_2[1][-1] >= 0:
+                            gap_x_y_2[1].append(self.layout_params[3][3])
+                        else:
+                            gap_x_y_2[1].append(-gap_x_y_2[1]
+                                                [-1]+self.layout_params[3][3])
 
             else:
                 layout_level_2.append(0)
         else:
             layout_level_2.append(0)
+
+        # fill negative gap
+        if self.vertical:
+            if gap_x_y_2[0][-1] < 0:
+                width_2.append(-gap_x_y_2[0][-1])
+                height_2.append(0)
+                img_preprocessing_sub.append(
+                    self.fill_negative_gap)
+                layout_level_2.append(1)
+                gap_x_y_2[0].append(0)
+                gap_x_y_2[1].append(0)
+        else:
+            if gap_x_y_2[1][-1] < 0:
+                width_2.append(0)
+                height_2.append(-gap_x_y_2[1][-1])
+                img_preprocessing_sub.append(
+                    self.fill_negative_gap)
+                layout_level_2.append(1)
+                gap_x_y_2[0].append(0)
+                gap_x_y_2[1].append(0)
+
+        gap_x_y_2[0][0] = 0
+        gap_x_y_2[1][0] = 0
         if sum(layout_level_2) != 0:
             # Since the title is up, we need to correct crop_points
             if self.magnifier_flag:
@@ -981,7 +1040,7 @@ class ImgManager(ImgDatabase):
                 row_col1.reverse()
                 row_col0.reverse()
 
-                # gap_x_y_2.reverse()
+                gap_x_y_2 = gap_x_y_2
                 gap_x_y_1.reverse()
                 gap_x_y_0.reverse()
 
@@ -1162,6 +1221,9 @@ class ImgManager(ImgDatabase):
 
         return img
 
+    def fill_negative_gap(self, img, id=None):
+        return None
+
     def crop_points_process(self, crop_points, img_mode=0):
         """img_mode, 0: show, 1: save"""
         crop_points_ = []
@@ -1280,12 +1342,12 @@ class ImgManager(ImgDatabase):
             height = [to_resize[1] for i in range(len(img_list))]
             gap_x = [0 for i in range(len(img_list))]
             gap_y = self.ImgF.adjust_gap(
-                magnifier_img_all_size[1], len(img_list), height, gap, delta[1])
+                self.to_size[1], len(img_list), height, gap, delta[1])
         else:
             width = [to_resize[0] for i in range(len(img_list))]
             height = [0 for i in range(len(img_list))]
             gap_x = self.ImgF.adjust_gap(
-                magnifier_img_all_size[0], len(img_list), width, gap, delta[0])
+                self.to_size[0], len(img_list), width, gap, delta[0])
             gap_y = [0 for i in range(len(img_list))]
 
         x = 0

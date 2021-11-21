@@ -9,7 +9,7 @@ from pathlib import Path
 import csv
 import copy
 
-from utils import solve_factor, rgb2hex
+from utils import solve_factor, rgb2hex, change_order
 
 
 class ImgUtils():
@@ -86,7 +86,7 @@ class ImgUtils():
     def draw_rectangle(self, img, xy_grids, bounding_boxs, color_list, line_width=2, single_box=False):
         """img
         xy_grids: the position of bounding_boxs (list)
-        boxs_points: the four points that make up a bounding boxs 
+        boxs_points: the four points that make up a bounding boxs
         color_list: the color of bounding_boxs
         """
 
@@ -127,7 +127,7 @@ class ImgUtils():
         img = Image.fromarray(img_array.astype('uint8')).convert('RGBA')
         return img
 
-    def cal_magnifier_size(self, magnifier_scale, crop_size, img_mode, gap, img_size, num_box, show_original, box_position=0, vertical=False):
+    def cal_magnifier_size(self, magnifier_scale, crop_size, img_mode, gap, img_size, num_box, show_original, gap_box_img, box_position=0, vertical=False):
         delta_x = 0
         delta_y = 0
         width, height = crop_size
@@ -171,7 +171,24 @@ class ImgUtils():
                           (num_box-1)*gap)
             delta_y = int((img_height-height_all)/2)
 
-            magnifier_img_all_size = [to_width, img_height]
+            magnifier_img_all_size = [to_width, height_all]
+
+            # adjust box position
+            if box_position == 0:  # middle bottom
+                delta_y = int((img_height-height_all)/2)
+                delta_x = gap_box_img
+            elif box_position == 2:  # right bottom
+                delta_y = 0
+                delta_x = -to_width
+            elif box_position == 1:  # left bottom
+                delta_y = img_height-height_all
+                delta_x = -to_width
+            elif box_position == 4:  # right top
+                delta_y = 0
+                delta_x = -img_width
+            elif box_position == 3:  # left top
+                delta_y = img_height-height_all
+                delta_x = -img_width
 
             if not show_original:
                 magnifier_img_all_size = [to_width, height_all]
@@ -208,12 +225,27 @@ class ImgUtils():
                     to_width = int(img_height/height*width)
             width_all = (to_width*num_box +
                          (num_box-1)*gap)
-            delta_x = int((img_width-width_all)/2)
 
-            magnifier_img_all_size = [img_width, to_height]
+            magnifier_img_all_size = [width_all, to_height]
+
+            # adjust box position
+            if box_position == 0:  # middle bottom
+                delta_x = int((img_width-width_all)/2)
+                delta_y = gap_box_img
+            elif box_position == 1:  # left bottom
+                delta_x = 0
+                delta_y = -to_height
+            elif box_position == 2:  # right bottom
+                delta_x = img_width-width_all
+                delta_y = -to_height
+            elif box_position == 3:  # left top
+                delta_x = 0
+                delta_y = -img_height
+            elif box_position == 4:  # right top
+                delta_x = img_width-width_all
+                delta_y = -img_height
 
             if not show_original:
-                magnifier_img_all_size = [width_all, to_height]
                 delta_x = 0
 
         to_resize = [to_width, to_height]
@@ -251,17 +283,50 @@ class ImgUtils():
 
         return gap
 
-    def get_xy_grid(self, width, height, row, col, gap_x, gap_y):
+    def get_xy_grid(self, width, height, row, col, gap_x, gap_y, grid="rowcol"):
         xy_grid = np.zeros((2, row, col)).astype(int)
-        y = 0
-        for iy in range(row):
+        if grid == "rowcol":
+            y = 0
+            for iy in range(row):
+                y = y + gap_y[iy]
+                x = 0
+                for ix in range(col):
+                    if grid:
+                        x = x + gap_x[ix]
+                    else:
+                        x = x + gap_x[iy]
+
+                    xy_grid[:, iy, ix] = [x, y]
+
+                    x = x + width[ix]
+
+                y = y + height[iy]
+        elif grid == "row":
+            y = 0
+            for iy in range(row):
+                y = y + gap_y[iy]
+                x = 0
+                for ix in range(col):
+                    x = x + gap_x[iy]
+
+                    xy_grid[:, iy, ix] = [x, y]
+
+                    x = x + width[ix]
+
+                y = y + height[iy]
+        elif grid == "col":
             x = 0
             for ix in range(col):
-                xy_grid[:, iy, ix] = [x, y]
+                x = x + gap_x[ix]
+                y = 0
+                for iy in range(row):
+                    y = y + gap_y[ix]
 
-                x = x + width[ix] + gap_x[ix]
+                    xy_grid[:, iy, ix] = [x, y]
 
-            y = y + height[iy] + gap_y[iy]
+                    x = x + width[ix]
+
+                y = y + height[iy]
 
         return xy_grid
 
@@ -308,27 +373,56 @@ class ImgUtils():
         # when i >=1, width layout[2] and layout[6] can be empty
         i = 0
         xy_grids = []
+        if vertical:
+            grid = ["col", "row", "rowcol"]
+        else:
+            grid = ["row", "col", "rowcol"]
         for layout in layout_list:
             row, col = layout[0]
             gap_x, gap_y = layout[1]
 
-            gap_x = [gap_x for i in range(col)]
-            gap_y = [gap_y for i in range(row)]
+            if grid[i] == "rowcol":
+                if isinstance(gap_x, list):
+                    pass
+                else:
+                    gap_x = [0]+[gap_x for i in range(col-1)]
+                if isinstance(gap_y, list):
+                    pass
+                else:
+                    gap_y = [0]+[gap_y for i in range(row-1)]
+            elif grid[i] == "col":
+                if isinstance(gap_x, list):
+                    pass
+                else:
+                    gap_x = [0]+[gap_x for i in range(col-1)]
+                if isinstance(gap_y, list):
+                    pass
+                else:
+                    gap_y = [0]+[gap_y for i in range(col-1)]
+            elif grid[i] == "row":
+                if isinstance(gap_x, list):
+                    pass
+                else:
+                    gap_x = [0]+[gap_x for i in range(row-1)]
+                if isinstance(gap_y, list):
+                    pass
+                else:
+                    gap_y = [0]+[gap_y for i in range(row-1)]
 
             if i >= 1:
                 width = [target_width for i in range(col)]
                 height = [target_height for i in range(row)]
                 layout[2] = [width, height]
 
-                target_width = target_width*col+sum(gap_x[0:-1])
-                target_height = target_height*row+sum(gap_y[0:-1])
+                target_width = target_width*col+sum(gap_x[:])
+                target_height = target_height*row+sum(gap_y[:])
                 layout[3] = [target_width, target_height]
             else:
                 width, height = layout[2]
                 target_width, target_height = layout[3]
 
             xy_grids.append(self.get_xy_grid(
-                width, height, row, col, gap_x, gap_y))
+                width, height, row, col, gap_x, gap_y, grid=grid[i]))
 
             i += 1
 
@@ -412,7 +506,8 @@ class ImgUtils():
                                         if img_preprocessing_sub[iy_2, ix_2] != []:
                                             im_ = img_preprocessing_sub[iy_2, ix_2](
                                                 im, id=img_list[iy_0, ix_0, iy_1, ix_1][1])
-                                            img.paste(im_, (x, y))
+                                            if im_:
+                                                img.paste(im_, (x, y))
                                     i += 1
 
         return img, xy_grids_output, xy_grids_id_list
@@ -690,7 +785,7 @@ class ImgDatabase():
                          for i in range(self.img_count, self.img_num)]
         elif self.type == 3:
             # one file list
-            #flist = self.path_list
+            # flist = self.path_list
             try:
                 flist = [str(Path(self.path_list[i]))
                          for i in range(self.img_count, self.img_count+self.count_per_action)]
@@ -805,6 +900,7 @@ class ImgManager(ImgDatabase):
         img_preprocessing_sub = []
         layout_level_2 = []
         width_2, height_2 = [[], []]
+        gap_x_y_2 = [[], []]
 
         # show original img
         self.show_original = self.layout_params[16]
@@ -818,6 +914,9 @@ class ImgManager(ImgDatabase):
 
             width_2.append(self.to_size[0])
             height_2.append(self.to_size[1])
+
+            gap_x_y_2[0].append(0)
+            gap_x_y_2[1].append(0)
         else:
             layout_level_2.append(0)
 
@@ -833,11 +932,18 @@ class ImgManager(ImgDatabase):
             # get magnifier size
             crop_width = self.crop_points[0][2]-self.crop_points[0][0]
             crop_height = self.crop_points[0][3]-self.crop_points[0][1]
-            _, _, magnifier_img_all_size = self.ImgF.cal_magnifier_size(
-                self.layout_params[8], [crop_width, crop_height], 0, self.layout_params[3][4], self.to_size, len(self.crop_points), self.show_original, box_position=self.layout_params[21], vertical=self.vertical)
+            _, delta, magnifier_img_all_size = self.ImgF.cal_magnifier_size(
+                self.layout_params[8], [crop_width, crop_height], 0, self.layout_params[3][4], self.to_size, len(self.crop_points), self.show_original, self.layout_params[3][3], box_position=self.layout_params[21], vertical=self.vertical)
             img_preprocessing_sub.append(self.magnifier_preprocessing)
-            width_2.append(magnifier_img_all_size[0])
-            height_2.append(magnifier_img_all_size[1])
+            if self.layout_params[21] == 0:
+                width_2.append(magnifier_img_all_size[0])
+                height_2.append(magnifier_img_all_size[1])
+            else:
+                width_2.append(0)
+                height_2.append(0)
+
+            gap_x_y_2[0].append(delta[0])
+            gap_x_y_2[1].append(delta[1])
         else:
             layout_level_2.append(0)
 
@@ -853,16 +959,65 @@ class ImgManager(ImgDatabase):
                     img_preprocessing_sub = [
                         self.title_preprocessing] + img_preprocessing_sub
                     layout_level_2 = [1]+layout_level_2
+
+                    if self.vertical:
+                        gap_x_y_2[0][0] = self.layout_params[3][3]
+                    else:
+                        gap_x_y_2[1][0] = self.layout_params[3][3]
+                    gap_x_y_2[0] = [0]+gap_x_y_2[0]
+                    gap_x_y_2[1] = [0]+gap_x_y_2[1]
+
                 else:
                     # down
                     width_2.append(title_width_height[0])
                     height_2.append(title_width_height[1])
                     img_preprocessing_sub.append(self.title_preprocessing)
                     layout_level_2.append(1)
+
+                    if self.vertical:
+                        gap_x_y_2[1].append(0)
+
+                        if gap_x_y_2[0][-1] >= 0:
+                            gap_x_y_2[0].append(self.layout_params[3][3])
+                        else:
+                            gap_x_y_2[0].append(-gap_x_y_2[0]
+                                                [-1]+self.layout_params[3][3])
+                    else:
+                        gap_x_y_2[0].append(0)
+
+                        if gap_x_y_2[1][-1] >= 0:
+                            gap_x_y_2[1].append(self.layout_params[3][3])
+                        else:
+                            gap_x_y_2[1].append(-gap_x_y_2[1]
+                                                [-1]+self.layout_params[3][3])
+
             else:
                 layout_level_2.append(0)
         else:
             layout_level_2.append(0)
+
+        # fill negative gap
+        if self.vertical:
+            if gap_x_y_2[0][-1] < 0:
+                width_2.append(-gap_x_y_2[0][-1])
+                height_2.append(0)
+                img_preprocessing_sub.append(
+                    self.fill_negative_gap)
+                layout_level_2.append(1)
+                gap_x_y_2[0].append(0)
+                gap_x_y_2[1].append(0)
+        else:
+            if gap_x_y_2[1][-1] < 0:
+                width_2.append(0)
+                height_2.append(-gap_x_y_2[1][-1])
+                img_preprocessing_sub.append(
+                    self.fill_negative_gap)
+                layout_level_2.append(1)
+                gap_x_y_2[0].append(0)
+                gap_x_y_2[1].append(0)
+
+        gap_x_y_2[0][0] = 0
+        gap_x_y_2[1][0] = 0
         if sum(layout_level_2) != 0:
             # Since the title is up, we need to correct crop_points
             if self.magnifier_flag:
@@ -877,7 +1032,6 @@ class ImgManager(ImgDatabase):
             # img_num_per_column,img_num_per_row
             row_col0 = [self.layout_params[2], self.layout_params[0]]
 
-            gap_x_y_2 = [0, self.layout_params[3][3]]
             gap_x_y_1 = [self.layout_params[3][2], 0]
             gap_x_y_0 = [self.layout_params[3][0], self.layout_params[3][1]]
 
@@ -886,7 +1040,7 @@ class ImgManager(ImgDatabase):
                 row_col1.reverse()
                 row_col0.reverse()
 
-                gap_x_y_2.reverse()
+                gap_x_y_2 = gap_x_y_2
                 gap_x_y_1.reverse()
                 gap_x_y_0.reverse()
 
@@ -896,10 +1050,10 @@ class ImgManager(ImgDatabase):
 
             if self.vertical:
                 target_width_2, target_height_2 = [
-                    sum(width_2)+gap_x_y_2[0]*(sum(layout_level_2)-1), height_2[0]]
+                    sum(width_2)+sum(gap_x_y_2[0]), height_2[0]]
             else:
                 target_width_2, target_height_2 = [width_2[0], sum(
-                    height_2)+gap_x_y_2[1]*(sum(layout_level_2)-1)]
+                    height_2)+sum(gap_x_y_2[1])]
             target_width_1, target_height_1 = [0, 0]
             target_width_0, target_height_0 = [0, 0]
 
@@ -1067,6 +1221,9 @@ class ImgManager(ImgDatabase):
 
         return img
 
+    def fill_negative_gap(self, img, id=None):
+        return None
+
     def crop_points_process(self, crop_points, img_mode=0):
         """img_mode, 0: show, 1: save"""
         crop_points_ = []
@@ -1131,7 +1288,7 @@ class ImgManager(ImgDatabase):
 
         # get the size of magnifier img
         to_resize, delta, magnifier_img_all_size = self.ImgF.cal_magnifier_size(
-            magnifier_scale, list(img_list[0].size), img_mode, gap, self.to_size, len(self.crop_points), self.show_original, box_position=self.layout_params[21], vertical=self.vertical)
+            magnifier_scale, list(img_list[0].size), img_mode, gap, self.to_size, len(self.crop_points), self.show_original, self.layout_params[3][3], box_position=self.layout_params[21], vertical=self.vertical)
 
         # resize images
         line_width = self.layout_params[10]
@@ -1185,16 +1342,16 @@ class ImgManager(ImgDatabase):
             height = [to_resize[1] for i in range(len(img_list))]
             gap_x = [0 for i in range(len(img_list))]
             gap_y = self.ImgF.adjust_gap(
-                magnifier_img_all_size[1], len(img_list), height, gap, delta[1])
+                self.to_size[1], len(img_list), height, gap, delta[1])
         else:
             width = [to_resize[0] for i in range(len(img_list))]
             height = [0 for i in range(len(img_list))]
             gap_x = self.ImgF.adjust_gap(
-                magnifier_img_all_size[0], len(img_list), width, gap, delta[0])
+                self.to_size[0], len(img_list), width, gap, delta[0])
             gap_y = [0 for i in range(len(img_list))]
 
-        x = delta[0]
-        y = delta[1]
+        x = 0
+        y = 0
         for i in range(len(img_list)):
             img.paste(img_list[i], (x, y))
             x = x + gap_x[i]+width[i]

@@ -585,9 +585,10 @@ class MulimgViewer (MulimgViewerGui):
         if self.select_img_box.Value:
             # move box
             if self.box_id != -1:
-                show_scale = self.xy_magnifier[self.box_id][4:6]
-                self.xy_magnifier[self.box_id][0:4] = self.move_box_point(
-                    x, y, show_scale)
+                show_scale = self.show_scale.GetLineText(0).split(',')
+                show_scale = [float(x) for x in show_scale]
+                points = self.move_box_point(x, y, show_scale)
+                self.xy_magnifier[self.box_id] = points+show_scale+[self.ImgManager.title_setting[2] and self.ImgManager.title_setting[1]]
                 self.refresh(event)
         else:
             # new box
@@ -714,8 +715,7 @@ class MulimgViewer (MulimgViewerGui):
 
     def magnifier_fc(self, event):
         self.start_flag = 0
-        self.show_scale.Value = "1,1"
-        self.show_scale_proportion = 0
+        # self.show_scale_proportion = 0
         i_cur = 0
         status_toggle = [self.magnifier, self.rotation, self.flip]
         if status_toggle[i_cur].Value:

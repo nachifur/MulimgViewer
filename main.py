@@ -179,8 +179,9 @@ class MulimgViewer (MulimgViewerGui):
                 self.SetStatusText_(
                     ["Save", str(self.ImgManager.action_count), "Save success!", "-1"])
             elif flag == 1:
-                self.SetStatusText_(
-                    ["-1", "-1", "***Error: First, need to select the output dir***", "-1"])
+                self.out_path(event)
+                # self.SetStatusText_(
+                #     ["-1", "-1", "***Error: First, need to select the output dir***", "-1"])
             elif flag == 2:
                 self.SetStatusText_(
                     ["-1", str(self.ImgManager.action_count), "***Error: "+str(self.ImgManager.name_list[self.ImgManager.action_count]) + ", during stitching images***", "-1"])

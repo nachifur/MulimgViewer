@@ -179,9 +179,9 @@ class MulimgViewer (MulimgViewerGui):
                 self.SetStatusText_(
                     ["Save", str(self.ImgManager.action_count), "Save success!", "-1"])
             elif flag == 1:
+                self.SetStatusText_(
+                    ["-1", "-1", "***First, you need to select the output dir***", "-1"])
                 self.out_path(event)
-                # self.SetStatusText_(
-                #     ["-1", "-1", "***Error: First, need to select the output dir***", "-1"])
             elif flag == 2:
                 self.SetStatusText_(
                     ["-1", str(self.ImgManager.action_count), "***Error: "+str(self.ImgManager.name_list[self.ImgManager.action_count]) + ", during stitching images***", "-1"])
@@ -190,7 +190,7 @@ class MulimgViewer (MulimgViewerGui):
                     ["-1", str(self.ImgManager.action_count), "***Error: "+str(self.ImgManager.name_list[self.ImgManager.action_count]) + ", the number of img in sub folders is different***", "-1"])
             elif flag == 4:
                 self.SetStatusText_(
-                    ["-1", str(self.ImgManager.action_count), "***Error: No magnification box, the magnified image should not be saved***", "-1"])
+                    ["-1", str(self.ImgManager.action_count), "***Error: No magnification box, the magnified image can not be saved***", "-1"])
         self.SetStatusText_(["Save", "-1", "-1", "-1"])
 
     def refresh(self, event):
@@ -638,7 +638,7 @@ class MulimgViewer (MulimgViewerGui):
         # zoom
         i_cur = 0
         status_toggle = [self.magnifier, self.rotation, self.flip]
-        if status_toggle[i_cur].Value and (self.key_status["ctrl"] == 1):
+        if status_toggle[i_cur].Value and self.key_status["ctrl"] == 1:
             if event.GetWheelDelta() >= 120:
                 speed = self.get_speed(name="scale")
 
@@ -680,7 +680,8 @@ class MulimgViewer (MulimgViewerGui):
 
     def key_down_detect(self, event):
         if event.GetKeyCode() == wx.WXK_CONTROL:
-            self.key_status["ctrl"] = 1
+            if self.key_status["ctrl"]==0:
+                self.key_status["ctrl"] = 1
         elif event.GetKeyCode() == wx.WXK_SHIFT:
             if self.key_status["shift"] == 0:
                 self.key_status["shift"] = 1
@@ -689,7 +690,8 @@ class MulimgViewer (MulimgViewerGui):
 
     def key_up_detect(self, event):
         if event.GetKeyCode() == wx.WXK_CONTROL:
-            self.key_status["ctrl"] = 0
+            if self.key_status["ctrl"]==1:
+                self.key_status["ctrl"] = 0
         elif event.GetKeyCode() == wx.WXK_SHIFT:
             pass
 

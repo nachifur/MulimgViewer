@@ -81,19 +81,22 @@ MulimgViewer可以轻松的完成纵向与横向的拼接，**支持自动拼接
 
 <img src="https://github.com/nachifur/MulimgViewer/blob/master/img/f7.jpg"/>
 
-同时支持**任意位置**划框（鼠标左键按住移动），**多框**并行放大（鼠标右键点击，生成新的框）。[详细见](#5.4.12)
+同时支持**任意位置**划框（鼠标左键按住移动），**多框**并行放大（鼠标右键点击，生成新的框）。[详细见](#5.4.11)
 
 ![image](https://github.com/nachifur/MulimgViewer/blob/master/img/f11.gif)
 
 ### 例4：成对数据浏览
-MulimgViewer可以方便的进行成对的数据的浏览、比较。[详细见](#5.4.5)
+MulimgViewer可以方便的进行成对的数据的浏览、比较。[详细见](#5.4.4)
 
 ![image](https://github.com/nachifur/MulimgViewer/blob/master/img/f8.jpg)
 
 ### 例5：一键生成论文对比图
-支持显示标题，调整放大框的位置。
+支持显示标题，调整放大框的位置。放大框的位置选择`middle bottom`，建议`🔍️Scale=-1,-1`;如果选择其他位置，自行调节放大倍数，例如：`🔍️Scale=1.5,1.5`。[详细见](#5.4.14)
 
 ![image](https://github.com/nachifur/MulimgViewer/blob/master/img/f17.jpg)
+
+显示半张图像。使用`NumPerimg`控制几张图像合成一张图像。`Gap(x,y)=*,*,0,*,*`消除间距。
+![image](https://github.com/nachifur/MulimgViewer/blob/master/img/f18.jpg)
 
 ### 例6：支持远程挂载目录图片浏览
 将远程服务器的目录挂载后，在MulimgViewer中选择目录即可，完成图片浏览。
@@ -175,7 +178,7 @@ MulimgViewer可以方便的进行成对的数据的浏览、比较。[详细见]
 
 <img width="250" height="150" src="https://github.com/nachifur/MulimgViewer/blob/master/img/f1.jpg"/>
 
-### 5.4.2  输出模式：
+### 5.4.2  输出模式
 
 Stitch: 将拼接的图像保存到*stitch_images*目录下
 
@@ -189,25 +192,25 @@ Magnifer: 单独保存放大图像，方便用户的后期处理。
 
 默认：`NumPerImg` = -1，这时为程序**自动布局模式**。`NumPerImg` 的意思是几张图像合成一个图像。
 
-### 5.4.4 取消图像排列自动化
-
 当`NumPerImg` = 1或者>1，图像布局为**手动模式**，这时可以调整 `Row` 和 `Col`。
 
-### 5.4.5. 并行模式下的串行显示  <a name="5.4.5"></a> 
+### 5.4.4. 并行模式下的串行显示  <a name="5.4.4"></a> 
 
-在`Parallel auto`和`Parallel manual`模式下，可以并行显示多个文件夹。选中`Parallel+Sequential`，在并行显示的同时，可以串行浏览每个文件夹中的前n张图片，n可由`NumPerImg`设定。
+在`Parallel auto`和`Parallel manual`模式下，可以并行显示多个文件夹。
 
-例如：`Row=5` ,`NumPerImg=4`, `Col=1`, 一次分别读取5个并行目录的4张图片，共20张。`Vertical`可以调整串行方向。
+**Parallel+Sequential：**
 
-修改`Row`和`Col`, 可以控制并行文件夹的二维排布。
+选中`Parallel+Sequential`，在并行显示的同时，可以串行浏览每个文件夹中的前n张图片，n可由`NumPerImg`设定。例如：`Row=5` ,`NumPerImg=4`, `Col=1`, 一次分别读取5个并行目录的4张图片，共20张。`Vertical`可以调整串行方向。修改`Row`和`Col`, 可以控制并行文件夹的二维排布。
 
 ![image](https://github.com/nachifur/MulimgViewer/blob/master/img/Parallel_Sequential.jpg)
 
-### 5.4.6 自动保存
+**Parallel->Sequential：** 将多个文件夹的所有图片，拼接成一个图片列表进行串行显示。
+
+### 5.4.5 自动保存
 
 勾选自动保存`AutoSaveAll`，点击保存💾️，实现批量化操作。
 
-### 5.4.7 图像尺寸归一化
+### 5.4.6 图像尺寸归一化
 
 Fill: 图像尺寸为一组图像中的最大尺寸，填充模式(保持原始像素分辨率)
 
@@ -217,19 +220,19 @@ Resize: 图像尺寸为一组图像中的平均尺寸，缩放模式(不保持�
 
 <img width="250" height="150" src="https://github.com/nachifur/MulimgViewer/blob/master/img/f3.jpg"/>
 
-### 5.4.8 图像间隔
+### 5.4.7 图像间隔
 
 ![image](https://github.com/nachifur/MulimgViewer/blob/master/img/f12.jpg)
 
-### 5.4.9 图像填充
+### 5.4.8 图像填充
 
 支持多种颜色填充。支持背景填充**透明**。**同时支持前景透明度调节**。
 
-### 5.4.10 并行手动模式支持路径导入保存
+### 5.4.9 并行手动模式支持路径导入保存
 
 <img width="250" height="200" src="https://github.com/nachifur/MulimgViewer/blob/master/img/f4.jpg"/>
 
-### 5.4.11 显示、输出尺寸独立
+### 5.4.10 显示、输出尺寸独立
 
 此功能可以保证显示的scale与输出独立。
 
@@ -237,10 +240,10 @@ Resize: 图像尺寸为一组图像中的平均尺寸，缩放模式(不保持�
 1. 同时浏览显示100张图像，屏幕放不下，使用`Scale:Show`缩放即可
 2. 100张拼接造成的保存图片很大，使用`Scale:Out`可以方便控制文件大小
 
-### 5.4.12 并行放大 <a name="5.4.12"></a> 
+### 5.4.11 并行放大 <a name="5.4.11"></a> 
 **操作**:
 
-1. 点击放大按钮
+1. 点击放大按钮`🔍️`
 
 <img width="50" height="50" src="https://github.com/nachifur/MulimgViewer/blob/master/img/f5.jpg"/>
 
@@ -256,13 +259,15 @@ Resize: 图像尺寸为一组图像中的平均尺寸，缩放模式(不保持�
 4. `🔍️Scale`，支持自定义倍数放大，最大不超过原图尺寸。例如：`3,3`，长宽3倍的放大。
 5. `Box:Width`设为0，即可隐藏框。
 6. `Box:Width`单位为pixel，在所有缩放下线宽保持不变。如果在`Scale:Show`为`0.1,0.1`，`Scale:Out`为`1,1`时，显示的框的宽度合适，那么输出框的宽度可能相比图片尺寸偏小。
+7. 点击放大按钮`🔍️`之后，鼠标单击图片选中，然后使用`ctrl`+鼠标滚轮全局缩放图像。
+8. 鼠标滚轮缩放功能，使用缩放因子控制。每次手动填写`Scale:Show`回车之后，缩放因子清零，界面刷新。
 
-**微调box**:
+**移动box**:
 
 （注意：开启`SelectBox`后，使用鼠标左键不能划框）
 1. 选中`SelectBox`
 2. 鼠标左键单击，选中已有的放大框
-3. 然后使用键盘上下左右，微调放大框
+3. 然后使用键盘上下左右(或者鼠标滚轮)，微调放大框(按`shift`键可以改变速度)。使用鼠标右键，快速移动放大框。
 4. 关闭`SelectBox`。
 
 **清除放大框**：
@@ -276,11 +281,18 @@ Resize: 图像尺寸为一组图像中的平均尺寸，缩放模式(不保持�
 2. 鼠标左键双击图片
 3. `Ctrl+R`刷新显示。
 
-### 5.4.13 窗口大小自动化调节
+**不显示box/框**：
+
+1. 不选中`Box:InBox`，去掉原始图片上的框
+2. 不选中`Box:In🔍️`，去掉放大图片上的框
+3. 不选中`ShowImg`，不显示原始图片
+4. 不选中`Show🔍️`，不显示放大图片
+
+### 5.4.12 窗口大小自动化调节
 
 开启`AutoWinSize`，即可实现窗口自动大小调节。
 
-### 5.4.14 浏览图片，精确定位
+### 5.4.13 浏览图片，精确定位
 **粗定位：** 移动slider。
 
 **精确定位：**
@@ -290,6 +302,18 @@ Resize: 图像尺寸为一组图像中的平均尺寸，缩放模式(不保持�
 1. `Help`->`Index table`
 2. 查看图片显示序号
 3. 输入序号，回车
+
+### 5.4.14 标题 <a name="5.4.14"></a> 
+**标题**
+
+1. 关闭`Title:Auto`之后，可以进行自定义显示
+2. 在`Sequential`输入模式下，文件名为`01_DSC.jpg`，不选中`Prefix`和`Suffix`，文件显示为`DSC`。使用数字可以对图片文件进行排序。
+
+**字体**
+
+1. 建议使用安装版`_Setup.exe`
+2. 将字体`1_Calibri-Light.ttf`复制到安装目录`C:\Program Files (x86)\MulimgViewer\font\using`下
+3. `1_Calibri-Light.ttf`中的数字越小，GUI中的字体排序靠前
 
 ## 6. 注意事项以及使用技巧
 

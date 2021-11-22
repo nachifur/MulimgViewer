@@ -90,7 +90,9 @@ MulimgViewer可以方便的进行成对的数据的浏览、比较。[详细见]
 
 ![image](https://github.com/nachifur/MulimgViewer/blob/master/img/f8.jpg)
 
-### 例5：支持远程挂载目录图片浏览
+### 例5：一键生成论文对比图
+
+### 例6：支持远程挂载目录图片浏览
 将远程服务器的目录挂载后，在MulimgViewer中选择目录即可，完成图片浏览。
 1. Ubuntu: 使用ubuntu的文件管理器`nautilus`，stfp://10.8.0.4连接到服务器。
 
@@ -100,13 +102,13 @@ MulimgViewer可以方便的进行成对的数据的浏览、比较。[详细见]
 
 <img width="500" height="200" src="https://github.com/nachifur/MulimgViewer/blob/master/img/f16.jpg"/>
 
-### 例6：支持点按旋转
+### 例7：支持点按旋转
 
 显示多张图片的同时，鼠标左键点击即可完成图片旋转。
 
 ![image](https://github.com/nachifur/MulimgViewer/blob/master/img/f10.gif)
 
-### 例7：批量化resize图片
+### 例8：批量化resize图片
 利用自动保存功能，可以实现批量化resize图片。
 操作：
 1. 输入模式选择：Sequential，选择输入文件夹

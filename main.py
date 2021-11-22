@@ -497,6 +497,12 @@ class MulimgViewer (MulimgViewerGui):
 
             self.SetStatusText_(["Flip", "-1", "-1", "-1"])
 
+        # focus img
+        if self.indextablegui or self.aboutgui:
+            pass
+        else:
+            self.img_panel.Children[0].SetFocus()
+
         # show dir_id
         x, y = event.GetPosition()
         id = self.get_img_id_from_point([x, y])
@@ -544,12 +550,6 @@ class MulimgViewer (MulimgViewerGui):
         y = y-xy_grid[1]
         RGBA = self.ImgManager.img.getpixel((int(x), int(y)))
         self.m_statusBar1.SetStatusText(str(x)+","+str(y)+"/"+str(RGBA), 0)
-
-        # focus img
-        if self.indextablegui or self.aboutgui:
-            pass
-        else:
-            self.img_panel.Children[0].SetFocus()
 
     def img_left_release(self, event):
         if self.magnifier.Value != False:

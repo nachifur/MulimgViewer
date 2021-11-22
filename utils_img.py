@@ -799,8 +799,8 @@ class ImgDatabase():
         return flist
 
     def get_dir_num(self):
-        num = (self.path_list).shape
-        return num[0]
+        num = len(self.path_list)
+        return num
 
 
 class ImgManager(ImgDatabase):

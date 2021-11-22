@@ -73,7 +73,7 @@ v3.9.3以后，`Windows 10`提供安装版`_Setup.exe`和便携版`_Portable.exe
 
 ![image](https://github.com/nachifur/MulimgViewer/blob/master/img/Parallel_select.jpg)
 
-图片并行挑选：`Parallel auto` or `Parallel manual`，关闭`Parallel+Sequential`（默认使用复制，选中`Move file`为剪切）。
+图片并行挑选：`Parallel auto` or `Parallel manual`，关闭`Parallel+Sequential`（默认使用复制，选中`MoveFile`为剪切）。
 
 ### 例3：并行放大 
 
@@ -91,6 +91,9 @@ MulimgViewer可以方便的进行成对的数据的浏览、比较。[详细见]
 ![image](https://github.com/nachifur/MulimgViewer/blob/master/img/f8.jpg)
 
 ### 例5：一键生成论文对比图
+支持显示标题，调整放大框的位置。
+
+![image](https://github.com/nachifur/MulimgViewer/blob/master/img/f17.jpg)
 
 ### 例6：支持远程挂载目录图片浏览
 将远程服务器的目录挂载后，在MulimgViewer中选择目录即可，完成图片浏览。
@@ -113,8 +116,8 @@ MulimgViewer可以方便的进行成对的数据的浏览、比较。[详细见]
 操作：
 1. 输入模式选择：Sequential，选择输入文件夹
 2. 选择保存文件的输出目录
-3. 勾选自动保存`Auto save all`
-4. 设置`Truth resolution`为固定的大小，例如：`256,256`
+3. 勾选自动保存`AutoSaveAll`
+4. 设置`TruthResolution`为固定的大小，例如：`256,256`
 5. 点击保存💾️
 
 ## 5. 使用说明
@@ -124,7 +127,7 @@ MulimgViewer可以方便的进行成对的数据的浏览、比较。[详细见]
 ![image](https://github.com/nachifur/MulimgViewer/blob/master/img/Shortcut_bar.jpg)
 
 ## 5.2 操作流程 <a name="5.2"></a> 
-1. 在**Setting中填写布局参数**：row（一行有几张图片）, num per img（一个图片由几个子图片组成）, col（一列有几个图片）
+1. 在**Setting中填写布局参数**：`Row`（一行有几张图片）, `NumPerImg`（一个图片由几个子图片组成）, `Col`（一列有几个图片）
 2. File->Open，选择**输入模式**
 
     2.1. Sequential: 一个文件夹多张图片。
@@ -135,9 +138,9 @@ MulimgViewer可以方便的进行成对的数据的浏览、比较。[详细见]
 
     2.4. Image file list： 从文件导入图片列表文件
 
-3. 这时图片显示在面板，可以使用**next、last**查看下一张，上一张图片
+3. 这时图片显示在面板，可以使用`>`查看下一张，`<`查看上一张图片
 4. File->Select output path, **选择输出的路径**。
-5. Setting->Output mode, 选择输出模式
+5. Setting->OutputMode, 选择输出模式
 6. 点击保存💾️
 
 ## 5.3 快捷键
@@ -168,7 +171,7 @@ MulimgViewer可以方便的进行成对的数据的浏览、比较。[详细见]
 
 `Image File List`是**自定义模式**，从txt, csv文件导入图片列表。支持csv文件多行多列显示。
 
-如果需要自动排布，`Num per img`设为-1。
+如果需要自动排布，`NumPerImg`设为-1。
 
 <img width="250" height="150" src="https://github.com/nachifur/MulimgViewer/blob/master/img/f1.jpg"/>
 
@@ -176,7 +179,7 @@ MulimgViewer可以方便的进行成对的数据的浏览、比较。[详细见]
 
 Stitch: 将拼接的图像保存到*stitch_images*目录下
 
-Select: 分别保存当前浏览的图像到不同的文件夹，默认为copy模式，选中`Move file`为剪切模式。（推荐的输入模式为`Parallel auto`或`Parallel manual`，关闭`Parallel+Sequential`）
+Select: 分别保存当前浏览的图像到不同的文件夹，默认为copy模式，选中`MoveFile`为剪切模式。（推荐的输入模式为`Parallel auto`或`Parallel manual`，关闭`Parallel+Sequential`和`Parallel->Sequential`）
 
 Magnifer: 单独保存放大图像，方便用户的后期处理。
 
@@ -184,25 +187,25 @@ Magnifer: 单独保存放大图像，方便用户的后期处理。
 
 ### 5.4.3 图像排列自动化
 
-默认：`Num per img` = -1，这时为程序**自动布局模式**。`Num per img` 的意思是几张图像合成一个图像。
+默认：`NumPerImg` = -1，这时为程序**自动布局模式**。`NumPerImg` 的意思是几张图像合成一个图像。
 
 ### 5.4.4 取消图像排列自动化
 
-当`num per img` = 1或者>1，图像布局为**手动模式**，这时可以调整 `row` 和 `col`。
+当`NumPerImg` = 1或者>1，图像布局为**手动模式**，这时可以调整 `Row` 和 `Col`。
 
 ### 5.4.5. 并行模式下的串行显示  <a name="5.4.5"></a> 
 
-在`Parallel auto`和`Parallel manual`模式下，可以并行显示多个文件夹。选中`Parallel+Sequential`，在并行显示的同时，可以串行浏览每个文件夹中的前n张图片，n可由`Num per img`设定。
+在`Parallel auto`和`Parallel manual`模式下，可以并行显示多个文件夹。选中`Parallel+Sequential`，在并行显示的同时，可以串行浏览每个文件夹中的前n张图片，n可由`NumPerImg`设定。
 
-例如：`row=5` ,`Num per img=4`, `col=1`, 一次分别读取5个并行目录的4张图片，共20张。`Vertical`可以调整串行方向。
+例如：`Row=5` ,`NumPerImg=4`, `Col=1`, 一次分别读取5个并行目录的4张图片，共20张。`Vertical`可以调整串行方向。
 
-修改`row`和`col`, 可以控制并行文件夹的二维排布。
+修改`Row`和`Col`, 可以控制并行文件夹的二维排布。
 
 ![image](https://github.com/nachifur/MulimgViewer/blob/master/img/Parallel_Sequential.jpg)
 
 ### 5.4.6 自动保存
 
-勾选自动保存`Auto save all`，点击保存💾️，实现批量化操作。
+勾选自动保存`AutoSaveAll`，点击保存💾️，实现批量化操作。
 
 ### 5.4.7 图像尺寸归一化
 
@@ -231,8 +234,8 @@ Resize: 图像尺寸为一组图像中的平均尺寸，缩放模式(不保持�
 此功能可以保证显示的scale与输出独立。
 
 **应用场景**：
-1. 同时浏览显示100张图像，屏幕放不下，使用`Show scale`缩放即可
-2. 100张拼接造成的保存图片很大，使用`Output scale`可以方便控制文件大小
+1. 同时浏览显示100张图像，屏幕放不下，使用`Scale:Show`缩放即可
+2. 100张拼接造成的保存图片很大，使用`Scale:Out`可以方便控制文件大小
 
 ### 5.4.12 并行放大 <a name="5.4.12"></a> 
 **操作**:
@@ -247,35 +250,35 @@ Resize: 图像尺寸为一组图像中的平均尺寸，缩放模式(不保持�
 
 **Tip**:
 
-1. 开启`🔍️Keep size`，即可获得与原始图片长宽比一样的放大结果。
+1. 开启`🔍️KeepSize`，即可获得与原始图片长宽比一样的放大结果。
 2. `🔍️Scale`，默认为`-1,1`，自动设置scale。
 3. 可以选中`Vertical`,`Crtl+R`刷新显示，放大图像放置在原图的左侧。
 4. `🔍️Scale`，支持自定义倍数放大，最大不超过原图尺寸。例如：`3,3`，长宽3倍的放大。
-5. `Draw line width`设为0，即可隐藏框。
-6. `Draw line width`单位为pixel，在所有缩放下线宽保持不变。如果在`Show scale`为`0.1,0.1`，`Output scale`为`1,1`时，显示的框的宽度合适，那么输出框的宽度可能相比图片尺寸偏小。
+5. `Box:Width`设为0，即可隐藏框。
+6. `Box:Width`单位为pixel，在所有缩放下线宽保持不变。如果在`Scale:Show`为`0.1,0.1`，`Scale:Out`为`1,1`时，显示的框的宽度合适，那么输出框的宽度可能相比图片尺寸偏小。
 
 **微调box**:
 
-（注意：开启`Select box`后，使用鼠标左键不能划框）
-1. 选中`Select box`
+（注意：开启`SelectBox`后，使用鼠标左键不能划框）
+1. 选中`SelectBox`
 2. 鼠标左键单击，选中已有的放大框
 3. 然后使用键盘上下左右，微调放大框
-4. 关闭`Select box`。
+4. 关闭`SelectBox`。
 
 **清除放大框**：
 
 方法1：
-1. 选中`Select box`，键盘`Del`，删除特定`box`
-2. 关闭`Select box`，键盘`Del`，删除所有`box`
+1. 选中`SelectBox`，键盘`Del`，删除特定`box`
+2. 关闭`SelectBox`，键盘`Del`，删除所有`box`
 
 方法2：
-1. 关闭`Select box`
+1. 关闭`SelectBox`
 2. 鼠标左键双击图片
 3. `Ctrl+R`刷新显示。
 
 ### 5.4.13 窗口大小自动化调节
 
-开启`Auto layout`，即可实现窗口自动大小调节。
+开启`AutoWinSize`，即可实现窗口自动大小调节。
 
 ### 5.4.14 浏览图片，精确定位
 **粗定位：** 移动slider。
@@ -307,9 +310,9 @@ Resize: 图像尺寸为一组图像中的平均尺寸，缩放模式(不保持�
 
 ### 6.2 多图拼接，超大像素图片，窗口大小问题
 
-1. 关闭`Auto layout`，最大化窗口
-2. 调节`Show scale`，`0.2,0.2`缩小，`2,2`放大
-3. 更改`Truth resolution`,将所有照片resize到同一尺寸，**对于浏览及其友好**
+1. 关闭`AutoWinSize`，最大化窗口
+2. 调节`Scale:Show`，`0.2,0.2`缩小，`2,2`放大
+3. 更改`TruthResolution`,将所有照片resize到同一尺寸，**对于浏览及其友好**
 
 ## 7. 未来增强功能
 感谢各位提供意见！大家可以在issues中发表意见，采用的会致谢大家！如果大家希望可以和我一起合作开发，请联系我！

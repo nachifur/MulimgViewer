@@ -5222,12 +5222,13 @@
                                                     <property name="tooltip"></property>
                                                     <property name="validator_data_type"></property>
                                                     <property name="validator_style">wxFILTER_NONE</property>
-                                                    <property name="validator_type">wxDefaultValidator</property>
+                                                    <property name="validator_type">wxTextValidator</property>
                                                     <property name="validator_variable"></property>
                                                     <property name="value">1,1</property>
                                                     <property name="window_extra_style"></property>
                                                     <property name="window_name"></property>
                                                     <property name="window_style"></property>
+                                                    <event name="OnTextEnter">show_scale_change</event>
                                                 </object>
                                             </object>
                                             <object class="sizeritem" expanded="0">

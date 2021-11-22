@@ -446,7 +446,7 @@ class MulimgViewerGui ( wx.Frame ):
 
 		wSizer6.Add( self.m_staticText6, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
-		self.show_scale = wx.TextCtrl( self.scrolledWindow_set, wx.ID_ANY, u"1,1", wx.DefaultPosition, wx.Size( 60,-1 ), 0 )
+		self.show_scale = wx.TextCtrl( self.scrolledWindow_set, wx.ID_ANY, u"1,1", wx.DefaultPosition, wx.Size( 60,-1 ), style=wx.TE_PROCESS_ENTER)
 		wSizer6.Add( self.show_scale, 0, wx.ALL, 5 )
 
 		self.m_staticText7 = wx.StaticText( self.scrolledWindow_set, wx.ID_ANY, u"Out", wx.DefaultPosition, wx.DefaultSize, 0 )
@@ -658,6 +658,7 @@ class MulimgViewerGui ( wx.Frame ):
 		self.select_img_box.Bind( wx.EVT_CHECKBOX, self.select_img_box_func )
 		self.title_auto.Bind( wx.EVT_CHECKBOX, self.title_auto_fc )
 		self.title_down_up.Bind( wx.EVT_CHECKBOX, self.title_down_up_fc )
+		self.show_scale.Bind( wx.EVT_TEXT_ENTER, self.show_scale_change )
 		self.colourPicker_gap.Bind( wx.EVT_COLOURPICKER_CHANGED, self.colour_change )
 		self.background_slider.Bind( wx.EVT_SCROLL, self.background_alpha )
 		self.foreground_slider.Bind( wx.EVT_SCROLL, self.foreground_alpha )
@@ -737,6 +738,9 @@ class MulimgViewerGui ( wx.Frame ):
 		event.Skip()
 
 	def title_down_up_fc( self, event ):
+		event.Skip()
+
+	def show_scale_change( self, event ):
 		event.Skip()
 
 	def colour_change( self, event ):

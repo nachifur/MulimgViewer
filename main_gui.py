@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ###########################################################################
-## Python code generated with wxFormBuilder (version Oct 26 2018)
+## Python code generated with wxFormBuilder (version 3.10.1-0-g8feb16b3)
 ## http://www.wxformbuilder.org/
 ##
 ## PLEASE DO *NOT* EDIT THIS FILE!
@@ -139,7 +139,7 @@ class MulimgViewerGui ( wx.Frame ):
 		self.m_staticText38 = wx.StaticText( self.scrolledWindow_set, wx.ID_ANY, u"Input/Output", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText38.Wrap( -1 )
 
-		self.m_staticText38.SetFont( wx.Font( 12, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD, False, wx.EmptyString ) )
+		self.m_staticText38.SetFont( wx.Font( 12, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL, False, wx.EmptyString ) )
 
 		fgSizer3.Add( self.m_staticText38, 0, wx.ALL, 5 )
 
@@ -234,7 +234,7 @@ class MulimgViewerGui ( wx.Frame ):
 		self.m_staticText16 = wx.StaticText( self.scrolledWindow_set, wx.ID_ANY, u"Layout", wx.DefaultPosition, wx.Size( 100,-1 ), 0 )
 		self.m_staticText16.Wrap( -1 )
 
-		self.m_staticText16.SetFont( wx.Font( 12, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD, False, wx.EmptyString ) )
+		self.m_staticText16.SetFont( wx.Font( 12, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL, False, wx.EmptyString ) )
 
 		fgSizer3.Add( self.m_staticText16, 0, wx.ALL, 5 )
 
@@ -323,7 +323,7 @@ class MulimgViewerGui ( wx.Frame ):
 		self.m_staticText40 = wx.StaticText( self.scrolledWindow_set, wx.ID_ANY, u"Box", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText40.Wrap( -1 )
 
-		self.m_staticText40.SetFont( wx.Font( 12, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD, False, wx.EmptyString ) )
+		self.m_staticText40.SetFont( wx.Font( 12, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL, False, wx.EmptyString ) )
 
 		wSizer7.Add( self.m_staticText40, 0, wx.ALL, 5 )
 
@@ -365,7 +365,7 @@ class MulimgViewerGui ( wx.Frame ):
 		self.m_staticText33 = wx.StaticText( self.scrolledWindow_set, wx.ID_ANY, u"Title", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText33.Wrap( -1 )
 
-		self.m_staticText33.SetFont( wx.Font( 12, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD, False, wx.EmptyString ) )
+		self.m_staticText33.SetFont( wx.Font( 12, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL, False, wx.EmptyString ) )
 
 		wSizer2.Add( self.m_staticText33, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
@@ -432,7 +432,7 @@ class MulimgViewerGui ( wx.Frame ):
 		self.m_staticText20 = wx.StaticText( self.scrolledWindow_set, wx.ID_ANY, u"Scale", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText20.Wrap( -1 )
 
-		self.m_staticText20.SetFont( wx.Font( 12, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD, False, wx.EmptyString ) )
+		self.m_staticText20.SetFont( wx.Font( 12, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL, False, wx.EmptyString ) )
 
 		fgSizer3.Add( self.m_staticText20, 0, wx.ALL, 5 )
 
@@ -446,7 +446,7 @@ class MulimgViewerGui ( wx.Frame ):
 
 		wSizer6.Add( self.m_staticText6, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
-		self.show_scale = wx.TextCtrl( self.scrolledWindow_set, wx.ID_ANY, u"1,1", wx.DefaultPosition, wx.Size( 60,-1 ), style=wx.TE_PROCESS_ENTER)
+		self.show_scale = wx.TextCtrl( self.scrolledWindow_set, wx.ID_ANY, u"1,1", wx.DefaultPosition, wx.Size( 60,-1 ), style=wx.TE_PROCESS_ENTER )
 		wSizer6.Add( self.show_scale, 0, wx.ALL, 5 )
 
 		self.m_staticText7 = wx.StaticText( self.scrolledWindow_set, wx.ID_ANY, u"Out", wx.DefaultPosition, wx.DefaultSize, 0 )
@@ -485,7 +485,7 @@ class MulimgViewerGui ( wx.Frame ):
 		self.m_staticText13 = wx.StaticText( self.scrolledWindow_set, wx.ID_ANY, u"Color/transparency", wx.DefaultPosition, wx.Size( 150,-1 ), 0 )
 		self.m_staticText13.Wrap( -1 )
 
-		self.m_staticText13.SetFont( wx.Font( 12, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD, False, wx.EmptyString ) )
+		self.m_staticText13.SetFont( wx.Font( 12, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL, False, wx.EmptyString ) )
 
 		fgSizer3.Add( self.m_staticText13, 0, wx.ALL, 5 )
 
@@ -685,7 +685,7 @@ class MulimgViewerGui ( wx.Frame ):
 		pass
 
 
-	# Virtual event handlers, overide them in your derived class
+	# Virtual event handlers, override them in your derived class
 	def frame_resize( self, event ):
 		event.Skip()
 

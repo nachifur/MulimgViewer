@@ -182,6 +182,8 @@ class MulimgViewer (MulimgViewerGui):
                 self.SetStatusText_(
                     ["-1", "-1", "***First, you need to select the output dir***", "-1"])
                 self.out_path(event)
+                self.SetStatusText_(
+                    ["-1", "-1","", "-1"])
             elif flag == 2:
                 self.SetStatusText_(
                     ["-1", str(self.ImgManager.action_count), "***Error: "+str(self.ImgManager.name_list[self.ImgManager.action_count]) + ", during stitching images***", "-1"])

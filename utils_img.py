@@ -1457,24 +1457,30 @@ class ImgManager(ImgDatabase):
                     else:
                         self.check.append(0)
         else:
+            
             if not self.parallel_to_sequential:
                 for i in range(len(dir_name)):
                     if not (Path(self.out_path_str)/"select_images"/dir_name[i]).exists():
                         os.makedirs(Path(self.out_path_str) /
                                     "select_images" / dir_name[i])
-
-                    f_path = self.flist[i]
-                    try:
-                        if self.layout_params[11]:
-                            move(f_path, Path(self.out_path_str) / "select_images" /
-                                 dir_name[i] / self.name_list[self.action_count])
-                        else:
-                            copyfile(f_path, Path(self.out_path_str) / "select_images" /
-                                     dir_name[i] / self.name_list[self.action_count])
-                    except:
-                        self.check.append(1)
+                    if self.layout_params[22]: # parallel_sequential
+                        num_per_img = self.layout_params[1]
                     else:
-                        self.check.append(0)
+                        num_per_img = 1
+                    for k in range(num_per_img):
+                        f_path = self.flist[i*num_per_img+k]
+                        name = Path(f_path).name
+                        try:
+                            if self.layout_params[11]:
+                                move(f_path, Path(self.out_path_str) / "select_images" /
+                                    dir_name[i] / name)
+                            else:
+                                copyfile(f_path, Path(self.out_path_str) / "select_images" /
+                                        dir_name[i] / name)
+                        except:
+                            self.check.append(1)
+                        else:
+                            self.check.append(0)
 
         if self.layout_params[11]:
             if self.action_count == 0:

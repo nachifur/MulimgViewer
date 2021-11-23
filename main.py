@@ -872,6 +872,7 @@ class MulimgViewer (MulimgViewerGui):
                     self.parallel_to_sequential.Value,      # 19
                     self.one_img.Value,                     # 20
                     self.box_position.GetSelection(),       # 21
+                    self.parallel_sequential.Value,         # 22
                     self.checkBox_orientation.Value]
 
     def show_img(self):

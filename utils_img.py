@@ -1444,14 +1444,7 @@ class ImgManager(ImgDatabase):
                     f_path = self.path_list[self.action_count *
                                             self.count_per_action+i_]
                     try:
-                        i = 0
-                        for stem in Path(f_path)._cparts:
-                            if i == 0:
-                                str_ = str(self.action_count *
-                                           self.count_per_action+i_)+"_"+stem
-                                i += 1
-                            else:
-                                str_ = str_+"_"+stem
+                        str_ = Path(f_path).parent.stem+"_"+Path(f_path).name
 
                         if self.layout_params[11]:
                             move(f_path, Path(self.out_path_str) / "select_images" /
@@ -1493,20 +1486,9 @@ class ImgManager(ImgDatabase):
             self.get_flist()
 
     def save_stitch(self, dir_name):
+        name_f = self.get_stitch_name()
         if self.type == 3:
-            name_f = self.path_list[self.action_count*self.count_per_action]
-            i = 0
-            for stem in Path(name_f)._cparts:
-                if i == 0:
-                    str_ = str(self.action_count *
-                               self.count_per_action)+"_"+stem
-                    i += 1
-                else:
-                    str_ = str_+"_"+stem
-            name_f = str_
-            name_f = str(Path(name_f).with_suffix(".png"))
-        else:
-            name_f = self.get_stitch_name()
+            name_f = "from_file_"+name_f
         f_path_output = Path(self.out_path_str) / dir_name / name_f
         if not (Path(self.out_path_str)/dir_name).is_dir():
             os.makedirs(Path(self.out_path_str) / dir_name)
@@ -1561,17 +1543,8 @@ class ImgManager(ImgDatabase):
                             f_path = self.path_list[self.action_count *
                                                     self.count_per_action+i_]
                             i = 0
-                            img_name = ""
-                            for stem in Path(f_path)._cparts:
-                                if i == 0:
-                                    str_ = str(self.action_count *
-                                               self.count_per_action+i_)+"_"+stem
-                                else:
-                                    if i == len(Path(f_path)._cparts)-1:
-                                        img_name = stem
-                                    else:
-                                        str_ = str_+"_"+stem
-                                i += 1
+                            
+                            str_ = Path(f_path).parent.stem+"_"+Path(f_path).stem
 
                             img = self.img_list[i_]
                             img_list = self.magnifier_preprocessing(
@@ -1579,7 +1552,7 @@ class ImgManager(ImgDatabase):
                             i = 0
                             for img in img_list:
                                 f_path_output = Path(
-                                    self.out_path_str) / dir_name/sub_dir_name / (str_+"_"+Path(img_name).stem+"_magnifier_"+str(i)+".png")
+                                    self.out_path_str) / dir_name/sub_dir_name / (str_+"_magnifier_"+str(i)+".png")
                                 img.save(f_path_output)
                                 i += 1
                 else:

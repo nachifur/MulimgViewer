@@ -1101,5 +1101,16 @@ class MulimgViewer (MulimgViewerGui):
         self.show_scale_proportion = 0
         self.refresh(event)
 
+    def select_img_box_func( self, event ):
+        if self.select_img_box.Value:
+            self.box_id = -1
+
+    def set_box_color( self, event ):
+        if self.select_img_box.Value:
+            if self.box_id != -1:
+                self.checkBox_auto_draw_color.Value = False
+                self.color_list[self.box_id] = self.colourPicker_draw.GetColour()
+                self.refresh(event)
+
 		# self.show_scale = wx.TextCtrl( self.scrolledWindow_set, wx.ID_ANY, u"1,1", wx.DefaultPosition, wx.Size( 60,-1 ), style=wx.TE_PROCESS_ENTER)
 		# wSizer6.Add( self.show_scale, 0, wx.ALL, 5 )

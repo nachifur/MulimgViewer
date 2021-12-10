@@ -354,9 +354,6 @@ class MulimgViewerGui ( wx.Frame ):
 		self.box_position.SetSelection( 0 )
 		wSizer7.Add( self.box_position, 0, wx.ALL, 5 )
 
-		self.m_button7 = wx.Button( self.scrolledWindow_set, wx.ID_ANY, u"Set Color", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
-		wSizer7.Add( self.m_button7, 0, wx.ALL, 5 )
-
 
 		fgSizer3.Add( wSizer7, 1, wx.EXPAND, 5 )
 
@@ -449,7 +446,7 @@ class MulimgViewerGui ( wx.Frame ):
 
 		wSizer6.Add( self.m_staticText6, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
-		self.show_scale = wx.TextCtrl( self.scrolledWindow_set, wx.ID_ANY, u"1,1", wx.DefaultPosition, wx.Size( 60,-1 ), wx.TE_PROCESS_ENTER )
+		self.show_scale = wx.TextCtrl( self.scrolledWindow_set, wx.ID_ANY, u"1,1", wx.DefaultPosition, wx.Size( 60,-1 ), style=wx.TE_PROCESS_ENTER )
 		wSizer6.Add( self.show_scale, 0, wx.ALL, 5 )
 
 		self.m_staticText7 = wx.StaticText( self.scrolledWindow_set, wx.ID_ANY, u"Out", wx.DefaultPosition, wx.DefaultSize, 0 )
@@ -502,7 +499,7 @@ class MulimgViewerGui ( wx.Frame ):
 
 		wSizer8.Add( self.m_staticText22, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
-		self.colourPicker_draw = wx.ColourPickerCtrl( self.scrolledWindow_set, wx.ID_ANY, wx.Colour( 239, 41, 41 ), wx.DefaultPosition, wx.Size( 30,-1 ), wx.CLRP_DEFAULT_STYLE )
+		self.colourPicker_draw = wx.ColourPickerCtrl( self.scrolledWindow_set, wx.ID_ANY, wx.Colour( 239, 41, 41 ), wx.DefaultPosition, wx.Size( 40,-1 ), wx.CLRP_DEFAULT_STYLE )
 		wSizer8.Add( self.colourPicker_draw, 0, wx.ALL, 5 )
 
 		self.m_staticText17 = wx.StaticText( self.scrolledWindow_set, wx.ID_ANY, u"Gap", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
@@ -510,7 +507,7 @@ class MulimgViewerGui ( wx.Frame ):
 
 		wSizer8.Add( self.m_staticText17, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
-		self.colourPicker_gap = wx.ColourPickerCtrl( self.scrolledWindow_set, wx.ID_ANY, wx.Colour( 255, 255, 255 ), wx.DefaultPosition, wx.Size( 30,-1 ), wx.CLRP_DEFAULT_STYLE )
+		self.colourPicker_gap = wx.ColourPickerCtrl( self.scrolledWindow_set, wx.ID_ANY, wx.Colour( 255, 255, 255 ), wx.DefaultPosition, wx.Size( 40,-1 ), wx.CLRP_DEFAULT_STYLE )
 		wSizer8.Add( self.colourPicker_gap, 0, wx.ALL, 5 )
 
 
@@ -659,7 +656,6 @@ class MulimgViewerGui ( wx.Frame ):
 		self.parallel_sequential.Bind( wx.EVT_CHECKBOX, self.parallel_sequential_fc )
 		self.parallel_to_sequential.Bind( wx.EVT_CHECKBOX, self.parallel_to_sequential_fc )
 		self.select_img_box.Bind( wx.EVT_CHECKBOX, self.select_img_box_func )
-		self.m_button7.Bind( wx.EVT_BUTTON, self.set_box_color )
 		self.title_auto.Bind( wx.EVT_CHECKBOX, self.title_auto_fc )
 		self.title_down_up.Bind( wx.EVT_CHECKBOX, self.title_down_up_fc )
 		self.show_scale.Bind( wx.EVT_TEXT_ENTER, self.show_scale_change )
@@ -736,9 +732,6 @@ class MulimgViewerGui ( wx.Frame ):
 		event.Skip()
 
 	def select_img_box_func( self, event ):
-		event.Skip()
-
-	def set_box_color( self, event ):
 		event.Skip()
 
 	def title_auto_fc( self, event ):

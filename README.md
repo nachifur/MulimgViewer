@@ -206,6 +206,8 @@ Magnifer: 单独保存放大图像，方便用户的后期处理。
 
 **Parallel->Sequential：** 将多个文件夹的所有图片，拼接成一个图片列表进行串行显示。
 
+在`Parallel+Sequential`模式下，各个子文件夹下的文件名称需要一样。在`Parallel->Sequential`模式下，则不需要。
+
 ### 5.4.5 自动保存
 
 勾选自动保存`AutoSaveAll`，点击保存💾️，实现批量化操作。

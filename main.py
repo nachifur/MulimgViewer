@@ -546,9 +546,9 @@ class MulimgViewer (MulimgViewerGui):
         x, y = event.GetPosition()
         id = self.get_img_id_from_point([x, y])
         xy_grid = self.ImgManager.xy_grid[id]
+        RGBA = self.ImgManager.img.getpixel((int(x), int(y)))
         x = x-xy_grid[0]
         y = y-xy_grid[1]
-        RGBA = self.ImgManager.img.getpixel((int(x), int(y)))
         self.m_statusBar1.SetStatusText(str(x)+","+str(y)+"/"+str(RGBA), 0)
 
     def img_left_release(self, event):

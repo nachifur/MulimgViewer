@@ -62,6 +62,9 @@ class MulimgViewer (MulimgViewerGui):
         self.m_statusBar1.SetStatusWidths([-2, -1, -4, -4])
         self.set_title_font()
 
+        # Draw color to box
+        self.colourPicker_draw.Bind(wx.EVT_COLOURPICKER_CHANGED, self.draw_color_change)
+
     def set_title_font(self):
         font_path = Path("font")/"using"
         font_path = Path(get_resource_path(str(font_path)))
@@ -566,7 +569,8 @@ class MulimgViewer (MulimgViewerGui):
             height = np.abs(y-y_0)
             if width > 5 and height > 5:
                 self.xy_magnifier = []
-                self.color_list.append(self.colourPicker_draw.GetColour())
+                if not self.checkBox_auto_draw_color:
+                    self.color_list.append(self.colourPicker_draw.GetColour())
 
                 show_scale = self.show_scale.GetLineText(0).split(',')
                 show_scale = [float(x) for x in show_scale]
@@ -593,7 +597,8 @@ class MulimgViewer (MulimgViewerGui):
         else:
             # new box
             if self.magnifier.Value:
-                self.color_list.append(self.colourPicker_draw.GetColour())
+                if not self.checkBox_auto_draw_color:
+                    self.color_list.append(self.colourPicker_draw.GetColour())
                 try:
                     show_scale = self.show_scale.GetLineText(0).split(',')
                     show_scale = [float(x) for x in show_scale]
@@ -804,18 +809,18 @@ class MulimgViewer (MulimgViewerGui):
 
             if self.checkBox_auto_draw_color.Value:
                 # 10 colors built into the software
-                color = [wx.Colour(217, 26, 42, 85/100*255),
-                         wx.Colour(147, 81, 166, 65/100*255),
-                         wx.Colour(85, 166, 73, 65/100*255),
-                         wx.Colour(242, 229, 48, 95/100*255),
-                         wx.Colour(242, 116, 5, 95/100*255),
-                         wx.Colour(242, 201, 224, 95/100*255),
-                         wx.Colour(36, 132, 191, 75/100*255),
-                         wx.Colour(65, 166, 90, 65/100*255),
-                         wx.Colour(214, 242, 206, 95/100*255),
-                         wx.Colour(242, 163, 94, 95/100*255)]
-            else:
-                color = self.color_list
+                self.color_list = [
+                    wx.Colour(217, 26, 42, 85/100*255),
+                    wx.Colour(147, 81, 166, 65/100*255),
+                    wx.Colour(85, 166, 73, 65/100*255),
+                    wx.Colour(242, 229, 48, 95/100*255),
+                    wx.Colour(242, 116, 5, 95/100*255),
+                    wx.Colour(242, 201, 224, 95/100*255),
+                    wx.Colour(36, 132, 191, 75/100*255),
+                    wx.Colour(65, 166, 90, 65/100*255),
+                    wx.Colour(214, 242, 206, 95/100*255),
+                    wx.Colour(242, 163, 94, 95/100*255)]
+            color = self.color_list
 
             line_width = int(self.line_width.GetLineText(0))
 
@@ -1103,3 +1108,17 @@ class MulimgViewer (MulimgViewerGui):
 
 		# self.show_scale = wx.TextCtrl( self.scrolledWindow_set, wx.ID_ANY, u"1,1", wx.DefaultPosition, wx.Size( 60,-1 ), style=wx.TE_PROCESS_ENTER)
 		# wSizer6.Add( self.show_scale, 0, wx.ALL, 5 )
+    
+    def select_img_box_func(self, event):
+        if self.select_img_box.Value:
+            self.box_id = -1
+        event.Skip()
+
+    def draw_color_change(self, event):
+        if self.select_img_box.Value:
+            if self.box_id != -1:
+                if self.checkBox_auto_draw_color.Value:
+                    self.checkBox_auto_draw_color.Value = False
+                self.color_list[self.box_id] = self.colourPicker_draw.GetColour()
+                self.refresh(event)
+        event.Skip()

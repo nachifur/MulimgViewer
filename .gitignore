@@ -10,5 +10,5 @@ test_output/select*
 *.spec
 *.pptx
 font/all/
-
+.venv/
 

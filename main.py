@@ -569,8 +569,7 @@ class MulimgViewer (MulimgViewerGui):
             height = np.abs(y-y_0)
             if width > 5 and height > 5:
                 self.xy_magnifier = []
-                if not self.checkBox_auto_draw_color:
-                    self.color_list.append(self.colourPicker_draw.GetColour())
+                self.color_list.append(self.colourPicker_draw.GetColour())
 
                 show_scale = self.show_scale.GetLineText(0).split(',')
                 show_scale = [float(x) for x in show_scale]
@@ -597,8 +596,7 @@ class MulimgViewer (MulimgViewerGui):
         else:
             # new box
             if self.magnifier.Value:
-                if not self.checkBox_auto_draw_color:
-                    self.color_list.append(self.colourPicker_draw.GetColour())
+                self.color_list.append(self.colourPicker_draw.GetColour())
                 try:
                     show_scale = self.show_scale.GetLineText(0).split(',')
                     show_scale = [float(x) for x in show_scale]

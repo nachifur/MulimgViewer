@@ -148,7 +148,7 @@ MulimgViewer可以方便的进行成对的数据的浏览、比较。[详细见]
 3. 打开文件夹，导入路径
 4. 这时图片显示在面板，可以使用`>`查看下一张，`<`查看上一张图片
 5. `Input/OutPut`->OutputMode, 选择输出模式
-6. File->Select output path, **选择输出的路径**。
+6. `File->Select output path`, **选择输出的路径**。
 7. 点击保存💾️
 
 ## 5.3 快捷键

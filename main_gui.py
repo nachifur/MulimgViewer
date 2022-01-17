@@ -446,7 +446,7 @@ class MulimgViewerGui ( wx.Frame ):
 
 		wSizer6.Add( self.m_staticText6, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
-		self.show_scale = wx.TextCtrl( self.scrolledWindow_set, wx.ID_ANY, u"1,1", wx.DefaultPosition, wx.Size( 60,-1 ), 0 )
+		self.show_scale = wx.TextCtrl( self.scrolledWindow_set, wx.ID_ANY, u"1,1", wx.DefaultPosition, wx.Size( 60,-1 ), style=wx.TE_PROCESS_ENTER)
 		wSizer6.Add( self.show_scale, 0, wx.ALL, 5 )
 
 		self.m_staticText7 = wx.StaticText( self.scrolledWindow_set, wx.ID_ANY, u"Out", wx.DefaultPosition, wx.DefaultSize, 0 )

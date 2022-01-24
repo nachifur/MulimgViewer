@@ -1,0 +1,9 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+- family-names: "Liu"
+  given-names: "Jiawei"
+  orcid: "https://orcid.org/0000-0002-7516-5008"
+title: "MulimgViewer: A multi-image viewer for image comparison and image stitching"
+url: "https://github.com/nachifur/MulimgViewer"
+license: GPL-3

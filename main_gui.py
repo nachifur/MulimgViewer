@@ -185,7 +185,7 @@ class MulimgViewerGui ( wx.Frame ):
 
 		image_interpChoices = [ u"Nearest", u"Cubic", u"Linear" ]
 		self.image_interp = wx.Choice( self.scrolledWindow_set, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, image_interpChoices, 0 )
-		self.image_interp.SetSelection( 0 )
+		self.image_interp.SetSelection( 2 )
 		bSizer23.Add( self.image_interp, 0, wx.ALL, 5 )
 
 
@@ -346,7 +346,7 @@ class MulimgViewerGui ( wx.Frame ):
 
 		wSizer7.Add( self.m_staticText23, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
-		self.line_width = wx.TextCtrl( self.scrolledWindow_set, wx.ID_ANY, u"2", wx.DefaultPosition, wx.Size( 40,-1 ), 0 )
+		self.line_width = wx.TextCtrl( self.scrolledWindow_set, wx.ID_ANY, u"2,2", wx.DefaultPosition, wx.Size( 40,-1 ), 0 )
 		wSizer7.Add( self.line_width, 0, wx.ALL, 5 )
 
 		box_positionChoices = [ u"middle bottom", u"left bottom", u"right bottom", u"left top", u"right top" ]

@@ -826,7 +826,8 @@ class MulimgViewer (MulimgViewerGui):
                 
             color = self.color_list
 
-            line_width = int(self.line_width.GetLineText(0))
+            line_width = self.line_width.GetLineText(0).split(',')
+            line_width = [int(x) for x in line_width]
 
             title_setting = [self.title_auto.Value,                     # 0
                              self.title_show.Value,                     # 1

@@ -1122,7 +1122,7 @@ class ImgManager(ImgDatabase):
                                 crop_point[1] = crop_point[1]+offset[1]
                                 crop_point[3] = crop_point[3]+offset[1]
                     self.img = self.ImgF.draw_rectangle(
-                        self.img, self.xy_grid, crop_points, self.layout_params[9], line_width=self.layout_params[10])
+                        self.img, self.xy_grid, crop_points, self.layout_params[9], line_width=self.layout_params[10][0])
             except:
                 return 1
             else:
@@ -1301,7 +1301,7 @@ class ImgManager(ImgDatabase):
             magnifier_scale, list(img_list[0].size), img_mode, gap, self.to_size, len(self.crop_points), self.show_original, self.layout_params[3][3], box_position=self.box_position, vertical=self.vertical)
 
         # resize images
-        line_width = self.layout_params[10]
+        line_width = self.layout_params[10][1]
         color_list = self.layout_params[9]
         image_interp = self.layout_params[13]
         if image_interp == 1:
@@ -1596,7 +1596,7 @@ class ImgManager(ImgDatabase):
             img = self.img_preprocessing(img, id=self.get_img_id(i))
             if self.show_box:
                 img = self.ImgF.draw_rectangle(img, self.xy_grid, self.crop_points,
-                                               self.layout_params[9], line_width=self.layout_params[10], single_box=True)
+                                               self.layout_params[9], line_width=self.layout_params[10][0], single_box=True)
             f_path_output = Path(self.out_path_str)/sub_dir_name/(Path(self.flist[i]).parent).stem / (
                 (Path(self.flist[i]).parent).stem+"_"+Path(self.flist[i]).stem+".png")
             if not (Path(self.out_path_str)/sub_dir_name/(Path(self.flist[i]).parent).stem).is_dir():

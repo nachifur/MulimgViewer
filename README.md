@@ -370,11 +370,11 @@ Resize: 图像尺寸为一组图像中的平均尺寸，缩放模式(不保持�
 ## 9. 引用
 如果您在研究中使用此项目，请使用以下BibTeX条目。
 ```
-@misc{MulimgViewer2020,
-  author =       {Liu, Jiawei},
-  title =        {{MulimgViewer: A multi-image viewer for image comparison and image stitching}},
-  howpublished = {\url{https://github.com/nachifur/MulimgViewer}},
-  year =         {2020}
+@software{MulimgViewer,
+  author  = {Liu, Jiawei},
+  license = {GPL-3},
+  title   = {{MulimgViewer: A multi-image viewer for image comparison and image stitching}},
+  url     = {https://github.com/nachifur/MulimgViewer}
 }
 ```
 

@@ -44,7 +44,7 @@ qq交流群：945669929
 <img width="250" height="355" src="https://github.com/nachifur/MulimgViewer/blob/master/img/qrcode.jpg"/>
 
 ## 2. python源码运行(windows\linux\ios)
-v3.9.1以后仅提供`Windows 10`的包（`amd64`）。其他环境可以使用源码运行。建议使用Python3.6以上。
+v3.9.1以后仅提供`Windows 10`的包（`amd64`）。其他环境可以使用[源码](https://codeload.github.com/nachifur/MulimgViewer/zip/refs/heads/master)运行。建议使用Python3.6以上。
 
 pip安装：（如果安装过程出错，可以使用conda安装）
 ```bash

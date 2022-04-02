@@ -35,10 +35,8 @@ MulimgViewer**多图像浏览器**，在一个界面显示多个图像，方便�
 ![image](https://github.com/nachifur/MulimgViewer/blob/master/img/f6.gif)
 
 **下载地址：**
-
-稳定版（package+code）： https://github.com/nachifur/MulimgViewer/releases
-
-最新（code）： https://codeload.github.com/nachifur/MulimgViewer/zip/refs/heads/master
+* 稳定版(package+code): https://github.com/nachifur/MulimgViewer/releases
+* 最新(code): https://codeload.github.com/nachifur/MulimgViewer/zip/refs/heads/master
 
 
 [**快速上手**](#5.2)

@@ -883,6 +883,8 @@ class MulimgViewer (MulimgViewerGui):
                     self.one_img.Value,                     # 20
                     self.box_position.GetSelection(),       # 21
                     self.parallel_sequential.Value,         # 22
+                    self.auto_save_all.Value,               # 23
+                    ######                                  # add new in this line
                     self.checkBox_orientation.Value]
 
     def show_img(self):

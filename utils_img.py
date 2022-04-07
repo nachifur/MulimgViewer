@@ -1523,7 +1523,11 @@ class ImgManager(ImgDatabase):
             name_end = Path(name_end).stem
         name = name_first + "-" + name_end
         name = Path(name).with_suffix(".png")
-        return str(name)
+        if self.layout_params[23]:
+            # when automatically saving
+            return str(Path(name_first).with_suffix(".png"))
+        else:
+            return str(name)
 
     def save_magnifier(self, dir_name):
         try:

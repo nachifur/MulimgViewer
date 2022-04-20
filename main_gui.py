@@ -110,12 +110,14 @@ class MulimgViewerGui ( wx.Frame ):
 		fgSizer5.SetNonFlexibleGrowMode( wx.FLEX_GROWMODE_SPECIFIED )
 
 		fgSizer5.SetMinSize( wx.Size( 1000,600 ) )
-		self.scrolledWindow_img = wx.ScrolledWindow( self, wx.ID_ANY, wx.DefaultPosition, wx.Size( -1,-1 ), wx.HSCROLL|wx.VSCROLL )
+		self.m_splitter1 = wx.SplitterWindow( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.SP_3D )
+		self.scrolledWindow_img = wx.ScrolledWindow( self.m_splitter1, wx.ID_ANY, wx.DefaultPosition, wx.Size( -1,-1 ), wx.HSCROLL|wx.VSCROLL )
 		self.scrolledWindow_img.SetScrollRate( 5, 5 )
 		fgSizer4 = wx.FlexGridSizer( 2, 1, 0, 0 )
 		fgSizer4.SetFlexibleDirection( wx.BOTH )
 		fgSizer4.SetNonFlexibleGrowMode( wx.FLEX_GROWMODE_SPECIFIED )
 
+		fgSizer4.SetMinSize( wx.Size( 700,600 ) )
 		self.m_staticText1 = wx.StaticText( self.scrolledWindow_img, wx.ID_ANY, u"Image show area", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText1.Wrap( -1 )
 
@@ -128,14 +130,13 @@ class MulimgViewerGui ( wx.Frame ):
 		self.scrolledWindow_img.SetSizer( fgSizer4 )
 		self.scrolledWindow_img.Layout()
 		fgSizer4.Fit( self.scrolledWindow_img )
-		fgSizer5.Add( self.scrolledWindow_img, 1, wx.ALL|wx.EXPAND, 5 )
-
-		self.scrolledWindow_set = wx.ScrolledWindow( self, wx.ID_ANY, wx.DefaultPosition, wx.Size( -1,-1 ), wx.HSCROLL|wx.VSCROLL )
+		self.scrolledWindow_set = wx.ScrolledWindow( self.m_splitter1, wx.ID_ANY, wx.DefaultPosition, wx.Size( -1,-1 ), wx.HSCROLL|wx.VSCROLL )
 		self.scrolledWindow_set.SetScrollRate( 5, 5 )
 		fgSizer3 = wx.FlexGridSizer( 0, 1, 0, 0 )
 		fgSizer3.SetFlexibleDirection( wx.BOTH )
 		fgSizer3.SetNonFlexibleGrowMode( wx.FLEX_GROWMODE_SPECIFIED )
 
+		fgSizer3.SetMinSize( wx.Size( 300,600 ) )
 		self.m_staticText38 = wx.StaticText( self.scrolledWindow_set, wx.ID_ANY, u"Input/Output", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText38.Wrap( -1 )
 
@@ -557,7 +558,8 @@ class MulimgViewerGui ( wx.Frame ):
 		self.scrolledWindow_set.SetSizer( fgSizer3 )
 		self.scrolledWindow_set.Layout()
 		fgSizer3.Fit( self.scrolledWindow_set )
-		fgSizer5.Add( self.scrolledWindow_set, 1, wx.ALL|wx.EXPAND, 5 )
+		self.m_splitter1.SplitVertically( self.scrolledWindow_img, self.scrolledWindow_set, -1 )
+		fgSizer5.Add( self.m_splitter1, 1, wx.EXPAND, 5 )
 
 
 		fgSizer1.Add( fgSizer5, 1, wx.EXPAND, 5 )
@@ -652,6 +654,8 @@ class MulimgViewerGui ( wx.Frame ):
 		self.magnifier.Bind( wx.EVT_TOGGLEBUTTON, self.magnifier_fc )
 		self.rotation.Bind( wx.EVT_TOGGLEBUTTON, self.rotation_fc )
 		self.flip.Bind( wx.EVT_TOGGLEBUTTON, self.flip_fc )
+		self.m_splitter1.Bind( wx.EVT_SPLITTER_SASH_POS_CHANGED, self.split_sash_pos_changed )
+		self.m_splitter1.Bind( wx.EVT_SPLITTER_SASH_POS_CHANGING, self.split_sash_pos_changing )
 		self.choice_normalized_size.Bind( wx.EVT_CHOICE, self.change_img_stitch_mode )
 		self.parallel_sequential.Bind( wx.EVT_CHECKBOX, self.parallel_sequential_fc )
 		self.parallel_to_sequential.Bind( wx.EVT_CHECKBOX, self.parallel_to_sequential_fc )
@@ -720,6 +724,12 @@ class MulimgViewerGui ( wx.Frame ):
 		event.Skip()
 
 	def flip_fc( self, event ):
+		event.Skip()
+
+	def split_sash_pos_changed( self, event ):
+		event.Skip()
+
+	def split_sash_pos_changing( self, event ):
 		event.Skip()
 
 	def change_img_stitch_mode( self, event ):

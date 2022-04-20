@@ -1,3 +1,4 @@
+from regex import E
 import wx
 from wx.core import App, Width
 from main_gui import MulimgViewerGui
@@ -61,6 +62,21 @@ class MulimgViewer (MulimgViewerGui):
         self.SetIcon(self.icon)
         self.m_statusBar1.SetStatusWidths([-2, -1, -4, -4])
         self.set_title_font()
+
+        # Different platforms may need to adjust the width of the scrolledWindow_set
+        sys_platform = platform.system()
+        if sys_platform.find("Windows") >= 0:
+            self.width_setting = 300
+        elif sys_platform.find("Linux") >= 0:
+            self.width_setting = 280
+        elif sys_platform.find("Darwin") >= 0:
+            self.width_setting = 350
+        else:
+            self.width_setting = 300
+
+        self.SashPosition = self.width-self.width_setting
+        self.m_splitter1.SetSashPosition(self.SashPosition)
+        self.split_changing = False
 
         # Draw color to box
         self.colourPicker_draw.Bind(wx.EVT_COLOURPICKER_CHANGED, self.draw_color_change)
@@ -976,6 +992,9 @@ class MulimgViewer (MulimgViewerGui):
         self.auto_layout()
         self.SetStatusText_(["Stitch", "-1", "-1", "-1"])
 
+        # issue: You need to change the window size, then the scrollbar starts to display.
+        self.scrolledWindow_img.FitInside() 
+        
     def auto_layout(self, frame_resize=False):
         # Auto Layout
 
@@ -991,29 +1010,18 @@ class MulimgViewer (MulimgViewerGui):
         self.displaySize[0] = self.displaySize[0]-50
         self.displaySize[1] = self.displaySize[1]-50
 
-        # Different platforms may need to adjust the width of the scrolledWindow_set
-        sys_platform = platform.system()
-        if sys_platform.find("Windows") >= 0:
-            width_setting = 300
-        elif sys_platform.find("Linux") >= 0:
-            width_setting = 280
-        elif sys_platform.find("Darwin") >= 0:
-            width_setting = 350
-        else:
-            width_setting = 300
-
         offset_width_img_show = 20
 
         if self.auto_layout_check.Value and (not frame_resize):
             if self.img_size[0] < self.width:
-                if self.img_size[0]+width_setting+offset_width_img_show < self.width:
+                if self.img_size[0]+self.width_setting+offset_width_img_show < self.width:
                     w = self.width
                 else:
-                    w = self.img_size[0]+width_setting+offset_width_img_show
-            elif self.img_size[0]+width_setting+offset_width_img_show > self.displaySize[0]:
+                    w = self.img_size[0]+self.width_setting+offset_width_img_show
+            elif self.img_size[0]+self.width_setting+offset_width_img_show > self.displaySize[0]:
                 w = self.displaySize[0]
             else:
-                w = self.img_size[0]+width_setting+offset_width_img_show
+                w = self.img_size[0]+self.width_setting+offset_width_img_show
 
             if self.img_size[1] < self.height:
                 if self.img_size[1]+200 < self.height:
@@ -1026,13 +1034,40 @@ class MulimgViewer (MulimgViewerGui):
                 h = self.img_size[1]+200
             self.Size = wx.Size((w, h))
 
+        self.init_min_size()
+
         self.scrolledWindow_set.SetMinSize(
-            wx.Size((width_setting, -1)))
+            wx.Size((self.width_setting, -1)))
         self.scrolledWindow_img.SetMinSize(
-            wx.Size((self.Size[0]-width_setting, self.Size[1]-150)))
+            wx.Size((self.Size[0]-self.width_setting, self.Size[1]-150)))
 
         self.Layout()
         self.Refresh()
+
+
+    def init_min_size(self):
+        self.scrolledWindow_set.SetMinSize(
+            wx.Size((5, -1)))
+        self.scrolledWindow_img.SetMinSize(
+            wx.Size((5, self.Size[1]-150)))
+
+    def split_sash_pos_changing(self,event):
+
+        self.init_min_size()
+        self.split_changing = True
+
+    def split_sash_pos_changed(self, event):
+        self.SashPosition = self.m_splitter1.SashPosition
+
+        if self.split_changing:
+            self.width_setting = self.Size[0]-self.SashPosition
+
+        self.scrolledWindow_set.SetMinSize(
+            wx.Size((self.Size[0]-self.SashPosition, -1)))
+        self.scrolledWindow_img.SetMinSize(
+            wx.Size((self.SashPosition, self.Size[1]-150)))
+
+        self.split_changing = False
 
     def about_gui(self, event):
         self.aboutgui = About(None)

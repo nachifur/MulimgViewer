@@ -1047,9 +1047,9 @@ class MulimgViewer (MulimgViewerGui):
 
     def init_min_size(self):
         self.scrolledWindow_set.SetMinSize(
-            wx.Size((5, -1)))
+            wx.Size((50, -1)))
         self.scrolledWindow_img.SetMinSize(
-            wx.Size((5, self.Size[1]-150)))
+            wx.Size((50, self.Size[1]-150)))
 
     def split_sash_pos_changing(self,event):
 
@@ -1063,11 +1063,12 @@ class MulimgViewer (MulimgViewerGui):
             self.width_setting = self.Size[0]-self.SashPosition
 
         self.scrolledWindow_set.SetMinSize(
-            wx.Size((self.Size[0]-self.SashPosition, -1)))
+            wx.Size((self.width_setting, -1)))
         self.scrolledWindow_img.SetMinSize(
-            wx.Size((self.SashPosition, self.Size[1]-150)))
+            wx.Size((self.Size[0] - self.width_setting, self.Size[1]-150)))
 
         self.split_changing = False
+        print(self.SashPosition)
 
     def about_gui(self, event):
         self.aboutgui = About(None)

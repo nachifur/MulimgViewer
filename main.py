@@ -992,6 +992,9 @@ class MulimgViewer (MulimgViewerGui):
         self.auto_layout()
         self.SetStatusText_(["Stitch", "-1", "-1", "-1"])
 
+        # issue: You need to change the window size, then the scrollbar starts to display.
+        self.scrolledWindow_img.FitInside() 
+        
     def auto_layout(self, frame_resize=False):
         # Auto Layout
 

@@ -1,3 +1,4 @@
+from traceback import print_tb
 from regex import E
 import wx
 from wx.core import App, Width
@@ -62,6 +63,7 @@ class MulimgViewer (MulimgViewerGui):
         self.SetIcon(self.icon)
         self.m_statusBar1.SetStatusWidths([-2, -1, -4, -4])
         self.set_title_font()
+        self.hidden_flag = 0
 
         # Different platforms may need to adjust the width of the scrolledWindow_set
         sys_platform = platform.system()
@@ -77,6 +79,7 @@ class MulimgViewer (MulimgViewerGui):
         self.SashPosition = self.width-self.width_setting
         self.m_splitter1.SetSashPosition(self.SashPosition)
         self.split_changing = False
+        self.width_setting_ = self.width_setting
 
         # Draw color to box
         self.colourPicker_draw.Bind(wx.EVT_COLOURPICKER_CHANGED, self.draw_color_change)
@@ -992,8 +995,7 @@ class MulimgViewer (MulimgViewerGui):
         self.auto_layout()
         self.SetStatusText_(["Stitch", "-1", "-1", "-1"])
 
-        # issue: You need to change the window size, then the scrollbar starts to display.
-        self.scrolledWindow_img.FitInside() 
+
         
     def auto_layout(self, frame_resize=False):
         # Auto Layout
@@ -1010,18 +1012,23 @@ class MulimgViewer (MulimgViewerGui):
         self.displaySize[0] = self.displaySize[0]-50
         self.displaySize[1] = self.displaySize[1]-50
 
-        offset_width_img_show = 20
+        
+        if self.hidden_flag==1:
+            offset_hight_img_show = 50
+        else:
+            offset_hight_img_show = 0
+            
 
         if self.auto_layout_check.Value and (not frame_resize):
             if self.img_size[0] < self.width:
-                if self.img_size[0]+self.width_setting+offset_width_img_show < self.width:
+                if self.img_size[0]+self.width_setting+20 < self.width:
                     w = self.width
                 else:
-                    w = self.img_size[0]+self.width_setting+offset_width_img_show
-            elif self.img_size[0]+self.width_setting+offset_width_img_show > self.displaySize[0]:
+                    w = self.img_size[0]+self.width_setting+20
+            elif self.img_size[0]+self.width_setting+20 > self.displaySize[0]:
                 w = self.displaySize[0]
             else:
-                w = self.img_size[0]+self.width_setting+offset_width_img_show
+                w = self.img_size[0]+self.width_setting+20
 
             if self.img_size[1] < self.height:
                 if self.img_size[1]+200 < self.height:
@@ -1034,12 +1041,20 @@ class MulimgViewer (MulimgViewerGui):
                 h = self.img_size[1]+200
             self.Size = wx.Size((w, h))
 
+        if self.hidden_flag==1:
+            self.m_splitter1.SashPosition=self.Size[0]
+
         self.init_min_size()
 
         self.scrolledWindow_set.SetMinSize(
             wx.Size((self.width_setting, -1)))
         self.scrolledWindow_img.SetMinSize(
-            wx.Size((self.Size[0]-self.width_setting, self.Size[1]-150)))
+            wx.Size((self.Size[0]-self.width_setting, self.Size[1]-150+offset_hight_img_show)))
+
+
+        # issue: You need to change the window size, then the scrollbar starts to display.
+        self.scrolledWindow_img.FitInside() 
+        self.scrolledWindow_set.FitInside() 
 
         self.Layout()
         self.Refresh()
@@ -1068,7 +1083,7 @@ class MulimgViewer (MulimgViewerGui):
             wx.Size((self.Size[0] - self.width_setting, self.Size[1]-150)))
 
         self.split_changing = False
-        print(self.SashPosition)
+        # print(self.SashPosition)
 
     def about_gui(self, event):
         self.aboutgui = About(None)
@@ -1165,3 +1180,24 @@ class MulimgViewer (MulimgViewerGui):
                 self.color_list[self.box_id] = self.colourPicker_draw.GetColour()
                 self.refresh(event)
         event.Skip()
+
+    def hidden(self, event):
+        if self.hidden_flag==0:
+            self.Sizer.Hide(self.m_panel1)
+            self.scrolledWindow_set.Sizer.Hide(self.m_panel4)
+
+            self.width_setting_ = self.width_setting
+            self.width_setting = 0
+
+            self.hidden_flag=1
+        else:
+            self.Sizer.Show(self.m_panel1)
+            self.scrolledWindow_set.Sizer.Show(self.m_panel4)
+
+            self.width_setting = self.width_setting_
+
+            self.hidden_flag=0
+
+        # issue: You need to change the window size, then the scrollbar starts to display.
+        self.scrolledWindow_set.FitInside() 
+        self.auto_layout()

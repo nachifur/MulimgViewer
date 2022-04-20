@@ -105,12 +105,13 @@ class MulimgViewerGui ( wx.Frame ):
 		wSizer1.Fit( self.m_panel1 )
 		fgSizer1.Add( self.m_panel1, 1, wx.EXPAND |wx.ALL, 5 )
 
+		self.m_panel3 = wx.Panel( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.TAB_TRAVERSAL )
 		fgSizer5 = wx.FlexGridSizer( 1, 2, 0, 0 )
 		fgSizer5.SetFlexibleDirection( wx.BOTH )
 		fgSizer5.SetNonFlexibleGrowMode( wx.FLEX_GROWMODE_SPECIFIED )
 
 		fgSizer5.SetMinSize( wx.Size( 1000,600 ) )
-		self.m_splitter1 = wx.SplitterWindow( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.SP_3D )
+		self.m_splitter1 = wx.SplitterWindow( self.m_panel3, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.SP_3D )
 		self.scrolledWindow_img = wx.ScrolledWindow( self.m_splitter1, wx.ID_ANY, wx.DefaultPosition, wx.Size( -1,-1 ), wx.HSCROLL|wx.VSCROLL )
 		self.scrolledWindow_img.SetScrollRate( 5, 5 )
 		fgSizer4 = wx.FlexGridSizer( 2, 1, 0, 0 )
@@ -132,30 +133,33 @@ class MulimgViewerGui ( wx.Frame ):
 		fgSizer4.Fit( self.scrolledWindow_img )
 		self.scrolledWindow_set = wx.ScrolledWindow( self.m_splitter1, wx.ID_ANY, wx.DefaultPosition, wx.Size( -1,-1 ), wx.HSCROLL|wx.VSCROLL )
 		self.scrolledWindow_set.SetScrollRate( 5, 5 )
+		bSizer13 = wx.BoxSizer( wx.VERTICAL )
+
+		self.m_panel4 = wx.Panel( self.scrolledWindow_set, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.TAB_TRAVERSAL )
 		fgSizer3 = wx.FlexGridSizer( 0, 1, 0, 0 )
 		fgSizer3.SetFlexibleDirection( wx.BOTH )
 		fgSizer3.SetNonFlexibleGrowMode( wx.FLEX_GROWMODE_SPECIFIED )
 
 		fgSizer3.SetMinSize( wx.Size( 300,600 ) )
-		self.m_staticText38 = wx.StaticText( self.scrolledWindow_set, wx.ID_ANY, u"Input/Output", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText38 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Input/Output", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText38.Wrap( -1 )
 
 		self.m_staticText38.SetFont( wx.Font( 12, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL, False, wx.EmptyString ) )
 
 		fgSizer3.Add( self.m_staticText38, 0, wx.ALL, 5 )
 
-		self.m_staticline3 = wx.StaticLine( self.scrolledWindow_set, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_HORIZONTAL )
+		self.m_staticline3 = wx.StaticLine( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_HORIZONTAL )
 		fgSizer3.Add( self.m_staticline3, 0, wx.EXPAND |wx.ALL, 5 )
 
 		bSizer16 = wx.BoxSizer( wx.HORIZONTAL )
 
-		self.m_staticText21 = wx.StaticText( self.scrolledWindow_set, wx.ID_ANY, u"CorrectSize", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText21 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"CorrectSize", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText21.Wrap( -1 )
 
 		bSizer16.Add( self.m_staticText21, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
 		choice_normalized_sizeChoices = [ u"Resize", u"Crop", u"Fill" ]
-		self.choice_normalized_size = wx.Choice( self.scrolledWindow_set, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, choice_normalized_sizeChoices, 0 )
+		self.choice_normalized_size = wx.Choice( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, choice_normalized_sizeChoices, 0 )
 		self.choice_normalized_size.SetSelection( 0 )
 		bSizer16.Add( self.choice_normalized_size, 0, wx.ALL|wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
@@ -164,13 +168,13 @@ class MulimgViewerGui ( wx.Frame ):
 
 		bSizer15 = wx.BoxSizer( wx.HORIZONTAL )
 
-		self.m_staticText19 = wx.StaticText( self.scrolledWindow_set, wx.ID_ANY, u"OutputMode", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText19 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"OutputMode", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText19.Wrap( -1 )
 
 		bSizer15.Add( self.m_staticText19, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
 		choice_outputChoices = [ u"1:stitch", u"2:select", u"3:1+2", u"4:magnifer", u"5:1+4", u"6:2+4", u"7:1+2+4" ]
-		self.choice_output = wx.Choice( self.scrolledWindow_set, wx.ID_ANY, wx.DefaultPosition, wx.Size( -1,-1 ), choice_outputChoices, 0 )
+		self.choice_output = wx.Choice( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.Size( -1,-1 ), choice_outputChoices, 0 )
 		self.choice_output.SetSelection( 0 )
 		bSizer15.Add( self.choice_output, 0, wx.ALL, 5 )
 
@@ -179,13 +183,13 @@ class MulimgViewerGui ( wx.Frame ):
 
 		bSizer23 = wx.BoxSizer( wx.HORIZONTAL )
 
-		self.m_staticText28 = wx.StaticText( self.scrolledWindow_set, wx.ID_ANY, u"ImgInterp🔍️", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText28 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"ImgInterp🔍️", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText28.Wrap( -1 )
 
 		bSizer23.Add( self.m_staticText28, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
 		image_interpChoices = [ u"Nearest", u"Cubic", u"Linear" ]
-		self.image_interp = wx.Choice( self.scrolledWindow_set, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, image_interpChoices, 0 )
+		self.image_interp = wx.Choice( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, image_interpChoices, 0 )
 		self.image_interp.SetSelection( 2 )
 		bSizer23.Add( self.image_interp, 0, wx.ALL, 5 )
 
@@ -194,12 +198,12 @@ class MulimgViewerGui ( wx.Frame ):
 
 		bSizer21 = wx.BoxSizer( wx.HORIZONTAL )
 
-		self.m_staticText26 = wx.StaticText( self.scrolledWindow_set, wx.ID_ANY, u"Parallel+Sequential", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText26 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Parallel+Sequential", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText26.Wrap( -1 )
 
 		bSizer21.Add( self.m_staticText26, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
-		self.parallel_sequential = wx.CheckBox( self.scrolledWindow_set, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.parallel_sequential = wx.CheckBox( self.m_panel4, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
 		bSizer21.Add( self.parallel_sequential, 0, wx.ALL, 5 )
 
 
@@ -207,12 +211,12 @@ class MulimgViewerGui ( wx.Frame ):
 
 		bSizer29 = wx.BoxSizer( wx.HORIZONTAL )
 
-		self.m_staticText37 = wx.StaticText( self.scrolledWindow_set, wx.ID_ANY, u"Parallel->Sequential", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText37 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Parallel->Sequential", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText37.Wrap( -1 )
 
 		bSizer29.Add( self.m_staticText37, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
-		self.parallel_to_sequential = wx.CheckBox( self.scrolledWindow_set, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.parallel_to_sequential = wx.CheckBox( self.m_panel4, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
 		bSizer29.Add( self.parallel_to_sequential, 0, wx.ALL, 5 )
 
 
@@ -220,36 +224,36 @@ class MulimgViewerGui ( wx.Frame ):
 
 		wSizer3 = wx.WrapSizer( wx.HORIZONTAL, wx.WRAPSIZER_DEFAULT_FLAGS )
 
-		self.auto_save_all = wx.CheckBox( self.scrolledWindow_set, wx.ID_ANY, u"AutoSaveAll", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.auto_save_all = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"AutoSaveAll", wx.DefaultPosition, wx.DefaultSize, 0 )
 		wSizer3.Add( self.auto_save_all, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
-		self.move_file = wx.CheckBox( self.scrolledWindow_set, wx.ID_ANY, u"MoveFile", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.move_file = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"MoveFile", wx.DefaultPosition, wx.DefaultSize, 0 )
 		wSizer3.Add( self.move_file, 0, wx.ALL, 5 )
 
 
 		fgSizer3.Add( wSizer3, 1, wx.EXPAND, 5 )
 
-		self.m_staticline14 = wx.StaticLine( self.scrolledWindow_set, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_HORIZONTAL )
+		self.m_staticline14 = wx.StaticLine( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_HORIZONTAL )
 		fgSizer3.Add( self.m_staticline14, 0, wx.EXPAND |wx.ALL, 5 )
 
-		self.m_staticText16 = wx.StaticText( self.scrolledWindow_set, wx.ID_ANY, u"Layout", wx.DefaultPosition, wx.Size( 100,-1 ), 0 )
+		self.m_staticText16 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Layout", wx.DefaultPosition, wx.Size( 100,-1 ), 0 )
 		self.m_staticText16.Wrap( -1 )
 
 		self.m_staticText16.SetFont( wx.Font( 12, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL, False, wx.EmptyString ) )
 
 		fgSizer3.Add( self.m_staticText16, 0, wx.ALL, 5 )
 
-		self.m_staticline13 = wx.StaticLine( self.scrolledWindow_set, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_HORIZONTAL )
+		self.m_staticline13 = wx.StaticLine( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_HORIZONTAL )
 		fgSizer3.Add( self.m_staticline13, 0, wx.EXPAND |wx.ALL, 5 )
 
 		bSizer121 = wx.BoxSizer( wx.HORIZONTAL )
 
-		self.m_staticText2 = wx.StaticText( self.scrolledWindow_set, wx.ID_ANY, u"Row", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText2 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Row", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText2.Wrap( -1 )
 
 		bSizer121.Add( self.m_staticText2, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
-		self.img_num_per_column = wx.TextCtrl( self.scrolledWindow_set, wx.ID_ANY, u"1", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
+		self.img_num_per_column = wx.TextCtrl( self.m_panel4, wx.ID_ANY, u"1", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
 		bSizer121.Add( self.img_num_per_column, 0, wx.ALL, 5 )
 
 
@@ -257,12 +261,12 @@ class MulimgViewerGui ( wx.Frame ):
 
 		bSizer111 = wx.BoxSizer( wx.HORIZONTAL )
 
-		self.m_staticText3 = wx.StaticText( self.scrolledWindow_set, wx.ID_ANY, u"NumPerImg", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText3 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"NumPerImg", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText3.Wrap( -1 )
 
 		bSizer111.Add( self.m_staticText3, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
-		self.num_per_img = wx.TextCtrl( self.scrolledWindow_set, wx.ID_ANY, u"1", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
+		self.num_per_img = wx.TextCtrl( self.m_panel4, wx.ID_ANY, u"1", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
 		bSizer111.Add( self.num_per_img, 0, wx.ALL, 5 )
 
 
@@ -270,12 +274,12 @@ class MulimgViewerGui ( wx.Frame ):
 
 		bSizer10 = wx.BoxSizer( wx.HORIZONTAL )
 
-		self.m_staticText4 = wx.StaticText( self.scrolledWindow_set, wx.ID_ANY, u"Col", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText4 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Col", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText4.Wrap( -1 )
 
 		bSizer10.Add( self.m_staticText4, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
-		self.img_num_per_row = wx.TextCtrl( self.scrolledWindow_set, wx.ID_ANY, u"1", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
+		self.img_num_per_row = wx.TextCtrl( self.m_panel4, wx.ID_ANY, u"1", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
 		bSizer10.Add( self.img_num_per_row, 0, wx.ALL, 5 )
 
 
@@ -283,12 +287,12 @@ class MulimgViewerGui ( wx.Frame ):
 
 		bSizer4 = wx.BoxSizer( wx.HORIZONTAL )
 
-		self.m_staticText5 = wx.StaticText( self.scrolledWindow_set, wx.ID_ANY, u"Gap (x,y)", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText5 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Gap (x,y)", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText5.Wrap( -1 )
 
 		bSizer4.Add( self.m_staticText5, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
-		self.gap = wx.TextCtrl( self.scrolledWindow_set, wx.ID_ANY, u"10,10,2,10,2", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.gap = wx.TextCtrl( self.m_panel4, wx.ID_ANY, u"10,10,2,10,2", wx.DefaultPosition, wx.DefaultSize, 0 )
 		bSizer4.Add( self.gap, 0, wx.ALL, 5 )
 
 
@@ -296,153 +300,153 @@ class MulimgViewerGui ( wx.Frame ):
 
 		wSizer4 = wx.WrapSizer( wx.HORIZONTAL, wx.WRAPSIZER_DEFAULT_FLAGS )
 
-		self.checkBox_orientation = wx.CheckBox( self.scrolledWindow_set, wx.ID_ANY, u"Vertical", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.checkBox_orientation = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"Vertical", wx.DefaultPosition, wx.DefaultSize, 0 )
 		wSizer4.Add( self.checkBox_orientation, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
-		self.one_img = wx.CheckBox( self.scrolledWindow_set, wx.ID_ANY, u"OneImg", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.one_img = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"OneImg", wx.DefaultPosition, wx.DefaultSize, 0 )
 		wSizer4.Add( self.one_img, 0, wx.ALL, 5 )
 
-		self.auto_layout_check = wx.CheckBox( self.scrolledWindow_set, wx.ID_ANY, u"AutoWinSize", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.auto_layout_check = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"AutoWinSize", wx.DefaultPosition, wx.DefaultSize, 0 )
 		wSizer4.Add( self.auto_layout_check, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
-		self.show_original = wx.CheckBox( self.scrolledWindow_set, wx.ID_ANY, u"ShowImg", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.show_original = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"ShowImg", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.show_original.SetValue(True)
 		wSizer4.Add( self.show_original, 0, wx.ALL, 5 )
 
-		self.show_crop = wx.CheckBox( self.scrolledWindow_set, wx.ID_ANY, u"Show🔍️", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.show_crop = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"Show🔍️", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.show_crop.SetValue(True)
 		wSizer4.Add( self.show_crop, 0, wx.ALL, 5 )
 
 
 		fgSizer3.Add( wSizer4, 1, wx.EXPAND, 5 )
 
-		self.m_staticline15 = wx.StaticLine( self.scrolledWindow_set, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_HORIZONTAL )
+		self.m_staticline15 = wx.StaticLine( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_HORIZONTAL )
 		fgSizer3.Add( self.m_staticline15, 0, wx.EXPAND |wx.ALL, 5 )
 
 		wSizer7 = wx.WrapSizer( wx.HORIZONTAL, wx.WRAPSIZER_DEFAULT_FLAGS )
 
-		self.m_staticText40 = wx.StaticText( self.scrolledWindow_set, wx.ID_ANY, u"Box", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText40 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Box", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText40.Wrap( -1 )
 
 		self.m_staticText40.SetFont( wx.Font( 12, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL, False, wx.EmptyString ) )
 
 		wSizer7.Add( self.m_staticText40, 0, wx.ALL, 5 )
 
-		self.m_staticline10 = wx.StaticLine( self.scrolledWindow_set, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_VERTICAL )
+		self.m_staticline10 = wx.StaticLine( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_VERTICAL )
 		wSizer7.Add( self.m_staticline10, 0, wx.EXPAND |wx.ALL, 5 )
 
-		self.show_box = wx.CheckBox( self.scrolledWindow_set, wx.ID_ANY, u"InImg", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.show_box = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"InImg", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.show_box.SetValue(True)
 		wSizer7.Add( self.show_box, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
-		self.show_box_in_crop = wx.CheckBox( self.scrolledWindow_set, wx.ID_ANY, u"In🔍️", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.show_box_in_crop = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"In🔍️", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.show_box_in_crop.SetValue(True)
 		wSizer7.Add( self.show_box_in_crop, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
-		self.select_img_box = wx.CheckBox( self.scrolledWindow_set, wx.ID_ANY, u"SelectBox", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.select_img_box = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"SelectBox", wx.DefaultPosition, wx.DefaultSize, 0 )
 		wSizer7.Add( self.select_img_box, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
-		self.m_staticText23 = wx.StaticText( self.scrolledWindow_set, wx.ID_ANY, u"Width", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText23 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Width", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText23.Wrap( -1 )
 
 		wSizer7.Add( self.m_staticText23, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
-		self.line_width = wx.TextCtrl( self.scrolledWindow_set, wx.ID_ANY, u"2,2", wx.DefaultPosition, wx.Size( 40,-1 ), 0 )
+		self.line_width = wx.TextCtrl( self.m_panel4, wx.ID_ANY, u"2,2", wx.DefaultPosition, wx.Size( 40,-1 ), 0 )
 		wSizer7.Add( self.line_width, 0, wx.ALL, 5 )
 
 		box_positionChoices = [ u"middle bottom", u"left bottom", u"right bottom", u"left top", u"right top" ]
-		self.box_position = wx.Choice( self.scrolledWindow_set, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, box_positionChoices, 0 )
+		self.box_position = wx.Choice( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, box_positionChoices, 0 )
 		self.box_position.SetSelection( 0 )
 		wSizer7.Add( self.box_position, 0, wx.ALL, 5 )
 
 
 		fgSizer3.Add( wSizer7, 1, wx.EXPAND, 5 )
 
-		self.m_staticline16 = wx.StaticLine( self.scrolledWindow_set, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_HORIZONTAL )
+		self.m_staticline16 = wx.StaticLine( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_HORIZONTAL )
 		fgSizer3.Add( self.m_staticline16, 0, wx.EXPAND |wx.ALL, 5 )
 
 		wSizer2 = wx.WrapSizer( wx.HORIZONTAL, wx.WRAPSIZER_DEFAULT_FLAGS )
 
-		self.m_staticText33 = wx.StaticText( self.scrolledWindow_set, wx.ID_ANY, u"Title", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText33 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Title", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText33.Wrap( -1 )
 
 		self.m_staticText33.SetFont( wx.Font( 12, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL, False, wx.EmptyString ) )
 
 		wSizer2.Add( self.m_staticText33, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
-		self.m_staticline11 = wx.StaticLine( self.scrolledWindow_set, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_VERTICAL )
+		self.m_staticline11 = wx.StaticLine( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_VERTICAL )
 		wSizer2.Add( self.m_staticline11, 0, wx.EXPAND |wx.ALL, 5 )
 
-		self.title_auto = wx.CheckBox( self.scrolledWindow_set, wx.ID_ANY, u"Auto", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.title_auto = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"Auto", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.title_auto.SetValue(True)
 		wSizer2.Add( self.title_auto, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
-		self.title_show = wx.CheckBox( self.scrolledWindow_set, wx.ID_ANY, u"Show", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.title_show = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"Show", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.title_show.SetValue(True)
 		wSizer2.Add( self.title_show, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
-		self.title_down_up = wx.CheckBox( self.scrolledWindow_set, wx.ID_ANY, u"Down", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.title_down_up = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"Down", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.title_down_up.Enable( False )
 
 		wSizer2.Add( self.title_down_up, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
-		self.title_show_parent = wx.CheckBox( self.scrolledWindow_set, wx.ID_ANY, u"Parent", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.title_show_parent = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"Parent", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.title_show_parent.Enable( False )
 
 		wSizer2.Add( self.title_show_parent, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
-		self.title_show_prefix = wx.CheckBox( self.scrolledWindow_set, wx.ID_ANY, u"Prefix", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.title_show_prefix = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"Prefix", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.title_show_prefix.SetValue(True)
 		self.title_show_prefix.Enable( False )
 
 		wSizer2.Add( self.title_show_prefix, 0, wx.ALL, 5 )
 
-		self.title_show_name = wx.CheckBox( self.scrolledWindow_set, wx.ID_ANY, u"Name", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.title_show_name = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"Name", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.title_show_name.SetValue(True)
 		self.title_show_name.Enable( False )
 
 		wSizer2.Add( self.title_show_name, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
-		self.title_show_suffix = wx.CheckBox( self.scrolledWindow_set, wx.ID_ANY, u"Suffix", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.title_show_suffix = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"Suffix", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.title_show_suffix.Enable( False )
 
 		wSizer2.Add( self.title_show_suffix, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
-		self.m_staticline12 = wx.StaticLine( self.scrolledWindow_set, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_VERTICAL )
+		self.m_staticline12 = wx.StaticLine( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_VERTICAL )
 		wSizer2.Add( self.m_staticline12, 0, wx.EXPAND |wx.ALL, 5 )
 
-		self.m_staticText351 = wx.StaticText( self.scrolledWindow_set, wx.ID_ANY, u"Font", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText351 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Font", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText351.Wrap( -1 )
 
 		wSizer2.Add( self.m_staticText351, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
-		self.title_font_size = wx.TextCtrl( self.scrolledWindow_set, wx.ID_ANY, u"20", wx.DefaultPosition, wx.Size( 40,-1 ), 0 )
+		self.title_font_size = wx.TextCtrl( self.m_panel4, wx.ID_ANY, u"20", wx.DefaultPosition, wx.Size( 40,-1 ), 0 )
 		wSizer2.Add( self.title_font_size, 0, wx.ALL, 5 )
 
 		title_fontChoices = []
-		self.title_font = wx.Choice( self.scrolledWindow_set, wx.ID_ANY, wx.DefaultPosition, wx.Size( -1,-1 ), title_fontChoices, 0 )
+		self.title_font = wx.Choice( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.Size( -1,-1 ), title_fontChoices, 0 )
 		self.title_font.SetSelection( 0 )
 		wSizer2.Add( self.title_font, 0, wx.ALL, 5 )
 
 
 		fgSizer3.Add( wSizer2, 1, wx.EXPAND, 5 )
 
-		self.m_staticline1 = wx.StaticLine( self.scrolledWindow_set, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_HORIZONTAL )
+		self.m_staticline1 = wx.StaticLine( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_HORIZONTAL )
 		fgSizer3.Add( self.m_staticline1, 0, wx.EXPAND |wx.ALL, 5 )
 
-		self.m_staticText20 = wx.StaticText( self.scrolledWindow_set, wx.ID_ANY, u"Scale", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText20 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Scale", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText20.Wrap( -1 )
 
 		self.m_staticText20.SetFont( wx.Font( 12, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL, False, wx.EmptyString ) )
 
 		fgSizer3.Add( self.m_staticText20, 0, wx.ALL, 5 )
 
-		self.m_staticline8 = wx.StaticLine( self.scrolledWindow_set, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_HORIZONTAL )
+		self.m_staticline8 = wx.StaticLine( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_HORIZONTAL )
 		fgSizer3.Add( self.m_staticline8, 0, wx.EXPAND |wx.ALL, 5 )
 
 		wSizer6 = wx.WrapSizer( wx.HORIZONTAL, wx.WRAPSIZER_DEFAULT_FLAGS )
 
-		self.m_staticText6 = wx.StaticText( self.scrolledWindow_set, wx.ID_ANY, u"Show", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText6 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Show", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText6.Wrap( -1 )
 
 		wSizer6.Add( self.m_staticText6, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
@@ -450,65 +454,65 @@ class MulimgViewerGui ( wx.Frame ):
 		self.show_scale = wx.TextCtrl( self.scrolledWindow_set, wx.ID_ANY, u"1,1", wx.DefaultPosition, wx.Size( 60,-1 ), style=wx.TE_PROCESS_ENTER)
 		wSizer6.Add( self.show_scale, 0, wx.ALL, 5 )
 
-		self.m_staticText7 = wx.StaticText( self.scrolledWindow_set, wx.ID_ANY, u"Out", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText7 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Out", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText7.Wrap( -1 )
 
 		wSizer6.Add( self.m_staticText7, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
-		self.output_scale = wx.TextCtrl( self.scrolledWindow_set, wx.ID_ANY, u"1,1", wx.DefaultPosition, wx.Size( 60,-1 ), 0 )
+		self.output_scale = wx.TextCtrl( self.m_panel4, wx.ID_ANY, u"1,1", wx.DefaultPosition, wx.Size( 60,-1 ), 0 )
 		wSizer6.Add( self.output_scale, 0, wx.ALL, 5 )
 
-		self.m_staticText18 = wx.StaticText( self.scrolledWindow_set, wx.ID_ANY, u"🔍️Scale", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText18 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"🔍️Scale", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText18.Wrap( -1 )
 
 		wSizer6.Add( self.m_staticText18, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
-		self.magnifier_scale = wx.TextCtrl( self.scrolledWindow_set, wx.ID_ANY, u"-1,-1", wx.DefaultPosition, wx.Size( 60,-1 ), 0 )
+		self.magnifier_scale = wx.TextCtrl( self.m_panel4, wx.ID_ANY, u"-1,-1", wx.DefaultPosition, wx.Size( 60,-1 ), 0 )
 		wSizer6.Add( self.magnifier_scale, 0, wx.ALL, 5 )
 
-		self.keep_magnifer_size = wx.CheckBox( self.scrolledWindow_set, wx.ID_ANY, u"🔍️KeepSize", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.keep_magnifer_size = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"🔍️KeepSize", wx.DefaultPosition, wx.DefaultSize, 0 )
 		wSizer6.Add( self.keep_magnifer_size, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
-		self.m_staticText8 = wx.StaticText( self.scrolledWindow_set, wx.ID_ANY, u"TruthResolution", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText8 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"TruthResolution", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText8.Wrap( -1 )
 
 		wSizer6.Add( self.m_staticText8, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
-		self.img_resolution = wx.TextCtrl( self.scrolledWindow_set, wx.ID_ANY, u"-1,-1", wx.DefaultPosition, wx.Size( 60,-1 ), 0 )
+		self.img_resolution = wx.TextCtrl( self.m_panel4, wx.ID_ANY, u"-1,-1", wx.DefaultPosition, wx.Size( 60,-1 ), 0 )
 		wSizer6.Add( self.img_resolution, 1, wx.ALL, 5 )
 
 
 		fgSizer3.Add( wSizer6, 1, wx.EXPAND, 5 )
 
-		self.m_staticline7 = wx.StaticLine( self.scrolledWindow_set, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_HORIZONTAL )
+		self.m_staticline7 = wx.StaticLine( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_HORIZONTAL )
 		fgSizer3.Add( self.m_staticline7, 0, wx.EXPAND |wx.ALL, 5 )
 
-		self.m_staticText13 = wx.StaticText( self.scrolledWindow_set, wx.ID_ANY, u"Color/transparency", wx.DefaultPosition, wx.Size( 150,-1 ), 0 )
+		self.m_staticText13 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Color/transparency", wx.DefaultPosition, wx.Size( 150,-1 ), 0 )
 		self.m_staticText13.Wrap( -1 )
 
 		self.m_staticText13.SetFont( wx.Font( 12, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL, False, wx.EmptyString ) )
 
 		fgSizer3.Add( self.m_staticText13, 0, wx.ALL, 5 )
 
-		self.m_staticline2 = wx.StaticLine( self.scrolledWindow_set, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_HORIZONTAL )
+		self.m_staticline2 = wx.StaticLine( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_HORIZONTAL )
 		fgSizer3.Add( self.m_staticline2, 0, wx.EXPAND |wx.ALL, 5 )
 
 		wSizer8 = wx.WrapSizer( wx.HORIZONTAL, wx.WRAPSIZER_DEFAULT_FLAGS )
 
-		self.m_staticText22 = wx.StaticText( self.scrolledWindow_set, wx.ID_ANY, u"Draw", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
+		self.m_staticText22 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Draw", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
 		self.m_staticText22.Wrap( -1 )
 
 		wSizer8.Add( self.m_staticText22, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
-		self.colourPicker_draw = wx.ColourPickerCtrl( self.scrolledWindow_set, wx.ID_ANY, wx.Colour( 239, 41, 41 ), wx.DefaultPosition, wx.Size( 40,-1 ), wx.CLRP_DEFAULT_STYLE )
+		self.colourPicker_draw = wx.ColourPickerCtrl( self.m_panel4, wx.ID_ANY, wx.Colour( 239, 41, 41 ), wx.DefaultPosition, wx.Size( 40,-1 ), wx.CLRP_DEFAULT_STYLE )
 		wSizer8.Add( self.colourPicker_draw, 0, wx.ALL, 5 )
 
-		self.m_staticText17 = wx.StaticText( self.scrolledWindow_set, wx.ID_ANY, u"Gap", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
+		self.m_staticText17 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Gap", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
 		self.m_staticText17.Wrap( -1 )
 
 		wSizer8.Add( self.m_staticText17, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
-		self.colourPicker_gap = wx.ColourPickerCtrl( self.scrolledWindow_set, wx.ID_ANY, wx.Colour( 255, 255, 255 ), wx.DefaultPosition, wx.Size( 40,-1 ), wx.CLRP_DEFAULT_STYLE )
+		self.colourPicker_gap = wx.ColourPickerCtrl( self.m_panel4, wx.ID_ANY, wx.Colour( 255, 255, 255 ), wx.DefaultPosition, wx.Size( 40,-1 ), wx.CLRP_DEFAULT_STYLE )
 		wSizer8.Add( self.colourPicker_gap, 0, wx.ALL, 5 )
 
 
@@ -516,12 +520,12 @@ class MulimgViewerGui ( wx.Frame ):
 
 		bSizer22 = wx.BoxSizer( wx.HORIZONTAL )
 
-		self.m_staticText27 = wx.StaticText( self.scrolledWindow_set, wx.ID_ANY, u"AutoDrawColor", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText27 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"AutoDrawColor", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText27.Wrap( -1 )
 
 		bSizer22.Add( self.m_staticText27, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
-		self.checkBox_auto_draw_color = wx.CheckBox( self.scrolledWindow_set, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.checkBox_auto_draw_color = wx.CheckBox( self.m_panel4, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.checkBox_auto_draw_color.SetValue(True)
 		bSizer22.Add( self.checkBox_auto_draw_color, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
@@ -530,12 +534,12 @@ class MulimgViewerGui ( wx.Frame ):
 
 		bSizer12 = wx.BoxSizer( wx.HORIZONTAL )
 
-		self.m_staticText14 = wx.StaticText( self.scrolledWindow_set, wx.ID_ANY, u"Background", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText14 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Background", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText14.Wrap( -1 )
 
 		bSizer12.Add( self.m_staticText14, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
-		self.background_slider = wx.Slider( self.scrolledWindow_set, wx.ID_ANY, 255, 0, 255, wx.DefaultPosition, wx.Size( -1,-1 ), wx.SL_HORIZONTAL )
+		self.background_slider = wx.Slider( self.m_panel4, wx.ID_ANY, 255, 0, 255, wx.DefaultPosition, wx.Size( -1,-1 ), wx.SL_HORIZONTAL )
 		bSizer12.Add( self.background_slider, 1, wx.ALL, 5 )
 
 
@@ -543,26 +547,35 @@ class MulimgViewerGui ( wx.Frame ):
 
 		bSizer11 = wx.BoxSizer( wx.HORIZONTAL )
 
-		self.m_staticText12 = wx.StaticText( self.scrolledWindow_set, wx.ID_ANY, u"Foreground", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText12 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Foreground", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText12.Wrap( -1 )
 
 		bSizer11.Add( self.m_staticText12, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
-		self.foreground_slider = wx.Slider( self.scrolledWindow_set, wx.ID_ANY, 255, 0, 255, wx.DefaultPosition, wx.Size( -1,-1 ), wx.SL_HORIZONTAL )
+		self.foreground_slider = wx.Slider( self.m_panel4, wx.ID_ANY, 255, 0, 255, wx.DefaultPosition, wx.Size( -1,-1 ), wx.SL_HORIZONTAL )
 		bSizer11.Add( self.foreground_slider, 1, wx.ALL, 5 )
 
 
 		fgSizer3.Add( bSizer11, 1, wx.EXPAND, 5 )
 
 
-		self.scrolledWindow_set.SetSizer( fgSizer3 )
+		self.m_panel4.SetSizer( fgSizer3 )
+		self.m_panel4.Layout()
+		fgSizer3.Fit( self.m_panel4 )
+		bSizer13.Add( self.m_panel4, 1, wx.EXPAND |wx.ALL, 5 )
+
+
+		self.scrolledWindow_set.SetSizer( bSizer13 )
 		self.scrolledWindow_set.Layout()
-		fgSizer3.Fit( self.scrolledWindow_set )
+		bSizer13.Fit( self.scrolledWindow_set )
 		self.m_splitter1.SplitVertically( self.scrolledWindow_img, self.scrolledWindow_set, -1 )
 		fgSizer5.Add( self.m_splitter1, 1, wx.EXPAND, 5 )
 
 
-		fgSizer1.Add( fgSizer5, 1, wx.EXPAND, 5 )
+		self.m_panel3.SetSizer( fgSizer5 )
+		self.m_panel3.Layout()
+		fgSizer5.Fit( self.m_panel3 )
+		fgSizer1.Add( self.m_panel3, 1, wx.EXPAND |wx.ALL, 5 )
 
 
 		self.SetSizer( fgSizer1 )
@@ -609,6 +622,9 @@ class MulimgViewerGui ( wx.Frame ):
 
 		self.menu_refresh = wx.MenuItem( self.m_menu2, wx.ID_ANY, u"Refresh"+ u"\t" + u"Ctrl+R", wx.EmptyString, wx.ITEM_NORMAL )
 		self.m_menu2.Append( self.menu_refresh )
+
+		self.menu_hidden = wx.MenuItem( self.m_menu2, wx.ID_ANY, u"hidden"+ u"\t" + u"Ctrl+H", wx.EmptyString, wx.ITEM_NORMAL )
+		self.m_menu2.Append( self.menu_hidden )
 
 		self.menu_up = wx.MenuItem( self.m_menu2, wx.ID_ANY, u"Up", wx.EmptyString, wx.ITEM_NORMAL )
 		self.m_menu2.Append( self.menu_up )
@@ -677,6 +693,7 @@ class MulimgViewerGui ( wx.Frame ):
 		self.Bind( wx.EVT_MENU, self.last_img, id = self.menu_last.GetId() )
 		self.Bind( wx.EVT_MENU, self.save_img, id = self.menu_save.GetId() )
 		self.Bind( wx.EVT_MENU, self.refresh, id = self.menu_refresh.GetId() )
+		self.Bind( wx.EVT_MENU, self.hidden, id = self.menu_hidden.GetId() )
 		self.Bind( wx.EVT_MENU, self.up_img, id = self.menu_up.GetId() )
 		self.Bind( wx.EVT_MENU, self.down_img, id = self.menu_down.GetId() )
 		self.Bind( wx.EVT_MENU, self.right_img, id = self.menu_right.GetId() )
@@ -784,6 +801,9 @@ class MulimgViewerGui ( wx.Frame ):
 
 
 
+
+	def hidden( self, event ):
+		event.Skip()
 
 	def up_img( self, event ):
 		event.Skip()

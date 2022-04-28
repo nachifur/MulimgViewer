@@ -1,7 +1,4 @@
-from traceback import print_tb
-from regex import E
 import wx
-from wx.core import App, Width
 from main_gui import MulimgViewerGui
 import numpy as np
 from about import About

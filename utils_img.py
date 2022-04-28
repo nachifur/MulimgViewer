@@ -1,5 +1,3 @@
-from types import DynamicClassAttribute
-from numpy.lib.shape_base import split
 import wx
 import numpy as np
 import os

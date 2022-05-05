@@ -663,12 +663,12 @@ class MulimgViewer (MulimgViewerGui):
         if status_toggle[i_cur].Value and self.key_status["ctrl"] == 1:
             if event.GetWheelDelta() >= 120:
                 speed = self.get_speed(name="scale")
-
+                self.adjust_show_scale_proportion() # adjust show_scale_proportion
+                # set show_scale
                 if event.GetWheelRotation() > 0:
                     self.show_scale_proportion = self.show_scale_proportion+speed
                 else:
                     self.show_scale_proportion = self.show_scale_proportion-speed
-
                 if self.show_scale_proportion > 0:
                     show_scale = [1*(1+self.show_scale_proportion),
                                   1*(1+self.show_scale_proportion)]
@@ -677,7 +677,6 @@ class MulimgViewer (MulimgViewerGui):
                                   1/(1-self.show_scale_proportion)]
                 else:
                     show_scale = [1, 1]
-
                 self.show_scale.Value = str(
                     round(show_scale[0], 2))+","+str(round(show_scale[1], 2))
 
@@ -699,6 +698,37 @@ class MulimgViewer (MulimgViewerGui):
                     self.right_img(event)
                 else:
                     self.left_img(event)
+
+    def adjust_show_scale_proportion(self):
+        # check "cur_scale", and adjust "self.show_scale_proportion"
+        cur_scale = self.show_scale.GetLineText(0).split(',')
+        cur_scale = [float(x) for x in cur_scale]
+        if self.show_scale_proportion > 0:
+            if cur_scale[0]==round(1*(1+self.show_scale_proportion),2):
+                pass
+            else:
+                if cur_scale[0]>1:
+                    self.show_scale_proportion = cur_scale[0]-1
+                elif cur_scale[0]<1 and cur_scale[0]>0:
+                    self.show_scale_proportion = 1-1/cur_scale[0]
+                elif cur_scale[0]==1:
+                    self.show_scale_proportion = 0
+                else:
+                    pass
+        elif self.show_scale_proportion < 0:
+            if cur_scale[0]==round(1/(1-self.show_scale_proportion),2):
+                pass
+            else:
+                if cur_scale[0]>1:
+                    self.show_scale_proportion = cur_scale[0]-1
+                elif cur_scale[0]<1 and cur_scale[0]>0:
+                    self.show_scale_proportion = 1-1/cur_scale[0]
+                elif cur_scale[0]==1:
+                    self.show_scale_proportion = 0
+                else:
+                    pass
+        else:
+            self.show_scale_proportion = 0
 
     def key_down_detect(self, event):
         if event.GetKeyCode() == wx.WXK_CONTROL:
@@ -734,7 +764,6 @@ class MulimgViewer (MulimgViewerGui):
 
     def magnifier_fc(self, event):
         self.start_flag = 0
-        self.show_scale_proportion = 0
         i_cur = 0
         status_toggle = [self.magnifier, self.rotation, self.flip]
         if status_toggle[i_cur].Value:

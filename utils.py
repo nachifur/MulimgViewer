@@ -2,6 +2,19 @@ import sys
 from pathlib import Path
 import numpy as np
 import copy
+import wx
+
+class MyTestEvent(wx.PyCommandEvent):
+
+    def __init__(self, evtType, id=0):
+        wx.PyCommandEvent.__init__(self, evtType, id)
+        self.eventArgs = ""
+
+    def GetEventArgs(self):
+        return self.eventArgs
+
+    def SetEventArgs(self, args):
+        self.eventArgs = args
 
 
 def get_resource_path(relative_path):
@@ -30,8 +43,8 @@ def solve_factor(num):
 
 
 def change_order(list_):
-    if isinstance(list_[1],list):
-        temp =  copy.deepcopy(list_[0])
+    if isinstance(list_[1], list):
+        temp = copy.deepcopy(list_[0])
     else:
         temp = list_[0]
     list_[0] = list_[1]

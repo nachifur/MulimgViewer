@@ -7,22 +7,10 @@ from utils_img import ImgManager
 from index_table import IndexTable
 from pathlib import Path
 import copy
-from utils import get_resource_path
+from utils import get_resource_path, MyTestEvent
 import platform
 import requests
 import threading
-
-class MyTestEvent(wx.PyCommandEvent):
-
-    def __init__(self, evtType, id=0):
-        wx.PyCommandEvent.__init__(self, evtType, id)
-        self.eventArgs = ""
-
-    def GetEventArgs(self):
-        return self.eventArgs
-
-    def SetEventArgs(self, args):
-        self.eventArgs = args
 
 
 class MulimgViewer (MulimgViewerGui):
@@ -125,7 +113,7 @@ class MulimgViewer (MulimgViewerGui):
                 else:
                     # print(output["tag_name"])
                     # print("Need to update!")
-                    evt = MyTestEvent(self.myEVT_MY_TEST) 
+                    evt = MyTestEvent(self.myEVT_MY_TEST)
                     evt.SetEventArgs(output["tag_name"])
                     wx.PostEvent(self, evt)
         except:
@@ -1085,9 +1073,9 @@ class MulimgViewer (MulimgViewerGui):
         sizes = [display.GetGeometry().GetSize() for display in displays_list]
         screen_id = wx.Display.GetFromWindow(self)
         self.displaySize = sizes[screen_id]
-        # leave some free space
-        self.displaySize[0] = self.displaySize[0]-50
-        self.displaySize[1] = self.displaySize[1]-50
+        # # leave some free space
+        # self.displaySize[0] = self.displaySize[0]-50
+        # self.displaySize[1] = self.displaySize[1]-50
 
         if self.hidden_flag == 1:
             offset_hight_img_show = 50
@@ -1096,24 +1084,29 @@ class MulimgViewer (MulimgViewerGui):
 
         if self.auto_layout_check.Value and (not frame_resize):
             if self.img_size[0] < self.width:
-                if self.img_size[0]+self.width_setting+20 < self.width:
+                if self.img_size[0]+self.width_setting+40 < self.width:
                     w = self.width
                 else:
-                    w = self.img_size[0]+self.width_setting+20
-            elif self.img_size[0]+self.width_setting+20 > self.displaySize[0]:
+                    w = self.img_size[0]+self.width_setting+40
+            elif self.img_size[0]+self.width_setting+40 > self.displaySize[0]:
                 w = self.displaySize[0]
             else:
-                w = self.img_size[0]+self.width_setting+20
+                w = self.img_size[0]+self.width_setting+40
 
             if self.img_size[1] < self.height:
                 if self.img_size[1]+200 < self.height:
                     h = self.height
                 else:
                     h = self.img_size[1]+200
+                    if self.hidden_flag == 1:
+                        h=h-50
             elif self.img_size[1]+200 > self.displaySize[1]:
                 h = self.displaySize[1]
             else:
                 h = self.img_size[1]+200
+                if self.hidden_flag == 1:
+                    h=h-50
+
             self.Size = wx.Size((w, h))
 
         if self.hidden_flag == 1:
@@ -1159,7 +1152,8 @@ class MulimgViewer (MulimgViewerGui):
         # print(self.SashPosition)
 
     def about_gui(self, event, update=False, new_version=None):
-        self.aboutgui = About(self, self.version, update=update, new_version=new_version)
+        self.aboutgui = About(self, self.version,
+                              update=update, new_version=new_version)
         self.aboutgui.Show(True)
 
     def index_table_gui(self, event):

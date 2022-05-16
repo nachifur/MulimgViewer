@@ -1073,9 +1073,6 @@ class MulimgViewer (MulimgViewerGui):
         sizes = [display.GetGeometry().GetSize() for display in displays_list]
         screen_id = wx.Display.GetFromWindow(self)
         self.displaySize = sizes[screen_id]
-        # # leave some free space
-        # self.displaySize[0] = self.displaySize[0]-50
-        # self.displaySize[1] = self.displaySize[1]-50
 
         if self.hidden_flag == 1:
             offset_hight_img_show = 50

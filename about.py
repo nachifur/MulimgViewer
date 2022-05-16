@@ -4,11 +4,21 @@ from utils import get_resource_path
 
 
 class About (AboutGui):
-    def __init__(self, parent):
+    def __init__(self, parent, version, update=False, new_version=None):
         super().__init__(parent)
 
         self.about_txt.SetEditable(False)
         self.about_txt.BeginFontSize(12)
+        self.about_txt.BeginBold()
+        if update:
+            self.about_txt.BeginTextColour(wx.Colour(255,0,0,255))
+            self.about_txt.WriteText(f"A new version ({new_version}) is available!!!\n")
+            self.about_txt.EndTextColour()
+
+        self.about_txt.WriteText("Software: ")
+        self.about_txt.EndBold()
+        self.about_txt.WriteText("MulimgViewer\n")
+
         self.about_txt.BeginBold()
         self.about_txt.WriteText("Maintainer: ")
         self.about_txt.EndBold()
@@ -22,7 +32,7 @@ class About (AboutGui):
         self.about_txt.BeginBold()
         self.about_txt.WriteText("Version: ")
         self.about_txt.EndBold()
-        self.about_txt.WriteText("3.9.6\n")
+        self.about_txt.WriteText(str(version)+"\n")
 
         self.about_txt.BeginBold()
         self.about_txt.WriteText("Platform: ")
@@ -50,3 +60,6 @@ class About (AboutGui):
         self.icon = wx.Icon(get_resource_path(
             'mulimgviewer.ico'), wx.BITMAP_TYPE_ICO)
         self.SetIcon(self.icon)
+
+        if update:
+            self.m_hyperlink3.SetBackgroundColour(wx.Colour(255, 0, 0, 255))

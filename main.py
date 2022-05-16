@@ -1,3 +1,4 @@
+from tkinter.messagebox import NO
 import wx
 from main_gui import MulimgViewerGui
 import numpy as np
@@ -8,6 +9,20 @@ from pathlib import Path
 import copy
 from utils import get_resource_path
 import platform
+import requests
+import threading
+
+class MyTestEvent(wx.PyCommandEvent):
+
+    def __init__(self, evtType, id=0):
+        wx.PyCommandEvent.__init__(self, evtType, id)
+        self.eventArgs = ""
+
+    def GetEventArgs(self):
+        return self.eventArgs
+
+    def SetEventArgs(self, args):
+        self.eventArgs = args
 
 
 class MulimgViewer (MulimgViewerGui):
@@ -79,7 +94,42 @@ class MulimgViewer (MulimgViewerGui):
         self.width_setting_ = self.width_setting
 
         # Draw color to box
-        self.colourPicker_draw.Bind(wx.EVT_COLOURPICKER_CHANGED, self.draw_color_change)
+        self.colourPicker_draw.Bind(
+            wx.EVT_COLOURPICKER_CHANGED, self.draw_color_change)
+
+        # Check the software version
+        self.myEVT_MY_TEST = wx.NewEventType()
+        EVT_MY_TEST = wx.PyEventBinder(self.myEVT_MY_TEST, 1)
+        self.Bind(EVT_MY_TEST, self.myEVT_MY_TEST_OnHandle)
+        self.version = "v3.9.7"
+        self.check_version()
+
+    def myEVT_MY_TEST_OnHandle(self, event):
+        self.about_gui(None, update=True, new_version=event.GetEventArgs())
+
+    def check_version(self):
+        t1 = threading.Thread(target=self.run, args=())
+        t1.setDaemon(True)
+        t1.start()
+
+    def run(self):
+        url = "https://api.github.com/repos/nachifur/MulimgViewer/releases/latest"
+        try:
+            resp = requests.get(url)
+            resp.encoding = 'UTF-8'
+            if resp.status_code == 200:
+                output = resp.json()
+                if output["tag_name"] == self.version:
+                    # print("No need to update!")
+                    pass
+                else:
+                    # print(output["tag_name"])
+                    # print("Need to update!")
+                    evt = MyTestEvent(self.myEVT_MY_TEST) 
+                    evt.SetEventArgs(output["tag_name"])
+                    wx.PostEvent(self, evt)
+        except:
+            pass
 
     def set_title_font(self):
         font_path = Path("font")/"using"
@@ -202,7 +252,7 @@ class MulimgViewer (MulimgViewerGui):
                     ["-1", "-1", "***First, you need to select the output dir***", "-1"])
                 self.out_path(event)
                 self.SetStatusText_(
-                    ["-1", "-1","", "-1"])
+                    ["-1", "-1", "", "-1"])
             elif flag == 2:
                 self.SetStatusText_(
                     ["-1", str(self.ImgManager.action_count), "***Error: "+str(self.ImgManager.name_list[self.ImgManager.action_count]) + ", during stitching images***", "-1"])
@@ -607,7 +657,8 @@ class MulimgViewer (MulimgViewerGui):
                 show_scale = self.show_scale.GetLineText(0).split(',')
                 show_scale = [float(x) for x in show_scale]
                 points = self.move_box_point(x, y, show_scale)
-                self.xy_magnifier[self.box_id] = points+show_scale+[self.ImgManager.title_setting[2] and self.ImgManager.title_setting[1]]
+                self.xy_magnifier[self.box_id] = points+show_scale+[
+                    self.ImgManager.title_setting[2] and self.ImgManager.title_setting[1]]
                 self.refresh(event)
         else:
             # new box
@@ -663,7 +714,7 @@ class MulimgViewer (MulimgViewerGui):
         if status_toggle[i_cur].Value and self.key_status["ctrl"] == 1:
             if event.GetWheelDelta() >= 120:
                 speed = self.get_speed(name="scale")
-                self.adjust_show_scale_proportion() # adjust show_scale_proportion
+                self.adjust_show_scale_proportion()  # adjust show_scale_proportion
                 # set show_scale
                 if event.GetWheelRotation() > 0:
                     self.show_scale_proportion = self.show_scale_proportion+speed
@@ -704,26 +755,26 @@ class MulimgViewer (MulimgViewerGui):
         cur_scale = self.show_scale.GetLineText(0).split(',')
         cur_scale = [float(x) for x in cur_scale]
         if self.show_scale_proportion > 0:
-            if cur_scale[0]==round(1*(1+self.show_scale_proportion),2):
+            if cur_scale[0] == round(1*(1+self.show_scale_proportion), 2):
                 pass
             else:
-                if cur_scale[0]>1:
+                if cur_scale[0] > 1:
                     self.show_scale_proportion = cur_scale[0]-1
-                elif cur_scale[0]<1 and cur_scale[0]>0:
+                elif cur_scale[0] < 1 and cur_scale[0] > 0:
                     self.show_scale_proportion = 1-1/cur_scale[0]
-                elif cur_scale[0]==1:
+                elif cur_scale[0] == 1:
                     self.show_scale_proportion = 0
                 else:
                     pass
         elif self.show_scale_proportion < 0:
-            if cur_scale[0]==round(1/(1-self.show_scale_proportion),2):
+            if cur_scale[0] == round(1/(1-self.show_scale_proportion), 2):
                 pass
             else:
-                if cur_scale[0]>1:
+                if cur_scale[0] > 1:
                     self.show_scale_proportion = cur_scale[0]-1
-                elif cur_scale[0]<1 and cur_scale[0]>0:
+                elif cur_scale[0] < 1 and cur_scale[0] > 0:
                     self.show_scale_proportion = 1-1/cur_scale[0]
-                elif cur_scale[0]==1:
+                elif cur_scale[0] == 1:
                     self.show_scale_proportion = 0
                 else:
                     pass
@@ -732,7 +783,7 @@ class MulimgViewer (MulimgViewerGui):
 
     def key_down_detect(self, event):
         if event.GetKeyCode() == wx.WXK_CONTROL:
-            if self.key_status["ctrl"]==0:
+            if self.key_status["ctrl"] == 0:
                 self.key_status["ctrl"] = 1
         elif event.GetKeyCode() == wx.WXK_SHIFT:
             if self.key_status["shift"] == 0:
@@ -742,7 +793,7 @@ class MulimgViewer (MulimgViewerGui):
 
     def key_up_detect(self, event):
         if event.GetKeyCode() == wx.WXK_CONTROL:
-            if self.key_status["ctrl"]==1:
+            if self.key_status["ctrl"] == 1:
                 self.key_status["ctrl"] = 0
         elif event.GetKeyCode() == wx.WXK_SHIFT:
             pass
@@ -865,11 +916,12 @@ class MulimgViewer (MulimgViewerGui):
                     wx.Colour(214, 242, 206, 95/100*255),
                     wx.Colour(242, 163, 94, 95/100*255)]
                 num_box = len(self.xy_magnifier)
-                if num_box<=len(color_list):
+                if num_box <= len(color_list):
                     self.color_list = color_list[0:num_box]
                 else:
-                    self.color_list = color_list+color_list[0:num_box-len(color_list)]
-                
+                    self.color_list = color_list + \
+                        color_list[0:num_box-len(color_list)]
+
             color = self.color_list
 
             line_width = self.line_width.GetLineText(0).split(',')
@@ -930,7 +982,7 @@ class MulimgViewer (MulimgViewerGui):
                     self.box_position.GetSelection(),       # 21
                     self.parallel_sequential.Value,         # 22
                     self.auto_save_all.Value,               # 23
-                    ######                                  # add new in this line
+                    # add new in this line
                     self.checkBox_orientation.Value]
 
     def show_img(self):
@@ -1022,8 +1074,6 @@ class MulimgViewer (MulimgViewerGui):
         self.auto_layout()
         self.SetStatusText_(["Stitch", "-1", "-1", "-1"])
 
-
-        
     def auto_layout(self, frame_resize=False):
         # Auto Layout
 
@@ -1039,12 +1089,10 @@ class MulimgViewer (MulimgViewerGui):
         self.displaySize[0] = self.displaySize[0]-50
         self.displaySize[1] = self.displaySize[1]-50
 
-        
-        if self.hidden_flag==1:
+        if self.hidden_flag == 1:
             offset_hight_img_show = 50
         else:
             offset_hight_img_show = 0
-            
 
         if self.auto_layout_check.Value and (not frame_resize):
             if self.img_size[0] < self.width:
@@ -1068,8 +1116,8 @@ class MulimgViewer (MulimgViewerGui):
                 h = self.img_size[1]+200
             self.Size = wx.Size((w, h))
 
-        if self.hidden_flag==1:
-            self.m_splitter1.SashPosition=self.Size[0]
+        if self.hidden_flag == 1:
+            self.m_splitter1.SashPosition = self.Size[0]
 
         self.init_min_size()
 
@@ -1078,14 +1126,12 @@ class MulimgViewer (MulimgViewerGui):
         self.scrolledWindow_img.SetMinSize(
             wx.Size((self.Size[0]-self.width_setting, self.Size[1]-150+offset_hight_img_show)))
 
-
         # issue: You need to change the window size, then the scrollbar starts to display.
-        self.scrolledWindow_img.FitInside() 
-        self.scrolledWindow_set.FitInside() 
+        self.scrolledWindow_img.FitInside()
+        self.scrolledWindow_set.FitInside()
 
         self.Layout()
         self.Refresh()
-
 
     def init_min_size(self):
         self.scrolledWindow_set.SetMinSize(
@@ -1093,7 +1139,7 @@ class MulimgViewer (MulimgViewerGui):
         self.scrolledWindow_img.SetMinSize(
             wx.Size((50, self.Size[1]-150)))
 
-    def split_sash_pos_changing(self,event):
+    def split_sash_pos_changing(self, event):
 
         self.init_min_size()
         self.split_changing = True
@@ -1112,8 +1158,8 @@ class MulimgViewer (MulimgViewerGui):
         self.split_changing = False
         # print(self.SashPosition)
 
-    def about_gui(self, event):
-        self.aboutgui = About(None)
+    def about_gui(self, event, update=False, new_version=None):
+        self.aboutgui = About(self, self.version, update=update, new_version=new_version)
         self.aboutgui.Show(True)
 
     def index_table_gui(self, event):
@@ -1191,9 +1237,9 @@ class MulimgViewer (MulimgViewerGui):
     #     self.show_scale_proportion = 0
     #     self.refresh(event)
 
-		# self.show_scale = wx.TextCtrl( self.scrolledWindow_set, wx.ID_ANY, u"1,1", wx.DefaultPosition, wx.Size( 60,-1 ), style=wx.TE_PROCESS_ENTER)
-		# wSizer6.Add( self.show_scale, 0, wx.ALL, 5 )
-    
+                # self.show_scale = wx.TextCtrl( self.scrolledWindow_set, wx.ID_ANY, u"1,1", wx.DefaultPosition, wx.Size( 60,-1 ), style=wx.TE_PROCESS_ENTER)
+                # wSizer6.Add( self.show_scale, 0, wx.ALL, 5 )
+
     def select_img_box_func(self, event):
         if self.select_img_box.Value:
             self.box_id = -1
@@ -1209,22 +1255,22 @@ class MulimgViewer (MulimgViewerGui):
         event.Skip()
 
     def hidden(self, event):
-        if self.hidden_flag==0:
+        if self.hidden_flag == 0:
             self.Sizer.Hide(self.m_panel1)
             self.scrolledWindow_set.Sizer.Hide(self.m_panel4)
 
             self.width_setting_ = self.width_setting
             self.width_setting = 0
 
-            self.hidden_flag=1
+            self.hidden_flag = 1
         else:
             self.Sizer.Show(self.m_panel1)
             self.scrolledWindow_set.Sizer.Show(self.m_panel4)
 
             self.width_setting = self.width_setting_
 
-            self.hidden_flag=0
+            self.hidden_flag = 0
 
         # issue: You need to change the window size, then the scrollbar starts to display.
-        self.scrolledWindow_set.FitInside() 
+        self.scrolledWindow_set.FitInside()
         self.auto_layout()

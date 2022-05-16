@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ###########################################################################
-## Python code generated with wxFormBuilder (version Oct 26 2018)
+## Python code generated with wxFormBuilder (version 3.10.1-0-g8feb16b3)
 ## http://www.wxformbuilder.org/
 ##
 ## PLEASE DO *NOT* EDIT THIS FILE!
@@ -37,6 +37,9 @@ class AboutGui ( wx.Frame ):
 
 		self.m_hyperlink2 = wx.adv.HyperlinkCtrl( self, wx.ID_ANY, u"License", u"https://github.com/nachifur/MulimgViewer/blob/master/LICENSE", wx.DefaultPosition, wx.DefaultSize, wx.adv.HL_DEFAULT_STYLE )
 		wSizer1.Add( self.m_hyperlink2, 0, wx.ALL, 5 )
+
+		self.m_hyperlink3 = wx.adv.HyperlinkCtrl( self, wx.ID_ANY, u"Download", u"https://github.com/nachifur/MulimgViewer/releases", wx.DefaultPosition, wx.DefaultSize, wx.adv.HL_DEFAULT_STYLE )
+		wSizer1.Add( self.m_hyperlink3, 0, wx.ALL, 5 )
 
 
 		fgSizer1.Add( wSizer1, 1, wx.EXPAND, 5 )

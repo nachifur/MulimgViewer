@@ -15,7 +15,7 @@ import threading
 
 class MulimgViewer (MulimgViewerGui):
 
-    def __init__(self, parent, UpdateUI, get_type):
+    def __init__(self, parent, UpdateUI, get_type, default_path=None):
         super().__init__(parent)
         self.create_ImgManager()
         self.UpdateUI = UpdateUI
@@ -91,6 +91,13 @@ class MulimgViewer (MulimgViewerGui):
         self.Bind(EVT_MY_TEST, self.myEVT_MY_TEST_OnHandle)
         self.version = "v3.9.7"
         self.check_version()
+
+        # open default path
+        if default_path:
+            self.ImgManager.init(default_path, 2)
+            self.show_img_init()
+            self.ImgManager.set_action_count(0)
+            self.show_img()
 
     def myEVT_MY_TEST_OnHandle(self, event):
         self.about_gui(None, update=True, new_version=event.GetEventArgs())

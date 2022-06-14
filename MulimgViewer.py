@@ -1,8 +1,11 @@
+from tkinter.messagebox import NO
 import wx
 from main import MulimgViewer
 from path_select import PathSelectFrame
 import wx.lib.inspection
 from PIL import ImageFile
+import sys
+from pathlib import Path
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 
@@ -22,8 +25,14 @@ class GuiManager():
         return frame
 
     def CreateFrame(self, type):
+        global file_name
+        if file_name:
+            input_path = Path(file_name).parent
+        else:
+            input_path = None
+
         if type == 0:
-            return MulimgViewer(None, self.UpdateUI, self.get_type)
+            return MulimgViewer(None, self.UpdateUI, self.get_type, default_path=input_path)
         elif type == 1:
             return PathSelectFrame(None, self.UpdateUI, self.get_type)
 
@@ -83,4 +92,9 @@ def main():
 
 
 if __name__ == '__main__':
+    global file_name
+    if len(sys.argv)>1:
+        file_name = sys.argv[1]
+    else:
+        file_name = None
     main()

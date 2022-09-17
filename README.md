@@ -135,9 +135,12 @@ MulimgViewer可以方便的进行成对的数据的浏览、比较。[详细见]
 ## 5.2 操作流程 <a name="5.2"></a> 
 测试图像下载地址：https://github.com/nachifur/MulimgViewer/blob/master/img/test_img.zip
 
+**注意：本软件不支持自动刷新，修改布局参数之后，需要手动刷新（`Ctrl+R`）。**
+
 ![image](https://github.com/nachifur/MulimgViewer/blob/master/img/Quick_start.jpg)
 
-1. 在`Layout`中**填写布局参数**：`Row`（一行有几张图片）, `NumPerImg`（一个图片由几个子图片组成）, `Col`（一列有几个图片）
+
+1. 在`Layout`中**填写布局参数**：`Row`（一行有几张图片）, `NumPerImg`（一个图片由几个子图片组成）, `Col`（一列有几个图片）。
 2. 选择**输入模式**
 
     2.1. Sequential: 一个文件夹多张图片。(`test_input/01`)
@@ -153,6 +156,7 @@ MulimgViewer可以方便的进行成对的数据的浏览、比较。[详细见]
 5. `Input/OutPut`->OutputMode, 选择输出模式
 6. `File->Select output path`, **选择输出的路径**。
 7. 点击保存💾️
+
 
 ## 5.3 快捷键
 1. 输入路径：

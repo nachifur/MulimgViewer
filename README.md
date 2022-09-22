@@ -11,6 +11,7 @@
 <a href="https://github.com/nachifur/MulimgViewer/releases" target="_blank">
  <img alt="All releases" src="https://img.shields.io/github/downloads/nachifur/MulimgViewer/total.svg" />
 </a>
+<a href="https://www.oscs1024.com/project/oscs/nachifur/MulimgViewer?ref=badge_small" alt="OSCS Status"><img src="https://www.oscs1024.com/platform/badge/nachifur/MulimgViewer.svg?size=small"/></a>
 </p>
 
 # MulimgViewer

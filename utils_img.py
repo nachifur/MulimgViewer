@@ -624,10 +624,10 @@ class ImgDatabase():
     def get_path_list_from_lf(self):
         format_group = [".png", ".jpg", ".jpeg", ".bmp", ".tif", ".tiff"]
         if Path(self.input_path).suffix.lower() == '.txt':
-            with open(self.input_path, "r") as f:
+            with open(self.input_path, "r",encoding='utf-8') as f:
                 dataset = f.read().split('\n')
         elif Path(self.input_path).suffix.lower() == '.csv':
-            with open(self.input_path, 'r', newline='') as csvfile:
+            with open(self.input_path, 'r', newline='',encoding='utf-8') as csvfile:
                 dataset = list(csv.reader(csvfile))
                 dataset_ = []
                 row = len(dataset)

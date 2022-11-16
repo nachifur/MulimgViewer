@@ -52,7 +52,7 @@ v3.9.1以后仅提供`Windows 10`的包（`amd64`）。其他环境可以使用�
 
 pip安装：（如果安装过程出错，可以使用conda安装）
 ```bash
-pip install wxpython pillow pytest-shutil numpy
+pip install wxpython pillow pytest-shutil numpy requests
 ```
 运行：
 ```python

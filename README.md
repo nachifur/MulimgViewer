@@ -50,6 +50,7 @@ qq交流群：945669929
 ## 2. python源码运行(windows\linux\ios)
 v3.9.1以后仅提供`Windows 10`的包（`amd64`）。其他环境可以使用源码运行。建议使用Python3.6以上。
 
+## 2.1 pip 安装
 pip安装：（如果安装过程出错，可以使用conda安装）
 ```bash
 pip install wxpython pillow pytest-shutil numpy requests
@@ -57,6 +58,16 @@ pip install wxpython pillow pytest-shutil numpy requests
 运行：
 ```python
 python3 MulimgViewer.py
+```
+## 2.2 conda 安装
+或者安装conda环境：
+```bash
+conda env create -f install.yaml
+```
+运行：
+```python
+conda activate mulimgviewer
+python MulimgViewer.py
 ```
 
 ## 3. Windows-10

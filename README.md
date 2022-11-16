@@ -47,12 +47,15 @@ qq交流群：945669929
 
 <img width="250" height="355" src="https://github.com/nachifur/MulimgViewer/blob/master/img/qrcode.jpg"/>
 
-## 2. python源码运行(windows\linux\ios)
-* v3.9.1以后仅提供`Windows 10`的包（`amd64`）
-* 其他环境可以使用源码运行；安装环境使用以下两种方式都行
+## 2. Windows-10
+* 直接运行exe文件；或者下载源码运行`MulimgViewer.py`->[**源码运行**](#3.0)
+* v3.9.3以后，`Windows 10`提供安装版`_Setup.exe`和便携版`_Portable.exe`（安装版`_Setup.exe`启动速度更快）
+
+## 3. python源码运行(windows\linux\ios)<a name="3.0"></a> 
+* v3.9.1以后仅提供`Windows 10`的包（`amd64`）；其他环境可以使用源码运行，安装环境使用以下两种方式都行
 * 建议使用Python3.6以上
 
-## 2.1 pip 安装
+## 3.1 pip 安装
 pip安装：（如果安装过程出错，可以使用conda安装）
 ```bash
 pip install wxpython pillow pytest-shutil numpy requests
@@ -61,7 +64,7 @@ pip install wxpython pillow pytest-shutil numpy requests
 ```python
 python3 MulimgViewer.py
 ```
-## 2.2 conda 安装
+## 3.2 conda 安装
 或者安装conda环境：
 ```bash
 conda env create -f install.yaml
@@ -71,11 +74,6 @@ conda env create -f install.yaml
 conda activate mulimgviewer
 python MulimgViewer.py
 ```
-
-## 3. Windows-10
-直接运行exe文件。也可以下载源码运行`MulimgViewer.py`。
-
-v3.9.3以后，`Windows 10`提供安装版`_Setup.exe`和便携版`_Portable.exe`（安装版`_Setup.exe`启动速度更快）。
 
 ## 4. 应用场景
 ### 例1：多图像浏览

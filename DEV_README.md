@@ -73,7 +73,7 @@ GUI使用[wxFormBuilder](https://github.com/wxFormBuilder/wxFormBuilder)创建�
 
 3. 修改`MulimgViewer/src/main.py`实现回调函数。
 
-事实上，wxFormBuilder生成的python的GUI代码是wxpython。因此，更多关于回调函数、事件等可见:
+事实上，wxFormBuilder生成的python的GUI代码是wxpython。更多关于回调函数、事件等可见:
 * [wxpython doc](https://docs.wxpython.org/index.html)
 * [wxpython 自定义事件、线程安全、多线程交互、版本更新](https://nachifur.blog.csdn.net/article/details/124809333)
 
@@ -82,7 +82,7 @@ MulimgViewer的所有功能均采用python编写，这保证了跨平台的使�
 ```
 from pathlib import Path
 ```
-[pathlib使用说明](ttps://zhuanlan.zhihu.com/p/13978333) 
+[pathlib使用说明](https://zhuanlan.zhihu.com/p/13978333) 
 
 ## 2.4 readme的维护
 * 当您提出一个issue，或者决定参与该项目的开发，可以添加到[README.md-7. 未来增强功能](https://github.com/nachifur/MulimgViewer#7.0)以及[wiki-7. Future enhancements](https://github.com/nachifur/MulimgViewer/wiki#7.0)。

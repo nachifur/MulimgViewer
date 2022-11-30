@@ -145,7 +145,7 @@ MulimgViewer可以方便的进行成对的数据的浏览、比较。[详细见]
 ![image](https://github.com/nachifur/MulimgViewer/blob/master/img/Shortcut_bar.jpg)
 
 ## 5.2 操作流程 <a name="5.2"></a> 
-测试图像下载地址：https://github.com/nachifur/MulimgViewer/blob/master/img/test_img.zip
+测试图像下载地址：https://raw.githubusercontent.com/nachifur/MulimgViewer/master/img/test_img.zip
 
 **注意：本软件不支持自动刷新，修改布局参数之后，需要手动刷新（`Ctrl+R`）。**
 
@@ -161,7 +161,7 @@ MulimgViewer可以方便的进行成对的数据的浏览、比较。[详细见]
 
     2.3. Parallel manual: 手动选择多个子文件夹。(`test_input//01`+`test_input//02`)
 
-    2.4. Image file list： 从文件导入图片列表文件。([Sample file](https://github.com/nachifur/MulimgViewer/tree/master/test_input_from_file))
+    2.4. Image file list： 从文件导入图片列表文件。([Sample file](https://github.com/nachifur/MulimgViewer/tree/master/demo_input_from_file))
 
 3. 打开文件夹，导入路径
 4. 这时图片显示在面板，可以使用`>`查看下一张，`<`查看上一张图片

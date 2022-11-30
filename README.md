@@ -110,7 +110,7 @@ MulimgViewer可以方便的进行成对的数据的浏览、比较。[详细见]
 
 ![image](https://github.com/nachifur/MulimgViewer/blob/master/img/f17.jpg)
 
-显示半张图像。使用`NumPerimg`控制几张图像合成一张图像。`Gap(x,y)=*,*,0,*,*`消除间距。
+显示半张图像。勾选`OneImg`，使用`NumPerimg`控制几张图像合成一张图像。`Gap(x,y)=*,*,0,*,*`消除间距。
 ![image](https://github.com/nachifur/MulimgViewer/blob/master/img/f18.jpg)
 
 ### 例6：支持远程挂载目录图片浏览

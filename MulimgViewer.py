@@ -1,11 +1,14 @@
-from tkinter.messagebox import NO
-import wx
-from main import MulimgViewer
-from path_select import PathSelectFrame
-import wx.lib.inspection
-from PIL import ImageFile
 import sys
 from pathlib import Path
+from tkinter.messagebox import NO
+
+import wx
+import wx.lib.inspection
+from PIL import ImageFile
+
+from src.main import MulimgViewer
+from src.path_select import PathSelectFrame
+
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 

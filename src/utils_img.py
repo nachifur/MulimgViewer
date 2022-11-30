@@ -1,13 +1,14 @@
-import wx
-import numpy as np
-import os
-from PIL import Image, ImageDraw, ImageFont
-from shutil import copyfile, move
-from pathlib import Path
-import csv
 import copy
+import csv
+import os
+from pathlib import Path
+from shutil import copyfile, move
 
-from utils import solve_factor, rgb2hex, change_order
+import numpy as np
+import wx
+from PIL import Image, ImageDraw, ImageFont
+
+from src.utils import change_order, rgb2hex, solve_factor
 
 
 class ImgUtils():

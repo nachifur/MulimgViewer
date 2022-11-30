@@ -52,9 +52,9 @@ MulimgViewer
         - about.py                  # 9. help 窗口文件
         - index_table.py            # 10. index table 窗口文件，可显示图片文件列表
         - utils.py                  # 11. 其他功能函数
-    MulimgViewer.py                 # 1. 入口文件
-    README.md                       # 12. 用户readme
-    DEV_README.md                   # 13. 开发readme
+    - MulimgViewer.py                 # 1. 入口文件
+    - README.md                       # 12. 用户readme
+    - DEV_README.md                   # 13. 开发readme
 ```
 # 2. 开发流程
 ## 2.1 GUI的创建

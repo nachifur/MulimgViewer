@@ -19,7 +19,7 @@
 
 [**国内gitee镜像项目**](https://gitee.com/nachifur/MulimgViewer) | [**果壳OpenCas镜像项目**](https://github.com/opencas/MulimgViewer)
 
-[**下载**](https://github.com/nachifur/MulimgViewer/releases) | [**快速上手**](#5.2)
+[**下载**](https://github.com/nachifur/MulimgViewer/releases) | [**快速上手**](#5.2) | [**开发者指南**](https://github.com/nachifur/MulimgViewer/blob/master/DEV_README.md)
 
 <!-- https://github.com/nachifur/MulimgViewer/blob/->https://gitee.com/nachifur/MulimgViewer/raw/ -->
 <!-- https://github.com/nachifur/MulimgViewer/releases->https://gitee.com/nachifur/MulimgViewer/releases -->
@@ -370,7 +370,7 @@ Resize: 图像尺寸为一组图像中的平均尺寸，缩放模式(不保持�
 2. 调节`Scale:Show`，`0.2,0.2`缩小，`2,2`放大
 3. 更改`TruthResolution`,将所有照片resize到同一尺寸，**对于浏览及其友好**
 
-## 7. 未来增强功能
+## 7. 未来增强功能 <a name="7.0"></a> 
 感谢各位提供意见！大家可以在issues中发表意见，采用的会致谢大家！如果大家希望可以和我一起合作开发，请联系我！
 - [x] 增加精确定位（目前已经有slider）
 - [x] 增加图片索引查看，方便进行精确定位
@@ -384,7 +384,7 @@ Resize: 图像尺寸为一组图像中的平均尺寸，缩放模式(不保持�
 - [x] 高清图像的对比，放大图像1:1输出（@Faberman提供改进意见）
 - [X] 为图像添加titile（@Faberman提供改进意见）
 
-## 8. 致谢
+## 8. 致谢 <a name="8.0"></a> 
 * Everyone in the QQ group;
 * nothingeasy:改进意见-(输入方式，新增：路径文件的导入和存储);
 * JuZiSYJ:改进意见-(保存带框的原始图像+并行放大);

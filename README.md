@@ -19,6 +19,8 @@
 
 [**国内gitee镜像项目**](https://gitee.com/nachifur/MulimgViewer) | [**果壳OpenCas镜像项目**](https://github.com/opencas/MulimgViewer)
 
+[**下载**](https://github.com/nachifur/MulimgViewer/releases) | [**快速上手**](#5.2)
+
 <!-- https://github.com/nachifur/MulimgViewer/blob/->https://gitee.com/nachifur/MulimgViewer/raw/ -->
 <!-- https://github.com/nachifur/MulimgViewer/releases->https://gitee.com/nachifur/MulimgViewer/releases -->
 
@@ -29,18 +31,11 @@ MulimgViewer**多图像浏览器**，在一个界面显示多个图像，方便�
 **功能**
 * 多路径并行显示
 * 多框并行放大
-* 点按旋转
+* 点按旋转、镜像
 * 支持远程目录
 * 批量化resize图片
 
 ![image](https://github.com/nachifur/MulimgViewer/blob/master/img/f6.gif)
-
-**下载地址：**
-* 稳定版(package+code): https://github.com/nachifur/MulimgViewer/releases
-* 最新(code): https://codeload.github.com/nachifur/MulimgViewer/zip/refs/heads/master
-
-
-[**快速上手**](#5.2)
 
 您的star是我开发完善该项目最大的支持！
 qq交流群：945669929
@@ -52,8 +47,11 @@ qq交流群：945669929
 * v3.9.3以后，`Windows 10`提供安装版`_Setup.exe`和便携版`_Portable.exe`（安装版`_Setup.exe`启动速度更快）
 
 ## 3. python源码运行(windows\linux\ios)<a name="3.0"></a> 
-* v3.9.1以后仅提供`Windows 10`的包（`amd64`）；其他环境可以使用源码运行，安装环境使用以下两种方式都行
+
+* 目前仅提供`Windows 10`的安装包（`amd64`）
+* **其他环境**可以使用源码运行，安装环境使用以下两种方式都行（pip or conda）
 * 建议使用Python3.6以上
+* 最新源码下载: https://codeload.github.com/nachifur/MulimgViewer/zip/refs/heads/master
 
 ## 3.1 pip 安装
 pip安装：（如果安装过程出错，可以使用conda安装）

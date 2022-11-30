@@ -28,12 +28,7 @@
 
 MulimgViewer**多图像浏览器**，在一个界面显示多个图像，方便图像的比较、筛选。 
 
-**功能**
-* 多路径并行显示
-* 多框并行放大
-* 点按旋转、镜像
-* 支持远程目录
-* 批量化resize图片
+**软件功能**: 多路径并行显示、多框并行放大 ([more](#4.0))。
 
 ![image](https://github.com/nachifur/MulimgViewer/blob/master/img/f6.gif)
 
@@ -43,7 +38,7 @@ qq交流群：945669929
 <img width="250" height="355" src="https://github.com/nachifur/MulimgViewer/blob/master/img/qrcode.jpg"/>
 
 ## 2. Windows-10
-* 直接运行exe文件；或者下载源码运行`MulimgViewer.py`->[**源码运行**](#3.0)
+* 直接下载并运行[exe文件]((https://github.com/nachifur/MulimgViewer/releases))；或者下载源码运行`MulimgViewer.py`->[**源码运行**](#3.0)
 * v3.9.3以后，`Windows 10`提供安装版`_Setup.exe`和便携版`_Portable.exe`（安装版`_Setup.exe`启动速度更快）
 
 ## 3. python源码运行(windows\linux\ios)<a name="3.0"></a> 
@@ -51,7 +46,7 @@ qq交流群：945669929
 * 目前仅提供`Windows 10`的安装包（`amd64`）
 * **其他环境**可以使用源码运行，安装环境使用以下两种方式都行（pip or conda）
 * 建议使用Python3.6以上
-* 最新源码下载: https://codeload.github.com/nachifur/MulimgViewer/zip/refs/heads/master
+* [最新源码下载](https://codeload.github.com/nachifur/MulimgViewer/zip/refs/heads/master)
 
 ## 3.1 pip 安装
 pip安装：（如果安装过程出错，可以使用conda安装）
@@ -73,7 +68,7 @@ conda activate mulimgviewer
 python MulimgViewer.py
 ```
 
-## 4. 应用场景
+## 4. 应用场景 <a name="4.0"></a> 
 ### 例1：多图像浏览
 浏览202,599张图片的数据库CelebA，需要多长时间？一次显示1000张，只需点击200多次即可完成！
 ![image](https://github.com/nachifur/MulimgViewer/blob/master/img/f15.jpg)

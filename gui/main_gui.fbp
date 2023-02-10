@@ -2896,7 +2896,7 @@
                                                                             <property name="minimize_button">0</property>
                                                                             <property name="minimum_size"></property>
                                                                             <property name="moveable">1</property>
-                                                                            <property name="name">img_num_per_column</property>
+                                                                            <property name="name">row_col</property>
                                                                             <property name="pane_border">1</property>
                                                                             <property name="pane_position"></property>
                                                                             <property name="pane_size"></property>
@@ -3032,7 +3032,7 @@
                                                                             <property name="minimize_button">0</property>
                                                                             <property name="minimum_size"></property>
                                                                             <property name="moveable">1</property>
-                                                                            <property name="name">img_num_per_row</property>
+                                                                            <property name="name">sub_row_col</property>
                                                                             <property name="pane_border">1</property>
                                                                             <property name="pane_position"></property>
                                                                             <property name="pane_size"></property>
@@ -3168,7 +3168,7 @@
                                                                             <property name="minimize_button">0</property>
                                                                             <property name="minimum_size"></property>
                                                                             <property name="moveable">1</property>
-                                                                            <property name="name">img_num_per_row1</property>
+                                                                            <property name="name">magnifer_row_col</property>
                                                                             <property name="pane_border">1</property>
                                                                             <property name="pane_position"></property>
                                                                             <property name="pane_size"></property>
@@ -3500,7 +3500,7 @@
                                                                             <property name="minimize_button">0</property>
                                                                             <property name="minimum_size"></property>
                                                                             <property name="moveable">1</property>
-                                                                            <property name="name">checkBox_orientation</property>
+                                                                            <property name="name">img_vertical</property>
                                                                             <property name="pane_border">1</property>
                                                                             <property name="pane_position"></property>
                                                                             <property name="pane_size"></property>
@@ -3564,7 +3564,7 @@
                                                                             <property name="minimize_button">0</property>
                                                                             <property name="minimum_size"></property>
                                                                             <property name="moveable">1</property>
-                                                                            <property name="name">m_checkBox22</property>
+                                                                            <property name="name">sub_img_vertical</property>
                                                                             <property name="pane_border">1</property>
                                                                             <property name="pane_position"></property>
                                                                             <property name="pane_size"></property>
@@ -3628,7 +3628,7 @@
                                                                             <property name="minimize_button">0</property>
                                                                             <property name="minimum_size"></property>
                                                                             <property name="moveable">1</property>
-                                                                            <property name="name">m_checkBox23</property>
+                                                                            <property name="name">magnifer_vertical</property>
                                                                             <property name="pane_border">1</property>
                                                                             <property name="pane_position"></property>
                                                                             <property name="pane_size"></property>
@@ -3887,7 +3887,7 @@
                                                                             <property name="minimize_button">0</property>
                                                                             <property name="minimum_size"></property>
                                                                             <property name="moveable">1</property>
-                                                                            <property name="name">show_crop</property>
+                                                                            <property name="name">show_magnifer</property>
                                                                             <property name="pane_border">1</property>
                                                                             <property name="pane_position"></property>
                                                                             <property name="pane_size"></property>
@@ -4980,7 +4980,7 @@
                                                                             <property name="minimize_button">0</property>
                                                                             <property name="minimum_size"></property>
                                                                             <property name="moveable">1</property>
-                                                                            <property name="name">m_checkBox24</property>
+                                                                            <property name="name">title_exif</property>
                                                                             <property name="pane_border">1</property>
                                                                             <property name="pane_position"></property>
                                                                             <property name="pane_size"></property>
@@ -5108,7 +5108,7 @@
                                                                             <property name="minimize_button">0</property>
                                                                             <property name="minimum_size"></property>
                                                                             <property name="moveable">1</property>
-                                                                            <property name="name">m_choice7</property>
+                                                                            <property name="name">title_position</property>
                                                                             <property name="pane_border">1</property>
                                                                             <property name="pane_position"></property>
                                                                             <property name="pane_size"></property>

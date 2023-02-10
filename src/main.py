@@ -96,10 +96,13 @@ class MulimgViewer (MulimgViewerGui):
 
         # open default path
         if default_path:
-            self.ImgManager.init(default_path, 2)
-            self.show_img_init()
-            self.ImgManager.set_action_count(0)
-            self.show_img()
+            try:
+                self.ImgManager.init(default_path, 2)
+                self.show_img_init()
+                self.ImgManager.set_action_count(0)
+                self.show_img()
+            except:
+                pass
 
     def myEVT_MY_TEST_OnHandle(self, event):
         self.about_gui(None, update=True, new_version=event.GetEventArgs())
@@ -975,14 +978,15 @@ class MulimgViewer (MulimgViewerGui):
                     self.show_box_in_crop.Value,            # 15
                     self.show_original.Value,               # 16
                     title_setting,                          # 17
-                    self.show_crop.Value,                   # 18
+                    self.show_magnifer.Value,               # 18
                     self.parallel_to_sequential.Value,      # 19
                     self.one_img.Value,                     # 20
                     self.box_position.GetSelection(),       # 21
                     self.parallel_sequential.Value,         # 22
                     self.auto_save_all.Value,               # 23
-                    # add new in this line
-                    self.checkBox_orientation.Value]
+                    self.img_vertical.Value,
+                    self.sub_img_vertical.Value,
+                    self.magnifer_vertical.Value]
 
     def show_img(self):
         # check layout_params change

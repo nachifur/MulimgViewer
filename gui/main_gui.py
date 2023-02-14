@@ -298,7 +298,7 @@ class MulimgViewerGui ( wx.Frame ):
 
 		bSizer14.Add( self.m_staticText331, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
-		self.row_col_img_unit = wx.TextCtrl( self.m_panel4, wx.ID_ANY, u"2,1", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.row_col_img_unit = wx.TextCtrl( self.m_panel4, wx.ID_ANY, u"3,1", wx.DefaultPosition, wx.DefaultSize, 0 )
 		bSizer14.Add( self.row_col_img_unit, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
 		self.img_unit_vertical = wx.CheckBox( self.m_panel4, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )

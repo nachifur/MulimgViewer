@@ -212,7 +212,7 @@ class ImgUtils():
             # adjust box position
             if box_position == 0:  # middle bottom
                 delta_y = int((img_height-height_all)/2)
-                delta_x = int((img_width-width_all)/2)
+                delta_x = img_unit_gap[0]
             elif box_position == 2:  # right bottom
                 delta_y = img_height-height_all
                 delta_x = -to_width
@@ -295,7 +295,7 @@ class ImgUtils():
                 y = y + height[iy]
         return xy_grid
 
-    def reshape_higher_dim(self, row_cols, img_list, vertical_list, type=object):
+    def reshape_higher_dim(self, row_cols, img_list, vertical_list, type=object, levels=2):
         """It is currently in 4 dimensions, and can be expanded to higher dimensions by simply modifying the code."""
         id = 0
         size = []
@@ -309,21 +309,31 @@ class ImgUtils():
             if vertical_list[i]:
                 row_col.reverse()
 
-        # level 0
-        for iy_0 in range(row_cols[0][0]):
-            for ix_0 in range(row_cols[0][1]):
-                id_0 = [iy_0, ix_0]
-                if vertical_list[0]:
-                    id_0.reverse()
-                # level 1
-                for iy_1 in range(row_cols[1][0]):
-                    for ix_1 in range(row_cols[1][1]):
-                        id_1 = [iy_1, ix_1]
-                        if vertical_list[1]:
-                            id_1.reverse()
-                        output[id_0[0], id_0[1], id_1[0],
-                               id_1[1]] = img_list[id]
-                        id += 1
+        if levels==2:
+            # level 0
+            for iy_0 in range(row_cols[0][0]):
+                for ix_0 in range(row_cols[0][1]):
+                    id_0 = [iy_0, ix_0]
+                    if vertical_list[0]:
+                        id_0.reverse()
+                    # level 1
+                    for iy_1 in range(row_cols[1][0]):
+                        for ix_1 in range(row_cols[1][1]):
+                            id_1 = [iy_1, ix_1]
+                            if vertical_list[1]:
+                                id_1.reverse()
+                            output[id_0[0], id_0[1], id_1[0],
+                                id_1[1]] = img_list[id]
+                            id += 1
+        elif levels==1:
+            # level 0
+            for iy_0 in range(row_cols[0][0]):
+                for ix_0 in range(row_cols[0][1]):
+                    id_0 = [iy_0, ix_0]
+                    if vertical_list[0]:
+                        id_0.reverse()
+                    output[id_0[0], id_0[1]] = img_list[id]
+                    id += 1
         return output
 
     def layout_2d(self, layout_list, gap_color, img_list, img_preprocessing, img_preprocessing_sub, vertical_list):
@@ -449,7 +459,8 @@ class ImgUtils():
                                         if img_preprocessing_sub[iy_2, ix_2] != []:
                                             im_ = img_preprocessing_sub[iy_2, ix_2](
                                                 im, id=img_list[iy_0, ix_0, iy_1, ix_1][1])
-                                            img.paste(im_, (x, y))
+                                            if im_:
+                                                img.paste(im_, (x, y))
                                     i += 1
 
         return img, xy_grids_output, xy_grids_id_list
@@ -687,12 +698,7 @@ class ImgManager(ImgData):
                     layout_level_2.append(1)
 
                     gap_x_y_2[0].append(0)
-
-                    if gap_x_y_2[1][-1] >= 0:
-                        gap_x_y_2[1].append(self.layout_params[3][5])
-                    else:
-                        gap_x_y_2[1].append(-gap_x_y_2[1]
-                                            [-1]+self.layout_params[3][5])
+                    gap_x_y_2[1].append(self.layout_params[3][5])
             else:
                 layout_level_2.append(0)
         else:
@@ -708,13 +714,13 @@ class ImgManager(ImgData):
                     gap_x_y_2[1] = gap_x_y_2[1][0:i+k+1]+[-gap_x_y_2_orignal[1][i] if gap_x_y_2_orignal[1][i]<0 else 0]+gap_x_y_2[1][i+k+1:]
                     width_2 = width_2[0:i+k+1]+[0]+width_2[i+k+1:]
                     height_2 = height_2[0:i+k+1]+[0]+height_2[i+k+1:]
-                    img_preprocessing_sub = img_preprocessing_sub[0:i+k+1]+[]+img_preprocessing_sub[i+k+1:]
+                    img_preprocessing_sub = img_preprocessing_sub[0:i+k+1]+[self.fill_func]+img_preprocessing_sub[i+k+1:]
                 else:
                     gap_x_y_2[0] = gap_x_y_2[0][0:i+k+1]+[-gap_x_y_2_orignal[0][i] if gap_x_y_2_orignal[0][i]<0 else 0]
                     gap_x_y_2[1] = gap_x_y_2[1][0:i+k+1]+[-gap_x_y_2_orignal[1][i] if gap_x_y_2_orignal[1][i]<0 else 0 ]
                     width_2 = width_2[0:i+k+1]+[0]
                     height_2 = height_2[0:i+k+1]+[0]
-                    img_preprocessing_sub = img_preprocessing_sub[0:i+k+1]+[]
+                    img_preprocessing_sub = img_preprocessing_sub[0:i+k+1]+[self.fill_func]
                 k+=1
         row_col2 = self.layout_params[2]
         if len(gap_x_y_2[0]) < row_col2[0]*row_col2[1]:
@@ -730,11 +736,11 @@ class ImgManager(ImgData):
             img_preprocessing_sub = img_preprocessing_sub+empty_
 
         # Extended Dimension
-        gap_x_y_2[1] = self.ImgF.reshape_higher_dim([row_col2,[1,1]], gap_x_y_2[1], [self.layout_params[27],False], type=int)[:,:,0,0]
-        gap_x_y_2[0] = self.ImgF.reshape_higher_dim([row_col2,[1,1]], gap_x_y_2[0], [self.layout_params[27],False], type=int)[:,:,0,0]
-        width_2 = self.ImgF.reshape_higher_dim([row_col2,[1,1]], width_2, [self.layout_params[27],False], type=int)[:,:,0,0]
-        height_2 = self.ImgF.reshape_higher_dim([row_col2,[1,1]], height_2, [self.layout_params[27],False], type=int)[:,:,0,0]
-        img_preprocessing_sub = self.ImgF.reshape_higher_dim([row_col2,[1,1]], img_preprocessing_sub, [self.layout_params[27],False])[:,:,0,0]
+        gap_x_y_2[1] = self.ImgF.reshape_higher_dim([row_col2], gap_x_y_2[1], [False,False], type=int, levels=1)
+        gap_x_y_2[0] = self.ImgF.reshape_higher_dim([row_col2], gap_x_y_2[0], [False,False], type=int, levels=1)
+        width_2 = self.ImgF.reshape_higher_dim([row_col2], width_2, [False,False], type=int, levels=1)
+        height_2 = self.ImgF.reshape_higher_dim([row_col2], height_2, [False,False], type=int, levels=1)
+        img_preprocessing_sub = self.ImgF.reshape_higher_dim([row_col2], img_preprocessing_sub, [False,False], levels=1)
 
         # correct gap
         for row in range(row_col2[0]):
@@ -743,12 +749,6 @@ class ImgManager(ImgData):
         for col in range(row_col2[1]):
             if gap_x_y_2[1][0][col]==self.layout_params[3][5]:
                 gap_x_y_2[1][0][col]=0
-        for row in range(row_col2[0]):
-            for col in range(row_col2[1]):
-                if gap_x_y_2[0][row][col]>self.layout_params[3][4] and width_2[row][col]==width_2[0][col]:
-                    gap_x_y_2[0][row][col] = self.layout_params[3][4]
-                if gap_x_y_2[1][row][col]>self.layout_params[3][5] and height_2[row][col]==height_2[row][0]:
-                    gap_x_y_2[1][row][col] = self.layout_params[3][5]
 
         if sum(layout_level_2) != 0:
             # Since the title is up, we need to correct crop_points
@@ -833,6 +833,9 @@ class ImgManager(ImgData):
         #         return 0
         # else:
         #     return 2
+
+    def fill_func(self, img, id=None):
+        return None
 
     def title_preprocessing(self, img, id):
         title_max_size = copy.deepcopy(self.title_max_size)
@@ -1051,13 +1054,19 @@ class ImgManager(ImgData):
         gap_y = self.ImgF.adjust_gap(
             self.to_size[1], magnifer_row_col[0], height, gap[1], delta[1])
 
+        if len(img_list) < magnifer_row_col[0]*magnifer_row_col[1]:
+            empty_ = [[] for i in range(magnifer_row_col[0]*magnifer_row_col[1]-len(img_list))]
+            img_list = img_list+empty_
+        # Change the order of the image list
+        magnifer_vertical = self.layout_params[27]
+        img_list = self.ImgF.reshape_higher_dim([magnifer_row_col], img_list, [magnifer_vertical,False], levels=1)
+
         y = 0
         for row in range(magnifer_row_col[0]):
             x = 0
             for col in range(magnifer_row_col[1]):
-                i=row*magnifer_row_col[1]+col
-                if i<len(img_list):
-                    img.paste(img_list[i], (x, y))
+                if img_list[row,col]!=[]:
+                    img.paste(img_list[row,col], (x, y))
                 x = gap_x[col]*(col+1)+width[col]*(col+1)
             y = gap_y[row]*(row+1)+height[row]*(row+1)
 

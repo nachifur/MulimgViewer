@@ -97,7 +97,7 @@ class MulimgViewer (MulimgViewerGui):
         # open default path
         if default_path:
             try:
-                self.ImgManager.init(default_path, 2)
+                self.ImgManager.init(default_path, type=2) # one_dir_mul_img
                 self.show_img_init()
                 self.ImgManager.set_action_count(0)
                 self.show_img()
@@ -150,13 +150,13 @@ class MulimgViewer (MulimgViewerGui):
     def open_all_img(self, event):
         input_mode = self.choice_input_mode.GetSelection()
         if input_mode == 0:
-            self.one_dir_mul_img(event)
+            self.one_dir_mul_img()
         elif input_mode == 1:
-            self.one_dir_mul_dir_auto(event)
+            self.one_dir_mul_dir_auto()
         elif input_mode == 2:
-            self.one_dir_mul_dir_manual(event)
+            self.one_dir_mul_dir_manual()
         elif input_mode == 3:
-            self.onefilelist(event)
+            self.onefilelist()
 
     def close(self, event):
         if self.get_type() == -1:
@@ -275,20 +275,20 @@ class MulimgViewer (MulimgViewerGui):
                 ["-1", "", "***Error: First, need to select the input dir***", "-1"])
         self.SetStatusText_(["Refresh", "-1", "-1", "-1"])
 
-    def one_dir_mul_dir_auto(self, event):
+    def one_dir_mul_dir_auto(self):
         self.SetStatusText_(["Input", "", "", "-1"])
         dlg = wx.DirDialog(None, "Parallel auto choose input dir", "",
                            wx.DD_DEFAULT_STYLE | wx.DD_DIR_MUST_EXIST)
         if dlg.ShowModal() == wx.ID_OK:
             self.ImgManager.init(
-                dlg.GetPath(), 0, self.parallel_to_sequential.Value)
+                dlg.GetPath(), type=0, parallel_to_sequential=self.parallel_to_sequential.Value)
             self.show_img_init()
             self.ImgManager.set_action_count(0)
             self.show_img()
             self.choice_input_mode.SetSelection(1)
         self.SetStatusText_(["Input", "-1", "-1", "-1"])
 
-    def one_dir_mul_dir_manual(self, event):
+    def one_dir_mul_dir_manual(self):
         self.SetStatusText_(["Input", "", "", "-1"])
         try:
             if self.ImgManager.type == 1:
@@ -301,14 +301,14 @@ class MulimgViewer (MulimgViewerGui):
         self.choice_input_mode.SetSelection(2)
         self.SetStatusText_(["Input", "-1", "-1", "-1"])
 
-    def one_dir_mul_img(self, event):
+    def one_dir_mul_img(self):
         self.SetStatusText_(
             ["Sequential choose input dir", "", "", "-1"])
         dlg = wx.DirDialog(None, "Choose input dir", "",
                            wx.DD_DEFAULT_STYLE | wx.DD_DIR_MUST_EXIST)
 
         if dlg.ShowModal() == wx.ID_OK:
-            self.ImgManager.init(dlg.GetPath(), 2)
+            self.ImgManager.init(dlg.GetPath(), type=2)
             self.show_img_init()
             self.ImgManager.set_action_count(0)
             self.show_img()
@@ -317,7 +317,7 @@ class MulimgViewer (MulimgViewerGui):
         self.SetStatusText_(
             ["Sequential choose input dir", "-1", "-1", "-1"])
 
-    def onefilelist(self, event):
+    def onefilelist(self):
         self.SetStatusText_(["Choose the File List", "", "", "-1"])
         wildcard = "List file (*.txt; *.csv)|*.txt;*.csv|" \
             "All files (*.*)|*.*"
@@ -325,7 +325,7 @@ class MulimgViewer (MulimgViewerGui):
                             wildcard, wx.FD_DEFAULT_STYLE | wx.FD_FILE_MUST_EXIST)
 
         if dlg.ShowModal() == wx.ID_OK:
-            self.ImgManager.init(dlg.GetPath(), 3)
+            self.ImgManager.init(dlg.GetPath(), type=3)
             self.show_img_init()
             self.ImgManager.set_action_count(0)
             self.show_img()
@@ -342,7 +342,7 @@ class MulimgViewer (MulimgViewerGui):
             with open(dlg.GetPath(), "r") as f:
                 input_path = f.read().split('\n')
             self.ImgManager.init(
-                input_path[0:-1], 1, self.parallel_to_sequential.Value)
+                input_path[0:-1], type=1, parallel_to_sequential=self.parallel_to_sequential.Value)
             self.show_img_init()
             self.ImgManager.set_action_count(0)
             self.show_img()
@@ -866,28 +866,35 @@ class MulimgViewer (MulimgViewerGui):
             if self.ImgManager.type == 0 or self.ImgManager.type == 1:
                 if self.parallel_to_sequential.Value:
                     self.ImgManager.set_count_per_action(
-                        layout_params[0]*layout_params[1]*layout_params[2])
+                        layout_params[0][0]*layout_params[0][1]*layout_params[1][0]*layout_params[1][1])
                 else:
                     if self.parallel_sequential.Value:
-                        self.ImgManager.set_count_per_action(layout_params[1])
+                        self.ImgManager.set_count_per_action(
+                            layout_params[1][0]*layout_params[1][1])
                     else:
                         self.ImgManager.set_count_per_action(1)
             elif self.ImgManager.type == 2 or self.ImgManager.type == 3:
                 self.ImgManager.set_count_per_action(
-                    layout_params[0]*layout_params[1]*layout_params[2])
+                    layout_params[0][0]*layout_params[0][1]*layout_params[1][0]*layout_params[1][1])
 
     def set_img_layout(self):
 
         try:
-            num_per_img = int(self.num_per_img.GetLineText(0))
-            if num_per_img == -1:
-                row_col = self.ImgManager.layout_advice()
-                self.img_num_per_row.SetValue(str(row_col[1]))
-                self.img_num_per_column.SetValue(str(row_col[0]))
-                num_per_img = 1
+            row_col = self.row_col.GetLineText(0).split(',')
+            row_col = [int(x) for x in row_col]
 
-            img_num_per_row = int(self.img_num_per_row.GetLineText(0))
-            img_num_per_column = int(self.img_num_per_column.GetLineText(0))
+            row_col_one_img = self.row_col_one_img.GetLineText(0).split(',')
+            row_col_one_img = [int(x) for x in row_col_one_img]
+
+            if row_col_one_img[0] == -1 and row_col_one_img[1] == -1:
+                row_col = self.ImgManager.layout_advice()
+                self.row_col.SetValue(str(row_col[0])+","+str(row_col[1]))
+
+            row_col_img_unit = self.row_col_img_unit.GetLineText(0).split(',')
+            row_col_img_unit = [int(x) for x in row_col_img_unit]
+
+            magnifer_row_col = self.magnifer_row_col.GetLineText(0).split(',')
+            magnifer_row_col = [int(x) for x in magnifer_row_col]
 
             gap = self.gap.GetLineText(0).split(',')
             gap = [int(x) for x in gap]
@@ -900,6 +907,10 @@ class MulimgViewer (MulimgViewerGui):
 
             img_resolution = self.img_resolution.GetLineText(0).split(',')
             img_resolution = [int(x) for x in img_resolution]
+
+            magnifer_resolution = self.magnifer_resolution.GetLineText(
+                0).split(',')
+            magnifer_resolution = [int(x) for x in magnifer_resolution]
 
             magnifier_scale = self.magnifier_scale.GetLineText(0).split(',')
             magnifier_scale = [float(x) for x in magnifier_scale]
@@ -938,31 +949,37 @@ class MulimgViewer (MulimgViewerGui):
                              self.title_show_suffix.Value,              # 6
                              self.title_font.GetSelection(),            # 7
                              self.title_font_size.Value,                # 8
-                             self.font_paths]                           # 9
+                             self.font_paths,                           # 9
+                             self.title_position.GetSelection(),        # 10
+                             self.title_exif.Value]                     # 11
 
             if title_setting[0]:
                 if self.ImgManager.type == 0 or self.ImgManager.type == 1:
                     # one_dir_mul_dir_auto / one_dir_mul_dir_manual
                     if self.parallel_sequential.Value or self.parallel_to_sequential.Value:
-                        title_setting[2:7] = [False, True, True, True, False]
+                        title_setting[2:8] = [
+                            False, False, True, True, True, False]
                     else:
-                        title_setting[2:7] = [False, True, True, False, False]
+                        title_setting[2:8] = [
+                            False, False, True, True, False, False]
 
                 elif self.ImgManager.type == 2:
                     # one_dir_mul_img
-                    title_setting[2:7] = [False, False, True, True, False]
+                    title_setting[2:8] = [
+                        False, False, False, True, True, False]
                 elif self.ImgManager.type == 3:
                     # read file list from a list file
-                    title_setting[2:7] = [False, True, True, True, False]
+                    title_setting[2:8] = [
+                        False, False, True, True, True, False]
 
         except:
             self.SetStatusText_(
                 ["-1", "-1", "***Error: setting***", "-1"])
             return False
         else:
-            return [img_num_per_row,                        # 0
-                    num_per_img,                            # 1
-                    img_num_per_column,                     # 2
+            return [row_col,                                # 0
+                    row_col_one_img,                        # 1
+                    row_col_img_unit,                       # 2
                     gap,                                    # 3
                     show_scale,                             # 4
                     output_scale,                           # 5
@@ -984,21 +1001,24 @@ class MulimgViewer (MulimgViewerGui):
                     self.box_position.GetSelection(),       # 21
                     self.parallel_sequential.Value,         # 22
                     self.auto_save_all.Value,               # 23
-                    self.img_vertical.Value,
-                    self.sub_img_vertical.Value,
-                    self.magnifer_vertical.Value]
+                    self.img_vertical.Value,                # 24
+                    self.one_img_vertical.Value,            # 25
+                    self.img_unit_vertical.Value,           # 26
+                    self.magnifer_vertical.Value,           # 27
+                    magnifer_resolution,                    # 28
+                    magnifer_row_col]                       # 29
 
     def show_img(self):
         # check layout_params change
         try:
-            if self.layout_params_old[0:3] != self.ImgManager.layout_params[0:3] or (self.layout_params_old[19] != self.ImgManager.layout_params[19]):
+            if self.layout_params_old[0:2] != self.ImgManager.layout_params[0:2] or (self.layout_params_old[19] != self.ImgManager.layout_params[19]):
                 action_count = self.ImgManager.action_count
                 if self.ImgManager.type == 0 or self.ImgManager.type == 1:
                     parallel_to_sequential = self.parallel_to_sequential.Value
                 else:
                     parallel_to_sequential = False
                 self.ImgManager.init(
-                    self.ImgManager.input_path, self.ImgManager.type, parallel_to_sequential)
+                    self.ImgManager.input_path, type=self.ImgManager.type, parallel_to_sequential=parallel_to_sequential)
                 self.show_img_init()
                 self.ImgManager.set_action_count(action_count)
                 if self.index_table_gui:
@@ -1111,13 +1131,13 @@ class MulimgViewer (MulimgViewerGui):
                 else:
                     h = self.img_size[1]+200
                     if self.hidden_flag == 1:
-                        h=h-50
+                        h = h-50
             elif self.img_size[1]+200 > self.displaySize[1]:
                 h = self.displaySize[1]
             else:
                 h = self.img_size[1]+200
                 if self.hidden_flag == 1:
-                    h=h-50
+                    h = h-50
 
             self.Size = wx.Size((w, h))
 

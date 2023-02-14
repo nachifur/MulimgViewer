@@ -153,13 +153,13 @@ class MulimgViewerGui ( wx.Frame ):
 
 		bSizer16 = wx.BoxSizer( wx.HORIZONTAL )
 
-		self.m_staticText21 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"CorrectSize", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText21 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"UniformSize", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText21.Wrap( -1 )
 
 		bSizer16.Add( self.m_staticText21, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
 		choice_normalized_sizeChoices = [ u"Resize", u"Crop", u"Fill" ]
-		self.choice_normalized_size = wx.Choice( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, choice_normalized_sizeChoices, 0 )
+		self.choice_normalized_size = wx.Choice( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.Size( 90,-1 ), choice_normalized_sizeChoices, 0 )
 		self.choice_normalized_size.SetSelection( 0 )
 		bSizer16.Add( self.choice_normalized_size, 0, wx.ALL|wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
@@ -174,7 +174,7 @@ class MulimgViewerGui ( wx.Frame ):
 		bSizer15.Add( self.m_staticText19, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
 		choice_outputChoices = [ u"1:stitch", u"2:select", u"3:1+2", u"4:magnifer", u"5:1+4", u"6:2+4", u"7:1+2+4" ]
-		self.choice_output = wx.Choice( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.Size( -1,-1 ), choice_outputChoices, 0 )
+		self.choice_output = wx.Choice( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.Size( 90,-1 ), choice_outputChoices, 0 )
 		self.choice_output.SetSelection( 0 )
 		bSizer15.Add( self.choice_output, 0, wx.ALL, 5 )
 
@@ -189,7 +189,7 @@ class MulimgViewerGui ( wx.Frame ):
 		bSizer23.Add( self.m_staticText28, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
 		image_interpChoices = [ u"Nearest", u"Cubic", u"Linear" ]
-		self.image_interp = wx.Choice( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, image_interpChoices, 0 )
+		self.image_interp = wx.Choice( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.Size( 90,-1 ), image_interpChoices, 0 )
 		self.image_interp.SetSelection( 2 )
 		bSizer23.Add( self.image_interp, 0, wx.ALL, 5 )
 
@@ -236,19 +236,32 @@ class MulimgViewerGui ( wx.Frame ):
 		self.m_staticline13 = wx.StaticLine( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_HORIZONTAL )
 		fgSizer3.Add( self.m_staticline13, 0, wx.EXPAND |wx.ALL, 5 )
 
+		bSizer151 = wx.BoxSizer( wx.HORIZONTAL )
+
 		self.m_staticText16 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Layout", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
 		self.m_staticText16.Wrap( -1 )
 
 		self.m_staticText16.SetFont( wx.Font( 12, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL, False, wx.EmptyString ) )
 
-		fgSizer3.Add( self.m_staticText16, 0, wx.ALL, 5 )
+		bSizer151.Add( self.m_staticText16, 1, wx.ALL, 5 )
+
+		self.m_staticline19 = wx.StaticLine( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_VERTICAL )
+		bSizer151.Add( self.m_staticline19, 0, wx.EXPAND |wx.ALL, 5 )
+
+		self.m_staticText34 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Vertical", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText34.Wrap( -1 )
+
+		bSizer151.Add( self.m_staticText34, 0, wx.ALL, 5 )
+
+
+		fgSizer3.Add( bSizer151, 1, wx.EXPAND, 5 )
 
 		self.m_staticline14 = wx.StaticLine( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_HORIZONTAL )
 		fgSizer3.Add( self.m_staticline14, 0, wx.EXPAND |wx.ALL, 5 )
 
 		bSizer18 = wx.BoxSizer( wx.HORIZONTAL )
 
-		self.m_staticText2 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Row, Col", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText2 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"RowCol", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText2.Wrap( -1 )
 
 		bSizer18.Add( self.m_staticText2, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
@@ -256,25 +269,47 @@ class MulimgViewerGui ( wx.Frame ):
 		self.row_col = wx.TextCtrl( self.m_panel4, wx.ID_ANY, u"1,1", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
 		bSizer18.Add( self.row_col, 0, wx.ALL, 5 )
 
+		self.img_vertical = wx.CheckBox( self.m_panel4, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
+		bSizer18.Add( self.img_vertical, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+
 
 		fgSizer3.Add( bSizer18, 1, wx.EXPAND, 5 )
 
 		bSizer10 = wx.BoxSizer( wx.HORIZONTAL )
 
-		self.m_staticText4 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"SubRowCol", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText4 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"RowCol->OneImg", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText4.Wrap( -1 )
 
 		bSizer10.Add( self.m_staticText4, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
-		self.sub_row_col = wx.TextCtrl( self.m_panel4, wx.ID_ANY, u"1,1", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
-		bSizer10.Add( self.sub_row_col, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+		self.row_col_one_img = wx.TextCtrl( self.m_panel4, wx.ID_ANY, u"1,1", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
+		bSizer10.Add( self.row_col_one_img, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+
+		self.one_img_vertical = wx.CheckBox( self.m_panel4, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
+		bSizer10.Add( self.one_img_vertical, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
 
 		fgSizer3.Add( bSizer10, 1, wx.EXPAND, 5 )
 
+		bSizer14 = wx.BoxSizer( wx.HORIZONTAL )
+
+		self.m_staticText331 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"RowCol(ImgUnit)", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText331.Wrap( -1 )
+
+		bSizer14.Add( self.m_staticText331, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+
+		self.row_col_img_unit = wx.TextCtrl( self.m_panel4, wx.ID_ANY, u"2,1", wx.DefaultPosition, wx.DefaultSize, 0 )
+		bSizer14.Add( self.row_col_img_unit, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+
+		self.img_unit_vertical = wx.CheckBox( self.m_panel4, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
+		bSizer14.Add( self.img_unit_vertical, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+
+
+		fgSizer3.Add( bSizer14, 1, wx.EXPAND, 5 )
+
 		bSizer101 = wx.BoxSizer( wx.HORIZONTAL )
 
-		self.m_staticText41 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"🔍️RowCol", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText41 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"RowCol(🔍️)", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText41.Wrap( -1 )
 
 		bSizer101.Add( self.m_staticText41, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
@@ -282,47 +317,28 @@ class MulimgViewerGui ( wx.Frame ):
 		self.magnifer_row_col = wx.TextCtrl( self.m_panel4, wx.ID_ANY, u"1,1", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
 		bSizer101.Add( self.magnifer_row_col, 0, wx.ALL, 5 )
 
+		self.magnifer_vertical = wx.CheckBox( self.m_panel4, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
+		bSizer101.Add( self.magnifer_vertical, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+
 
 		fgSizer3.Add( bSizer101, 1, wx.EXPAND, 5 )
 
 		bSizer4 = wx.BoxSizer( wx.HORIZONTAL )
 
-		self.m_staticText5 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Gap (XY,SubXY,🔍️XY)", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText5 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Gap(XY,One,Unit,🔍️)", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText5.Wrap( -1 )
 
 		bSizer4.Add( self.m_staticText5, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
-		self.gap = wx.TextCtrl( self.m_panel4, wx.ID_ANY, u"10,10,5,5,2,2", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.gap = wx.TextCtrl( self.m_panel4, wx.ID_ANY, u"10,10,5,5,3,3,2,2", wx.DefaultPosition, wx.DefaultSize, 0 )
 		bSizer4.Add( self.gap, 0, wx.ALL, 5 )
 
 
 		fgSizer3.Add( bSizer4, 1, wx.EXPAND, 5 )
 
-		wSizer9 = wx.WrapSizer( wx.HORIZONTAL, wx.WRAPSIZER_DEFAULT_FLAGS )
-
-		self.m_staticText34 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Vertical", wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.m_staticText34.Wrap( -1 )
-
-		wSizer9.Add( self.m_staticText34, 0, wx.ALL, 5 )
-
-		self.m_staticline19 = wx.StaticLine( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_VERTICAL )
-		wSizer9.Add( self.m_staticline19, 0, wx.EXPAND |wx.ALL, 5 )
-
-		self.img_vertical = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"Img", wx.DefaultPosition, wx.DefaultSize, 0 )
-		wSizer9.Add( self.img_vertical, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
-
-		self.sub_img_vertical = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"SubImg", wx.DefaultPosition, wx.DefaultSize, 0 )
-		wSizer9.Add( self.sub_img_vertical, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
-
-		self.magnifer_vertical = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"🔍️", wx.DefaultPosition, wx.DefaultSize, 0 )
-		wSizer9.Add( self.magnifer_vertical, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
-
-
-		fgSizer3.Add( wSizer9, 1, wx.EXPAND, 5 )
-
 		wSizer81 = wx.WrapSizer( wx.HORIZONTAL, wx.WRAPSIZER_DEFAULT_FLAGS )
 
-		self.m_staticText32 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Show", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText32 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"ShowUnit", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText32.Wrap( -1 )
 
 		wSizer81.Add( self.m_staticText32, 0, wx.ALL, 5 )
@@ -338,16 +354,20 @@ class MulimgViewerGui ( wx.Frame ):
 		self.show_magnifer.SetValue(True)
 		wSizer81.Add( self.show_magnifer, 0, wx.ALL, 5 )
 
+		self.title_show = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"Title", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.title_show.SetValue(True)
+		wSizer81.Add( self.title_show, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+
 
 		fgSizer3.Add( wSizer81, 1, wx.EXPAND, 5 )
 
 		wSizer11 = wx.WrapSizer( wx.HORIZONTAL, wx.WRAPSIZER_DEFAULT_FLAGS )
 
-		self.one_img = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"OneImg", wx.DefaultPosition, wx.DefaultSize, 0 )
-		wSizer11.Add( self.one_img, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
-
 		self.auto_layout_check = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"AutoWinSize", wx.DefaultPosition, wx.DefaultSize, 0 )
 		wSizer11.Add( self.auto_layout_check, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+
+		self.one_img = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"OneImg", wx.DefaultPosition, wx.DefaultSize, 0 )
+		wSizer11.Add( self.one_img, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
 
 		fgSizer3.Add( wSizer11, 1, wx.EXPAND, 5 )
@@ -368,25 +388,26 @@ class MulimgViewerGui ( wx.Frame ):
 		wSizer7.Add( self.m_staticline10, 0, wx.EXPAND |wx.ALL, 5 )
 
 		self.show_box = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"InImg", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.show_box.SetValue(True)
 		wSizer7.Add( self.show_box, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
 		self.show_box_in_crop = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"In🔍️", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.show_box_in_crop.SetValue(True)
 		wSizer7.Add( self.show_box_in_crop, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
-		self.select_img_box = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"SelectBox", wx.DefaultPosition, wx.DefaultSize, 0 )
-		wSizer7.Add( self.select_img_box, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
-
 		self.m_staticText23 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Width", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText23.Wrap( -1 )
 
 		wSizer7.Add( self.m_staticText23, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
-		self.line_width = wx.TextCtrl( self.m_panel4, wx.ID_ANY, u"2,2", wx.DefaultPosition, wx.Size( 40,-1 ), 0 )
+		self.line_width = wx.TextCtrl( self.m_panel4, wx.ID_ANY, u"2,2", wx.DefaultPosition, wx.Size( 35,-1 ), 0 )
 		wSizer7.Add( self.line_width, 0, wx.ALL, 5 )
 
+		self.select_img_box = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"SelectBox", wx.DefaultPosition, wx.DefaultSize, 0 )
+		wSizer7.Add( self.select_img_box, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+
 		box_positionChoices = [ u"middle bottom", u"left bottom", u"right bottom", u"left top", u"right top" ]
-		self.box_position = wx.Choice( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, box_positionChoices, 0 )
+		self.box_position = wx.Choice( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.Size( 105,-1 ), box_positionChoices, 0 )
 		self.box_position.SetSelection( 0 )
 		wSizer7.Add( self.box_position, 0, wx.ALL, 5 )
 
@@ -412,24 +433,10 @@ class MulimgViewerGui ( wx.Frame ):
 		self.title_auto.SetValue(True)
 		wSizer2.Add( self.title_auto, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
-		self.title_show = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"Show", wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.title_show.SetValue(True)
-		wSizer2.Add( self.title_show, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
-
 		self.title_exif = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"EXIF", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.title_exif.Enable( False )
 
 		wSizer2.Add( self.title_exif, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
-
-		self.title_down_up = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"Down", wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.title_down_up.Enable( False )
-
-		wSizer2.Add( self.title_down_up, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
-
-		title_positionChoices = [ u"left", u"center", u"right" ]
-		self.title_position = wx.Choice( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.Size( 50,-1 ), title_positionChoices, 0 )
-		self.title_position.SetSelection( 0 )
-		wSizer2.Add( self.title_position, 0, wx.ALL, 5 )
 
 		self.title_show_parent = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"Parent", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.title_show_parent.Enable( False )
@@ -453,8 +460,20 @@ class MulimgViewerGui ( wx.Frame ):
 
 		wSizer2.Add( self.title_show_suffix, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
-		self.m_staticline12 = wx.StaticLine( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_VERTICAL )
-		wSizer2.Add( self.m_staticline12, 0, wx.EXPAND |wx.ALL, 5 )
+		title_positionChoices = [ u"left", u"center", u"right" ]
+		self.title_position = wx.Choice( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.Size( 45,-1 ), title_positionChoices, 0 )
+		self.title_position.SetSelection( 0 )
+		self.title_position.Enable( False )
+
+		wSizer2.Add( self.title_position, 0, wx.ALL, 5 )
+
+		self.title_down_up = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"Down", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.title_down_up.Enable( False )
+
+		wSizer2.Add( self.title_down_up, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+
+		self.m_staticline20 = wx.StaticLine( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_VERTICAL )
+		wSizer2.Add( self.m_staticline20, 0, wx.EXPAND |wx.ALL, 5 )
 
 		self.m_staticText351 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Font", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText351.Wrap( -1 )
@@ -517,6 +536,9 @@ class MulimgViewerGui ( wx.Frame ):
 
 		fgSizer3.Add( wSizer6, 1, wx.EXPAND, 5 )
 
+		self.m_staticline21 = wx.StaticLine( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_HORIZONTAL )
+		fgSizer3.Add( self.m_staticline21, 0, wx.EXPAND |wx.ALL, 5 )
+
 		wSizer10 = wx.WrapSizer( wx.HORIZONTAL, wx.WRAPSIZER_DEFAULT_FLAGS )
 
 		self.m_staticText39 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Size", wx.DefaultPosition, wx.DefaultSize, 0 )
@@ -542,8 +564,8 @@ class MulimgViewerGui ( wx.Frame ):
 
 		wSizer10.Add( self.m_staticText381, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
-		self.m_textCtrl14 = wx.TextCtrl( self.m_panel4, wx.ID_ANY, u"-1,-1", wx.DefaultPosition, wx.Size( 60,-1 ), 0 )
-		wSizer10.Add( self.m_textCtrl14, 0, wx.ALL, 5 )
+		self.magnifer_resolution = wx.TextCtrl( self.m_panel4, wx.ID_ANY, u"-1,-1", wx.DefaultPosition, wx.Size( 60,-1 ), 0 )
+		wSizer10.Add( self.magnifer_resolution, 0, wx.ALL, 5 )
 
 
 		fgSizer3.Add( wSizer10, 1, wx.EXPAND, 5 )

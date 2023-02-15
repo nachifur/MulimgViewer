@@ -638,7 +638,7 @@ class ImgManager(ImgData):
         elif img_mode == 1:
             self.scale = self.layout_params[5]
         self.img_resolution = (
-            np.array(self.img_resolution_origin) * np.array(self.scale)).astype(np.int)
+            np.array(self.img_resolution_origin) * np.array(self.scale)).astype(np.int64)
 
         if img_mode == 0:
             self.img_resolution_show = self.img_resolution

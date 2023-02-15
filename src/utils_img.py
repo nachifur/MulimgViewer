@@ -48,7 +48,7 @@ class ImgUtils():
             box_point[3] = temp
 
         img_resolution = (np.array(img_resolution_origin)
-                          * np.array(show_scale)).astype(np.int)
+                          * np.array(show_scale)).astype(np.int64)
 
         width = abs(box_point[0]-box_point[2])
         height = abs(box_point[1]-box_point[3])

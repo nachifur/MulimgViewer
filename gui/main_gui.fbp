@@ -7080,11 +7080,11 @@
                                                                     <property name="window_style"></property>
                                                                 </object>
                                                             </object>
-                                                            <object class="sizeritem" expanded="0">
+                                                            <object class="sizeritem" expanded="1">
                                                                 <property name="border">5</property>
                                                                 <property name="flag">wxEXPAND</property>
                                                                 <property name="proportion">1</property>
-                                                                <object class="wxWrapSizer" expanded="0">
+                                                                <object class="wxWrapSizer" expanded="1">
                                                                     <property name="flags">wxWRAPSIZER_DEFAULT_FLAGS</property>
                                                                     <property name="minimum_size"></property>
                                                                     <property name="name">wSizer8</property>
@@ -7341,11 +7341,11 @@
                                                                     </object>
                                                                 </object>
                                                             </object>
-                                                            <object class="sizeritem" expanded="0">
+                                                            <object class="sizeritem" expanded="1">
                                                                 <property name="border">5</property>
                                                                 <property name="flag">wxEXPAND</property>
                                                                 <property name="proportion">1</property>
-                                                                <object class="wxBoxSizer" expanded="0">
+                                                                <object class="wxBoxSizer" expanded="1">
                                                                     <property name="minimum_size"></property>
                                                                     <property name="name">bSizer22</property>
                                                                     <property name="orient">wxHORIZONTAL</property>

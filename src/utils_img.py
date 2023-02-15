@@ -438,7 +438,7 @@ class ImgUtils():
                             if img_list[iy_0, ix_0, iy_1, ix_1] != []:
                                 im = img_list[iy_0, ix_0, iy_1, ix_1][0]
                                 im = img_preprocessing(
-                                    im, id=iy_1*Col['level_1']+ix_1)
+                                    im, rowcol=[iy_1,ix_1])
 
                                 xy_grids_output.append(
                                     [x_offset_0+x_offset_1, y_offset_0+y_offset_1])
@@ -933,7 +933,7 @@ class ImgManager(ImgData):
 
         return self.title_max_size
 
-    def img_preprocessing(self, img, id=None):
+    def img_preprocessing(self, img, rowcol=[1,1]):
         if self.custom_resolution:
             # custom image resolution
             width, height = self.img_resolution
@@ -954,12 +954,12 @@ class ImgManager(ImgData):
         img = self.ImgF.add_alpha(img, self.img_alpha)
 
         # n img -> one img, split width
-        if id != None and self.one_img:
+        if self.one_img:
             sub_img_width = int(width/self.layout_params[1][1])
             sub_img_height = int(height/self.layout_params[1][0])
             img = np.array(img)
-            img = img[id*sub_img_height:(id+1)*sub_img_height,
-                      id*sub_img_width:(id+1)*sub_img_width, :]
+            img = img[rowcol[0]*sub_img_height:(rowcol[0]+1)*sub_img_height,
+                      rowcol[1]*sub_img_width:(rowcol[1]+1)*sub_img_width, :]
             img = Image.fromarray(np.uint8(img))
 
         return img

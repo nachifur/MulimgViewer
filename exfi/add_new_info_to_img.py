@@ -11,11 +11,13 @@ def get_encoding(file):
         tmp = chardet.detect(f.read())
         return tmp['encoding']
 
+
 def check_type(obj):
     if isinstance(obj, bytes):
         return str(obj, encoding='utf-8')
     else:
         return obj
+
 
 def fill_dict_to_img(key_list, exif_list):
     img_path = Path(exif_list[0])
@@ -35,21 +37,24 @@ def fill_dict_to_img(key_list, exif_list):
     exif_dict["0th"][270] = json.dumps(add_new_dict)
     exif_bytes = piexif.dump(exif_dict)
     img.save(img_path, exif=exif_bytes)
-    print("Modified EXIF - ImageDescription:",img_path)
+    print("Modified EXIF - ImageDescription:", img_path)
     print(exif_dict["0th"][270])
 
 
 # load csv
-input_path = Path("D:/ncfey/Desktop/Vaccher/input_exif.csv")
-encoding = get_encoding(input_path)
+csv_list = ["D:/ncfey/Desktop/Vaccher/input_1_exif.csv",
+            "D:/ncfey/Desktop/Vaccher/input_2_exif.csv"]
+for csv_file in csv_list:
+    input_path = Path(csv_file)
+    encoding = get_encoding(input_path)
 
-with open(input_path, 'r', newline='', encoding='ANSI') as csvfile:
-    dataset = list(csv.reader(csvfile))
-    row = len(dataset)
-    first_row = True
-    for r in range(row):
-        if first_row:
-            key_list = dataset[0]
-            first_row = False
-            continue
-        fill_dict_to_img(key_list, dataset[r])
+    with open(input_path, 'r', newline='', encoding='ANSI') as csvfile:
+        dataset = list(csv.reader(csvfile))
+        row = len(dataset)
+        first_row = True
+        for r in range(row):
+            if first_row:
+                key_list = dataset[0]
+                first_row = False
+                continue
+            fill_dict_to_img(key_list, dataset[r])

@@ -25,15 +25,13 @@ def fill_dict_to_img(key_list, exif_list):
 
     add_new_dict = {}
     sub_dict = {}
-    sub_sub_dict = {}
     add_new_dict["MulimgViewer"] = sub_dict
-    sub_dict["Geoswim"] = sub_sub_dict
     for i in range(len(exif_list)):
         if i == 0:
-            # sub_sub_dict[key_list[i]] = check_type(exif_dict["0th"][270]) # ImageDescription
-            sub_sub_dict[key_list[i]] = Path(exif_list[i]).name
+            # sub_dict[key_list[i]] = check_type(exif_dict["0th"][270]) # ImageDescription
+            sub_dict[key_list[i]] = Path(exif_list[i]).name
         else:
-            sub_sub_dict[key_list[i]] = check_type(exif_list[i])
+            sub_dict[key_list[i]] = check_type(exif_list[i])
     exif_dict["0th"][270] = json.dumps(add_new_dict)
     exif_bytes = piexif.dump(exif_dict)
     img.save(img_path, exif=exif_bytes)
@@ -45,7 +43,7 @@ def fill_dict_to_img(key_list, exif_list):
 input_path = Path("D:/ncfey/Desktop/Vaccher/input_exif.csv")
 encoding = get_encoding(input_path)
 
-with open(input_path, 'r', newline='', encoding=encoding) as csvfile:
+with open(input_path, 'r', newline='', encoding='ANSI') as csvfile:
     dataset = list(csv.reader(csvfile))
     row = len(dataset)
     first_row = True

@@ -1,5 +1,4 @@
 import copy
-import csv
 import os
 from pathlib import Path
 from shutil import copyfile, move
@@ -10,7 +9,8 @@ from PIL import Image, ImageDraw, ImageFont
 
 from src.utils import rgb2hex
 from src.data import ImgData
-
+import piexif
+import json
 
 class ImgUtils():
     """The set of functional programming modules"""
@@ -475,7 +475,7 @@ class ImgUtils():
     def identity_transformation(self, img, id=0):
         return img
 
-    def cal_txt_size(self, title_list, standard_size, font, font_size):
+    def cal_txt_size_adjust_title(self, title_list, standard_size, font, font_size):
         im = Image.new('RGBA', (256, 256), 0)
         draw = ImageDraw.Draw(im)
         title_size = []
@@ -885,39 +885,60 @@ class ImgManager(ImgData):
     def title_init(self, width_2, height_2):
         # self.title_setting = self.layout_params[17]
         # title_setting = [self.title_auto.Value,                     # 0
-        #                     self.title_show.Value,                     # 1
-        #                     self.title_down_up.Value,                  # 2
-        #                     self.title_exif.Value,                     # 3
-        #                     self.title_show_parent.Value,              # 4
-        #                     self.title_show_prefix.Value,              # 5
-        #                     self.title_show_name.Value,                # 6
-        #                     self.title_show_suffix.Value,              # 7
-        #                     self.title_font.GetSelection(),            # 8
-        #                     self.title_font_size.Value,                # 9
-        #                     self.font_paths,                           # 10
-        #                     self.title_position.GetSelection()]        # 11
+        #                  self.title_show.Value,                     # 1
+        #                  self.title_down_up.Value,                  # 2
+        #                  self.title_show_parent.Value,              # 3
+        #                  self.title_show_prefix.Value,              # 4
+        #                  self.title_show_name.Value,                # 5
+        #                  self.title_show_suffix.Value,              # 6
+        #                  self.title_font.GetSelection(),            # 7
+        #                  self.title_font_size.Value,                # 8
+        #                  self.font_paths,                           # 9
+        #                  self.title_position.GetSelection(),        # 10
+        #                  self.title_exif.Value]                     # 11
 
         # get title
+        title_exif = self.title_setting[11]
         title_list = []
-        for path in self.flist:
-            path = Path(path)
-            if path.is_file() and path.suffix.lower() in self.format_group:
-                title = ""
-                if self.title_setting[3]:
-                    title = title+path.parent.stem
-                if self.title_setting[5]:
-                    if self.title_setting[3]:
-                        title = title+"/"
-                    name = path.stem
-                    if not self.title_setting[4]:
-                        try:
-                            name = name.split("_", 1)[1]
-                        except:
-                            pass
-                    title = title+name
-                if self.title_setting[6]:
-                    title = title+path.suffix
+
+        if title_exif:
+            for img in self.img_list:
+                exif = piexif.load(img.info['exif'])
+                try:
+                    exif_dict = json.loads(exif["0th"][270])["MulimgViewer"]
+
+                except:
+                    title = str(exif["0th"][270], encoding = "utf-8")
+                else:
+                    i = 0
+                    title = ""
+                    for key in exif_dict.keys():
+                        title = title+key+": "+exif_dict[key]
+                        if i<len(exif_dict.keys())-1:
+                            title = title+"\n"
+                        i+=1
+
                 title_list.append(title)
+        else:
+            for path in self.flist:
+                path = Path(path)
+                if path.is_file() and path.suffix.lower() in self.format_group:
+                    title = ""
+                    if self.title_setting[3]:
+                        title = title+path.parent.stem
+                    if self.title_setting[5]:
+                        if self.title_setting[3]:
+                            title = title+"/"
+                        name = path.stem
+                        if not self.title_setting[4]:
+                            try:
+                                name = name.split("_", 1)[1]
+                            except:
+                                pass
+                        title = title+name
+                    if self.title_setting[6]:
+                        title = title+path.suffix
+                    title_list.append(title)
         # get title color
         text_color = [255-self.gap_color[0], 255 -
                       self.gap_color[1], 255-self.gap_color[2]]
@@ -928,7 +949,7 @@ class ImgManager(ImgData):
         self.font = ImageFont.truetype(
             self.title_setting[9][self.title_setting[7]], font_size)
         standard_size = width_2[0]
-        self.title_size, self.title_list, self.title_max_size = self.ImgF.cal_txt_size(
+        self.title_size, self.title_list, self.title_max_size = self.ImgF.cal_txt_size_adjust_title(
             title_list, standard_size, self.font, font_size)
 
         return self.title_max_size

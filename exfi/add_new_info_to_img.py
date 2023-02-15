@@ -42,8 +42,8 @@ def fill_dict_to_img(key_list, exif_list):
 
 
 # load csv
-csv_list = ["D:/ncfey/Desktop/Vaccher/input_1_exif.csv",
-            "D:/ncfey/Desktop/Vaccher/input_2_exif.csv"]
+csv_list = ["D:/ncfey/Desktop/Vaccher/test_show_exif/input_1_exif.csv",
+            "D:/ncfey/Desktop/Vaccher/test_show_exif/input_2_exif.csv"]
 for csv_file in csv_list:
     input_path = Path(csv_file)
     encoding = get_encoding(input_path)

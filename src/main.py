@@ -904,16 +904,16 @@ class MulimgViewer (MulimgViewerGui):
             if self.checkBox_auto_draw_color.Value:
                 # 10 colors built into the software
                 color_list = [
-                    wx.Colour(217, 26, 42, 85/100*255),
-                    wx.Colour(147, 81, 166, 65/100*255),
-                    wx.Colour(85, 166, 73, 65/100*255),
-                    wx.Colour(242, 229, 48, 95/100*255),
-                    wx.Colour(242, 116, 5, 95/100*255),
-                    wx.Colour(242, 201, 224, 95/100*255),
-                    wx.Colour(36, 132, 191, 75/100*255),
-                    wx.Colour(65, 166, 90, 65/100*255),
-                    wx.Colour(214, 242, 206, 95/100*255),
-                    wx.Colour(242, 163, 94, 95/100*255)]
+                wx.Colour(217, 26, 42, int(85/100*255)),
+                wx.Colour(147, 81, 166, int(65/100*255)),
+                wx.Colour(85, 166, 73, int(65/100*255)),
+                wx.Colour(242, 229, 48, int(95/100*255)),
+                wx.Colour(242, 116, 5, int(95/100*255)),
+                wx.Colour(242, 201, 224, int(95/100*255)),
+                wx.Colour(36, 132, 191, int(75/100*255)),
+                wx.Colour(65, 166, 90, int(65/100*255)),
+                wx.Colour(214, 242, 206, int(95/100*255)),
+                wx.Colour(242, 163, 94, int(95/100*255))]
                 num_box = len(self.xy_magnifier)
                 if num_box <= len(color_list):
                     self.color_list = color_list[0:num_box]

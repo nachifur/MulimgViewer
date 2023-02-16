@@ -5884,7 +5884,7 @@
                                                                             <property name="resize">Resizable</property>
                                                                             <property name="selection">0</property>
                                                                             <property name="show">1</property>
-                                                                            <property name="size">50,-1</property>
+                                                                            <property name="size">-1,-1</property>
                                                                             <property name="style"></property>
                                                                             <property name="subclass">; ; forward_declare</property>
                                                                             <property name="toolbar_pane">0</property>

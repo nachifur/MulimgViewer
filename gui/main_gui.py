@@ -487,7 +487,7 @@ class MulimgViewerGui ( wx.Frame ):
 		wSizer2.Add( self.title_font_size, 0, wx.ALL, 5 )
 
 		title_fontChoices = []
-		self.title_font = wx.Choice( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.Size( 50,-1 ), title_fontChoices, 0 )
+		self.title_font = wx.Choice( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.Size( -1,-1 ), title_fontChoices, 0 )
 		self.title_font.SetSelection( 0 )
 		wSizer2.Add( self.title_font, 0, wx.ALL, 5 )
 

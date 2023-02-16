@@ -343,7 +343,7 @@ class ImgUtils():
                     id += 1
         return output
 
-    def layout_2d(self, layout_list, gap_color, img_list, img_preprocessing, img_preprocessing_sub, vertical_list):
+    def layout_2d(self, layout_list, gap_color, img_list, img_preprocessing, img_preprocessing_sub, vertical_list, onetitle, title_func):
         # Two-dimensional arrangement
         # layout_list = [
         #                 [[row_2,col_2],[gap_x_2,gap_y_2],[width_2,height_2],[target_width_2, target_height_2],discard_table_2],
@@ -356,6 +356,8 @@ class ImgUtils():
         i = 0
         xy_grids = []
         per_gap = [True, False, False]
+        title_init_func = title_func[0]
+        title_preprocessing=title_func[1]
         for layout in layout_list:
             row, col = layout[0]
             gap_x, gap_y = layout[1]
@@ -372,10 +374,15 @@ class ImgUtils():
             if i >= 1:
                 width = [target_width for i in range(col)]
                 height = [target_height for i in range(row)]
-                layout[2] = [width, height]
-
                 target_width = target_width*col+sum(gap_x[:])
                 target_height = target_height*row+sum(gap_y[:])
+
+                if onetitle and i==1:
+                    title_max_size = title_init_func(target_width,target_height)
+                    gap_add_new_title = gap_y[0]
+                    target_height = target_height + title_max_size[1]+gap_y[0]
+
+                layout[2] = [width, height]
                 layout[3] = [target_width, target_height]
             else:
                 width, height = layout[2]
@@ -469,6 +476,17 @@ class ImgUtils():
                                             if im_:
                                                 img.paste(im_, (x, y))
                                     i += 1
+                # show onetitle 
+                if onetitle:
+                    if im:
+                        im_ = title_preprocessing(im, id=img_list[iy_0, ix_0, 0, 0][1])
+                        if im_:
+                            x_offset_2 = xy_grids[level][0, Row['level_2']-1, Col['level_2']-1]
+                            y_offset_2 = xy_grids[level][1, Row['level_2']-1, Col['level_2']-1]
+
+                            x = x_offset_0
+                            y = y_offset_0+y_offset_1+y_offset_2+gap_add_new_title
+                            img.paste(im_, (x, y))
 
         return img, xy_grids_output, xy_grids_id_list
 
@@ -693,32 +711,36 @@ class ImgManager(ImgData):
         # show title
         self.title_setting = self.layout_params[17]
         self.onetitle = self.layout_params[30]
-        if self.title_setting[1] and (not self.onetitle):
+        if self.onetitle:
             if len(width_2) != 0:
-                title_width_height = self.title_init(width_2, height_2)
-                if self.title_setting[2]:
-                    # up
-                    width_2 = [title_width_height[0]]+width_2
-                    height_2 = [title_width_height[1]]+height_2
-                    img_preprocessing_sub = [
-                        self.title_preprocessing] + img_preprocessing_sub
-                    layout_level_2 = [1]+layout_level_2
+                self.title_init(width_2[0], height_2[0])
+        else:
+            if self.title_setting[1]:
+                if len(width_2) != 0:
+                    title_width_height = self.title_init(width_2[0], height_2[0])
+                    if self.title_setting[2]:
+                        # up
+                        width_2 = [title_width_height[0]]+width_2
+                        height_2 = [title_width_height[1]]+height_2
+                        img_preprocessing_sub = [
+                            self.title_preprocessing] + img_preprocessing_sub
+                        layout_level_2 = [1]+layout_level_2
 
-                    gap_x_y_2[0] = [0,0]
-                    gap_x_y_2[1] = [0,0]
+                        gap_x_y_2[0] = [0,0]
+                        gap_x_y_2[1] = [0,0]
+                    else:
+                        # down
+                        width_2.append(title_width_height[0])
+                        height_2.append(title_width_height[1])
+                        img_preprocessing_sub.append(self.title_preprocessing)
+                        layout_level_2.append(1)
+
+                        gap_x_y_2[0].append(0)
+                        gap_x_y_2[1].append(0)
                 else:
-                    # down
-                    width_2.append(title_width_height[0])
-                    height_2.append(title_width_height[1])
-                    img_preprocessing_sub.append(self.title_preprocessing)
-                    layout_level_2.append(1)
-
-                    gap_x_y_2[0].append(0)
-                    gap_x_y_2[1].append(0)
+                    layout_level_2.append(0)
             else:
                 layout_level_2.append(0)
-        else:
-            layout_level_2.append(0)
 
         # check gap
         gap_x_y_2_orignal = copy.deepcopy(gap_x_y_2)
@@ -817,8 +839,6 @@ class ImgManager(ImgData):
                 self.crop_points_process(copy.deepcopy(
                     draw_points), img_mode=img_mode)
 
-
-
             gap_x_y_1 = [self.layout_params[3][2], self.layout_params[3][3]]
             gap_x_y_0 = [self.layout_params[3][0], self.layout_params[3][1]]
 
@@ -860,7 +880,7 @@ class ImgManager(ImgData):
             # try:
             # Two-dimensional arrangement
             self.img, self.xy_grid, self.xy_grids_id_list = self.ImgF.layout_2d(
-                layout_list, self.gap_color, copy.deepcopy(self.img_list), self.img_preprocessing, img_preprocessing_sub, [self.img_vertical, self.one_img_vertical, self.img_unit_vertical])
+                layout_list, self.gap_color, copy.deepcopy(self.img_list), self.img_preprocessing, img_preprocessing_sub, [self.img_vertical, self.one_img_vertical, self.img_unit_vertical],self.onetitle, [self.title_init,self.title_preprocessing])
 
             self.show_box = self.layout_params[14]
             if self.show_original and self.show_box and len(draw_points) != 0:
@@ -967,7 +987,7 @@ class ImgManager(ImgData):
         font_size = int(self.title_setting[8])
         self.font = ImageFont.truetype(
             self.title_setting[9][self.title_setting[7]], font_size)
-        standard_size = width_2[0]
+        standard_size = width_2
         self.title_size, self.title_list, self.title_max_size = self.ImgF.cal_txt_size_adjust_title(
             title_list, standard_size, self.font, font_size)
 

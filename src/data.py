@@ -10,7 +10,7 @@ class ImgData():
     """Multi-image database.  
     Multi-image browsing, path management, loading multi-image data, automatic layout layout, etc. """
 
-    def init(self, input_path, type, parallel_to_sequential=False, action_count=None, img_count=None):
+    def init(self, input_path, type=2, parallel_to_sequential=False, action_count=None, img_count=None):
         self.input_path = input_path
         self.type = type
         self.parallel_to_sequential = parallel_to_sequential

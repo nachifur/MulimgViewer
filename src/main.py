@@ -1006,7 +1006,8 @@ class MulimgViewer (MulimgViewerGui):
                     self.img_unit_vertical.Value,           # 26
                     self.magnifer_vertical.Value,           # 27
                     magnifer_resolution,                    # 28
-                    magnifer_row_col]                       # 29
+                    magnifer_row_col,                       # 29
+                    self.onetitle.Value]                    # 30
 
     def show_img(self):
         # check layout_params change

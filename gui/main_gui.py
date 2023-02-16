@@ -369,6 +369,9 @@ class MulimgViewerGui ( wx.Frame ):
 		self.one_img = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"OneImg", wx.DefaultPosition, wx.DefaultSize, 0 )
 		wSizer11.Add( self.one_img, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
+		self.onetitle = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"OneTitle", wx.DefaultPosition, wx.DefaultSize, 0 )
+		wSizer11.Add( self.onetitle, 0, wx.ALL, 5 )
+
 
 		fgSizer3.Add( wSizer11, 1, wx.EXPAND, 5 )
 

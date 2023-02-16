@@ -225,7 +225,7 @@ class ImgUtils():
                 delta_x = -to_width
             elif box_position == 1:  # left bottom
                 delta_y = img_height-height_all
-                delta_x = -to_width
+                delta_x = -img_width
             elif box_position == 4:  # right top
                 delta_y = 0
                 delta_x = -to_width
@@ -669,10 +669,12 @@ class ImgManager(ImgData):
                 width_2.append(magnifier_img_all_size[0])
                 height_2.append(magnifier_img_all_size[1])
             else:
-                gap_x_y_2[0].append(self.layout_params[3][4]
-                                    if delta[0] == 0 else delta[0])
-                gap_x_y_2[1].append(self.layout_params[3][5]
-                                    if delta[1] == 0 else delta[1])
+                if delta[0]<0 or delta[1]<0:
+                    gap_x_y_2[0].append(delta[0])
+                    gap_x_y_2[1].append(delta[1])
+                else:
+                    gap_x_y_2[0].append(0)
+                    gap_x_y_2[1].append(0)
                 if self.layout_params[21] == 0:
                     width_2.append(magnifier_img_all_size[0])
                     height_2.append(magnifier_img_all_size[1])
@@ -684,7 +686,8 @@ class ImgManager(ImgData):
 
         # show title
         self.title_setting = self.layout_params[17]
-        if self.title_setting[1]:
+        self.onetitle = self.layout_params[30]
+        if self.title_setting[1] and (not self.onetitle):
             if len(width_2) != 0:
                 title_width_height = self.title_init(width_2, height_2)
                 if self.title_setting[2]:
@@ -695,10 +698,8 @@ class ImgManager(ImgData):
                         self.title_preprocessing] + img_preprocessing_sub
                     layout_level_2 = [1]+layout_level_2
 
-                    gap_x_y_2[1][0] = self.layout_params[3][5]
-                    gap_x_y_2[0] = [0]+gap_x_y_2[0]
-                    gap_x_y_2[1] = [0]+gap_x_y_2[1]
-
+                    gap_x_y_2[0] = [0,0]
+                    gap_x_y_2[1] = [0,0]
                 else:
                     # down
                     width_2.append(title_width_height[0])
@@ -707,7 +708,7 @@ class ImgManager(ImgData):
                     layout_level_2.append(1)
 
                     gap_x_y_2[0].append(0)
-                    gap_x_y_2[1].append(self.layout_params[3][5])
+                    gap_x_y_2[1].append(0)
             else:
                 layout_level_2.append(0)
         else:
@@ -768,15 +769,19 @@ class ImgManager(ImgData):
         # correct gap
         for row in range(row_col2[0]):
             for col in range(row_col2[1]):
-                if gap_x_y_2[0][row][0] == self.layout_params[3][4]:
-                    gap_x_y_2[0][row][0] = 0        
-                if gap_x_y_2[1][0][col] == self.layout_params[3][5]:
-                    gap_x_y_2[1][0][col] = 0        
-                if self.box_position == 0:
-                    if height_2[row][col]<height_2[row][0] and gap_x_y_2[1][row][col]>=0 and gap_x_y_2[1][row][col]<=self.layout_params[3][5]:
-                        gap_x_y_2[1][row][col] = gap_x_y_2[1][row][col]+int((height_2[row][0]-height_2[row][col])/2)
-                    if width_2[row][col]<width_2[0][col] and gap_x_y_2[0][row][col]>=0 and gap_x_y_2[0][row][col]<=self.layout_params[3][4]:
-                        gap_x_y_2[0][row][col] = gap_x_y_2[0][row][col]+int((width_2[0][col]-width_2[row][col])/2)
+                i = row*row_col2[1]+col
+                if gap_x_y_2[1][row,col]>=0 and gap_x_y_2[1][row,col]<=self.layout_params[3][5] and gap_x_y_2[0][row,col]>=0 and gap_x_y_2[0][row,col]<=self.layout_params[3][4]:
+                    if col!=0 and gap_x_y_2[0][row,col]==0 and i<sum(layout_level_2):
+                        gap_x_y_2[0][row,col] = self.layout_params[3][4]
+                    
+                    if row!=0 and gap_x_y_2[1][row,col]==0 and i<sum(layout_level_2):
+                        gap_x_y_2[1][row,col] = self.layout_params[3][5]
+
+                if self.box_position == 0 and i<sum(layout_level_2):
+                    if height_2[row,col]<height_2[row][0]:
+                        gap_x_y_2[1][row,col] = gap_x_y_2[1][row,col]+int((height_2[row][0]-height_2[row,col])/2)
+                    if width_2[row,col]<width_2[0][col]:
+                        gap_x_y_2[0][row,col] = gap_x_y_2[0][row,col]+int((width_2[0][col]-width_2[row,col])/2)
 
         if sum(layout_level_2) != 0:
             # Since the title is up, we need to correct crop_points
@@ -800,15 +805,8 @@ class ImgManager(ImgData):
             width_1, height_1 = [[], []]
             width_0, height_0 = [[], []]
 
-            if row_col2[1] == 1:
-                target_width_2, target_height_2 = [width_2[0][0],
-                                                   height_2.sum()+gap_x_y_2[1].sum()]
-            elif row_col2[0] == 1:
-                target_width_2, target_height_2 = [
-                    width_2.sum()+gap_x_y_2[0].sum(), height_2[0][0]]
-            else:
-                target_width_2, target_height_2 = [
-                    width_2[0, :].sum(), height_2[:, 0].sum()]
+            target_width_2, target_height_2 = [
+                width_2[0, :].sum()+gap_x_y_2[0][0, :].sum(), height_2[:, 0].sum()+gap_x_y_2[1][:, 0].sum()]
 
             target_width_1, target_height_1 = [0, 0]
             target_width_0, target_height_0 = [0, 0]

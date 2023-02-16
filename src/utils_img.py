@@ -606,7 +606,7 @@ class ImgManager(ImgData):
         self.img_resolution = self.img_resolution.tolist()
         return self.img_resolution
 
-    def stitch_img_init(self, img_mode, draw_points):
+    def stitch_img_init(self, img_mode, draw_points, first_run=True):
         """img_mode, 0: show, 1: save"""
         # init
         self.get_img_list()  # Generate image list
@@ -617,6 +617,13 @@ class ImgManager(ImgData):
         self.one_img_vertical = self.layout_params[25]
         self.img_unit_vertical = self.layout_params[26]
         self.magnifer_vertical = self.layout_params[27]
+        # Two-dimensional arrangement
+        # row_col_img_unit:  title image, original image, magnifier image
+        row_col2 = self.layout_params[2]
+        # row_col_one_img
+        row_col1 = self.layout_params[1]
+        # row_col
+        row_col0 = self.layout_params[0]
 
         img_preprocessing_sub = []
         layout_level_2 = []
@@ -658,7 +665,6 @@ class ImgManager(ImgData):
             crop_width = self.crop_points[0][2]-self.crop_points[0][0]
             crop_height = self.crop_points[0][3]-self.crop_points[0][1]
             magnifer_row_col = self.layout_params[29]
-            row_col2 = self.layout_params[2]
             _, delta, magnifier_img_all_size = self.ImgF.cal_magnifier_size(
                 self.layout_params[8], [crop_width, crop_height], 0, self.layout_params[3][6:8], self.to_size, magnifer_row_col, self.show_original, box_position=self.box_position, row_col_img_unit=self.layout_params[2], img_unit_gap=self.layout_params[3][4:6])
             img_preprocessing_sub.append(self.magnifier_preprocessing)
@@ -716,6 +722,7 @@ class ImgManager(ImgData):
 
         # check gap
         gap_x_y_2_orignal = copy.deepcopy(gap_x_y_2)
+        new_add_gap_rowcol_flag = [0 for i in range(sum(layout_level_2))]
         k = 0
         for i in range(len(gap_x_y_2_orignal[0])):
             if gap_x_y_2_orignal[0][i] < 0 or gap_x_y_2_orignal[1][i] < 0:
@@ -728,6 +735,8 @@ class ImgManager(ImgData):
                     height_2 = height_2[0:i+k+1]+[0]+height_2[i+k+1:]
                     img_preprocessing_sub = img_preprocessing_sub[0:i+k+1]+[
                         self.fill_func]+img_preprocessing_sub[i+k+1:]
+                    new_add_gap_rowcol_flag = new_add_gap_rowcol_flag[0:i+k+1]+[0]+new_add_gap_rowcol_flag[i+k+1:]
+                    new_add_gap_rowcol_flag[i+k]=1
                 else:
                     gap_x_y_2[0] = gap_x_y_2[0][0:i+k+1]+[-gap_x_y_2_orignal[0]
                                                           [i] if gap_x_y_2_orignal[0][i] < 0 else 0]
@@ -737,8 +746,9 @@ class ImgManager(ImgData):
                     height_2 = height_2[0:i+k+1]+[0]
                     img_preprocessing_sub = img_preprocessing_sub[0:i+k+1]+[
                         self.fill_func]
+                    new_add_gap_rowcol_flag = new_add_gap_rowcol_flag[0:i+k+1]+[0]
+                    new_add_gap_rowcol_flag[i+k]=1
                 k += 1
-        row_col2 = self.layout_params[2]
         if len(gap_x_y_2[0]) < row_col2[0]*row_col2[1]:
             empty_ = [0 for i in range(
                 row_col2[0]*row_col2[1]-len(gap_x_y_2[1]))]
@@ -753,6 +763,8 @@ class ImgManager(ImgData):
             empty_ = [[] for i in range(
                 row_col2[0]*row_col2[1]-len(img_preprocessing_sub))]
             img_preprocessing_sub = img_preprocessing_sub+empty_
+            empty_ = [0 for i in range(row_col2[0]*row_col2[1]-len(new_add_gap_rowcol_flag))]
+            new_add_gap_rowcol_flag = new_add_gap_rowcol_flag+empty_
 
         # Extended Dimension
         gap_x_y_2[1] = self.ImgF.reshape_higher_dim(
@@ -765,6 +777,8 @@ class ImgManager(ImgData):
             [copy.deepcopy(row_col2)], height_2, [self.img_unit_vertical], type=int, levels=1)
         img_preprocessing_sub = self.ImgF.reshape_higher_dim(
             [copy.deepcopy(row_col2)], img_preprocessing_sub, [self.img_unit_vertical], levels=1)
+        new_add_gap_rowcol_flag = self.ImgF.reshape_higher_dim(
+            [copy.deepcopy(row_col2)], new_add_gap_rowcol_flag, [self.img_unit_vertical], type=int, levels=1)
 
         # correct gap
         for row in range(row_col2[0]):
@@ -780,8 +794,22 @@ class ImgManager(ImgData):
                 if self.box_position == 0 and i<sum(layout_level_2):
                     if height_2[row,col]<height_2[row][0]:
                         gap_x_y_2[1][row,col] = gap_x_y_2[1][row,col]+int((height_2[row][0]-height_2[row,col])/2)
+                    else:
+                        height_2[row,col]=height_2[row][0]
                     if width_2[row,col]<width_2[0][col]:
                         gap_x_y_2[0][row,col] = gap_x_y_2[0][row,col]+int((width_2[0][col]-width_2[row,col])/2)
+                    else:
+                        width_2[row,col]=width_2[0][col]
+        
+        # correct row_col2
+        if self.box_position != 0 and first_run:
+            row_col_ = np.argwhere(new_add_gap_rowcol_flag==1).tolist()[0]
+            if row_col_[0]>row_col_[1]:
+                self.layout_params[2][0] = row_col2[0]+1
+            else:
+                self.layout_params[2][1] = row_col2[1]+1
+            return self.stitch_img_init(img_mode, draw_points, first_run=False)
+            
 
         if sum(layout_level_2) != 0:
             # Since the title is up, we need to correct crop_points
@@ -789,14 +817,7 @@ class ImgManager(ImgData):
                 self.crop_points_process(copy.deepcopy(
                     draw_points), img_mode=img_mode)
 
-            # Two-dimensional arrangement
-            # row_col_img_unit:  title image, original image, magnifier image
-            row_col2 = self.layout_params[2]
-            # row_col2 = [sum(layout_level_2), 1]
-            # row_col_one_img
-            row_col1 = self.layout_params[1]
-            # row_col
-            row_col0 = self.layout_params[0]
+
 
             gap_x_y_1 = [self.layout_params[3][2], self.layout_params[3][3]]
             gap_x_y_0 = [self.layout_params[3][0], self.layout_params[3][1]]

@@ -51,7 +51,7 @@ qq交流群：945669929
 ## 3.1 pip 安装
 pip安装：（如果安装过程出错，可以使用conda安装）
 ```bash
-pip install wxpython pillow pytest-shutil numpy requests
+pip install wxpython pillow pytest-shutil numpy requests piexif
 ```
 运行：
 ```python

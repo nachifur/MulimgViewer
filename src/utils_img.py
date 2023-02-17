@@ -877,30 +877,30 @@ class ImgManager(ImgData):
             img_mode, draw_points)
         if show_img:
             # stitch img
-            # try:
-            # Two-dimensional arrangement
-            self.img, self.xy_grid, self.xy_grids_id_list = self.ImgF.layout_2d(
-                layout_list, self.gap_color, copy.deepcopy(self.img_list), self.img_preprocessing, img_preprocessing_sub, [self.img_vertical, self.one_img_vertical, self.img_unit_vertical],self.onetitle, [self.title_init,self.title_preprocessing])
+            try:
+                # Two-dimensional arrangement
+                self.img, self.xy_grid, self.xy_grids_id_list = self.ImgF.layout_2d(
+                    layout_list, self.gap_color, copy.deepcopy(self.img_list), self.img_preprocessing, img_preprocessing_sub, [self.img_vertical, self.one_img_vertical, self.img_unit_vertical],self.onetitle, [self.title_init,self.title_preprocessing])
 
-            self.show_box = self.layout_params[14]
-            if self.show_original and self.show_box and len(draw_points) != 0:
-                crop_points = self.crop_points
-                offset = [self.title_max_size[0]+self.layout_params[3]
-                          [4], self.title_max_size[1]+self.layout_params[3][5]]
-                for crop_point in crop_points:
-                    up = crop_point[-1]  # down(False) or up(True)
-                    if (up and self.title_setting[2] and self.title_setting[1]) or ((not up) and self.title_setting[2] and self.title_setting[1]):
-                        crop_point[1] = crop_point[1]+offset[1]
-                        crop_point[3] = crop_point[3]+offset[1]
-                self.img = self.ImgF.draw_rectangle(
-                    self.img, self.xy_grid, crop_points, self.layout_params[9], line_width=self.layout_params[10][0])
-            return 0
-        #     except:
-        #         return 1
-        #     else:
-        #         return 0
-        # else:
-        #     return 2
+                self.show_box = self.layout_params[14]
+                if self.show_original and self.show_box and len(draw_points) != 0:
+                    crop_points = self.crop_points
+                    offset = [self.title_max_size[0]+self.layout_params[3]
+                            [4], self.title_max_size[1]+self.layout_params[3][5]]
+                    for crop_point in crop_points:
+                        up = crop_point[-1]  # down(False) or up(True)
+                        if (up and self.title_setting[2] and self.title_setting[1]) or ((not up) and self.title_setting[2] and self.title_setting[1]):
+                            crop_point[1] = crop_point[1]+offset[1]
+                            crop_point[3] = crop_point[3]+offset[1]
+                    self.img = self.ImgF.draw_rectangle(
+                        self.img, self.xy_grid, crop_points, self.layout_params[9], line_width=self.layout_params[10][0])
+            # return 0
+            except:
+                return 1
+            else:
+                return 0
+        else:
+            return 2
 
     def fill_func(self, img, id=None):
         return None

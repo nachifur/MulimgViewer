@@ -912,8 +912,11 @@ class MulimgViewer (MulimgViewerGui):
                 0).split(',')
             magnifer_resolution = [int(x) for x in magnifer_resolution]
 
-            magnifier_scale = self.magnifier_scale.GetLineText(0).split(',')
-            magnifier_scale = [float(x) for x in magnifier_scale]
+            magnifier_show_scale = self.magnifier_show_scale.GetLineText(0).split(',')
+            magnifier_show_scale = [float(x) for x in magnifier_show_scale]
+
+            magnifier_out_scale = self.magnifier_out_scale.GetLineText(0).split(',')
+            magnifier_out_scale = [float(x) for x in magnifier_out_scale]
 
             if self.checkBox_auto_draw_color.Value:
                 # 10 colors built into the software
@@ -985,7 +988,7 @@ class MulimgViewer (MulimgViewerGui):
                     output_scale,                           # 5
                     img_resolution,                         # 6
                     1 if self.magnifier.Value else 0,       # 7
-                    magnifier_scale,                        # 8
+                    magnifier_show_scale,                        # 8
                     color,                                  # 9
                     line_width,                             # 10
                     self.move_file.Value,                   # 11
@@ -1007,7 +1010,8 @@ class MulimgViewer (MulimgViewerGui):
                     self.magnifer_vertical.Value,           # 27
                     magnifer_resolution,                    # 28
                     magnifer_row_col,                       # 29
-                    self.onetitle.Value]                    # 30
+                    self.onetitle.Value,                    # 30
+                    magnifier_out_scale]                    # 31
 
     def show_img(self):
         # check layout_params change

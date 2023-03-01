@@ -1032,7 +1032,38 @@ class ImgManager(ImgData):
             crop_point = crop_point_scale[0:4]
             show_scale_old = crop_point_scale[4:6]
 
+            # KeepSize
             if self.layout_params[12]:
+                width = crop_point[2]-crop_point[0]
+                height = crop_point[3]-crop_point[1]
+                center_x = crop_point[0]+int(width/2)
+                center_y = crop_point[1]+int(height/2)
+                if self.img_resolution[0]/width > self.img_resolution[1]/height:
+                    height = int(
+                        width*self.img_resolution[1]/self.img_resolution[0])
+                else:
+                    width = int(
+                        height*self.img_resolution[0]/self.img_resolution[1])
+                crop_point[0] = center_x - int(width/2)
+                crop_point[2] = center_x + int(width/2)
+
+                crop_point[1] = center_y-int(height/2)
+                crop_point[3] = center_y+int(height/2)
+            
+            # magnifer_resolution
+            magnifer_resolution = self.layout_params[28]
+            if magnifer_resolution[0]==-1 and magnifer_resolution[1]==-1:
+                is_to_magnifer_resolution = False
+            elif magnifer_resolution[0]==-1:
+                is_to_magnifer_resolution = True
+                magnifer_resolution[0] = magnifer_resolution[1]
+            elif magnifer_resolution[1]==-1:
+                is_to_magnifer_resolution = True
+                magnifer_resolution[1] = magnifer_resolution[0]
+            else:
+                is_to_magnifer_resolution = True
+
+            if is_to_magnifer_resolution:
                 width = crop_point[2]-crop_point[0]
                 height = crop_point[3]-crop_point[1]
                 center_x = crop_point[0]+int(width/2)
@@ -1074,7 +1105,10 @@ class ImgManager(ImgData):
     def magnifier_preprocessing(self, img, img_mode=0, id=0):
         """img_mode, 0: show, 1: save"""
         # crop images
-        magnifier_scale = self.layout_params[8]
+        if img_mode:
+            magnifier_scale = self.layout_params[31]
+        else:
+            magnifier_scale = self.layout_params[8]
         img_list = []
         for crop_point in self.crop_points:
             crop_point = copy.deepcopy(crop_point)

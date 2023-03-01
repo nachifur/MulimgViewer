@@ -525,16 +525,21 @@ class MulimgViewerGui ( wx.Frame ):
 		self.output_scale = wx.TextCtrl( self.m_panel4, wx.ID_ANY, u"1,1", wx.DefaultPosition, wx.Size( 50,-1 ), 0 )
 		wSizer6.Add( self.output_scale, 0, wx.ALL, 5 )
 
-		self.m_staticText18 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"🔍️Scale", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText18 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"🔍️Show", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText18.Wrap( -1 )
 
 		wSizer6.Add( self.m_staticText18, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
-		self.magnifier_scale = wx.TextCtrl( self.m_panel4, wx.ID_ANY, u"-1,-1", wx.DefaultPosition, wx.Size( 60,-1 ), 0 )
-		wSizer6.Add( self.magnifier_scale, 0, wx.ALL, 5 )
+		self.magnifier_show_scale = wx.TextCtrl( self.m_panel4, wx.ID_ANY, u"-1,-1", wx.DefaultPosition, wx.Size( 60,-1 ), 0 )
+		wSizer6.Add( self.magnifier_show_scale, 0, wx.ALL, 5 )
 
-		self.keep_magnifer_size = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"🔍️KeepSize", wx.DefaultPosition, wx.DefaultSize, 0 )
-		wSizer6.Add( self.keep_magnifer_size, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+		self.m_staticText341 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"🔍️Out", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText341.Wrap( -1 )
+
+		wSizer6.Add( self.m_staticText341, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+
+		self.magnifier_out_scale = wx.TextCtrl( self.m_panel4, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size( 60,-1 ), 0 )
+		wSizer6.Add( self.magnifier_out_scale, 0, wx.ALL, 5 )
 
 
 		fgSizer3.Add( wSizer6, 1, wx.EXPAND, 5 )
@@ -569,6 +574,9 @@ class MulimgViewerGui ( wx.Frame ):
 
 		self.magnifer_resolution = wx.TextCtrl( self.m_panel4, wx.ID_ANY, u"-1,-1", wx.DefaultPosition, wx.Size( 60,-1 ), 0 )
 		wSizer10.Add( self.magnifer_resolution, 0, wx.ALL, 5 )
+
+		self.keep_magnifer_size = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"🔍️KeepSize", wx.DefaultPosition, wx.DefaultSize, 0 )
+		wSizer10.Add( self.keep_magnifer_size, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
 
 		fgSizer3.Add( wSizer10, 1, wx.EXPAND, 5 )

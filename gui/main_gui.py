@@ -538,7 +538,7 @@ class MulimgViewerGui ( wx.Frame ):
 
 		wSizer6.Add( self.m_staticText341, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
-		self.magnifier_out_scale = wx.TextCtrl( self.m_panel4, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size( 60,-1 ), 0 )
+		self.magnifier_out_scale = wx.TextCtrl( self.m_panel4, wx.ID_ANY, u"1,1", wx.DefaultPosition, wx.Size( 60,-1 ), 0 )
 		wSizer6.Add( self.magnifier_out_scale, 0, wx.ALL, 5 )
 
 

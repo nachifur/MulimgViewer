@@ -1062,18 +1062,15 @@ class ImgManager(ImgData):
                 magnifer_resolution[1] = magnifer_resolution[0]
             else:
                 is_to_magnifer_resolution = True
-
             if is_to_magnifer_resolution:
                 width = crop_point[2]-crop_point[0]
                 height = crop_point[3]-crop_point[1]
                 center_x = crop_point[0]+int(width/2)
                 center_y = crop_point[1]+int(height/2)
-                if self.img_resolution[0]/width > self.img_resolution[1]/height:
-                    height = int(
-                        width*self.img_resolution[1]/self.img_resolution[0])
-                else:
-                    width = int(
-                        height*self.img_resolution[0]/self.img_resolution[1])
+                
+                width = magnifer_resolution[0]
+                height = magnifer_resolution[1]
+
                 crop_point[0] = center_x - int(width/2)
                 crop_point[2] = center_x + int(width/2)
 
@@ -1386,7 +1383,7 @@ class ImgManager(ImgData):
 
                             img = self.img_list[i_]
                             img_list = self.magnifier_preprocessing(
-                                self.img_preprocessing(img, id=self.get_img_id(i_)), img_mode=1)
+                                self.img_preprocessing(img, rowcol=self.get_img_row_col(i_)), img_mode=1)
                             i = 0
                             for img in img_list:
                                 f_path_output = Path(
@@ -1399,7 +1396,7 @@ class ImgManager(ImgData):
                     i = 0
                     for img in self.img_list:
                         img_list = self.magnifier_preprocessing(
-                            self.img_preprocessing(img, id=self.get_img_id(i)), img_mode=1)
+                            self.img_preprocessing(img, rowcol=self.get_img_row_col(i)), img_mode=1)
                         if not (Path(self.out_path_str)/dir_name/(Path(self.flist[i]).parent).stem).is_dir():
                             os.makedirs(Path(self.out_path_str) / dir_name /
                                         (Path(self.flist[i]).parent).stem)
@@ -1410,6 +1407,7 @@ class ImgManager(ImgData):
                             img.save(f_path_output)
                             ii += 1
                         i += 1
+                # self.check_2.append(0)
             except:
                 self.check_2.append(1)
             else:
@@ -1425,7 +1423,7 @@ class ImgManager(ImgData):
                         sub_dir_name)
         i = 0
         for img in self.img_list:
-            img = self.img_preprocessing(img, id=self.get_img_id(i))
+            img = self.img_preprocessing(img, rowcol=self.get_img_row_col(i))
             if self.show_box:
                 img = self.ImgF.draw_rectangle(img, self.xy_grid, self.crop_points,
                                                self.layout_params[9], line_width=self.layout_params[10][0], single_box=True)
@@ -1437,14 +1435,26 @@ class ImgManager(ImgData):
             img.save(f_path_output)
             i += 1
 
-    def get_img_id(self, i):
+    def get_img_row_col(self, i):
         if i != None and self.one_img:
-            row = self.layout_params[0][0]
-            numperimg = self.layout_params[1][0]*self.layout_params[1][1]
-            col = self.layout_params[0][1]
-            kernel = list(range(numperimg))
+            # row_col_one_img
+            row_col1 = self.layout_params[1]
+            # row_col
+            row_col0 = self.layout_params[0]
+            one_img_vertical = self.layout_params[25]
+
+            kernel = []
+            if one_img_vertical:
+                for col in range(row_col1[1]):
+                    for row in range(row_col1[0]):
+                        kernel = kernel+[[row,col]]
+            else:
+                for row in range(row_col1[0]):
+                    for col in range(row_col1[1]):
+                        kernel = kernel+[[row,col]]
+
             L = []
-            for k in range(row*col):
+            for k in range(row_col0[0]*row_col0[1]):
                 L = L+kernel
             return L[i]
         else:

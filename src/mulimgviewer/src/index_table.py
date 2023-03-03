@@ -28,14 +28,11 @@ class IndexTable (IndexTableGui):
         self.id_list = []
         self.flist = flist
         self.index_table.Clear()
-        img_num_per_row = layout_params[0]
-        num_per_img = layout_params[1]
-        img_num_per_column = layout_params[2]
+        img_num_per_row = layout_params[0][0]
+        num_per_img = layout_params[1][0]*layout_params[1][1]
+        img_num_per_column = layout_params[0][1]
         if type == 2 or type == 3:
-            if num_per_img == -1:
-                interval = img_num_per_row*img_num_per_column
-            else:
-                interval = img_num_per_row*img_num_per_column*num_per_img
+            interval = img_num_per_row*img_num_per_column*num_per_img
         else:
             if self.parallel_sequential:
                 interval = num_per_img

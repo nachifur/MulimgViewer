@@ -59,7 +59,7 @@ class About (AboutGui):
         self.about_txt.EndFontSize()
 
         self.icon = wx.Icon(get_resource_path(
-            'mulimgviewer.ico'), wx.BITMAP_TYPE_ICO)
+            'mulimgviewer.png'), wx.BITMAP_TYPE_PNG)
         self.SetIcon(self.icon)
 
         if update:

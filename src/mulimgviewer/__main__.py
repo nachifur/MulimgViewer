@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import sys
 from pathlib import Path
 
@@ -5,8 +6,8 @@ import wx
 import wx.lib.inspection
 from PIL import ImageFile
 
-from .src.main import MulimgViewer
-from .src.path_select import PathSelectFrame
+from mulimgviewer.src.main import MulimgViewer
+from mulimgviewer.src.path_select import PathSelectFrame
 
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 

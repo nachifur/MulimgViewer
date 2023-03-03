@@ -2,7 +2,7 @@ from pathlib import Path
 
 import numpy as np
 import wx
-from gui.index_table_gui import IndexTableGui
+from ..gui.index_table_gui import IndexTableGui
 
 
 class IndexTable (IndexTableGui):

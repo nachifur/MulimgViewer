@@ -77,9 +77,13 @@ jobs:
       - uses: softprops/action-gh-release@v1
         if: runner.os == 'Linux' && startsWith(github.ref, 'refs/tags/')
         with:
+          body_path: ${{ github.workspace }}/CHANGELOG.txt
+          token: ${{ secrets.CUSTOM_GITHUB_TOKEN }}
           files: |
             dist/*
             build/resources/*
+        env:
+          GITHUB_REPOSITORY: ${{ github.repository }}
       - uses: pypa/gh-action-pypi-publish@release/v1
         if: runner.os == 'Linux' && startsWith(github.ref, 'refs/tags/')
         with:

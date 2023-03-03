@@ -1,6 +1,6 @@
 <p align="center">
 <a href="https://github.com/nachifur/MulimgViewer" target="_blank">
-<img align="center" alt="multiple images viewer" src="https://github.com/nachifur/MulimgViewer/blob/master/mulimgviewer.ico" />
+<img width="250" height="250" img align="center" alt="multiple images viewer" src="https://github.com/nachifur/MulimgViewer/blob/master/img/mulimgviewer.png" />
 </a>
 </p>
 

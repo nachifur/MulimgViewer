@@ -62,9 +62,6 @@ Source = "https://github.com/nachifur/mulimgviewer"
 [project.scripts]
 mulimgviewer = "mulimgviewer.__main__:main"
 
-[tool.setuptools.package-data]
-mulimgviewer = ["py.typed", "*.ico", "font/using/*.ttf", "font/using/*.ttc"]
-
 [tool.setuptools.dynamic.dependencies]
 file = "requirements.txt"
 

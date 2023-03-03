@@ -2,7 +2,6 @@ import copy
 import platform
 import threading
 from pathlib import Path
-from tkinter.messagebox import NO
 
 import numpy as np
 import requests
@@ -61,7 +60,7 @@ class MulimgViewer (MulimgViewerGui):
         self.indextablegui = None
         self.aboutgui = None
         self.icon = wx.Icon(get_resource_path(
-            'mulimgviewer.ico'), wx.BITMAP_TYPE_ICO)
+            'mulimgviewer.png'), wx.BITMAP_TYPE_PNG)
         self.SetIcon(self.icon)
         self.m_statusBar1.SetStatusWidths([-2, -1, -4, -4])
         self.set_title_font()

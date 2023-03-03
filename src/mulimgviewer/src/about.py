@@ -1,7 +1,7 @@
 import wx
-from gui.about_gui import AboutGui
+from ..gui.about_gui import AboutGui
 
-from src.utils import get_resource_path
+from .utils import get_resource_path
 
 
 class About (AboutGui):

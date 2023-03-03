@@ -4,7 +4,7 @@ from pathlib import Path
 
 import numpy as np
 
-from src.utils import solve_factor
+from .utils import solve_factor
 
 class ImgData():
     """Multi-image database.  

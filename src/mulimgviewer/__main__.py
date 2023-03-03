@@ -1,13 +1,12 @@
 import sys
 from pathlib import Path
-from tkinter.messagebox import NO
 
 import wx
 import wx.lib.inspection
 from PIL import ImageFile
 
-from src.main import MulimgViewer
-from src.path_select import PathSelectFrame
+from .src.main import MulimgViewer
+from .src.path_select import PathSelectFrame
 
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
@@ -88,6 +87,11 @@ class MainAPP(wx.App):
 
 
 def main():
+    global file_name
+    if len(sys.argv)>1:
+        file_name = sys.argv[1]
+    else:
+        file_name = None
     app = MainAPP()
     # debug
     # wx.lib.inspection.InspectionTool().Show()
@@ -95,9 +99,4 @@ def main():
 
 
 if __name__ == '__main__':
-    global file_name
-    if len(sys.argv)>1:
-        file_name = sys.argv[1]
-    else:
-        file_name = None
     main()

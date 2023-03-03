@@ -7,12 +7,12 @@ from tkinter.messagebox import NO
 import numpy as np
 import requests
 import wx
-from gui.main_gui import MulimgViewerGui
+from ..gui.main_gui import MulimgViewerGui
 
-from src.about import About
-from src.index_table import IndexTable
-from src.utils import MyTestEvent, get_resource_path
-from src.utils_img import ImgManager
+from .about import About
+from .index_table import IndexTable
+from .utils import MyTestEvent, get_resource_path
+from .utils_img import ImgManager
 
 
 class MulimgViewer (MulimgViewerGui):

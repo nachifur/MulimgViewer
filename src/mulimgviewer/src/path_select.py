@@ -1,7 +1,7 @@
 import wx
-from gui.path_select_gui import PathSelectFrameGui
+from ..gui.path_select_gui import PathSelectFrameGui
 
-from src.utils import get_resource_path
+from .utils import get_resource_path
 
 
 class PathSelectFrame (PathSelectFrameGui):

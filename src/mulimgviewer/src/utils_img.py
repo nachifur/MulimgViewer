@@ -7,8 +7,8 @@ import numpy as np
 import wx
 from PIL import Image, ImageDraw, ImageFont
 
-from src.utils import rgb2hex
-from src.data import ImgData
+from .utils import rgb2hex
+from .data import ImgData
 import piexif
 import json
 

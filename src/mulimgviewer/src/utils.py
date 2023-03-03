@@ -1,9 +1,12 @@
 import copy
+import os
 import sys
 from pathlib import Path
 
 import numpy as np
 import wx
+
+ROOT = os.path.dirname(os.path.dirname(__file__))
 
 
 class MyTestEvent(wx.PyCommandEvent):
@@ -22,7 +25,7 @@ class MyTestEvent(wx.PyCommandEvent):
 def get_resource_path(relative_path):
     if hasattr(sys, '_MEIPASS'):
         return str(Path(sys._MEIPASS)/relative_path)
-    return str(Path(relative_path).absolute())
+    return str(Path(os.path.join(ROOT, relative_path)).absolute())
 
 
 def solve_factor(num):

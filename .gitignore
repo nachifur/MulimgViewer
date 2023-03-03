@@ -1,3 +1,4 @@
+_version.py
 .vscode/
 test_output/mag*
 test_output/select*

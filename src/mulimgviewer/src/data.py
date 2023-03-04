@@ -7,7 +7,7 @@ import numpy as np
 from .utils import solve_factor
 
 class ImgData():
-    """Multi-image database.  
+    """Multi-image database.
     Multi-image browsing, path management, loading multi-image data, automatic layout layout, etc. """
 
     def init(self, input_path, type=2, parallel_to_sequential=False, action_count=None, img_count=None):

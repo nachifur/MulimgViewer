@@ -26,7 +26,7 @@
 
 ## 1. 介绍
 
-MulimgViewer**多图像浏览器**，在一个界面显示多个图像，方便图像的比较、筛选。 
+MulimgViewer**多图像浏览器**，在一个界面显示多个图像，方便图像的比较、筛选。
 
 **软件功能**: 多路径并行显示、多框并行放大 ([more](#4.0))。
 
@@ -41,7 +41,7 @@ qq交流群：945669929
 * 直接下载并运行[exe文件]((https://github.com/nachifur/MulimgViewer/releases))；或者下载源码运行`MulimgViewer.py`->[**源码运行**](#3.0)
 * v3.9.3以后，`Windows 10`提供安装版`_Setup.exe`和便携版`_Portable.exe`（安装版`_Setup.exe`启动速度更快）
 
-## 3. python源码运行(windows\linux\ios)<a name="3.0"></a> 
+## 3. python源码运行(windows\linux\ios)<a name="3.0"></a>
 
 * 目前仅提供`Windows 10`的安装包（`amd64`）
 * **其他环境**可以使用源码运行，安装环境使用以下两种方式都行（pip or conda）
@@ -68,7 +68,7 @@ conda activate mulimgviewer
 python MulimgViewer.py
 ```
 
-## 4. 应用场景 <a name="4.0"></a> 
+## 4. 应用场景 <a name="4.0"></a>
 ### 例1：多图像浏览
 浏览202,599张图片的数据库CelebA，需要多长时间？一次显示1000张，只需点击200多次即可完成！
 ![image](https://github.com/nachifur/MulimgViewer/blob/master/img/f15.jpg)
@@ -83,7 +83,7 @@ python MulimgViewer.py
 
 图片并行挑选：`Parallel auto` or `Parallel manual`，关闭`Parallel+Sequential`（默认使用复制，选中`MoveFile`为剪切）。
 
-### 例3：并行放大 
+### 例3：并行放大
 
 MulimgViewer可以轻松的完成纵向与横向的拼接，**支持自动拼接保存，支持并行放大**！
 
@@ -137,7 +137,7 @@ MulimgViewer可以方便的进行成对的数据的浏览、比较。[详细见]
 
 ![image](https://github.com/nachifur/MulimgViewer/blob/master/img/Shortcut_bar.jpg)
 
-## 5.2 操作流程 <a name="5.2"></a> 
+## 5.2 操作流程 <a name="5.2"></a>
 测试图像下载地址：https://raw.githubusercontent.com/nachifur/MulimgViewer/master/img/test_img.zip
 
 **注意：本软件不支持自动刷新，修改布局参数之后，需要手动刷新（`Ctrl+R`）。**
@@ -212,7 +212,7 @@ Magnifer: 单独保存放大图像，方便用户的后期处理。
 
 当`NumPerImg` = 1或者>1，图像布局为**手动模式**，这时可以调整 `Row` 和 `Col`。
 
-### 5.4.4. 并行模式下的串行显示  <a name="5.4.4"></a> 
+### 5.4.4. 并行模式下的串行显示  <a name="5.4.4"></a>
 
 在`Parallel auto`和`Parallel manual`模式下，可以并行显示多个文件夹。
 
@@ -260,7 +260,7 @@ Resize: 图像尺寸为一组图像中的平均尺寸，缩放模式(不保持�
 1. 同时浏览显示100张图像，屏幕放不下，使用`Scale:Show`缩放即可
 2. 100张拼接造成的保存图片很大，使用`Scale:Out`可以方便控制文件大小
 
-### 5.4.11 并行放大 <a name="5.4.11"></a> 
+### 5.4.11 并行放大 <a name="5.4.11"></a>
 **操作**:
 
 1. 点击放大按钮`🔍️`
@@ -301,7 +301,7 @@ Resize: 图像尺寸为一组图像中的平均尺寸，缩放模式(不保持�
 1. 关闭`Box:SelectBox`
 2. 鼠标左键双击图片
 3. `Ctrl+R`刷新显示。
-   
+
 **手动修改放大框的颜色**：
 
 1. 选中`Box:SelectBox`
@@ -330,7 +330,7 @@ Resize: 图像尺寸为一组图像中的平均尺寸，缩放模式(不保持�
 2. 查看图片显示序号
 3. 输入序号，回车
 
-### 5.4.14 标题 <a name="5.4.14"></a> 
+### 5.4.14 标题 <a name="5.4.14"></a>
 **标题**
 
 1. 关闭`Title:Auto`之后，可以进行自定义显示标题
@@ -350,10 +350,10 @@ Resize: 图像尺寸为一组图像中的平均尺寸，缩放模式(不保持�
 2. 子文件夹的命名。如果是0,1,2...10,11，需要改为00,01,02,...10,11。因为排序时会变为：0,1,10,11,2...
 
 > 文件重命名工具推荐：
-> 
+>
 > win10: [uTools](https://u.tools/)
-> 
-> Ubuntu: 
+>
+> Ubuntu:
 > 1. purrr.
 > `sudo apt install purrr`
 > 2. Thunar - Bulk Rename Files.
@@ -365,7 +365,7 @@ Resize: 图像尺寸为一组图像中的平均尺寸，缩放模式(不保持�
 2. 调节`Scale:Show`，`0.2,0.2`缩小，`2,2`放大
 3. 更改`TruthResolution`,将所有照片resize到同一尺寸，**对于浏览及其友好**
 
-## 7. 未来增强功能 <a name="7.0"></a> 
+## 7. 未来增强功能 <a name="7.0"></a>
 感谢各位提供意见！大家可以在issues中发表意见，采用的会致谢大家！如果大家希望可以和我一起合作开发，请联系我！
 - [x] 增加精确定位（目前已经有slider）
 - [x] 增加图片索引查看，方便进行精确定位
@@ -379,7 +379,7 @@ Resize: 图像尺寸为一组图像中的平均尺寸，缩放模式(不保持�
 - [x] 高清图像的对比，放大图像1:1输出（@Faberman提供改进意见）
 - [X] 为图像添加titile（@Faberman提供改进意见）
 
-## 8. 致谢 <a name="8.0"></a> 
+## 8. 致谢 <a name="8.0"></a>
 * Everyone in the QQ group;
 * nothingeasy:改进意见-(输入方式，新增：路径文件的导入和存储);
 * JuZiSYJ:改进意见-(保存带框的原始图像+并行放大);

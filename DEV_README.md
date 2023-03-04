@@ -8,7 +8,7 @@
 
 **开发**：每个人都希望定制自己的MulimgViewer，但一个包含各种各样功能的软件也许不是大家喜欢的。开发一些受众较广的功能，这会帮助到更多的人，这是我们期望的。另外，进一步完善扩展核心功能也是需要的。
 
-**如何参与开发？** 
+**如何参与开发？**
 我们真诚地感谢您加入MulimgViewer的开发。
 
 参与做出贡献的途径：（由易到难）
@@ -41,7 +41,7 @@ MulimgViewer
         - index_table_gui.py
         - main_gui.fbp              # 4. 使用wxfrombuilder可以更改GUI界面，生成对应的_gui.py
         - main_gui.py               # 3. 主文件对应的GUI
-        - path_select_gui.fbp       
+        - path_select_gui.fbp
         - path_select_gui.py
     * img
     * src
@@ -82,7 +82,7 @@ MulimgViewer的所有功能均采用python编写，这保证了跨平台的使�
 ```
 from pathlib import Path
 ```
-[pathlib使用说明](https://zhuanlan.zhihu.com/p/13978333) 
+[pathlib使用说明](https://zhuanlan.zhihu.com/p/13978333)
 
 ## 2.4 readme的维护
 * 当您提出一个issue，或者决定参与该项目的开发，可以添加到[README.md-7. 未来增强功能](https://github.com/nachifur/MulimgViewer#7.0)以及[wiki-7. Future enhancements](https://github.com/nachifur/MulimgViewer/wiki#7.0)。

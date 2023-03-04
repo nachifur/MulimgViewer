@@ -476,7 +476,7 @@ class ImgUtils():
                                             if im_:
                                                 img.paste(im_, (x, y))
                                     i += 1
-                # show onetitle 
+                # show onetitle
                 if onetitle:
                     if im:
                         im_ = title_preprocessing(im, id=img_list[iy_0, ix_0, 0, 0][1])
@@ -540,7 +540,7 @@ class ImgUtils():
 
 
 class ImgManager(ImgData):
-    """Multi-image manager.  
+    """Multi-image manager.
     Multi-image parallel magnification, stitching, saving, rotation"""
 
     def __init__(self):
@@ -809,7 +809,7 @@ class ImgManager(ImgData):
                 if gap_x_y_2[1][row,col]>=0 and gap_x_y_2[1][row,col]<=self.layout_params[3][5] and gap_x_y_2[0][row,col]>=0 and gap_x_y_2[0][row,col]<=self.layout_params[3][4]:
                     if col!=0 and gap_x_y_2[0][row,col]==0 and i<sum(layout_level_2):
                         gap_x_y_2[0][row,col] = self.layout_params[3][4]
-                    
+
                     if row!=0 and gap_x_y_2[1][row,col]==0 and i<sum(layout_level_2):
                         gap_x_y_2[1][row,col] = self.layout_params[3][5]
 
@@ -822,7 +822,7 @@ class ImgManager(ImgData):
                         gap_x_y_2[0][row,col] = gap_x_y_2[0][row,col]+int((width_2[0][col]-width_2[row,col])/2)
                     else:
                         width_2[row,col]=width_2[0][col]
-        
+
         # correct row_col2
         if self.box_position != 0 and first_run:
             row_col_ = np.argwhere(new_add_gap_rowcol_flag==1).tolist()[0]
@@ -831,7 +831,7 @@ class ImgManager(ImgData):
             else:
                 self.layout_params[2][1] = row_col2[1]+1
             return self.stitch_img_init(img_mode, draw_points, first_run=False)
-            
+
 
         if sum(layout_level_2) != 0:
             # Since the title is up, we need to correct crop_points
@@ -1049,7 +1049,7 @@ class ImgManager(ImgData):
 
                 crop_point[1] = center_y-int(height/2)
                 crop_point[3] = center_y+int(height/2)
-            
+
             # magnifer_resolution
             magnifer_resolution = self.layout_params[28]
             if magnifer_resolution[0]==-1 and magnifer_resolution[1]==-1:
@@ -1067,7 +1067,7 @@ class ImgManager(ImgData):
                 height = crop_point[3]-crop_point[1]
                 center_x = crop_point[0]+int(width/2)
                 center_y = crop_point[1]+int(height/2)
-                
+
                 width = magnifer_resolution[0]
                 height = magnifer_resolution[1]
 

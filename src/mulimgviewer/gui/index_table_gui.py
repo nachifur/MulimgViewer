@@ -82,5 +82,3 @@ class IndexTableGui ( wx.Frame ):
 
 	def next_txt( self, event ):
 		event.Skip()
-
-

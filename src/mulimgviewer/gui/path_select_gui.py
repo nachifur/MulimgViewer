@@ -95,3 +95,5 @@ class PathSelectFrameGui ( wx.Frame ):
 
 	def Close( self, event ):
 		event.Skip()
+
+

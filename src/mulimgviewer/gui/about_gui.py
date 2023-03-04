@@ -52,3 +52,5 @@ class AboutGui ( wx.Frame ):
 
 	def __del__( self ):
 		pass
+
+

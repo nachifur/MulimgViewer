@@ -6,7 +6,6 @@ repos:
     rev: v4.4.0
     hooks:
       - id: check-added-large-files
-        exclude: ^tests/.*\.zip$
       - id: fix-byte-order-marker
       - id: check-case-conflict
       - id: check-shebang-scripts-are-executable

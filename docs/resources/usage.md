@@ -5,7 +5,9 @@
 ![Shortcut_bar](https://user-images.githubusercontent.com/32936898/224470802-9336ba25-2cc6-49f5-9468-058281b02ff4.jpg)
 
 ## 操作流程
-测试图像下载地址：https://raw.githubusercontent.com/nachifur/MulimgViewer/master/img/test_img.zip
+
+测试图像下载地址：
+[test_img.zip](https://github.com/nachifur/MulimgViewer/files/10948418/test_img.zip)
 
 **注意：本软件不支持自动刷新，修改布局参数之后，需要手动刷新（`Ctrl+R`）。**
 
@@ -86,7 +88,7 @@ Magnifer: 单独保存放大图像，方便用户的后期处理。
 
 选中`Parallel+Sequential`，在并行显示的同时，可以串行浏览每个文件夹中的前n张图片，n可由`NumPerImg`设定。例如：`Row=5` ,`NumPerImg=4`, `Col=1`, 一次分别读取5个并行目录的4张图片，共20张。`Vertical`可以调整串行方向。修改`Row`和`Col`, 可以控制并行文件夹的二维排布。
 
-![image](https://github.com/nachifur/MulimgViewer/blob/master/img/Parallel_Sequential.jpg)
+![Parallel_Sequential](https://user-images.githubusercontent.com/32936898/224482764-d5e1335d-647d-480b-ae69-2596eeff3941.jpg)
 
 **Parallel->Sequential：** 将多个文件夹的所有图片，拼接成一个图片列表进行串行显示。
 

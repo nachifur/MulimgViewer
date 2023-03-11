@@ -20,7 +20,7 @@ Doc: [**English readme**](https://github.com/nachifur/MulimgViewer/wiki) | [**�
 
 Mirror: [**国内gitee镜像项目**](https://gitee.com/nachifur/MulimgViewer) | [**果壳OpenCas镜像项目**](https://github.com/opencas/MulimgViewer)
 
-Link: [**快速入门**](https://mulimgviewer.readthedocs.io/zh/latest/resources/usage.html) | [下载和安装](https://mulimgviewer.readthedocs.io/zh/latest/resources/install.html)
+Link: [**快速入门**](https://mulimgviewer.readthedocs.io/zh/latest/resources/usage.html) | [**下载和安装**](https://mulimgviewer.readthedocs.io/zh/latest/resources/install.html)
 
 ## 介绍
 

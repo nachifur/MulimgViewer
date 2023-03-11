@@ -1,7 +1,17 @@
+'''
+https://github.com/nachifur/MulimgViewer/issues/74
+'''
 from PIL import ImageEnhance
 from pathlib import Path
 import os
 
+def custom_process_img(img):
+    # Users can modify this function for custom image processing.
+    # input: image(pillow)
+    # output: image(pillow)
+    enh = ImageEnhance.Contrast(img)
+    img = enh.enhance(2)
+    return img
 
 def main(img_list, save_path, name_list=None):
     i = 0
@@ -15,10 +25,7 @@ def main(img_list, save_path, name_list=None):
         flag_save = False
 
     for img in img_list:
-        # custom process img
-        enh = ImageEnhance.Contrast(img)
-        img = enh.enhance(2)
-        ##########
+        img = custom_process_img(img)
 
         out_img_list.append(img)
         if flag_save:

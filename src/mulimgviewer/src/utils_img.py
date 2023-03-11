@@ -540,7 +540,6 @@ class ImgUtils():
                           (title_size[:, 1]).max()+int(font_size/4)]
         return title_size, title_list, title_max_size
 
-    @staticmethod
     def cat_img(self,img1,img2):
         target_width = img1.size[0]
         target_height = img1.size[1]+img2.size[1]

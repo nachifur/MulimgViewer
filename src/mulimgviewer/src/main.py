@@ -12,6 +12,7 @@ from .about import About
 from .index_table import IndexTable
 from .utils import MyTestEvent, get_resource_path
 from .utils_img import ImgManager
+import os
 
 
 class MulimgViewer (MulimgViewerGui):
@@ -211,9 +212,9 @@ class MulimgViewer (MulimgViewerGui):
         self.SetStatusText_(["Skip", "-1", "-1", "-1"])
 
     def save_img(self, event):
-        layout_params = self.set_img_layout()
-        if layout_params != False:
-            self.ImgManager.layout_params = layout_params
+        # layout_params = self.set_img_layout()
+        # if layout_params != False:
+        #     self.ImgManager.layout_params = layout_params
         type_ = self.choice_output.GetSelection()
         if self.auto_save_all.Value:
             last_count_img = self.ImgManager.action_count
@@ -244,7 +245,6 @@ class MulimgViewer (MulimgViewerGui):
             except:
                 pass
             flag = self.ImgManager.save_img(self.out_path_str, type_)
-            self.refresh(event)
             if flag == 0:
                 self.SetStatusText_(
                     ["Save", str(self.ImgManager.action_count), "Save success!", "-1"])
@@ -263,6 +263,9 @@ class MulimgViewer (MulimgViewerGui):
             elif flag == 4:
                 self.SetStatusText_(
                     ["-1", str(self.ImgManager.action_count), "***Error: No magnification box, the magnified image can not be saved***", "-1"])
+            elif flag == 5:
+                self.SetStatusText_(
+                    ["-1", str(self.ImgManager.action_count), "***Error: First, need to select the input dir***", "-1"])
         self.SetStatusText_(["Save", "-1", "-1", "-1"])
 
     def refresh(self, event):
@@ -616,7 +619,7 @@ class MulimgViewer (MulimgViewerGui):
         x, y = event.GetPosition()
         id = self.get_img_id_from_point([x, y])
         xy_grid = self.ImgManager.xy_grid[id]
-        RGBA = self.ImgManager.img.getpixel((int(x), int(y)))
+        RGBA = self.show_bmp_in_panel.getpixel((int(x), int(y)))
         x = x-xy_grid[0]
         y = y-xy_grid[1]
         self.m_statusBar1.SetStatusText(str(x)+","+str(y)+"/"+str(RGBA), 0)
@@ -911,10 +914,12 @@ class MulimgViewer (MulimgViewerGui):
                 0).split(',')
             magnifer_resolution = [int(x) for x in magnifer_resolution]
 
-            magnifier_show_scale = self.magnifier_show_scale.GetLineText(0).split(',')
+            magnifier_show_scale = self.magnifier_show_scale.GetLineText(
+                0).split(',')
             magnifier_show_scale = [float(x) for x in magnifier_show_scale]
 
-            magnifier_out_scale = self.magnifier_out_scale.GetLineText(0).split(',')
+            magnifier_out_scale = self.magnifier_out_scale.GetLineText(
+                0).split(',')
             magnifier_out_scale = [float(x) for x in magnifier_out_scale]
 
             if self.checkBox_auto_draw_color.Value:
@@ -987,7 +992,7 @@ class MulimgViewer (MulimgViewerGui):
                     output_scale,                           # 5
                     img_resolution,                         # 6
                     1 if self.magnifier.Value else 0,       # 7
-                    magnifier_show_scale,                        # 8
+                    magnifier_show_scale,                   # 8
                     color,                                  # 9
                     line_width,                             # 10
                     self.move_file.Value,                   # 11
@@ -1010,9 +1015,14 @@ class MulimgViewer (MulimgViewerGui):
                     magnifer_resolution,                    # 28
                     magnifer_row_col,                       # 29
                     self.onetitle.Value,                    # 30
-                    magnifier_out_scale]                    # 31
+                    magnifier_out_scale,                    # 31
+                    self.customfunc.Value,                  # 32
+                    self.out_path_str]                      # 33
 
     def show_img(self):
+        if self.customfunc.Value and self.out_path_str == "":
+            self.out_path(None)
+            self.ImgManager.layout_params[33] = self.out_path_str
         # check layout_params change
         try:
             if self.layout_params_old[0:2] != self.ImgManager.layout_params[0:2] or (self.layout_params_old[19] != self.ImgManager.layout_params[19]):
@@ -1048,10 +1058,19 @@ class MulimgViewer (MulimgViewerGui):
             self.slider_img.SetMax(self.ImgManager.max_action_num-1)
             self.ImgManager.get_flist()
 
+            # show the output image processed by the custom func; return cat(bmp, processed_bmp)
+            if self.customfunc.Value:
+                bmp_processed = self.process_by_custom_func()
+            else:
+                bmp_processed = None
+
             flag = self.ImgManager.stitch_images(
                 0, copy.deepcopy(self.xy_magnifier))
             if flag == 0:
                 bmp = self.ImgManager.img
+                if self.customfunc.Value and bmp_processed != None:
+                    bmp = self.ImgManager.ImgF.cat_img(bmp, bmp_processed)
+                self.show_bmp_in_panel = bmp
                 self.img_size = bmp.size
                 bmp = self.ImgManager.ImgF.PIL2wx(bmp)
 
@@ -1097,7 +1116,7 @@ class MulimgViewer (MulimgViewerGui):
                     ["-1", "-1", "No image is displayed! Check Show orignal/Show 🔍️/Show title.", "-1"])
         else:
             self.SetStatusText_(
-                ["-1", "-1", "***Error: no image in this dir! Maybe you can choose parallel mode!***", "-1"])
+                ["-1", "-1", "***Error: no image in this dir!***", "-1"])
         self.auto_layout()
         self.SetStatusText_(["Stitch", "-1", "-1", "-1"])
 
@@ -1167,6 +1186,16 @@ class MulimgViewer (MulimgViewerGui):
             wx.Size((50, -1)))
         self.scrolledWindow_img.SetMinSize(
             wx.Size((50, self.Size[1]-150)))
+
+    def process_by_custom_func(self):
+        flag = self.ImgManager.stitch_images(
+            0, copy.deepcopy(self.xy_magnifier))
+        bmp_processed = self.ImgManager.img
+        self.ImgManager.layout_params[32] = False  # customfunc
+        if flag == 0:
+            return bmp_processed
+        else:
+            return None
 
     def split_sash_pos_changing(self, event):
 
@@ -1262,13 +1291,6 @@ class MulimgViewer (MulimgViewerGui):
         else:
             for title in titles:
                 title.Enabled = True
-
-    # def show_scale_change(self, event):
-    #     self.show_scale_proportion = 0
-    #     self.refresh(event)
-
-                # self.show_scale = wx.TextCtrl( self.scrolledWindow_set, wx.ID_ANY, u"1,1", wx.DefaultPosition, wx.Size( 60,-1 ), style=wx.TE_PROCESS_ENTER)
-                # wSizer6.Add( self.show_scale, 0, wx.ALL, 5 )
 
     def select_img_box_func(self, event):
         if self.select_img_box.Value:

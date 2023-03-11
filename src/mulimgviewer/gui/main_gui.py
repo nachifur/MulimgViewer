@@ -372,6 +372,9 @@ class MulimgViewerGui ( wx.Frame ):
 		self.onetitle = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"OneTitle", wx.DefaultPosition, wx.DefaultSize, 0 )
 		wSizer11.Add( self.onetitle, 0, wx.ALL, 5 )
 
+		self.customfunc = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"CustomFunc", wx.DefaultPosition, wx.DefaultSize, 0 )
+		wSizer11.Add( self.customfunc, 0, wx.ALL, 5 )
+
 
 		fgSizer3.Add( wSizer11, 1, wx.EXPAND, 5 )
 

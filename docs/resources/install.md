@@ -97,7 +97,7 @@ pip install wxpython pillow pytest-shutil numpy requests piexif
 ```python
 python MulimgViewer.py
 ```
-## 2. conda 安装
+### 2. conda 安装
 或者安装conda环境：
 ```bash
 conda env create -f install.yaml

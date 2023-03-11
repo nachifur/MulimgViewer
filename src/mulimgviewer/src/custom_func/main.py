@@ -29,6 +29,3 @@ def main(img_list, save_path, name_list=None):
             img.save(str(img_path))
         i += 1
     return out_img_list
-
-# if __name__ == '__main__':
-#     main()

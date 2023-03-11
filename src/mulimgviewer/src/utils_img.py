@@ -540,6 +540,7 @@ class ImgUtils():
                           (title_size[:, 1]).max()+int(font_size/4)]
         return title_size, title_list, title_max_size
 
+    @staticmethod
     def cat_img(self,img1,img2):
         target_width = img1.size[0]
         target_height = img1.size[1]+img2.size[1]
@@ -1219,7 +1220,7 @@ class ImgManager(ImgData):
         try:
             if out_path_str != "" and Path(out_path_str).is_dir():
                 self.set_scale_mode(img_mode=1)
-                dir_name = [Path(path)._parts[-1] for path in self.path_list]
+                dir_name = [Path(path).name for path in self.path_list]
                 out_type = out_type+1
                 if out_type == 2:
                     pass
@@ -1230,8 +1231,7 @@ class ImgManager(ImgData):
                 elif out_type == 4:
                     dir_name = ["magnifier_images"]
                 elif out_type == 5:
-                    dir_name = ["stitch_images"]
-                    dir_name.append("magnifier_images")
+                    dir_name = ["stitch_images","magnifier_images"]
                 elif out_type == 6:
                     dir_name.append("magnifier_images")
                 elif out_type == 7:
@@ -1261,8 +1261,6 @@ class ImgManager(ImgData):
                         self.save_select(dir_name[0:-2])
                     self.save_stitch(dir_name[-2])
                     self.save_magnifier(dir_name[-1])
-
-                # self.stitch_images(0,copy.deepcopy(self.draw_points))
 
                 if sum(self.check) != 0:
                     return 3

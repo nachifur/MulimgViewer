@@ -214,9 +214,6 @@ class MulimgViewer (MulimgViewerGui):
         self.SetStatusText_(["Skip", "-1", "-1", "-1"])
 
     def save_img(self, event):
-        # layout_params = self.set_img_layout()
-        # if layout_params != False:
-        #     self.ImgManager.layout_params = layout_params
         type_ = self.choice_output.GetSelection()
         if self.auto_save_all.Value:
             last_count_img = self.ImgManager.action_count

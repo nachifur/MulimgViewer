@@ -1094,7 +1094,7 @@ class MulimgViewer (MulimgViewerGui):
                     ["-1", str(self.ImgManager.action_count)+"/"+str(self.ImgManager.get_dir_num())+" dir", "***Error: "+str(self.ImgManager.name_list[self.ImgManager.action_count]) + ", during stitching images***", "-1"])
             if flag == 2:
                 self.SetStatusText_(
-                    ["-1", "-1", "No image is displayed! Check Show orignal/Show 🔍️/Show title.", "-1"])
+                    ["-1", "-1", "No image is displayed! Check Show original/Show 🔍️/Show title.", "-1"])
         else:
             self.SetStatusText_(
                 ["-1", "-1", "***Error: no image in this dir! Maybe you can choose parallel mode!***", "-1"])

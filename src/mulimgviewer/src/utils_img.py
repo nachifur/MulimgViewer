@@ -83,11 +83,11 @@ class ImgUtils():
 
         return box_point
 
-    def draw_rectangle(self, img, xy_grids, bounding_boxs, color_list, line_width=2, single_box=False):
+    def draw_rectangle(self, img, xy_grids, bounding_boxes, color_list, line_width=2, single_box=False):
         """img
-        xy_grids: the position of bounding_boxs (list)
-        boxs_points: the four points that make up a bounding boxs
-        color_list: the color of bounding_boxs
+        xy_grids: the position of bounding_boxes (list)
+        bounding_boxes: the four points that make up a bounding boxes
+        color_list: the color of bounding_boxes
         """
 
         if single_box:
@@ -99,7 +99,7 @@ class ImgUtils():
 
         i = 0
         k = 0
-        for bounding_box in bounding_boxs:
+        for bounding_box in bounding_boxes:
             x_0, y_0, x, y = bounding_box[0:4]
             height = y-y_0
             width = x - x_0

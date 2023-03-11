@@ -4,4 +4,3 @@ numpy
 piexif
 pillow
 requests
-wxpython

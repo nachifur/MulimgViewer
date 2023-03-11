@@ -7,11 +7,11 @@ import numpy as np
 import wx
 from ..gui.main_gui import MulimgViewerGui
 
+from .. import __version__ as VERSION  # type: ignore
 from .about import About
 from .index_table import IndexTable
 from .utils import MyTestEvent, get_resource_path
 from .utils_img import ImgManager
-import os
 
 
 class MulimgViewer (MulimgViewerGui):
@@ -90,7 +90,7 @@ class MulimgViewer (MulimgViewerGui):
         self.myEVT_MY_TEST = wx.NewEventType()
         EVT_MY_TEST = wx.PyEventBinder(self.myEVT_MY_TEST, 1)
         self.Bind(EVT_MY_TEST, self.myEVT_MY_TEST_OnHandle)
-        self.version = "v3.9.7"
+        self.version = VERSION
         self.check_version()
 
         # open default path
@@ -121,7 +121,8 @@ class MulimgViewer (MulimgViewerGui):
             resp.encoding = 'UTF-8'
             if resp.status_code == 200:
                 output = resp.json()
-                if output["tag_name"] == self.version:
+                # version is "rolling" means that it is run from source code
+                if self.version == output["tag_name"] or self.version == "rolling":
                     # print("No need to update!")
                     pass
                 else:

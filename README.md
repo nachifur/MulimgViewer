@@ -16,11 +16,11 @@
 
 # MulimgViewer
 
-[**English readme (Thanks @Faberman for the translation and polishing.)**](https://github.com/nachifur/MulimgViewer/wiki)
+Doc: [**English readme**](https://github.com/nachifur/MulimgViewer/wiki) | [**完整官网文档**](https://mulimgviewer.readthedocs.io)
 
-[**国内gitee镜像项目**](https://gitee.com/nachifur/MulimgViewer) | [**果壳OpenCas镜像项目**](https://github.com/opencas/MulimgViewer)
+Mirror: [**国内gitee镜像项目**](https://gitee.com/nachifur/MulimgViewer) | [**果壳OpenCas镜像项目**](https://github.com/opencas/MulimgViewer)
 
-[**快速入门**](https://mulimgviewer.readthedocs.io/zh/latest/resources/usage.html) | [**完整官网文档**](https://mulimgviewer.readthedocs.io)
+Link: [**快速入门**](https://mulimgviewer.readthedocs.io/zh/latest/resources/usage.html) | [下载和安装](https://mulimgviewer.readthedocs.io/zh/latest/resources/install.html)
 
 ## 介绍
 

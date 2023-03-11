@@ -20,6 +20,8 @@
 
 [**国内gitee镜像项目**](https://gitee.com/nachifur/MulimgViewer) | [**果壳OpenCas镜像项目**](https://github.com/opencas/MulimgViewer)
 
+[**快速入门**](https://mulimgviewer.readthedocs.io/zh/latest/resources/usage.html) | [**完整官网文档**](https://mulimgviewer.readthedocs.io)
+
 ## 介绍
 
 MulimgViewer**多图像浏览器**，在一个界面显示多个图像，方便图像的比较、筛选。
@@ -96,11 +98,6 @@ MulimgViewer可以方便的进行成对的数据的浏览、比较。[详细见]
 3. 勾选自动保存`AutoSaveAll`
 4. 设置`TruthResolution`为固定的大小，例如：`256,256`
 5. 点击保存💾️
-
-## 使用
-
-参见 [官网](https://mulimgviewer.readthedocs.io) 的
-[使用说明](https://mulimgviewer.readthedocs.io/zh/latest/resources/usage.html)。
 
 ## 引用
 

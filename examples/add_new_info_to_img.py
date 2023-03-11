@@ -1,3 +1,4 @@
+r"""`<https://github.com/nachifur/MulimgViewer/issues/57#issuecomment-1431032894>_`"""
 import piexif
 from PIL import Image
 import json

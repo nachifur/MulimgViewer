@@ -22,7 +22,7 @@
 
     2.3. Parallel manual: 手动选择多个子文件夹。(`test_input//01`+`test_input//02`)
 
-    2.4. Image file list： 从文件导入图片列表文件。([Demo file](https://github.com/nachifur/MulimgViewer/tree/master/demo_input_from_file))
+    2.4. Image file list： 从文件导入图片列表文件。([Examples file](https://github.com/nachifur/MulimgViewer/tree/master/examples/input))
 
 3. 打开文件夹，导入路径
 4. 这时图片显示在面板，可以使用`>`查看下一张，`<`查看上一张图片

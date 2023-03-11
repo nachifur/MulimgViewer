@@ -56,17 +56,17 @@ MulimgViewer可以轻松的完成纵向与横向的拼接，**支持自动拼接
 
 ![f7](https://user-images.githubusercontent.com/32936898/224470740-375f42ee-a9d3-4902-b9d4-9945bc84044c.jpg)
 
-同时支持**任意位置**划框（鼠标左键按住移动），**多框**并行放大（鼠标右键点击，生成新的框）。[详细见]([#5.4.11](https://mulimgviewer.readthedocs.io/zh/latest/resources/usage.html#id15))
+同时支持**任意位置**划框（鼠标左键按住移动），**多框**并行放大（鼠标右键点击，生成新的框）。[详细见](https://mulimgviewer.readthedocs.io/zh/latest/resources/usage.html#id16)
 
 ![f11](https://user-images.githubusercontent.com/32936898/224470749-46b0507d-b1c8-4418-9429-6874579ffdca.gif)
 
 ### 例4：成对数据浏览
-MulimgViewer可以方便的进行成对的数据的浏览、比较。[详细见](#5.4.4)
+MulimgViewer可以方便的进行成对的数据的浏览、比较。[详细见](https://mulimgviewer.readthedocs.io/zh/latest/resources/usage.html#id9)
 
 ![f8](https://user-images.githubusercontent.com/32936898/224470741-b6466206-6397-4383-a56c-92c601128170.jpg)
 
 ### 例5：一键生成论文对比图
-支持显示标题，调整放大框的位置。放大框的位置选择`middle bottom`，建议`🔍️Scale=-1,-1`;如果选择其他位置，自行调节放大倍数，例如：`🔍️Scale=1.5,1.5`。[详细见](#[5.4.14](https://mulimgviewer.readthedocs.io/zh/latest/resources/usage.html#id9))
+支持显示标题，调整放大框的位置。放大框的位置选择`middle bottom`，建议`🔍️Scale=-1,-1`;如果选择其他位置，自行调节放大倍数，例如：`🔍️Scale=1.5,1.5`。[详细见](https://mulimgviewer.readthedocs.io/zh/latest/resources/usage.html#id19)
 
 ![f17](https://user-images.githubusercontent.com/32936898/224470773-0917564d-e74c-4f3e-9434-f3cb7d7687de.jpg)
 

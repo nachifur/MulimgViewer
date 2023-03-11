@@ -8,6 +8,8 @@
 
 ```sh
 pip install mulimgviewer
+# if you want a prompt when this program has a new version
+pip install mulimgviewer[update]
 ```
 
 注意，目前由于依赖项 [wxpython](https://github.com/wxWidgets/Phoenix)
@@ -44,7 +46,7 @@ yay -S python-mulimgviewer
 22.04 就是这样安装的）：
 
 ```sh
-sudo apt install python-wxgtk4.0
+sudo apt install python3-wxgtk4.0
 git clone --depth=1 https://github.com/nachifur/MulimgViewer
 cd MulimgViewer
 sed -i /wxpython/d requirements.txt

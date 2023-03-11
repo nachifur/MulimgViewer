@@ -4,7 +4,6 @@ import threading
 from pathlib import Path
 
 import numpy as np
-import requests
 import wx
 from ..gui.main_gui import MulimgViewerGui
 
@@ -115,6 +114,9 @@ class MulimgViewer (MulimgViewerGui):
     def run(self):
         url = "https://api.github.com/repos/nachifur/MulimgViewer/releases/latest"
         try:
+            # make request to be an optional depend
+            import requests
+
             resp = requests.get(url)
             resp.encoding = 'UTF-8'
             if resp.status_code == 200:

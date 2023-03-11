@@ -68,6 +68,9 @@ file = "requirements.txt"
 [tool.setuptools.dynamic.optional-dependencies.dev]
 file = "requirements/dev.txt"
 
+[tool.setuptools.dynamic.optional-dependencies.update]
+file = "requirements/update.txt"
+
 [tool.setuptools_scm]
 write_to = "src/mulimgviewer/_version.py"
 

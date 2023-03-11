@@ -1,6 +1,13 @@
 # 安装
 
-## [PYPI](https://pypi.org/project/mulimgviewer/)
+## Windows
+
+下载 [exe 文件](https://github.com/nachifur/MulimgViewer/releases)：
+
+- 安装版 `*_Setup.exe` （启动速度更快）
+- 便携版 `*_Portable.exe`
+
+## [PYPI](https://pypi.org/project/mulimgviewer/) (测试中)
 
 任何安装了 [`pip`](https://github.com/pypa/pip) 的系统均可：
 
@@ -38,7 +45,19 @@ yay -S python-mulimgviewer
 
 ![icon](https://user-images.githubusercontent.com/32936898/224473440-2088edd7-42e5-45a3-a403-515e2daa019a.jpg)
 
-## PPA
+## brew
+
+任何安装了 [`brew`](https://github.com/Homebrew/brew) 的系统均可：
+
+- Any Linux distributions with linuxbrew
+- macOS with homebrew
+
+```sh
+curl -OL https://raw.githubusercontent.com/nachifur/MulimgViewer/master/python-mulimgviewer.rb
+brew install python-mulimgviewer.rb
+```
+
+## PPA （TODO）
 
 目前该软件还没有打包到 Ubuntu PPA 上。
 
@@ -53,7 +72,7 @@ sed -i /wxpython/d requirements.txt
 pip install .
 ```
 
-## Nix
+## Nix （TODO）
 
 任何安装了 [`nix`](https://github.com/NixOS/nix) 的系统均可：
 
@@ -61,23 +80,30 @@ pip install .
 - Other Linux distributions with nix
 - macOS with nix-darwin
 
-TODO
 
-## brew
 
-任何安装了 [`brew`](https://github.com/Homebrew/brew) 的系统均可：
+## 运行源码 | 适合所有系统，需自行构建python环境
+* **任何系统**都可以使用源码运行
+* 安装python环境可以使用`pip` or `conda`
+* 建议使用Python3.6以上
+* [最新源码下载](https://codeload.github.com/nachifur/MulimgViewer/zip/refs/heads/master)
 
-- Any Linux distributions with linuxbrew
-- macOS with homebrew
-
-```sh
-curl -OL https://raw.githubusercontent.com/nachifur/MulimgViewer/master/python-mulimgviewer.rb
-brew install python-mulimgviewer.rb
+### 1. pip 安装
+pip安装：（如果安装过程出错，可以使用conda安装）
+```bash
+pip install wxpython pillow pytest-shutil numpy requests piexif
 ```
-
-## Windows exe
-
-下载 [exe 文件](https://github.com/nachifur/MulimgViewer/releases)：
-
-- 安装版 `*_Setup.exe` （启动速度更快）
-- 便携版 `*_Portable.exe`
+运行：
+```python
+python MulimgViewer.py
+```
+## 2. conda 安装
+或者安装conda环境：
+```bash
+conda env create -f install.yaml
+```
+运行：
+```python
+conda activate mulimgviewer
+python MulimgViewer.py
+```

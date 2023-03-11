@@ -1,5 +1,6 @@
 # MulimgViewer开发指南
-# 0. 加入我们吧！
+
+## 0. 加入我们吧！
 **初衷**：目前的市面上的图像浏览器不能同时显示多张图像。2020.8.10诞生的MulimgViewer，希望可以让大家方便地进行多张图像的显示和比较。恍惚一世，希望能在这个世界留下痕迹。
 
 **定位**：MulimgViewer，即multi-image viewer。该软件**核心功能**是：多张图像并行显示、比较。
@@ -28,7 +29,7 @@
 3. 正常的开发流程：fork到自己本地->新建一个分支->实现功能->自行调试成功->合并到主分支。
 4. 如果您希望深度地、持续地参与到项目的开发中，可以邮件(liujiawei18@mails.ucas.ac.cn)联系我。我会邀请您开发此软件，您可以获得直接访问该项目的权限，这有利于快速及时地更新主分支。
 
-# 1. 文件说明
+## 1. 文件说明
 项目框架：
 ```
 MulimgViewer
@@ -56,15 +57,15 @@ MulimgViewer
     - README.md                       # 12. 用户readme
     - DEV_README.md                   # 13. 开发readme
 ```
-# 2. 开发流程
-## 2.1 GUI的创建
+## 2. 开发流程
+### 2.1 GUI的创建
 GUI使用[wxFormBuilder](https://github.com/wxFormBuilder/wxFormBuilder)创建。wxFormBuilder的安装：
 1. window平台可以直接下载[exe](https://github.com/wxFormBuilder/wxFormBuilder/releases)。
 2. linux平台可以下载`.deb`，或者使用`.flatpak`。
 3. ubuntu18.04下的安装，可以见[参考](https://nachifur.blog.csdn.net/article/details/107702485).
 4. 目前MulimgViewer使用的wxFormBuilder版本为：v3.10.1。大家也可以使用最新的版本。
 
-## 2.2 编写实现GUI的回调函数
+### 2.2 编写实现GUI的回调函数
 为了分离GUI和功能实现，对于`MulimgViewer/gui`路径下的文件，不建议手动直接修改。具体的操作如下：
 1. wxFormBuilder创建GUI文件`MulimgViewer/gui/main.fbp`。
 2. 使用自动生成代码，生成`MulimgViewer/gui/main_gui.py`。只需在wxFormBuilder的GUI中，点击代码生成按钮即可生成`.py`。
@@ -77,22 +78,22 @@ GUI使用[wxFormBuilder](https://github.com/wxFormBuilder/wxFormBuilder)创建�
 * [wxpython doc](https://docs.wxpython.org/index.html)
 * [wxpython 自定义事件、线程安全、多线程交互、版本更新](https://nachifur.blog.csdn.net/article/details/124809333)
 
-## 2.3 跨平台的支持
+### 2.3 跨平台的支持
 MulimgViewer的所有功能均采用python编写，这保证了跨平台的使用。但是windows和linux的路径是有区别的。**直接使用`D:\ncfey\Desktop\`，是非常糟糕的**，这会破坏跨平台。因为我们**强烈建议**使用：
 ```
 from pathlib import Path
 ```
 [pathlib使用说明](https://zhuanlan.zhihu.com/p/13978333)
 
-## 2.4 readme的维护
+### 2.4 readme的维护
 * 当您提出一个issue，或者决定参与该项目的开发，可以添加到[README.md-7. 未来增强功能](https://github.com/nachifur/MulimgViewer#7.0)以及[wiki-7. Future enhancements](https://github.com/nachifur/MulimgViewer/wiki#7.0)。
 * 当您完成一个功能的时候，可以在issue中添加该功能的`md`说明。在下一个版本release的时候，我们会更新`README.md`（仅包含最新release版本的功能介绍）。
 * 当您完成一个功能的时候，可以添加到[README.md-8. 致谢](https://github.com/nachifur/MulimgViewer#7.0)以及[wiki-8. Acknowledgements](https://github.com/nachifur/MulimgViewer/wiki#8.0)。
 
-# 3. Release
+## 3. Release
 我们的下一个release版本的计划可见[projects](https://github.com/nachifur/MulimgViewer/projects?type=classic)。
 
-## 3.1 window的打包
+### 3.1 window的打包
 1. 安装：
 ```
 pip install wxpython pillow pytest-shutil numpy requests
@@ -112,10 +113,10 @@ pyinstaller -D -w -i mulimgviewer.ico --add-data "mulimgviewer.ico;." --add-data
 ```
 * 使用createinstall打包成可安装的`.exe`。[createinstall使用](https://blog.csdn.net/qq_41811438/article/details/103092610)
 
-## 3.2 linux/ios/arm等平台的打包
+### 3.2 linux/ios/arm等平台的打包
 ubuntu的打包可以使用`dpkg`。个人目前不了解其他平台的打包，期待大家可以帮助打包MulimgViewer！献上最真诚的感谢！
 
-## 3.3 命名
+### 3.3 命名
 ```
 MulimgViewer_3.9.3_win10_amd64_Portable.exe
 MulimgViewer_3.9.3_win10_amd64_Setup.exe
@@ -123,7 +124,7 @@ MulimgViewer_3.9.3_ubuntu_amd64.deb
 MulimgViewer_3.9.3_ios_amd64.ipa
 ```
 
-## 3.4 镜像维护
+### 3.4 镜像维护
 我们目前支持以下两个镜像，release版本需要推送到这两个站点：
 * [**国内gitee镜像项目**](https://gitee.com/nachifur/MulimgViewer)
 * [**果壳OpenCas镜像项目**](https://github.com/opencas/MulimgViewer)

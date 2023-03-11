@@ -1,16 +1,18 @@
 import copy
+import json
 import os
 from pathlib import Path
 from shutil import copyfile, move
 
+from .custom_func.main import main as main_custom_func
 import numpy as np
+import piexif
 import wx
 from PIL import Image, ImageDraw, ImageFont
 
-from .utils import rgb2hex
 from .data import ImgData
-import piexif
-import json
+from .utils import rgb2hex
+
 
 class ImgUtils():
     """The set of functional programming modules"""
@@ -538,6 +540,13 @@ class ImgUtils():
                           (title_size[:, 1]).max()+int(font_size/4)]
         return title_size, title_list, title_max_size
 
+    def cat_img(self,img1,img2):
+        target_width = img1.size[0]
+        target_height = img1.size[1]+img2.size[1]
+        img = Image.new('RGBA', (target_width, target_height))
+        img.paste(img1,(0,0))
+        img.paste(img2,(0,img1.size[1]))
+        return img
 
 class ImgManager(ImgData):
     """Multi-image manager.
@@ -557,15 +566,22 @@ class ImgManager(ImgData):
         self.crop_points = []
         self.draw_points = []
         self.ImgF = ImgUtils()
+        self.path_custom_func_path = ""
 
     def get_img_list(self):
         img_list = []
+        # load img list
         for path in self.flist:
             path = Path(path)
             if path.is_file() and path.suffix.lower() in self.format_group:
                 img_list.append(Image.open(path).convert('RGB'))
             else:
                 pass
+        # custom process
+        customfunc = self.layout_params[32]
+        out_path_str = self.layout_params[33]
+        if customfunc:
+            img_list = main_custom_func(img_list,out_path_str,name_list=self.name_list)
         # resolution
         width_ = []
         height_ = []
@@ -1200,61 +1216,69 @@ class ImgManager(ImgData):
         self.check_1 = []
         self.check_2 = []
         self.out_path_str = out_path_str
-        if out_path_str != "" and Path(out_path_str).is_dir():
-            self.set_scale_mode(img_mode=1)
-            dir_name = [Path(path)._parts[-1] for path in self.path_list]
-            out_type = out_type+1
-            if out_type == 2:
-                pass
-            elif out_type == 1:
-                dir_name = ["stitch_images"]
-            elif out_type == 3:
-                dir_name.append("stitch_images")
-            elif out_type == 4:
-                dir_name = ["magnifier_images"]
-            elif out_type == 5:
-                dir_name = ["stitch_images"]
-                dir_name.append("magnifier_images")
-            elif out_type == 6:
-                dir_name.append("magnifier_images")
-            elif out_type == 7:
-                dir_name.append("stitch_images")
-                dir_name.append("magnifier_images")
+        try:
+            if out_path_str != "" and Path(out_path_str).is_dir():
+                self.set_scale_mode(img_mode=1)
+                dir_name = [Path(path)._parts[-1] for path in self.path_list]
+                out_type = out_type+1
+                if out_type == 2:
+                    pass
+                elif out_type == 1:
+                    dir_name = ["stitch_images"]
+                elif out_type == 3:
+                    dir_name.append("stitch_images")
+                elif out_type == 4:
+                    dir_name = ["magnifier_images"]
+                elif out_type == 5:
+                    dir_name = ["stitch_images"]
+                    dir_name.append("magnifier_images")
+                elif out_type == 6:
+                    dir_name.append("magnifier_images")
+                elif out_type == 7:
+                    dir_name.append("stitch_images")
+                    dir_name.append("magnifier_images")
 
-            if out_type == 2:
-                self.save_select(dir_name)
-            elif out_type == 1:
-                self.save_stitch(dir_name[-1])
-            elif out_type == 3:
-                self.save_select(dir_name[0:-1])
-                self.save_stitch(dir_name[-1])
-            elif out_type == 4:
-                self.save_magnifier(dir_name[-1])
-            elif out_type == 5:
-                self.save_stitch(dir_name[0])
-                self.save_magnifier(dir_name[-1])
-            elif out_type == 6:
-                self.save_select(dir_name[0:-1])
-                self.save_magnifier(dir_name[-1])
-            elif out_type == 7:
-                self.save_select(dir_name[0:-2])
-                self.save_stitch(dir_name[-2])
-                self.save_magnifier(dir_name[-1])
+                if out_type == 2:
+                    if not self.layout_params[32]:
+                        self.save_select(dir_name)
+                elif out_type == 1:
+                    self.save_stitch(dir_name[-1])
+                elif out_type == 3:
+                    if not self.layout_params[32]:
+                        self.save_select(dir_name[0:-1])
+                    self.save_stitch(dir_name[-1])
+                elif out_type == 4:
+                    self.save_magnifier(dir_name[-1])
+                elif out_type == 5:
+                    self.save_stitch(dir_name[0])
+                    self.save_magnifier(dir_name[-1])
+                elif out_type == 6:
+                    if not self.layout_params[32]:
+                        self.save_select(dir_name[0:-1])
+                    self.save_magnifier(dir_name[-1])
+                elif out_type == 7:
+                    if not self.layout_params[32]:
+                        self.save_select(dir_name[0:-2])
+                    self.save_stitch(dir_name[-2])
+                    self.save_magnifier(dir_name[-1])
 
-            # self.stitch_images(0,copy.deepcopy(self.draw_points))
+                # self.stitch_images(0,copy.deepcopy(self.draw_points))
 
-            if sum(self.check) != 0:
-                return 3
+                if sum(self.check) != 0:
+                    return 3
 
-            if sum(self.check_1) != 0:
-                return 2
+                if sum(self.check_1) != 0:
+                    return 2
 
-            if sum(self.check_2) != 0:
-                return 4
+                if sum(self.check_2) != 0:
+                    return 4
 
-            return 0
-        else:
-            return 1
+                return 0
+            else:
+                return 1
+        except:
+            return 5
+
 
     def save_select(self, dir_name):
         if self.type == 3:

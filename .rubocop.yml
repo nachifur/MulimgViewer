@@ -1,0 +1,10 @@
+#!/usr/bin/env -S rubocop -c
+---
+StringLiterals:
+  EnforcedStyle: double_quotes
+Layout/LineLength:
+  Max: 118
+Style/FrozenStringLiteralComment:
+  Exclude: "*.rb"
+Style/Documentation:
+  Exclude: "*.rb"

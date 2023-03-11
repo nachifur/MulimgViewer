@@ -1,0 +1,8 @@
+#!/usr/bin/env -S yamllint -c
+---
+extends: default
+
+rules:
+  comments:
+    # https://github.com/prettier/prettier/issues/6780
+    min-spaces-from-content: 1

@@ -1,5 +1,8 @@
 #!/usr/bin/env -S pip install -r
 
 -e .
+# https://github.com/wxWidgets/Phoenix/issues/2225
+# this bug has been fixed in latest linux, however, readthedocs use an old linux
+attrdict3
 myst-parser
 sphinxcontrib-eval

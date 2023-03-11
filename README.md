@@ -15,14 +15,10 @@
 </p>
 
 # MulimgViewer
+
 [**English readme (Thanks @Faberman for the translation and polishing.)**](https://github.com/nachifur/MulimgViewer/wiki)
 
 [**国内gitee镜像项目**](https://gitee.com/nachifur/MulimgViewer) | [**果壳OpenCas镜像项目**](https://github.com/opencas/MulimgViewer)
-
-[**下载**](https://github.com/nachifur/MulimgViewer/releases) | [**快速上手**](#5.2) | [**开发者指南**](https://github.com/nachifur/MulimgViewer/blob/master/DEV_README.md)
-
-<!-- https://github.com/nachifur/MulimgViewer/blob/->https://gitee.com/nachifur/MulimgViewer/raw/ -->
-<!-- https://github.com/nachifur/MulimgViewer/releases->https://gitee.com/nachifur/MulimgViewer/releases -->
 
 ## 介绍
 

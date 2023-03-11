@@ -71,7 +71,8 @@ TODO
 - macOS with homebrew
 
 ```sh
-brew install https://github.com/nachifur/MulimgViewer/blob/master/python-mulimgviewer.rb
+curl -OL https://raw.githubusercontent.com/nachifur/MulimgViewer/master/python-mulimgviewer.rb
+brew install python-mulimgviewer.rb
 ```
 
 ## Windows exe

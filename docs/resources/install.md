@@ -70,7 +70,10 @@ TODO
 - Any Linux distributions with linuxbrew
 - macOS with homebrew
 
-TODO
+```sh
+curl -OL https://raw.githubusercontent.com/nachifur/MulimgViewer/master/python-mulimgviewer.rb
+brew install python-mulimgviewer.rb
+```
 
 ## Windows exe
 

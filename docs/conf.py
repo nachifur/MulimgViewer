@@ -14,7 +14,7 @@ __all__ = ["version", "author", "copyright", "project"]
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 
 # -- Project information -----------------------------------------------------
-language = "en"
+language = "zh_CN"
 
 # -- General configuration ---------------------------------------------------
 

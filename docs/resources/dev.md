@@ -70,7 +70,7 @@ GUI使用[wxFormBuilder](https://github.com/wxFormBuilder/wxFormBuilder)创建�
 1. wxFormBuilder创建GUI文件`MulimgViewer/gui/main.fbp`。
 2. 使用自动生成代码，生成`MulimgViewer/gui/main_gui.py`。只需在wxFormBuilder的GUI中，点击代码生成按钮即可生成`.py`。
 
-![image](https://github.com/nachifur/MulimgViewer/blob/master/img/f19.jpg)
+![f19](https://user-images.githubusercontent.com/32936898/224470780-2f663d08-5a64-4f56-9d86-a350fbe90f81.jpg)
 
 3. 修改`MulimgViewer/src/main.py`实现回调函数。
 
@@ -104,12 +104,12 @@ cd MulimgViewer
 ```
 便携版：
 ```
-pyinstaller -F -w -i mulimgviewer.ico --add-data "mulimgviewer.ico;." --add-data "font/using;font/using" --add-data "img/flip_cursor.png;img" MulimgViewer.py
+pyinstaller -F -w -i mulimgviewer.png --add-data "mulimgviewer.png;." --add-data "font/using;font/using" --add-data "assets/images/flip_cursor.png;assets/images" MulimgViewer.py
 ```
 安装版：
 * 打包成一个文件夹：
 ```
-pyinstaller -D -w -i mulimgviewer.ico --add-data "mulimgviewer.ico;." --add-data "font/using;font/using" --add-data "img/flip_cursor.png;img" MulimgViewer.py
+pyinstaller -D -w -i mulimgviewer.png --add-data "mulimgviewer.png;." --add-data "font/using;font/using" --add-data "assets/images/flip_cursor.png;assets/images" MulimgViewer.py
 ```
 * 使用createinstall打包成可安装的`.exe`。[createinstall使用](https://blog.csdn.net/qq_41811438/article/details/103092610)
 

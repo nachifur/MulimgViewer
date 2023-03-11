@@ -101,9 +101,16 @@ MulimgViewer可以方便的进行成对的数据的浏览、比较。[详细见]
 4. 设置`TruthResolution`为固定的大小，例如：`256,256`
 5. 点击保存💾️
 
+## 使用
+
+参见 [官网](https://mulimgviewer.readthedocs.io) 的
+[使用说明](https://mulimgviewer.readthedocs.io/zh/latest/resources/usage.html)。
+
 ## 引用
+
 如果您在研究中使用此项目，请使用以下BibTeX条目。
-```
+
+```bib
 @software{MulimgViewer,
   author  = {Liu, Jiawei},
   license = {GPL-3},

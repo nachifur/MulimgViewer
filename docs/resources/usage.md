@@ -215,15 +215,22 @@ Resize: 图像尺寸为一组图像中的平均尺寸，缩放模式(不保持�
 1. 使用多图浏览模式（Parallel manual和Parallel auto），对比的文件夹里面的图像命名需要一样！
 2. 子文件夹的命名。如果是0,1,2...10,11，需要改为00,01,02,...10,11。因为排序时会变为：0,1,10,11,2...
 
-> 文件重命名工具推荐：
->
-> win10: [uTools](https://u.tools/)
->
-> Ubuntu:
-> 1. purrr.
-> `sudo apt install purrr`
-> 2. Thunar - Bulk Rename Files.
-> `sudo apt install thunar`
+文件重命名工具推荐：
+
+win10: [uTools](https://u.tools/)
+
+Ubuntu:
+
+1. purrr.
+
+`sudo apt install purrr`
+
+2. Thunar - Bulk Rename Files.
+
+`sudo apt install thunar`
+
+懂正则表达式的用户可以试试
+[perl-rename](https://unix.stackexchange.com/questions/730894/what-are-the-different-versions-of-the-rename-command-how-do-i-use-the-perl-ver)。
 
 ### 多图拼接，超大像素图片，窗口大小问题
 

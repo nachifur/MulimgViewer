@@ -571,8 +571,10 @@ class ImgManager(ImgData):
     def get_img_list(self):
         img_list = []
         # load img list
+        name_list = []
         for path in self.flist:
             path = Path(path)
+            name_list.append(path.name)
             if path.is_file() and path.suffix.lower() in self.format_group:
                 img_list.append(Image.open(path).convert('RGB'))
             else:
@@ -581,7 +583,7 @@ class ImgManager(ImgData):
         customfunc = self.layout_params[32]
         out_path_str = self.layout_params[33]
         if customfunc:
-            img_list = main_custom_func(img_list,out_path_str,name_list=self.name_list)
+            img_list = main_custom_func(img_list,out_path_str,name_list=name_list)
         # resolution
         width_ = []
         height_ = []

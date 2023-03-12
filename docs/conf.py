@@ -4,8 +4,10 @@ https://www.sphinx-doc.org/en/master/usage/configuration.html
 """
 from mulimgviewer import __version__ as version  # type: ignore
 from mulimgviewer._metainfo import author, copyright, project  # type: ignore
+from mulimgviewer.src.utils import get_resource_path
 
-__all__ = ["version", "author", "copyright", "project"]
+__all__ = ["version", "author", "copyright", "project", "html_favicon"]
+html_favicon = get_resource_path("mulimgviewer.png")
 
 # -- Path setup --------------------------------------------------------------
 

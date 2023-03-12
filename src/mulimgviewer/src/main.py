@@ -89,7 +89,7 @@ class MulimgViewer (MulimgViewerGui):
         # Check the software version
         self.myEVT_MY_TEST = wx.NewEventType()
         EVT_MY_TEST = wx.PyEventBinder(self.myEVT_MY_TEST, 1)
-        self.Bind(EVT_MY_TEST, self.myEVT_MY_TEST_OnHandle)
+        self.Bind(EVT_MY_TEST, self.EVT_MY_TEST_OnHandle)
         self.version = VERSION
         self.check_version()
 
@@ -103,7 +103,7 @@ class MulimgViewer (MulimgViewerGui):
             except:
                 pass
 
-    def myEVT_MY_TEST_OnHandle(self, event):
+    def EVT_MY_TEST_OnHandle(self, event):
         self.about_gui(None, update=True, new_version=event.GetEventArgs())
 
     def check_version(self):

@@ -16,7 +16,9 @@
 
 # MulimgViewer
 
-Doc: [**English readme**](https://github.com/nachifur/MulimgViewer/wiki) | [**完整官网文档**](https://mulimgviewer.readthedocs.io)
+Doc: [**English Doc**](https://mulimgviewer.readthedocs.io/en/latest/) | [**完整官网文档**](https://mulimgviewer.readthedocs.io) | [Wiki](https://github.com/nachifur/MulimgViewer/wiki)
+
+
 
 Mirror: [**国内gitee镜像项目**](https://gitee.com/nachifur/MulimgViewer) | [**果壳OpenCas镜像项目**](https://github.com/opencas/MulimgViewer)
 

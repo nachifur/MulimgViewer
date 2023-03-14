@@ -53,16 +53,15 @@ yay -S python-mulimgviewer
 - macOS with homebrew
 
 ```sh
-curl -OL https://raw.githubusercontent.com/nachifur/MulimgViewer/master/python-mulimgviewer.rb
-brew install python-mulimgviewer.rb
+brew tap nachifur/MulimgViewer https://github.com/nachifur/MulimgViewer
+brew install python-mulimgviewer
 ```
 
 ## PPA （TODO）
 
 目前该软件还没有打包到 Ubuntu PPA 上。
 
-这是一个临时的安装方法，它避开了 `wxpython` 的 bug（目前运行该网站的 Ubuntu
-22.04 就是这样安装的）：
+这是一个临时的安装方法，它避开了 `wxpython` 的 bug：
 
 ```sh
 sudo apt install python3-wxgtk4.0
@@ -79,8 +78,6 @@ pip install .
 - Nix OS
 - Other Linux distributions with nix
 - macOS with nix-darwin
-
-
 
 ## 运行源码 | 适合所有系统，需自行构建python环境
 * **任何系统**都可以使用源码运行

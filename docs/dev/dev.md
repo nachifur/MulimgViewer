@@ -104,12 +104,12 @@ cd MulimgViewer
 ```
 便携版：
 ```
-pyinstaller -F -w -i mulimgviewer.png --add-data "mulimgviewer.png;." --add-data "font/using;font/using" --add-data "assets/images/flip_cursor.png;assets/images" MulimgViewer.py
+pyinstaller -F -w -i ./src/mulimgviewer/mulimgviewer.png --add-data "./src/mulimgviewer/mulimgviewer.png;./src/mulimgviewer/" --add-data "./src/mulimgviewer/font/using;./src/mulimgviewer/font/using" --add-data "./src/mulimgviewer/images/flip_cursor.png;./src/mulimgviewer/images/" MulimgViewer.py
 ```
 安装版：
 * 打包成一个文件夹：
 ```
-pyinstaller -D -w -i mulimgviewer.png --add-data "mulimgviewer.png;." --add-data "font/using;font/using" --add-data "assets/images/flip_cursor.png;assets/images" MulimgViewer.py
+pyinstaller -D -w -i ./src/mulimgviewer/mulimgviewer.png --add-data "./src/mulimgviewer/mulimgviewer.png;./src/mulimgviewer/" --add-data "./src/mulimgviewer/font/using;./src/mulimgviewer/font/using" --add-data "./src/mulimgviewer/images/flip_cursor.png;./src/mulimgviewer/images/" MulimgViewer.py
 ```
 * 使用createinstall打包成可安装的`.exe`。[createinstall使用](https://blog.csdn.net/qq_41811438/article/details/103092610)
 

@@ -24,7 +24,7 @@ class MyTestEvent(wx.PyCommandEvent):
 
 def get_resource_path(relative_path):
     if hasattr(sys, '_MEIPASS'):
-        return str(Path(sys._MEIPASS)/relative_path)
+        return str(Path(sys._MEIPASS)/'src'/'mulimgviewer'/relative_path)
     return str(Path(os.path.join(ROOT, relative_path)).absolute())
 
 

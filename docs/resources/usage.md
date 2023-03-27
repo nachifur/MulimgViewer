@@ -231,6 +231,12 @@ Ubuntu:
 
 `sudo apt install thunar`
 
+3. find
+
+```
+find /path/to/folder -type f > ./filelist.txt
+```
+
 懂正则表达式的用户可以试试
 [perl-rename](https://unix.stackexchange.com/questions/730894/what-are-the-different-versions-of-the-rename-command-how-do-i-use-the-perl-ver)。
 

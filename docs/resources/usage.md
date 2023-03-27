@@ -231,8 +231,16 @@ Ubuntu:
 
 `sudo apt install thunar`
 
-懂正则表达式的用户可以试试
+3. 懂正则表达式的用户可以试试
 [perl-rename](https://unix.stackexchange.com/questions/730894/what-are-the-different-versions-of-the-rename-command-how-do-i-use-the-perl-ver)。
+
+4. find
+
+```
+find /path/to/folder -type f > ./filelist.txt
+```
+
+
 
 ### 多图拼接，超大像素图片，窗口大小问题
 

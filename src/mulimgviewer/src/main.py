@@ -964,20 +964,20 @@ class MulimgViewer (MulimgViewerGui):
                 if self.ImgManager.type == 0 or self.ImgManager.type == 1:
                     # one_dir_mul_dir_auto / one_dir_mul_dir_manual
                     if self.parallel_sequential.Value or self.parallel_to_sequential.Value:
-                        title_setting[2:8] = [
-                            False, False, True, True, True, False]
+                        title_setting[2:7] = [
+                            False, False, True, True, True]
                     else:
-                        title_setting[2:8] = [
-                            False, False, True, True, False, False]
+                        title_setting[2:7] = [
+                            False, False, True, True, False]
 
                 elif self.ImgManager.type == 2:
                     # one_dir_mul_img
-                    title_setting[2:8] = [
-                        False, False, False, True, True, False]
+                    title_setting[2:7] = [
+                        False, False, False, True, True]
                 elif self.ImgManager.type == 3:
                     # read file list from a list file
-                    title_setting[2:8] = [
-                        False, False, True, True, True, False]
+                    title_setting[2:7] = [
+                        False, False, True, True, True]
 
         except:
             self.SetStatusText_(

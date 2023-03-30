@@ -71,13 +71,35 @@ sed -i /wxpython/d requirements.txt
 pip install .
 ```
 
-## Nix （TODO）
+## Nix
 
 任何安装了 [`nix`](https://github.com/NixOS/nix) 的系统均可：
 
 - Nix OS
 - Other Linux distributions with nix
 - macOS with nix-darwin
+
+For NixOS:
+
+```nix
+{ config, pkgs, ... }:
+{
+  environment.systemPackages = with pkgs;
+    [
+      (
+        callPackage
+          (
+            fetchurl {
+              url = "https://raw.githubusercontent.com/nachifur/mulimgviewer/master/default.nix";
+              # replace XXX with `nix-prefetch-url https://raw.githubusercontent.com/nachifur/mulimgviewer/master/default.nix`
+              sha256 = "XXX";
+            }
+          )
+        { }
+      )
+    ];
+}
+```
 
 ## 运行源码 | 适合所有系统，需自行构建python环境
 * **任何系统**都可以使用源码运行

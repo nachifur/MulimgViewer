@@ -79,26 +79,34 @@ pip install .
 - Other Linux distributions with nix
 - macOS with nix-darwin
 
-For NixOS:
+For NixOS, add the following code to `/etc/nixos/configuration.nix`:
 
 ```nix
 { config, pkgs, ... }:
 {
-  environment.systemPackages = with pkgs;
+  nix.settings.experimental-features = [ "flakes" ];
+  environment.systemPackages =
+    let
+      mulimgviewer = (
+        builtins.getFlake "github:nachifur/MulimgViewer"
+      ).packages.${builtins.currentSystem}.default;
+    in
     [
-      (
-        callPackage
-          (
-            fetchurl {
-              url = "https://raw.githubusercontent.com/nachifur/mulimgviewer/master/default.nix";
-              # replace XXX with `nix-prefetch-url https://raw.githubusercontent.com/nachifur/mulimgviewer/master/default.nix`
-              sha256 = "XXX";
-            }
-          )
-        { }
-      )
+      mulimgviewer
     ];
 }
+```
+
+For nix,
+
+```sh
+nix shell github:nachifur/MulimgViewer
+```
+
+Or just take a try without installation:
+
+```sh
+nix run github:nachifur/MulimgViewer
 ```
 
 ## 运行源码 | 适合所有系统，需自行构建python环境

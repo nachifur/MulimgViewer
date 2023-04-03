@@ -62,6 +62,9 @@ Source = "https://github.com/nachifur/mulimgviewer"
 [project.gui-scripts]
 mulimgviewer = "mulimgviewer.__main__:main"
 
+[tool.setuptools.package-data]
+mulimgviewer = ["*.png", "font/using/*"]
+
 [tool.setuptools.dynamic.dependencies]
 file = "requirements.txt"
 

@@ -26,6 +26,9 @@ gettext_compact = False
 # ones.
 extensions = [
     "sphinx.ext.autodoc",
+    "sphinx.ext.napoleon",
+    "sphinx.ext.viewcode",
+    "sphinx.ext.githubpages",
     "myst_parser",
     "sphinxcontrib.eval",
 ]

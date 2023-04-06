@@ -73,14 +73,12 @@ jobs:
         with:
           path: |
             dist/*
-            build/resources/*
       - uses: softprops/action-gh-release@v1
         if: runner.os == 'Linux' && startsWith(github.ref, 'refs/tags/')
         with:
           body_path: build/CHANGELOG.md
           files: |
             dist/*
-            build/resources/*
       - uses: pypa/gh-action-pypi-publish@release/v1
         if: runner.os == 'Linux' && startsWith(github.ref, 'refs/tags/')
         with:

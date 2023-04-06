@@ -30,10 +30,6 @@
             pythonImportsCheck = [
               "mulimgviewer"
             ];
-            postInstall = ''
-              install -Dm644 assets/desktop/mulimgviewer.desktop -t $out/share/applications
-              install -Dm644 src/mulimgviewer/mulimgviewer.png -t $out/share/icons/hicolor/256x256/apps
-            '';
           };
         }
       );

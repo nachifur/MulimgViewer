@@ -83,3 +83,11 @@ jobs:
         if: runner.os == 'Linux' && startsWith(github.ref, 'refs/tags/')
         with:
           password: ${{ secrets.PYPI_API_TOKEN }}
+      - uses: Freed-Wu/update-aur-package@v1.0.8
+        if: startsWith(github.ref, 'refs/tags/') && runner.os == 'Linux'
+        with:
+          tag_version_prefix: ""
+          package_name: python-dev
+          commit_username: github-action[bot]
+          commit_email: 41898282+github-actions[bot]@users.noreply.github.com
+          ssh_private_key: ${{ secrets.AUR_SSH_PRIVATE_KEY }}

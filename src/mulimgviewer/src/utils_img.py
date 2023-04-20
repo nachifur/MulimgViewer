@@ -982,7 +982,7 @@ class ImgManager(ImgData):
                 if path.is_file() and path.suffix.lower() in self.format_group:
                     title = ""
                     if self.title_setting[3]:
-                        title = title+path.parent.stem
+                        title = title+path.parent.parts[-1]
                     if self.title_setting[5]:
                         if self.title_setting[3]:
                             title = title+"/"

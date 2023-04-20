@@ -1,0 +1,194 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2023
+# This file is distributed under the same license as the mulimgviewer
+# package.
+# nachifur <1476879092.com>, 2023.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: mulimgviewer 3.9.10\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2023-03-29 12:46+0800\n"
+"PO-Revision-Date: 2023-03-29 12:46+0800\n"
+"Last-Translator: nachifur <1476879092.com>\n"
+"Language-Team: nachifur <1476879092.com>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.11.0\n"
+
+#: ../../resources/install.md:1
+msgid "安装"
+msgstr "Install and download"
+
+#: ../../resources/install.md:3
+msgid "Windows"
+msgstr ""
+
+#: ../../resources/install.md:5
+msgid "下载 [exe 文件](https://github.com/nachifur/MulimgViewer/releases)："
+msgstr "Execute the provided binary file directly. Or download the source code and run `MulimgViewer.py`."
+
+#: ../../resources/install.md:7
+msgid "安装版 `*_Setup.exe` （启动速度更快）"
+msgstr "After v3.9.3, Windows 10 provides installation version `_Setup.exe` and portable version `_Portable.exe` (installation version `_Setup.exe` starts faster)."
+
+#: ../../resources/install.md:8
+msgid "便携版 `*_Portable.exe`"
+msgstr "**Download link**: [Windows 10 binary package (amd64)](https://github.com/nachifur/MulimgViewer/releases)"
+
+#: ../../resources/install.md:10
+msgid "[PYPI](https://pypi.org/project/mulimgviewer/) (测试中)"
+msgstr ""
+
+#: ../../resources/install.md:12
+msgid "任何安装了 [`pip`](https://github.com/pypa/pip) 的系统均可："
+msgstr ""
+
+#: ../../resources/install.md:14
+msgid "所有 `python` 支持的系统 (`pip` 是用 `python` 写的)"
+msgstr ""
+
+#: ../../resources/install.md:22
+msgid ""
+"注意，目前由于依赖项 [wxpython](https://github.com/wxWidgets/Phoenix) 的 "
+"[bug](https://github.com/wxWidgets/Phoenix/issues/2225)，该方法可能会失败。"
+msgstr ""
+
+#: ../../resources/install.md:25
+msgid ""
+"除了 `pip` 以外的安装方式都会额外支持任务栏的图标。 `pip` 不支持是因为 `pip` 只能把软件安装到类似 "
+"`/usr/lib/python3.X/site-packages` 的目录里，而软件的快捷方式、图标都必须放在该目录以外的其他目录。 "
+"当然，你手动完成也是可以的。"
+msgstr ""
+
+#: ../../resources/install.md:30
+msgid "[AUR](https://aur.archlinux.org/packages/python-mulimgviewer)"
+msgstr ""
+
+#: ../../resources/install.md:32
+msgid ""
+"任何安装了 [`pacman`](https://archlinux.org/pacman/) 的系统均可（尽管目前仅在 `ArchLinux` "
+"上测试过）："
+msgstr ""
+
+#: ../../resources/install.md:35
+msgid "[ArchLinux](https://archlinux.org/)"
+msgstr ""
+
+#: ../../resources/install.md:36
+msgid "Other Linux distributions with pacman"
+msgstr ""
+
+#: ../../resources/install.md:37
+msgid "Windows with [Msys2](https://www.msys2.org/)"
+msgstr ""
+
+#: ../../resources/install.md:38
+msgid "Android with [Termux-pacman](https://github.com/termux-pacman)"
+msgstr ""
+
+#: ../../resources/install.md:40
+#, python-format
+msgid "通过[AUR 助手](https://wiki.archlinuxcn.org/wiki/AUR_%E5%8A%A9%E6%89%8B)安装："
+msgstr ""
+
+#: ../../resources/install.md:46
+msgid ""
+"![icon](https://user-"
+"images.githubusercontent.com/32936898/224473440-2088edd7-42e5-45a3-a403-515e2daa019a.jpg)"
+msgstr ""
+
+#: ../../resources/install.md:46
+msgid "icon"
+msgstr ""
+
+#: ../../resources/install.md:48
+msgid "brew"
+msgstr ""
+
+#: ../../resources/install.md:50
+msgid "任何安装了 [`brew`](https://github.com/Homebrew/brew) 的系统均可："
+msgstr ""
+
+#: ../../resources/install.md:52
+msgid "Any Linux distributions with linuxbrew"
+msgstr ""
+
+#: ../../resources/install.md:53
+msgid "macOS with homebrew"
+msgstr ""
+
+#: ../../resources/install.md:60
+msgid "PPA （TODO）"
+msgstr ""
+
+#: ../../resources/install.md:62
+msgid "目前该软件还没有打包到 Ubuntu PPA 上。"
+msgstr ""
+
+#: ../../resources/install.md:64
+msgid "这是一个临时的安装方法，它避开了 `wxpython` 的 bug："
+msgstr ""
+
+#: ../../resources/install.md:74
+msgid "Nix （TODO）"
+msgstr ""
+
+#: ../../resources/install.md:76
+msgid "任何安装了 [`nix`](https://github.com/NixOS/nix) 的系统均可："
+msgstr ""
+
+#: ../../resources/install.md:78
+msgid "Nix OS"
+msgstr ""
+
+#: ../../resources/install.md:79
+msgid "Other Linux distributions with nix"
+msgstr ""
+
+#: ../../resources/install.md:80
+msgid "macOS with nix-darwin"
+msgstr ""
+
+#: ../../resources/install.md:82
+msgid "运行源码 | 适合所有系统，需自行构建python环境"
+msgstr "Run with Python source code (windows/linux/ios)"
+
+#: ../../resources/install.md:83
+msgid "**任何系统**都可以使用源码运行"
+msgstr "**Any system** can be run with source code"
+
+#: ../../resources/install.md:84
+msgid "安装python环境可以使用`pip` or `conda`"
+msgstr "You can use `pip` or `conda` to install python environment"
+
+#: ../../resources/install.md:85
+msgid "建议使用Python3.6以上"
+msgstr "Python 3.6 or above is recommended"
+
+#: ../../resources/install.md:86
+msgid "[最新源码下载](https://codeload.github.com/nachifur/MulimgViewer/zip/refs/heads/master)"
+msgstr "[Latest source code download](https://codeload.github.com/nachifur/MulimgViewer/zip/refs/heads/master)"
+
+#: ../../resources/install.md:88
+msgid "1. pip 安装"
+msgstr "1. pip"
+
+#: ../../resources/install.md:89
+msgid "pip安装：（如果安装过程出错，可以使用conda安装）"
+msgstr "**pip installation:** (If there is an error in the installation process, you can use conda.)"
+
+#: ../../resources/install.md:93 ../../resources/install.md:102
+msgid "运行："
+msgstr "**run:**"
+
+#: ../../resources/install.md:97
+msgid "2. conda 安装"
+msgstr "2.conda"
+
+#: ../../resources/install.md:98
+msgid "或者安装conda环境："
+msgstr "install the conda environment:"
+

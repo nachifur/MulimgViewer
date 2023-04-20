@@ -22,10 +22,7 @@ pip install mulimgviewer[update]
 注意，目前由于依赖项 [wxpython](https://github.com/wxWidgets/Phoenix)
 的 [bug](https://github.com/wxWidgets/Phoenix/issues/2225)，该方法可能会失败。
 
-除了 `pip` 以外的安装方式都会额外支持任务栏的图标。 `pip` 不支持是因为 `pip`
-只能把软件安装到类似 `/usr/lib/python3.X/site-packages`
-的目录里，而软件的快捷方式、图标都必须放在该目录以外的其他目录。
-当然，你手动完成也是可以的。
+![icon](https://user-images.githubusercontent.com/32936898/224473440-2088edd7-42e5-45a3-a403-515e2daa019a.jpg)
 
 ## [AUR](https://aur.archlinux.org/packages/python-mulimgviewer)
 
@@ -42,8 +39,6 @@ pip install mulimgviewer[update]
 ```sh
 yay -S python-mulimgviewer
 ```
-
-![icon](https://user-images.githubusercontent.com/32936898/224473440-2088edd7-42e5-45a3-a403-515e2daa019a.jpg)
 
 ## brew
 
@@ -71,13 +66,43 @@ sed -i /wxpython/d requirements.txt
 pip install .
 ```
 
-## Nix （TODO）
+## Nix
 
 任何安装了 [`nix`](https://github.com/NixOS/nix) 的系统均可：
 
 - Nix OS
 - Other Linux distributions with nix
 - macOS with nix-darwin
+
+For NixOS, add the following code to `/etc/nixos/configuration.nix`:
+
+```nix
+{ config, pkgs, ... }:
+{
+  nix.settings.experimental-features = [ "flakes" ];
+  environment.systemPackages =
+    let
+      mulimgviewer = (
+        builtins.getFlake "github:nachifur/MulimgViewer"
+      ).packages.${builtins.currentSystem}.default;
+    in
+    [
+      mulimgviewer
+    ];
+}
+```
+
+For nix,
+
+```sh
+nix shell github:nachifur/MulimgViewer
+```
+
+Or just take a try without installation:
+
+```sh
+nix run github:nachifur/MulimgViewer
+```
 
 ## 运行源码 | 适合所有系统，需自行构建python环境
 * **任何系统**都可以使用源码运行

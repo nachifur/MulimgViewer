@@ -16,6 +16,8 @@ __all__ = ["version", "author", "copyright", "project", "html_favicon"]
 
 # -- Project information -----------------------------------------------------
 language = "zh_CN"
+locale_dirs = ["locale"]
+gettext_compact = False
 
 # -- General configuration ---------------------------------------------------
 
@@ -24,6 +26,9 @@ language = "zh_CN"
 # ones.
 extensions = [
     "sphinx.ext.autodoc",
+    "sphinx.ext.napoleon",
+    "sphinx.ext.viewcode",
+    "sphinx.ext.githubpages",
     "myst_parser",
     "sphinxcontrib.eval",
 ]

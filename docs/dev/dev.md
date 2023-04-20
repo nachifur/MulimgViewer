@@ -113,6 +113,8 @@ pyinstaller -D -w -i ./src/mulimgviewer/mulimgviewer.png --add-data "./src/mulim
 ```
 * 使用createinstall打包成可安装的`.exe`。[createinstall使用](https://blog.csdn.net/qq_41811438/article/details/103092610)
 
+TODO: CI/CD [自动打包](https://github.com/marketplace/actions/pyinstaller-windows)
+
 ### 3.2 linux/ios/arm等平台的打包
 ubuntu的打包可以使用`dpkg`。个人目前不了解其他平台的打包，期待大家可以帮助打包MulimgViewer！献上最真诚的感谢！
 
@@ -128,3 +130,17 @@ MulimgViewer_3.9.3_ios_amd64.ipa
 我们目前支持以下两个镜像，release版本需要推送到这两个站点：
 * [**国内gitee镜像项目**](https://gitee.com/nachifur/MulimgViewer)
 * [**果壳OpenCas镜像项目**](https://github.com/opencas/MulimgViewer)
+
+### 翻译
+
+```sh
+cd docs
+sphinx-build -M gettext . _build
+sphinx-intl update -p _build/gettext
+vi locale/en/LC_MESSAGES/*.po  # edit translations
+git add -A
+git commit
+git push
+```
+
+Refer [sphinx-intl](https://sphinx-intl.readthedocs.io).

@@ -1,0 +1,72 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2023
+# This file is distributed under the same license as the mulimgviewer
+# package.
+# nachifur <1476879092.com>, 2023.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: mulimgviewer 3.9.10\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2023-03-29 12:46+0800\n"
+"PO-Revision-Date: 2023-03-29 12:46+0800\n"
+"Last-Translator: nachifur <1476879092.com>\n"
+"Language-Team: nachifur <1476879092.com>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.11.0\n"
+
+#: ../../misc/todo.md:1
+msgid "未来增强功能"
+msgstr "Future enhancements"
+
+#: ../../misc/todo.md:3
+msgid "感谢各位提供意见！大家可以在 issues 中发表意见，采用的会致谢大家！如果大家希望可以和我一起合作开发，请联系我！"
+msgstr "Thanks for your comments ([open an new issue](https://github.com/nachifur/MulimgViewer/issues))! Leave your suggestions, ideas and feedback in the issues, and I will try to implement the most useful ones! If you are interested in fully immersing yourself and contributing to the development of this project, kindly reach out to me (email: liujiawei18@mails.ucas.ac.cn)!"
+
+#: ../../misc/todo.md:5
+msgid "[x] 增加精确定位（目前已经有 slider）"
+msgstr "Add precise positioning (currently there is a slider)"
+
+#: ../../misc/todo.md:6
+msgid "[x] 增加图片索引查看，方便进行精确定位"
+msgstr "Add image index view to facilitate precise positioning"
+
+#: ../../misc/todo.md:7
+msgid "[x] 并行的局部放大功能（用于论文中的对比实验图片**急需！**）"
+msgstr "Parallel partial zoom function (used for contrast experiment pictures in the paper **needed urgently!**)"
+
+#: ../../misc/todo.md:8
+msgid "[x] 输入方式，新增：路径文件的导入和存储（@nothingeasy 提供改进意见）"
+msgstr "Input method, new: import and storage of path files (@nothingeasy provides suggestions for improvement)"
+
+#: ../../misc/todo.md:9
+msgid "[x] 增加删除功能（完善筛选功能）"
+msgstr "Add delete function (perfect filter function)"
+
+#: ../../misc/todo.md:10
+msgid "[x] 保存带框的原始图像（@JuZiSYJ 提供改进意见）"
+msgstr "Save the original framed image (@JuZiSYJ provides suggestions for improvement)"
+
+#: ../../misc/todo.md:11
+msgid "[x] 拼图过程中，点击可旋转图片"
+msgstr "Each image can be rotated after clicking"
+
+#: ../../misc/todo.md:12
+msgid "[x] 多框放大功能（@JuZiSYJ 提供改进意见）"
+msgstr "Add multi-box zoom function (@JuZiSYJ provides suggestions for improvement)"
+
+#: ../../misc/todo.md:13
+msgid "[x] 去除放大图像的 box（@stefanklut 提供改进意见）"
+msgstr "Remove the box of cropped images (@stefanklut provides suggestions for improvement)"
+
+#: ../../misc/todo.md:14
+msgid "[x] 高清图像的对比，放大图像 1:1 输出（@Faberman 提供改进意见）"
+msgstr "Comparison of high-definition images, and 1:1 output of enlarged images (@Faberman provides suggestions for improvement)"
+
+#: ../../misc/todo.md:15
+msgid "[x] 为图像添加 title（@Faberman 提供改进意见）"
+msgstr "Add title for each image (@Faberman provides suggestions for improvement)"
+

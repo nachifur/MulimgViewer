@@ -62,6 +62,13 @@ Source = "https://github.com/nachifur/mulimgviewer"
 [project.gui-scripts]
 mulimgviewer = "mulimgviewer.__main__:main"
 
+[tool.setuptools.package-data]
+mulimgviewer = ["*.png", "font/using/*"]
+
+[tool.setuptools.data-files]
+"share/application" = ["assets/desktop/mulimgviewer.desktop"]
+"share/icons/hicolor/256x256/apps" = ["src/mulimgviewer/mulimgviewer.png"]
+
 [tool.setuptools.dynamic.dependencies]
 file = "requirements.txt"
 

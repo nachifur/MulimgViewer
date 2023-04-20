@@ -889,6 +889,7 @@ class MulimgViewer (MulimgViewerGui):
             row_col_one_img = [int(x) for x in row_col_one_img]
 
             if row_col_one_img[0] == -1 and row_col_one_img[1] == -1:
+                row_col_one_img= [1,1]
                 row_col = self.ImgManager.layout_advice()
                 self.row_col.SetValue(str(row_col[0])+","+str(row_col[1]))
 
@@ -964,20 +965,16 @@ class MulimgViewer (MulimgViewerGui):
                 if self.ImgManager.type == 0 or self.ImgManager.type == 1:
                     # one_dir_mul_dir_auto / one_dir_mul_dir_manual
                     if self.parallel_sequential.Value or self.parallel_to_sequential.Value:
-                        title_setting[2:7] = [
-                            False, False, True, True, True]
+                        title_setting[2:7] = [False, True, True, True, False]
                     else:
-                        title_setting[2:7] = [
-                            False, False, True, True, False]
+                        title_setting[2:7] = [False, True, True, False, False]
 
                 elif self.ImgManager.type == 2:
                     # one_dir_mul_img
-                    title_setting[2:7] = [
-                        False, False, False, True, True]
+                    title_setting[2:7] = [False, False, True, True, False]
                 elif self.ImgManager.type == 3:
                     # read file list from a list file
-                    title_setting[2:7] = [
-                        False, False, True, True, True]
+                    title_setting[2:7] = [False, True, True, True, False]
 
         except:
             self.SetStatusText_(

@@ -108,7 +108,7 @@ git push
 
 **fix error**: set pythonpath `windows powershell`:
 ```
-$env:PYTHONPATH = "D:\ncfey\Desktop\github\MulimgViewer\src"
+$env:PYTHONPATH = "path_to_directory_1;path_to_directory_2"
 echo $env:PYTHONPATH
 ```
 

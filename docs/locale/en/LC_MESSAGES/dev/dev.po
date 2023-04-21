@@ -24,7 +24,7 @@ msgstr "MulimgViewer Development Guide"
 
 #: ../../dev/dev.md:3
 msgid "0. 加入我们吧！"
-msgstr "0. Join us!"
+msgstr "0.Join us!"
 
 #: ../../dev/dev.md:4
 msgid "**初衷**：目前的市面上的图像浏览器不能同时显示多张图像。2020.8.10诞生的MulimgViewer，希望可以让大家方便地进行多张图像的显示和比较。恍惚一世，希望能在这个世界留下痕迹。"
@@ -135,7 +135,7 @@ msgstr ""
 
 #: ../../dev/dev.md:32
 msgid "1. 文件说明"
-msgstr "1. File Description"
+msgstr "1.File Description"
 
 #: ../../dev/dev.md:33
 msgid "项目框架："
@@ -143,7 +143,7 @@ msgstr "Project Framework:"
 
 #: ../../dev/dev.md:60
 msgid "2. 开发流程"
-msgstr "2. Development Flow"
+msgstr "2.Development Flow"
 
 #: ../../dev/dev.md:61
 msgid "2.1 GUI的创建"
@@ -290,7 +290,7 @@ msgstr ""
 
 #: ../../dev/dev.md:115
 msgid "3. Release"
-msgstr ""
+msgstr "3.Release"
 
 #: ../../dev/dev.md:116
 msgid "我们的下一个release版本的计划可见[projects](https://github.com/nachifur/MulimgViewer/projects?type=classic)。"
@@ -357,10 +357,4 @@ msgstr "[**gitee**](https://gitee.com/nachifur/MulimgViewer)"
 #: ../../dev/dev.md:153
 msgid "[**果壳OpenCas镜像项目**](https://github.com/opencas/MulimgViewer)"
 msgstr "[**OpenCas**](https://github.com/opencas/MulimgViewer)"
-
-#~ msgid "**Error**: ModuleNotFoundError: No module named 'mulimgviewer'"
-#~ msgstr ""
-
-#~ msgid "**Fix error**: set pythonpath `windows powershell`:"
-#~ msgstr ""
 

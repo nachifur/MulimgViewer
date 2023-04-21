@@ -24,6 +24,8 @@ Mirror: [**国内gitee镜像项目**](https://gitee.com/nachifur/MulimgViewer) |
 
 Link: [**快速入门**](https://mulimgviewer.readthedocs.io/zh_CN/latest/resources/usage.html) | [**下载和安装**](https://mulimgviewer.readthedocs.io/zh_CN/latest/resources/install.html)
 
+如果有一些超链接失效，请通过issue反馈。
+
 ## 介绍
 
 MulimgViewer**多图像浏览器**，在一个界面显示多个图像，方便图像的比较、筛选。

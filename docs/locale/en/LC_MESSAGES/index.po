@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: mulimgviewer 3.9.10\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-04-21 19:04+0800\n"
+"POT-Creation-Date: 2023-04-21 19:23+0800\n"
 "PO-Revision-Date: 2023-03-29 12:46+0800\n"
 "Last-Translator: nachifur <1476879092.com>\n"
 "Language-Team: nachifur <1476879092.com>\n"
@@ -64,48 +64,56 @@ msgid ""
 " | "
 "[**下载和安装**](https://mulimgviewer.readthedocs.io/zh_CN/latest/resources/install.html)"
 msgstr ""
-"Link: [**Quick Start**](https://mulimgviewer.readthedocs.io/en/latest/resources/usage.html) | [**Install and "
+"Link: [**Quick "
+"Start**](https://mulimgviewer.readthedocs.io/en/latest/resources/usage.html)"
+" | [**Install and "
 "Download**](https://mulimgviewer.readthedocs.io/en/latest/resources/install.html)"
 
 #: ../../../README.md:28
+msgid "如果有一些超链接失效，请通过issue反馈。"
+msgstr "If there are any invalid hyperlinks, please provide feedback through an issue."
+
+#: ../../../README.md:30
 msgid "介绍"
 msgstr "Introduction"
 
-#: ../../../README.md:30
+#: ../../../README.md:32
 msgid "MulimgViewer**多图像浏览器**，在一个界面显示多个图像，方便图像的比较、筛选。"
 msgstr ""
 "[MulimgViewer](https://github.com/nachifur/MulimgViewer) is an image "
 "viewer, which is capable of displaying multiple images in one window. It "
 "is very useful for image comparison, selection and stitching."
 
-#: ../../../README.md:32
+#: ../../../README.md:34
 msgid "**软件功能**: 多路径并行显示、多框并行放大。"
 msgstr ""
+"**Features: 1. Loading images from multiple folders and displaying them "
+"side by side. 2.Simultaneous magnification of multiple selected areas."
 
-#: ../../../README.md:34
+#: ../../../README.md:36
 msgid ""
 "![f6](https://user-"
 "images.githubusercontent.com/32936898/224470721-c49f0269-70ad-419d-"
 "bbd0-f2a8eaa7a453.gif)"
 msgstr ""
 
-#: ../../../README.md:34
+#: ../../../README.md:36
 msgid "f6"
 msgstr ""
 
-#: ../../../README.md:36
+#: ../../../README.md:38
 msgid "您的star是我开发完善该项目最大的支持！ qq交流群：945669929"
 msgstr "Your star is my biggest support in developing and improving this project!"
 
-#: ../../../README.md:41
+#: ../../../README.md:43
 msgid "应用场景"
 msgstr "Application Scenarios"
 
-#: ../../../README.md:42
+#: ../../../README.md:44
 msgid "例1：多图像浏览"
 msgstr "Example 1: Parallel image browsing"
 
-#: ../../../README.md:43
+#: ../../../README.md:45
 msgid ""
 "浏览202,599张图片的数据库CelebA，需要多长时间？一次显示1000张，只需点击200多次即可完成！ ![f15](https"
 "://user-images.githubusercontent.com/32936898/224470768-96eb5aee-"
@@ -115,40 +123,40 @@ msgstr ""
 "Display 1000 images at once using MulimgViewer — you will be all set in "
 "200 clicks!"
 
-#: ../../../README.md:43
+#: ../../../README.md:45
 msgid "f15"
 msgstr ""
 
-#: ../../../README.md:46
+#: ../../../README.md:48
 msgid "例2：并行挑选"
 msgstr "Example 2: Parallel image selection and saving"
 
-#: ../../../README.md:48
+#: ../../../README.md:50
 msgid "**以前**你可能需要在多个窗口打开多个图像，逐个对比，再到文件夹找到对应的图像，复制到别的地方。"
 msgstr ""
 "**Previously**, you had to open each image separately, compare them one "
 "by one, then find the specific images in a folder and copy them to "
 "another place."
 
-#: ../../../README.md:50
+#: ../../../README.md:52
 msgid "**现在**使用MulimgViewer多图像浏览器，输入各个需要对比的目录，**一键保存需要对比的多张图像到本地**！"
 msgstr ""
 "**Now** you can use MulimgViewer to load and display all the images from "
 "multiple directories at once, then **export the image pairs with one "
 "click**!"
 
-#: ../../../README.md:52
+#: ../../../README.md:54
 msgid ""
 "![Parallel_select](https://user-"
 "images.githubusercontent.com/32936898/224470788-799e5141-a8a0-4e4b-b58b-"
 "cd61f5446591.jpg)"
 msgstr ""
 
-#: ../../../README.md:52
+#: ../../../README.md:54
 msgid "Parallel_select"
 msgstr ""
 
-#: ../../../README.md:54
+#: ../../../README.md:56
 msgid ""
 "图片并行挑选：`Parallel auto` or `Parallel "
 "manual`，关闭`Parallel+Sequential`（默认使用复制，选中`MoveFile`为剪切）。"
@@ -158,27 +166,27 @@ msgstr ""
 "Auto` or `Parallel Manual` input modes and disabled `Parallel+Sequential`"
 " option."
 
-#: ../../../README.md:56
+#: ../../../README.md:58
 msgid "例3：并行放大"
 msgstr "Example 3: Parallel zoom"
 
-#: ../../../README.md:58
+#: ../../../README.md:60
 msgid "MulimgViewer可以轻松的完成纵向与横向的拼接，**支持自动拼接保存，支持并行放大**！"
 msgstr ""
 "MulimgViewer **supports automatic image stitching, saving and "
 "magnification in parallel**!"
 
-#: ../../../README.md:60
+#: ../../../README.md:62
 msgid ""
 "![f7](https://user-images.githubusercontent.com/32936898/224470740"
 "-375f42ee-a9d3-4902-b9d4-9945bc84044c.jpg)"
 msgstr ""
 
-#: ../../../README.md:60
+#: ../../../README.md:62
 msgid "f7"
 msgstr ""
 
-#: ../../../README.md:62
+#: ../../../README.md:64
 msgid "同时支持**任意位置**划框（鼠标左键按住移动），**多框**并行放大（鼠标右键点击，生成新的框）。[详细见](https://mulimgviewer.readthedocs.io/zh_CN/latest/resources/usage.html#id16)"
 msgstr ""
 "You can select any part of the image to magnify that area. Click `Zoom "
@@ -187,42 +195,42 @@ msgstr ""
 "magnified areas simultaneously. [See "
 "details](https://mulimgviewer.readthedocs.io/en/latest/resources/usage.html#id16)."
 
-#: ../../../README.md:64
+#: ../../../README.md:66
 msgid ""
 "![f11](https://user-images.githubusercontent.com/32936898/224470749"
 "-46b0507d-b1c8-4418-9429-6874579ffdca.gif)"
 msgstr ""
 
-#: ../../../README.md:64
+#: ../../../README.md:66
 msgid "f11"
 msgstr ""
 
-#: ../../../README.md:66
+#: ../../../README.md:68
 msgid "例4：成对数据浏览"
 msgstr "Example 4: Dataset browsing, paired images"
 
-#: ../../../README.md:67
+#: ../../../README.md:69
 msgid "MulimgViewer可以方便的进行成对的数据的浏览、比较。[详细见](https://mulimgviewer.readthedocs.io/zh_CN/latest/resources/usage.html#id9)"
 msgstr ""
 "MulimgViewer makes it easy to view and compare paired images. [See "
 "details](https://mulimgviewer.readthedocs.io/en/latest/resources/usage.html#id9)."
 
-#: ../../../README.md:69
+#: ../../../README.md:71
 msgid ""
 "![f8](https://user-"
 "images.githubusercontent.com/32936898/224470741-b6466206-6397-4383-a56c-"
 "92c601128170.jpg)"
 msgstr ""
 
-#: ../../../README.md:69
+#: ../../../README.md:71
 msgid "f8"
 msgstr ""
 
-#: ../../../README.md:71
+#: ../../../README.md:73
 msgid "例5：一键生成论文对比图"
 msgstr "Example 5: One-click generation of paper comparison chart"
 
-#: ../../../README.md:72
+#: ../../../README.md:74
 msgid ""
 "支持显示标题，调整放大框的位置。放大框的位置选择`middle "
 "bottom`，建议`🔍️Scale=-1,-1`;如果选择其他位置，自行调节放大倍数，例如：`🔍️Scale=1.5,1.5`。[详细见](https://mulimgviewer.readthedocs.io/zh_CN/latest/resources/usage.html#id19)"
@@ -233,50 +241,50 @@ msgstr ""
 "`🔍️Scale=1.5,1.5`. [See "
 "details](https://mulimgviewer.readthedocs.io/en/latest/resources/usage.html#id19)"
 
-#: ../../../README.md:74
+#: ../../../README.md:76
 msgid ""
 "![f17](https://user-images.githubusercontent.com/32936898/224470773"
 "-0917564d-e74c-4f3e-9434-f3cb7d7687de.jpg)"
 msgstr ""
 
-#: ../../../README.md:74
+#: ../../../README.md:76
 msgid "f17"
 msgstr ""
 
-#: ../../../README.md:76
+#: ../../../README.md:78
 msgid "显示半张图像。勾选`OneImg`，使用`NumPerimg`控制几张图像合成一张图像。`Gap(x,y)=*,*,0,*,*`消除间距。"
 msgstr ""
 "Show the half of an image. Check `OneImg`. When `NumPerimg=2`, combine "
 "two images into one image. When `Gap(x,y)=*,*,0,*,*`, the gap is "
 "eliminated."
 
-#: ../../../README.md:78
+#: ../../../README.md:80
 msgid ""
 "![f18](https://user-images.githubusercontent.com/32936898/224470775"
 "-aa84975a-29e4-4d6a-b826-7ffbb4cbbbc6.jpg)"
 msgstr ""
 
-#: ../../../README.md:78
+#: ../../../README.md:80
 msgid "f18"
 msgstr ""
 
-#: ../../../README.md:80
+#: ../../../README.md:82
 msgid "例6：支持远程挂载目录图片浏览"
 msgstr "Example 6: Browse images in a remote directory"
 
-#: ../../../README.md:81
+#: ../../../README.md:83
 msgid "将远程服务器的目录挂载后，在MulimgViewer中选择目录即可，完成图片浏览。"
 msgstr ""
 "After mounting a remote directory you can open that directory in "
 "MulimgViewer to view the images."
 
-#: ../../../README.md:82
+#: ../../../README.md:84
 msgid "Ubuntu: 使用ubuntu的文件管理器`nautilus`，stfp://10.8.0.4连接到服务器。"
 msgstr ""
 "Ubuntu: In the example below we connected to server `stfp://10.8.0.4` "
 "using Ubuntu's file manager `nautilus`."
 
-#: ../../../README.md:86
+#: ../../../README.md:88
 msgid ""
 "win10: 安装WinFsp和[SSHFS-Win](https://github.com/billziss-gh/sshfs-"
 "win)之后，文件资源管理器中填写远程服务器ip，例如：`\\\\sshfs\\user@ip!port`"
@@ -285,85 +293,85 @@ msgstr ""
 "/billziss-gh/sshfs-win), fill in the remote server ip in the file "
 "explorer, for example: `\\sshfs\\user@ip!port`"
 
-#: ../../../README.md:90
+#: ../../../README.md:92
 msgid "例7：支持点按旋转"
 msgstr "Example 7: Click to rotate"
 
-#: ../../../README.md:92
+#: ../../../README.md:94
 msgid "显示多张图片的同时，鼠标左键点击即可完成图片旋转。"
 msgstr "Click `Rotate ↷`, then click the left mouse button to rotate an image."
 
-#: ../../../README.md:94
+#: ../../../README.md:96
 msgid ""
 "![f10](https://user-"
 "images.githubusercontent.com/32936898/224470746-39609e38-b610-4254-baf5-3ad4385f9171.gif)"
 msgstr ""
 
-#: ../../../README.md:94
+#: ../../../README.md:96
 msgid "f10"
 msgstr ""
 
-#: ../../../README.md:96
+#: ../../../README.md:98
 msgid "例8：批量化resize图片"
 msgstr "Example 8: Batch image resizing"
 
-#: ../../../README.md:97
+#: ../../../README.md:99
 msgid "利用自动保存功能，可以实现批量化resize图片。 操作："
 msgstr ""
 "It is possible to batch resize images using the auto-save function. Step-"
 "by-step instructions:"
 
-#: ../../../README.md:99
+#: ../../../README.md:101
 msgid "输入模式选择：Sequential，选择输入文件夹"
 msgstr "Input mode: `Sequential`. Choose the input directory;"
 
-#: ../../../README.md:100
+#: ../../../README.md:102
 msgid "选择保存文件的输出目录"
 msgstr "Choose the output directory;"
 
-#: ../../../README.md:101
+#: ../../../README.md:103
 msgid "勾选自动保存`AutoSaveAll`"
 msgstr "Check `AutoSaveAll`;"
 
-#: ../../../README.md:102
+#: ../../../README.md:104
 msgid "设置`TruthResolution`为固定的大小，例如：`256,256`"
 msgstr "Set `TruthResolution` to a fixed size, for example `256,256`;"
 
-#: ../../../README.md:103
+#: ../../../README.md:105
 msgid "点击保存💾️"
 msgstr "Click `Save 💾️`."
 
-#: ../../../README.md:105
+#: ../../../README.md:107
 msgid "引用"
 msgstr "Cite This Project"
 
-#: ../../../README.md:107
+#: ../../../README.md:109
 msgid "如果您在研究中使用此项目，请使用以下BibTeX条目。"
 msgstr ""
 "If you use this project in your research please use the following BibTeX "
 "entry."
 
-#: ../../../README.md:118
+#: ../../../README.md:120
 msgid "使用条款"
 msgstr "Terms of use"
 
-#: ../../../README.md:119
+#: ../../../README.md:121
 msgid "**许可证**"
 msgstr "**License**"
 
-#: ../../../README.md:121
+#: ../../../README.md:123
 msgid "GPL-3.0 License：https://www.gnu.org/licenses/gpl-3.0.en.html"
 msgstr "GPL-3.0 License：https://www.gnu.org/licenses/gpl-3.0.en.html"
 
-#: ../../../README.md:123
+#: ../../../README.md:125
 msgid "**额外条款**"
 msgstr "**Additional terms of use**"
 
-#: ../../../README.md:125
+#: ../../../README.md:127
 msgid "允许个人使用"
 msgstr "Personal use is allowed."
 
-#: ../../../README.md:126
+#: ../../../README.md:128
 msgid "商业使用请联系 - liujiawei18@mails.ucas.ac.cn."
 msgstr "Contact liujiawei18@mails.ucas.ac.cn for commercial use."
 

@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: mulimgviewer 3.9.10\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-04-21 17:34+0800\n"
+"POT-Creation-Date: 2023-04-21 18:46+0800\n"
 "PO-Revision-Date: 2023-03-29 12:46+0800\n"
 "Last-Translator: nachifur <1476879092.com>\n"
 "Language-Team: nachifur <1476879092.com>\n"
@@ -23,8 +23,8 @@ msgid "MulimgViewer开发指南"
 msgstr "MulimgViewer Development Guide"
 
 #: ../../dev/dev.md:3
-msgid "0. 加入我们吧！"
-msgstr "0.Join us!"
+msgid "加入我们吧！"
+msgstr "Join us!"
 
 #: ../../dev/dev.md:4
 msgid "**初衷**：目前的市面上的图像浏览器不能同时显示多张图像。2020.8.10诞生的MulimgViewer，希望可以让大家方便地进行多张图像的显示和比较。恍惚一世，希望能在这个世界留下痕迹。"
@@ -57,7 +57,9 @@ msgstr ""
 
 #: ../../dev/dev.md:12
 msgid "**如何参与开发？** 我们真诚地感谢您加入MulimgViewer的开发。"
-msgstr "**How to participate in development?** We sincerely appreciate your joining in the development of MulimgViewer."
+msgstr ""
+"**How to participate in development?** We sincerely appreciate your "
+"joining in the development of MulimgViewer."
 
 #: ../../dev/dev.md:15
 msgid "参与做出贡献的途径：（由易到难）"
@@ -65,15 +67,21 @@ msgstr "Ways to contribute (listed from easiest to hardest):"
 
 #: ../../dev/dev.md:16
 msgid "项目的宣传。如：QQ、微信、知乎文章、CSDN博客、公众号等。"
-msgstr "Project Promotion. Such as: blogs, Twitter, and other social media platforms."
+msgstr ""
+"Project Promotion. Such as: blogs, Twitter, and other social media "
+"platforms."
 
 #: ../../dev/dev.md:17
 msgid "readme的优化。如：提升readme的易读性、完善某一功能的介绍。"
-msgstr "Optimizing README. For example: improving the readability of README, enhancing the introduction of a specific feature."
+msgstr ""
+"Optimizing README. For example: improving the readability of README, "
+"enhancing the introduction of a specific feature."
 
 #: ../../dev/dev.md:18
 msgid "ubuntu和ios等平台的打包。（该功能目前由@wzy负责）"
-msgstr "Packaging for platforms such as Ubuntu and iOS. (This feature is currently managed by @wzy)"
+msgstr ""
+"Packaging for platforms such as Ubuntu and iOS. (This feature is "
+"currently managed by @wzy)"
 
 #: ../../dev/dev.md:19
 msgid "pip安装途径的支持和维护。（该功能目前由@wzy负责）"
@@ -134,20 +142,20 @@ msgstr ""
 " the main branch."
 
 #: ../../dev/dev.md:32
-msgid "1. 文件说明"
-msgstr "1.File Description"
+msgid "文件说明"
+msgstr "File Description"
 
 #: ../../dev/dev.md:33
 msgid "项目框架："
 msgstr "Project Framework:"
 
 #: ../../dev/dev.md:60
-msgid "2. 开发流程"
-msgstr "2.Development Flow"
+msgid "开发流程"
+msgstr "Development Flow"
 
 #: ../../dev/dev.md:61
-msgid "2.1 GUI的创建"
-msgstr "2.1 GUI creation"
+msgid "GUI的创建"
+msgstr "GUI creation"
 
 #: ../../dev/dev.md:62
 msgid "GUI使用[wxFormBuilder](https://github.com/wxFormBuilder/wxFormBuilder)创建。wxFormBuilder的安装："
@@ -177,8 +185,8 @@ msgstr ""
 "Everyone can also use the latest version."
 
 #: ../../dev/dev.md:68
-msgid "2.2 编写实现GUI的回调函数"
-msgstr "2.2 Implementing the callback function of GUI"
+msgid "编写实现GUI的回调函数"
+msgstr "Implementing the callback function of GUI"
 
 #: ../../dev/dev.md:69
 msgid "为了分离GUI和功能实现，对于`MulimgViewer/src/mulimgviewer/gui`路径下的文件，不建议手动直接修改。具体的操作如下："
@@ -232,8 +240,8 @@ msgid ""
 msgstr "[wxpython events](https://docs.wxpython.org/events_overview.html)"
 
 #: ../../dev/dev.md:81
-msgid "2.3 跨平台的支持"
-msgstr "2.3 Cross-platform support"
+msgid "跨平台的支持"
+msgstr "Cross-platform support"
 
 #: ../../dev/dev.md:82
 msgid "MulimgViewer的所有功能均采用python编写，这保证了跨平台的使用。但是windows和linux的路径是有区别的。**直接使用`D:\\ncfey\\Desktop\\`，是非常糟糕的**，这会破坏跨平台。因为我们**强烈建议**使用："
@@ -252,7 +260,7 @@ msgstr ""
 "pathlib)"
 
 #: ../../dev/dev.md:88
-msgid "2.4 Readme | Translation"
+msgid "Readme | Translation"
 msgstr ""
 
 #: ../../dev/dev.md:89
@@ -289,8 +297,8 @@ msgid "**fix error**: set pythonpath `windows powershell`:"
 msgstr ""
 
 #: ../../dev/dev.md:115
-msgid "3. Release"
-msgstr "3.Release"
+msgid "Release"
+msgstr "Release"
 
 #: ../../dev/dev.md:116
 msgid "我们的下一个release版本的计划可见[projects](https://github.com/nachifur/MulimgViewer/projects?type=classic)。"
@@ -299,8 +307,8 @@ msgstr ""
 "page](https://github.com/nachifur/MulimgViewer/projects?type=classic)."
 
 #: ../../dev/dev.md:118
-msgid "3.1 window的打包"
-msgstr "3.1 packaging for window"
+msgid "window的打包"
+msgstr "packaging for Windows"
 
 #: ../../dev/dev.md:119
 msgid "安装："
@@ -329,20 +337,20 @@ msgstr ""
 "installable `.exe`."
 
 #: ../../dev/dev.md:139
-msgid "3.2 linux/ios/arm等平台的打包"
-msgstr "3.2 packaging for linux/ios/arm"
+msgid "linux/ios/arm等平台的打包"
+msgstr "packaging for linux/ios/arm"
 
 #: ../../dev/dev.md:140
 msgid "感谢@wzy。打包目前由@wzy主要负责。"
 msgstr "Thanks @wzy. This feature is currently managed by @wzy."
 
 #: ../../dev/dev.md:142
-msgid "3.3 命名"
-msgstr "Naming of published software"
+msgid "命名"
+msgstr ""
 
 #: ../../dev/dev.md:150
-msgid "3.4 镜像维护"
-msgstr "3.4 Mirror maintenance"
+msgid "镜像维护"
+msgstr "Mirror maintenance"
 
 #: ../../dev/dev.md:151
 msgid "我们目前支持以下两个镜像，release版本需要推送到这两个站点："
@@ -357,4 +365,5 @@ msgstr "[**gitee**](https://gitee.com/nachifur/MulimgViewer)"
 #: ../../dev/dev.md:153
 msgid "[**果壳OpenCas镜像项目**](https://github.com/opencas/MulimgViewer)"
 msgstr "[**OpenCas**](https://github.com/opencas/MulimgViewer)"
+
 

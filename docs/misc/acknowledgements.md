@@ -12,5 +12,5 @@
 * wwhio:设置box的颜色
 * wzy:
   * 为MulimgViewer带来了CI/CD等先进的开发流程
-  * 构建了readthedocs网页
+  * 构建了readthedocs网页，并支持多语言
   * 支持`pip install MulimgViewer`

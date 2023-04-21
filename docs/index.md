@@ -32,7 +32,6 @@ hidden:
 caption: Index
 ---
 genindex
-modindex
 search
 ```
 

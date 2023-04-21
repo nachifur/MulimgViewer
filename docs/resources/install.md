@@ -11,8 +11,6 @@
 
 任何安装了 [`pip`](https://github.com/pypa/pip) 的系统均可：
 
-- 所有 `python` 支持的系统 (`pip` 是用 `python` 写的)
-
 ```sh
 pip install mulimgviewer
 # if you want a prompt when this program has a new version

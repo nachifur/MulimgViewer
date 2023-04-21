@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: mulimgviewer 3.9.10\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-04-21 19:26+0800\n"
+"POT-Creation-Date: 2023-04-21 19:36+0800\n"
 "PO-Revision-Date: 2023-03-29 12:46+0800\n"
 "Last-Translator: nachifur <1476879092.com>\n"
 "Language-Team: nachifur <1476879092.com>\n"
@@ -71,7 +71,9 @@ msgstr ""
 
 #: ../../../README.md:28
 msgid "如果有一些超链接失效，请通过[issue](https://github.com/nachifur/MulimgViewer/issues/new/choose)反馈。"
-msgstr "If there are any invalid hyperlinks, please provide feedback through an [issue](https://github.com/nachifur/MulimgViewer/issues/new/choose)."
+msgstr ""
+"If there are any invalid hyperlinks, please provide feedback through an "
+"[issue](https://github.com/nachifur/MulimgViewer/issues/new/choose)."
 
 #: ../../../README.md:30
 msgid "介绍"
@@ -84,11 +86,13 @@ msgstr ""
 "viewer, which is capable of displaying multiple images in one window. It "
 "is very useful for image comparison, selection and stitching."
 
+#: ../../../README.md:33
+msgid "从多个文件夹加载图像并并排显示"
+msgstr "Loading images from multiple folders and displaying them side by side."
+
 #: ../../../README.md:34
-msgid "**软件功能**: 多路径并行显示、多框并行放大。"
-msgstr ""
-"**Features: 1. Loading images from multiple folders and displaying them "
-"side by side. 2.Simultaneous magnification of multiple selected areas."
+msgid "同时放大多个区域"
+msgstr "Simultaneous magnification of multiple selected areas."
 
 #: ../../../README.md:36
 msgid ""

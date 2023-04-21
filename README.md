@@ -29,8 +29,8 @@ Link: [**快速入门**](https://mulimgviewer.readthedocs.io/zh_CN/latest/resour
 ## 介绍
 
 MulimgViewer**多图像浏览器**，在一个界面显示多个图像，方便图像的比较、筛选。
-
-**软件功能**: 多路径并行显示、多框并行放大。
+- 从多个文件夹加载图像并并排显示
+- 同时放大多个区域
 
 ![f6](https://user-images.githubusercontent.com/32936898/224470721-c49f0269-70ad-419d-bbd0-f2a8eaa7a453.gif)
 

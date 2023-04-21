@@ -24,7 +24,7 @@ Mirror: [**国内gitee镜像项目**](https://gitee.com/nachifur/MulimgViewer) |
 
 Link: [**快速入门**](https://mulimgviewer.readthedocs.io/zh_CN/latest/resources/usage.html) | [**下载和安装**](https://mulimgviewer.readthedocs.io/zh_CN/latest/resources/install.html)
 
-如果有一些超链接失效，请通过issue反馈。
+如果有一些超链接失效，请通过[issue](https://github.com/nachifur/MulimgViewer/issues/new/choose)反馈。
 
 ## 介绍
 

@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: mulimgviewer 3.9.10\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-04-21 19:23+0800\n"
+"POT-Creation-Date: 2023-04-21 19:26+0800\n"
 "PO-Revision-Date: 2023-03-29 12:46+0800\n"
 "Last-Translator: nachifur <1476879092.com>\n"
 "Language-Team: nachifur <1476879092.com>\n"
@@ -70,8 +70,8 @@ msgstr ""
 "Download**](https://mulimgviewer.readthedocs.io/en/latest/resources/install.html)"
 
 #: ../../../README.md:28
-msgid "如果有一些超链接失效，请通过issue反馈。"
-msgstr "If there are any invalid hyperlinks, please provide feedback through an issue."
+msgid "如果有一些超链接失效，请通过[issue](https://github.com/nachifur/MulimgViewer/issues/new/choose)反馈。"
+msgstr "If there are any invalid hyperlinks, please provide feedback through an [issue](https://github.com/nachifur/MulimgViewer/issues/new/choose)."
 
 #: ../../../README.md:30
 msgid "介绍"

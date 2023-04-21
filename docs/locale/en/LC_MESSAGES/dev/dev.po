@@ -57,9 +57,7 @@ msgstr ""
 
 #: ../../dev/dev.md:12
 msgid "**如何参与开发？** 我们真诚地感谢您加入MulimgViewer的开发。"
-msgstr ""
-"**How to participate in development?** We sincerely appreciate your "
-"joining in the development of MulimgViewer."
+msgstr "**How to participate in development?** We sincerely appreciate your joining in the development of MulimgViewer."
 
 #: ../../dev/dev.md:15
 msgid "参与做出贡献的途径：（由易到难）"
@@ -67,22 +65,15 @@ msgstr "Ways to contribute (listed from easiest to hardest):"
 
 #: ../../dev/dev.md:16
 msgid "项目的宣传。如：QQ、微信、知乎文章、CSDN博客、公众号等。"
-msgstr ""
-"Project Promotion. Such as: blogs, Twitter, and other social media "
-"platforms."
+msgstr "Project Promotion. Such as: blogs, Twitter, and other social media platforms."
 
 #: ../../dev/dev.md:17
 msgid "readme的优化。如：提升readme的易读性、完善某一功能的介绍。"
-msgstr ""
-"Optimizing README. For example: improving the readability of README, "
-"enhancing the introduction of a specific feature."
+msgstr "Optimizing README. For example: improving the readability of README, enhancing the introduction of a specific feature."
 
 #: ../../dev/dev.md:18
-#, fuzzy
 msgid "ubuntu和ios等平台的打包。（该功能目前由@wzy负责）"
-msgstr ""
-"Packaging for platforms such as Ubuntu and iOS. (This feature is "
-"currently managed by @wzy)"
+msgstr "Packaging for platforms such as Ubuntu and iOS. (This feature is currently managed by @wzy)"
 
 #: ../../dev/dev.md:19
 msgid "pip安装途径的支持和维护。（该功能目前由@wzy负责）"
@@ -152,7 +143,7 @@ msgstr "Project Framework:"
 
 #: ../../dev/dev.md:60
 msgid "2. 开发流程"
-msgstr "Development Flow"
+msgstr "2. Development Flow"
 
 #: ../../dev/dev.md:61
 msgid "2.1 GUI的创建"
@@ -290,11 +281,11 @@ msgid "**翻译**：(Refer [sphinx-intl](https://sphinx-intl.readthedocs.io).)"
 msgstr "Translation"
 
 #: ../../dev/dev.md:107
-msgid "**Error**: ModuleNotFoundError: No module named 'mulimgviewer'"
+msgid "**error**: ModuleNotFoundError: No module named 'mulimgviewer'"
 msgstr ""
 
 #: ../../dev/dev.md:109
-msgid "**Fix error**: set pythonpath `windows powershell`:"
+msgid "**fix error**: set pythonpath `windows powershell`:"
 msgstr ""
 
 #: ../../dev/dev.md:115
@@ -366,4 +357,10 @@ msgstr "[**gitee**](https://gitee.com/nachifur/MulimgViewer)"
 #: ../../dev/dev.md:153
 msgid "[**果壳OpenCas镜像项目**](https://github.com/opencas/MulimgViewer)"
 msgstr "[**OpenCas**](https://github.com/opencas/MulimgViewer)"
+
+#~ msgid "**Error**: ModuleNotFoundError: No module named 'mulimgviewer'"
+#~ msgstr ""
+
+#~ msgid "**Fix error**: set pythonpath `windows powershell`:"
+#~ msgstr ""
 

@@ -290,11 +290,11 @@ msgid "**翻译**：(Refer [sphinx-intl](https://sphinx-intl.readthedocs.io).)"
 msgstr "Translation"
 
 #: ../../dev/dev.md:107
-msgid "**error**: ModuleNotFoundError: No module named 'mulimgviewer'"
+msgid "**Error**: ModuleNotFoundError: No module named 'mulimgviewer'"
 msgstr ""
 
 #: ../../dev/dev.md:109
-msgid "**fix error**: set pythonpath `windows powershell`:"
+msgid "**Fix error**: set pythonpath `windows powershell`:"
 msgstr ""
 
 #: ../../dev/dev.md:115

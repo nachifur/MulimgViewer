@@ -403,6 +403,8 @@ class MulimgViewer (MulimgViewerGui):
             self.xy_magnifier = []
             self.refresh(event)
             self.SetStatusText_(["delete all box",  "-1", "-1", "-1"])
+        if len(self.xy_magnifier)==0:
+            self.box_position.SetSelection(0)
 
     def up_img(self, event):
         speed = self.get_speed(name="pixel")
@@ -590,6 +592,7 @@ class MulimgViewer (MulimgViewerGui):
             self.start_flag = 0
             self.xy_magnifier = []
             self.color_list = []
+            self.box_position.SetSelection(0)
 
     def img_left_move(self, event):
         # https://stackoverflow.com/questions/57342753/how-to-select-a-rectangle-of-the-screen-to-capture-by-dragging-mouse-on-transpar

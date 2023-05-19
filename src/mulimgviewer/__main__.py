@@ -6,13 +6,13 @@ from pathlib import Path
 
 import wx
 import wx.lib.inspection
-from PIL import ImageFile
+from PIL import ImageFile,Image
 
 from .src.main import MulimgViewer
 from .src.path_select import PathSelectFrame
 
 ImageFile.LOAD_TRUNCATED_IMAGES = True
-
+Image.MAX_IMAGE_PIXELS = None
 
 class GuiManager():
     def __init__(self, UpdateUI, get_type):

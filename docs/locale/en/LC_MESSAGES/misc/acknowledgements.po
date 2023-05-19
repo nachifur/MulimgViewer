@@ -78,13 +78,13 @@ msgstr ""
 
 #: ../../misc/acknowledgements.md:14
 msgid "为MulimgViewer带来了CI/CD等先进的开发流程"
-msgstr ""
+msgstr "Bring advanced development processes such as CI/CD to MulimgViewer"
 
 #: ../../misc/acknowledgements.md:15
 msgid "构建了readthedocs网页，并支持多语言"
-msgstr ""
+msgstr "Create readthedocs page with multi-language support"
 
 #: ../../misc/acknowledgements.md:16
 msgid "支持`pip install MulimgViewer`"
-msgstr ""
+msgstr "`pip install MulimgViewer`"
 

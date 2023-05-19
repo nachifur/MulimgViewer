@@ -127,3 +127,11 @@ conda env create -f install.yaml
 conda activate mulimgviewer
 python MulimgViewer.py
 ```
+### 3. 快速运行源代码
+在win11上，你可以编写一个`MulimgViewer.bat`文件快速地运行源码:
+```
+call cd /D D:\ncfey\Desktop\github\MulimgViewer
+call conda activate MulimgViewer
+call python MulimgViewer.py
+```
+**注意**：上述命令行适用于win11+windows terminal。其他系统和终端运行的命令行，大家可以自己探索（鼓励大家通过`issue`反馈，提供其他平台的命令行文件）。

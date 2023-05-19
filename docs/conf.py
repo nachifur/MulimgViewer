@@ -2,9 +2,13 @@ r"""Configure the Sphinx documentation builder.
 
 https://www.sphinx-doc.org/en/master/usage/configuration.html
 """
-from mulimgviewer import __version__ as version  # type: ignore
+try:
+    from mulimgviewer import __version__ as version  # type: ignore
+
 # from mulimgviewer._metainfo import author, copyright, project  # type: ignore
-from mulimgviewer import html_favicon
+    from mulimgviewer import html_favicon
+except:
+    pass
 
 __all__ = ["version", "author", "copyright", "project", "html_favicon"]
 

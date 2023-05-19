@@ -206,7 +206,7 @@ msgstr "install the conda environment:"
 
 #: ../../resources/install.md:130
 msgid "3. 快速运行源代码"
-msgstr "Quick Run Source Code"
+msgstr "3. Quick Run Source Code"
 
 #: ../../resources/install.md:131
 msgid "在win11上，你可以编写一个`MulimgViewer.bat`文件快速地运行源码:"

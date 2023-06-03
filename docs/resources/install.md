@@ -77,16 +77,24 @@ For NixOS, add the following code to `/etc/nixos/configuration.nix`:
 ```nix
 { config, pkgs, ... }:
 {
-  nix.settings.experimental-features = [ "flakes" ];
-  environment.systemPackages =
-    let
-      mulimgviewer = (
-        builtins.getFlake "github:nachifur/MulimgViewer"
-      ).packages.${builtins.currentSystem}.default;
-    in
-    [
-      mulimgviewer
-    ];
+  nixpkgs.config.packageOverrides = pkgs: {
+    nur = import
+      (
+        builtins.fetchTarball
+          "https://github.com/nix-community/NUR/archive/master.tar.gz"
+      )
+      {
+        inherit pkgs;
+      };
+  };
+  environment.systemPackages = with pkgs;
+      (
+        python3.withPackages (
+          p: with p; [
+            nur.repos.Freed-Wu.mulimgviewer
+          ]
+        )
+      )
 }
 ```
 

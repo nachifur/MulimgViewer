@@ -87,7 +87,7 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - uses: Freed-Wu/update-aur-package@v1.0.9
+      - uses: Freed-Wu/update-aur-package@v1.0.11
         if: startsWith(github.ref, 'refs/tags/')
         with:
           package_name: python-mulimgviewer

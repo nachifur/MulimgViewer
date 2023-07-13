@@ -17,15 +17,15 @@
             format = "pyproject";
             disabled = pythonOlder "3.6";
             propagatedBuildInputs = [
-              # https://github.com/NixOS/nixpkgs/issues/181500
-              wrapGAppsHook
               piexif
               pillow
               wxPython_4_2
               requests
             ];
-            nativeCheckInputs = [
+            nativeBuildInputs = [
               setuptools-generate
+              # https://github.com/NixOS/nixpkgs/issues/181500
+              wrapGAppsHook
             ];
             pythonImportsCheck = [
               "mulimgviewer"

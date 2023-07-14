@@ -17,9 +17,6 @@ pip install mulimgviewer
 pip install mulimgviewer[update]
 ```
 
-注意，目前由于依赖项 [wxpython](https://github.com/wxWidgets/Phoenix)
-的 [bug](https://github.com/wxWidgets/Phoenix/issues/2225)，该方法可能会失败。
-
 ![icon](https://user-images.githubusercontent.com/32936898/224473440-2088edd7-42e5-45a3-a403-515e2daa019a.jpg)
 
 ## [AUR](https://aur.archlinux.org/packages/python-mulimgviewer)
@@ -54,7 +51,7 @@ brew install python-mulimgviewer
 
 目前该软件还没有打包到 Ubuntu PPA 上。
 
-这是一个临时的安装方法，它避开了 `wxpython` 的 bug：
+这是一个临时的安装方法：
 
 ```sh
 sudo apt install python3-wxgtk4.0

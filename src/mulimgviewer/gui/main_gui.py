@@ -685,69 +685,69 @@ class MulimgViewerGui ( wx.Frame ):
 		self.m_menubar1 = wx.MenuBar( 0 )
 		self.m_menu1 = wx.Menu()
 		self.m_menu11 = wx.Menu()
-		self.menu_open_sequential = wx.MenuItem( self.m_menu11, wx.ID_ANY, u"Sequential"+ u"\t" + u"Ctrl+E", u"one dir mul limg", wx.ITEM_NORMAL )
+		self.menu_open_sequential = self.m_menu11.Append( wx.ID_ANY, u"Sequential"+ u"\t" + u"Ctrl+E", u"one dir mul limg", wx.ITEM_NORMAL )
 		self.m_menu11.Append( self.menu_open_sequential )
 
-		self.menu_open_auto = wx.MenuItem( self.m_menu11, wx.ID_ANY, u"Parallel auto"+ u"\t" + u"Ctrl+A", u"one dir mul dir", wx.ITEM_NORMAL )
+		self.menu_open_auto = self.m_menu11.Append( wx.ID_ANY, u"Parallel auto"+ u"\t" + u"Ctrl+A", u"one dir mul dir", wx.ITEM_NORMAL )
 		self.m_menu11.Append( self.menu_open_auto )
 
-		self.menu_open_manual = wx.MenuItem( self.m_menu11, wx.ID_ANY, u"Parallel manual"+ u"\t" + u"Ctrl+M", u"one dir mul dir", wx.ITEM_NORMAL )
+		self.menu_open_manual = self.m_menu11.Append( wx.ID_ANY, u"Parallel manual"+ u"\t" + u"Ctrl+M", u"one dir mul dir", wx.ITEM_NORMAL )
 		self.m_menu11.Append( self.menu_open_manual )
 
-		self.menu_open_filelist = wx.MenuItem( self.m_menu11, wx.ID_ANY, u"Image File List"+ u"\t" + u"Ctrl+F", u"one dir mul dir", wx.ITEM_NORMAL )
+		self.menu_open_filelist = self.m_menu11.Append( wx.ID_ANY, u"Image File List"+ u"\t" + u"Ctrl+F", u"one dir mul dir", wx.ITEM_NORMAL )
 		self.m_menu11.Append( self.menu_open_filelist )
 
 		self.m_menu1.AppendSubMenu( self.m_menu11, u"Open" )
 
-		self.menu_output = wx.MenuItem( self.m_menu1, wx.ID_ANY, u"Select output path"+ u"\t" + u"Ctrl+O", wx.EmptyString, wx.ITEM_NORMAL )
+		self.menu_output = self.m_menu1.Append( wx.ID_ANY, u"Select output path"+ u"\t" + u"Ctrl+O", wx.EmptyString, wx.ITEM_NORMAL )
 		self.m_menu1.Append( self.menu_output )
 
-		self.m_menuItem15 = wx.MenuItem( self.m_menu1, wx.ID_ANY, u"Input flist - Parallel manual"+ u"\t" + u"Ctrl+I", wx.EmptyString, wx.ITEM_NORMAL )
+		self.m_menuItem15 = self.m_menu1.Append( wx.ID_ANY, u"Input flist - Parallel manual"+ u"\t" + u"Ctrl+I", wx.EmptyString, wx.ITEM_NORMAL )
 		self.m_menu1.Append( self.m_menuItem15 )
 
-		self.m_menuItem16 = wx.MenuItem( self.m_menu1, wx.ID_ANY, u"Save flist - Parallel manual"+ u"\t" + u"Ctrl+P", wx.EmptyString, wx.ITEM_NORMAL )
+		self.m_menuItem16 = self.m_menu1.Append( wx.ID_ANY, u"Save flist - Parallel manual"+ u"\t" + u"Ctrl+P", wx.EmptyString, wx.ITEM_NORMAL )
 		self.m_menu1.Append( self.m_menuItem16 )
 
 		self.m_menubar1.Append( self.m_menu1, u"File" )
 
 		self.m_menu2 = wx.Menu()
-		self.menu_next = wx.MenuItem( self.m_menu2, wx.ID_ANY, u"Next"+ u"\t" + u"Ctrl+N", wx.EmptyString, wx.ITEM_NORMAL )
+		self.menu_next = self.m_menu2.Append( wx.ID_ANY, u"Next"+ u"\t" + u"Ctrl+N", wx.EmptyString, wx.ITEM_NORMAL )
 		self.m_menu2.Append( self.menu_next )
 
-		self.menu_last = wx.MenuItem( self.m_menu2, wx.ID_ANY, u"Last"+ u"\t" + u"Ctrl+L", wx.EmptyString, wx.ITEM_NORMAL )
+		self.menu_last = self.m_menu2.Append( wx.ID_ANY, u"Last"+ u"\t" + u"Ctrl+L", wx.EmptyString, wx.ITEM_NORMAL )
 		self.m_menu2.Append( self.menu_last )
 
-		self.menu_save = wx.MenuItem( self.m_menu2, wx.ID_ANY, u"Save"+ u"\t" + u"Ctrl+S", wx.EmptyString, wx.ITEM_NORMAL )
+		self.menu_save = self.m_menu2.Append( wx.ID_ANY, u"Save"+ u"\t" + u"Ctrl+S", wx.EmptyString, wx.ITEM_NORMAL )
 		self.m_menu2.Append( self.menu_save )
 
-		self.menu_refresh = wx.MenuItem( self.m_menu2, wx.ID_ANY, u"Refresh"+ u"\t" + u"Ctrl+R", wx.EmptyString, wx.ITEM_NORMAL )
+		self.menu_refresh = self.m_menu2.Append( wx.ID_ANY, u"Refresh"+ u"\t" + u"Ctrl+R", wx.EmptyString, wx.ITEM_NORMAL )
 		self.m_menu2.Append( self.menu_refresh )
 
-		self.menu_hidden = wx.MenuItem( self.m_menu2, wx.ID_ANY, u"hidden"+ u"\t" + u"Ctrl+H", wx.EmptyString, wx.ITEM_NORMAL )
+		self.menu_hidden = self.m_menu2.Append( wx.ID_ANY, u"hidden"+ u"\t" + u"Ctrl+H", wx.EmptyString, wx.ITEM_NORMAL )
 		self.m_menu2.Append( self.menu_hidden )
 
-		self.menu_up = wx.MenuItem( self.m_menu2, wx.ID_ANY, u"Up", wx.EmptyString, wx.ITEM_NORMAL )
+		self.menu_up = self.m_menu2.Append( wx.ID_ANY, u"Up", wx.EmptyString, wx.ITEM_NORMAL )
 		self.m_menu2.Append( self.menu_up )
 
-		self.menu_down = wx.MenuItem( self.m_menu2, wx.ID_ANY, u"Down", wx.EmptyString, wx.ITEM_NORMAL )
+		self.menu_down = self.m_menu2.Append( wx.ID_ANY, u"Down", wx.EmptyString, wx.ITEM_NORMAL )
 		self.m_menu2.Append( self.menu_down )
 
-		self.menu_right = wx.MenuItem( self.m_menu2, wx.ID_ANY, u"Right", wx.EmptyString, wx.ITEM_NORMAL )
+		self.menu_right = self.m_menu2.Append( wx.ID_ANY, u"Right", wx.EmptyString, wx.ITEM_NORMAL )
 		self.m_menu2.Append( self.menu_right )
 
-		self.menu_left = wx.MenuItem( self.m_menu2, wx.ID_ANY, u"left", wx.EmptyString, wx.ITEM_NORMAL )
+		self.menu_left = self.m_menu2.Append( wx.ID_ANY, u"left", wx.EmptyString, wx.ITEM_NORMAL )
 		self.m_menu2.Append( self.menu_left )
 
-		self.menu_delete_box = wx.MenuItem( self.m_menu2, wx.ID_ANY, u"delete_box", wx.EmptyString, wx.ITEM_NORMAL )
+		self.menu_delete_box = self.m_menu2.Append( wx.ID_ANY, u"delete_box", wx.EmptyString, wx.ITEM_NORMAL )
 		self.m_menu2.Append( self.menu_delete_box )
 
 		self.m_menubar1.Append( self.m_menu2, u"Edit" )
 
 		self.m_menu3 = wx.Menu()
-		self.index_table = wx.MenuItem( self.m_menu3, wx.ID_ANY, u"Index table"+ u"\t" + u"F2", wx.EmptyString, wx.ITEM_NORMAL )
+		self.index_table = self.m_menu3.Append( wx.ID_ANY, u"Index table"+ u"\t" + u"F2", wx.EmptyString, wx.ITEM_NORMAL )
 		self.m_menu3.Append( self.index_table )
 
-		self.menu_about = wx.MenuItem( self.m_menu3, wx.ID_ANY, u"About"+ u"\t" + u"F1", wx.EmptyString, wx.ITEM_NORMAL )
+		self.menu_about = self.m_menu3.Append( wx.ID_ANY, u"About"+ u"\t" + u"F1", wx.EmptyString, wx.ITEM_NORMAL )
 		self.m_menu3.Append( self.menu_about )
 
 		self.m_menubar1.Append( self.m_menu3, u"Help" )

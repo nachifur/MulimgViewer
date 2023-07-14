@@ -3,5 +3,5 @@
 # installing wxpython will install numpy
 # numpy
 piexif
-pillow==9.3
+pillow>=9.3
 wxpython

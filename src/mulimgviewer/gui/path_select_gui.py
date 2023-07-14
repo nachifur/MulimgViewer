@@ -49,13 +49,13 @@ class PathSelectFrameGui ( wx.Frame ):
 		fgSizer1.Fit( self )
 		self.m_menubar1 = wx.MenuBar( 0 )
 		self.m_menu1 = wx.Menu()
-		self.m_menuItem1 = wx.MenuItem( self.m_menu1, wx.ID_ANY, u"Clear all path"+ u"\t" + u"CTRL+A", wx.EmptyString, wx.ITEM_NORMAL )
+		self.m_menuItem1 = self.m_menu1.Append( wx.ID_ANY, u"Clear all path"+ u"\t" + u"CTRL+A", wx.EmptyString, wx.ITEM_NORMAL )
 		self.m_menu1.Append( self.m_menuItem1 )
 
-		self.m_menuItem2 = wx.MenuItem( self.m_menu1, wx.ID_ANY, u"Clear last path"+ u"\t" + u"CTRL+Z", wx.EmptyString, wx.ITEM_NORMAL )
+		self.m_menuItem2 = self.m_menu1.Append( wx.ID_ANY, u"Clear last path"+ u"\t" + u"CTRL+Z", wx.EmptyString, wx.ITEM_NORMAL )
 		self.m_menu1.Append( self.m_menuItem2 )
 
-		self.menu_close = wx.MenuItem( self.m_menu1, wx.ID_ANY, u"Close"+ u"\t" + u"Alt+C", wx.EmptyString, wx.ITEM_NORMAL )
+		self.menu_close = self.m_menu1.Append( wx.ID_ANY, u"Close"+ u"\t" + u"Alt+C", wx.EmptyString, wx.ITEM_NORMAL )
 		self.m_menu1.Append( self.menu_close )
 
 		self.m_menubar1.Append( self.m_menu1, u"Edit" )

@@ -11,8 +11,7 @@
         {
           formatter = nixpkgs-fmt;
           packages.default = buildPythonApplication rec {
-            pname = "mulimgviewer";
-            version = "";
+            name = "mulimgviewer";
             src = self;
             format = "pyproject";
             disabled = pythonOlder "3.6";

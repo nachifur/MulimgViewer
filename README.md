@@ -125,3 +125,6 @@ GPL-3.0 License：https://www.gnu.org/licenses/gpl-3.0.en.html
 
 - 允许个人使用
 - 商业使用请联系 - liujiawei18@mails.ucas.ac.cn.
+## Star 历史
+
+[![Star History Chart](https://api.star-history.com/svg?repos=nachifur/MulimgViewer&type=Date)](https://star-history.com/#nachifur/MulimgViewer&Date)

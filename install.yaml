@@ -1,6 +1,6 @@
 name: mulimgviewer
 dependencies:
-  - python=3.9.15=h6244533_0
+  - python=3.9.15
   - pip:
       - numpy==1.23.4
       - path==16.5.0

@@ -5,3 +5,4 @@
 piexif
 pillow>=9.3
 wxpython
+imageio

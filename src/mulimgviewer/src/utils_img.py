@@ -9,6 +9,7 @@ import numpy as np
 import piexif
 import wx
 from PIL import Image, ImageDraw, ImageFont
+import imageio
 
 from .data import ImgData
 from .utils import rgb2hex
@@ -576,7 +577,12 @@ class ImgManager(ImgData):
             path = Path(path)
             name_list.append(path.name)
             if path.is_file() and path.suffix.lower() in self.format_group:
-                img_list.append(Image.open(path).convert('RGB'))
+                img = imageio.imread(path)
+                if img.dtype != np.uint8:
+                    img = (255 * img).astype(np.uint8)
+                pil_img = Image.fromarray(img)
+                img_list.append(pil_img.convert('RGB'))
+                # img_list.append(Image.open(path).convert('RGB'))
             else:
                 pass
         # custom process

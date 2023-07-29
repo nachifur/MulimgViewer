@@ -926,6 +926,9 @@ class MulimgViewer (MulimgViewerGui):
                 0).split(',')
             magnifier_out_scale = [float(x) for x in magnifier_out_scale]
 
+            img_value_range = self.img_value_range.GetLineText(0).split(',')
+            img_value_range = [int(x) for x in img_value_range]
+
             if self.checkBox_auto_draw_color.Value:
                 # 10 colors built into the software
                 color_list = [
@@ -1017,7 +1020,10 @@ class MulimgViewer (MulimgViewerGui):
                     self.onetitle.Value,                    # 30
                     magnifier_out_scale,                    # 31
                     self.customfunc.Value,                  # 32
-                    self.out_path_str]                      # 33
+                    self.out_path_str,                      # 33
+                    img_value_range,                        # 34    
+                    ]                      
+
 
     def show_img(self):
         if self.customfunc.Value and self.out_path_str == "":

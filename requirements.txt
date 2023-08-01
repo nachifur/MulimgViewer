@@ -1,8 +1,8 @@
 #!/usr/bin/env -S pip install -r
 
+imageio
 # installing wxpython will install numpy
 # numpy
 piexif
 pillow>=9.3
 wxpython
-imageio

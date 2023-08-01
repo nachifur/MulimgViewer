@@ -1021,8 +1021,8 @@ class MulimgViewer (MulimgViewerGui):
                     magnifier_out_scale,                    # 31
                     self.customfunc.Value,                  # 32
                     self.out_path_str,                      # 33
-                    img_value_range,                        # 34    
-                    ]                      
+                    img_value_range,                        # 34
+                    ]
 
 
     def show_img(self):

@@ -583,33 +583,6 @@ class MulimgViewerGui ( wx.Frame ):
 
 
 		fgSizer3.Add( wSizer10, 1, wx.EXPAND, 5 )
-######
-		self.m_staticline23 = wx.StaticLine( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_HORIZONTAL )
-		fgSizer3.Add( self.m_staticline23, 0, wx.EXPAND |wx.ALL, 5 )
-
-		wSizer12 = wx.WrapSizer( wx.HORIZONTAL, wx.WRAPSIZER_DEFAULT_FLAGS )
-
-		self.m_staticText42 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Value", wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.m_staticText42.Wrap( -1 )
-
-		self.m_staticText42.SetFont( wx.Font( 12, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL, False, wx.EmptyString ) )
-
-		wSizer12.Add( self.m_staticText42, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
-
-		self.m_staticline24 = wx.StaticLine( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_VERTICAL )
-		wSizer12.Add( self.m_staticline24, 0, wx.EXPAND |wx.ALL, 5 )
-
-		self.m_staticText43 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Range", wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.m_staticText43.Wrap( -1 )
-
-		wSizer12.Add( self.m_staticText43, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
-
-		self.img_value_range = wx.TextCtrl( self.m_panel4, wx.ID_ANY, u"0,255", wx.DefaultPosition, wx.Size( 80,-1 ), 0 )
-		wSizer12.Add( self.img_value_range, 1, wx.ALL, 5 )
-
-
-		fgSizer3.Add( wSizer12, 1, wx.EXPAND, 5 )
-######
 
 		self.m_staticline7 = wx.StaticLine( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_HORIZONTAL )
 		fgSizer3.Add( self.m_staticline7, 0, wx.EXPAND |wx.ALL, 5 )

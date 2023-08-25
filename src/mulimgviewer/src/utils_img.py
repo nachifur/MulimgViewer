@@ -579,12 +579,7 @@ class ImgManager(ImgData):
             if path.is_file() and path.suffix.lower() in self.format_group:
                 img = imageio.imread(path)
                 if img.dtype != np.uint8:
-                    img = np.around(255 * img).astype(np.uint8)
-                img_value_range=np.array(self.layout_params[34])
-                vmin=img_value_range.min()
-                vmax=img_value_range.max()
-                if (vmin != 0 or vmax != 255) and vmin < vmax:
-                    img=((np.clip(img,vmin,vmax)-vmin) / (vmax-vmin) * 255).astype(np.uint8)
+                    img = (255 * img).astype(np.uint8)
                 pil_img = Image.fromarray(img)
                 img_list.append(pil_img.convert('RGB'))
                 # img_list.append(Image.open(path).convert('RGB'))

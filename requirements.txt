@@ -1,5 +1,6 @@
 #!/usr/bin/env -S pip install -r
 
+imageio
 # installing wxpython will install numpy
 # numpy
 piexif

@@ -44,7 +44,7 @@ msgstr "Process Flow"
 msgid ""
 "测试图像下载地址： "
 "[test_img.zip](https://github.com/nachifur/MulimgViewer/files/10948418/test_img.zip)"
-msgstr "**Test images pack download link**: https://raw.githubusercontent.com/nachifur/MulimgViewer/master/img/test_img.zip"
+msgstr "**Test images pack download link**: https://github.com/nachifur/MulimgViewer/files/10948418/test_img.zip"
 
 #: ../../resources/usage.md:12
 msgid "**注意：本软件不支持自动刷新，修改布局参数之后，需要手动刷新（`Ctrl+R`）。**"

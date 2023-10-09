@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ###########################################################################
-## Python code generated with wxFormBuilder (version Oct 26 2018)
+## Python code generated with wxFormBuilder (version 3.10.1-0-g8feb16b3)
 ## http://www.wxformbuilder.org/
 ##
 ## PLEASE DO *NOT* EDIT THIS FILE!
@@ -49,13 +49,13 @@ class PathSelectFrameGui ( wx.Frame ):
 		fgSizer1.Fit( self )
 		self.m_menubar1 = wx.MenuBar( 0 )
 		self.m_menu1 = wx.Menu()
-		self.m_menuItem1 = self.m_menu1.Append( wx.ID_ANY, u"Clear all path"+ u"\t" + u"CTRL+A", wx.EmptyString, wx.ITEM_NORMAL )
+		self.m_menuItem1 = wx.MenuItem( self.m_menu1, wx.ID_ANY, u"Clear all path"+ u"\t" + u"CTRL+A", wx.EmptyString, wx.ITEM_NORMAL )
 		self.m_menu1.Append( self.m_menuItem1 )
 
-		self.m_menuItem2 = self.m_menu1.Append( wx.ID_ANY, u"Clear last path"+ u"\t" + u"CTRL+Z", wx.EmptyString, wx.ITEM_NORMAL )
+		self.m_menuItem2 = wx.MenuItem( self.m_menu1, wx.ID_ANY, u"Clear last path"+ u"\t" + u"CTRL+Z", wx.EmptyString, wx.ITEM_NORMAL )
 		self.m_menu1.Append( self.m_menuItem2 )
 
-		self.menu_close = self.m_menu1.Append( wx.ID_ANY, u"Close"+ u"\t" + u"Alt+C", wx.EmptyString, wx.ITEM_NORMAL )
+		self.menu_close = wx.MenuItem( self.m_menu1, wx.ID_ANY, u"Close"+ u"\t" + u"Alt+C", wx.EmptyString, wx.ITEM_NORMAL )
 		self.m_menu1.Append( self.menu_close )
 
 		self.m_menubar1.Append( self.m_menu1, u"Edit" )
@@ -78,7 +78,7 @@ class PathSelectFrameGui ( wx.Frame ):
 		pass
 
 
-	# Virtual event handlers, overide them in your derived class
+	# Virtual event handlers, override them in your derived class
 	def frame_resize( self, event ):
 		event.Skip()
 

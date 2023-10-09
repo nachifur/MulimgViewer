@@ -19,7 +19,7 @@
         <property name="internationalize">0</property>
         <property name="name">PathSelect</property>
         <property name="namespace"></property>
-        <property name="path">D:\ncfey\Desktop\github\MulimgViewer\gui</property>
+        <property name="path">D:\ncfey\Desktop\github\MulimgViewer\src\mulimgviewer\gui</property>
         <property name="precompiled_header"></property>
         <property name="relative_path">1</property>
         <property name="skip_lua_events">1</property>

@@ -153,11 +153,11 @@ class MulimgViewer (MulimgViewerGui):
     def open_all_img(self, event):
         input_mode = self.choice_input_mode.GetSelection()
         if input_mode == 0:
-            self.one_dir_mul_img()
+            self.one_dir_mul_img(event)
         elif input_mode == 1:
-            self.one_dir_mul_dir_auto()
+            self.one_dir_mul_dir_auto(event)
         elif input_mode == 2:
-            self.one_dir_mul_dir_manual()
+            self.one_dir_mul_dir_manual(event)
         elif input_mode == 3:
             self.onefilelist()
 
@@ -277,7 +277,7 @@ class MulimgViewer (MulimgViewerGui):
                 ["-1", "", "***Error: First, need to select the input dir***", "-1"])
         self.SetStatusText_(["Refresh", "-1", "-1", "-1"])
 
-    def one_dir_mul_dir_auto(self):
+    def one_dir_mul_dir_auto(self, event):
         self.SetStatusText_(["Input", "", "", "-1"])
         dlg = wx.DirDialog(None, "Parallel auto choose input dir", "",
                            wx.DD_DEFAULT_STYLE | wx.DD_DIR_MUST_EXIST)
@@ -290,7 +290,7 @@ class MulimgViewer (MulimgViewerGui):
             self.choice_input_mode.SetSelection(1)
         self.SetStatusText_(["Input", "-1", "-1", "-1"])
 
-    def one_dir_mul_dir_manual(self):
+    def one_dir_mul_dir_manual(self, event):
         self.SetStatusText_(["Input", "", "", "-1"])
         try:
             if self.ImgManager.type == 1:
@@ -303,7 +303,7 @@ class MulimgViewer (MulimgViewerGui):
         self.choice_input_mode.SetSelection(2)
         self.SetStatusText_(["Input", "-1", "-1", "-1"])
 
-    def one_dir_mul_img(self):
+    def one_dir_mul_img(self, event):
         self.SetStatusText_(
             ["Sequential choose input dir", "", "", "-1"])
         dlg = wx.DirDialog(None, "Choose input dir", "",

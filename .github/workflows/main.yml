@@ -73,7 +73,7 @@ jobs:
         with:
           path: |
             dist/*
-      - uses: softprops/action-gh-release@v1
+      - uses: softprops/action-gh-release@v2
         if: runner.os == 'Linux' && startsWith(github.ref, 'refs/tags/')
         with:
           body_path: build/CHANGELOG.md

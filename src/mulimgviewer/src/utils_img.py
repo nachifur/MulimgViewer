@@ -501,7 +501,7 @@ class ImgUtils():
         draw = ImageDraw.Draw(im)
         title_size = []
         for title in title_list:
-            title_size.append(draw.multiline_textsize(title, font))
+            title_size.append(draw.multiline_textbbox((0,0),title, font))
         title_size = np.array(title_size)
         title_size = title_size.reshape(-1, 2)
         # adjust title names
@@ -522,7 +522,7 @@ class ImgUtils():
                     else:
                         str_ = str_ + "\n"+title[id:]
                     k += 1
-                size_edit = draw.multiline_textsize(str_, font)
+                size_edit = draw.multiline_textbbox((0,0),str_, font)
                 title_size[i, :] = size_edit
                 split_num = split_num+1
                 if split_num > len(title):
@@ -531,7 +531,7 @@ class ImgUtils():
         # re-calculate title size
         title_size = []
         for title in title_list:
-            title_size.append(draw.multiline_textsize(title, font))
+            title_size.append(draw.multiline_textbbox((0,0),title, font))
         title_size = np.array(title_size)
         title_size = title_size.reshape(-1, 2)
         # final title list

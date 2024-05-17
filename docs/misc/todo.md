@@ -12,4 +12,4 @@
 - [x] 多框放大功能（@JuZiSYJ 提供改进意见）
 - [x] 去除放大图像的 box（@stefanklut 提供改进意见）
 - [x] 高清图像的对比，放大图像 1:1 输出（@Faberman 提供改进意见）
-- [x] 为图像添加 title（@Faberman 提供改进意见）
+- [x] 为图像添加 title（@Faberman 提供改进意见） 

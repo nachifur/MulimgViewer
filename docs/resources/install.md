@@ -122,6 +122,11 @@ pip install wxpython pillow pytest-shutil numpy requests piexif
 ```python
 python MulimgViewer.py
 ```
+安装wxpython发生错误，可以考虑跟换清华源：
+```
+python -m pip install --upgrade pip
+pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
+```
 ### 2. conda 安装
 或者安装conda环境：
 ```bash

@@ -9,14 +9,14 @@ msgid ""
 msgstr ""
 "Project-Id-Version: mulimgviewer 3.9.10\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-04-21 19:36+0800\n"
+"POT-Creation-Date: 2024-05-17 23:53+0800\n"
 "PO-Revision-Date: 2023-03-29 12:46+0800\n"
 "Last-Translator: nachifur <1476879092.com>\n"
 "Language-Team: nachifur <1476879092.com>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.12.1\n"
+"Generated-By: Babel 2.15.0\n"
 
 #: ../../index.md:2
 msgid "resources"
@@ -378,4 +378,19 @@ msgstr "Personal use is allowed."
 #: ../../../README.md:128
 msgid "商业使用请联系 - liujiawei18@mails.ucas.ac.cn."
 msgstr "Contact liujiawei18@mails.ucas.ac.cn for commercial use."
+
+#: ../../../README.md:129
+msgid "Star 历史"
+msgstr ""
+
+#: ../../../README.md:131
+msgid ""
+"[![Star History Chart](https://api.star-"
+"history.com/svg?repos=nachifur/MulimgViewer&type=Date)](https://star-"
+"history.com/#nachifur/MulimgViewer&Date)"
+msgstr ""
+
+#: ../../../README.md:131
+msgid "Star History Chart"
+msgstr ""
 

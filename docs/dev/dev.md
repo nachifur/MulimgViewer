@@ -93,12 +93,17 @@ from pathlib import Path
 **翻译**：(Refer [sphinx-intl](https://sphinx-intl.readthedocs.io).)
 
 ```sh
+# 1. edit .md
+vim docs/*md. 
+# 2. generate .po
 pip install sphinx sphinx-intl myst-parser sphinxcontrib-eval
 cd docs
-sphinx-build -b gettext ./ build/gettext # generate .pot
+sphinx-build -b gettext ./ build/gettext 
 sphinx-intl update -p ./build/gettext -l en
-vi locale/en/LC_MESSAGES/*.po  # edit translations
-git add -A
+# 3. edit translations
+vim locale/en/LC_MESSAGES/*.po  
+# 4. commit
+git add -A 
 git commit
 git push
 ```

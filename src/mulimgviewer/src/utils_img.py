@@ -4,15 +4,15 @@ import os
 from pathlib import Path
 from shutil import copyfile, move
 
-from .custom_func.main import main as main_custom_func
+from custom_func.main import main as main_custom_func
 import numpy as np
 import piexif
 import wx
 from PIL import Image, ImageDraw, ImageFont
 import imageio
 
-from .data import ImgData
-from .utils import rgb2hex
+from data import ImgData
+from utils import rgb2hex
 
 
 class ImgUtils():
@@ -146,6 +146,7 @@ class ImgUtils():
             # custom magnifier scale
             to_height = int(height*magnifier_scale[1])
             to_width = int(width*magnifier_scale[0])
+
             width_all = to_width * \
                 magnifer_row_col[1] + (magnifer_row_col[1]-1)*gap[0]
             height_all = to_height * \
@@ -154,15 +155,23 @@ class ImgUtils():
             if img_width/width_all > img_height/height_all:
                 if to_height > img_height:
                     to_width = int(
-                        img_height/to_height*to_width)
+                        img_height/height_all*to_width)
                     to_height = int(
                         (img_height-gap[1]*(magnifer_row_col[0]-1))/magnifer_row_col[0])
+
             else:
                 if width_all >= img_width:
                     to_height = int(
                         img_width/width_all*to_height)
                     to_width = int(
                         (img_width-gap[0]*(magnifer_row_col[1]-1))/magnifer_row_col[1])
+
+            if (to_height > img_height):
+                to_width = int(int(img_width) / int(to_height) * int(img_height))
+                to_height = img_height
+            if (to_width > img_width):
+                to_height = int(int(img_height) / int(to_width) * int(img_width))
+                to_width = img_width
         else:
             # auto magnifier scale
             width_all = width * \
@@ -170,13 +179,20 @@ class ImgUtils():
             height_all = height * \
                 magnifer_row_col[0]+gap[1]*(magnifer_row_col[0]-1)
             if img_width/width_all > img_height/height_all:
-                to_height = int(
+                to_height = int(#img_height)
                     (img_height-gap[1]*(magnifer_row_col[0]-1))/magnifer_row_col[0])
                 to_width = int(to_height/height*width)
             else:
-                to_width = int(
+                to_width = int(#img_width)
                     (img_width-gap[0]*(magnifer_row_col[1]-1))/magnifer_row_col[1])
                 to_height = int(to_width/width*height)
+
+            if (int(to_height) > int(img_height)):
+                to_width = int(int(img_width) / int(to_height) * int(img_height))
+                to_height = img_height
+            if (int(to_width) > int(img_width)):
+                to_height = int(int(img_height) / int(to_width) * int(img_width))
+                to_width = img_width
 
         width_all = to_width*magnifer_row_col[1]+gap[0]*(magnifer_row_col[1]-1)
         height_all = to_height * \

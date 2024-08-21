@@ -9,7 +9,7 @@
 
 import wx
 import wx.xrc
-import re
+
 ###########################################################################
 ## Class MulimgViewerGui
 ###########################################################################
@@ -29,14 +29,12 @@ class MulimgViewerGui ( wx.Frame ):
 		wSizer1 = wx.WrapSizer( wx.HORIZONTAL, wx.WRAPSIZER_DEFAULT_FLAGS )
 
 		self.button_open_all = wx.Button( self.m_panel1, wx.ID_ANY, u"📂️", wx.DefaultPosition, wx.Size( 50,30 ), wx.BORDER_NONE )
-
 		self.button_open_all.SetFont( wx.Font( 20, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL, False, wx.EmptyString ) )
 
 		wSizer1.Add( self.button_open_all, 0, wx.ALL|wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
 		choice_input_modeChoices = [ u"Sequential", u"Parallel auto", u"Parallel manual", u"Image File List" ]
 		self.choice_input_mode = wx.Choice( self.m_panel1, wx.ID_ANY, wx.DefaultPosition, wx.Size( -1,-1 ), choice_input_modeChoices, 0 )
-
 		self.choice_input_mode.SetSelection( 0 )
 		wSizer1.Add( self.choice_input_mode, 0, wx.ALL|wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
@@ -267,39 +265,8 @@ class MulimgViewerGui ( wx.Frame ):
 		self.m_staticText2.Wrap( -1 )
 
 		bSizer18.Add( self.m_staticText2, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
-		row_col_num = u"1,1"
-		row_col_one_img_num = u"1,1"
-		row_col_img_unit_num = u"3,1"
-		magnifer_row_col_num = u"1,1"
-		with open('config.txt', 'r') as file:
-			lines = file.readlines()
-			for i in range(len(lines)):
-				s = lines[i].split(':')
-				if "row_col" == s[0]:
-					row_col = lines[i].split(':')
-					row_col_num = row_col[1]
 
-			for i in range(len(lines)):
-				s = lines[i].split(':')
-				if "row_col_one_img" == s[0]:
-					row_col_one_img = lines[i].split(':')
-					row_col_one_img_num = row_col_one_img[1]
-
-			for i in range(len(lines)):
-				s = lines[i].split(':')
-				if "row_col_img_unit" == s[0]:
-					row_col_img_unit = lines[i].split(':')
-					row_col_img_unit_num = row_col_img_unit[1]
-
-			for i in range(len(lines)):
-				s = lines[i].split(':')
-				if "magnifer_row_col" == s[0]:
-					magnifer_row_col = lines[i].split(':')
-					magnifer_row_col_num = magnifer_row_col[1]
-
-
-		self.row_col = wx.TextCtrl( self.m_panel4, wx.ID_ANY, row_col_num, wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
-
+		self.row_col = wx.TextCtrl( self.m_panel4, wx.ID_ANY, u"1,1", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
 		bSizer18.Add( self.row_col, 0, wx.ALL, 5 )
 
 		self.img_vertical = wx.CheckBox( self.m_panel4, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
@@ -315,7 +282,7 @@ class MulimgViewerGui ( wx.Frame ):
 
 		bSizer10.Add( self.m_staticText4, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
-		self.row_col_one_img = wx.TextCtrl( self.m_panel4, wx.ID_ANY, row_col_one_img_num, wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
+		self.row_col_one_img = wx.TextCtrl( self.m_panel4, wx.ID_ANY, u"1,1", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
 		bSizer10.Add( self.row_col_one_img, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
 		self.one_img_vertical = wx.CheckBox( self.m_panel4, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
@@ -331,7 +298,7 @@ class MulimgViewerGui ( wx.Frame ):
 
 		bSizer14.Add( self.m_staticText331, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
-		self.row_col_img_unit = wx.TextCtrl( self.m_panel4, wx.ID_ANY, row_col_img_unit_num, wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.row_col_img_unit = wx.TextCtrl( self.m_panel4, wx.ID_ANY, u"3,1", wx.DefaultPosition, wx.DefaultSize, 0 )
 		bSizer14.Add( self.row_col_img_unit, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
 		self.img_unit_vertical = wx.CheckBox( self.m_panel4, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
@@ -347,7 +314,7 @@ class MulimgViewerGui ( wx.Frame ):
 
 		bSizer101.Add( self.m_staticText41, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
-		self.magnifer_row_col = wx.TextCtrl( self.m_panel4, wx.ID_ANY, magnifer_row_col_num, wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
+		self.magnifer_row_col = wx.TextCtrl( self.m_panel4, wx.ID_ANY, u"1,1", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
 		bSizer101.Add( self.magnifer_row_col, 0, wx.ALL, 5 )
 
 		self.magnifer_vertical = wx.CheckBox( self.m_panel4, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
@@ -833,17 +800,6 @@ class MulimgViewerGui ( wx.Frame ):
 		self.Bind( wx.EVT_MENU, self.delete_box, id = self.menu_delete_box.GetId() )
 		self.Bind( wx.EVT_MENU, self.index_table_gui, id = self.index_table.GetId() )
 		self.Bind( wx.EVT_MENU, self.about_gui, id = self.menu_about.GetId() )
-
-		self.button_open_all.SetToolTip("open all picture")
-		self.m_button6.SetToolTip("out path")
-		self.save_butoon.SetToolTip("save")
-		self.m_button3.SetToolTip("left arrow")
-		self.m_button4.SetToolTip("right arrow")
-		self.m_button5.SetToolTip("refresh")
-		self.magnifier.SetToolTip("magnifier")
-		self.rotation.SetToolTip("rotation")
-		self.flip.SetToolTip("flip")
-
 
 	def __del__( self ):
 		pass

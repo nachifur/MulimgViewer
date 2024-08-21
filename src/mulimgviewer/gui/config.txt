@@ -1,4 +1,0 @@
-row_col:1,2
-row_col_one_img:1,1
-row_col_img_unit:3,1
-magnifer_row_col:2,1

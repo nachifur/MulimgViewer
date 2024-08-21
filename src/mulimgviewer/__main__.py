@@ -8,8 +8,8 @@ import wx
 import wx.lib.inspection
 from PIL import ImageFile,Image
 
-from src.main import MulimgViewer
-from src.path_select import PathSelectFrame
+from .src.main import MulimgViewer
+from .src.path_select import PathSelectFrame
 
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 Image.MAX_IMAGE_PIXELS = None

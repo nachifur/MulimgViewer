@@ -5,13 +5,13 @@ from pathlib import Path
 
 import numpy as np
 import wx
-from gui.main_gui import MulimgViewerGui
+from ..gui.main_gui import MulimgViewerGui
 
-import __version__ as VERSION  # type: ignore
-from about import About
-from index_table import IndexTable
-from utils import MyTestEvent, get_resource_path
-from utils_img import ImgManager
+from .. import __version__ as VERSION  # type: ignore
+from .about import About
+from .index_table import IndexTable
+from .utils import MyTestEvent, get_resource_path
+from .utils_img import ImgManager
 
 
 class MulimgViewer (MulimgViewerGui):

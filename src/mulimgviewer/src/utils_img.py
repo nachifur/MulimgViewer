@@ -4,15 +4,15 @@ import os
 from pathlib import Path
 from shutil import copyfile, move
 
-from custom_func.main import main as main_custom_func
+from .custom_func.main import main as main_custom_func
 import numpy as np
 import piexif
 import wx
 from PIL import Image, ImageDraw, ImageFont
 import imageio
 
-from data import ImgData
-from utils import rgb2hex
+from .data import ImgData
+from .utils import rgb2hex
 
 
 class ImgUtils():

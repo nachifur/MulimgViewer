@@ -130,8 +130,7 @@ class ImgUtils():
         img = Image.fromarray(img_array.astype('uint8')).convert('RGBA')
         return img
 
-    def cal_magnifier_size(self, magnifier_scale, crop_size, img_mode, gap, img_size, magnifer_row_col, show_original,
-                           box_position=0, row_col_img_unit=[1, 1], img_unit_gap=[1, 1]):
+    def cal_magnifier_size(self, magnifier_scale, crop_size, img_mode, gap, img_size, magnifer_row_col, show_original, box_position=0, row_col_img_unit=[1, 1], img_unit_gap=[1, 1]):
         delta_x = 0
         delta_y = 0
         width, height = crop_size
@@ -145,59 +144,43 @@ class ImgUtils():
             if magnifier_scale[1] == -1:
                 magnifier_scale[1] = magnifier_scale[0]
             # custom magnifier scale
-            to_height = int(height * magnifier_scale[1])
-            to_width = int(width * magnifier_scale[0])
-
+            to_height = int(height*magnifier_scale[1])
+            to_width = int(width*magnifier_scale[0])
             width_all = to_width * \
-                        magnifer_row_col[1] + (magnifer_row_col[1] - 1) * gap[0]
+                magnifer_row_col[1] + (magnifer_row_col[1]-1)*gap[0]
             height_all = to_height * \
-                         magnifer_row_col[0] + (magnifer_row_col[0] - 1) * gap[1]
+                magnifer_row_col[0] + (magnifer_row_col[0]-1)*gap[1]
 
-            if img_width / width_all > img_height / height_all:
+            if img_width/width_all > img_height/height_all:
                 if to_height > img_height:
                     to_width = int(
-                        img_height / height_all * to_width)
+                        img_height/to_height*to_width)
                     to_height = int(
-                        (img_height - gap[1] * (magnifer_row_col[0] - 1)) / magnifer_row_col[0])
-
+                        (img_height-gap[1]*(magnifer_row_col[0]-1))/magnifer_row_col[0])
             else:
                 if width_all >= img_width:
                     to_height = int(
-                        img_width / width_all * to_height)
+                        img_width/width_all*to_height)
                     to_width = int(
-                        (img_width - gap[0] * (magnifer_row_col[1] - 1)) / magnifer_row_col[1])
-
-            if (to_height > img_height):
-                to_width = int(int(img_width) / int(to_height) * int(img_height))
-                to_height = img_height
-            if (to_width > img_width):
-                to_height = int(int(img_height) / int(to_width) * int(img_width))
-                to_width = img_width
+                        (img_width-gap[0]*(magnifer_row_col[1]-1))/magnifer_row_col[1])
         else:
             # auto magnifier scale
             width_all = width * \
-                        magnifer_row_col[1] + gap[0] * (magnifer_row_col[1] - 1)
+                magnifer_row_col[1]+gap[0]*(magnifer_row_col[1]-1)
             height_all = height * \
-                         magnifer_row_col[0] + gap[1] * (magnifer_row_col[0] - 1)
-            if img_width / width_all > img_height / height_all:
-                to_height = int(  # img_height)
-                    (img_height - gap[1] * (magnifer_row_col[0] - 1)) / magnifer_row_col[0])
-                to_width = int(to_height / height * width)
+                magnifer_row_col[0]+gap[1]*(magnifer_row_col[0]-1)
+            if img_width/width_all > img_height/height_all:
+                to_height = int(
+                    (img_height-gap[1]*(magnifer_row_col[0]-1))/magnifer_row_col[0])
+                to_width = int(to_height/height*width)
             else:
-                to_width = int(  # img_width)
-                    (img_width - gap[0] * (magnifer_row_col[1] - 1)) / magnifer_row_col[1])
-                to_height = int(to_width / width * height)
+                to_width = int(
+                    (img_width-gap[0]*(magnifer_row_col[1]-1))/magnifer_row_col[1])
+                to_height = int(to_width/width*height)
 
-            if (int(to_height) > int(img_height)):
-                to_width = int(int(img_width) / int(to_height) * int(img_height))
-                to_height = img_height
-            if (int(to_width) > int(img_width)):
-                to_height = int(int(img_height) / int(to_width) * int(img_width))
-                to_width = img_width
-
-        width_all = to_width * magnifer_row_col[1] + gap[0] * (magnifer_row_col[1] - 1)
+        width_all = to_width*magnifer_row_col[1]+gap[0]*(magnifer_row_col[1]-1)
         height_all = to_height * \
-                     magnifer_row_col[0] + gap[1] * (magnifer_row_col[0] - 1)
+            magnifer_row_col[0]+gap[1]*(magnifer_row_col[0]-1)
 
         magnifier_img_all_size = [width_all, height_all]
 
@@ -210,24 +193,24 @@ class ImgUtils():
                 delta_x = 0
                 delta_y = -height_all
             elif box_position == 2:  # right bottom
-                delta_x = img_width - width_all
+                delta_x = img_width-width_all
                 delta_y = -height_all
             elif box_position == 3:  # left top
                 delta_x = 0
                 delta_y = -img_height
             elif box_position == 4:  # right top
-                delta_x = img_width - width_all
+                delta_x = img_width-width_all
                 delta_y = -img_height
         elif row_col_img_unit[0] == 1:
             # adjust box position
             if box_position == 0:  # middle bottom
-                delta_y = int((img_height - height_all) / 2)
+                delta_y = int((img_height-height_all)/2)
                 delta_x = img_unit_gap[0]
             elif box_position == 2:  # right bottom
-                delta_y = img_height - height_all
+                delta_y = img_height-height_all
                 delta_x = -to_width
             elif box_position == 1:  # left bottom
-                delta_y = img_height - height_all
+                delta_y = img_height-height_all
                 delta_x = 0
             elif box_position == 4:  # right top
                 delta_y = 0
@@ -241,10 +224,10 @@ class ImgUtils():
                 delta_y = 0
                 delta_x = 0
             elif box_position == 2:  # right bottom
-                delta_y = img_height - height_all
+                delta_y = img_height-height_all
                 delta_x = -to_width
             elif box_position == 1:  # left bottom
-                delta_y = img_height - height_all
+                delta_y = img_height-height_all
                 delta_x = -img_width
             elif box_position == 4:  # right top
                 delta_y = 0

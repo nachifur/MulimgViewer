@@ -65,7 +65,17 @@ class MulimgViewer (MulimgViewerGui):
         self.m_statusBar1.SetStatusWidths([-2, -1, -4, -4])
         self.set_title_font()
         self.hidden_flag = 0
-
+        self.button_open_all.SetToolTip("open")
+        self.m_button6.SetToolTip("out path")
+        self.save_butoon.SetToolTip("save")
+        self.m_button3.SetToolTip("left arrow")
+        self.m_button4.SetToolTip("right arrow")
+        self.m_button5.SetToolTip("refresh")
+        self.m_toggleBtn4.SetToolTip("save_configuration")
+        self.magnifier.SetToolTip("magnifier")
+        self.rotation.SetToolTip("rotation")
+        self.flip.SetToolTip("flip")
+        self.m_button7.SetToolTip("load_configuration")
         # Different platforms may need to adjust the width of the scrolledWindow_set
         sys_platform = platform.system()
         if sys_platform.find("Windows") >= 0:
@@ -1327,3 +1337,264 @@ class MulimgViewer (MulimgViewerGui):
         # issue: You need to change the window size, then the scrollbar starts to display.
         self.scrolledWindow_set.FitInside()
         self.auto_layout()
+
+    def save_configuration(self, event):
+        f = open('log.txt', 'w')
+        row_col_text = self.row_col.GetLineText(0)
+        f.write(row_col_text + '\n')
+        row_col_one_img_text = self.row_col_one_img.GetLineText(0)
+        f.write(row_col_one_img_text + '\n')
+        show_scale_text = self.show_scale.GetLineText(0)
+        f.write(show_scale_text + '\n')
+        row_col_img_unit_num = self.row_col_img_unit.GetLineText(0)
+        f.write(row_col_img_unit_num + '\n')
+        gap_text = self.gap.GetLineText(0)
+        f.write(gap_text + '\n')
+        magnifer_row_col_text = self.magnifer_row_col.GetLineText(0)
+        f.write(magnifer_row_col_text + '\n')
+        output_scale_text = self.output_scale.GetLineText(0)
+        f.write(output_scale_text + '\n')
+        img_resolution_text = self.img_resolution.GetLineText(0)
+        f.write(img_resolution_text + '\n')
+        magnifer_resolution_text = self.magnifer_resolution.GetLineText(0)
+        f.write(magnifer_resolution_text + '\n')
+        magnifier_show_scale_text = self.magnifier_show_scale.GetLineText(0)
+        f.write(magnifier_show_scale_text + '\n')
+        line_width_text = self.line_width.GetLineText(0)
+        f.write(line_width_text + '\n')
+        magnifier_out_scale_text = self.magnifier_out_scale.GetLineText(0)
+        f.write(magnifier_out_scale_text + '\n')
+        title_font_size_text = self.title_font_size.GetLineText(0)
+        f.write(title_font_size_text + '\n')
+        box_position_sel = self.box_position.GetSelection()
+        f.write(str(box_position_sel) + '\n')
+        choice_normalized_size_sel = self.choice_normalized_size.GetSelection()
+        f.write(str(choice_normalized_size_sel) + '\n')
+        choice_output_sel = self.choice_output.GetSelection()
+        f.write(str(choice_output_sel) + '\n')
+        image_interp_sel = self.image_interp.GetSelection()
+        f.write(str(image_interp_sel) + '\n')
+        Magnifier_format_sel = self.Magnifier_format.GetSelection()
+        f.write(str(Magnifier_format_sel) + '\n')
+        title_font_sel = self.title_font.GetSelection()
+        f.write(str(title_font_sel) + '\n')
+        parallel_sequential_num = self.parallel_sequential.GetValue()
+        f.write(str(parallel_sequential_num) + '\n')
+        parallel_to_sequential_num = self.parallel_to_sequential.GetValue()
+        f.write(str(parallel_to_sequential_num) + '\n')
+        auto_save_all_num = self.auto_save_all.GetValue()
+        f.write(str(auto_save_all_num) + '\n')
+        move_file_num = self.move_file.GetValue()
+        f.write(str(move_file_num) + '\n')
+        img_vertical_num = self.img_vertical.GetValue()
+        f.write(str(img_vertical_num) + '\n')
+        one_img_vertical_num = self.one_img_vertical.GetValue()
+        f.write(str(one_img_vertical_num) + '\n')
+        img_unit_vertical_num = self.img_unit_vertical.GetValue()
+        f.write(str(img_unit_vertical_num) + '\n')
+        magnifer_vertical_num = self.magnifer_vertical.GetValue()
+        f.write(str(magnifer_vertical_num) + '\n')
+        show_original_num = self.show_original.GetValue()
+        f.write(str(show_original_num) + '\n')
+        show_magnifer_num = self.show_magnifer.GetValue()
+        f.write(str(show_magnifer_num) + '\n')
+        title_show_num = self.title_show.GetValue()
+        f.write(str(title_show_num) + '\n')
+        auto_layout_check_num = self.auto_layout_check.GetValue()
+        f.write(str(auto_layout_check_num) + '\n')
+        one_img_num = self.one_img.GetValue()
+        f.write(str(one_img_num) + '\n')
+        onetitle_num = self.onetitle.GetValue()
+        f.write(str(onetitle_num) + '\n')
+        customfunc_num = self.customfunc.GetValue()
+        f.write(str(customfunc_num) + '\n')
+        show_box_num = self.show_box.GetValue()
+        f.write(str(show_box_num) + '\n')
+        show_box_in_crop_num = self.show_box_in_crop.GetValue()
+        f.write(str(show_box_in_crop_num) + '\n')
+        select_img_box_num = self.select_img_box.GetValue()
+        f.write(str(select_img_box_num) + '\n')
+        title_auto_num = self.title_auto.GetValue()
+        f.write(str(title_auto_num) + '\n')
+        title_exif_num = self.title_exif.GetValue()
+        f.write(str(title_exif_num) + '\n')
+        title_show_parent_num = self.title_show_parent.GetValue()
+        f.write(str(title_show_parent_num) + '\n')
+        title_show_prefix_num = self.title_show_prefix.GetValue()
+        f.write(str(title_show_prefix_num) + '\n')
+        title_show_name_num = self.title_show_name.GetValue()
+        f.write(str(title_show_name_num) + '\n')
+        title_show_suffix_num = self.title_show_suffix.GetValue()
+        f.write(str(title_show_suffix_num) + '\n')
+        title_down_up_num = self.title_down_up.GetValue()
+        f.write(str(title_down_up_num) + '\n')
+        f.close()
+
+    def load_configuration(self, event):
+        with open('log.txt', 'r') as file:
+            # 逐行读取文件内容
+            line = file.readline()
+            self.row_col.SetValue(line)
+            line = file.readline()
+            self.row_col_one_img.SetValue(line)
+            line = file.readline()
+            self.show_scale.SetValue(line)
+            line = file.readline()
+            self.row_col_img_unit.SetValue(line)
+            line = file.readline()
+            self.gap.SetValue(line)
+            line = file.readline()
+            self.magnifer_row_col.SetValue(line)
+            line = file.readline()
+            self.output_scale.SetValue(line)
+            line = file.readline()
+            self.img_resolution.SetValue(line)
+            line = file.readline()
+            self.magnifer_resolution.SetValue(line)
+            line = file.readline()
+            self.magnifier_show_scale.SetValue(line)
+            line = file.readline()
+            self.line_width.SetValue(line)
+            line = file.readline()
+            self.magnifier_out_scale.SetValue(line)
+            line = file.readline()
+            self.title_font_size.SetValue(line)
+            line = file.readline()
+            self.box_position.SetSelection(int(line))
+            line = file.readline()
+            self.choice_normalized_size.SetSelection(int(line))
+            line = file.readline()
+            self.choice_output.SetSelection(int(line))
+            line = file.readline()
+            self.image_interp.SetSelection(int(line))
+            line = file.readline()
+            self.Magnifier_format.SetSelection(int(line))
+            line = file.readline()
+            self.title_font.SetSelection(int(line))
+            line = file.readline()
+            if line == "False\n":
+                self.parallel_sequential.Value = False
+            else:
+                self.parallel_sequential.Value = True
+            line = file.readline()
+            if line == "False\n":
+                self.parallel_to_sequential.Value = False
+            else:
+                self.parallel_to_sequential.Value = True
+            line = file.readline()
+            if line == "False\n":
+                self.auto_save_all.Value = False
+            else:
+                self.auto_save_all.Value = True
+            line = file.readline()
+            if line == "False\n":
+                self.move_file.Value = False
+            else:
+                self.move_file.Value = True
+            line = file.readline()
+            if line == "False\n":
+                self.img_vertical.Value = False
+            else:
+                self.img_vertical.Value = True
+            line = file.readline()
+            if line == "False\n":
+                self.one_img_vertical.Value = False
+            else:
+                self.one_img_vertical.Value = True
+            line = file.readline()
+            if line == "False\n":
+                self.img_unit_vertical.Value = False
+            else:
+                self.img_unit_vertical.Value = True
+            line = file.readline()
+            if line == "False\n":
+                self.magnifer_vertical.Value = False
+            else:
+                self.magnifer_vertical.Value = True
+            line = file.readline()
+            if line == "False\n":
+                self.show_original.Value = False
+            else:
+                self.show_original.Value = True
+            line = file.readline()
+            if line == "False\n":
+                self.show_magnifer.Value = False
+            else:
+                self.show_magnifer.Value = True
+            line = file.readline()
+            if line == "False\n":
+                self.title_show.Value = False
+            else:
+                self.title_show.Value = True
+            line = file.readline()
+            if line == "False\n":
+                self.auto_layout_check.Value = False
+            else:
+                self.auto_layout_check.Value = True
+            line = file.readline()
+            if line == "False\n":
+                self.one_img.Value = False
+            else:
+                self.one_img.Value = True
+            line = file.readline()
+            if line == "False\n":
+                self.onetitle.Value = False
+            else:
+                self.onetitle.Value = True
+            line = file.readline()
+            if line == "False\n":
+                self.customfunc.Value = False
+            else:
+                self.customfunc.Value = True
+            line = file.readline()
+            if line == "False\n":
+                self.show_box.Value = False
+            else:
+                self.show_box.Value = True
+            line = file.readline()
+            if line == "False\n":
+                self.show_box_in_crop.Value = False
+            else:
+                self.show_box_in_crop.Value = True
+            line = file.readline()
+            if line == "False\n":
+                self.select_img_box.Value = False
+            else:
+                self.select_img_box.Value = True
+            line = file.readline()
+            if line == "False\n":
+                self.title_auto.Value = False
+            else:
+                self.title_auto.Value = True
+            line = file.readline()
+            if line == "False\n":
+                self.title_exif.Value = False
+            else:
+                self.title_exif.Value = True
+            line = file.readline()
+            if line == "False\n":
+                self.title_show_parent.Value = False
+            else:
+                self.title_show_parent.Value = True
+            line = file.readline()
+            if line == "False\n":
+                self.title_show_prefix.Value = False
+            else:
+                self.title_show_prefix.Value = True
+            line = file.readline()
+            if line == "False\n":
+                self.title_show_name.Value = False
+            else:
+                self.title_show_name.Value = True
+            line = file.readline()
+            if line == "False\n":
+                self.title_show_suffix.Value = False
+            else:
+                self.title_show_suffix.Value = True
+            line = file.readline()
+            if line == "False\n":
+                self.title_down_up.Value = False
+            else:
+                self.title_down_up.Value = True
+
+

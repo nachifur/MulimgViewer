@@ -153,41 +153,53 @@ class ImgUtils():
             height_all = to_height * \
                          magnifer_row_col[0] + (magnifer_row_col[0] - 1) * gap[1]
 
-            if img_width / width_all > img_height / height_all:
-                if to_height > img_height:
-                    to_width = int(
-                        img_height / height_all * to_width)
-                    to_height = int(
-                        (img_height - gap[1] * (magnifer_row_col[0] - 1)) / magnifer_row_col[0])
-
-            else:
-                if width_all >= img_width:
-                    to_height = int(
-                        img_width / width_all * to_height)
-                    to_width = int(
-                        (img_width - gap[0] * (magnifer_row_col[1] - 1)) / magnifer_row_col[1])
+            # if img_width / width_all > img_height / height_all:
+            #     if to_height > img_height:
+            #         to_width = int(
+            #             img_height / height_all * to_width)
+            #         to_height = int(
+            #             (img_height - gap[1] * (magnifer_row_col[0] - 1)) / magnifer_row_col[0])
+            #
+            # else:
+            #     if width_all >= img_width:
+            #         to_height = int(
+            #             img_width / width_all * to_height)
+            #         to_width = int(
+            #             (img_width - gap[0] * (magnifer_row_col[1] - 1)) / magnifer_row_col[1])
 
             if magnifier_format == 1:
-                to_height = int(int(to_height) / int(to_width) * int(img_width / magnifer_row_col[1]))
-                to_width = int(img_width / magnifer_row_col[1])
                 if row_col_img_unit[1] >= 2:
+                    if (int(to_width) > int(img_width / magnifer_row_col[1])):
+                        to_height = int(int(to_height) / int(to_width) * int(img_width / magnifer_row_col[1]))
+                        to_width = int(img_width / magnifer_row_col[1])
                     if (int(to_height) > int(img_height / magnifer_row_col[0])):
                         to_width = int(to_width / to_height * img_height / magnifer_row_col[0])
                         to_height = int(img_height / magnifer_row_col[0])
-            elif magnifier_format == 2:
-                to_width = int(int(to_width) / int(to_height) * int(int(img_height) / int(magnifer_row_col[0])))
-                to_height = int(int(img_height) / int(magnifer_row_col[0]))
-                if row_col_img_unit[1] == 1:
+                else:
                     if (int(to_width) > int(img_width / magnifer_row_col[1])):
-                        to_height = int(to_height / to_width * img_width / magnifer_row_col[1])
+                        to_height = int(int(to_height) / int(to_width) * int(img_width / magnifer_row_col[1]))
                         to_width = int(img_width / magnifer_row_col[1])
+            elif magnifier_format == 2:
+                if row_col_img_unit[1] == 1:
+                    if (to_height > int(int(img_height) / int(magnifer_row_col[0]))):
+                        to_width = int(int(to_width) / int(to_height) * int(int(img_height) / int(magnifer_row_col[0])))
+                        to_height = int(int(img_height) / int(magnifer_row_col[0]))
+                    if (int(to_width) > int(img_width / magnifer_row_col[1])):
+                        to_height =int(int(to_height) / int(to_width) * int(img_width / magnifer_row_col[1]))
+                        to_width = int(img_width / magnifer_row_col[1])
+                else :
+                    if (to_height > int(int(img_height) / int(magnifer_row_col[0]))):
+                        to_width = int(int(to_width) / int(to_height) * int(int(img_height) / int(magnifer_row_col[0])))
+                        to_height = int(int(img_height) / int(magnifer_row_col[0]))
+
+
             else:
-                if (to_height > img_height):
-                    to_width = int(int(img_width) / int(to_height) * int(img_height))
-                    to_height = img_height
-                if (to_width > img_width):
-                    to_height = int(int(img_height) / int(to_width) * int(img_width))
-                    to_width = img_width
+                if to_height > int(int(img_height) / int(magnifer_row_col[0])):
+                    to_width =  int(int(to_width) / int(to_height) * int(img_height/ int(magnifer_row_col[0])))
+                    to_height = int(img_height / int(magnifer_row_col[0]))
+                if to_width > int(int(img_width) / int(magnifer_row_col[1])):
+                    to_height = int(int(to_height) / int(to_width) * int(img_width/ int(magnifer_row_col[1])))
+                    to_width = int(img_width / int(magnifer_row_col[1]))
         else:
             # auto magnifier scale
             width_all = width * \

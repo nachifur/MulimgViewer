@@ -1017,7 +1017,8 @@ class MulimgViewer (MulimgViewerGui):
                     self.onetitle.Value,                    # 30
                     magnifier_out_scale,                    # 31
                     self.customfunc.Value,                  # 32
-                    self.out_path_str]                      # 33
+                    self.out_path_str,                      # 33
+                    self.Magnifier_format.GetSelection()]                  # 34
 
     def show_img(self):
         if self.customfunc.Value and self.out_path_str == "":

@@ -131,7 +131,7 @@ class ImgUtils():
         return img
 
     def cal_magnifier_size(self, magnifier_scale, crop_size, img_mode, gap, img_size, magnifer_row_col, show_original,
-                           box_position=0, row_col_img_unit=[1, 1], img_unit_gap=[1, 1]):
+                           box_position=0, row_col_img_unit=[1, 1], img_unit_gap=[1, 1],magnifier_format=0):
         delta_x = 0
         delta_y = 0
         width, height = crop_size
@@ -167,12 +167,27 @@ class ImgUtils():
                     to_width = int(
                         (img_width - gap[0] * (magnifer_row_col[1] - 1)) / magnifer_row_col[1])
 
-            if (to_height > img_height):
-                to_width = int(int(img_width) / int(to_height) * int(img_height))
-                to_height = img_height
-            if (to_width > img_width):
-                to_height = int(int(img_height) / int(to_width) * int(img_width))
-                to_width = img_width
+            if magnifier_format == 1:
+                to_height = int(int(to_height) / int(to_width) * int(img_width / magnifer_row_col[1]))
+                to_width = int(img_width / magnifer_row_col[1])
+                if row_col_img_unit[1] >= 2:
+                    if (int(to_height) > int(img_height / magnifer_row_col[0])):
+                        to_width = int(to_width / to_height * img_height / magnifer_row_col[0])
+                        to_height = int(img_height / magnifer_row_col[0])
+            elif magnifier_format == 2:
+                to_width = int(int(to_width) / int(to_height) * int(int(img_height) / int(magnifer_row_col[0])))
+                to_height = int(int(img_height) / int(magnifer_row_col[0]))
+                if row_col_img_unit[1] == 1:
+                    if (int(to_width) > int(img_width / magnifer_row_col[1])):
+                        to_height = int(to_height / to_width * img_width / magnifer_row_col[1])
+                        to_width = int(img_width / magnifer_row_col[1])
+            else:
+                if (to_height > img_height):
+                    to_width = int(int(img_width) / int(to_height) * int(img_height))
+                    to_height = img_height
+                if (to_width > img_width):
+                    to_height = int(int(img_height) / int(to_width) * int(img_width))
+                    to_width = img_width
         else:
             # auto magnifier scale
             width_all = width * \
@@ -187,13 +202,27 @@ class ImgUtils():
                 to_width = int(  # img_width)
                     (img_width - gap[0] * (magnifer_row_col[1] - 1)) / magnifer_row_col[1])
                 to_height = int(to_width / width * height)
-
-            if (int(to_height) > int(img_height)):
-                to_width = int(int(img_width) / int(to_height) * int(img_height))
-                to_height = img_height
-            if (int(to_width) > int(img_width)):
-                to_height = int(int(img_height) / int(to_width) * int(img_width))
-                to_width = img_width
+            if magnifier_format == 1:
+                to_height = int(int(to_height) / int(to_width) * int(img_width/magnifer_row_col[1]))
+                to_width = int(img_width/magnifer_row_col[1])
+                if row_col_img_unit[1] >= 2:
+                    if(int(to_height) > int(img_height/magnifer_row_col[0])):
+                        to_width = int(to_width/to_height*img_height/magnifer_row_col[0])
+                        to_height = int(img_height/magnifer_row_col[0])
+            elif magnifier_format == 2:
+                to_width = int(int(to_width) / int(to_height) * int(int(img_height)/int(magnifer_row_col[0])))
+                to_height = int(int(img_height)/int(magnifer_row_col[0]))
+                if row_col_img_unit[1] == 1:
+                    if(int(to_width) > int(img_width/magnifer_row_col[1])):
+                        to_height = int(to_height/to_width*img_width/magnifer_row_col[1])
+                        to_width = int(img_width/magnifer_row_col[1])
+            else :
+                if (int(to_height) > int(img_height)):
+                    to_width = int(int(img_width) / int(to_height) * int(img_height))
+                    to_height = img_height
+                if (int(to_width) > int(img_width)):
+                    to_height = int(int(img_height) / int(to_width) * int(img_width))
+                    to_width = img_width
 
         width_all = to_width * magnifer_row_col[1] + gap[0] * (magnifer_row_col[1] - 1)
         height_all = to_height * \
@@ -727,7 +756,7 @@ class ImgManager(ImgData):
             crop_height = self.crop_points[0][3]-self.crop_points[0][1]
             magnifer_row_col = self.layout_params[29]
             _, delta, magnifier_img_all_size = self.ImgF.cal_magnifier_size(
-                self.layout_params[8], [crop_width, crop_height], 0, self.layout_params[3][6:8], self.to_size, magnifer_row_col, self.show_original, box_position=self.box_position, row_col_img_unit=self.layout_params[2], img_unit_gap=self.layout_params[3][4:6])
+                self.layout_params[8], [crop_width, crop_height], 0, self.layout_params[3][6:8], self.to_size, magnifer_row_col, self.show_original, box_position=self.box_position, row_col_img_unit=self.layout_params[2], img_unit_gap=self.layout_params[3][4:6], magnifier_format=self.layout_params[34])
             img_preprocessing_sub.append(self.magnifier_preprocessing)
 
             if layout_level_2[0] == 0:
@@ -1159,7 +1188,7 @@ class ImgManager(ImgData):
         # get the size of magnifier img
         magnifer_row_col = self.layout_params[29]
         to_resize, delta, magnifier_img_all_size = self.ImgF.cal_magnifier_size(
-            magnifier_scale, list(img_list[0].size), img_mode, gap, self.to_size, magnifer_row_col, self.show_original, box_position=self.box_position, row_col_img_unit=self.layout_params[2], img_unit_gap=self.layout_params[3][4:6])
+            magnifier_scale, list(img_list[0].size), img_mode, gap, self.to_size, magnifer_row_col, self.show_original, box_position=self.box_position, row_col_img_unit=self.layout_params[2], img_unit_gap=self.layout_params[3][4:6], magnifier_format=self.layout_params[34])
 
         # resize images
         line_width = self.layout_params[10][1]

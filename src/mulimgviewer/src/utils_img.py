@@ -170,7 +170,7 @@ class ImgUtils():
             if magnifier_format == 1:
                 to_height = int(int(to_height) / int(to_width) * int(img_width / magnifer_row_col[1]))
                 to_width = int(img_width / magnifer_row_col[1])
-                if row_col_img_unit[1] == 2:
+                if row_col_img_unit[1] >= 2:
                     if (int(to_height) > int(img_height / magnifer_row_col[0])):
                         to_width = int(to_width / to_height * img_height / magnifer_row_col[0])
                         to_height = int(img_height / magnifer_row_col[0])
@@ -205,7 +205,7 @@ class ImgUtils():
             if magnifier_format == 1:
                 to_height = int(int(to_height) / int(to_width) * int(img_width/magnifer_row_col[1]))
                 to_width = int(img_width/magnifer_row_col[1])
-                if row_col_img_unit[1] == 2:
+                if row_col_img_unit[1] >= 2:
                     if(int(to_height) > int(img_height/magnifer_row_col[0])):
                         to_width = int(to_width/to_height*img_height/magnifer_row_col[0])
                         to_height = int(img_height/magnifer_row_col[0])

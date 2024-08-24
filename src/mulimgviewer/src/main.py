@@ -1436,6 +1436,3 @@ class MulimgViewer (MulimgViewerGui):
             self.title_show_name.SetValue(data['title_show_name'])
             self.title_show_suffix.SetValue(data['title_show_suffix'])
             self.title_down_up.SetValue(data['title_down_up'])
-
-
-

@@ -13,6 +13,7 @@ from .index_table import IndexTable
 from .utils import MyTestEvent, get_resource_path
 from .utils_img import ImgManager
 import json
+import shutil
 
 class MulimgViewer (MulimgViewerGui):
 
@@ -71,11 +72,12 @@ class MulimgViewer (MulimgViewerGui):
         self.m_button3.SetToolTip("left arrow")
         self.m_button4.SetToolTip("right arrow")
         self.m_button5.SetToolTip("refresh")
-        self.m_toggleBtn4.SetToolTip("save_configuration")
+        self.m_button9.SetToolTip("save_configuration")
         self.magnifier.SetToolTip("magnifier")
         self.rotation.SetToolTip("rotation")
         self.flip.SetToolTip("flip")
         self.m_button7.SetToolTip("load_configuration")
+        self.m_button8.SetToolTip("reset_configuration")
         # Different platforms may need to adjust the width of the scrolledWindow_set
         sys_platform = platform.system()
         if sys_platform.find("Windows") >= 0:
@@ -1387,10 +1389,10 @@ class MulimgViewer (MulimgViewerGui):
         }
 
         with open('output.json', 'w') as file:
-            json.dump(data, file)
+            json.dump(data, file, indent=1)
 
-    def load_configuration(self, event):
-        with open('output.json', 'r') as file:
+    def load_configuration(self, event, config_name="output.json"):
+        with open(config_name, 'r') as file:
             data = json.load(file)
             self.row_col.SetValue(data['row_col'])
             self.row_col_one_img.SetValue(data['row_col_one_img'])
@@ -1436,3 +1438,7 @@ class MulimgViewer (MulimgViewerGui):
             self.title_show_name.SetValue(data['title_show_name'])
             self.title_show_suffix.SetValue(data['title_show_suffix'])
             self.title_down_up.SetValue(data['title_down_up'])
+
+    def reset_configuration(self, event):
+        self.load_configuration(event, config_name="output_s.json")
+        shutil.copy("output_s.json", "output.json")

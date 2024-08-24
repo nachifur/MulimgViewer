@@ -12,7 +12,7 @@ from .about import About
 from .index_table import IndexTable
 from .utils import MyTestEvent, get_resource_path
 from .utils_img import ImgManager
-
+import json
 
 class MulimgViewer (MulimgViewerGui):
 
@@ -65,7 +65,17 @@ class MulimgViewer (MulimgViewerGui):
         self.m_statusBar1.SetStatusWidths([-2, -1, -4, -4])
         self.set_title_font()
         self.hidden_flag = 0
-
+        self.button_open_all.SetToolTip("open")
+        self.m_button6.SetToolTip("out path")
+        self.save_butoon.SetToolTip("save")
+        self.m_button3.SetToolTip("left arrow")
+        self.m_button4.SetToolTip("right arrow")
+        self.m_button5.SetToolTip("refresh")
+        self.m_toggleBtn4.SetToolTip("save_configuration")
+        self.magnifier.SetToolTip("magnifier")
+        self.rotation.SetToolTip("rotation")
+        self.flip.SetToolTip("flip")
+        self.m_button7.SetToolTip("load_configuration")
         # Different platforms may need to adjust the width of the scrolledWindow_set
         sys_platform = platform.system()
         if sys_platform.find("Windows") >= 0:
@@ -1327,3 +1337,105 @@ class MulimgViewer (MulimgViewerGui):
         # issue: You need to change the window size, then the scrollbar starts to display.
         self.scrolledWindow_set.FitInside()
         self.auto_layout()
+
+    def save_configuration(self, event):
+        data = {
+            'row_col': self.row_col.GetLineText(0),
+            'row_col_one_img': self.row_col_one_img.GetLineText(0),
+            'show_scale': self.show_scale.GetLineText(0),
+            'row_col_img_unit': self.row_col_img_unit.GetLineText(0),
+            'gap': self.gap.GetLineText(0),
+            'magnifer_row_col': self.magnifer_row_col.GetLineText(0),
+            'output_scale': self.output_scale.GetLineText(0),
+            'img_resolution': self.img_resolution.GetLineText(0),
+            'magnifer_resolution': self.magnifer_resolution.GetLineText(0),
+            'magnifier_show_scale': self.magnifier_show_scale.GetLineText(0),
+            'line_width': self.line_width.GetLineText(0),
+            'magnifier_out_scale': self.magnifier_out_scale.GetLineText(0),
+            'title_font_size': self.title_font_size.GetLineText(0),
+            'box_position': self.box_position.GetSelection(),
+            'choice_normalized_size': self.choice_normalized_size.GetSelection(),
+            'choice_output': self.choice_output.GetSelection(),
+            'image_interp': self.image_interp.GetSelection(),
+            'Magnifier_format': self.Magnifier_format.GetSelection(),
+            'title_font': self.title_font.GetSelection(),
+            'parallel_sequential': self.parallel_sequential.GetValue(),
+            'parallel_to_sequential': self.parallel_to_sequential.GetValue(),
+            'auto_save_all': self.auto_save_all.GetValue(),
+            'move_file': self.move_file.GetValue(),
+            'img_vertical': self.img_vertical.GetValue(),
+            'one_img_vertical': self.one_img_vertical.GetValue(),
+            'img_unit_vertical': self.img_unit_vertical.GetValue(),
+            'magnifer_vertical': self.magnifer_vertical.GetValue(),
+            'show_original': self.show_original.GetValue(),
+            'show_magnifer': self.show_magnifer.GetValue(),
+            'title_show': self.title_show.GetValue(),
+            'auto_layout_check': self.auto_layout_check.GetValue(),
+            'one_img': self.one_img.GetValue(),
+            'onetitle': self.onetitle.GetValue(),
+            'customfunc': self.customfunc.GetValue(),
+            'show_box': self.show_box.GetValue(),
+            'show_box_in_crop': self.show_box_in_crop.GetValue(),
+            'select_img_box': self.select_img_box.GetValue(),
+            'title_auto': self.title_auto.GetValue(),
+            'title_exif': self.title_exif.GetValue(),
+            'title_show_parent': self.title_show_parent.GetValue(),
+            'title_show_prefix': self.title_show_prefix.GetValue(),
+            'title_show_name': self.title_show_name.GetValue(),
+            'title_show_suffix': self.title_show_suffix.GetValue(),
+            'title_down_up': self.title_down_up.GetValue(),
+        }
+
+        with open('output.json', 'w') as file:
+            json.dump(data, file)
+
+    def load_configuration(self, event):
+        with open('output.json', 'r') as file:
+            data = json.load(file)
+            self.row_col.SetValue(data['row_col'])
+            self.row_col_one_img.SetValue(data['row_col_one_img'])
+            self.show_scale.SetValue(data['show_scale'])
+            self.row_col_img_unit.SetValue(data['row_col_img_unit'])
+            self.gap.SetValue(data['gap'])
+            self.magnifer_row_col.SetValue(data['magnifer_row_col'])
+            self.output_scale.SetValue(data['output_scale'])
+            self.img_resolution.SetValue(data['img_resolution'])
+            self.magnifer_resolution.SetValue(data['magnifer_resolution'])
+            self.magnifier_show_scale.SetValue(data['magnifier_show_scale'])
+            self.line_width.SetValue(data['line_width'])
+            self.magnifier_out_scale.SetValue(data['magnifier_out_scale'])
+            self.title_font_size.SetValue(data['title_font_size'])
+            self.box_position.SetSelection(data['box_position'])
+            self.choice_normalized_size.SetSelection(data['choice_normalized_size'])
+            self.choice_output.SetSelection(data['choice_output'])
+            self.image_interp.SetSelection(data['image_interp'])
+            self.Magnifier_format.SetSelection(data['Magnifier_format'])
+            self.title_font.SetSelection(data['title_font'])
+            self.parallel_sequential.SetValue(data['parallel_sequential'])
+            self.parallel_to_sequential.SetValue(data['parallel_to_sequential'])
+            self.auto_save_all.SetValue(data['auto_save_all'])
+            self.move_file.SetValue(data['move_file'])
+            self.img_vertical.SetValue(data['img_vertical'])
+            self.one_img_vertical.SetValue(data['one_img_vertical'])
+            self.img_unit_vertical.SetValue(data['img_unit_vertical'])
+            self.magnifer_vertical.SetValue(data['magnifer_vertical'])
+            self.show_original.SetValue(data['show_original'])
+            self.show_magnifer.SetValue(data['show_magnifer'])
+            self.title_show.SetValue(data['title_show'])
+            self.auto_layout_check.SetValue(data['auto_layout_check'])
+            self.one_img.SetValue(data['one_img'])
+            self.onetitle.SetValue(data['onetitle'])
+            self.customfunc.SetValue(data['customfunc'])
+            self.show_box.SetValue(data['show_box'])
+            self.show_box_in_crop.SetValue(data['show_box_in_crop'])
+            self.select_img_box.SetValue(data['select_img_box'])
+            self.title_auto.SetValue(data['title_auto'])
+            self.title_exif.SetValue(data['title_exif'])
+            self.title_show_parent.SetValue(data['title_show_parent'])
+            self.title_show_prefix.SetValue(data['title_show_prefix'])
+            self.title_show_name.SetValue(data['title_show_name'])
+            self.title_show_suffix.SetValue(data['title_show_suffix'])
+            self.title_down_up.SetValue(data['title_down_up'])
+
+
+

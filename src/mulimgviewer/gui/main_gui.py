@@ -445,15 +445,15 @@ class MulimgViewerGui ( wx.Frame ):
 
 		wSizer111 = wx.WrapSizer( wx.HORIZONTAL, wx.WRAPSIZER_DEFAULT_FLAGS )
 
-		self.m_staticText36 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"🔍️Typed", wx.DefaultPosition, wx.Size( 100,-1 ), 0 )
+		self.m_staticText36 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"🔍️Typed", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
 		self.m_staticText36.Wrap( -1 )
 
-		wSizer111.Add( self.m_staticText36, 0, wx.ALL, 5 )
+		wSizer111.Add( self.m_staticText36, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
 		Magnifier_formatChoices = [ u"equal length width", u"equal width", u"equal height " ]
 		self.Magnifier_format = wx.Choice( self.m_panel4, wx.ID_ANY, wx.Point( -1,-1 ), wx.DefaultSize, Magnifier_formatChoices, 0 )
 		self.Magnifier_format.SetSelection( 1 )
-		wSizer111.Add( self.Magnifier_format, 0, wx.ALL, 5 )
+		wSizer111.Add( self.Magnifier_format, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
 
 		fgSizer3.Add( wSizer111, 1, wx.EXPAND, 5 )

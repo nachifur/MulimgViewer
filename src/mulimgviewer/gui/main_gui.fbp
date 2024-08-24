@@ -5462,7 +5462,7 @@
                                   <property name="permission">none</property>
                                   <object class="sizeritem" expanded="true">
                                     <property name="border">5</property>
-                                    <property name="flag">wxALL</property>
+                                    <property name="flag">wxALL|wxALIGN_CENTER_VERTICAL</property>
                                     <property name="proportion">0</property>
                                     <object class="wxStaticText" expanded="true">
                                       <property name="BottomDockable">1</property>
@@ -5511,7 +5511,7 @@
                                       <property name="pos"></property>
                                       <property name="resize">Resizable</property>
                                       <property name="show">1</property>
-                                      <property name="size">100,-1</property>
+                                      <property name="size">-1,-1</property>
                                       <property name="style"></property>
                                       <property name="subclass">; ; forward_declare</property>
                                       <property name="toolbar_pane">0</property>
@@ -5524,7 +5524,7 @@
                                   </object>
                                   <object class="sizeritem" expanded="true">
                                     <property name="border">5</property>
-                                    <property name="flag">wxALL</property>
+                                    <property name="flag">wxALL|wxALIGN_CENTER_VERTICAL</property>
                                     <property name="proportion">0</property>
                                     <object class="wxChoice" expanded="true">
                                       <property name="BottomDockable">1</property>

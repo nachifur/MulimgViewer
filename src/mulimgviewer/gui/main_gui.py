@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ###########################################################################
-## Python code generated with wxFormBuilder (version 3.10.1-0-g8feb16b3)
+## Python code generated with wxFormBuilder (version 4.2.1-0-g80c4cb6)
 ## http://www.wxformbuilder.org/
 ##
 ## PLEASE DO *NOT* EDIT THIS FILE!
@@ -144,7 +144,7 @@ class MulimgViewerGui ( wx.Frame ):
 		self.m_staticText38 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Input/Output", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText38.Wrap( -1 )
 
-		self.m_staticText38.SetFont( wx.Font( 12, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL, False, wx.EmptyString ) )
+		self.m_staticText38.SetFont( wx.Font( 12, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD, False, wx.EmptyString ) )
 
 		fgSizer3.Add( self.m_staticText38, 0, wx.ALL, 5 )
 
@@ -247,7 +247,7 @@ class MulimgViewerGui ( wx.Frame ):
 		self.m_staticText16 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Layout", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
 		self.m_staticText16.Wrap( -1 )
 
-		self.m_staticText16.SetFont( wx.Font( 12, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL, False, wx.EmptyString ) )
+		self.m_staticText16.SetFont( wx.Font( 12, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD, False, wx.EmptyString ) )
 
 		bSizer151.Add( self.m_staticText16, 1, wx.ALL, 5 )
 
@@ -324,6 +324,7 @@ class MulimgViewerGui ( wx.Frame ):
 		bSizer101.Add( self.magnifer_row_col, 0, wx.ALL, 5 )
 
 		self.magnifer_vertical = wx.CheckBox( self.m_panel4, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.magnifer_vertical.SetValue(True)
 		bSizer101.Add( self.magnifer_vertical, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
 
@@ -392,7 +393,7 @@ class MulimgViewerGui ( wx.Frame ):
 		self.m_staticText40 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Box", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText40.Wrap( -1 )
 
-		self.m_staticText40.SetFont( wx.Font( 12, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL, False, wx.EmptyString ) )
+		self.m_staticText40.SetFont( wx.Font( 12, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD, False, wx.EmptyString ) )
 
 		wSizer7.Add( self.m_staticText40, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
@@ -435,7 +436,7 @@ class MulimgViewerGui ( wx.Frame ):
 
 		Magnifier_formatChoices = [ u"equal length width", u"equal width", u"equal height " ]
 		self.Magnifier_format = wx.Choice( self.m_panel4, wx.ID_ANY, wx.Point( -1,-1 ), wx.DefaultSize, Magnifier_formatChoices, 0 )
-		self.Magnifier_format.SetSelection( 0 )
+		self.Magnifier_format.SetSelection( 1 )
 		wSizer111.Add( self.Magnifier_format, 0, wx.ALL, 5 )
 
 
@@ -449,7 +450,7 @@ class MulimgViewerGui ( wx.Frame ):
 		self.m_staticText33 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Title", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText33.Wrap( -1 )
 
-		self.m_staticText33.SetFont( wx.Font( 12, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL, False, wx.EmptyString ) )
+		self.m_staticText33.SetFont( wx.Font( 12, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD, False, wx.EmptyString ) )
 
 		wSizer2.Add( self.m_staticText33, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
@@ -457,7 +458,6 @@ class MulimgViewerGui ( wx.Frame ):
 		wSizer2.Add( self.m_staticline11, 0, wx.EXPAND |wx.ALL, 5 )
 
 		self.title_auto = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"Auto", wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.title_auto.SetValue(True)
 		wSizer2.Add( self.title_auto, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
 		self.title_exif = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"EXIF", wx.DefaultPosition, wx.DefaultSize, 0 )
@@ -526,7 +526,7 @@ class MulimgViewerGui ( wx.Frame ):
 		self.m_staticText20 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Scale", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText20.Wrap( -1 )
 
-		self.m_staticText20.SetFont( wx.Font( 12, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL, False, wx.EmptyString ) )
+		self.m_staticText20.SetFont( wx.Font( 12, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD, False, wx.EmptyString ) )
 
 		wSizer6.Add( self.m_staticText20, 0, wx.ALL, 5 )
 
@@ -611,7 +611,7 @@ class MulimgViewerGui ( wx.Frame ):
 		self.m_staticText13 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Color/transparency", wx.DefaultPosition, wx.Size( 150,-1 ), 0 )
 		self.m_staticText13.Wrap( -1 )
 
-		self.m_staticText13.SetFont( wx.Font( 12, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL, False, wx.EmptyString ) )
+		self.m_staticText13.SetFont( wx.Font( 12, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD, False, wx.EmptyString ) )
 
 		fgSizer3.Add( self.m_staticText13, 0, wx.ALL, 5 )
 

@@ -41,11 +41,11 @@ class MulimgViewerGui ( wx.Frame ):
 		self.m_staticline4 = wx.StaticLine( self.m_panel1, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_VERTICAL )
 		wSizer1.Add( self.m_staticline4, 0, wx.EXPAND |wx.ALL, 5 )
 
-		self.m_button6 = wx.Button( self.m_panel1, wx.ID_ANY, u"📁️", wx.DefaultPosition, wx.Size( 50,30 ), wx.BORDER_NONE )
-		self.m_button6.SetFont( wx.Font( 20, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL, False, wx.EmptyString ) )
-		self.m_button6.SetMinSize( wx.Size( 50,30 ) )
+		self.out_path_button = wx.Button( self.m_panel1, wx.ID_ANY, u"📁️", wx.DefaultPosition, wx.Size( 50,30 ), wx.BORDER_NONE )
+		self.out_path_button.SetFont( wx.Font( 20, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL, False, wx.EmptyString ) )
+		self.out_path_button.SetMinSize( wx.Size( 50,30 ) )
 
-		wSizer1.Add( self.m_button6, 0, wx.ALL|wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL, 5 )
+		wSizer1.Add( self.out_path_button, 0, wx.ALL|wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
 		self.save_butoon = wx.Button( self.m_panel1, wx.ID_ANY, u"💾️", wx.DefaultPosition, wx.Size( 50,30 ), wx.BORDER_NONE )
 		self.save_butoon.SetFont( wx.Font( 20, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL, False, wx.EmptyString ) )
@@ -55,20 +55,20 @@ class MulimgViewerGui ( wx.Frame ):
 		self.m_staticline5 = wx.StaticLine( self.m_panel1, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_VERTICAL )
 		wSizer1.Add( self.m_staticline5, 0, wx.EXPAND |wx.ALL, 5 )
 
-		self.m_button3 = wx.Button( self.m_panel1, wx.ID_ANY, u"<", wx.DefaultPosition, wx.Size( 50,30 ), 0 )
-		self.m_button3.SetFont( wx.Font( 20, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL, False, wx.EmptyString ) )
+		self.left_arrow_button = wx.Button( self.m_panel1, wx.ID_ANY, u"<", wx.DefaultPosition, wx.Size( 50,30 ), 0 )
+		self.left_arrow_button.SetFont( wx.Font( 20, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL, False, wx.EmptyString ) )
 
-		wSizer1.Add( self.m_button3, 0, wx.ALL|wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL, 5 )
+		wSizer1.Add( self.left_arrow_button, 0, wx.ALL|wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
-		self.m_button4 = wx.Button( self.m_panel1, wx.ID_ANY, u">", wx.DefaultPosition, wx.Size( 50,30 ), 0 )
-		self.m_button4.SetFont( wx.Font( 20, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL, False, wx.EmptyString ) )
+		self.right_arrow_button = wx.Button( self.m_panel1, wx.ID_ANY, u">", wx.DefaultPosition, wx.Size( 50,30 ), 0 )
+		self.right_arrow_button.SetFont( wx.Font( 20, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL, False, wx.EmptyString ) )
 
-		wSizer1.Add( self.m_button4, 0, wx.ALL|wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL, 5 )
+		wSizer1.Add( self.right_arrow_button, 0, wx.ALL|wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
-		self.m_button5 = wx.Button( self.m_panel1, wx.ID_ANY, u"⟳", wx.DefaultPosition, wx.Size( 50,30 ), 0 )
-		self.m_button5.SetFont( wx.Font( 16, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL, False, wx.EmptyString ) )
+		self.refresh_button = wx.Button( self.m_panel1, wx.ID_ANY, u"⟳", wx.DefaultPosition, wx.Size( 50,30 ), 0 )
+		self.refresh_button.SetFont( wx.Font( 16, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL, False, wx.EmptyString ) )
 
-		wSizer1.Add( self.m_button5, 0, wx.ALL|wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL, 5 )
+		wSizer1.Add( self.refresh_button, 0, wx.ALL|wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
 		self.slider_value = wx.TextCtrl( self.m_panel1, wx.ID_ANY, u"0", wx.DefaultPosition, wx.Size( 50,-1 ), wx.TE_PROCESS_ENTER )
 		wSizer1.Add( self.slider_value, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_CENTER_HORIZONTAL, 5 )
@@ -243,14 +243,14 @@ class MulimgViewerGui ( wx.Frame ):
 		self.m_staticline201 = wx.StaticLine( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_VERTICAL )
 		wSizer112.Add( self.m_staticline201, 0, wx.EXPAND |wx.ALL, 5 )
 
-		self.m_button7 = wx.Button( self.m_panel4, wx.ID_ANY, u"Load", wx.Point( -1,-1 ), wx.Size( 50,-1 ), 0 )
-		wSizer112.Add( self.m_button7, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+		self.load_config_button = wx.Button( self.m_panel4, wx.ID_ANY, u"Load", wx.Point( -1,-1 ), wx.Size( 50,-1 ), 0 )
+		wSizer112.Add( self.load_config_button, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
-		self.m_button9 = wx.Button( self.m_panel4, wx.ID_ANY, u"Save", wx.DefaultPosition, wx.Size( 50,-1 ), 0 )
-		wSizer112.Add( self.m_button9, 0, wx.ALL, 5 )
+		self.save_config_button = wx.Button( self.m_panel4, wx.ID_ANY, u"Save", wx.DefaultPosition, wx.Size( 50,-1 ), 0 )
+		wSizer112.Add( self.save_config_button, 0, wx.ALL, 5 )
 
-		self.m_button8 = wx.Button( self.m_panel4, wx.ID_ANY, u"Reset", wx.DefaultPosition, wx.Size( 50,-1 ), 0 )
-		wSizer112.Add( self.m_button8, 0, wx.ALL, 5 )
+		self.reset_config_button = wx.Button( self.m_panel4, wx.ID_ANY, u"Reset", wx.DefaultPosition, wx.Size( 50,-1 ), 0 )
+		wSizer112.Add( self.reset_config_button, 0, wx.ALL, 5 )
 
 
 		fgSizer3.Add( wSizer112, 1, wx.EXPAND, 5 )
@@ -797,11 +797,11 @@ class MulimgViewerGui ( wx.Frame ):
 		# Connect Events
 		self.Bind( wx.EVT_SIZE, self.frame_resize )
 		self.button_open_all.Bind( wx.EVT_BUTTON, self.open_all_img )
-		self.m_button6.Bind( wx.EVT_BUTTON, self.out_path )
+		self.out_path_button.Bind( wx.EVT_BUTTON, self.out_path )
 		self.save_butoon.Bind( wx.EVT_BUTTON, self.save_img )
-		self.m_button3.Bind( wx.EVT_BUTTON, self.last_img )
-		self.m_button4.Bind( wx.EVT_BUTTON, self.next_img )
-		self.m_button5.Bind( wx.EVT_BUTTON, self.refresh )
+		self.left_arrow_button.Bind( wx.EVT_BUTTON, self.last_img )
+		self.right_arrow_button.Bind( wx.EVT_BUTTON, self.next_img )
+		self.refresh_button.Bind( wx.EVT_BUTTON, self.refresh )
 		self.slider_value.Bind( wx.EVT_TEXT_ENTER, self.slider_value_change )
 		self.slider_img.Bind( wx.EVT_SCROLL, self.skip_to_n_img )
 		self.magnifier.Bind( wx.EVT_TOGGLEBUTTON, self.magnifier_fc )
@@ -812,9 +812,9 @@ class MulimgViewerGui ( wx.Frame ):
 		self.choice_normalized_size.Bind( wx.EVT_CHOICE, self.change_img_stitch_mode )
 		self.parallel_sequential.Bind( wx.EVT_CHECKBOX, self.parallel_sequential_fc )
 		self.parallel_to_sequential.Bind( wx.EVT_CHECKBOX, self.parallel_to_sequential_fc )
-		self.m_button7.Bind( wx.EVT_BUTTON, self.load_configuration )
-		self.m_button9.Bind( wx.EVT_BUTTON, self.save_configuration )
-		self.m_button8.Bind( wx.EVT_BUTTON, self.reset_configuration )
+		self.load_config_button.Bind( wx.EVT_BUTTON, self.load_configuration )
+		self.save_config_button.Bind( wx.EVT_BUTTON, self.save_configuration )
+		self.reset_config_button.Bind( wx.EVT_BUTTON, self.reset_configuration )
 		self.select_img_box.Bind( wx.EVT_CHECKBOX, self.select_img_box_func )
 		self.title_auto.Bind( wx.EVT_CHECKBOX, self.title_auto_fc )
 		self.title_down_up.Bind( wx.EVT_CHECKBOX, self.title_down_up_fc )

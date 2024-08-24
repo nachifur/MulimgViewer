@@ -148,13 +148,6 @@ class MulimgViewerGui ( wx.Frame ):
 
 		fgSizer3.Add( self.m_staticText38, 0, wx.ALL, 5 )
 
-		self.m_toggleBtn4 = wx.ToggleButton( self.m_panel4, wx.ID_ANY, u"Save", wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.m_toggleBtn4.SetValue( True )
-		fgSizer3.Add( self.m_toggleBtn4, 0, wx.ALL, 5 )
-
-		self.m_button7 = wx.Button( self.m_panel4, wx.ID_ANY, u"Load", wx.Point( -1,-1 ), wx.DefaultSize, 0 )
-		fgSizer3.Add( self.m_button7, 0, wx.ALL, 5 )
-
 		self.m_staticline3 = wx.StaticLine( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_HORIZONTAL )
 		fgSizer3.Add( self.m_staticline3, 0, wx.EXPAND |wx.ALL, 5 )
 
@@ -239,6 +232,26 @@ class MulimgViewerGui ( wx.Frame ):
 
 
 		fgSizer3.Add( wSizer3, 1, wx.EXPAND, 5 )
+
+		wSizer112 = wx.WrapSizer( wx.HORIZONTAL, wx.WRAPSIZER_DEFAULT_FLAGS )
+
+		self.m_staticText361 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"LayoutConfig", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText361.Wrap( -1 )
+
+		wSizer112.Add( self.m_staticText361, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+
+		self.m_staticline201 = wx.StaticLine( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_VERTICAL )
+		wSizer112.Add( self.m_staticline201, 0, wx.EXPAND |wx.ALL, 5 )
+
+		self.m_toggleBtn4 = wx.ToggleButton( self.m_panel4, wx.ID_ANY, u"Save", wx.DefaultPosition, wx.Size( 50,-1 ), 0 )
+		self.m_toggleBtn4.SetValue( True )
+		wSizer112.Add( self.m_toggleBtn4, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+
+		self.m_button7 = wx.Button( self.m_panel4, wx.ID_ANY, u"Load", wx.Point( -1,-1 ), wx.Size( 50,-1 ), 0 )
+		wSizer112.Add( self.m_button7, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+
+
+		fgSizer3.Add( wSizer112, 1, wx.EXPAND, 5 )
 
 		self.m_staticline13 = wx.StaticLine( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_HORIZONTAL )
 		fgSizer3.Add( self.m_staticline13, 0, wx.EXPAND |wx.ALL, 5 )
@@ -794,11 +807,11 @@ class MulimgViewerGui ( wx.Frame ):
 		self.flip.Bind( wx.EVT_TOGGLEBUTTON, self.flip_fc )
 		self.m_splitter1.Bind( wx.EVT_SPLITTER_SASH_POS_CHANGED, self.split_sash_pos_changed )
 		self.m_splitter1.Bind( wx.EVT_SPLITTER_SASH_POS_CHANGING, self.split_sash_pos_changing )
-		self.m_toggleBtn4.Bind( wx.EVT_TOGGLEBUTTON, self.save_configuration )
-		self.m_button7.Bind( wx.EVT_BUTTON, self.load_configuration )
 		self.choice_normalized_size.Bind( wx.EVT_CHOICE, self.change_img_stitch_mode )
 		self.parallel_sequential.Bind( wx.EVT_CHECKBOX, self.parallel_sequential_fc )
 		self.parallel_to_sequential.Bind( wx.EVT_CHECKBOX, self.parallel_to_sequential_fc )
+		self.m_toggleBtn4.Bind( wx.EVT_TOGGLEBUTTON, self.save_configuration )
+		self.m_button7.Bind( wx.EVT_BUTTON, self.load_configuration )
 		self.select_img_box.Bind( wx.EVT_CHECKBOX, self.select_img_box_func )
 		self.title_auto.Bind( wx.EVT_CHECKBOX, self.title_auto_fc )
 		self.title_down_up.Bind( wx.EVT_CHECKBOX, self.title_down_up_fc )
@@ -872,12 +885,6 @@ class MulimgViewerGui ( wx.Frame ):
 	def split_sash_pos_changing( self, event ):
 		event.Skip()
 
-	def save_configuration( self, event ):
-		event.Skip()
-
-	def load_configuration( self, event ):
-		event.Skip()
-
 	def change_img_stitch_mode( self, event ):
 		event.Skip()
 
@@ -885,6 +892,12 @@ class MulimgViewerGui ( wx.Frame ):
 		event.Skip()
 
 	def parallel_to_sequential_fc( self, event ):
+		event.Skip()
+
+	def save_configuration( self, event ):
+		event.Skip()
+
+	def load_configuration( self, event ):
 		event.Skip()
 
 	def select_img_box_func( self, event ):

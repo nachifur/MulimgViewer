@@ -40,7 +40,7 @@ repos:
         args:
           - --msg-filename
   - repo: https://github.com/editorconfig-checker/editorconfig-checker.python
-    rev: 2.7.3
+    rev: 3.0.3
     hooks:
       - id: editorconfig-checker
   - repo: https://github.com/jumanjihouse/pre-commit-hooks

@@ -581,7 +581,9 @@ class ImgUtils():
                         str_ = str_ + "\n"+title[id:]
                     k += 1
                 size_edit = draw.multiline_textbbox((0,0),str_, font)
-                title_size[i, :] = size_edit
+                size_edit = np.array(size_edit)
+                size_edit = size_edit.reshape(-1, 2)
+                title_size[i, :] = size_edit[0,:]
                 split_num = split_num+1
                 if split_num > len(title):
                     break
@@ -991,9 +993,10 @@ class ImgManager(ImgData):
 
     def title_preprocessing(self, img, id):
         title_max_size = copy.deepcopy(self.title_max_size)
+
         img = Image.new('RGBA', tuple(title_max_size), self.gap_color)
         draw = ImageDraw.Draw(img)
-        title_size = self.title_size[id, :]
+        title_size = self.title_size[id*2+1, :]
         delta_x = int((title_max_size[0]-title_size[0])/2)
         if self.title_setting[2]:
             # up

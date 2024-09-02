@@ -1033,6 +1033,7 @@ class MulimgViewer (MulimgViewerGui):
                     self.Magnifier_format.GetSelection()]                  # 34
 
     def show_img(self):
+
         if self.customfunc.Value and self.out_path_str == "":
             self.out_path(None)
             self.ImgManager.layout_params[33] = self.out_path_str
@@ -1059,7 +1060,6 @@ class MulimgViewer (MulimgViewerGui):
         self.slider_value.SetValue(str(self.ImgManager.action_count))
         self.slider_value_max.SetLabel(
             str(self.ImgManager.max_action_num-1))
-
         # Destroy the window to avoid memory leaks
         try:
             self.img_last.Destroy()
@@ -1076,7 +1076,6 @@ class MulimgViewer (MulimgViewerGui):
                 bmp_processed = self.process_by_custom_func()
             else:
                 bmp_processed = None
-
             flag = self.ImgManager.stitch_images(
                 0, copy.deepcopy(self.xy_magnifier))
             if flag == 0:
@@ -1086,7 +1085,6 @@ class MulimgViewer (MulimgViewerGui):
                 self.show_bmp_in_panel = bmp
                 self.img_size = bmp.size
                 bmp = self.ImgManager.ImgF.PIL2wx(bmp)
-
                 self.img_panel.SetSize(
                     wx.Size(self.img_size[0]+100, self.img_size[1]+100))
                 self.img_last = wx.StaticBitmap(parent=self.img_panel,
@@ -1120,7 +1118,6 @@ class MulimgViewer (MulimgViewerGui):
             else:
                 self.SetStatusText_(
                     ["-1", str(self.ImgManager.action_count)+"/"+str(self.ImgManager.get_dir_num())+" dir", str(self.ImgManager.img_resolution[0])+"x"+str(self.ImgManager.img_resolution[1])+" pixels / "+self.ImgManager.get_stitch_name(), "-1"])
-
             if flag == 1:
                 self.SetStatusText_(
                     ["-1", str(self.ImgManager.action_count)+"/"+str(self.ImgManager.get_dir_num())+" dir", "***Error: "+str(self.ImgManager.name_list[self.ImgManager.action_count]) + ", during stitching images***", "-1"])

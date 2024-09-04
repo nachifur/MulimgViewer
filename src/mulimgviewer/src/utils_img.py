@@ -3,7 +3,7 @@ import json
 import os
 from pathlib import Path
 from shutil import copyfile, move
-
+import textwrap
 from .custom_func.main import main as main_custom_func
 import numpy as np
 import piexif
@@ -567,7 +567,7 @@ class ImgUtils():
             split_num = 2
             title = title_list[i]
             str_ = title_list[i]
-            while title_size[i, 0] > standard_size:
+            while title_size[i*2+1, 0] > standard_size:
                 ids = [0] + [(i+1)*int(len(title)/split_num)
                              for i in range(split_num-1)]
                 str_ = ""
@@ -583,7 +583,7 @@ class ImgUtils():
                 size_edit = draw.multiline_textbbox((0,0),str_, font)
                 size_edit = np.array(size_edit)
                 size_edit = size_edit.reshape(-1, 2)
-                title_size[i, :] = size_edit[0,:]
+                title_size[i*2+1, :] = size_edit[1,:]
                 split_num = split_num+1
                 if split_num > len(title):
                     break
@@ -997,15 +997,33 @@ class ImgManager(ImgData):
         img = Image.new('RGBA', tuple(title_max_size), self.gap_color)
         draw = ImageDraw.Draw(img)
         title_size = self.title_size[id*2+1, :]
-        delta_x = int((title_max_size[0]-title_size[0])/2)
-        if self.title_setting[2]:
-            # up
-            draw.multiline_text(
-                (delta_x, 0), self.title_list[id], font=self.font, fill=self.text_color)
-        else:
-            # down
-            draw.multiline_text(
-                (delta_x, 0), self.title_list[id], font=self.font, fill=self.text_color)
+        delta_x = max(0,int((title_max_size[0]-title_size[0])/2))
+        one_size = int(int(self.title_setting[8])/2)#int(title_size[0]/int(len(self.title_list[id])))
+        wrapper = textwrap.TextWrapper(width=int(int(title_max_size[0])/int(one_size)))  # 设置换行的宽度
+        lines = wrapper.wrap(text=self.title_list[id])
+        if delta_x + title_size[0] >  title_max_size[0]:
+            delta_x = 0
+        y = 0
+        # 遍历处理过的行进行绘制
+        for line in lines:
+            if delta_x + len(line )*one_size > title_max_size[0]:
+                delta_x = 0
+            if self.title_setting[2]:
+                # up
+                draw.text((delta_x, y), line, align="center",font=self.font, fill=self.text_color)
+            else:
+                # down
+                draw.text((delta_x, y), line, align="center",font=self.font, fill=self.text_color)
+            y += int(self.title_setting[8])  # 增加y轴偏移量，确保每行文本不重叠
+
+        # if self.title_setting[2]:
+        #     # up
+        #     draw.multiline_text(
+        #         (delta_x, 0), self.title_list[id], font=self.font, fill=self.text_color,align="left")
+        # else:
+        #     # down (anchor=None,spacing=0,align="left",direction=None,features=None)
+        #     draw.multiline_text(
+        #         (delta_x, 0), self.title_list[id], font=self.font, fill=self.text_color,align="left")
         return img
 
     def title_init(self, width_2, height_2):

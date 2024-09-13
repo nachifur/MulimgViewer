@@ -19,7 +19,7 @@
     <property name="lua_skip_events">1</property>
     <property name="lua_ui_table">UI</property>
     <property name="name">mulimg_viewer</property>
-    <property name="path">C:\Users\46225\Desktop\8.21\fork8242\MulimgViewer\src\mulimgviewer\gui</property>
+    <property name="path">D:\ncfey\Desktop\github\MulimgViewer\src\mulimgviewer\gui</property>
     <property name="php_disconnect_events">0</property>
     <property name="php_disconnect_mode">source_name</property>
     <property name="php_skip_events">1</property>
@@ -31,7 +31,7 @@
     <property name="relative_path">1</property>
     <property name="use_microsoft_bom">0</property>
     <property name="use_native_eol">0</property>
-    <object class="Frame" expanded="false">
+    <object class="Frame" expanded="true">
       <property name="aui_managed">0</property>
       <property name="aui_manager_style">wxAUI_MGR_DEFAULT</property>
       <property name="bg"></property>
@@ -5797,7 +5797,7 @@
                                       <property name="caption"></property>
                                       <property name="caption_visible">1</property>
                                       <property name="center_pane">0</property>
-                                      <property name="checked">0</property>
+                                      <property name="checked">1</property>
                                       <property name="close_button">1</property>
                                       <property name="context_help"></property>
                                       <property name="context_menu">1</property>
@@ -6538,7 +6538,7 @@
                                       <property name="resize">Resizable</property>
                                       <property name="selection">0</property>
                                       <property name="show">1</property>
-                                      <property name="size">-1,-1</property>
+                                      <property name="size">80,-1</property>
                                       <property name="style"></property>
                                       <property name="subclass">; ; forward_declare</property>
                                       <property name="toolbar_pane">0</property>

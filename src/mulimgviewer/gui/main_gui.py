@@ -474,6 +474,7 @@ class MulimgViewerGui ( wx.Frame ):
 		wSizer2.Add( self.m_staticline11, 0, wx.EXPAND |wx.ALL, 5 )
 
 		self.title_auto = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"Auto", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.title_auto.SetValue(True)
 		wSizer2.Add( self.title_auto, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
 		self.title_exif = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"EXIF", wx.DefaultPosition, wx.DefaultSize, 0 )
@@ -527,7 +528,7 @@ class MulimgViewerGui ( wx.Frame ):
 		wSizer2.Add( self.title_font_size, 0, wx.ALL, 5 )
 
 		title_fontChoices = []
-		self.title_font = wx.Choice( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.Size( -1,-1 ), title_fontChoices, 0 )
+		self.title_font = wx.Choice( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.Size( 80,-1 ), title_fontChoices, 0 )
 		self.title_font.SetSelection( 0 )
 		wSizer2.Add( self.title_font, 0, wx.ALL, 5 )
 

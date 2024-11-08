@@ -450,9 +450,9 @@ class MulimgViewerGui ( wx.Frame ):
 
 		wSizer111.Add( self.m_staticText36, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
-		Magnifier_formatChoices = [ u"equal length width", u"equal width", u"equal height " ]
+		Magnifier_formatChoices = [ u"equal width height", u"equal width", u"equal height " ]
 		self.Magnifier_format = wx.Choice( self.m_panel4, wx.ID_ANY, wx.Point( -1,-1 ), wx.DefaultSize, Magnifier_formatChoices, 0 )
-		self.Magnifier_format.SetSelection( 1 )
+		self.Magnifier_format.SetSelection( 0 )
 		wSizer111.Add( self.Magnifier_format, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
 

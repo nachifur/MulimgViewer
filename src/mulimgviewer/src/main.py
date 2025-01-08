@@ -115,6 +115,8 @@ class MulimgViewer (MulimgViewerGui):
             except:
                 pass
 
+        self.load_configuration( None , config_name="output.json")
+
     def EVT_MY_TEST_OnHandle(self, event):
         self.about_gui(None, update=True, new_version=event.GetEventArgs())
 
@@ -1384,12 +1386,15 @@ class MulimgViewer (MulimgViewerGui):
             'title_show_suffix': self.title_show_suffix.GetValue(),
             'title_down_up': self.title_down_up.GetValue(),
         }
-
-        with open('output.json', 'w') as file:
+        flip_cursor_path = Path(get_resource_path(str(Path("configs"))))
+        flip_cursor_path = str(flip_cursor_path / "output.json")
+        with open(flip_cursor_path, 'w') as file:
             json.dump(data, file, indent=1)
 
     def load_configuration(self, event, config_name="output.json"):
-        with open(config_name, 'r') as file:
+        flip_cursor_path = Path(get_resource_path(str(Path("configs"))))
+        flip_cursor_path = str(flip_cursor_path / config_name)
+        with open(flip_cursor_path, 'r') as file:
             data = json.load(file)
             self.row_col.SetValue(data['row_col'])
             self.row_col_one_img.SetValue(data['row_col_one_img'])
@@ -1437,5 +1442,8 @@ class MulimgViewer (MulimgViewerGui):
             self.title_down_up.SetValue(data['title_down_up'])
 
     def reset_configuration(self, event):
+        json_path = Path(get_resource_path(str(Path("configs"))))
+        output_json_path = str(json_path / "output.json")
+        output_s_json_path = str(json_path / "output_s.json")
         self.load_configuration(event, config_name="output_s.json")
-        shutil.copy("output_s.json", "output.json")
+        shutil.copy(output_s_json_path, output_json_path)

@@ -1012,7 +1012,7 @@ class ImgManager(ImgData):
             delta_x = max(0,int((title_max_size[0]-title_size[0])/2))
         elif title_position == 2:
             # right
-            delta_x = title_max_size[0]-title_size[0] 
+            delta_x = title_max_size[0]-title_size[0]
         y = 0
         # 遍历处理过的行进行绘制
         for line in lines:

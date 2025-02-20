@@ -1003,6 +1003,16 @@ class ImgManager(ImgData):
         lines = wrapper.wrap(text=self.title_list[id])
         if delta_x + title_size[0] >  title_max_size[0]:
             delta_x = 0
+        title_position=self.title_setting[10]
+        if title_position == 0:
+                # left
+            delta_x = 0
+        elif title_position == 1:
+            # center
+            delta_x = max(0,int((title_max_size[0]-title_size[0])/2))
+        elif title_position == 2:
+            # right
+            delta_x = title_max_size[0]-title_size[0] 
         y = 0
         # 遍历处理过的行进行绘制
         for line in lines:

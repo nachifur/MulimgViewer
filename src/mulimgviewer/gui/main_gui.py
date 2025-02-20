@@ -506,7 +506,7 @@ class MulimgViewerGui ( wx.Frame ):
 
 		title_positionChoices = [ u"left", u"center", u"right" ]
 		self.title_position = wx.Choice( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.Size( 45,-1 ), title_positionChoices, 0 )
-		self.title_position.SetSelection( 0 )
+		self.title_position.SetSelection( 1 )
 		self.title_position.Enable( False )
 
 		wSizer2.Add( self.title_position, 0, wx.ALL, 5 )

@@ -968,5 +968,3 @@ class MulimgViewerGui ( wx.Frame ):
 
 	def about_gui( self, event ):
 		event.Skip()
-
-

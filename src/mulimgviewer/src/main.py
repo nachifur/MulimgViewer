@@ -736,7 +736,7 @@ class MulimgViewer (MulimgViewerGui):
                 self.right_img(event)
             else:
                 self.left_img(event)
-        
+
         # zoom
         i_cur = 0
         status_toggle = [self.magnifier, self.rotation, self.flip]

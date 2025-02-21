@@ -160,7 +160,7 @@ class MulimgViewerGui ( wx.Frame ):
 
 		choice_normalized_sizeChoices = [ u"Resize", u"Crop", u"Fill" ]
 		self.choice_normalized_size = wx.Choice( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.Size( 90,-1 ), choice_normalized_sizeChoices, 0 )
-		self.choice_normalized_size.SetSelection( 2 )
+		self.choice_normalized_size.SetSelection( 0 )
 		bSizer16.Add( self.choice_normalized_size, 0, wx.ALL|wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
 
@@ -474,6 +474,7 @@ class MulimgViewerGui ( wx.Frame ):
 		wSizer2.Add( self.m_staticline11, 0, wx.EXPAND |wx.ALL, 5 )
 
 		self.title_auto = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"Auto", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.title_auto.SetValue(True)
 		wSizer2.Add( self.title_auto, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
 		self.title_exif = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"EXIF", wx.DefaultPosition, wx.DefaultSize, 0 )
@@ -506,6 +507,8 @@ class MulimgViewerGui ( wx.Frame ):
 		title_positionChoices = [ u"left", u"center", u"right" ]
 		self.title_position = wx.Choice( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.Size( 45,-1 ), title_positionChoices, 0 )
 		self.title_position.SetSelection( 1 )
+		self.title_position.Enable( False )
+
 		wSizer2.Add( self.title_position, 0, wx.ALL, 5 )
 
 		self.title_down_up = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"Down", wx.DefaultPosition, wx.DefaultSize, 0 )

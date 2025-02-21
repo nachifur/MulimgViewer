@@ -762,9 +762,9 @@ class MulimgViewer (MulimgViewerGui):
         # move
         if self.shift_pressed:
             if event.GetWheelRotation()>0:
-                self.right_img(event) 
+                self.right_img(event)
             else:
-                self.left_img(event) 
+                self.left_img(event)
         if self.key_status["ctrl"] == 0 and event.GetWheelDelta() >= 120:
             if event.WheelAxis == 0 and self.shift_pressed == 0:
                 if event.GetWheelRotation() > 0:

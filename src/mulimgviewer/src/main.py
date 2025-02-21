@@ -18,7 +18,6 @@ import shutil
 class MulimgViewer (MulimgViewerGui):
 
     def __init__(self, parent, UpdateUI, get_type, default_path=None):
-        self.shift_pressed = False
         super().__init__(parent)
         self.create_ImgManager()
         self.UpdateUI = UpdateUI
@@ -729,13 +728,6 @@ class MulimgViewer (MulimgViewerGui):
 
     def img_wheel(self, event):
         # https://wxpython.org/Phoenix/docs/html/wx.MouseEvent.html
-        if self.shift_pressed:
-            delta=event.GetWheelDelta()
-            rotation=event.GetWheelRotation()
-            if rotation>0:
-                self.right_img(event)
-            else:
-                self.left_img(event)
 
         # zoom
         i_cur = 0
@@ -751,10 +743,10 @@ class MulimgViewer (MulimgViewerGui):
                     self.show_scale_proportion = self.show_scale_proportion-speed
                 if self.show_scale_proportion > 0:
                     show_scale = [1*(1+self.show_scale_proportion),
-                                1*(1+self.show_scale_proportion)]
+                                  1*(1+self.show_scale_proportion)]
                 elif self.show_scale_proportion < 0:
                     show_scale = [1/(1-self.show_scale_proportion),
-                                1/(1-self.show_scale_proportion)]
+                                  1/(1-self.show_scale_proportion)]
                 else:
                     show_scale = [1, 1]
                 self.show_scale.Value = str(
@@ -815,7 +807,6 @@ class MulimgViewer (MulimgViewerGui):
             if self.key_status["ctrl"] == 0:
                 self.key_status["ctrl"] = 1
         elif event.GetKeyCode() == wx.WXK_SHIFT:
-            self.shift_pressed = True
             if self.key_status["shift"] == 0:
                 self.key_status["shift"] = 1
             elif self.key_status["shift"] == 1:
@@ -826,8 +817,7 @@ class MulimgViewer (MulimgViewerGui):
             if self.key_status["ctrl"] == 1:
                 self.key_status["ctrl"] = 0
         elif event.GetKeyCode() == wx.WXK_SHIFT:
-            self.shift_pressed = False
-        event.Skip()
+            pass
 
     def get_speed(self, name="pixel"):
         if name == "pixel":

@@ -18,6 +18,7 @@ import shutil
 class MulimgViewer (MulimgViewerGui):
 
     def __init__(self, parent, UpdateUI, get_type, default_path=None):
+        self.shift_pressed=False
         super().__init__(parent)
         self.create_ImgManager()
         self.UpdateUI = UpdateUI
@@ -759,8 +760,13 @@ class MulimgViewer (MulimgViewerGui):
             pass
 
         # move
+        if self.shift_pressed:
+            if event.GetWheelRotation()>0:
+                self.right_img(event)
+            else:
+                self.left_img(event)
         if self.key_status["ctrl"] == 0 and event.GetWheelDelta() >= 120:
-            if event.WheelAxis == 0:
+            if event.WheelAxis == 0 and self.shift_pressed == 0:
                 if event.GetWheelRotation() > 0:
                     self.up_img(event)
                 else:
@@ -807,6 +813,7 @@ class MulimgViewer (MulimgViewerGui):
             if self.key_status["ctrl"] == 0:
                 self.key_status["ctrl"] = 1
         elif event.GetKeyCode() == wx.WXK_SHIFT:
+            self.shift_pressed = True
             if self.key_status["shift"] == 0:
                 self.key_status["shift"] = 1
             elif self.key_status["shift"] == 1:
@@ -817,7 +824,7 @@ class MulimgViewer (MulimgViewerGui):
             if self.key_status["ctrl"] == 1:
                 self.key_status["ctrl"] = 0
         elif event.GetKeyCode() == wx.WXK_SHIFT:
-            pass
+            self.shift_pressed = False
 
     def get_speed(self, name="pixel"):
         if name == "pixel":

@@ -58,7 +58,7 @@ class MulimgViewer (MulimgViewerGui):
         self.box_id = -1
         self.xy_magnifier = []
         self.show_scale_proportion = 0
-        self.key_status = {"shift": 0, "ctrl": 0, "alt": 0}
+        self.key_status = {"shift_s": 0, "ctrl": 0, "alt": 0}
         self.indextablegui = None
         self.aboutgui = None
         self.icon = wx.Icon(get_resource_path(
@@ -762,9 +762,9 @@ class MulimgViewer (MulimgViewerGui):
         # move
         if self.shift_pressed:
             if event.GetWheelRotation()>0:
-                self.right_img(event)
-            else:
                 self.left_img(event)
+            else:
+                self.right_img(event)
         if self.key_status["ctrl"] == 0 and event.GetWheelDelta() >= 120:
             if event.WheelAxis == 0 and self.shift_pressed == 0:
                 if event.GetWheelRotation() > 0:
@@ -773,9 +773,9 @@ class MulimgViewer (MulimgViewerGui):
                     self.down_img(event)
             else:
                 if event.GetWheelRotation() > 0:
-                    self.right_img(event)
-                else:
                     self.left_img(event)
+                else:
+                    self.right_img(event)
 
     def adjust_show_scale_proportion(self):
         # check "cur_scale", and adjust "self.show_scale_proportion"
@@ -814,10 +814,14 @@ class MulimgViewer (MulimgViewerGui):
                 self.key_status["ctrl"] = 1
         elif event.GetKeyCode() == wx.WXK_SHIFT:
             self.shift_pressed = True
-            if self.key_status["shift"] == 0:
-                self.key_status["shift"] = 1
-            elif self.key_status["shift"] == 1:
-                self.key_status["shift"] = 0
+            # 检查是否同时按下 Shift 和 'S'
+        elif event.GetKeyCode() == ord('S'):
+            if self.shift_pressed == True:
+                # Shift + S 被按下，做出反应
+                if self.key_status["shift_s"] == 0:
+                    self.key_status["shift_s"] = 1
+                elif self.key_status["shift_s"] == 1:
+                    self.key_status["shift_s"] = 0
 
     def key_up_detect(self, event):
         if event.GetKeyCode() == wx.WXK_CONTROL:
@@ -828,12 +832,12 @@ class MulimgViewer (MulimgViewerGui):
 
     def get_speed(self, name="pixel"):
         if name == "pixel":
-            if self.key_status["shift"] == 1:
+            if self.key_status["shift_s"] == 1:
                 speed = 5
             else:
                 speed = 1
         elif name == "scale":
-            if self.key_status["shift"] == 1:
+            if self.key_status["shift_s"] == 1:
                 speed = 0.5
             else:
                 speed = 0.1

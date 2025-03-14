@@ -6,7 +6,7 @@ from shutil import copyfile, move
 import textwrap
 from .custom_func.main import main as main_custom_func
 import numpy as np
-import piexif 
+import piexif
 import wx
 from PIL import Image, ImageDraw, ImageFont
 import imageio
@@ -28,7 +28,7 @@ class Save():
                         save_image.save(new_path, 'PDF')
         except:
                 print("error")
-        
+
 class ImgUtils():
     """The set of functional programming modules"""
 

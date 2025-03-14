@@ -6,36 +6,29 @@ from shutil import copyfile, move
 import textwrap
 from .custom_func.main import main as main_custom_func
 import numpy as np
-import piexif 
+import piexif
 import wx
 from PIL import Image, ImageDraw, ImageFont
 import imageio
 
 from .data import ImgData
 from .utils import rgb2hex
-class Save():#修改添加起始
-    '''def __init__(self):
-        self.save_formatChoices = [ u"png", u"pdf", u"jpg" ]
-        self.save_format=wx.ComboBox(self, -1, u"png", choices=self.save_formatChoices, style=wx.CB_READONLY)
-        self.save_format.SetSelection(0) '''
-
+class Save():
     def save_convert_image(png_path,save_image,save_format=0):
-                # 根据目标格式保存图像
         try:
-                img = save_image
                 if save_format == 0:
-                    img.save(png_path, 'PNG')
+                    save_image.save(png_path, 'PNG')
                 else:
                     if save_format == 2:
-                        rgb_img = img.convert('RGB')
+                        rgb_img = save_image.convert('RGB')
                         new_path = os.path.splitext(png_path)[0] + '.jpg'
                         rgb_img.save(new_path, 'JPEG')
                     else:
                         new_path = os.path.splitext(png_path)[0] + '.pdf'
-                        img.save(new_path, 'PDF')
+                        save_image.save(new_path, 'PDF')
         except:
                 print("error")
-        
+
 class ImgUtils():
     """The set of functional programming modules"""
 

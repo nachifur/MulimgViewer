@@ -166,6 +166,21 @@ class MulimgViewerGui ( wx.Frame ):
 
 		fgSizer3.Add( bSizer16, 1, wx.EXPAND, 5 )
 
+		bSizer162 = wx.BoxSizer( wx.HORIZONTAL )
+
+		self.m_staticText211 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"save format", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText211.Wrap( -1 )
+
+		bSizer162.Add( self.m_staticText211, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+
+		save_formatChoices = [ u"png", u"pdf", u"jpg" ]
+		self.save_format = wx.Choice( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.Size( 90,-1 ), save_formatChoices, 0 )
+		self.save_format.SetSelection( 0 )
+		bSizer162.Add( self.save_format, 0, wx.ALL|wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL, 5 )
+
+
+		fgSizer3.Add( bSizer162, 1, wx.EXPAND, 5 )
+
 		bSizer15 = wx.BoxSizer( wx.HORIZONTAL )
 
 		self.m_staticText19 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"OutputMode", wx.DefaultPosition, wx.DefaultSize, 0 )
@@ -506,7 +521,7 @@ class MulimgViewerGui ( wx.Frame ):
 
 		title_positionChoices = [ u"left", u"center", u"right" ]
 		self.title_position = wx.Choice( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.Size( 45,-1 ), title_positionChoices, 0 )
-		self.title_position.SetSelection( 1 )
+		self.title_position.SetSelection( 0 )
 		self.title_position.Enable( False )
 
 		wSizer2.Add( self.title_position, 0, wx.ALL, 5 )
@@ -811,6 +826,7 @@ class MulimgViewerGui ( wx.Frame ):
 		self.m_splitter1.Bind( wx.EVT_SPLITTER_SASH_POS_CHANGED, self.split_sash_pos_changed )
 		self.m_splitter1.Bind( wx.EVT_SPLITTER_SASH_POS_CHANGING, self.split_sash_pos_changing )
 		self.choice_normalized_size.Bind( wx.EVT_CHOICE, self.change_img_stitch_mode )
+		self.save_format.Bind( wx.EVT_CHOICE, self.change_img_stitch_mode )
 		self.parallel_sequential.Bind( wx.EVT_CHECKBOX, self.parallel_sequential_fc )
 		self.parallel_to_sequential.Bind( wx.EVT_CHECKBOX, self.parallel_to_sequential_fc )
 		self.load_config_button.Bind( wx.EVT_BUTTON, self.load_configuration )
@@ -891,6 +907,7 @@ class MulimgViewerGui ( wx.Frame ):
 
 	def change_img_stitch_mode( self, event ):
 		event.Skip()
+
 
 	def parallel_sequential_fc( self, event ):
 		event.Skip()

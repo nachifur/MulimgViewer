@@ -1043,7 +1043,8 @@ class MulimgViewer (MulimgViewerGui):
                     magnifier_out_scale,                    # 31
                     self.customfunc.Value,                  # 32
                     self.out_path_str,                      # 33
-                    self.Magnifier_format.GetSelection()]                  # 34
+                    self.Magnifier_format.GetSelection(),   # 34
+                    self.save_format.GetSelection()]        # 35
 
     def show_img(self):
 
@@ -1396,6 +1397,7 @@ class MulimgViewer (MulimgViewerGui):
             'title_show_name': self.title_show_name.GetValue(),
             'title_show_suffix': self.title_show_suffix.GetValue(),
             'title_down_up': self.title_down_up.GetValue(),
+            'save_format': self.save_format.GetSelection(),
         }
         flip_cursor_path = Path(get_resource_path(str(Path("configs"))))
         flip_cursor_path = str(flip_cursor_path / "output.json")
@@ -1451,6 +1453,7 @@ class MulimgViewer (MulimgViewerGui):
             self.title_show_name.SetValue(data['title_show_name'])
             self.title_show_suffix.SetValue(data['title_show_suffix'])
             self.title_down_up.SetValue(data['title_down_up'])
+            self.save_format.SetSelection(data['save_format'])
 
     def reset_configuration(self, event):
         json_path = Path(get_resource_path(str(Path("configs"))))

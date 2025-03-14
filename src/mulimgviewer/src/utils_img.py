@@ -6,15 +6,36 @@ from shutil import copyfile, move
 import textwrap
 from .custom_func.main import main as main_custom_func
 import numpy as np
-import piexif
+import piexif 
 import wx
 from PIL import Image, ImageDraw, ImageFont
 import imageio
 
 from .data import ImgData
 from .utils import rgb2hex
+class Save():#修改添加起始
+    '''def __init__(self):
+        self.save_formatChoices = [ u"png", u"pdf", u"jpg" ]
+        self.save_format=wx.ComboBox(self, -1, u"png", choices=self.save_formatChoices, style=wx.CB_READONLY)
+        self.save_format.SetSelection(0) '''
 
-
+    def save_convert_image(png_path,save_image,save_format=0):
+                # 根据目标格式保存图像
+        try:
+                img = save_image
+                if save_format == 0:
+                    img.save(png_path, 'PNG')
+                else:
+                    if save_format == 2:
+                        rgb_img = img.convert('RGB')
+                        new_path = os.path.splitext(png_path)[0] + '.jpg'
+                        rgb_img.save(new_path, 'JPEG')
+                    else:
+                        new_path = os.path.splitext(png_path)[0] + '.pdf'
+                        img.save(new_path, 'PDF')
+        except:
+                print("error")
+        
 class ImgUtils():
     """The set of functional programming modules"""
 
@@ -609,10 +630,10 @@ class ImgUtils():
         img.paste(img2,(0,img1.size[1]))
         return img
 
-class ImgManager(ImgData):
+class ImgManager(ImgData,Save):
     """Multi-image manager.
     Multi-image parallel magnification, stitching, saving, rotation"""
-
+    save_instance = Save()#修改添加一行
     def __init__(self):
         self.layout_params = []
         self.gap_color = (0, 0, 0, 0)
@@ -908,7 +929,6 @@ class ImgManager(ImgData):
                         gap_x_y_2[0][row,col] = gap_x_y_2[0][row,col]+int((width_2[0][col]-width_2[row,col])/2)
                     else:
                         width_2[row,col]=width_2[0][col]
-
         # correct row_col2
         if self.box_position != 0 and first_run:
             row_col_ = np.argwhere(new_add_gap_rowcol_flag==1).tolist()[0]
@@ -1451,8 +1471,7 @@ class ImgManager(ImgData):
                     1, copy.deepcopy(self.draw_points)))
             else:
                 self.check_1.append(self.stitch_images(1))
-
-        self.img.save(f_path_output)
+        Save.save_convert_image(f_path_output,self.img,save_format=self.layout_params[35])
 
     def get_stitch_name(self):
         name_first = self.flist[0]
@@ -1508,7 +1527,7 @@ class ImgManager(ImgData):
                             for img in img_list:
                                 f_path_output = Path(
                                     self.out_path_str) / dir_name/sub_dir_name / (str_+"_magnifier_"+str(i)+".png")
-                                img.save(f_path_output)
+                                Save.save_convert_image(f_path_output,img,save_format=self.layout_params[35])
                                 i += 1
                 else:
                     # origin image with box
@@ -1524,7 +1543,7 @@ class ImgManager(ImgData):
                         for img in img_list:
                             f_path_output = Path(self.out_path_str) / dir_name / (Path(self.flist[i]).parent).stem / (
                                 (Path(self.flist[i]).parent).stem+"_"+Path(self.flist[i]).stem+"_magnifier_"+str(ii)+".png")
-                            img.save(f_path_output)
+                            Save.save_convert_image(f_path_output,img,save_format=self.layout_params[35])
                             ii += 1
                         i += 1
                 # self.check_2.append(0)
@@ -1552,7 +1571,7 @@ class ImgManager(ImgData):
             if not (Path(self.out_path_str)/sub_dir_name/(Path(self.flist[i]).parent).stem).is_dir():
                 os.makedirs(Path(self.out_path_str) /
                             sub_dir_name/(Path(self.flist[i]).parent).stem)
-            img.save(f_path_output)
+            Save.save_convert_image(f_path_output,img,save_format=self.layout_params[35])
             i += 1
 
     def get_img_row_col(self, i):
@@ -1583,7 +1602,7 @@ class ImgManager(ImgData):
     def rotate(self, id):
         img = Image.open(self.flist[id]).convert(
             'RGB').transpose(Image.ROTATE_270)
-        img.save(self.flist[id])
+        Save.save_convert_image(self.flist[id],img,save_format=self.layout_params[35])
 
     def flip(self, id, FLIP_TOP_BOTTOM=False):
         if FLIP_TOP_BOTTOM:
@@ -1592,4 +1611,4 @@ class ImgManager(ImgData):
         else:
             img = Image.open(self.flist[id]).convert(
                 'RGB').transpose(Image.FLIP_LEFT_RIGHT)
-        img.save(self.flist[id])
+        Save.save_convert_image(self.flist[id],img,save_format=self.layout_params[35])

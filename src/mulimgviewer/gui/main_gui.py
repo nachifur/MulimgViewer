@@ -158,7 +158,7 @@ class MulimgViewerGui ( wx.Frame ):
 
 		bSizer16.Add( self.m_staticText21, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
-		choice_normalized_sizeChoices = [ u"Resize", u"Crop", u"Fill" ]
+		choice_normalized_sizeChoices = [ u"resize", u"crop", u"fill" ]
 		self.choice_normalized_size = wx.Choice( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.Size( 90,-1 ), choice_normalized_sizeChoices, 0 )
 		self.choice_normalized_size.SetSelection( 0 )
 		bSizer16.Add( self.choice_normalized_size, 0, wx.ALL|wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL, 5 )
@@ -168,7 +168,7 @@ class MulimgViewerGui ( wx.Frame ):
 
 		bSizer162 = wx.BoxSizer( wx.HORIZONTAL )
 
-		self.m_staticText211 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"save format", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText211 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"SaveFormat", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText211.Wrap( -1 )
 
 		bSizer162.Add( self.m_staticText211, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
@@ -203,7 +203,7 @@ class MulimgViewerGui ( wx.Frame ):
 
 		bSizer23.Add( self.m_staticText28, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
-		image_interpChoices = [ u"Nearest", u"Cubic", u"Linear" ]
+		image_interpChoices = [ u"nearest", u"cubic", u"linear" ]
 		self.image_interp = wx.Choice( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.Size( 90,-1 ), image_interpChoices, 0 )
 		self.image_interp.SetSelection( 2 )
 		bSizer23.Add( self.image_interp, 0, wx.ALL, 5 )
@@ -521,7 +521,7 @@ class MulimgViewerGui ( wx.Frame ):
 
 		title_positionChoices = [ u"left", u"center", u"right" ]
 		self.title_position = wx.Choice( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.Size( 45,-1 ), title_positionChoices, 0 )
-		self.title_position.SetSelection( 0 )
+		self.title_position.SetSelection( 1 )
 		self.title_position.Enable( False )
 
 		wSizer2.Add( self.title_position, 0, wx.ALL, 5 )

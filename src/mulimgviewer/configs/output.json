@@ -36,7 +36,7 @@
  "show_box": true,
  "show_box_in_crop": true,
  "select_img_box": false,
- "title_auto": false,
+ "title_auto": true,
  "title_exif": false,
  "title_show_parent": false,
  "title_show_prefix": true,

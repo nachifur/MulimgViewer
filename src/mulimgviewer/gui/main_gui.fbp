@@ -19,7 +19,7 @@
     <property name="lua_skip_events">1</property>
     <property name="lua_ui_table">UI</property>
     <property name="name">mulimg_viewer</property>
-    <property name="path">C:\Users\46225\Desktop\MulimgViewer\3.14\MulimgViewer\src\mulimgviewer\gui</property>
+    <property name="path">D:\ncfey\Desktop\github\MulimgViewer\src\mulimgviewer\gui</property>
     <property name="php_disconnect_events">0</property>
     <property name="php_disconnect_mode">source_name</property>
     <property name="php_skip_events">1</property>
@@ -1904,7 +1904,7 @@
                                       <property name="caption"></property>
                                       <property name="caption_visible">1</property>
                                       <property name="center_pane">0</property>
-                                      <property name="choices">&quot;Resize&quot; &quot;Crop&quot; &quot;Fill&quot;</property>
+                                      <property name="choices">&quot;resize&quot; &quot;crop&quot; &quot;fill&quot;</property>
                                       <property name="close_button">1</property>
                                       <property name="context_help"></property>
                                       <property name="context_menu">1</property>
@@ -1996,7 +1996,7 @@
                                       <property name="gripper">0</property>
                                       <property name="hidden">0</property>
                                       <property name="id">wxID_ANY</property>
-                                      <property name="label">save format</property>
+                                      <property name="label">SaveFormat</property>
                                       <property name="markup">0</property>
                                       <property name="max_size"></property>
                                       <property name="maximize_button">0</property>
@@ -2320,7 +2320,7 @@
                                       <property name="caption"></property>
                                       <property name="caption_visible">1</property>
                                       <property name="center_pane">0</property>
-                                      <property name="choices">&quot;Nearest&quot; &quot;Cubic&quot; &quot;Linear&quot;</property>
+                                      <property name="choices">&quot;nearest&quot; &quot;cubic&quot; &quot;linear&quot;</property>
                                       <property name="close_button">1</property>
                                       <property name="context_help"></property>
                                       <property name="context_menu">1</property>
@@ -6358,7 +6358,7 @@
                                       <property name="pin_button">1</property>
                                       <property name="pos"></property>
                                       <property name="resize">Resizable</property>
-                                      <property name="selection">0</property>
+                                      <property name="selection">1</property>
                                       <property name="show">1</property>
                                       <property name="size">45,-1</property>
                                       <property name="style"></property>

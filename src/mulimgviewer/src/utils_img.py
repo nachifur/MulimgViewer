@@ -331,18 +331,17 @@ class ImgUtils():
             res_a = 0
         else:
             res_a = res_ / (number-1)
-
         # Quantitative change causes qualitative change
         add_ = 0
         add_gap = 0
         gap_out = []
         for i in range(number):
-            gap_out.append(gap+add_gap)
+            gap_out.append(gap + add_gap)
 
             add_ = add_+res_a
             if add_ >= 1:
                 add_ -= 1
-                add_gap = 1
+                add_gap = 0
             else:
                 add_gap = 0
 

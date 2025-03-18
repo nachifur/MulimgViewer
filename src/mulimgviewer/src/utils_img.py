@@ -764,7 +764,6 @@ class ImgManager(ImgData,Save):
             gap_x_y_2[1].append(0)
         else:
             layout_level_2.append(0)
-
         # show magnifier img
         self.magnifier_flag = self.layout_params[7]
         self.show_crop = self.layout_params[18]
@@ -922,14 +921,13 @@ class ImgManager(ImgData,Save):
                     else:
                         width_2[row,col]=width_2[0][col]
         # correct row_col2
-        if self.box_position != 0 and first_run:
-            row_col_ = np.argwhere(new_add_gap_rowcol_flag==1).tolist()[0]
-            if row_col_[0]>row_col_[1]:
-                self.layout_params[2][0] = row_col2[0]+1
+        if self.box_position != 0 and first_run and np.argwhere(new_add_gap_rowcol_flag == 1).tolist():# Determine if new_add_gap_rowcol_flag is null
+            row_col_ = np.argwhere(new_add_gap_rowcol_flag == 1).tolist()[0]
+            if row_col_[0] > row_col_[1]:
+                self.layout_params[2][0] = row_col2[0] + 1
             else:
-                self.layout_params[2][1] = row_col2[1]+1
+                self.layout_params[2][1] = row_col2[1] + 1
             return self.stitch_img_init(img_mode, draw_points, first_run=False)
-
 
         if sum(layout_level_2) != 0:
             # Since the title is up, we need to correct crop_points

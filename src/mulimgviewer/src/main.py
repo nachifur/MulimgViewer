@@ -582,7 +582,9 @@ class MulimgViewer (MulimgViewerGui):
         if self.flip.Value:
             x, y = event.GetPosition()
             self.ImgManager.flip(self.get_img_id_from_point(
-                [x, y], img=True), FLIP_TOP_BOTTOM=self.checkBox_orientation.Value)
+                [x, y], img=True), FLIP_TOP_BOTTOM=False)
+            # self.ImgManager.flip(self.get_img_id_from_point(
+            #     [x, y], img=True), FLIP_TOP_BOTTOM=self.checkBox_orientation.Value)
             self.refresh(event)
 
             self.SetStatusText_(["Flip", "-1", "-1", "-1"])

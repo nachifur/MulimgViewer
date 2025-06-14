@@ -60,6 +60,11 @@ class MulimgViewerGui ( wx.Frame ):
 
 		wSizer1.Add( self.left_arrow_button, 0, wx.ALL|wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
+		self.browsing_button = wx.ToggleButton( self.m_panel1, wx.ID_ANY, u"▷", wx.DefaultPosition, wx.Size( 50,30 ), 0 )
+		self.browsing_button.SetFont( wx.Font( 20, wx.FONTFAMILY_ROMAN, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL, False, "Times New Roman" ) )
+
+		wSizer1.Add( self.browsing_button, 0, wx.ALL, 5 )
+
 		self.right_arrow_button = wx.Button( self.m_panel1, wx.ID_ANY, u">", wx.DefaultPosition, wx.Size( 50,30 ), 0 )
 		self.right_arrow_button.SetFont( wx.Font( 20, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL, False, wx.EmptyString ) )
 
@@ -266,6 +271,19 @@ class MulimgViewerGui ( wx.Frame ):
 
 		self.reset_config_button = wx.Button( self.m_panel4, wx.ID_ANY, u"Reset", wx.DefaultPosition, wx.Size( 50,-1 ), 0 )
 		wSizer112.Add( self.reset_config_button, 0, wx.ALL, 5 )
+
+		bSizer17 = wx.BoxSizer( wx.HORIZONTAL )
+
+		self.m_staticText382 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"FrameInterval(s):", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText382.Wrap( -1 )
+
+		bSizer17.Add( self.m_staticText382, 0, wx.ALL, 5 )
+
+		self.m_textCtrl15 = wx.TextCtrl( self.m_panel4, wx.ID_ANY, u"1.0", wx.DefaultPosition, wx.DefaultSize, 0 )
+		bSizer17.Add( self.m_textCtrl15, 0, wx.ALL, 5 )
+
+
+		wSizer112.Add( bSizer17, 1, wx.EXPAND, 5 )
 
 
 		fgSizer3.Add( wSizer112, 1, wx.EXPAND, 5 )
@@ -816,6 +834,7 @@ class MulimgViewerGui ( wx.Frame ):
 		self.out_path_button.Bind( wx.EVT_BUTTON, self.out_path )
 		self.save_butoon.Bind( wx.EVT_BUTTON, self.save_img )
 		self.left_arrow_button.Bind( wx.EVT_BUTTON, self.last_img )
+		self.browsing_button.Bind( wx.EVT_TOGGLEBUTTON, self.auto_browsing )
 		self.right_arrow_button.Bind( wx.EVT_BUTTON, self.next_img )
 		self.refresh_button.Bind( wx.EVT_BUTTON, self.refresh )
 		self.slider_value.Bind( wx.EVT_TEXT_ENTER, self.slider_value_change )
@@ -876,6 +895,9 @@ class MulimgViewerGui ( wx.Frame ):
 		event.Skip()
 
 	def last_img( self, event ):
+		event.Skip()
+
+	def auto_browsing( self, event ):
 		event.Skip()
 
 	def next_img( self, event ):

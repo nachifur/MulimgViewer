@@ -23,6 +23,10 @@ class MulimgViewer (MulimgViewerGui):
         self.create_ImgManager()
         self.UpdateUI = UpdateUI
         self.get_type = get_type
+        self.timer = wx.Timer(self)
+        self.Bind(wx.EVT_TIMER, self.on_timer)
+        self.is_browsing_button = False
+        self.browsing_direction = None
 
         acceltbl = wx.AcceleratorTable([(wx.ACCEL_NORMAL, wx.WXK_UP,
                                          self.menu_up.GetId()),
@@ -71,6 +75,7 @@ class MulimgViewer (MulimgViewerGui):
         self.out_path_button.SetToolTip("out path")
         self.save_butoon.SetToolTip("save")
         self.left_arrow_button.SetToolTip("left arrow")
+        self.browsing_button.SetToolTip("browsing")    
         self.right_arrow_button.SetToolTip("right arrow")
         self.refresh_button.SetToolTip("refresh")
         self.save_config_button.SetToolTip("save_configuration")
@@ -191,6 +196,16 @@ class MulimgViewer (MulimgViewerGui):
             self.SetStatusText_(
                 ["-1", "", "***Error: First, need to select the input dir***", "-1"])
         self.SetStatusText_(["Next", "-1", "-1", "-1"])
+        if self.is_browsing_button:
+            self.browsing_direction = 'right'
+            try:
+                interval = float(self.m_textCtrl15.GetValue()) * 1000
+                interval = int(interval)
+                if interval <= 0:
+                    interval = 1000  
+            except ValueError:
+                interval = 1000  
+            self.timer.Start(interval)
 
     def last_img(self, event):
         if self.ImgManager.img_num != 0:
@@ -201,6 +216,37 @@ class MulimgViewer (MulimgViewerGui):
             self.SetStatusText_(
                 ["-1",  "", "***Error: First, need to select the input dir***", "-1"])
         self.SetStatusText_(["Last", "-1", "-1", "-1"])
+        if self.is_browsing_button:
+            self.browsing_direction = 'left'
+            try:
+                interval = float(self.m_textCtrl15.GetValue()) * 1000
+                interval = int(interval)
+                if interval <= 0:
+                    interval = 1000  
+            except ValueError:
+                interval = 1000  
+            self.timer.Start(interval)
+    
+    def auto_browsing(self, event):
+        self.is_browsing_button = self.browsing_button.GetValue()
+        if self.is_browsing_button:
+            try:
+                interval = float(self.m_textCtrl15.GetValue()) * 1000
+                interval = int(interval)
+                if interval <= 0:
+                        interval = 1000  
+            except ValueError:
+                    interval = 1000  
+            self.timer.Start(interval)
+        else:
+            self.timer.Stop()  
+            self.browsing_direction = None
+
+    def on_timer(self, event):
+        if self.browsing_direction == 'left':
+            self.last_img(event)
+        elif self.browsing_direction == 'right':
+            self.next_img(event)
 
     def skip_to_n_img(self, event):
         if self.ImgManager.img_num != 0:

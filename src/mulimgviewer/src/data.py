@@ -1,4 +1,3 @@
-
 import csv
 from pathlib import Path
 
@@ -10,12 +9,35 @@ class ImgData():
     """Multi-image database.
     Multi-image browsing, path management, loading multi-image data, automatic layout layout, etc. """
 
+    def __init__(self):
+        # 添加缺失的属性初始化
+        self.format_group = [".png", ".jpg", ".jpeg", ".bmp", ".tif", ".tiff", 
+                            ".PNG", ".JPG", ".JPEG", ".BMP", ".TIF", ".TIFF"]
+        self.img_num = 0
+        self.img_count = 0
+        self.action_count = 0
+        self.count_per_action = 1
+        self.max_action_num = 0
+        self.dataset_mode = False
+        self.csv_flag = 0
+        self.input_path = None
+        self.type = 2
+        self.parallel_to_sequential = False
+        self.path_list = []
+        self.name_list = []
+        self.flist = []
+
     def init(self, input_path, type=2, parallel_to_sequential=False, action_count=None, img_count=None):
         self.input_path = input_path
         self.type = type
         self.parallel_to_sequential = parallel_to_sequential
 
+        print(f"[ImgData调试] 开始初始化 - input_path: {input_path}, type: {type}")
+        
         self.init_flist()
+        
+        print(f"[ImgData调试] init_flist 完成 - name_list: {self.name_list}")
+        
         if self.parallel_to_sequential:
             list_ = []
             for name_list in self.name_list:
@@ -23,6 +45,9 @@ class ImgData():
             self.img_num = len(list_)
         else:
             self.img_num = len(self.name_list)
+        
+        print(f"[ImgData调试] 计算得到 img_num: {self.img_num}")
+        
         # self.set_count_per_action(1)
         if img_count:
             self.img_count = img_count
@@ -56,7 +81,9 @@ class ImgData():
             # one_dir_mul_img
             self.path_list = [self.input_path]
             self.path_list = np.sort(self.path_list)
+            print(f"[ImgData调试] type=2, path_list: {self.path_list}")
             self.name_list = self.get_name_list()
+            print(f"[ImgData调试] type=2, 获取到的 name_list: {self.name_list}")
 
         elif self.type == 3:
             # read file list from a list file
@@ -109,27 +136,53 @@ class ImgData():
         i = 0
         output = []
         for path_ in self.path_list:
+            print(f"[ImgData调试] 处理路径: {path_}")
+            
+            # 检查路径是否存在
+            if not Path(path_).exists():
+                print(f"[ImgData警告] 路径不存在: {path_}")
+                continue
+                
             no_check_list = [str(f.name)
                              for f in Path(path_).iterdir()]
+            print(f"[ImgData调试] 文件夹中所有文件: {no_check_list}")
+            
             if len(no_check_list) > 100:
                 self.dataset_mode = True
                 no_check_list = np.sort(no_check_list)
                 output.append(no_check_list)
+                print(f"[ImgData调试] 大数据集模式，文件数量: {len(no_check_list)}")
             else:
                 self.dataset_mode = False
-                check_list = [str(f.name) for f in Path(path_).iterdir(
-                ) if f.is_file() and f.suffix.lower() in self.format_group]
+                # 修复：确保 self.format_group 存在
+                if not hasattr(self, 'format_group') or not self.format_group:
+                    self.format_group = [".png", ".jpg", ".jpeg", ".bmp", ".tif", ".tiff", 
+                                       ".PNG", ".JPG", ".JPEG", ".BMP", ".TIF", ".TIFF"]
+                    print(f"[ImgData调试] 初始化 format_group: {self.format_group}")
+                
+                check_list = []
+                for f in Path(path_).iterdir():
+                    if f.is_file():
+                        file_suffix = f.suffix.lower()
+                        # 检查文件扩展名是否在支持列表中（忽略大小写）
+                        if any(file_suffix == fmt.lower() for fmt in self.format_group):
+                            check_list.append(str(f.name))
+                
                 check_list = np.sort(check_list)
                 output.append(check_list)
+                print(f"[ImgData调试] 普通模式，匹配的图片文件: {check_list}")
+                
             if not self.parallel_to_sequential:
                 if i == 0:
                     break
             i += 1
 
+        print(f"[ImgData调试] 最终输出: {output}")
+        
         if self.parallel_to_sequential:
             return output
         else:
-            return output[0]
+            return output[0] if len(output) > 0 else []
 
     def add(self):
         if self.action_count < self.max_action_num-1:
@@ -149,7 +202,7 @@ class ImgData():
             self.max_action_num = int(self.img_num/self.count_per_action)
 
     def set_action_count(self, action_count):
-        if action_count < self.max_action_num:
+        if hasattr(self, 'max_action_num') and action_count < self.max_action_num:
             self.action_count = action_count
             self.img_count = self.count_per_action*self.action_count
 
@@ -239,6 +292,7 @@ class ImgData():
             flist = []
 
         self.flist = flist
+        print(f"[ImgData调试] get_flist 返回: {flist}")
         return flist
 
     def get_dir_num(self):

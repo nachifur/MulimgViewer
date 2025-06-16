@@ -636,11 +636,17 @@ class ImgManager(ImgData,Save):
         self.img_resolution = [-1, -1]
         self.custom_resolution = False
         self.img_num = 0
-        self.format_group = [".png", ".jpg", ".jpeg", ".bmp", ".tiff", ".tif"]
+        self.format_group = [".png", ".jpg", ".jpeg", ".bmp", ".tiff", ".tif", 
+                             ".PNG", ".JPG", ".JPEG", ".BMP", ".TIFF", ".TIF"]
         self.crop_points = []
         self.draw_points = []
         self.ImgF = ImgUtils()
         self.path_custom_func_path = ""
+        self.input_path = None
+        self.parallel_to_sequential = False
+        self.count_per_action = 1       
+        self.max_action_num = 0          
+        self.action_count = 0
 
     def get_img_list(self):
         img_list = []
@@ -655,9 +661,12 @@ class ImgManager(ImgData,Save):
                     if img.dtype != np.uint8:
                         img = (255 * img).astype(np.uint8)
                     pil_img = Image.fromarray(img)
+                    pil_img.filename = str(path)  # 加这一行
                     img_list.append(pil_img.convert('RGB'))
                 else:
-                    img_list.append(Image.open(path).convert('RGB'))
+                    img = Image.open(path).convert('RGB')  # 改这一行
+                    img.filename = str(path)  
+                    img_list.append(img)
             else:
                 pass
         # custom process
@@ -705,6 +714,19 @@ class ImgManager(ImgData,Save):
             self.custom_resolution = True
 
         self.img_list = img_list
+
+    def init(self, folder, type=2,parallel_to_sequential=False, action_count=None, img_count=None):
+        """正确调用父类的 init 方法"""
+        # 调用父类 ImgData 的 init 方法
+        super().init(folder, type, parallel_to_sequential, action_count, img_count)
+        
+        # ImgManager 特有的初始化逻辑
+        print(f"[ImgManager] 初始化完成 - img_num: {self.img_num}")
+        print(f"[ImgManager] name_list: {getattr(self, 'name_list', 'undefined')}")
+        
+        # 确保必要的属性存在
+        if not hasattr(self, 'flist'):
+            self.flist = [] 
 
     def set_scale_mode(self, img_mode=0):
         """img_mode, 0: show, 1: save"""
@@ -1003,39 +1025,54 @@ class ImgManager(ImgData,Save):
 
     def title_preprocessing(self, img, id):
         title_max_size = copy.deepcopy(self.title_max_size)
-
+        print(f"id={id}, title_list长度={len(self.title_list)}")
         img = Image.new('RGBA', tuple(title_max_size), self.gap_color)
         draw = ImageDraw.Draw(img)
-        title_size = self.title_size[id*2+1, :]
-        delta_x = max(0,int((title_max_size[0]-title_size[0])/2))
-        one_size = int(int(self.title_setting[8])/2)#int(title_size[0]/int(len(self.title_list[id])))
-        wrapper = textwrap.TextWrapper(width=int(int(title_max_size[0])/int(one_size)))  # 设置换行的宽度
-        lines = wrapper.wrap(text=self.title_list[id])
-        if delta_x + title_size[0] >  title_max_size[0]:
-            delta_x = 0
-        title_position=self.title_setting[10]
-        if title_position == 0:
-                # left
-            delta_x = 0
-        elif title_position == 1:
-            # center
-            delta_x = max(0,int((title_max_size[0]-title_size[0])/2))
-        elif title_position == 2:
-            # right
-            delta_x = title_max_size[0]-title_size[0]
-        y = 0
-        # 遍历处理过的行进行绘制
-        for line in lines:
-            if delta_x + len(line )*one_size > title_max_size[0]:
-                delta_x = 0
-            if self.title_setting[2]:
-                # up
-                draw.text((delta_x, y), line, align="center",font=self.font, fill=self.text_color)
-            else:
-                # down
-                draw.text((delta_x, y), line, align="center",font=self.font, fill=self.text_color)
-            y += int(self.title_setting[8])  # 增加y轴偏移量，确保每行文本不重叠
+        
+        if id < len(self.title_list):
+            text = self.title_list[id]
+            
+            # 计算实际文本尺寸
+            bbox = draw.multiline_textbbox((0, 0), text, font=self.font)
+            text_width = bbox[2] - bbox[0]
 
+            # 根据位置设置计算偏移和对齐方式
+            title_position = self.title_setting[10]
+            
+            if title_position == 0:        # 左对齐
+                delta_x = 0
+                align_mode = "left"
+            elif title_position == 1:      # 居中对齐
+                # 手动计算居中偏移
+                delta_x = max(0, int((title_max_size[0] - text_width) / 2))
+                align_mode = "left"  # 使用左对齐 + 手动偏移
+            elif title_position == 2:      # 右对齐
+                delta_x = max(0, title_max_size[0] - text_width)
+                align_mode = "left"  # 使用左对齐 + 手动偏移
+            else:
+                delta_x = 0
+                align_mode = "left"
+            
+            print(f"[调试] id={id}, 对齐方式: {align_mode}")
+            
+            # 使用 PIL 内置对齐，delta_x=0
+            draw.multiline_text((delta_x, 0), text, font=self.font, fill=self.text_color, align=align_mode)
+        else:
+            print(f"[警告] id={id} 超出title_list长度={len(self.title_list)}，跳过。")
+        
+        return img
+        
+        # 遍历处理过的行进行绘制
+        # for line in lines:
+        #     if delta_x + len(line )*one_size > title_max_size[0]:
+        #         delta_x = 0
+        #     if self.title_setting[2]:
+        #         # up
+        #         draw.text((delta_x, y), line, align="center",font=self.font, fill=self.text_color)
+        #     else:
+        #         # down
+        #         draw.text((delta_x, y), line, align="center",font=self.font, fill=self.text_color)
+        #     y += int(self.title_setting[8])  # 增加y轴偏移量，确保每行文本不重叠
         # if self.title_setting[2]:
         #     # up
         #     draw.multiline_text(
@@ -1044,7 +1081,6 @@ class ImgManager(ImgData,Save):
         #     # down (anchor=None,spacing=0,align="left",direction=None,features=None)
         #     draw.multiline_text(
         #         (delta_x, 0), self.title_list[id], font=self.font, fill=self.text_color,align="left")
-        return img
 
     def title_init(self, width_2, height_2):
         # self.title_setting = self.layout_params[17]
@@ -1061,48 +1097,41 @@ class ImgManager(ImgData,Save):
         #                  self.title_position.GetSelection(),        # 10
         #                  self.title_exif.Value]                     # 11
 
-        # get title
+        # # get title
         title_exif = self.title_setting[11]
         title_list = []
-
-        if title_exif:
+        # 如果使用EXIF，则从EXIF中获取标题
+        if self.title_setting[11]:  
             for img in self.img_list:
-                exif = piexif.load(img.info['exif'])
+                exif = img.info.get('exif')  
+                if not exif:
+                    title = self.auto_generate_title_from_path(img.filename)
+                    title_list.append(title)
+                    continue
                 try:
-                    exif_dict = json.loads(exif["0th"][270])["MulimgViewer"]
-
-                except:
-                    title = str(exif["0th"][270], encoding = "utf-8")
-                else:
-                    i = 0
-                    title = ""
-                    for key in exif_dict.keys():
-                        title = title+key+": "+exif_dict[key]
-                        if i<len(exif_dict.keys())-1:
-                            title = title+"\n"
-                        i+=1
-
-                title_list.append(title)
+                    exif_dict_raw = piexif.load(exif)
+                    desc_bytes = exif_dict_raw["0th"].get(270, b"")
+                    if not desc_bytes:
+                        raise KeyError("Missing 270 field in EXIF.")
+                    try:
+                        desc_str = desc_bytes.decode("utf-8") if isinstance(desc_bytes, bytes) else str(desc_bytes)
+                        desc_json = json.loads(desc_str)
+                        exif_dict = desc_json.get("MulimgViewer", {})
+                        title = "\n".join([f"{k}: {v}" for k, v in exif_dict.items()])
+                    except Exception as e:
+                        print(f"[EXIF解析失败] {img.filename}: {e}")
+                        title = desc_str
+                except Exception as e:
+                    print(f"[EXIF读取失败] {img.filename}: {e}")
+                    title = self.auto_generate_title_from_path(img.filename)
+                title_list.append(title)  # ← 必须在for循环内
         else:
             for path in self.flist:
                 path = Path(path)
                 if path.is_file() and path.suffix.lower() in self.format_group:
-                    title = ""
-                    if self.title_setting[3]:
-                        title = title+path.parent.parts[-1]
-                    if self.title_setting[5]:
-                        if self.title_setting[3]:
-                            title = title+"/"
-                        name = path.stem
-                        if not self.title_setting[4]:
-                            try:
-                                name = name.split("_", 1)[1]
-                            except:
-                                pass
-                        title = title+name
-                    if self.title_setting[6]:
-                        title = title+path.suffix
+                    title = self.auto_generate_title_from_path(str(path))
                     title_list.append(title)
+
         # get title color
         text_color = [255-self.gap_color[0], 255 -
                       self.gap_color[1], 255-self.gap_color[2]]
@@ -1117,7 +1146,25 @@ class ImgManager(ImgData,Save):
             title_list, standard_size, self.font, font_size)
 
         return self.title_max_size
-
+    #如果没有EXIF，则从路径中获取标题
+    def auto_generate_title_from_path(self, file_path):
+        path = Path(file_path)
+        title = ""
+        if self.title_setting[3]:
+            title += path.parent.parts[-1]
+        if self.title_setting[5]:
+            if self.title_setting[3]:
+                title += "/"
+            name = path.stem
+            if not self.title_setting[4]:
+                try:
+                    name = name.split("_", 1)[1]
+                except IndexError:
+                    pass
+            title += name
+        if self.title_setting[6]:
+            title += path.suffix
+        return title
     def img_preprocessing(self, img, rowcol=[1,1]):
         if self.custom_resolution:
             # custom image resolution

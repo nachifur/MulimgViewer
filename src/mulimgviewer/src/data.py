@@ -11,7 +11,7 @@ class ImgData():
 
     def __init__(self):
         # 添加缺失的属性初始化
-        self.format_group = [".png", ".jpg", ".jpeg", ".bmp", ".tif", ".tiff", 
+        self.format_group = [".png", ".jpg", ".jpeg", ".bmp", ".tif", ".tiff",
                             ".PNG", ".JPG", ".JPEG", ".BMP", ".TIF", ".TIFF"]
         self.img_num = 0
         self.img_count = 0
@@ -33,11 +33,11 @@ class ImgData():
         self.parallel_to_sequential = parallel_to_sequential
 
         print(f"[ImgData调试] 开始初始化 - input_path: {input_path}, type: {type}")
-        
+
         self.init_flist()
-        
+
         print(f"[ImgData调试] init_flist 完成 - name_list: {self.name_list}")
-        
+
         if self.parallel_to_sequential:
             list_ = []
             for name_list in self.name_list:
@@ -45,9 +45,9 @@ class ImgData():
             self.img_num = len(list_)
         else:
             self.img_num = len(self.name_list)
-        
+
         print(f"[ImgData调试] 计算得到 img_num: {self.img_num}")
-        
+
         # self.set_count_per_action(1)
         if img_count:
             self.img_count = img_count
@@ -137,16 +137,16 @@ class ImgData():
         output = []
         for path_ in self.path_list:
             print(f"[ImgData调试] 处理路径: {path_}")
-            
+
             # 检查路径是否存在
             if not Path(path_).exists():
                 print(f"[ImgData警告] 路径不存在: {path_}")
                 continue
-                
+
             no_check_list = [str(f.name)
                              for f in Path(path_).iterdir()]
             print(f"[ImgData调试] 文件夹中所有文件: {no_check_list}")
-            
+
             if len(no_check_list) > 100:
                 self.dataset_mode = True
                 no_check_list = np.sort(no_check_list)
@@ -156,10 +156,10 @@ class ImgData():
                 self.dataset_mode = False
                 # 修复：确保 self.format_group 存在
                 if not hasattr(self, 'format_group') or not self.format_group:
-                    self.format_group = [".png", ".jpg", ".jpeg", ".bmp", ".tif", ".tiff", 
+                    self.format_group = [".png", ".jpg", ".jpeg", ".bmp", ".tif", ".tiff",
                                        ".PNG", ".JPG", ".JPEG", ".BMP", ".TIF", ".TIFF"]
                     print(f"[ImgData调试] 初始化 format_group: {self.format_group}")
-                
+
                 check_list = []
                 for f in Path(path_).iterdir():
                     if f.is_file():
@@ -167,18 +167,18 @@ class ImgData():
                         # 检查文件扩展名是否在支持列表中（忽略大小写）
                         if any(file_suffix == fmt.lower() for fmt in self.format_group):
                             check_list.append(str(f.name))
-                
+
                 check_list = np.sort(check_list)
                 output.append(check_list)
                 print(f"[ImgData调试] 普通模式，匹配的图片文件: {check_list}")
-                
+
             if not self.parallel_to_sequential:
                 if i == 0:
                     break
             i += 1
 
         print(f"[ImgData调试] 最终输出: {output}")
-        
+
         if self.parallel_to_sequential:
             return output
         else:

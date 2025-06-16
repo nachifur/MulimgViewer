@@ -15,8 +15,8 @@ def check_type(obj):
                 continue
         return obj.hex()
     else:
-        return obj          
-    
+        return obj
+
 def find_config_path():
     script_dir = Path(__file__).parent
     project_root = script_dir.parent
@@ -39,32 +39,32 @@ def batch_write_exif(image_folder, key_list, exif_lists):
     """批量写入EXIF信息到图片"""
     print(f"[批量处理] 开始处理文件夹: {image_folder}")
     processed_count = 0
-    
+
     for exif_list in exif_lists:
         if len(exif_list) != len(key_list):
             print(f"[警告] 跳过字段数不匹配的行: {exif_list}")
             continue
-            
+
         img_name = exif_list[0]
         # 使用传入的 image_folder 构建完整路径
         img_path = Path(image_folder) / img_name
-        
+
         # 如果找不到，尝试只用文件名再找一次
         if not img_path.exists():
             img_path = Path(image_folder) / Path(img_name).name
-        
+
         if img_path.is_file() and img_path.suffix.lower() in [".jpg", ".jpeg"]:
             fill_dict_to_img(key_list, exif_list, image_folder)
             processed_count += 1
         else:
             print(f"[跳过] 非图片文件或不存在: {img_path}")
-    
+
     print(f"[批量处理] 完成，共处理 {processed_count} 个文件")
 
 def fill_dict_to_img(key_list, exif_list, image_folder=None):
     print("进入 fill_dict_to_img")
     img_name = exif_list[0]
-    
+
     # 如果没有传入 image_folder，则从配置文件读取
     if image_folder is None:
         config_path = find_config_path()
@@ -81,10 +81,10 @@ def fill_dict_to_img(key_list, exif_list, image_folder=None):
         image_folder = image_folder.resolve()
     else:
         image_folder = Path(image_folder)
-    
+
     print(f"[处理] 图片文件夹: {image_folder}")
     print(f"[处理] 图片文件名: {img_name}")
-    
+
     img_path = image_folder / img_name
 
     # 如果找不到，尝试只用文件名再找一次
@@ -101,33 +101,33 @@ def fill_dict_to_img(key_list, exif_list, image_folder=None):
     if not os.access(img_path, os.W_OK):
         print(f"[权限错误] 文件不可写: {img_path}")
         return
-    
+
     try:
         img = Image.open(img_path)
         try:
             exif_dict = piexif.load(img.info.get("exif", b""))
         except Exception:
             exif_dict = {"0th": {}, "Exif": {}, "GPS": {}, "1st": {}, "thumbnail": None}
-        
+
         add_new_dict = {}
         sub_dict = {}
         add_new_dict["MulimgViewer"] = sub_dict
-        
+
         for i in range(len(exif_list)):
             if i == 0:
                 sub_dict[key_list[i]] = Path(exif_list[i]).name
             else:
                 sub_dict[key_list[i]] = check_type(exif_list[i])
-        
+
         exif_dict["0th"][piexif.ImageIFD.ImageDescription] = json.dumps(add_new_dict, ensure_ascii=False).encode("utf-8")
         exif_bytes = piexif.dump(exif_dict)
-        
+
         if img.mode != "RGB":
             img = img.convert("RGB")
-        
+
         img.save(img_path, "JPEG", exif=exif_bytes)
         img.close()
-        
+
         # 验证写入结果
         img_check = Image.open(img_path)
         try:
@@ -145,13 +145,13 @@ def fill_dict_to_img(key_list, exif_list, image_folder=None):
             print(f"[写入验证失败] {img_path.name}: {e}")
         finally:
             img_check.close()
-            
+
     except Exception as e:
         print(f"[处理失败] {img_path}: {e}")
 
 if __name__ == "__main__":
     import sys
-    
+
     # 优先使用命令行参数
     if len(sys.argv) > 1:
         image_folder_arg = sys.argv[1]
@@ -169,7 +169,7 @@ if __name__ == "__main__":
             raw_path = config.get("image_folder", "")
             if not isinstance(raw_path, str) or not raw_path.strip():
                 raise ValueError(f"[配置错误] 配置文件 {config_path} 中 image_folder 字段缺失或无效: {raw_path}")
-            
+
             image_folder = Path(raw_path).expanduser()
             if not image_folder.is_absolute():
                 config_dir = config_path.parent
@@ -184,7 +184,7 @@ if __name__ == "__main__":
     csv_path = Path(__file__).parent / "output_exif_data.csv"
     print(f"[调试] 尝试读取CSV文件: {csv_path}")
     print(f"[调试] 文件是否存在: {csv_path.exists()}")
-    
+
     if not csv_path.exists():
         print(f"[错误] 找不到CSV文件: {csv_path}")
         sys.exit(1)
@@ -196,15 +196,15 @@ if __name__ == "__main__":
             if not dataset:
                 print("[错误] CSV文件为空")
                 sys.exit(1)
-            
+
             key_list = dataset[0]
             exif_lists = dataset[1:]
-            
+
             print(f"[调试] CSV包含 {len(key_list)} 个字段: {key_list}")
             print(f"[调试] CSV包含 {len(exif_lists)} 行数据")
             # 使用批量处理函数
             batch_write_exif(image_folder, key_list, exif_lists)
-            
+
     except Exception as e:
         print(f"[错误] 处理CSV文件时出错: {e}")
         sys.exit(1)

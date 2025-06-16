@@ -636,7 +636,7 @@ class ImgManager(ImgData,Save):
         self.img_resolution = [-1, -1]
         self.custom_resolution = False
         self.img_num = 0
-        self.format_group = [".png", ".jpg", ".jpeg", ".bmp", ".tiff", ".tif", 
+        self.format_group = [".png", ".jpg", ".jpeg", ".bmp", ".tiff", ".tif",
                              ".PNG", ".JPG", ".JPEG", ".BMP", ".TIFF", ".TIF"]
         self.crop_points = []
         self.draw_points = []
@@ -644,8 +644,8 @@ class ImgManager(ImgData,Save):
         self.path_custom_func_path = ""
         self.input_path = None
         self.parallel_to_sequential = False
-        self.count_per_action = 1       
-        self.max_action_num = 0          
+        self.count_per_action = 1
+        self.max_action_num = 0
         self.action_count = 0
 
     def get_img_list(self):
@@ -665,7 +665,7 @@ class ImgManager(ImgData,Save):
                     img_list.append(pil_img.convert('RGB'))
                 else:
                     img = Image.open(path).convert('RGB')  # 改这一行
-                    img.filename = str(path)  
+                    img.filename = str(path)
                     img_list.append(img)
             else:
                 pass
@@ -719,14 +719,14 @@ class ImgManager(ImgData,Save):
         """正确调用父类的 init 方法"""
         # 调用父类 ImgData 的 init 方法
         super().init(folder, type, parallel_to_sequential, action_count, img_count)
-        
+
         # ImgManager 特有的初始化逻辑
         print(f"[ImgManager] 初始化完成 - img_num: {self.img_num}")
         print(f"[ImgManager] name_list: {getattr(self, 'name_list', 'undefined')}")
-        
+
         # 确保必要的属性存在
         if not hasattr(self, 'flist'):
-            self.flist = [] 
+            self.flist = []
 
     def set_scale_mode(self, img_mode=0):
         """img_mode, 0: show, 1: save"""
@@ -1028,17 +1028,17 @@ class ImgManager(ImgData,Save):
         print(f"id={id}, title_list长度={len(self.title_list)}")
         img = Image.new('RGBA', tuple(title_max_size), self.gap_color)
         draw = ImageDraw.Draw(img)
-        
+
         if id < len(self.title_list):
             text = self.title_list[id]
-            
+
             # 计算实际文本尺寸
             bbox = draw.multiline_textbbox((0, 0), text, font=self.font)
             text_width = bbox[2] - bbox[0]
 
             # 根据位置设置计算偏移和对齐方式
             title_position = self.title_setting[10]
-            
+
             if title_position == 0:        # 左对齐
                 delta_x = 0
                 align_mode = "left"
@@ -1052,16 +1052,16 @@ class ImgManager(ImgData,Save):
             else:
                 delta_x = 0
                 align_mode = "left"
-            
+
             print(f"[调试] id={id}, 对齐方式: {align_mode}")
-            
+
             # 使用 PIL 内置对齐，delta_x=0
             draw.multiline_text((delta_x, 0), text, font=self.font, fill=self.text_color, align=align_mode)
         else:
             print(f"[警告] id={id} 超出title_list长度={len(self.title_list)}，跳过。")
-        
+
         return img
-        
+
         # 遍历处理过的行进行绘制
         # for line in lines:
         #     if delta_x + len(line )*one_size > title_max_size[0]:
@@ -1101,9 +1101,9 @@ class ImgManager(ImgData,Save):
         title_exif = self.title_setting[11]
         title_list = []
         # 如果使用EXIF，则从EXIF中获取标题
-        if self.title_setting[11]:  
+        if self.title_setting[11]:
             for img in self.img_list:
-                exif = img.info.get('exif')  
+                exif = img.info.get('exif')
                 if not exif:
                     title = self.auto_generate_title_from_path(img.filename)
                     title_list.append(title)

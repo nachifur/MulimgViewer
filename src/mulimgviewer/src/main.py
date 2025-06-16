@@ -133,7 +133,7 @@ class MulimgViewer (MulimgViewerGui):
             if not new_folder_path or not os.path.exists(new_folder_path):
                 print(f"[警告] 文件夹路径无效: {new_folder_path}")
                 return False
-                
+
             # 读取配置文件
             try:
                 with open(config_path, "r", encoding="utf-8") as f:
@@ -141,81 +141,81 @@ class MulimgViewer (MulimgViewerGui):
             except (FileNotFoundError, json.JSONDecodeError) as e:
                 print(f"[配置文件错误] {e}，将创建新配置")
                 config = {}
-            
+
             # 更新路径
             config["image_folder"] = new_folder_path
-            
+
             # 确保目录存在
             os.makedirs(os.path.dirname(config_path), exist_ok=True)
-            
+
             # 写入配置
             with open(config_path, "w", encoding="utf-8") as f:
                 json.dump(config, f, ensure_ascii=False, indent=2)
-            
+
             print(f"[配置更新] 已更新图片文件夹路径: {new_folder_path}")
             return True
         except Exception as e:
             print(f"[配置更新失败] {e}")
             return False
-    
+
     def on_title_exif_checked(self, event):
-        if self.title_exif.Value: 
+        if self.title_exif.Value:
             current_image_folder = self.ImgManager.input_path
-            
+
             # 检查路径有效性
             if not current_image_folder or not os.path.exists(current_image_folder):
                 print(f"[警告] 图片文件夹路径无效: {current_image_folder}")
                 return
-            
+
             examples_dir = Path(__file__).parent.parent.parent.parent / "examples"
             exif_to_csv_path = str(examples_dir / "exif_to_csv.py")
             add_script_path = str(examples_dir / "add_new_info_to_img_custom.py")
-            
+
             try:
                 # 直接传递文件夹路径作为参数，不写入配置文件
                 print(f"[EXIF处理] 开始处理文件夹: {current_image_folder}")
-                
+
                 # 运行 exif_to_csv.py 并传递文件夹路径
                 result1 = subprocess.run(
-                    [sys.executable, exif_to_csv_path, current_image_folder], 
-                    check=True, 
+                    [sys.executable, exif_to_csv_path, current_image_folder],
+                    check=True,
                     cwd=str(examples_dir),
                     capture_output=True,
                     text=True
                 )
-                
+
                 # 运行 add_new_info_to_img_custom.py 并传递文件夹路径
                 result2 = subprocess.run(
-                    [sys.executable, add_script_path, current_image_folder], 
-                    check=True, 
+                    [sys.executable, add_script_path, current_image_folder],
+                    check=True,
                     cwd=str(examples_dir),
                     capture_output=True,
                     text=True
                 )
-                
+
                 print(f"[EXIF处理] 处理完成")
                 #wx.MessageBox("EXIF信息已导出并写回图片。", "提示", wx.OK | wx.ICON_INFORMATION)
-                
+
             except subprocess.CalledProcessError as e:
                 error_msg = f"脚本执行失败: {e.stderr if e.stderr else str(e)}"
                 print(f"[EXIF处理失败] {error_msg}")
                 #wx.MessageBox(f"EXIF处理失败：{error_msg}", "错误", wx.OK | wx.ICON_ERROR)
             except Exception as e:
                 print(f"[EXIF处理失败] {e}")
-                #wx.MessageBox(f"EXIF处理失败：{e}", "错误", wx.OK | wx.ICON_ERROR) 
+                #wx.MessageBox(f"EXIF处理失败：{e}", "错误", wx.OK | wx.ICON_ERROR)
 
     def run_exif_to_csv(self, folder):
         """运行EXIF提取脚本"""
         if not folder or not os.path.exists(folder):
             print(f"[EXIF处理] 图片文件夹路径无效: {folder}")
             return False
-            
+
         try:
             script_path = str(Path(__file__).parent.parent.parent.parent / "examples" / "exif_to_csv.py")
             if not os.path.exists(script_path):
                 print(f"[EXIF处理] 脚本不存在: {script_path}")
                 return False
-                
+
             print(f"[EXIF处理] 开始处理文件夹: {folder}")
             result = subprocess.run(
                 [sys.executable, script_path, folder],
@@ -223,7 +223,7 @@ class MulimgViewer (MulimgViewerGui):
                 text=True,
                 check=False
             )
-            
+
             if result.returncode == 0:
                 print(f"[EXIF处理] 导出成功")
                 return True
@@ -280,10 +280,10 @@ class MulimgViewer (MulimgViewerGui):
 
     def open_all_img(self, event):
         input_mode = self.choice_input_mode.GetSelection()
-        
+
         # 保存调用前的路径，用于检测路径是否更新
         previous_path = self.ImgManager.input_path if hasattr(self.ImgManager, 'input_path') else None
-        
+
         # 根据不同模式调用不同的打开函数
         if input_mode == 0:
             self.one_dir_mul_img(event)
@@ -303,20 +303,20 @@ class MulimgViewer (MulimgViewerGui):
                     current_image_folder = None
             else:
                 current_image_folder = None
-        
+
         # 检查路径是否发生变化
         if previous_path != self.ImgManager.input_path:
             # 确保 input_path 有效后再写入配置文件
             current_image_folder = self.ImgManager.input_path
-            
+
             # 如果是列表类型，取第一个元素的父目录
             if isinstance(current_image_folder, list) and len(current_image_folder) > 0:
                 current_image_folder = str(Path(current_image_folder[0]).parent)
-            
+
             if current_image_folder is not None and current_image_folder != "":
                 config_path = str(Path(get_resource_path("configs")) / "output.json")
                 update_success = self.update_image_folder_in_config(current_image_folder, config_path)
-                
+
                 if update_success and self.title_exif.Value:
                     try:
                         self.run_exif_to_csv(current_image_folder)
@@ -451,7 +451,7 @@ class MulimgViewer (MulimgViewerGui):
         if dlg.ShowModal() == wx.ID_OK:
             folder = dlg.GetPath()
             print(f"[调试] 选择的文件夹: {folder}")
-            
+
             # 详细调试文件夹内容
             try:
                 all_files = os.listdir(folder)
@@ -461,41 +461,41 @@ class MulimgViewer (MulimgViewerGui):
                 print(f"[调试] 匹配的图片文件数量: {len(image_files)}")
             except Exception as e:
                 print(f"[调试] 读取文件夹失败: {e}")
-        
+
             try:
                 # 设置参数
                 self.ImgManager.parallel_to_sequential = self.parallel_to_sequential.Value
                 print(f"[调试] parallel_to_sequential 设置为: {self.parallel_to_sequential.Value}")
-                
+
                 # 调试 ImgManager 初始化前的状态
                 print(f"[调试] ImgManager 初始化前 - format_group: {getattr(self.ImgManager, 'format_group', 'undefined')}")
-                
+
                 # 初始化图片管理器
                 self.ImgManager.init(folder, type=2)
-                
+
                 # 调试 ImgManager 初始化后的状态
                 print(f"[调试] ImgManager 初始化完成")
                 print(f"[调试] - img_num: {getattr(self.ImgManager, 'img_num', 'undefined')}")
                 print(f"[调试] - input_path: {getattr(self.ImgManager, 'input_path', 'undefined')}")
                 print(f"[调试] - format_group: {getattr(self.ImgManager, 'format_group', 'undefined')}")
-                
+
                 # 如果图片数量为 0，手动设置
                 if getattr(self.ImgManager, 'img_num', 0) == 0:
                     print(f"[调试] 图片数量为 0，尝试手动设置...")
                     self.ImgManager.img_num = len(image_files)
                     print(f"[调试] 手动设置图片数量为: {self.ImgManager.img_num}")
-                    
+
                     # 如果还是 0，说明 format_group 有问题
                     if self.ImgManager.img_num == 0:
                         print(f"[错误] 即使手动设置图片数量也为 0，请检查 format_group")
                         self.SetStatusText_(["错误: 图片格式不支持", "0", "-1", "-1"])
                         dlg.Destroy()
                         return
-                
+
                 # 更新配置文件
                 config_path = str(Path(get_resource_path("configs")) / "output.json")
                 self.update_image_folder_in_config(folder, config_path)
-                
+
                 # EXIF 处理
                 if self.title_exif.Value:
                     current_image_folder = self.ImgManager.input_path
@@ -503,39 +503,39 @@ class MulimgViewer (MulimgViewerGui):
                         self.run_exif_to_csv(current_image_folder)
                     except Exception as e:
                         print(f"[EXIF自动导出失败] {e}")
-                
+
                 # 显示图片
                 self.show_img_init()
                 print("[调试] show_img_init() 完成")
-                
+
                 self.ImgManager.set_action_count(0)
                 print("[调试] set_action_count(0) 完成")
-                
+
                 self.show_img()
                 print("[调试] show_img() 完成")
-                
+
                 self.choice_input_mode.SetSelection(0)
-                
+
                 # 更新状态栏显示成功信息
                 final_img_num = getattr(self.ImgManager, 'img_num', 0)
                 self.SetStatusText_(["图片加载成功", str(final_img_num), "-1", "-1"])
                 print(f"[调试] 最终图片数量: {final_img_num}")
-                
+
             except Exception as e:
                 error_msg = f"加载文件夹失败: {e}"
                 print(f"[错误] {error_msg}")
                 print(f"[错误详情] {type(e).__name__}: {str(e)}")
                 import traceback
                 traceback.print_exc()
-                
+
                 # 显示错误状态
                 self.SetStatusText_(["加载失败", "0", "-1", "-1"])
                 wx.MessageBox(error_msg, "加载错误", wx.OK | wx.ICON_ERROR)
-        
+
         else:
             # 用户取消了选择
             self.SetStatusText_(["Sequential choose input dir", "-1", "-1", "-1"])
-        
+
         dlg.Destroy()
 
     def one_dir_mul_dir_auto(self, event):
@@ -572,11 +572,11 @@ class MulimgViewer (MulimgViewerGui):
                     current_folder = str(Path(self.ImgManager.input_path[0]).parent)
                 else:
                     current_folder = str(self.ImgManager.input_path)
-                
+
                 # 更新配置文件
                 config_path = str(Path(get_resource_path("configs")) / "output.json")
                 self.update_image_folder_in_config(current_folder, config_path)
-                
+
                 # EXIF 自动处理
                 if self.title_exif.Value:
                     try:

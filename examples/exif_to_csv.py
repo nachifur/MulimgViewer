@@ -36,7 +36,7 @@ def find_config_path():
     )
 
 # 删除这部分重复的配置读取代码（第26-47行）
-# script_dir = os.path.dirname(os.path.abspath(__file__))  
+# script_dir = os.path.dirname(os.path.abspath(__file__))
 # config_path = find_config_path()
 # ... 等等
 
@@ -98,7 +98,7 @@ def get_exif_data(image_path):
     except Exception as e:
         print(f"错误处理图像 {image_path}: {e}")
         return {}
-    
+
     exif_data = {}
     for tag_id, value in exif_data_raw.items():
         tag_name = TAGS.get(tag_id, tag_id)
@@ -187,7 +187,7 @@ def get_exif_data_exifread(image_path):
     try:
         with open(image_path, 'rb') as f:
             tags = exifread.process_file(f, details=False)
-        
+
         for tag, val in tags.items():
             # DigitalZoomRatio等Ratio类型特殊处理
             if hasattr(val, 'num') and hasattr(val, 'den'):
@@ -308,7 +308,7 @@ def extract_to_csv(folder, output_csv):
 
 if __name__ == "__main__":
     import sys
-    
+
     # 优先使用命令行参数
     if len(sys.argv) > 1:
         image_folder_arg = sys.argv[1]
@@ -325,7 +325,7 @@ if __name__ == "__main__":
                 config_text = f.read().strip()
                 config = json.loads(config_text)
                 print("[调试] 配置文件内容：", json.dumps(config, indent=2, ensure_ascii=False))
-            
+
             raw_path = config.get("image_folder", "")
             if not isinstance(raw_path, str) or not raw_path.strip():
                 raise ValueError(f"[配置错误] 配置文件 {config_path} 中 image_folder 字段缺失或无效，内容为: {raw_path}")
@@ -339,7 +339,7 @@ if __name__ == "__main__":
         except Exception as e:
             print(f"[错误] 无法从配置文件获取图片文件夹路径: {e}")
             sys.exit(1)
-    
+
     script_dir = Path(__file__).parent.resolve()
     out_csv = script_dir / "output_exif_data.csv"
     extract_to_csv(image_folder, out_csv)

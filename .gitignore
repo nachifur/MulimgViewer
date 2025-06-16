@@ -135,3 +135,6 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+.DS_Store
+exifread_debug.txt
+src/mulimgviewer/configs/images/

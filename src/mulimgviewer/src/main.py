@@ -75,7 +75,7 @@ class MulimgViewer (MulimgViewerGui):
         self.out_path_button.SetToolTip("out path")
         self.save_butoon.SetToolTip("save")
         self.left_arrow_button.SetToolTip("left arrow")
-        self.browsing_button.SetToolTip("browsing")    
+        self.browsing_button.SetToolTip("browsing")
         self.right_arrow_button.SetToolTip("right arrow")
         self.refresh_button.SetToolTip("refresh")
         self.save_config_button.SetToolTip("save_configuration")
@@ -202,9 +202,9 @@ class MulimgViewer (MulimgViewerGui):
                 interval = float(self.m_textCtrl15.GetValue()) * 1000
                 interval = int(interval)
                 if interval <= 0:
-                    interval = 1000  
+                    interval = 1000
             except ValueError:
-                interval = 1000  
+                interval = 1000
             self.timer.Start(interval)
 
     def last_img(self, event):
@@ -222,11 +222,11 @@ class MulimgViewer (MulimgViewerGui):
                 interval = float(self.m_textCtrl15.GetValue()) * 1000
                 interval = int(interval)
                 if interval <= 0:
-                    interval = 1000  
+                    interval = 1000
             except ValueError:
-                interval = 1000  
+                interval = 1000
             self.timer.Start(interval)
-    
+
     def auto_browsing(self, event):
         self.is_browsing_button = self.browsing_button.GetValue()
         if self.is_browsing_button:
@@ -234,12 +234,12 @@ class MulimgViewer (MulimgViewerGui):
                 interval = float(self.m_textCtrl15.GetValue()) * 1000
                 interval = int(interval)
                 if interval <= 0:
-                        interval = 1000  
+                        interval = 1000
             except ValueError:
-                    interval = 1000  
+                    interval = 1000
             self.timer.Start(interval)
         else:
-            self.timer.Stop()  
+            self.timer.Stop()
             self.browsing_direction = None
 
     def on_timer(self, event):

@@ -23,6 +23,7 @@ class ImgData():
             self.img_num = len(list_)
         else:
             self.img_num = len(self.name_list)
+
         # self.set_count_per_action(1)
         if img_count:
             self.img_count = img_count
@@ -67,7 +68,7 @@ class ImgData():
             self.name_list = []
 
     def get_path_list_from_lf(self):
-        format_group = [".png", ".jpg", ".jpeg", ".bmp", ".tif", ".tiff"]
+        format_group = [".png", ".jpg", ".jpeg", ".bmp", ".tif", ".tiff", ".PNG", ".JPG", ".JPEG", ".BMP", ".TIF", ".TIFF"]#改这一行
         if Path(self.input_path).suffix.lower() == '.txt':
             with open(self.input_path, "r",encoding='utf-8') as f:
                 dataset = f.read().split('\n')
@@ -129,7 +130,7 @@ class ImgData():
         if self.parallel_to_sequential:
             return output
         else:
-            return output[0]
+            return output[0] if len(output) > 0 else []
 
     def add(self):
         if self.action_count < self.max_action_num-1:

@@ -636,7 +636,7 @@ class ImgManager(ImgData,Save):
         self.img_resolution = [-1, -1]
         self.custom_resolution = False
         self.img_num = 0
-        self.format_group = [".png", ".jpg", ".jpeg", ".bmp", ".tiff", ".tif"]
+        self.format_group = [".png", ".jpg", ".jpeg", ".bmp", ".tiff", ".tif",".PNG", ".JPG", ".JPEG", ".BMP", ".TIFF", ".TIF"]
         self.crop_points = []
         self.draw_points = []
         self.ImgF = ImgUtils()
@@ -655,9 +655,12 @@ class ImgManager(ImgData,Save):
                     if img.dtype != np.uint8:
                         img = (255 * img).astype(np.uint8)
                     pil_img = Image.fromarray(img)
+                    pil_img.filename = str(path)  # 加这一行
                     img_list.append(pil_img.convert('RGB'))
                 else:
-                    img_list.append(Image.open(path).convert('RGB'))
+                    img = Image.open(path).convert('RGB')  # 改这一行
+                    img.filename = str(path)
+                    img_list.append(img)
             else:
                 pass
         # custom process
@@ -1010,7 +1013,7 @@ class ImgManager(ImgData,Save):
         delta_x = max(0,int((title_max_size[0]-title_size[0])/2))
         one_size = int(int(self.title_setting[8])/2)#int(title_size[0]/int(len(self.title_list[id])))
         wrapper = textwrap.TextWrapper(width=int(int(title_max_size[0])/int(one_size)))  # 设置换行的宽度
-        lines = wrapper.wrap(text=self.title_list[id])
+        lines = self.title_list[id].split('\n')
         if delta_x + title_size[0] >  title_max_size[0]:
             delta_x = 0
         title_position=self.title_setting[10]
@@ -1026,14 +1029,14 @@ class ImgManager(ImgData,Save):
         y = 0
         # 遍历处理过的行进行绘制
         for line in lines:
-            if delta_x + len(line )*one_size > title_max_size[0]:
-                delta_x = 0
+            # if delta_x + len(line )*one_size > title_max_size[0]:
+            #     delta_x = 0
             if self.title_setting[2]:
                 # up
-                draw.text((delta_x, y), line, align="center",font=self.font, fill=self.text_color)
+                draw.multiline_text((delta_x, y), line, align="center",font=self.font, fill=self.text_color)
             else:
                 # down
-                draw.text((delta_x, y), line, align="center",font=self.font, fill=self.text_color)
+                draw.multiline_text((delta_x, y), line, align="center",font=self.font, fill=self.text_color)
             y += int(self.title_setting[8])  # 增加y轴偏移量，确保每行文本不重叠
 
         # if self.title_setting[2]:
@@ -1061,7 +1064,7 @@ class ImgManager(ImgData,Save):
         #                  self.title_position.GetSelection(),        # 10
         #                  self.title_exif.Value]                     # 11
 
-        # get title
+        #  get title
         title_exif = self.title_setting[11]
         title_list = []
 

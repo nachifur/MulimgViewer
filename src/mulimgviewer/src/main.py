@@ -15,6 +15,9 @@ from .utils_img import ImgManager
 import json
 import shutil
 
+import sys
+import subprocess
+
 class MulimgViewer (MulimgViewerGui):
 
     def __init__(self, parent, UpdateUI, get_type, default_path=None):
@@ -120,6 +123,22 @@ class MulimgViewer (MulimgViewerGui):
 
     def EVT_MY_TEST_OnHandle(self, event):
         self.about_gui(None, update=True, new_version=event.GetEventArgs())
+
+    def process_exif(self, folder_path):
+        if self.title_exif.Value and folder_path:
+            return self.run_exif_to_csv(folder_path)
+        return True
+
+    def run_exif_to_csv(self, current_image_folder):
+        examples_dir = Path(__file__).parent.parent.parent.parent / "examples"
+        exif_to_csv_path = str(examples_dir / "exif_to_csv.py")
+        add_script_path = str(examples_dir / "add_new_info_to_img_s.py")
+
+        result1 = subprocess.run([sys.executable, exif_to_csv_path, current_image_folder],
+                    check=True, cwd=str(examples_dir), capture_output=True, text=True)
+        csv_file = examples_dir / "output_exif_data.csv"
+        result2 = subprocess.run([sys.executable, add_script_path, current_image_folder],
+                    check=True, cwd=str(examples_dir), capture_output=True, text=True)
 
     def check_version(self):
         t1 = threading.Thread(target=self.run, args=())
@@ -299,6 +318,7 @@ class MulimgViewer (MulimgViewerGui):
         if dlg.ShowModal() == wx.ID_OK:
             self.ImgManager.init(
                 dlg.GetPath(), type=0, parallel_to_sequential=self.parallel_to_sequential.Value)
+            self.process_exif(dlg.GetPath())
             self.show_img_init()
             self.ImgManager.set_action_count(0)
             self.show_img()
@@ -326,6 +346,7 @@ class MulimgViewer (MulimgViewerGui):
 
         if dlg.ShowModal() == wx.ID_OK:
             self.ImgManager.init(dlg.GetPath(), type=2)
+            self.process_exif(dlg.GetPath())
             self.show_img_init()
             self.ImgManager.set_action_count(0)
             self.show_img()
@@ -365,8 +386,10 @@ class MulimgViewer (MulimgViewerGui):
             self.show_img()
             self.choice_input_mode.SetSelection(2)
 
+
     def save_flist_parallel_manual(self, event):
         if self.out_path_str == "":
+
             self.SetStatusText_(
                 ["-1", "-1", "***Error: First, need to select the output dir***", "-1"])
         else:

@@ -1038,15 +1038,6 @@ class ImgManager(ImgData,Save):
                 # down
                 draw.multiline_text((delta_x, y), line, align="center",font=self.font, fill=self.text_color)
             y += int(self.title_setting[8])  # 增加y轴偏移量，确保每行文本不重叠
-
-        # if self.title_setting[2]:
-        #     # up
-        #     draw.multiline_text(
-        #         (delta_x, 0), self.title_list[id], font=self.font, fill=self.text_color,align="left")
-        # else:
-        #     # down (anchor=None,spacing=0,align="left",direction=None,features=None)
-        #     draw.multiline_text(
-        #         (delta_x, 0), self.title_list[id], font=self.font, fill=self.text_color,align="left")
         return img
 
     def title_init(self, width_2, height_2):

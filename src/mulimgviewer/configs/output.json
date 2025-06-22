@@ -43,6 +43,5 @@
  "title_show_name": true,
  "title_show_suffix": false,
  "title_down_up": false,
- "save_format": 0,
- "image_folder": "images"
+ "save_format": 0
 }

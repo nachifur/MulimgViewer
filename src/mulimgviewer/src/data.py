@@ -130,7 +130,7 @@ class ImgData():
         if self.parallel_to_sequential:
             return output
         else:
-            return output[0] if len(output) > 0 else []
+            return output[0]
 
     def add(self):
         if self.action_count < self.max_action_num-1:

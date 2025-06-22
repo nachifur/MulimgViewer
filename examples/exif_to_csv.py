@@ -14,9 +14,6 @@ def safe_decode(value):
                 continue
     return str(value) if value is not None else "N/A"
 
-def find_config_path():
-    return Path(__file__).parent.parent / 'src' / 'mulimgviewer' / 'configs' / 'output.json'
-
 TAGS_TO_EXTRACT = {
     "Make": ["Make"],
     "Model": ["Model", "Camera Model Name", "Image Model"],
@@ -48,7 +45,7 @@ def convert_to_degrees(value):
         m = float(value[1][0]) / float(value[1][1])
         s = float(value[2][0]) / float(value[2][1])
         return d, m, s
-    except Exception as e:
+    except:
         return "N/A"
 
 def format_gps(d, m, s, ref):
@@ -58,7 +55,7 @@ def format_gps(d, m, s, ref):
         sec = round(s, 2)
         ref = ref.decode() if isinstance(ref, bytes) else ref
         return f"{deg}°{min_}'{sec:.2f}\"{ref}"
-    except Exception as e:
+    except:
         return "N/A"
 
 def get_exif_data(image_path):

@@ -1110,7 +1110,12 @@ class MulimgViewer (MulimgViewerGui):
             if flag == 0:
                 bmp = self.ImgManager.img
                 if self.customfunc.Value and self.ImgManager.customfunc_img != None:
-                    bmp = self.ImgManager.ImgF.cat_img(bmp, self.ImgManager.customfunc_img)
+                    if self.show_unit.Value and self.show_custom.Value:
+                        bmp = self.ImgManager.ImgF.cat_img(bmp, self.ImgManager.customfunc_img)
+                    elif not self.show_unit.Value and self.show_custom.Value:
+                        bmp = self.ImgManager.customfunc_img
+                    elif self.show_unit.Value and not self.show_custom.Value:
+                        bmp = bmp
                 self.show_bmp_in_panel = bmp
                 self.img_size = bmp.size
                 bmp = self.ImgManager.ImgF.PIL2wx(bmp)

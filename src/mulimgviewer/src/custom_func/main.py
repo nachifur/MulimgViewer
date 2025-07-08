@@ -18,7 +18,7 @@ def main(img_list, save_path, name_list=None):
     out_img_list = []
     if save_path!="":
         flag_save = True
-        save_path = Path(save_path)/"custom_func_output"
+        save_path = Path(save_path)/"custom_func_output"/"processed_img"
         if not save_path.exists():
             os.makedirs(str(save_path))
     else:

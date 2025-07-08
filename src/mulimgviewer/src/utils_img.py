@@ -1475,7 +1475,20 @@ class ImgManager(ImgData):
             f_path_output = Path(self.out_path_str) / dir_name / name_f
             self.ImgF.save_img_diff_format(f_path_output,self.img,save_format=self.layout_params[35])
 
-    def save_stitch_img_and_customfunc_img(self, out_path_str):
+    def show_stitch_img_and_customfunc_img(self, customfunc):
+        show_unit = self.layout_params[36]
+        show_custom = self.layout_params[37]
+        img = self.img
+        if customfunc and self.customfunc_img != None:
+            if show_unit and show_custom:
+                img = self.ImgF.cat_img(self.img, self.customfunc_img)
+            elif not show_unit and show_custom:
+                img = self.customfunc_img
+            elif show_unit and not show_custom:
+                img = img
+        return img
+
+    def save_stitch_img_and_customfunc_img(self, out_path_str, customfunc):
         name_f = self.get_stitch_name()
         if self.type == 3: # read file list from a list file
             name_f = "from_file_"+name_f
@@ -1491,7 +1504,7 @@ class ImgManager(ImgData):
             else:
                 self.check_1.append(self.stitch_images(1))
         f_path_output = Path(out_path_str) / "stitch_img_and_customfunc_img" / name_f
-        img = self.ImgF.cat_img(self.img, self.customfunc_img)
+        img = self.show_stitch_img_and_customfunc_img(customfunc)
         self.ImgF.save_img_diff_format(f_path_output, img, save_format=self.layout_params[35])
 
     def get_stitch_name(self):

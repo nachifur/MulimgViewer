@@ -403,12 +403,7 @@ class MulimgViewerGui ( wx.Frame ):
 		self.m_staticline211 = wx.StaticLine( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_VERTICAL )
 		wSizer81.Add( self.m_staticline211, 0, wx.EXPAND |wx.ALL, 5 )
 
-		self.m_staticText382 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"ShowCustom", wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.m_staticText382.Wrap( -1 )
-
-		wSizer81.Add( self.m_staticText382, 0, wx.ALL, 5 )
-
-		self.show_custom = wx.CheckBox( self.m_panel4, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.show_custom = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"ShowCustom", wx.DefaultPosition, wx.DefaultSize, 0 )
 		wSizer81.Add( self.show_custom, 0, wx.ALL, 5 )
 
 

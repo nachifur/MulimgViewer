@@ -9,14 +9,14 @@ msgid ""
 msgstr ""
 "Project-Id-Version: mulimgviewer 3.9.10\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-04-21 18:46+0800\n"
+"POT-Creation-Date: 2025-07-08 08:44+0800\n"
 "PO-Revision-Date: 2023-03-29 12:46+0800\n"
 "Last-Translator: nachifur <1476879092.com>\n"
 "Language-Team: nachifur <1476879092.com>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.12.1\n"
+"Generated-By: Babel 2.15.0\n"
 
 #: ../../dev/dev.md:1
 msgid "MulimgViewer开发指南"
@@ -288,82 +288,82 @@ msgstr ""
 msgid "**翻译**：(Refer [sphinx-intl](https://sphinx-intl.readthedocs.io).)"
 msgstr "Translation"
 
-#: ../../dev/dev.md:107
+#: ../../dev/dev.md:112
 msgid "**error**: ModuleNotFoundError: No module named 'mulimgviewer'"
 msgstr ""
 
-#: ../../dev/dev.md:109
+#: ../../dev/dev.md:114
 msgid "**fix error**: set pythonpath `windows powershell`:"
 msgstr ""
 
-#: ../../dev/dev.md:115
+#: ../../dev/dev.md:120
 msgid "Release"
 msgstr "Release"
 
-#: ../../dev/dev.md:116
-msgid "我们的下一个release版本的计划可见[projects](https://github.com/nachifur/MulimgViewer/projects?type=classic)。"
+#: ../../dev/dev.md:121
+#, fuzzy
+msgid "我们的下一个release版本的计划可见[projects](https://github.com/nachifur/MulimgViewer/projects)。"
 msgstr ""
 "Our plan for the next release version can be seen on the [projects "
-"page](https://github.com/nachifur/MulimgViewer/projects?type=classic)."
+"page](https://github.com/nachifur/MulimgViewer/projects)."
 
-#: ../../dev/dev.md:118
+#: ../../dev/dev.md:123
 msgid "window的打包"
 msgstr "packaging for Windows"
 
-#: ../../dev/dev.md:119
+#: ../../dev/dev.md:124
 msgid "安装："
 msgstr "install"
 
-#: ../../dev/dev.md:123
+#: ../../dev/dev.md:128
 msgid "Windows打包"
 msgstr "packaging"
 
-#: ../../dev/dev.md:127
+#: ../../dev/dev.md:132
 msgid "便携版："
 msgstr "Portable version"
 
-#: ../../dev/dev.md:131
+#: ../../dev/dev.md:136
 msgid "安装版："
 msgstr "Installation version:"
 
-#: ../../dev/dev.md:132
+#: ../../dev/dev.md:137
 msgid "打包成一个文件夹："
 msgstr "Packed in a folder"
 
-#: ../../dev/dev.md:136
+#: ../../dev/dev.md:141
 msgid "使用createinstall打包成可安装的`.exe`。[createinstall使用](https://blog.csdn.net/qq_41811438/article/details/103092610)"
 msgstr ""
 "Use [createinstall](https://www.createinstall.com/) to package it as an "
 "installable `.exe`."
 
-#: ../../dev/dev.md:139
+#: ../../dev/dev.md:144
 msgid "linux/ios/arm等平台的打包"
 msgstr "packaging for linux/ios/arm"
 
-#: ../../dev/dev.md:140
+#: ../../dev/dev.md:145
 msgid "感谢@wzy。打包目前由@wzy主要负责。"
 msgstr "Thanks @wzy. This feature is currently managed by @wzy."
 
-#: ../../dev/dev.md:142
+#: ../../dev/dev.md:147
 msgid "命名"
 msgstr ""
 
-#: ../../dev/dev.md:150
+#: ../../dev/dev.md:155
 msgid "镜像维护"
 msgstr "Mirror maintenance"
 
-#: ../../dev/dev.md:151
+#: ../../dev/dev.md:156
 msgid "我们目前支持以下两个镜像，release版本需要推送到这两个站点："
 msgstr ""
 "Currently, we support the following two mirrors and the release version "
 "needs to be pushed to these two sites:"
 
-#: ../../dev/dev.md:152
+#: ../../dev/dev.md:157
 msgid "[**国内gitee镜像项目**](https://gitee.com/nachifur/MulimgViewer)"
 msgstr "[**gitee**](https://gitee.com/nachifur/MulimgViewer)"
 
-#: ../../dev/dev.md:153
+#: ../../dev/dev.md:158
 msgid "[**果壳OpenCas镜像项目**](https://github.com/opencas/MulimgViewer)"
 msgstr "[**OpenCas**](https://github.com/opencas/MulimgViewer)"
-
 

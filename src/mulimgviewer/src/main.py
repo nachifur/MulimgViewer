@@ -46,6 +46,7 @@ class MulimgViewer (MulimgViewerGui):
         # parameter
         self.out_path_str = ""
         self.img_name = []
+        self.selected_img_id = 0
         self.position = [0, 0]
         self.Uint = self.scrolledWindow_img.GetScrollPixelsPerUnit()
         self.Status_number = self.m_statusBar1.GetFieldsCount()
@@ -568,6 +569,7 @@ class MulimgViewer (MulimgViewerGui):
             # select box
             x, y = event.GetPosition()
             id = self.get_img_id_from_point([x, y])
+            self.selected_img_id = id
             xy_grid = self.ImgManager.xy_grid[id]
             x = x-xy_grid[0]
             y = y-xy_grid[1]
@@ -724,7 +726,52 @@ class MulimgViewer (MulimgViewerGui):
                 self.refresh(event)
                 self.SetStatusText_(["Magnifier", "-1", "-1", "-1"])
             else:
-                self.refresh(event)
+                if self.handle_title_injection(id):
+                    pass
+                else:
+                    self.refresh(event)
+
+    def inject_new_title(self, new_title, img_id=None):
+        try:
+            if img_id is not None:
+                current_index = img_id
+            else:
+                current_index = getattr(self, 'selected_img_id', self.ImgManager.action_count)
+            if hasattr(self.ImgManager, 'xy_grids_id_list') and current_index < len(self.ImgManager.xy_grids_id_list):
+                actual_img_index = self.ImgManager.xy_grids_id_list[current_index]
+            else:
+                actual_img_index = current_index
+            if actual_img_index < len(self.ImgManager.flist):
+                img_path = self.ImgManager.flist[actual_img_index]
+                success = self.ImgManager.update_image_exif_37510(img_path, new_title)
+                if success:
+                    self.ImgManager.get_img_list()
+                    self.refresh(None)
+                    if hasattr(self, 'm_textCtrl16'):
+                        self.m_textCtrl16.SetValue("")
+                    self.SetStatusText_([f"已向第 {current_index+1} 张图片注入标题: {new_title}", "-1", "-1", "-1"])
+                else:
+                    raise Exception("写入EXIF失败")
+            else:
+                raise Exception(f"图片索引 {actual_img_index} 超出范围")
+
+        except Exception as e:
+            pass
+
+    def handle_title_injection(self, img_id = None):
+        if hasattr(self, 'm_textCtrl16'):
+            new_title = self.m_textCtrl16.GetValue().strip()
+            if new_title:
+                try:
+                    self.inject_new_title(new_title, img_id)
+                    return True
+                except:
+                    pass
+                    return False
+            else:
+                return False
+        else:
+            return False
 
     def move_box_point(self, x, y, show_scale):
         x_0, y_0, x_1, y_1 = self.xy_magnifier[0][0:4]

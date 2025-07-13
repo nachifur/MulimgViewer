@@ -1001,6 +1001,29 @@ class ImgManager(ImgData,Save):
         # else:
         #     return 2
 
+    def update_image_exif_37510(self, img_path, new_title):
+        try:
+            if not img_path.lower().endswith(('.jpg', '.jpeg', '.tiff', '.tif')):
+                return False
+            img = Image.open(img_path)
+            if 'exif' in img.info:
+                try:
+                    exif_dict = piexif.load(img.info['exif'])
+                except:
+                    exif_dict = {"0th": {}, "Exif": {}, "GPS": {}, "1st": {}, "thumbnail": None}
+            else:
+                exif_dict = {"0th": {}, "Exif": {}, "GPS": {}, "1st": {}, "thumbnail": None}
+            user_comment_tag = 0x9286
+            new_data = {"custom_title": new_title}
+            comment_data = json.dumps(new_data, ensure_ascii=False)
+            exif_dict["Exif"][user_comment_tag] = comment_data.encode('utf-8')
+            exif_bytes = piexif.dump(exif_dict)
+            img.save(img_path, exif=exif_bytes)
+            return True
+        except:
+            pass
+            return False
+
     def fill_func(self, img, id=None):
         return None
 
@@ -1061,20 +1084,45 @@ class ImgManager(ImgData,Save):
 
         if title_exif:
             for img in self.img_list:
+                if 'exif' not in img.info:
+                    title = "无EXIF信息"
+                    title_list.append(title)
+                    continue
                 exif = piexif.load(img.info['exif'])
-                try:
-                    exif_dict = json.loads(exif["0th"][270])["MulimgViewer"]
-
-                except:
-                    title = str(exif["0th"][270], encoding = "utf-8")
+                custom_title = None
+                if 0x9286 in exif["Exif"]:
+                    try:
+                        raw_data = exif["Exif"][0x9286]
+                        json_str = raw_data.decode('utf-8')
+                        data = json.loads(json_str)
+                        custom_title = data.get('custom_title')
+                    except Exception as e:
+                        pass
+                if 270 in exif["0th"]:
+                    try:
+                        exif_dict = json.loads(exif["0th"][270])["MulimgViewer"]
+                        title_parts = []
+                        for key, value in exif_dict.items():
+                            if key == "Name" :
+                                display_name = custom_title if custom_title else value
+                                title_parts.append(f"{key}: {display_name}")
+                            else:
+                                title_parts.append(f"{key}: {value}")
+                        title = "\n".join(title_parts)
+                    except:
+                        try:
+                            original_title = str(exif["0th"][270], encoding="utf-8")
+                            if custom_title:
+                                title = f"Name: {custom_title}\noriginal: {original_title}"
+                            else:
+                                title = original_title
+                        except:
+                            title = "EXIF解析失败"
                 else:
-                    i = 0
-                    title = ""
-                    for key in exif_dict.keys():
-                        title = title+key+": "+exif_dict[key]
-                        if i<len(exif_dict.keys())-1:
-                            title = title+"\n"
-                        i+=1
+                    if custom_title:
+                        title = f"Name: {custom_title}"
+                    else:
+                        title = "无标题信息"
 
                 title_list.append(title)
         else:
@@ -1097,6 +1145,7 @@ class ImgManager(ImgData,Save):
                     if self.title_setting[6]:
                         title = title+path.suffix
                     title_list.append(title)
+
         # get title color
         text_color = [255-self.gap_color[0], 255 -
                       self.gap_color[1], 255-self.gap_color[2]]

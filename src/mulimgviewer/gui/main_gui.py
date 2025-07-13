@@ -547,6 +547,14 @@ class MulimgViewerGui ( wx.Frame ):
 		self.title_font.SetSelection( 0 )
 		wSizer2.Add( self.title_font, 0, wx.ALL, 5 )
 
+		self.m_staticText382 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Rename", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText382.Wrap( -1 )
+
+		wSizer2.Add( self.m_staticText382, 0, wx.ALL, 5 )
+
+		self.m_textCtrl16 = wx.TextCtrl( self.m_panel4, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
+		wSizer2.Add( self.m_textCtrl16, 1, wx.ALL, 5 )
+
 
 		fgSizer3.Add( wSizer2, 1, wx.EXPAND, 5 )
 

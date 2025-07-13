@@ -384,6 +384,10 @@ class MulimgViewerGui ( wx.Frame ):
 		self.m_staticline18 = wx.StaticLine( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_VERTICAL )
 		wSizer81.Add( self.m_staticline18, 0, wx.EXPAND |wx.ALL, 5 )
 
+		self.show_unit = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"ALL", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.show_unit.SetValue(True)
+		wSizer81.Add( self.show_unit, 0, wx.ALL, 5 )
+
 		self.show_original = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"Img", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.show_original.SetValue(True)
 		wSizer81.Add( self.show_original, 0, wx.ALL, 5 )
@@ -395,6 +399,12 @@ class MulimgViewerGui ( wx.Frame ):
 		self.title_show = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"Title", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.title_show.SetValue(True)
 		wSizer81.Add( self.title_show, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+
+		self.m_staticline211 = wx.StaticLine( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_VERTICAL )
+		wSizer81.Add( self.m_staticline211, 0, wx.EXPAND |wx.ALL, 5 )
+
+		self.show_custom = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"ShowCustom", wx.DefaultPosition, wx.DefaultSize, 0 )
+		wSizer81.Add( self.show_custom, 0, wx.ALL, 5 )
 
 
 		fgSizer3.Add( wSizer81, 1, wx.EXPAND, 5 )
@@ -616,7 +626,7 @@ class MulimgViewerGui ( wx.Frame ):
 		self.m_staticText39 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Size", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText39.Wrap( -1 )
 
-		self.m_staticText39.SetFont( wx.Font( 12, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL, False, wx.EmptyString ) )
+		self.m_staticText39.SetFont( wx.Font( 12, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD, False, "宋体" ) )
 
 		wSizer10.Add( self.m_staticText39, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 

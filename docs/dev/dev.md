@@ -118,7 +118,7 @@ echo $env:PYTHONPATH
 ```
 
 ## Release
-我们的下一个release版本的计划可见[projects](https://github.com/nachifur/MulimgViewer/projects?type=classic)。
+我们的下一个release版本的计划可见[projects](https://github.com/nachifur/MulimgViewer/projects)。
 
 ### window的打包
 1. 安装：

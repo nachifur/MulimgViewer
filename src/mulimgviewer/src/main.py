@@ -268,7 +268,13 @@ class MulimgViewer (MulimgViewerGui):
                     self.SetStatusText_(
                         ["-1", "-1", "***"+str(self.ImgManager.name_list[self.ImgManager.action_count])+", saving img***", "-1"])
                     self.ImgManager.get_flist()
+                    if self.customfunc.Value:
+                        self.ImgManager.layout_params[32] = True  # customfunc
+                        self.ImgManager.save_img(self.out_path_str, type_)
+                        self.ImgManager.layout_params[32] = False  # customfunc
                     self.ImgManager.save_img(self.out_path_str, type_)
+                    self.ImgManager.save_stitch_img_and_customfunc_img(self.out_path_str, self.customfunc.Value)
+
                     self.ImgManager.add()
                 self.ImgManager.set_action_count(last_count_img)
                 self.SetStatusText_(
@@ -279,7 +285,13 @@ class MulimgViewer (MulimgViewerGui):
                     ["-1", "-1", "***"+str(self.ImgManager.name_list[self.ImgManager.action_count])+", saving img...***", "-1"])
             except:
                 pass
+            if self.customfunc.Value:
+                self.ImgManager.layout_params[32] = True  # customfunc
+                self.ImgManager.save_img(self.out_path_str, type_)
+                self.ImgManager.layout_params[32] = False  # customfunc
             flag = self.ImgManager.save_img(self.out_path_str, type_)
+            self.ImgManager.save_stitch_img_and_customfunc_img(self.out_path_str, self.customfunc.Value)
+
             if flag == 0:
                 self.SetStatusText_(
                     ["Save", str(self.ImgManager.action_count), "Save success!", "-1"])
@@ -1116,7 +1128,9 @@ class MulimgViewer (MulimgViewerGui):
                     self.customfunc.Value,                  # 32
                     self.out_path_str,                      # 33
                     self.Magnifier_format.GetSelection(),   # 34
-                    self.save_format.GetSelection()]        # 35
+                    self.save_format.GetSelection(),        # 35
+                    self.show_unit.Value,                   # 36
+                    self.show_custom.Value]                 # 37
 
     def show_img(self):
 
@@ -1157,17 +1171,16 @@ class MulimgViewer (MulimgViewerGui):
             self.slider_img.SetMax(self.ImgManager.max_action_num-1)
             self.ImgManager.get_flist()
 
-            # show the output image processed by the custom func; return cat(bmp, processed_bmp)
+            # show the output image processed by the custom func; return cat(bmp, customfunc_img)
             if self.customfunc.Value:
-                bmp_processed = self.process_by_custom_func()
-            else:
-                bmp_processed = None
+                self.ImgManager.layout_params[32] = True  # customfunc
+                self.ImgManager.stitch_images(
+                    0, copy.deepcopy(self.xy_magnifier))
+                self.ImgManager.layout_params[32] = False  # customfunc
             flag = self.ImgManager.stitch_images(
                 0, copy.deepcopy(self.xy_magnifier))
             if flag == 0:
-                bmp = self.ImgManager.img
-                if self.customfunc.Value and bmp_processed != None:
-                    bmp = self.ImgManager.ImgF.cat_img(bmp, bmp_processed)
+                bmp = self.ImgManager.show_stitch_img_and_customfunc_img(self.customfunc.Value)
                 self.show_bmp_in_panel = bmp
                 self.img_size = bmp.size
                 bmp = self.ImgManager.ImgF.PIL2wx(bmp)
@@ -1282,16 +1295,6 @@ class MulimgViewer (MulimgViewerGui):
             wx.Size((50, -1)))
         self.scrolledWindow_img.SetMinSize(
             wx.Size((50, self.Size[1]-150)))
-
-    def process_by_custom_func(self):
-        flag = self.ImgManager.stitch_images(
-            0, copy.deepcopy(self.xy_magnifier))
-        bmp_processed = self.ImgManager.img
-        self.ImgManager.layout_params[32] = False  # customfunc
-        if flag == 0:
-            return bmp_processed
-        else:
-            return None
 
     def split_sash_pos_changing(self, event):
 

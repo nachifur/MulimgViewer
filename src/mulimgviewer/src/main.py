@@ -612,7 +612,7 @@ class MulimgViewer (MulimgViewerGui):
         id = self.get_img_id_from_point([x, y])
         second_txt = self.m_statusBar1.GetStatusText(1)
         second_txt = second_txt.split("/")[0]
-        self.m_statusBar1.SetStatusText(second_txt+"/"+str(id)+"-th dir", 1)
+        self.m_statusBar1.SetStatusText(second_txt+"/"+str(id)+"-th img", 1)
 
     def img_left_dclick(self, event):
         if self.select_img_box.Value:

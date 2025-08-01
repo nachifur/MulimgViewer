@@ -759,8 +759,8 @@ class MulimgViewer (MulimgViewerGui):
                 if success:
                     self.ImgManager.get_img_list()
                     self.refresh(None)
-                    if hasattr(self, 'm_textCtrl16'):
-                        self.m_textCtrl16.SetValue("")
+                    if hasattr(self, 'title_rename_text'):
+                        self.title_rename_text.SetValue("")
                     self.SetStatusText_([f"已向第 {current_index+1} 张图片注入标题: {new_title}", "-1", "-1", "-1"])
                 else:
                     raise Exception("写入EXIF失败")
@@ -771,8 +771,8 @@ class MulimgViewer (MulimgViewerGui):
             pass
 
     def handle_title_injection(self, img_id = None):
-        if hasattr(self, 'm_textCtrl16'):
-            new_title = self.m_textCtrl16.GetValue().strip()
+        if hasattr(self, 'title_rename_text'):
+            new_title = self.title_rename_text.GetValue().strip()
             if new_title:
                 try:
                     self.inject_new_title(new_title, img_id)
@@ -1071,7 +1071,8 @@ class MulimgViewer (MulimgViewerGui):
                              self.title_font_size.Value,                # 8
                              self.font_paths,                           # 9
                              self.title_position.GetSelection(),        # 10
-                             self.title_exif.Value]                     # 11
+                             self.title_exif.Value,                     # 11
+                             self.title_show_rename.Value]              # 12
 
             if title_setting[0]:
                 if self.ImgManager.type == 0 or self.ImgManager.type == 1:
@@ -1373,6 +1374,22 @@ class MulimgViewer (MulimgViewerGui):
         else:
             self.title_down_up.SetLabel('Down')
 
+    def title_rename_fc(self, event):
+        if hasattr(self.ImgManager, 'layout_params') and len(self.ImgManager.layout_params) > 17:
+            if len(self.ImgManager.layout_params[17]) > 12:
+                self.ImgManager.layout_params[17][12] = self.title_show_rename.Value
+            else:
+                pass
+        else:
+            pass
+
+        if self.ImgManager.img_num != 0:
+            self.refresh(event)
+        else:
+            self.SetStatusText_(
+                ["-1", "", "***Error: First, need to select the input dir***", "-1"])
+            pass
+
     def parallel_sequential_fc(self, event):
         if self.parallel_sequential.Value:
             self.parallel_to_sequential.Value = False
@@ -1383,7 +1400,8 @@ class MulimgViewer (MulimgViewerGui):
 
     def title_auto_fc(self, event):
         titles = [self.title_down_up, self.title_show_parent,
-                  self.title_show_name, self.title_show_suffix, self.title_show_prefix, self.title_position, self.title_exif]
+                  self.title_show_name, self.title_show_suffix, self.title_show_prefix, self.title_position, self.title_exif,
+                  self.title_show_rename, self.title_rename_text]
         if self.title_auto.Value:
             for title in titles:
                 title.Enabled = False
@@ -1473,6 +1491,7 @@ class MulimgViewer (MulimgViewerGui):
             'title_show_suffix': self.title_show_suffix.GetValue(),
             'title_down_up': self.title_down_up.GetValue(),
             'save_format': self.save_format.GetSelection(),
+            'title_show_rename': self.title_show_rename.GetValue(),
         }
         flip_cursor_path = Path(get_resource_path(str(Path("configs"))))
         flip_cursor_path = str(flip_cursor_path / "output.json")
@@ -1529,6 +1548,7 @@ class MulimgViewer (MulimgViewerGui):
             self.title_show_suffix.SetValue(data['title_show_suffix'])
             self.title_down_up.SetValue(data['title_down_up'])
             self.save_format.SetSelection(data['save_format'])
+            self.title_show_rename.SetValue(data.get('title_show_rename', False))
 
     def reset_configuration(self, event):
         json_path = Path(get_resource_path(str(Path("configs"))))

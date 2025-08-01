@@ -553,6 +553,9 @@ class ImgUtils():
         return img
 
     def cal_txt_size_adjust_title(self, title_list, standard_size, font, font_size):
+        if not title_list or len(title_list) == 0:
+            return np.array([[standard_size, font_size]]), ["默认标题"], [standard_size, font_size]
+
         im = Image.new('RGBA', (256, 256), 0)
         draw = ImageDraw.Draw(im)
         title_size = []
@@ -1025,6 +1028,28 @@ class ImgManager(ImgData):
             pass
             return False
 
+    def get_display_title(self, img_path, original_title, title_rename_enabled):
+        if not title_rename_enabled:
+            return original_title
+        try:
+            img = Image.open(img_path)
+            exif_dict = piexif.load(img.info.get('exif', b''))
+            if 'Exif' in exif_dict and piexif.ExifIFD.UserComment in exif_dict['Exif']:
+                user_comment = exif_dict['Exif'][piexif.ExifIFD.UserComment]
+                if user_comment:
+                    if isinstance(user_comment, bytes):
+                        try:
+                            decoded_comment = user_comment[8:].decode('utf-8').strip()
+                            if decoded_comment:
+                                return decoded_comment
+                        except:
+                            pass
+                    elif isinstance(user_comment, str) and user_comment.strip():
+                        return user_comment.strip()
+            return original_title
+        except:
+            return original_title
+
     def fill_func(self, img, id=None):
         return None
 
@@ -1083,6 +1108,9 @@ class ImgManager(ImgData):
         title_exif = self.title_setting[11]
         title_list = []
 
+        if hasattr(self, 'layout_params') and len(self.layout_params) > 17:
+            self.title_setting = self.layout_params[17]
+
         if title_exif:
             for img in self.img_list:
                 if 'exif' not in img.info:
@@ -1099,31 +1127,45 @@ class ImgManager(ImgData):
                         custom_title = data.get('custom_title')
                     except Exception as e:
                         pass
-                if 270 in exif["0th"]:
-                    try:
-                        exif_dict = json.loads(exif["0th"][270])["MulimgViewer"]
-                        title_parts = []
-                        for key, value in exif_dict.items():
-                            if key == "Name" :
-                                display_name = custom_title if custom_title else value
-                                title_parts.append(f"{key}: {display_name}")
-                            else:
-                                title_parts.append(f"{key}: {value}")
-                        title = "\n".join(title_parts)
-                    except:
+                title_rename_enabled = len(self.title_setting) > 12 and self.title_setting[12]
+
+                if title_rename_enabled and custom_title:
+                    # 情况1：勾选且有270字段
+                    title_parts = [f"Name: {custom_title}"]
+                    if 270 in exif["0th"]:
                         try:
-                            original_title = str(exif["0th"][270], encoding="utf-8")
-                            if custom_title:
-                                title = f"Name: {custom_title}\noriginal: {original_title}"
-                            else:
-                                title = original_title
+                            exif_dict = json.loads(exif["0th"][270])["MulimgViewer"]
+                            for key, value in exif_dict.items():
+                                if key != "Name":
+                                    title_parts.append(f"{key}: {value}")
+                            title = "\n".join(title_parts)
                         except:
-                            title = "EXIF解析失败"
-                else:
-                    if custom_title:
-                        title = f"Name: {custom_title}"
+                            try:
+                                original_title = str(exif["0th"][270], encoding="utf-8")
+                                title = f"Name: {custom_title}\noriginal: {original_title}"
+                            except:
+                                title = f"Name: {custom_title}"
                     else:
-                        title = "无标题信息"
+                        title = f"Name: {custom_title}"
+                else:
+                    # 其他所有情况：显示270字段的完整原始内容
+                    if 270 in exif["0th"]:
+                        try:
+                            exif_dict = json.loads(exif["0th"][270])["MulimgViewer"]
+                            title_parts = []
+                            for key, value in exif_dict.items():
+                                title_parts.append(f"{key}: {value}")
+                            title = "\n".join(title_parts)
+                        except:
+                            try:
+                                title = str(exif["0th"][270], encoding="utf-8")
+                            except:
+                                title = "EXIF解析失败"
+                    else:
+                        if title_rename_enabled and custom_title:
+                            title = f"Name: {custom_title}"  # 情况3：勾选但没270字段
+                        else:
+                            title = "无标题信息"  # 情况4：未勾选且没270字段
 
                 title_list.append(title)
         else:
@@ -1145,7 +1187,9 @@ class ImgManager(ImgData):
                         title = title+name
                     if self.title_setting[6]:
                         title = title+path.suffix
-                    title_list.append(title)
+                    title_rename_enabled = len(self.title_setting) > 12 and self.title_setting[12]
+                    final_title = self.get_display_title(str(path), title, title_rename_enabled)
+                    title_list.append(final_title)
 
         # get title color
         text_color = [255-self.gap_color[0], 255 -

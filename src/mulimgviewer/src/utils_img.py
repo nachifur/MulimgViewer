@@ -553,6 +553,9 @@ class ImgUtils():
         return img
 
     def cal_txt_size_adjust_title(self, title_list, standard_size, font, font_size):
+        if not title_list or len(title_list) == 0:
+            return np.array([[standard_size, font_size]]), ["默认标题"], [standard_size, font_size]
+
         im = Image.new('RGBA', (256, 256), 0)
         draw = ImageDraw.Draw(im)
         title_size = []
@@ -633,7 +636,7 @@ class ImgManager(ImgData):
         self.img_resolution = [-1, -1]
         self.custom_resolution = False
         self.img_num = 0
-        self.format_group = [".png", ".jpg", ".jpeg", ".bmp", ".tiff", ".tif"]
+        self.format_group = [".png", ".jpg", ".jpeg", ".bmp", ".tiff", ".tif",".PNG", ".JPG", ".JPEG", ".BMP", ".TIFF", ".TIF"]
         self.crop_points = []
         self.draw_points = []
         self.ImgF = ImgUtils()
@@ -652,9 +655,12 @@ class ImgManager(ImgData):
                     if img.dtype != np.uint8:
                         img = (255 * img).astype(np.uint8)
                     pil_img = Image.fromarray(img)
+                    pil_img.filename = str(path)  # 加这一行
                     img_list.append(pil_img.convert('RGB'))
                 else:
-                    img_list.append(Image.open(path).convert('RGB'))
+                    img = Image.open(path).convert('RGB')  # 改这一行
+                    img.filename = str(path)
+                    img_list.append(img)
             else:
                 pass
         out_path_str = self.layout_params[33]
@@ -999,6 +1005,51 @@ class ImgManager(ImgData):
         # else:
         #     return 2
 
+    def update_image_exif_37510(self, img_path, new_title):
+        try:
+            if not img_path.lower().endswith(('.jpg', '.jpeg', '.tiff', '.tif')):
+                return False
+            img = Image.open(img_path)
+            if 'exif' in img.info:
+                try:
+                    exif_dict = piexif.load(img.info['exif'])
+                except:
+                    exif_dict = {"0th": {}, "Exif": {}, "GPS": {}, "1st": {}, "thumbnail": None}
+            else:
+                exif_dict = {"0th": {}, "Exif": {}, "GPS": {}, "1st": {}, "thumbnail": None}
+            user_comment_tag = 0x9286
+            new_data = {"custom_title": new_title}
+            comment_data = json.dumps(new_data, ensure_ascii=False)
+            exif_dict["Exif"][user_comment_tag] = comment_data.encode('utf-8')
+            exif_bytes = piexif.dump(exif_dict)
+            img.save(img_path, exif=exif_bytes)
+            return True
+        except:
+            pass
+            return False
+
+    def get_display_title(self, img_path, original_title, title_rename_enabled):
+        if not title_rename_enabled:
+            return original_title
+        try:
+            img = Image.open(img_path)
+            exif_dict = piexif.load(img.info.get('exif', b''))
+            if 'Exif' in exif_dict and piexif.ExifIFD.UserComment in exif_dict['Exif']:
+                user_comment = exif_dict['Exif'][piexif.ExifIFD.UserComment]
+                if user_comment:
+                    if isinstance(user_comment, bytes):
+                        try:
+                            decoded_comment = user_comment[8:].decode('utf-8').strip()
+                            if decoded_comment:
+                                return decoded_comment
+                        except:
+                            pass
+                    elif isinstance(user_comment, str) and user_comment.strip():
+                        return user_comment.strip()
+            return original_title
+        except:
+            return original_title
+
     def fill_func(self, img, id=None):
         return None
 
@@ -1011,7 +1062,7 @@ class ImgManager(ImgData):
         delta_x = max(0,int((title_max_size[0]-title_size[0])/2))
         one_size = int(int(self.title_setting[8])/2)#int(title_size[0]/int(len(self.title_list[id])))
         wrapper = textwrap.TextWrapper(width=int(int(title_max_size[0])/int(one_size)))  # 设置换行的宽度
-        lines = wrapper.wrap(text=self.title_list[id])
+        lines = self.title_list[id].split('\n')
         if delta_x + title_size[0] >  title_max_size[0]:
             delta_x = 0
         title_position=self.title_setting[10]
@@ -1027,24 +1078,15 @@ class ImgManager(ImgData):
         y = 0
         # 遍历处理过的行进行绘制
         for line in lines:
-            if delta_x + len(line )*one_size > title_max_size[0]:
-                delta_x = 0
+            # if delta_x + len(line )*one_size > title_max_size[0]:
+            #     delta_x = 0
             if self.title_setting[2]:
                 # up
-                draw.text((delta_x, y), line, align="center",font=self.font, fill=self.text_color)
+                draw.multiline_text((delta_x, y), line, align="center",font=self.font, fill=self.text_color)
             else:
                 # down
-                draw.text((delta_x, y), line, align="center",font=self.font, fill=self.text_color)
+                draw.multiline_text((delta_x, y), line, align="center",font=self.font, fill=self.text_color)
             y += int(self.title_setting[8])  # 增加y轴偏移量，确保每行文本不重叠
-
-        # if self.title_setting[2]:
-        #     # up
-        #     draw.multiline_text(
-        #         (delta_x, 0), self.title_list[id], font=self.font, fill=self.text_color,align="left")
-        # else:
-        #     # down (anchor=None,spacing=0,align="left",direction=None,features=None)
-        #     draw.multiline_text(
-        #         (delta_x, 0), self.title_list[id], font=self.font, fill=self.text_color,align="left")
         return img
 
     def title_init(self, width_2, height_2):
@@ -1062,26 +1104,68 @@ class ImgManager(ImgData):
         #                  self.title_position.GetSelection(),        # 10
         #                  self.title_exif.Value]                     # 11
 
-        # get title
+        #  get title
         title_exif = self.title_setting[11]
         title_list = []
 
+        if hasattr(self, 'layout_params') and len(self.layout_params) > 17:
+            self.title_setting = self.layout_params[17]
+
         if title_exif:
             for img in self.img_list:
+                if 'exif' not in img.info:
+                    title = "无EXIF信息"
+                    title_list.append(title)
+                    continue
                 exif = piexif.load(img.info['exif'])
-                try:
-                    exif_dict = json.loads(exif["0th"][270])["MulimgViewer"]
+                custom_title = None
+                if 0x9286 in exif["Exif"]:
+                    try:
+                        raw_data = exif["Exif"][0x9286]
+                        json_str = raw_data.decode('utf-8')
+                        data = json.loads(json_str)
+                        custom_title = data.get('custom_title')
+                    except Exception as e:
+                        pass
+                title_rename_enabled = len(self.title_setting) > 12 and self.title_setting[12]
 
-                except:
-                    title = str(exif["0th"][270], encoding = "utf-8")
+                if title_rename_enabled and custom_title:
+                    # 情况1：勾选且有270字段
+                    title_parts = [f"Name: {custom_title}"]
+                    if 270 in exif["0th"]:
+                        try:
+                            exif_dict = json.loads(exif["0th"][270])["MulimgViewer"]
+                            for key, value in exif_dict.items():
+                                if key != "Name":
+                                    title_parts.append(f"{key}: {value}")
+                            title = "\n".join(title_parts)
+                        except:
+                            try:
+                                original_title = str(exif["0th"][270], encoding="utf-8")
+                                title = f"Name: {custom_title}\noriginal: {original_title}"
+                            except:
+                                title = f"Name: {custom_title}"
+                    else:
+                        title = f"Name: {custom_title}"
                 else:
-                    i = 0
-                    title = ""
-                    for key in exif_dict.keys():
-                        title = title+key+": "+exif_dict[key]
-                        if i<len(exif_dict.keys())-1:
-                            title = title+"\n"
-                        i+=1
+                    # 其他所有情况：显示270字段的完整原始内容
+                    if 270 in exif["0th"]:
+                        try:
+                            exif_dict = json.loads(exif["0th"][270])["MulimgViewer"]
+                            title_parts = []
+                            for key, value in exif_dict.items():
+                                title_parts.append(f"{key}: {value}")
+                            title = "\n".join(title_parts)
+                        except:
+                            try:
+                                title = str(exif["0th"][270], encoding="utf-8")
+                            except:
+                                title = "EXIF解析失败"
+                    else:
+                        if title_rename_enabled and custom_title:
+                            title = f"Name: {custom_title}"  # 情况3：勾选但没270字段
+                        else:
+                            title = "无标题信息"  # 情况4：未勾选且没270字段
 
                 title_list.append(title)
         else:
@@ -1103,7 +1187,10 @@ class ImgManager(ImgData):
                         title = title+name
                     if self.title_setting[6]:
                         title = title+path.suffix
-                    title_list.append(title)
+                    title_rename_enabled = len(self.title_setting) > 12 and self.title_setting[12]
+                    final_title = self.get_display_title(str(path), title, title_rename_enabled)
+                    title_list.append(final_title)
+
         # get title color
         text_color = [255-self.gap_color[0], 255 -
                       self.gap_color[1], 255-self.gap_color[2]]

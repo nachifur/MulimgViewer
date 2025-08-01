@@ -15,6 +15,9 @@ from .utils_img import ImgManager
 import json
 import shutil
 
+import sys
+import subprocess
+
 class MulimgViewer (MulimgViewerGui):
 
     def __init__(self, parent, UpdateUI, get_type, default_path=None):
@@ -43,6 +46,7 @@ class MulimgViewer (MulimgViewerGui):
         # parameter
         self.out_path_str = ""
         self.img_name = []
+        self.selected_img_id = 0
         self.position = [0, 0]
         self.Uint = self.scrolledWindow_img.GetScrollPixelsPerUnit()
         self.Status_number = self.m_statusBar1.GetFieldsCount()
@@ -120,6 +124,22 @@ class MulimgViewer (MulimgViewerGui):
 
     def EVT_MY_TEST_OnHandle(self, event):
         self.about_gui(None, update=True, new_version=event.GetEventArgs())
+
+    def process_exif(self, folder_path):
+        if self.title_exif.Value and folder_path:
+            return self.run_exif_to_csv(folder_path)
+        return True
+
+    def run_exif_to_csv(self, current_image_folder):
+        examples_dir = Path(__file__).parent.parent.parent.parent / "examples"
+        exif_to_csv_path = str(examples_dir / "exif_to_csv.py")
+        add_script_path = str(examples_dir / "add_new_info_to_img_s.py")
+
+        result1 = subprocess.run([sys.executable, exif_to_csv_path, current_image_folder],
+                    check=True, cwd=str(examples_dir), capture_output=True, text=True)
+        csv_file = examples_dir / "output_exif_data.csv"
+        result2 = subprocess.run([sys.executable, add_script_path, current_image_folder],
+                    check=True, cwd=str(examples_dir), capture_output=True, text=True)
 
     def check_version(self):
         t1 = threading.Thread(target=self.run, args=())
@@ -311,6 +331,7 @@ class MulimgViewer (MulimgViewerGui):
         if dlg.ShowModal() == wx.ID_OK:
             self.ImgManager.init(
                 dlg.GetPath(), type=0, parallel_to_sequential=self.parallel_to_sequential.Value)
+            self.process_exif(dlg.GetPath())
             self.show_img_init()
             self.ImgManager.set_action_count(0)
             self.show_img()
@@ -338,6 +359,7 @@ class MulimgViewer (MulimgViewerGui):
 
         if dlg.ShowModal() == wx.ID_OK:
             self.ImgManager.init(dlg.GetPath(), type=2)
+            self.process_exif(dlg.GetPath())
             self.show_img_init()
             self.ImgManager.set_action_count(0)
             self.show_img()
@@ -377,8 +399,10 @@ class MulimgViewer (MulimgViewerGui):
             self.show_img()
             self.choice_input_mode.SetSelection(2)
 
+
     def save_flist_parallel_manual(self, event):
         if self.out_path_str == "":
+
             self.SetStatusText_(
                 ["-1", "-1", "***Error: First, need to select the output dir***", "-1"])
         else:
@@ -557,6 +581,7 @@ class MulimgViewer (MulimgViewerGui):
             # select box
             x, y = event.GetPosition()
             id = self.get_img_id_from_point([x, y])
+            self.selected_img_id = id
             xy_grid = self.ImgManager.xy_grid[id]
             x = x-xy_grid[0]
             y = y-xy_grid[1]
@@ -713,7 +738,52 @@ class MulimgViewer (MulimgViewerGui):
                 self.refresh(event)
                 self.SetStatusText_(["Magnifier", "-1", "-1", "-1"])
             else:
-                self.refresh(event)
+                if self.handle_title_injection(id):
+                    pass
+                else:
+                    self.refresh(event)
+
+    def inject_new_title(self, new_title, img_id=None):
+        try:
+            if img_id is not None:
+                current_index = img_id
+            else:
+                current_index = getattr(self, 'selected_img_id', self.ImgManager.action_count)
+            if hasattr(self.ImgManager, 'xy_grids_id_list') and current_index < len(self.ImgManager.xy_grids_id_list):
+                actual_img_index = self.ImgManager.xy_grids_id_list[current_index]
+            else:
+                actual_img_index = current_index
+            if actual_img_index < len(self.ImgManager.flist):
+                img_path = self.ImgManager.flist[actual_img_index]
+                success = self.ImgManager.update_image_exif_37510(img_path, new_title)
+                if success:
+                    self.ImgManager.get_img_list()
+                    self.refresh(None)
+                    if hasattr(self, 'title_rename_text'):
+                        self.title_rename_text.SetValue("")
+                    self.SetStatusText_([f"已向第 {current_index+1} 张图片注入标题: {new_title}", "-1", "-1", "-1"])
+                else:
+                    raise Exception("写入EXIF失败")
+            else:
+                raise Exception(f"图片索引 {actual_img_index} 超出范围")
+
+        except Exception as e:
+            pass
+
+    def handle_title_injection(self, img_id = None):
+        if hasattr(self, 'title_rename_text'):
+            new_title = self.title_rename_text.GetValue().strip()
+            if new_title:
+                try:
+                    self.inject_new_title(new_title, img_id)
+                    return True
+                except:
+                    pass
+                    return False
+            else:
+                return False
+        else:
+            return False
 
     def move_box_point(self, x, y, show_scale):
         x_0, y_0, x_1, y_1 = self.xy_magnifier[0][0:4]
@@ -1001,7 +1071,8 @@ class MulimgViewer (MulimgViewerGui):
                              self.title_font_size.Value,                # 8
                              self.font_paths,                           # 9
                              self.title_position.GetSelection(),        # 10
-                             self.title_exif.Value]                     # 11
+                             self.title_exif.Value,                     # 11
+                             self.title_show_rename.Value]              # 12
 
             if title_setting[0]:
                 if self.ImgManager.type == 0 or self.ImgManager.type == 1:
@@ -1302,6 +1373,22 @@ class MulimgViewer (MulimgViewerGui):
         else:
             self.title_down_up.SetLabel('Down')
 
+    def title_rename_fc(self, event):
+        if hasattr(self.ImgManager, 'layout_params') and len(self.ImgManager.layout_params) > 17:
+            if len(self.ImgManager.layout_params[17]) > 12:
+                self.ImgManager.layout_params[17][12] = self.title_show_rename.Value
+            else:
+                pass
+        else:
+            pass
+
+        if self.ImgManager.img_num != 0:
+            self.refresh(event)
+        else:
+            self.SetStatusText_(
+                ["-1", "", "***Error: First, need to select the input dir***", "-1"])
+            pass
+
     def parallel_sequential_fc(self, event):
         if self.parallel_sequential.Value:
             self.parallel_to_sequential.Value = False
@@ -1312,7 +1399,8 @@ class MulimgViewer (MulimgViewerGui):
 
     def title_auto_fc(self, event):
         titles = [self.title_down_up, self.title_show_parent,
-                  self.title_show_name, self.title_show_suffix, self.title_show_prefix, self.title_position, self.title_exif]
+                  self.title_show_name, self.title_show_suffix, self.title_show_prefix, self.title_position, self.title_exif,
+                  self.title_show_rename, self.title_rename_text]
         if self.title_auto.Value:
             for title in titles:
                 title.Enabled = False
@@ -1402,6 +1490,7 @@ class MulimgViewer (MulimgViewerGui):
             'title_show_suffix': self.title_show_suffix.GetValue(),
             'title_down_up': self.title_down_up.GetValue(),
             'save_format': self.save_format.GetSelection(),
+            'title_show_rename': self.title_show_rename.GetValue(),
         }
         flip_cursor_path = Path(get_resource_path(str(Path("configs"))))
         flip_cursor_path = str(flip_cursor_path / "output.json")
@@ -1458,6 +1547,7 @@ class MulimgViewer (MulimgViewerGui):
             self.title_show_suffix.SetValue(data['title_show_suffix'])
             self.title_down_up.SetValue(data['title_down_up'])
             self.save_format.SetSelection(data['save_format'])
+            self.title_show_rename.SetValue(data.get('title_show_rename', False))
 
     def reset_configuration(self, event):
         json_path = Path(get_resource_path(str(Path("configs"))))

@@ -3,6 +3,7 @@ import csv
 from pathlib import Path
 
 import numpy as np
+import cv2,math
 
 from .utils import solve_factor
 
@@ -13,8 +14,10 @@ class ImgData():
     def init(self, input_path, type=2, parallel_to_sequential=False, action_count=None, img_count=None):
         self.input_path = input_path
         self.type = type
-        self.parallel_to_sequential = parallel_to_sequential
+        self.video_mode = False
 
+        self.parallel_to_sequential = parallel_to_sequential
+        
         self.init_flist()
         if self.parallel_to_sequential:
             list_ = []
@@ -55,6 +58,7 @@ class ImgData():
         elif self.type == 2:
             # one_dir_mul_img
             self.path_list = [self.input_path]
+            print(f"self.path_list: {self.path_list}")
             self.path_list = np.sort(self.path_list)
             self.name_list = self.get_name_list()
 
@@ -65,6 +69,10 @@ class ImgData():
         else:
             self.path_list = []
             self.name_list = []
+
+    def update_video_mode(self, flag):
+        self.video_mode = flag
+        print(f"Video mode updated: {self.video_mode}")
 
     def get_path_list_from_lf(self):
         format_group = [".png", ".jpg", ".jpeg", ".bmp", ".tif", ".tiff"]
@@ -113,13 +121,13 @@ class ImgData():
                              for f in Path(path_).iterdir()]
             if len(no_check_list) > 100:
                 self.dataset_mode = True
-                no_check_list = np.sort(no_check_list)
+                no_check_list = sorted(no_check_list, key=lambda x: int(x.split('.')[0]))
                 output.append(no_check_list)
             else:
                 self.dataset_mode = False
                 check_list = [str(f.name) for f in Path(path_).iterdir(
                 ) if f.is_file() and f.suffix.lower() in self.format_group]
-                check_list = np.sort(check_list)
+                no_check_list = sorted(no_check_list, key=lambda x: int(x.split('.')[0]))
                 output.append(check_list)
             if not self.parallel_to_sequential:
                 if i == 0:
@@ -217,8 +225,9 @@ class ImgData():
                         except:
                             flist += [str(Path(self.path_list[i]) /
                                           self.name_list[-1])]
-
+            print(f"flist: {flist}, img_count: {self.img_count}, count_per_action: {self.count_per_action},img_num: {self.img_num}")
         elif self.type == 2:
+            self.name_list = sorted(self.name_list, key=lambda x: int(x.split('.')[0]))
             # one_dir_mul_img
             try:
                 flist = [str(Path(self.path_list[0])/self.name_list[i])
@@ -226,6 +235,7 @@ class ImgData():
             except:
                 flist = [str(Path(self.path_list[0])/self.name_list[i])
                          for i in range(self.img_count, self.img_num)]
+            print(f"flist: {flist}, img_count: {self.img_count}, count_per_action: {self.count_per_action},img_num: {self.img_num}")
         elif self.type == 3:
             # one file list
             # flist = self.path_list
@@ -235,6 +245,7 @@ class ImgData():
             except:
                 flist = [str(Path(self.path_list[i]))
                          for i in range(self.img_count, self.img_num)]
+            print(f"flist: {flist}, img_count: {self.img_count}, count_per_action: {self.count_per_action},img_num: {self.img_num}")
         else:
             flist = []
 
@@ -244,3 +255,23 @@ class ImgData():
     def get_dir_num(self):
         num = len(self.path_list)
         return num
+    
+    def calc_max_extractable_frames(video_path, interval_sec):
+        cap = cv2.VideoCapture(video_path)
+        if not cap.isOpened():
+            print(f"❌ 无法打开视频: {video_path}")
+            return 0
+
+        fps = cap.get(cv2.CAP_PROP_FPS)  # 帧率
+        total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))  # 总帧数
+        duration_sec = total_frames / fps  # 总时长（秒）
+
+        max_frames = math.floor(duration_sec / interval_sec)
+
+        print(f"视频总时长: {duration_sec:.2f}s")
+        print(f"时间间隔: {interval_sec}s -> 最多可拆帧数: {max_frames}")
+
+        cap.release()
+        return max_frames
+
+

@@ -2,6 +2,8 @@ import copy
 import platform
 import threading
 from pathlib import Path
+import cv2
+from concurrent.futures import ThreadPoolExecutor
 
 import numpy as np
 import wx
@@ -12,6 +14,7 @@ from .about import About
 from .index_table import IndexTable
 from .utils import MyTestEvent, get_resource_path
 from .utils_img import ImgManager
+from .data import ImgData
 import json
 import shutil
 
@@ -20,10 +23,10 @@ class MulimgViewer (MulimgViewerGui):
     def __init__(self, parent, UpdateUI, get_type, default_path=None):
         self.shift_pressed=False
         super().__init__(parent)
-        self.create_ImgManager()
         self.UpdateUI = UpdateUI
         self.get_type = get_type
-
+        self.create_ImgManager()
+        self.ImgData = ImgData()
         acceltbl = wx.AcceleratorTable([(wx.ACCEL_NORMAL, wx.WXK_UP,
                                          self.menu_up.GetId()),
                                         (wx.ACCEL_NORMAL, wx.WXK_DOWN,
@@ -59,6 +62,9 @@ class MulimgViewer (MulimgViewerGui):
         self.xy_magnifier = []
         self.show_scale_proportion = 0
         self.key_status = {"shift_s": 0, "ctrl": 0, "alt": 0}
+        self.video_mode = False
+        self.cache_enabled = False
+        self.count_per_action = 1
         self.indextablegui = None
         self.aboutgui = None
         self.icon = wx.Icon(get_resource_path(
@@ -94,6 +100,8 @@ class MulimgViewer (MulimgViewerGui):
         self.m_splitter1.SetSashPosition(self.SashPosition)
         self.split_changing = False
         self.width_setting_ = self.width_setting
+        self.thread = 4
+        self.cache_num = 2
 
         # Draw color to box
         self.colourPicker_draw.Bind(
@@ -105,6 +113,7 @@ class MulimgViewer (MulimgViewerGui):
         self.Bind(EVT_MY_TEST, self.EVT_MY_TEST_OnHandle)
         self.version = VERSION
         self.check_version()
+        self.video_path = None
 
         # open default path
         if default_path:
@@ -117,6 +126,10 @@ class MulimgViewer (MulimgViewerGui):
                 pass
 
         self.load_configuration( None , config_name="output.json")
+
+    def on_checkbox(self, event):
+        checked = self.m_checkBox66.GetValue()
+        self.ImgData.update_video_mode(checked)
 
     def EVT_MY_TEST_OnHandle(self, event):
         self.about_gui(None, update=True, new_version=event.GetEventArgs())
@@ -333,11 +346,25 @@ class MulimgViewer (MulimgViewerGui):
     def one_dir_mul_img(self, event):
         self.SetStatusText_(
             ["Sequential choose input dir", "", "", "-1"])
-        dlg = wx.DirDialog(None, "Choose input dir", "",
-                           wx.DD_DEFAULT_STYLE | wx.DD_DIR_MUST_EXIST)
+        if self.video_mode:
+            self.on_checkbox(None)  # Ensure video mode is set
+            wildcard = "Video files (*.mp4;*.avi;*.mov)|*.mp4;*.avi;*.mov"
+            dlg = wx.FileDialog(None, "Choose video file", "", "",
+                                wildcard, wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
+        else:
+            dlg = wx.DirDialog(None, "Choose input dir", "",
+                               wx.DD_DEFAULT_STYLE | wx.DD_DIR_MUST_EXIST)
 
         if dlg.ShowModal() == wx.ID_OK:
-            self.ImgManager.init(dlg.GetPath(), type=2)
+            if self.video_mode:
+                video_path = dlg.GetPath()
+                self.thread = int(self.m_textCtrl29.GetValue())
+                self.cache_num = int(self.m_textCtrl30.GetValue())
+                self.count_per_action = self.get_count_per_action(type=2)
+                self.video_path = self.init_video_frame_cache(Path(video_path), num_frames=(self.cache_num+1)*self.count_per_action, max_threads=self.thread)
+                self.ImgManager.init(self.video_path, type=2)
+            else:
+                self.ImgManager.init(dlg.GetPath(), type=2)
             self.show_img_init()
             self.ImgManager.set_action_count(0)
             self.show_img()
@@ -1465,3 +1492,69 @@ class MulimgViewer (MulimgViewerGui):
         output_s_json_path = str(json_path / "output_s.json")
         self.load_configuration(event, config_name="output_s.json")
         shutil.copy(output_s_json_path, output_json_path)
+
+    def on_enable_video_mode(self, event):
+        self.video_mode = self.m_checkBox66.GetValue()
+        return self.video_mode
+        
+    def on_enable_cache(self, event):
+        self.cache_enabled = self.m_checkBox67.GetValue()
+        return self.cache_enabled
+    
+    def init_video_frame_cache(self, input_path, num_frames=8, max_threads=4):
+        input_path = Path(input_path)
+        output_list = []
+
+        def extract_head_frames(video_path: Path):
+            video_name = video_path.stem
+            out_dir = Path("video_frames") / video_name
+            # 新增：如果目录存在，先删除旧缓存
+            if out_dir.exists():
+                shutil.rmtree(out_dir)
+
+            out_dir.mkdir(parents=True, exist_ok=True)
+
+            cap = cv2.VideoCapture(str(video_path))
+            if not cap.isOpened():
+                print(f"❌ 无法打开 {video_path}")
+                return None
+
+            frame_idx = 0
+            while frame_idx < num_frames:
+                ret, frame = cap.read()
+                if not ret:
+                    break
+                h, w = frame.shape[:2]
+                scale = 256 / max(h, w)
+                new_w, new_h = int(w * scale), int(h * scale)
+                resized = cv2.resize(frame, (new_w, new_h))
+                cv2.imwrite(str(out_dir / f"{frame_idx}.png"), resized)
+                frame_idx += 1
+
+            cap.release()
+            return str(out_dir)
+
+        # 多线程执行
+        executor = ThreadPoolExecutor(max_workers=max_threads)
+
+        if input_path.is_file() and input_path.suffix.lower() == ".mp4":
+            return extract_head_frames(input_path)
+
+        elif input_path.is_dir():
+            video_paths = list(input_path.glob("*.mp4"))
+            futures = [executor.submit(extract_head_frames, v) for v in video_paths]
+            for f in futures:
+                result = f.result()
+                if result:
+                    output_list.append(result)
+            return output_list
+
+        else:
+            raise ValueError("路径既不是 .mp4 文件，也不是包含 .mp4 的目录")
+        
+    def get_count_per_action(self,type=2):
+        if type == 2:
+            row_col = self.row_col.GetLineText(0).split(',')
+            row_col = [int(x) for x in row_col]
+            product = row_col[0] * row_col[1]
+        return product

@@ -60,6 +60,11 @@ class MulimgViewerGui ( wx.Frame ):
 
 		wSizer1.Add( self.left_arrow_button, 0, wx.ALL|wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
+		self.right_arrow_button1 = wx.Button( self.m_panel1, wx.ID_ANY, u"▶", wx.DefaultPosition, wx.Size( 50,30 ), 0 )
+		self.right_arrow_button1.SetFont( wx.Font( 20, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL, False, wx.EmptyString ) )
+
+		wSizer1.Add( self.right_arrow_button1, 0, wx.ALL, 5 )
+
 		self.right_arrow_button = wx.Button( self.m_panel1, wx.ID_ANY, u">", wx.DefaultPosition, wx.Size( 50,30 ), 0 )
 		self.right_arrow_button.SetFont( wx.Font( 20, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL, False, wx.EmptyString ) )
 
@@ -502,6 +507,80 @@ class MulimgViewerGui ( wx.Frame ):
 		self.m_staticline16 = wx.StaticLine( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_HORIZONTAL )
 		fgSizer3.Add( self.m_staticline16, 0, wx.EXPAND |wx.ALL, 5 )
 
+		wSizer12 = wx.WrapSizer( wx.HORIZONTAL, wx.WRAPSIZER_DEFAULT_FLAGS )
+
+		self.m_staticText401 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Video", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText401.Wrap( -1 )
+
+		self.m_staticText401.SetFont( wx.Font( 12, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD, False, wx.EmptyString ) )
+
+		wSizer12.Add( self.m_staticText401, 0, wx.ALL, 5 )
+
+
+		fgSizer3.Add( wSizer12, 1, wx.EXPAND, 5 )
+
+		wSizer24 = wx.WrapSizer( wx.HORIZONTAL, wx.WRAPSIZER_DEFAULT_FLAGS )
+
+		self.m_checkBox66 = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"Enable Video Mode", wx.DefaultPosition, wx.DefaultSize, 0 )
+		wSizer24.Add( self.m_checkBox66, 0, wx.ALL, 5 )
+
+		self.m_checkBox67 = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"Enable Cache", wx.DefaultPosition, wx.DefaultSize, 0 )
+		wSizer24.Add( self.m_checkBox67, 0, wx.ALL, 5 )
+
+
+		fgSizer3.Add( wSizer24, 1, wx.EXPAND, 5 )
+
+		wSizer26 = wx.WrapSizer( wx.HORIZONTAL, wx.WRAPSIZER_DEFAULT_FLAGS )
+
+		self.m_staticText79 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Frame Interval(s)", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText79.Wrap( -1 )
+
+		wSizer26.Add( self.m_staticText79, 0, wx.ALL, 5 )
+
+
+		wSizer26.Add( ( 0, 0), 1, wx.EXPAND, 5 )
+
+		self.m_textCtrl28 = wx.TextCtrl( self.m_panel4, wx.ID_ANY, u"1.0", wx.DefaultPosition, wx.DefaultSize, 0 )
+		wSizer26.Add( self.m_textCtrl28, 0, wx.ALL, 5 )
+
+
+		fgSizer3.Add( wSizer26, 1, wx.EXPAND, 5 )
+
+		wSizer27 = wx.WrapSizer( wx.HORIZONTAL, wx.WRAPSIZER_DEFAULT_FLAGS )
+
+		self.m_staticText80 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Parallel Threads", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText80.Wrap( -1 )
+
+		wSizer27.Add( self.m_staticText80, 0, wx.ALL, 5 )
+
+
+		wSizer27.Add( ( 0, 0), 1, wx.EXPAND, 5 )
+
+		self.m_textCtrl29 = wx.TextCtrl( self.m_panel4, wx.ID_ANY, u"4", wx.DefaultPosition, wx.DefaultSize, 0 )
+		wSizer27.Add( self.m_textCtrl29, 0, wx.ALL, 5 )
+
+
+		fgSizer3.Add( wSizer27, 1, wx.EXPAND, 5 )
+
+		wSizer28 = wx.WrapSizer( wx.HORIZONTAL, wx.WRAPSIZER_DEFAULT_FLAGS )
+
+		self.m_staticText81 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Cached Frames(±)", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText81.Wrap( -1 )
+
+		wSizer28.Add( self.m_staticText81, 0, wx.ALL, 5 )
+
+
+		wSizer28.Add( ( 0, 0), 1, wx.EXPAND, 5 )
+
+		self.m_textCtrl30 = wx.TextCtrl( self.m_panel4, wx.ID_ANY, u"2", wx.DefaultPosition, wx.DefaultSize, 0 )
+		wSizer28.Add( self.m_textCtrl30, 0, wx.ALL, 5 )
+
+
+		fgSizer3.Add( wSizer28, 1, wx.EXPAND, 5 )
+
+		self.m_staticline48 = wx.StaticLine( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_HORIZONTAL )
+		fgSizer3.Add( self.m_staticline48, 0, wx.EXPAND |wx.ALL, 5 )
+
 		wSizer2 = wx.WrapSizer( wx.HORIZONTAL, wx.WRAPSIZER_DEFAULT_FLAGS )
 
 		self.m_staticText33 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Title", wx.DefaultPosition, wx.DefaultSize, 0 )
@@ -629,6 +708,13 @@ class MulimgViewerGui ( wx.Frame ):
 		self.m_staticline21 = wx.StaticLine( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_HORIZONTAL )
 		fgSizer3.Add( self.m_staticline21, 0, wx.EXPAND |wx.ALL, 5 )
 
+		self.m_staticText13 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Color/transparency", wx.DefaultPosition, wx.Size( 150,-1 ), 0 )
+		self.m_staticText13.Wrap( -1 )
+
+		self.m_staticText13.SetFont( wx.Font( 12, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD, False, wx.EmptyString ) )
+
+		fgSizer3.Add( self.m_staticText13, 0, wx.ALL, 5 )
+
 		wSizer10 = wx.WrapSizer( wx.HORIZONTAL, wx.WRAPSIZER_DEFAULT_FLAGS )
 
 		self.m_staticText39 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Size", wx.DefaultPosition, wx.DefaultSize, 0 )
@@ -665,13 +751,6 @@ class MulimgViewerGui ( wx.Frame ):
 
 		self.m_staticline7 = wx.StaticLine( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_HORIZONTAL )
 		fgSizer3.Add( self.m_staticline7, 0, wx.EXPAND |wx.ALL, 5 )
-
-		self.m_staticText13 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Color/transparency", wx.DefaultPosition, wx.Size( 150,-1 ), 0 )
-		self.m_staticText13.Wrap( -1 )
-
-		self.m_staticText13.SetFont( wx.Font( 12, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD, False, wx.EmptyString ) )
-
-		fgSizer3.Add( self.m_staticText13, 0, wx.ALL, 5 )
 
 		self.m_staticline2 = wx.StaticLine( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_HORIZONTAL )
 		fgSizer3.Add( self.m_staticline2, 0, wx.EXPAND |wx.ALL, 5 )
@@ -842,6 +921,7 @@ class MulimgViewerGui ( wx.Frame ):
 		self.out_path_button.Bind( wx.EVT_BUTTON, self.out_path )
 		self.save_butoon.Bind( wx.EVT_BUTTON, self.save_img )
 		self.left_arrow_button.Bind( wx.EVT_BUTTON, self.last_img )
+		self.right_arrow_button1.Bind( wx.EVT_BUTTON, self.toggle_play )
 		self.right_arrow_button.Bind( wx.EVT_BUTTON, self.next_img )
 		self.refresh_button.Bind( wx.EVT_BUTTON, self.refresh )
 		self.slider_value.Bind( wx.EVT_TEXT_ENTER, self.slider_value_change )
@@ -883,6 +963,8 @@ class MulimgViewerGui ( wx.Frame ):
 		self.Bind( wx.EVT_MENU, self.delete_box, id = self.menu_delete_box.GetId() )
 		self.Bind( wx.EVT_MENU, self.index_table_gui, id = self.index_table.GetId() )
 		self.Bind( wx.EVT_MENU, self.about_gui, id = self.menu_about.GetId() )
+		self.m_checkBox66.Bind(wx.EVT_CHECKBOX, self.on_enable_video_mode)
+		self.m_checkBox67.Bind(wx.EVT_CHECKBOX, self.on_enable_cache)
 
 	def __del__( self ):
 		pass
@@ -890,6 +972,12 @@ class MulimgViewerGui ( wx.Frame ):
 
 	# Virtual event handlers, override them in your derived class
 	def frame_resize( self, event ):
+		event.Skip()
+	
+	def on_enable_video_mode(self, event):
+		event.Skip()
+	
+	def on_enable_cache(self, event):
 		event.Skip()
 
 	def open_all_img( self, event ):
@@ -987,7 +1075,8 @@ class MulimgViewerGui ( wx.Frame ):
 	def save_flist_parallel_manual( self, event ):
 		event.Skip()
 
-
+	def enable_cache(self, event):
+		event.Skip()
 
 
 
@@ -1015,4 +1104,5 @@ class MulimgViewerGui ( wx.Frame ):
 	def about_gui( self, event ):
 		event.Skip()
 
-
+	def toggle_play(self, event):
+		event.Skip()

@@ -70,6 +70,7 @@ class MulimgViewer (MulimgViewerGui):
         self.current_batch_idx = 0
         self.icon = wx.Icon(get_resource_path(
             'mulimgviewer.png'), wx.BITMAP_TYPE_PNG)
+        self.interval = float(self.m_textCtrl28.GetValue())
         self.SetIcon(self.icon)
         self.m_statusBar1.SetStatusWidths([-2, -1, -4, -4])
         self.set_title_font()
@@ -137,6 +138,18 @@ class MulimgViewer (MulimgViewerGui):
     def EVT_MY_TEST_OnHandle(self, event):
         self.about_gui(None, update=True, new_version=event.GetEventArgs())
 
+    def on_cache_num_change(self, event):
+        try:
+            self.cache_num = int(self.m_textCtrl30.GetValue())
+        except ValueError:
+            self.cache_num = 2  # 你默认的安全值
+
+    def on_thread_change(self, event):
+        try:
+            self.thread = int(self.m_textCtrl29.GetValue())
+        except ValueError:
+            self.thread = 4  # 你默认的安全值
+        
     def check_version(self):
         t1 = threading.Thread(target=self.run, args=())
         t1.setDaemon(True)
@@ -207,35 +220,32 @@ class MulimgViewer (MulimgViewerGui):
             return
 
         if self.video_mode:
-            # 初始化批次索引
             if not hasattr(self, "current_batch_idx"):
                 self.current_batch_idx = 0
 
-            if self.current_batch_idx > 0:
-                self.current_batch_idx -= 1
-            else:
-                return
+            if self.current_batch_idx == 0:
+                return  # 已经是第一批，不能再往前了
 
-
-            # 计算当前批次的起止帧索引
+            self.current_batch_idx -= 1
             batch_start = self.current_batch_idx * self.count_per_action
-            batch_end = min(batch_start + self.count_per_action, self.ImgManager.img_num)
+            batch_end = batch_start + self.count_per_action
 
-            # 更新缓存
             if hasattr(self, "update_cache"):
                 self.update_cache(batch_start)
 
-            # 检查当前批次是否已生成
             missing_frames = []
-            for idx in range(batch_start, batch_end):
-                frame_path = os.path.join(self.frame_cache_dir, f"{idx}.png")
-                if not os.path.exists(frame_path):
-                    missing_frames.append(idx)
+            for cache_dir, max_frame in zip(self.frame_cache_dir, self.ImgManager.img_num_list):
+                actual_end = min(batch_end, max_frame)
+                for idx in range(batch_start, actual_end):
+                    frame_path = os.path.join(cache_dir, f"{idx}.png")
+                    if not os.path.exists(frame_path):
+                        missing_frames.append((cache_dir, idx))
 
             if missing_frames:
+                print(f"缺少以下帧文件：{missing_frames}")
                 return
+
             self.ImgManager.subtract()
-            # 显示当前批次
             self.show_img_init()
             self.show_img()
             self.SetStatusText_(["Last", "-1", "-1", "-1"])
@@ -380,7 +390,7 @@ class MulimgViewer (MulimgViewerGui):
                         max_threads=self.thread
                     )
                     self.video_path.append(cache)
-                self.ImgManager.init(self.video_path, type=1, video_mode=self.video_mode, video_path=video_paths)
+                self.ImgManager.init(self.video_path, type=1, video_mode=self.video_mode, video_path=video_paths,interval=self.interval)
             else:
                 self.ImgManager.init(
                     dlg.GetPath(), type=0, parallel_to_sequential=self.parallel_to_sequential.Value)
@@ -421,8 +431,9 @@ class MulimgViewer (MulimgViewerGui):
                 self.thread = int(self.m_textCtrl29.GetValue())
                 self.cache_num = int(self.m_textCtrl30.GetValue())
                 self.count_per_action = self.get_count_per_action(type=2)
+            
                 self.video_path = self.init_video_frame_cache(Path(video_path), num_frames=(self.cache_num+1)*self.count_per_action, max_threads=self.thread)
-                self.ImgManager.init(self.video_path, type=2, video_mode=self.video_mode, video_path = video_path)
+                self.ImgManager.init(self.video_path, type=2, video_mode=self.video_mode, video_path = video_path,interval=self.interval)
                 if isinstance(self.video_path, str):
                     self.video_path = [self.video_path]  # 单个也转成列表
             else:
@@ -1622,6 +1633,14 @@ class MulimgViewer (MulimgViewerGui):
             product = 1
         return product
     
+        # 2. 事件处理函数
+    def on_interval_changed(self, event):
+        val = self.m_textCtrl28.GetValue()
+        try:
+            self.interval = float(val)
+        except ValueError:
+            self.interval = 1.0  # 你默认的安全值
+
     def toggle_play(self, event):
         """
         播放/暂停按钮事件
@@ -1646,64 +1665,7 @@ class MulimgViewer (MulimgViewerGui):
     def on_play_timer(self, event):
         self.next_img(None)  # 每次定时调用 next_img
 
-    # def next_img(self, event):
-    #     import os  # Ensure os is imported for file operations
-    #     assert hasattr(self, 'executor'), "self.executor 未初始化！"
-    #     self.frame_cache_dir = self.video_path
-    #     # 无图片/视频直接报错
-    #     if self.ImgManager.img_num == 0:
-    #         self.SetStatusText_(
-    #             ["-1", "", "***Error: First, need to select the input dir***", "-1"]
-    #         )
-    #         return
-    #     print("self.ImgManager.img_num_list:", self.ImgManager.img_num_list)
-    #     # ============ 视频模式逻辑修改 ============
-    #     if self.video_mode:
-    #         # 初始化批次索引和批次大小
-    #         if not hasattr(self, "current_batch_idx"):
-    #             self.current_batch_idx = 0
-
-    #         self.current_batch_idx += 1
-
-    #         # 计算当前批次的起止帧索引
-    #         batch_start = self.current_batch_idx * self.count_per_action
-    #         batch_end = min(batch_start + self.count_per_action, self.ImgManager.img_num)
-
-    #         # 触发动态缓存：缓存范围 = 当前批次 ± cache_radius 批次
-    #         if hasattr(self, "update_cache"):
-    #             # 注意：update_cache需改造支持批次逻辑（按帧范围缓存）
-    #             self.update_cache(batch_start)
-
-    #         missing_frames = []
-
-    #         # 遍历所有视频的缓存目录
-    #         for cache_dir in self.frame_cache_dir:
-    #             for idx in range(batch_start, batch_end):
-    #                 frame_path = os.path.join(cache_dir, f"{idx}.png")
-    #                 if not os.path.exists(frame_path):
-    #                     missing_frames.append((cache_dir, idx))
-
-    #         if missing_frames:
-    #             print(f"缺少以下帧文件：{missing_frames}")
-    #             return
-
-    #         self.ImgManager.add()
-    #         # --- 显示图像 ---
-    #         self.show_img_init()
-    #         self.show_img()
-    #         self.SetStatusText_(["Next", "-1", "-1", "-1"])
-    #         return
-
-    #     # ============ 图片模式逻辑原样保留 ============
-    #     if self.ImgManager.img_count < self.ImgManager.img_num - 1:
-    #         self.ImgManager.add()
-
-    #     self.show_img_init()
-    #     self.show_img()
-    #     self.SetStatusText_(["Next", "-1", "-1", "-1"])
-
     def next_img(self, event):
-        import os  # Ensure os is imported for file operations
         assert hasattr(self, 'executor'), "self.executor 未初始化！"
         self.frame_cache_dir = self.video_path
         # 无图片/视频直接报错
@@ -1712,7 +1674,6 @@ class MulimgViewer (MulimgViewerGui):
                 ["-1", "", "***Error: First, need to select the input dir***", "-1"]
             )
             return
-        print("self.ImgManager.img_num_list:", self.ImgManager.img_num_list)
 
         # ============ 视频模式逻辑修改 ============
         if self.video_mode:
@@ -1755,76 +1716,6 @@ class MulimgViewer (MulimgViewerGui):
         self.show_img()
         self.SetStatusText_(["Next", "-1", "-1", "-1"])
 
-    # def update_cache(self, batch_start):
-    #     """
-    #     动态缓存：以当前批次为中心缓存前后 cache_radius 批次
-    #     - batch_start: 当前批次起始帧索引
-    #     """
-    #     assert hasattr(self, 'executor'), "self.executor 未初始化！"
-    #     self.cache_radius = self.cache_num
-    #     self.total_frames = self.ImgManager.img_num
-    #     # 计算当前批次索引
-    #     current_batch = batch_start // self.count_per_action
-
-    #     # 总批次数
-    #     total_batches = (self.total_frames + self.count_per_action - 1) // self.count_per_action
-
-    #     # 计算缓存批次范围
-    #     cache_start_batch = max(0, current_batch - self.cache_radius)
-    #     cache_end_batch = min(total_batches - 1, current_batch + self.cache_radius)
-
-    #     # 转换为帧范围
-    #     cache_start_frame = cache_start_batch * self.count_per_action
-    #     cache_end_frame = min(self.total_frames, (cache_end_batch + 1) * self.count_per_action)
-
-    #             # 删除缓存范围外的帧
-    #     for cache_dir in self.frame_cache_dir:
-    #         for file in os.listdir(cache_dir):
-    #             if not file.endswith('.png'):
-    #                 continue
-    #             try:
-    #                 idx = int(os.path.splitext(file)[0])
-    #             except ValueError:
-    #                 continue  # 跳过非数字命名文件
-
-    #             if idx < cache_start_frame or idx >= cache_end_frame:
-    #                 os.remove(os.path.join(cache_dir, file))
-
-    #     # 生成缓存范围内缺失的帧
-    #     for cache_dir in self.frame_cache_dir:
-    #         for idx in range(cache_start_frame, cache_end_frame):
-    #             path = os.path.join(cache_dir, f"{idx}.png")
-    #             if not os.path.exists(path):
-    #                 self.executor.submit(self._save_frame, idx)
-
-    # def _save_frame(self, frame_idx):
-    #     for video_idx in range(len(self.real_video_path)):
-    #         video_path = self.real_video_path[video_idx]
-    #         cache_dir = self.frame_cache_dir[video_idx]
-
-    #         save_path = os.path.join(cache_dir, f"{frame_idx}.png")
-    #         if os.path.exists(save_path):
-    #             continue
-
-    #         # 每个线程独立打开视频文件，避免多线程共享同一个cap
-    #         cap = cv2.VideoCapture(video_path)
-    #         if not cap.isOpened():
-    #             continue
-
-    #         cap.set(cv2.CAP_PROP_POS_FRAMES, frame_idx)
-    #         ret, frame = cap.read()
-    #         cap.release()
-
-    #         if not ret:
-    #             continue
-
-    #         h, w = frame.shape[:2]
-    #         scale = 256 / max(h, w)
-    #         new_w, new_h = int(w * scale), int(h * scale)
-    #         frame = cv2.resize(frame, (new_w, new_h))
-
-    #         cv2.imwrite(save_path, frame)
-
     def update_cache(self, batch_start):
         assert hasattr(self, 'executor'), "self.executor 未初始化！"
         self.cache_radius = self.cache_num
@@ -1838,8 +1729,13 @@ class MulimgViewer (MulimgViewerGui):
         cache_start_frame = cache_start_batch * self.count_per_action
         cache_end_frame = min(self.total_frames, (cache_end_batch + 1) * self.count_per_action)
 
-        # 删除缓存范围外的帧
         for video_idx, cache_dir in enumerate(self.frame_cache_dir):
+            if len(self.ImgManager.img_num_list) == 1:
+                real_frame_count = self.ImgManager.img_num_list[0]
+            else:
+                real_frame_count = self.ImgManager.img_num_list[video_idx]
+            last_valid_idx = real_frame_count - 1
+
             for file in os.listdir(cache_dir):
                 if not file.endswith('.png'):
                     continue
@@ -1847,12 +1743,19 @@ class MulimgViewer (MulimgViewerGui):
                     idx = int(os.path.splitext(file)[0])
                 except ValueError:
                     continue
-                if idx < cache_start_frame or idx >= cache_end_frame:
+                # 特别注意：idx 超过该视频真实帧数也应该删除
+                if cache_start_frame >= real_frame_count-2:
+                    cache_start_frame = real_frame_count-2
+                if idx < cache_start_frame or idx >= cache_end_frame or idx > last_valid_idx:
                     os.remove(os.path.join(cache_dir, file))
 
         # 缓存每个视频的 [cache_start_frame, cache_end_frame) 区间
         for video_idx, cache_dir in enumerate(self.frame_cache_dir):
-            real_frame_count = self.ImgManager.img_num_list[video_idx]
+            if len(self.ImgManager.img_num_list) == 1:
+                real_frame_count = self.ImgManager.img_num_list[0]
+            else:
+                real_frame_count = self.ImgManager.img_num_list[video_idx]
+            #real_frame_count = self.ImgManager.img_num_list[video_idx]
             last_valid_idx = real_frame_count - 1
             for idx in range(cache_start_frame, cache_end_frame):
                 save_path = os.path.join(cache_dir, f"{idx}.png")
@@ -1862,8 +1765,14 @@ class MulimgViewer (MulimgViewerGui):
 
 
     def _save_frame(self, frame_idx, video_idx, save_idx):
-        video_path = self.real_video_path[video_idx]
-        cache_dir = self.frame_cache_dir[video_idx]
+        if isinstance(self.real_video_path, str):
+            video_path = self.real_video_path  # 单字符串直接用
+        else:
+            video_path = self.real_video_path[video_idx]
+        if isinstance(self.frame_cache_dir, str):
+            cache_dir = self.frame_cache_dir
+        else:
+            cache_dir = self.frame_cache_dir[video_idx]
 
         save_path = os.path.join(cache_dir, f"{save_idx}.png")
         if os.path.exists(save_path):
@@ -1886,4 +1795,26 @@ class MulimgViewer (MulimgViewerGui):
         frame = cv2.resize(frame, (new_w, new_h))
 
         cv2.imwrite(save_path, frame)
+
+import os
+import shutil
+import atexit
+import signal
+import wx
+
+TEMP_DIR = "video_frames"  # 你临时生成内容的目录路径（可以修改）
+
+def cleanup_temp_dir():
+    if os.path.exists(TEMP_DIR):
+        try:
+            shutil.rmtree(TEMP_DIR)
+        except Exception as e:
+            pass
+
+# 注册退出时自动清理
+atexit.register(cleanup_temp_dir)
+
+# 注册中断信号（如 Ctrl+C / kill）
+signal.signal(signal.SIGINT, lambda sig, frame: (cleanup_temp_dir(), exit(0)))
+signal.signal(signal.SIGTERM, lambda sig, frame: (cleanup_temp_dir(), exit(0)))
 

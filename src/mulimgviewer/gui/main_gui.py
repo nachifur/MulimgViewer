@@ -965,10 +965,21 @@ class MulimgViewerGui ( wx.Frame ):
 		self.Bind( wx.EVT_MENU, self.about_gui, id = self.menu_about.GetId() )
 		self.m_checkBox66.Bind(wx.EVT_CHECKBOX, self.on_enable_video_mode)
 		self.m_checkBox67.Bind(wx.EVT_CHECKBOX, self.on_enable_cache)
+		self.m_textCtrl28.Bind(wx.EVT_TEXT, self.on_interval_changed)
+		self.m_textCtrl29.Bind(wx.EVT_TEXT, self.on_thread_change)
+		self.m_textCtrl30.Bind(wx.EVT_TEXT, self.on_cache_num_change)
 
 	def __del__( self ):
 		pass
 
+	def on_interval_changed(self, event):
+		event.Skip()
+
+	def on_thread_change(self, event):
+		event.Skip()
+	
+	def on_cache_num_change(self, event):
+		event.Skip()
 
 	# Virtual event handlers, override them in your derived class
 	def frame_resize( self, event ):

@@ -62,13 +62,10 @@ encoding = get_encoding(csv_file)
 with open(csv_file, 'r', newline='', encoding=encoding) as csvfile:
     dataset = list(csv.reader(csvfile))
     row = len(dataset)
-    if row > 1:  # 确保有数据行
-        key_list = dataset[0]  # 第一行是字段名
-
-        # 🔥 正确：在循环内处理每一行
-        for r in range(1, row):  # 从第二行开始（跳过标题行）
+    if row > 1:
+        key_list = dataset[0]
+        for r in range(1, row):
             try:
                 fill_dict_to_img(key_list, dataset[r], image_folder)
-                print(f"处理完成: {dataset[r][0]}")
-            except Exception as e:
-                print(f"处理失败 {dataset[r][0]}: {e}")
+            except:
+                pass

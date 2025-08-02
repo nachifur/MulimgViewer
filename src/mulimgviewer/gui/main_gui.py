@@ -854,6 +854,7 @@ class MulimgViewerGui ( wx.Frame ):
 		self.reset_config_button.Bind( wx.EVT_BUTTON, self.reset_configuration )
 		self.select_img_box.Bind( wx.EVT_CHECKBOX, self.select_img_box_func )
 		self.title_auto.Bind( wx.EVT_CHECKBOX, self.title_auto_fc )
+		self.title_exif.Bind( wx.EVT_CHECKBOX, self.on_title_exif_changed )
 		self.title_down_up.Bind( wx.EVT_CHECKBOX, self.title_down_up_fc )
 		self.title_show_rename.Bind( wx.EVT_CHECKBOX, self.title_rename_fc )
 		self.colourPicker_gap.Bind( wx.EVT_COLOURPICKER_CHANGED, self.colour_change )
@@ -949,6 +950,9 @@ class MulimgViewerGui ( wx.Frame ):
 		event.Skip()
 
 	def title_auto_fc( self, event ):
+		event.Skip()
+
+	def on_title_exif_changed( self, event ):
 		event.Skip()
 
 	def title_down_up_fc( self, event ):

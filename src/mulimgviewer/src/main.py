@@ -130,16 +130,180 @@ class MulimgViewer (MulimgViewerGui):
             return self.run_exif_to_csv(folder_path)
         return True
 
-    def run_exif_to_csv(self, current_image_folder):
-        examples_dir = Path(__file__).parent.parent.parent.parent / "examples"
-        exif_to_csv_path = str(examples_dir / "exif_to_csv.py")
-        add_script_path = str(examples_dir / "add_new_info_to_img_s.py")
+    # def run_exif_to_csv(self, current_image_folder):
+    #     examples_dir = Path(__file__).parent.parent.parent.parent / "examples"
+    #     exif_to_csv_path = str(examples_dir / "exif_to_csv.py")
+    #     add_script_path = str(examples_dir / "add_new_info_to_img.py")
 
-        result1 = subprocess.run([sys.executable, exif_to_csv_path, current_image_folder],
-                    check=True, cwd=str(examples_dir), capture_output=True, text=True)
-        csv_file = examples_dir / "output_exif_data.csv"
-        result2 = subprocess.run([sys.executable, add_script_path, current_image_folder],
-                    check=True, cwd=str(examples_dir), capture_output=True, text=True)
+    #     result1 = subprocess.run([sys.executable, exif_to_csv_path, current_image_folder],
+    #                 check=True, cwd=str(examples_dir), capture_output=True, text=True)
+    #     csv_file = examples_dir / "output_exif_data.csv"
+    #     result2 = subprocess.run([sys.executable, add_script_path, current_image_folder],
+    #                 check=True, cwd=str(examples_dir), capture_output=True, text=True)
+
+    def run_exif_to_csv(self, current_image_folder):
+        """运行 EXIF 处理脚本"""
+        try:
+            print(f"开始处理 EXIF: {current_image_folder}")  # 🔥 调试信息
+
+            examples_dir = Path(__file__).parent.parent.parent.parent / "examples"
+            exif_to_csv_path = str(examples_dir / "exif_to_csv.py")
+            add_script_path = str(examples_dir / "add_new_info_to_img.py")
+
+            print(f"examples_dir: {examples_dir}")  # 🔥 调试信息
+            print(f"exif_to_csv_path: {exif_to_csv_path}")
+            print(f"add_script_path: {add_script_path}")
+
+            # 🔥 检查文件是否存在
+            if not Path(exif_to_csv_path).exists():
+                print(f"错误：找不到文件 {exif_to_csv_path}")
+                return False
+
+            if not Path(add_script_path).exists():
+                print(f"错误：找不到文件 {add_script_path}")
+                return False
+
+            # 🔥 步骤1：生成 CSV
+            print("正在执行 exif_to_csv.py...")
+            result1 = subprocess.run([sys.executable, exif_to_csv_path, current_image_folder],
+                        check=True, cwd=str(examples_dir), capture_output=True, text=True)
+            print("exif_to_csv.py 执行完成")
+            print(f"stdout: {result1.stdout}")
+            print(f"stderr: {result1.stderr}")
+
+            # 🔥 检查 CSV 是否生成
+            csv_file = examples_dir / "output_exif_data.csv"
+            if not csv_file.exists():
+                print("错误：CSV 文件未生成")
+                return False
+            else:
+                print(f"CSV 文件已生成: {csv_file}")
+
+            # 🔥 步骤2：写入 270 字段
+            print("正在执行 add_new_info_to_img.py...")
+            result2 = subprocess.run([sys.executable, add_script_path, current_image_folder],
+                        check=True, cwd=str(examples_dir), capture_output=True, text=True)
+            print("add_new_info_to_img.py 执行完成")
+            print(f"stdout: {result2.stdout}")
+            print(f"stderr: {result2.stderr}")
+
+            return True
+
+        except subprocess.CalledProcessError as e:
+            print(f"subprocess 错误详情:")
+            print(f"  命令: {e.cmd}")
+            print(f"  返回码: {e.returncode}")
+            print(f"  stdout: {e.stdout}")
+            print(f"  stderr: {e.stderr}")
+            return False
+
+        except Exception as e:
+            print(f"其他错误: {e}")
+            import traceback
+            traceback.print_exc()
+            return False
+
+    def on_title_exif_changed(self, event):
+        """当 EXIF 复选框状态改变时的处理函数"""
+        print(f"EXIF 复选框状态: {self.title_exif.Value}")
+
+        if hasattr(self, 'ImgManager') and hasattr(self.ImgManager, 'input_path'):
+            print(f"ImgManager 存在，input_path: {self.ImgManager.input_path}")
+
+            if self.title_exif.Value:
+                try:
+                    current_folder = self.ImgManager.input_path
+                    if isinstance(current_folder, list):
+                        current_folder = current_folder[0] if current_folder else None
+
+                    print(f"处理文件夹: {current_folder}")
+
+                    if current_folder:
+                        self.SetStatusText_(["正在处理 EXIF 信息...", "-1", "-1", "-1"])
+
+                        try:
+                            success = self.process_exif(current_folder)
+                            print(f"process_exif 返回: {success}")
+
+                            if success:
+                                self.SetStatusText_(["EXIF 处理完成，正在重新加载图片...", "-1", "-1", "-1"])
+
+                                # 🔥 记录当前状态
+                                current_img_index = self.ImgManager.now_num if hasattr(self.ImgManager, 'now_num') else 0
+
+                                # 🔥 关键：重新从磁盘加载图片列表，这会读取更新后的EXIF
+                                self.ImgManager.get_img_list(customfunc=False)
+
+                                # 🔥 如果有图片，保持当前位置
+                                if self.ImgManager.img_num > 0:
+                                    if current_img_index < self.ImgManager.img_num:
+                                        self.ImgManager.now_num = current_img_index
+                                    else:
+                                        self.ImgManager.now_num = 0
+
+                                    # 🔥 重新生成标题
+                                    if hasattr(self.ImgManager, 'title_init'):
+                                        try:
+                                            # 获取合适的尺寸
+                                            if hasattr(self, 'scrolledWindow_img'):
+                                                width_2, height_2 = self.scrolledWindow_img.GetSize()
+                                            else:
+                                                width_2, height_2 = 800, 600  # 默认尺寸
+
+                                            self.ImgManager.title_init(width_2, height_2)
+                                        except Exception as e:
+                                            print(f"标题初始化失败: {e}")
+
+                                    # 🔥 刷新显示
+                                    self.refresh(event)
+
+                                self.SetStatusText_(["EXIF 信息更新完成", "-1", "-1", "-1"])
+                            else:
+                                self.SetStatusText_(["EXIF 处理失败", "-1", "-1", "-1"])
+
+                        except Exception as e:
+                            print(f"处理异常: {e}")
+                            import traceback
+                            traceback.print_exc()
+                            self.SetStatusText_(["EXIF 处理失败: " + str(e), "-1", "-1", "-1"])
+
+                    else:
+                        self.SetStatusText_(["错误：没有选择有效的文件夹", "-1", "-1", "-1"])
+
+                except Exception as e:
+                    print(f"外层异常: {e}")
+                    import traceback
+                    traceback.print_exc()
+                    self.SetStatusText_(["EXIF 处理失败: 外层异常", "-1", "-1", "-1"])
+            else:
+                # 取消勾选时：重新加载图片不显示EXIF
+                if hasattr(self, 'ImgManager') and hasattr(self.ImgManager, 'input_path'):
+                    current_folder = self.ImgManager.input_path
+                    if isinstance(current_folder, list):
+                        current_folder = current_folder[0] if current_folder else None
+
+                    if current_folder:
+                        current_img_index = self.ImgManager.now_num if hasattr(self.ImgManager, 'now_num') else 0
+
+                        # 🔥 重新加载图片列表
+                        self.ImgManager.get_img_list(customfunc=False)
+
+                        if self.ImgManager.img_num > 0:
+                            if current_img_index < self.ImgManager.img_num:
+                                self.ImgManager.now_num = current_img_index
+                            else:
+                                self.ImgManager.now_num = 0
+
+                            self.refresh(event)
+
+                self.SetStatusText_(["已关闭 EXIF 显示", "-1", "-1", "-1"])
+        else:
+            print("ImgManager 不存在或没有 input_path")
+            if self.title_exif.Value:
+                self.SetStatusText_(["请先选择图片文件夹", "-1", "-1", "-1"])
+
+        # 调用基类方法
+        super().on_title_exif_changed(event)
 
     def check_version(self):
         t1 = threading.Thread(target=self.run, args=())

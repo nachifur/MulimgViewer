@@ -759,10 +759,10 @@ class MulimgViewerGui ( wx.Frame ):
 
 		bSize_v2 = wx.BoxSizer( wx.HORIZONTAL )
 
-		self.Video mode = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Time interval (seconds)", wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.Video mode.Wrap( -1 )
+		self.Video_mode = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Time interval (seconds)", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.Video_mode.Wrap( -1 )
 
-		bSize_v2.Add( self.Video mode, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+		bSize_v2.Add( self.Video_mode, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
 		self.interval_time_text = wx.TextCtrl( self.m_panel4, wx.ID_ANY, u"1", wx.DefaultPosition, wx.DefaultSize, 0 )
 		bSize_v2.Add( self.interval_time_text, 0, wx.ALL, 5 )
@@ -772,10 +772,10 @@ class MulimgViewerGui ( wx.Frame ):
 
 		bSize_v3 = wx.BoxSizer( wx.HORIZONTAL )
 
-		self.Video mode1 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Parallel Threads", wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.Video mode1.Wrap( -1 )
+		self.Video_mode1 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Parallel Threads", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.Video_mode1.Wrap( -1 )
 
-		bSize_v3.Add( self.Video mode1, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+		bSize_v3.Add( self.Video_mode1, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
 		self.thread_count_text = wx.TextCtrl( self.m_panel4, wx.ID_ANY, u"4", wx.DefaultPosition, wx.DefaultSize, 0 )
 		bSize_v3.Add( self.thread_count_text, 0, wx.ALL, 5 )
@@ -799,10 +799,10 @@ class MulimgViewerGui ( wx.Frame ):
 
 		bSize_v4 = wx.BoxSizer( wx.HORIZONTAL )
 
-		self.Video mode2 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Cache Frames", wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.Video mode2.Wrap( -1 )
+		self.Video_mode2 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Cache Frames", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.Video_mode2.Wrap( -1 )
 
-		bSize_v4.Add( self.Video mode2, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+		bSize_v4.Add( self.Video_mode2, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
 		self.interval_time_text2 = wx.TextCtrl( self.m_panel4, wx.ID_ANY, u"10", wx.DefaultPosition, wx.DefaultSize, 0 )
 		bSize_v4.Add( self.interval_time_text2, 0, wx.ALL, 5 )

@@ -61,10 +61,6 @@ class MulimgViewerGui ( wx.Frame ):
 		wSizer1.Add( self.left_arrow_button, 0, wx.ALL|wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
 		self.m_toggleBtn4 = wx.ToggleButton( self.m_panel1, wx.ID_ANY, u"Play", wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.m_toggleBtn4.SetValue( True )
-
-		self.m_toggleBtn4.SetBitmapPosition( wx.LEFT )
-		self.m_toggleBtn4.SetBitmapMargins( wx.Size( 1,1 ) )
 		wSizer1.Add( self.m_toggleBtn4, 0, wx.ALL, 5 )
 
 		self.right_arrow_button = wx.Button( self.m_panel1, wx.ID_ANY, u">", wx.DefaultPosition, wx.Size( 50,30 ), 0 )
@@ -149,7 +145,7 @@ class MulimgViewerGui ( wx.Frame ):
 		fgSizer3.SetFlexibleDirection( wx.BOTH )
 		fgSizer3.SetNonFlexibleGrowMode( wx.FLEX_GROWMODE_SPECIFIED )
 
-		fgSizer3.SetMinSize( wx.Size( 300,800 ) )
+		fgSizer3.SetMinSize( wx.Size( 300,1500 ) )
 		self.m_staticText38 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Input/Output", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText38.Wrap( -1 )
 
@@ -502,7 +498,7 @@ class MulimgViewerGui ( wx.Frame ):
 
 		Magnifier_formatChoices = [ u"equal width height", u"equal width", u"equal height " ]
 		self.Magnifier_format = wx.Choice( self.m_panel4, wx.ID_ANY, wx.Point( -1,-1 ), wx.DefaultSize, Magnifier_formatChoices, 0 )
-		self.Magnifier_format.SetSelection( 0 )
+		self.Magnifier_format.SetSelection( 2 )
 		wSizer111.Add( self.Magnifier_format, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
 
@@ -745,10 +741,10 @@ class MulimgViewerGui ( wx.Frame ):
 
 		bSize_v1 = wx.BoxSizer( wx.HORIZONTAL )
 
-		self.m_staticText271 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Video mode", wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.m_staticText271.Wrap( -1 )
+		self.video_mode_text = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Video mode", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.video_mode_text.Wrap( -1 )
 
-		bSize_v1.Add( self.m_staticText271, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+		bSize_v1.Add( self.video_mode_text, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
 		self.video_mode_checkbox = wx.CheckBox( self.m_panel4, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.video_mode_checkbox.SetValue(True)
@@ -759,10 +755,10 @@ class MulimgViewerGui ( wx.Frame ):
 
 		bSize_v2 = wx.BoxSizer( wx.HORIZONTAL )
 
-		self.Video_mode = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Time interval (seconds)", wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.Video_mode.Wrap( -1 )
+		self.time_text = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Time interval (seconds)", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.time_text.Wrap( -1 )
 
-		bSize_v2.Add( self.Video_mode, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+		bSize_v2.Add( self.time_text, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
 		self.interval_time_text = wx.TextCtrl( self.m_panel4, wx.ID_ANY, u"1", wx.DefaultPosition, wx.DefaultSize, 0 )
 		bSize_v2.Add( self.interval_time_text, 0, wx.ALL, 5 )
@@ -772,10 +768,10 @@ class MulimgViewerGui ( wx.Frame ):
 
 		bSize_v3 = wx.BoxSizer( wx.HORIZONTAL )
 
-		self.Video_mode1 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Parallel Threads", wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.Video_mode1.Wrap( -1 )
+		self.parallel_text = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Parallel Threads", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.parallel_text.Wrap( -1 )
 
-		bSize_v3.Add( self.Video_mode1, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+		bSize_v3.Add( self.parallel_text, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
 		self.thread_count_text = wx.TextCtrl( self.m_panel4, wx.ID_ANY, u"4", wx.DefaultPosition, wx.DefaultSize, 0 )
 		bSize_v3.Add( self.thread_count_text, 0, wx.ALL, 5 )
@@ -799,10 +795,10 @@ class MulimgViewerGui ( wx.Frame ):
 
 		bSize_v4 = wx.BoxSizer( wx.HORIZONTAL )
 
-		self.Video_mode2 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Cache Frames", wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.Video_mode2.Wrap( -1 )
+		self.Cache_text = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Cache Frames", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.Cache_text.Wrap( -1 )
 
-		bSize_v4.Add( self.Video_mode2, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+		bSize_v4.Add( self.Cache_text, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
 		self.interval_time_text2 = wx.TextCtrl( self.m_panel4, wx.ID_ANY, u"10", wx.DefaultPosition, wx.DefaultSize, 0 )
 		bSize_v4.Add( self.interval_time_text2, 0, wx.ALL, 5 )

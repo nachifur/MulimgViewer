@@ -96,8 +96,9 @@ class MulimgViewer (MulimgViewerGui):
         self.width_setting_ = self.width_setting
 
         # Draw color to box
-        self.colourPicker_draw.Bind(
-            wx.EVT_COLOURPICKER_CHANGED, self.draw_color_change)
+        # Note: colourPicker_draw is not defined in GUI, so commenting out the binding
+        # self.colourPicker_draw.Bind(
+        #     wx.EVT_COLOURPICKER_CHANGED, self.draw_color_change)
 
         # Check the software version
         self.myEVT_MY_TEST = wx.NewEventType()
@@ -406,12 +407,14 @@ class MulimgViewer (MulimgViewerGui):
             self.m_statusBar1.SetStatusText(self.out_path_str, 3)
 
     def colour_change(self, event):
-        c = self.colourPicker_gap.GetColour()
+        # Use default black color since colourPicker_gap is not defined in GUI
+        c = wx.Colour(0, 0, 0)  # Default black color
         self.ImgManager.gap_color = (
             c.red, c.green, c.blue, self.ImgManager.gap_alpha)
 
     def background_alpha(self, event):
-        c = self.colourPicker_gap.GetColour()
+        # Use default black color since colourPicker_gap is not defined in GUI
+        c = wx.Colour(0, 0, 0)  # Default black color
         self.ImgManager.gap_alpha = self.background_slider.GetValue()
         self.ImgManager.gap_color = (
             c.red, c.green, c.blue, self.ImgManager.gap_alpha)
@@ -671,7 +674,8 @@ class MulimgViewer (MulimgViewerGui):
             height = np.abs(y-y_0)
             if width > 5 and height > 5:
                 self.xy_magnifier = []
-                self.color_list.append(self.colourPicker_draw.GetColour())
+                # Use default red color since colourPicker_draw is not defined in GUI
+                self.color_list.append(wx.Colour(255, 0, 0))  # Default red color
 
                 show_scale = self.show_scale.GetLineText(0).split(',')
                 show_scale = [float(x) for x in show_scale]
@@ -699,7 +703,8 @@ class MulimgViewer (MulimgViewerGui):
         else:
             # new box
             if self.magnifier.Value:
-                self.color_list.append(self.colourPicker_draw.GetColour())
+                # Use default red color since colourPicker_draw is not defined in GUI
+                self.color_list.append(wx.Colour(255, 0, 0))  # Default red color
                 try:
                     show_scale = self.show_scale.GetLineText(0).split(',')
                     show_scale = [float(x) for x in show_scale]
@@ -1330,7 +1335,8 @@ class MulimgViewer (MulimgViewerGui):
             if self.box_id != -1:
                 if self.checkBox_auto_draw_color.Value:
                     self.checkBox_auto_draw_color.Value = False
-                self.color_list[self.box_id] = self.colourPicker_draw.GetColour()
+                # Use default red color since colourPicker_draw is not defined in GUI
+                self.color_list[self.box_id] = wx.Colour(255, 0, 0)  # Default red color
                 self.refresh(event)
         event.Skip()
 

@@ -3,7 +3,7 @@ import csv
 from pathlib import Path
 
 import numpy as np
-import cv2,math
+import cv2,math,os
 
 from .utils import solve_factor
 
@@ -11,21 +11,30 @@ class ImgData():
     """Multi-image database.
     Multi-image browsing, path management, loading multi-image data, automatic layout layout, etc. """
 
-    def init(self, input_path, type=2, parallel_to_sequential=False, action_count=None, img_count=None):
+    def init(self, input_path, type=2, parallel_to_sequential=False, action_count=None, img_count=None,video_mode=False, video_path=[]):
         self.input_path = input_path
         self.type = type
-        self.video_mode = False
-
+        self.video_mode = video_mode
+        self.video_path = video_path
+        self.img_num_list = []
         self.parallel_to_sequential = parallel_to_sequential
         
         self.init_flist()
         if self.parallel_to_sequential:
-            list_ = []
-            for name_list in self.name_list:
-                list_ = list_+name_list.tolist()
-            self.img_num = len(list_)
+            if self.video_mode:
+                self.img_num_list = self.calc_max_extractable_frames(self.video_path, 1)
+                self.img_num = sum(self.img_num_list)
+            else:
+                list_ = []
+                for name_list in self.name_list:
+                    list_ = list_+name_list.tolist()
+                self.img_num = len(list_)
         else:
-            self.img_num = len(self.name_list)
+            if self.video_mode:
+                self.img_num_list = self.calc_max_extractable_frames(self.video_path, 1)
+                self.img_num = max(self.img_num_list)
+            else:
+                self.img_num = len(self.name_list)
         # self.set_count_per_action(1)
         if img_count:
             self.img_count = img_count
@@ -58,7 +67,6 @@ class ImgData():
         elif self.type == 2:
             # one_dir_mul_img
             self.path_list = [self.input_path]
-            print(f"self.path_list: {self.path_list}")
             self.path_list = np.sort(self.path_list)
             self.name_list = self.get_name_list()
 
@@ -70,9 +78,26 @@ class ImgData():
             self.path_list = []
             self.name_list = []
 
-    def update_video_mode(self, flag):
-        self.video_mode = flag
-        print(f"Video mode updated: {self.video_mode}")
+    def video_name_list(self):
+        name_list = []
+        for img_count in self.img_num_list:
+            one_list = [f"{i}.png" for i in range(img_count)]
+            # 补充：将最后一帧重复填充到最大长度
+            if img_count < self.img_num:
+                one_list += [f"{img_count - 1}.png"] * (self.img_num - img_count)
+            name_list.append(one_list)
+
+        # 如果只有一个元素，返回一维列表
+        if len(name_list) == 1:
+            return name_list[0]
+        return name_list
+
+
+    def update_state(self, path, mode):
+        self.video_path = path
+        self.video_mode = mode
+        
+
 
     def get_path_list_from_lf(self):
         format_group = [".png", ".jpg", ".jpeg", ".bmp", ".tif", ".tiff"]
@@ -133,7 +158,6 @@ class ImgData():
                 if i == 0:
                     break
             i += 1
-
         if self.parallel_to_sequential:
             return output
         else:
@@ -198,7 +222,8 @@ class ImgData():
             return row_col
 
     def get_flist(self):
-
+        if self.video_mode:
+                self.name_list = self.video_name_list()
         if self.type == 0 or self.type == 1:
             # one_dir_mul_dir_auto, one_dir_mul_dir_manual
             if self.parallel_to_sequential:
@@ -218,14 +243,14 @@ class ImgData():
             else:
                 flist = []
                 for i in range(len(self.path_list)):
-                    for k in range(self.img_count, self.img_count+self.count_per_action):
+                    for k in range(self.img_count, self.img_count + self.count_per_action):
                         try:
                             flist += [str(Path(self.path_list[i]) /
-                                          self.name_list[k])]
+                                        self.name_list[i][k])]
                         except:
                             flist += [str(Path(self.path_list[i]) /
-                                          self.name_list[-1])]
-            print(f"flist: {flist}, img_count: {self.img_count}, count_per_action: {self.count_per_action},img_num: {self.img_num}")
+                                        self.name_list[i][-1])]
+                            
         elif self.type == 2:
             self.name_list = sorted(self.name_list, key=lambda x: int(x.split('.')[0]))
             # one_dir_mul_img
@@ -235,7 +260,6 @@ class ImgData():
             except:
                 flist = [str(Path(self.path_list[0])/self.name_list[i])
                          for i in range(self.img_count, self.img_num)]
-            print(f"flist: {flist}, img_count: {self.img_count}, count_per_action: {self.count_per_action},img_num: {self.img_num}")
         elif self.type == 3:
             # one file list
             # flist = self.path_list
@@ -245,7 +269,6 @@ class ImgData():
             except:
                 flist = [str(Path(self.path_list[i]))
                          for i in range(self.img_count, self.img_num)]
-            print(f"flist: {flist}, img_count: {self.img_count}, count_per_action: {self.count_per_action},img_num: {self.img_num}")
         else:
             flist = []
 
@@ -256,22 +279,31 @@ class ImgData():
         num = len(self.path_list)
         return num
     
-    def calc_max_extractable_frames(video_path, interval_sec):
-        cap = cv2.VideoCapture(video_path)
-        if not cap.isOpened():
-            print(f"❌ 无法打开视频: {video_path}")
-            return 0
+    def calc_max_extractable_frames(self, video_path, interval_sec):
+        # 如果是字符串，统一转为列表
+        if isinstance(video_path, str):
+            video_path = [video_path]
 
-        fps = cap.get(cv2.CAP_PROP_FPS)  # 帧率
-        total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))  # 总帧数
-        duration_sec = total_frames / fps  # 总时长（秒）
+        max_frames_list = []
+        for path in video_path:
+            cap = cv2.VideoCapture(path)
+            if not cap.isOpened():
+                print(f"❌ 无法打开视频: {path}")
+                max_frames_list.append(0)
+                continue
 
-        max_frames = math.floor(duration_sec / interval_sec)
+            fps = cap.get(cv2.CAP_PROP_FPS)
+            total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+            duration_sec = total_frames / fps if fps > 0 else 0
+            max_frames = math.floor(duration_sec / interval_sec)
 
-        print(f"视频总时长: {duration_sec:.2f}s")
-        print(f"时间间隔: {interval_sec}s -> 最多可拆帧数: {max_frames}")
+            print(f"视频: {path}")
+            print(f"  总时长: {duration_sec:.2f}s")
+            print(f"  时间间隔: {interval_sec}s -> 最多可拆帧数: {max_frames}")
 
-        cap.release()
-        return max_frames
+            cap.release()
+            max_frames_list.append(max_frames)
+
+        return max_frames_list
 
 

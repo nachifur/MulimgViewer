@@ -4,6 +4,7 @@ import threading
 from pathlib import Path
 import cv2,os
 from concurrent.futures import ThreadPoolExecutor
+import concurrent.futures
 
 import numpy as np
 import wx
@@ -26,6 +27,7 @@ class MulimgViewer (MulimgViewerGui):
         self.UpdateUI = UpdateUI
         self.get_type = get_type
         self.create_ImgManager()
+        self.refresh_flag = False
         acceltbl = wx.AcceleratorTable([(wx.ACCEL_NORMAL, wx.WXK_UP,
                                          self.menu_up.GetId()),
                                         (wx.ACCEL_NORMAL, wx.WXK_DOWN,
@@ -356,6 +358,10 @@ class MulimgViewer (MulimgViewerGui):
 
     def refresh(self, event):
         if self.ImgManager.img_num != 0:
+            if self.video_mode:
+                self.refresh_flag = True
+                self.count_per_action = self.get_count_per_action(type=2)
+                self.ImgManager.img_count = 0
             self.show_img_init()
             self.show_img()
         else:
@@ -366,19 +372,21 @@ class MulimgViewer (MulimgViewerGui):
     def one_dir_mul_dir_auto(self, event):
         self.SetStatusText_(["Input", "", "", "-1"])
         if self.video_mode:
-            dlg = wx.FileDialog(
-    None,
-    "Select multiple video files",
-    wildcard="Video files (*.mp4;*.avi;*.mov)|*.mp4;*.avi;*.mov|All files (*.*)|*.*",
-    style=wx.FD_OPEN | wx.FD_MULTIPLE
-)
+            dlg = wx.DirDialog(None, "Select folder containing videos", style=wx.DD_DEFAULT_STYLE)
+            video_paths = []
         else:
             dlg = wx.DirDialog(None, "Parallel auto choose input dir", "",
                            wx.DD_DEFAULT_STYLE | wx.DD_DIR_MUST_EXIST)
         if dlg.ShowModal() == wx.ID_OK:
             if self.video_mode:
                 self.video_path = []
-                video_paths = dlg.GetPaths()
+                selected_folder = dlg.GetPath()
+                # 遍历该文件夹及其所有子目录
+                for root, dirs, files in os.walk(selected_folder):
+                    for file in files:
+                        if file.lower().endswith(('.mp4', '.avi', '.mov')):
+                            full_path = os.path.join(root, file)
+                            video_paths.append(full_path)
                 self.real_video_path = video_paths
                 self.thread = int(self.m_textCtrl29.GetValue())
                 self.cache_num = int(self.m_textCtrl30.GetValue())
@@ -1726,16 +1734,26 @@ class MulimgViewer (MulimgViewerGui):
         cache_start_batch = max(0, current_batch - self.cache_radius)
         cache_end_batch = min(total_batches - 1, current_batch + self.cache_radius)
 
-        cache_start_frame = cache_start_batch * self.count_per_action
-        cache_end_frame = min(self.total_frames, (cache_end_batch + 1) * self.count_per_action)
+        # 原全局 cache_start_frame / cache_end_frame 用于参考
+        global_cache_start = cache_start_batch * self.count_per_action
+        global_cache_end = (cache_end_batch + 1) * self.count_per_action
 
         for video_idx, cache_dir in enumerate(self.frame_cache_dir):
+            # 每个视频独立的最大帧数
             if len(self.ImgManager.img_num_list) == 1:
                 real_frame_count = self.ImgManager.img_num_list[0]
             else:
-                real_frame_count = self.ImgManager.img_num_list[video_idx]
+                if self.refresh_flag:
+                    real_frame_count = self.ImgManager.img_num_list[0]
+                else:
+                    real_frame_count = self.ImgManager.img_num_list[video_idx]
             last_valid_idx = real_frame_count - 1
 
+            # 为每个视频计算独立 cache_start_frame 和 cache_end_frame
+            cache_start_frame = min(global_cache_start, real_frame_count - 2)
+            cache_end_frame = min(global_cache_end, real_frame_count)
+
+            # 清除不在 cache 范围内或超出视频帧数的图片
             for file in os.listdir(cache_dir):
                 if not file.endswith('.png'):
                     continue
@@ -1743,28 +1761,18 @@ class MulimgViewer (MulimgViewerGui):
                     idx = int(os.path.splitext(file)[0])
                 except ValueError:
                     continue
-                # 特别注意：idx 超过该视频真实帧数也应该删除
-                if cache_start_frame >= real_frame_count-2:
-                    cache_start_frame = real_frame_count-2
                 if idx < cache_start_frame or idx >= cache_end_frame or idx > last_valid_idx:
                     os.remove(os.path.join(cache_dir, file))
 
-        # 缓存每个视频的 [cache_start_frame, cache_end_frame) 区间
-        for video_idx, cache_dir in enumerate(self.frame_cache_dir):
-            if len(self.ImgManager.img_num_list) == 1:
-                real_frame_count = self.ImgManager.img_num_list[0]
-            else:
-                real_frame_count = self.ImgManager.img_num_list[video_idx]
-            #real_frame_count = self.ImgManager.img_num_list[video_idx]
-            last_valid_idx = real_frame_count - 1
+            # 缓存缺失的帧（根据每个视频自己的范围）
             for idx in range(cache_start_frame, cache_end_frame):
                 save_path = os.path.join(cache_dir, f"{idx}.png")
                 if not os.path.exists(save_path):
                     actual_idx = idx if idx < real_frame_count else last_valid_idx
-                    self.executor.submit(self._save_frame, actual_idx, video_idx, idx)  # 第三个参数是真正伪造用的名字
-
+                    self.executor.submit(self._save_frame, actual_idx, video_idx, idx)
 
     def _save_frame(self, frame_idx, video_idx, save_idx):
+        import time
         if isinstance(self.real_video_path, str):
             video_path = self.real_video_path  # 单字符串直接用
         else:
@@ -1795,6 +1803,7 @@ class MulimgViewer (MulimgViewerGui):
         frame = cv2.resize(frame, (new_w, new_h))
 
         cv2.imwrite(save_path, frame)
+        #time.sleep(0.5)
 
 import os
 import shutil

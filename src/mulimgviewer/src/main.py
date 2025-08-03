@@ -121,6 +121,7 @@ class MulimgViewer (MulimgViewerGui):
                 pass
 
         self.load_configuration( None , config_name="output.json")
+        self.Bind(wx.EVT_CONTEXT_MENU, self.on_right_click)
 
     def EVT_MY_TEST_OnHandle(self, event):
         self.about_gui(None, update=True, new_version=event.GetEventArgs())
@@ -751,6 +752,13 @@ class MulimgViewer (MulimgViewerGui):
         xy_grid = self.ImgManager.xy_grid[id]
         x = x-xy_grid[0]
         y = y-xy_grid[1]
+
+        menu_triggered = getattr(event, 'menu_triggered', False)
+
+        if not menu_triggered:
+            self.on_right_click(event)
+            return
+
         if self.select_img_box.Value:
             # move box
             if self.box_id != -1:
@@ -781,6 +789,132 @@ class MulimgViewer (MulimgViewerGui):
                     pass
                 else:
                     self.refresh(event)
+        self.on_right_click(event)
+
+    def on_right_click(self, event):
+        menu = wx.Menu()
+        refresh_id = wx.NewId()
+        menu.Append(refresh_id, "🔄 refresh")
+        menu.Bind(wx.EVT_MENU, self.refresh, id=refresh_id)
+        menu.AppendSeparator()
+
+        if self.magnifier.Value:
+            magnifier_menu = wx.Menu()
+            new_box_id = wx.NewId()
+            magnifier_menu.Append(new_box_id, "Create a zoom box at this location")
+
+            def create_magnifier_box(evt):
+                event.menu_triggered = True
+                x, y = event.GetPosition()
+                id = self.get_img_id_from_point([x, y])
+                xy_grid = self.ImgManager.xy_grid[id]
+                x = x-xy_grid[0]
+                y = y-xy_grid[1]
+
+                if self.magnifier.Value:
+                    self.color_list.append(self.colourPicker_draw.GetColour())
+                    try:
+                        show_scale = self.show_scale.GetLineText(0).split(',')
+                        show_scale = [float(x) for x in show_scale]
+                        if len(self.xy_magnifier) == 0:
+                            default_size = 50
+                            points = self.ImgManager.ImgF.sort_box_point(
+                                [x-default_size//2, y-default_size//2, x+default_size//2, y+default_size//2],
+                                show_scale, self.ImgManager.img_resolution_origin, first_point=True)
+                            self.xy_magnifier.append(
+                                points+show_scale+[self.ImgManager.title_setting[2] and self.ImgManager.title_setting[1]])
+                        else:
+                            points = self.move_box_point(x, y, show_scale)
+                            self.xy_magnifier.append(
+                                points+show_scale+[self.ImgManager.title_setting[2] and self.ImgManager.title_setting[1]])
+                        self.refresh(evt)
+                        self.SetStatusText_(["Create a zoom box", "-1", "-1", "-1"])
+                    except Exception as e:
+                        self.SetStatusText_(["-1", f"Failed to create zoom box: {str(e)}", "-1", "-1"])
+            magnifier_menu.Bind(wx.EVT_MENU, create_magnifier_box, id=new_box_id)
+
+            if len(self.xy_magnifier) > 0:
+                magnifier_menu.AppendSeparator()
+                clear_all_id = wx.NewId()
+                magnifier_menu.Append(clear_all_id, "Clear all zoom boxes")
+                magnifier_menu.Bind(wx.EVT_MENU, self.img_left_dclick, id=clear_all_id)
+
+            menu.AppendSubMenu(magnifier_menu, "🔍 ​Zoom​")
+
+        if self.select_img_box.Value:
+            box_menu = wx.Menu()
+
+            if self.box_id != -1:
+                move_box_id = wx.NewId()
+                box_menu.Append(move_box_id, f"Move box {self.box_id} to this position")
+
+                def move_box_to_position(evt):
+                    event.menu_triggered = True
+                    self.img_right_click(event)
+                    self.refresh(evt)
+                    self.SetStatusText_([f"Move box {self.box_id}", "-1", "-1", "-1"])
+                box_menu.Bind(wx.EVT_MENU, move_box_to_position, id=move_box_id)
+                delete_box_id = wx.NewId()
+                box_menu.Append(delete_box_id, f"Delete box {self.box_id}")
+                def delete_specific_box(evt):
+                    if self.select_img_box.Value and self.box_id != -1:
+                        self.xy_magnifier.pop(self.box_id)
+                        if len(self.xy_magnifier) == 0:
+                            self.box_position.SetSelection(0)
+                        self.refresh(evt)
+                        self.SetStatusText_([f"Delete box {self.box_id}", "-1", "-1", "-1"])
+                box_menu.Bind(wx.EVT_MENU, delete_specific_box, id=delete_box_id)
+
+                delete_all_id = wx.NewId()
+                box_menu.Append(delete_all_id, "Delete all boxes")
+                def delete_all_boxes(evt):
+                    if len(self.xy_magnifier) > 0:
+                        self.xy_magnifier = []
+                        self.box_position.SetSelection(0)
+                        self.refresh(evt)
+                        self.SetStatusText_(["Delete all boxes", "-1", "-1", "-1"])
+                box_menu.Bind(wx.EVT_MENU, delete_all_boxes, id=delete_all_id)
+            menu.AppendSubMenu(box_menu, f"Selection box" + (f" ({self.box_id})" if self.box_id != -1 else ""))
+        menu.AppendSeparator()
+
+        if hasattr(self, 'title_rename_text'):
+            new_title = self.title_rename_text.GetValue().strip()
+            if new_title:
+                title_menu = wx.Menu()
+                inject_title_id = wx.NewId()
+                title_menu.Append(inject_title_id, f"Inject title: {new_title[:15]}...")
+                def inject_title(evt):
+                    x, y = event.GetPosition()
+                    id = self.get_img_id_from_point([x, y])
+                    success = self.handle_title_injection(id)
+                    if success:
+                        self.SetStatusText_(["Inject title success", "-1", "-1", "-1"])
+                    else:
+                        self.refresh(evt)
+                title_menu.Bind(wx.EVT_MENU, inject_title, id=inject_title_id)
+                menu.AppendSeparator()
+                menu.AppendSubMenu(title_menu, "📝 Title")
+        nav_menu = wx.Menu()
+
+        prev_id = wx.NewId()
+        nav_menu.Append(prev_id, "Previous Page")
+        nav_menu.Bind(wx.EVT_MENU, self.last_img, id=prev_id)
+
+        next_id = wx.NewId()
+        nav_menu.Append(next_id, "Next Page")
+        nav_menu.Bind(wx.EVT_MENU, self.next_img, id=next_id)
+
+        menu.AppendSeparator()
+        menu.AppendSubMenu(nav_menu, "⬅️➡️ Turn Page")
+
+        try:
+            mouse_screen_pos = wx.GetMousePosition()
+            client_pos = self.ScreenToClient(mouse_screen_pos)
+        except:
+            client_pos = wx.Point(100, 100)
+
+        self.PopupMenu(menu, client_pos)
+        menu.Destroy()
 
     def inject_new_title(self, new_title, img_id=None):
         try:
@@ -1173,6 +1307,8 @@ class MulimgViewer (MulimgViewerGui):
                     self.show_custom.Value]                 # 37
 
     def show_img(self):
+        if hasattr(self, 'm_staticText1'):
+            self.m_staticText1.Hide()
 
         if self.customfunc.Value and self.out_path_str == "":
             self.out_path(None)

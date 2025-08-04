@@ -2,6 +2,8 @@ import copy
 import platform
 import threading
 from pathlib import Path
+import os
+import tempfile
 
 import numpy as np
 import wx
@@ -14,6 +16,21 @@ from .utils import MyTestEvent, get_resource_path
 from .utils_img import ImgManager
 import json
 import shutil
+
+# Video processing imports
+try:
+    import imageio
+    VIDEO_SUPPORT_IMAGEIO = True
+except ImportError:
+    VIDEO_SUPPORT_IMAGEIO = False
+
+try:
+    import cv2
+    VIDEO_SUPPORT_CV2 = True
+except ImportError:
+    VIDEO_SUPPORT_CV2 = False
+
+VIDEO_SUPPORT = VIDEO_SUPPORT_IMAGEIO or VIDEO_SUPPORT_CV2
 
 class MulimgViewer (MulimgViewerGui):
 
@@ -79,6 +96,25 @@ class MulimgViewer (MulimgViewerGui):
         self.flip.SetToolTip("flip")
         self.load_config_button.SetToolTip("load_configuration")
         self.reset_config_button.SetToolTip("reset_configuration")
+
+        # Video playback controls
+        self.m_toggleBtn4.SetToolTip("Play/Pause video")
+
+        # Video playback state variables
+        self.is_playing = False
+        self.play_direction = 1  # 1 for forward, -1 for backward
+        self.play_timer = wx.Timer(self)
+        self.Bind(wx.EVT_TIMER, self.on_play_timer, self.play_timer)
+
+        # Video processing variables
+        self.video_cache_dir = None
+        self.video_files = []
+        self.supported_video_formats = ['.mp4', '.avi', '.mov', '.mkv', '.wmv', '.flv', '.webm']
+
+        # Bind video control events
+        self.m_toggleBtn4.Bind(wx.EVT_TOGGLEBUTTON, self.on_play_toggle)
+        self.video_mode_checkbox.Bind(wx.EVT_CHECKBOX, self.on_video_mode_change)
+
         # Different platforms may need to adjust the width of the scrolledWindow_set
         sys_platform = platform.system()
         if sys_platform.find("Windows") >= 0:
@@ -96,8 +132,9 @@ class MulimgViewer (MulimgViewerGui):
         self.width_setting_ = self.width_setting
 
         # Draw color to box
-        self.colourPicker_draw.Bind(
-            wx.EVT_COLOURPICKER_CHANGED, self.draw_color_change)
+        # Note: colourPicker_draw is not defined in GUI, so commenting out the binding
+        # self.colourPicker_draw.Bind(
+        #     wx.EVT_COLOURPICKER_CHANGED, self.draw_color_change)
 
         # Check the software version
         self.myEVT_MY_TEST = wx.NewEventType()
@@ -117,6 +154,363 @@ class MulimgViewer (MulimgViewerGui):
                 pass
 
         self.load_configuration( None , config_name="output.json")
+
+    def on_play_toggle(self, event):
+        """Handle play/pause button toggle"""
+        if self.m_toggleBtn4.GetValue():
+            self.start_playing()
+        else:
+            self.stop_playing()
+
+    def start_playing(self):
+        """Start video playback"""
+        if self.ImgManager.img_num == 0:
+            self.m_toggleBtn4.SetValue(False)
+            self.SetStatusText_(
+                ["-1", "", "***Error: First, need to select the input dir***", "-1"])
+            return
+
+        self.is_playing = True
+        self.m_toggleBtn4.SetLabel("⏸️")  # Pause icon
+
+        # Get interval time from settings
+        try:
+            interval_seconds = float(self.interval_time_text.GetValue())
+            interval_ms = int(interval_seconds * 1000)
+        except ValueError:
+            interval_ms = 1000  # Default 1 second
+
+        self.play_timer.Start(interval_ms)
+        self.SetStatusText_(["Playing", "-1", "-1", "-1"])
+
+    def stop_playing(self):
+        """Stop video playback"""
+        self.is_playing = False
+        self.play_timer.Stop()
+        self.m_toggleBtn4.SetLabel("▶️")  # Play icon
+        self.SetStatusText_(["Stopped", "-1", "-1", "-1"])
+
+    def on_play_timer(self, event):
+        """Timer event for automatic playback"""
+        if not self.is_playing:
+            return
+
+        if self.play_direction == 1:
+            # Forward playback
+            if self.ImgManager.action_count < self.ImgManager.img_num - 1:
+                self.next_img(None)
+            else:
+                # Reached end, stop or loop
+                self.stop_playing()
+                self.m_toggleBtn4.SetValue(False)
+        else:
+            # Backward playback
+            if self.ImgManager.action_count > 0:
+                self.last_img(None)
+            else:
+                # Reached beginning, stop or loop
+                self.stop_playing()
+                self.m_toggleBtn4.SetValue(False)
+
+    def on_video_mode_change(self, event):
+        """Handle video mode checkbox change"""
+        if self.video_mode_checkbox.GetValue():
+            self.SetStatusText_(["Video mode enabled", "-1", "-1", "-1"])
+        else:
+            self.SetStatusText_(["Video mode disabled", "-1", "-1", "-1"])
+            # Stop playing if currently playing
+            if self.is_playing:
+                self.stop_playing()
+                self.m_toggleBtn4.SetValue(False)
+
+    def is_video_file(self, file_path):
+        """Check if a file is a supported video format"""
+        if not VIDEO_SUPPORT:
+            return False
+
+        file_ext = Path(file_path).suffix.lower()
+        return file_ext in self.supported_video_formats
+
+    def extract_video_frames(self, video_path, output_dir):
+        """Extract frames from video file to temporary directory"""
+        if not VIDEO_SUPPORT:
+            wx.MessageBox("Video support not available. Please install imageio or opencv-python.",
+                         "Error", wx.OK | wx.ICON_ERROR)
+            return False
+
+        # Create output directory if it doesn't exist
+        os.makedirs(output_dir, exist_ok=True)
+
+        # Try OpenCV first (more reliable for video processing)
+        if VIDEO_SUPPORT_CV2:
+            return self._extract_frames_cv2(video_path, output_dir)
+        elif VIDEO_SUPPORT_IMAGEIO:
+            return self._extract_frames_imageio(video_path, output_dir)
+        else:
+            return False
+
+    def _extract_frames_cv2(self, video_path, output_dir):
+        """Extract frames using OpenCV"""
+        try:
+            import cv2
+            cap = cv2.VideoCapture(video_path)
+
+            if not cap.isOpened():
+                raise Exception("Could not open video file")
+
+            # Get total frame count
+            total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+            frame_count = 0
+
+            while True:
+                ret, frame = cap.read()
+                if not ret:
+                    break
+
+                # Convert BGR to RGB (OpenCV uses BGR by default)
+                frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+                # Save frame
+                frame_path = os.path.join(output_dir, f"frame_{frame_count:06d}.png")
+                cv2.imwrite(frame_path, cv2.cvtColor(frame_rgb, cv2.COLOR_RGB2BGR))
+                frame_count += 1
+
+                # Update status every 50 frames
+                if frame_count % 50 == 0:
+                    progress = f"Extracting frames: {frame_count}/{total_frames} ({frame_count*100//total_frames}%)"
+                    self.SetStatusText_([progress, "-1", "-1", "-1"])
+                    wx.GetApp().Yield()
+
+            cap.release()
+            self.SetStatusText_([f"Extracted {frame_count} frames", "-1", "-1", "-1"])
+            return frame_count > 0
+
+        except Exception as e:
+            wx.MessageBox(f"Error extracting video frames with OpenCV: {str(e)}",
+                         "Error", wx.OK | wx.ICON_ERROR)
+            return False
+
+    def _extract_frames_imageio(self, video_path, output_dir):
+        """Extract frames using imageio (fallback method)"""
+        try:
+            import imageio
+
+            # Try different readers
+            reader = None
+            try:
+                reader = imageio.get_reader(video_path)
+            except Exception as e1:
+                try:
+                    reader = imageio.get_reader(video_path, 'ffmpeg')
+                except Exception as e2:
+                    raise Exception(f"Could not open video with imageio: {str(e1)}, {str(e2)}")
+
+            frame_count = 0
+            try:
+                # Try iteration method
+                for i, frame in enumerate(reader):
+                    frame_path = os.path.join(output_dir, f"frame_{i:06d}.png")
+                    imageio.imwrite(frame_path, frame)
+                    frame_count += 1
+
+                    if i % 50 == 0:
+                        self.SetStatusText_([f"Extracting frames: {i}", "-1", "-1", "-1"])
+                        wx.GetApp().Yield()
+
+            except Exception:
+                # Try get_data method
+                i = 0
+                while True:
+                    try:
+                        frame = reader.get_data(i)
+                        frame_path = os.path.join(output_dir, f"frame_{i:06d}.png")
+                        imageio.imwrite(frame_path, frame)
+                        frame_count += 1
+
+                        if i % 50 == 0:
+                            self.SetStatusText_([f"Extracting frames: {i}", "-1", "-1", "-1"])
+                            wx.GetApp().Yield()
+                        i += 1
+                    except:
+                        break
+
+            reader.close()
+            self.SetStatusText_([f"Extracted {frame_count} frames", "-1", "-1", "-1"])
+            return frame_count > 0
+
+        except Exception as e:
+            wx.MessageBox(f"Error extracting video frames with imageio: {str(e)}",
+                         "Error", wx.OK | wx.ICON_ERROR)
+            return False
+
+    def process_video_input(self, path):
+        """Process video files in the input path"""
+        if not self.video_mode_checkbox.GetValue():
+            return False
+
+        path_obj = Path(path)
+
+        if path_obj.is_file() and self.is_video_file(path):
+            # Single video file
+            return self.process_single_video(path)
+        elif path_obj.is_dir():
+            # Directory containing videos
+            return self.process_video_directory(path)
+
+        return False
+
+    def process_single_video(self, video_path):
+        """Process a single video file"""
+        # Create temporary directory for frames
+        if self.video_cache_dir:
+            shutil.rmtree(self.video_cache_dir, ignore_errors=True)
+
+        self.video_cache_dir = tempfile.mkdtemp(prefix="mulimgviewer_video_")
+
+        # Extract frames
+        if self.extract_video_frames(video_path, self.video_cache_dir):
+            # Update ImgManager to use the extracted frames
+            self.ImgManager.init(self.video_cache_dir, type=2)  # Single directory mode
+            return True
+
+        return False
+
+    def process_video_directory(self, dir_path):
+        """Process a directory containing video files"""
+        video_files = []
+
+        for file_path in Path(dir_path).iterdir():
+            if file_path.is_file() and self.is_video_file(str(file_path)):
+                video_files.append(str(file_path))
+
+        if not video_files:
+            return False
+
+        # Create temporary directory structure for parallel comparison
+        if self.video_cache_dir:
+            shutil.rmtree(self.video_cache_dir, ignore_errors=True)
+
+        self.video_cache_dir = tempfile.mkdtemp(prefix="mulimgviewer_videos_")
+
+        # Process each video
+        video_dirs = []
+        for i, video_path in enumerate(video_files):
+            video_name = Path(video_path).stem
+            video_output_dir = os.path.join(self.video_cache_dir, f"{i:02d}_{video_name}")
+
+            if self.extract_video_frames(video_path, video_output_dir):
+                video_dirs.append(video_output_dir)
+
+        if video_dirs:
+            # Set up parallel mode with extracted frame directories
+            # For type=1 (parallel manual), we need to pass the list directly
+            self.ImgManager.init(video_dirs, type=1)  # Parallel manual mode
+            return True
+
+        return False
+
+    def process_video_directory_sequential(self, dir_path):
+        """Process a directory containing video files for sequential display"""
+        video_files = []
+
+        # Find all video files in the directory
+        for file_path in Path(dir_path).iterdir():
+            if file_path.is_file() and self.is_video_file(str(file_path)):
+                video_files.append(str(file_path))
+
+        if not video_files:
+            return False
+
+        # Sort video files for consistent ordering
+        video_files.sort()
+
+        # Create temporary directory for all frames
+        if self.video_cache_dir:
+            shutil.rmtree(self.video_cache_dir, ignore_errors=True)
+
+        self.video_cache_dir = tempfile.mkdtemp(prefix="mulimgviewer_sequential_")
+
+        # Extract frames from all videos into a single directory
+        total_frame_count = 0
+        for i, video_path in enumerate(video_files):
+            video_name = Path(video_path).stem
+            self.SetStatusText_([f"Processing video {i+1}/{len(video_files)}: {video_name}", "-1", "-1", "-1"])
+            wx.GetApp().Yield()
+
+            # Extract frames with sequential naming
+            if self.extract_video_frames_sequential(video_path, self.video_cache_dir, total_frame_count, video_name):
+                # Count frames to update total_frame_count
+                frame_files = [f for f in os.listdir(self.video_cache_dir) if f.startswith(f"frame_")]
+                total_frame_count = len(frame_files)
+
+        if total_frame_count > 0:
+            # Set up sequential mode with all extracted frames
+            self.ImgManager.init(self.video_cache_dir, type=2)  # Sequential mode
+            self.SetStatusText_([f"Loaded {total_frame_count} frames from {len(video_files)} videos", "-1", "-1", "-1"])
+            return True
+
+        return False
+
+    def extract_video_frames_sequential(self, video_path, output_dir, start_frame_num, video_name):
+        """Extract frames from video with sequential numbering across multiple videos"""
+        if not VIDEO_SUPPORT:
+            return False
+
+        try:
+            # Use OpenCV if available
+            if VIDEO_SUPPORT_CV2:
+                import cv2
+                cap = cv2.VideoCapture(video_path)
+
+                if not cap.isOpened():
+                    return False
+
+                frame_count = start_frame_num
+                while True:
+                    ret, frame = cap.read()
+                    if not ret:
+                        break
+
+                    # Convert BGR to RGB
+                    frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+                    # Save frame with sequential naming and video info
+                    frame_path = os.path.join(output_dir, f"frame_{frame_count:06d}_{video_name}.png")
+                    cv2.imwrite(frame_path, cv2.cvtColor(frame_rgb, cv2.COLOR_RGB2BGR))
+                    frame_count += 1
+
+                    # Update status every 50 frames
+                    if (frame_count - start_frame_num) % 50 == 0:
+                        self.SetStatusText_([f"Extracting from {video_name}: {frame_count - start_frame_num} frames", "-1", "-1", "-1"])
+                        wx.GetApp().Yield()
+
+                cap.release()
+                return True
+
+            # Fallback to imageio
+            elif VIDEO_SUPPORT_IMAGEIO:
+                import imageio
+                reader = imageio.get_reader(video_path)
+
+                frame_count = start_frame_num
+                for frame in reader:
+                    frame_path = os.path.join(output_dir, f"frame_{frame_count:06d}_{video_name}.png")
+                    imageio.imwrite(frame_path, frame)
+                    frame_count += 1
+
+                    if (frame_count - start_frame_num) % 50 == 0:
+                        self.SetStatusText_([f"Extracting from {video_name}: {frame_count - start_frame_num} frames", "-1", "-1", "-1"])
+                        wx.GetApp().Yield()
+
+                reader.close()
+                return True
+
+        except Exception as e:
+            wx.MessageBox(f"Error extracting frames from {video_name}: {str(e)}",
+                         "Error", wx.OK | wx.ICON_ERROR)
+            return False
+
+        return False
 
     def EVT_MY_TEST_OnHandle(self, event):
         self.about_gui(None, update=True, new_version=event.GetEventArgs())
@@ -177,6 +571,17 @@ class MulimgViewer (MulimgViewerGui):
             self.onefilelist()
 
     def close(self, event):
+        # Clean up video cache directory
+        if hasattr(self, 'video_cache_dir') and self.video_cache_dir:
+            try:
+                shutil.rmtree(self.video_cache_dir, ignore_errors=True)
+            except:
+                pass
+
+        # Stop any playing video
+        if hasattr(self, 'is_playing') and self.is_playing:
+            self.stop_playing()
+
         if self.get_type() == -1:
             self.Destroy()
         else:
@@ -187,6 +592,8 @@ class MulimgViewer (MulimgViewerGui):
             self.show_img_init()
             self.ImgManager.add()
             self.show_img()
+            # Set play direction to forward when next button is clicked
+            self.play_direction = 1
         else:
             self.SetStatusText_(
                 ["-1", "", "***Error: First, need to select the input dir***", "-1"])
@@ -197,6 +604,8 @@ class MulimgViewer (MulimgViewerGui):
             self.show_img_init()
             self.ImgManager.subtract()
             self.show_img()
+            # Set play direction to backward when previous button is clicked
+            self.play_direction = -1
         else:
             self.SetStatusText_(
                 ["-1",  "", "***Error: First, need to select the input dir***", "-1"])
@@ -309,12 +718,31 @@ class MulimgViewer (MulimgViewerGui):
         dlg = wx.DirDialog(None, "Parallel auto choose input dir", "",
                            wx.DD_DEFAULT_STYLE | wx.DD_DIR_MUST_EXIST)
         if dlg.ShowModal() == wx.ID_OK:
-            self.ImgManager.init(
-                dlg.GetPath(), type=0, parallel_to_sequential=self.parallel_to_sequential.Value)
-            self.show_img_init()
-            self.ImgManager.set_action_count(0)
-            self.show_img()
-            self.choice_input_mode.SetSelection(1)
+            selected_path = dlg.GetPath()
+
+            # Check if video mode is enabled and try video processing first
+            if self.video_mode_checkbox.GetValue():
+                if self.process_video_directory(selected_path):
+                    self.show_img_init()
+                    self.ImgManager.set_action_count(0)
+                    self.show_img()
+                    self.choice_input_mode.SetSelection(1)
+                else:
+                    # Fall back to regular image processing
+                    self.ImgManager.init(
+                        selected_path, type=0, parallel_to_sequential=self.parallel_to_sequential.Value)
+                    self.show_img_init()
+                    self.ImgManager.set_action_count(0)
+                    self.show_img()
+                    self.choice_input_mode.SetSelection(1)
+            else:
+                # Regular image processing
+                self.ImgManager.init(
+                    selected_path, type=0, parallel_to_sequential=self.parallel_to_sequential.Value)
+                self.show_img_init()
+                self.ImgManager.set_action_count(0)
+                self.show_img()
+                self.choice_input_mode.SetSelection(1)
         self.SetStatusText_(["Input", "-1", "-1", "-1"])
 
     def one_dir_mul_dir_manual(self, event):
@@ -333,15 +761,67 @@ class MulimgViewer (MulimgViewerGui):
     def one_dir_mul_img(self, event):
         self.SetStatusText_(
             ["Sequential choose input dir", "", "", "-1"])
-        dlg = wx.DirDialog(None, "Choose input dir", "",
-                           wx.DD_DEFAULT_STYLE | wx.DD_DIR_MUST_EXIST)
 
-        if dlg.ShowModal() == wx.ID_OK:
-            self.ImgManager.init(dlg.GetPath(), type=2)
-            self.show_img_init()
-            self.ImgManager.set_action_count(0)
-            self.show_img()
-            self.choice_input_mode.SetSelection(0)
+        # Check if video mode is enabled
+        if self.video_mode_checkbox.GetValue():
+            # Show dialog to choose between file and directory
+            choice_dlg = wx.MessageDialog(None,
+                                        "Choose input type:\n\nYes - Select video file\nNo - Select directory",
+                                        "Video Mode Input",
+                                        wx.YES_NO | wx.ICON_QUESTION)
+
+            if choice_dlg.ShowModal() == wx.ID_YES:
+                # Select video file
+                dlg = wx.FileDialog(None, "Choose video file", "",
+                                   "", "Video files (*.mp4;*.avi;*.mov;*.mkv;*.wmv;*.flv;*.webm)|*.mp4;*.avi;*.mov;*.mkv;*.wmv;*.flv;*.webm|All files (*.*)|*.*",
+                                   wx.FD_DEFAULT_STYLE | wx.FD_FILE_MUST_EXIST)
+
+                if dlg.ShowModal() == wx.ID_OK:
+                    selected_path = dlg.GetPath()
+
+                    # Process video file
+                    if self.is_video_file(selected_path):
+                        if self.process_single_video(selected_path):
+                            self.show_img_init()
+                            self.ImgManager.set_action_count(0)
+                            self.show_img()
+                            self.choice_input_mode.SetSelection(0)
+                        else:
+                            wx.MessageBox("Failed to process video file", "Error", wx.OK | wx.ICON_ERROR)
+                    else:
+                        wx.MessageBox("Selected file is not a supported video format", "Error", wx.OK | wx.ICON_ERROR)
+            else:
+                # Select directory (for videos or images)
+                dlg = wx.DirDialog(None, "Choose directory containing videos or images", "",
+                                   wx.DD_DEFAULT_STYLE | wx.DD_DIR_MUST_EXIST)
+
+                if dlg.ShowModal() == wx.ID_OK:
+                    selected_path = dlg.GetPath()
+
+                    # Try to process as video directory for sequential display
+                    if self.process_video_directory_sequential(selected_path):
+                        self.show_img_init()
+                        self.ImgManager.set_action_count(0)
+                        self.show_img()
+                        self.choice_input_mode.SetSelection(0)
+                    else:
+                        # Fall back to regular image processing
+                        self.ImgManager.init(selected_path, type=2)
+                        self.show_img_init()
+                        self.ImgManager.set_action_count(0)
+                        self.show_img()
+                        self.choice_input_mode.SetSelection(0)
+        else:
+            # Regular directory selection for images
+            dlg = wx.DirDialog(None, "Choose input dir", "",
+                               wx.DD_DEFAULT_STYLE | wx.DD_DIR_MUST_EXIST)
+
+            if dlg.ShowModal() == wx.ID_OK:
+                self.ImgManager.init(dlg.GetPath(), type=2)
+                self.show_img_init()
+                self.ImgManager.set_action_count(0)
+                self.show_img()
+                self.choice_input_mode.SetSelection(0)
 
         self.SetStatusText_(
             ["Sequential choose input dir", "-1", "-1", "-1"])
@@ -406,12 +886,14 @@ class MulimgViewer (MulimgViewerGui):
             self.m_statusBar1.SetStatusText(self.out_path_str, 3)
 
     def colour_change(self, event):
-        c = self.colourPicker_gap.GetColour()
+        # Use default black color since colourPicker_gap is not defined in GUI
+        c = wx.Colour(0, 0, 0)  # Default black color
         self.ImgManager.gap_color = (
             c.red, c.green, c.blue, self.ImgManager.gap_alpha)
 
     def background_alpha(self, event):
-        c = self.colourPicker_gap.GetColour()
+        # Use default black color since colourPicker_gap is not defined in GUI
+        c = wx.Colour(0, 0, 0)  # Default black color
         self.ImgManager.gap_alpha = self.background_slider.GetValue()
         self.ImgManager.gap_color = (
             c.red, c.green, c.blue, self.ImgManager.gap_alpha)
@@ -671,7 +1153,8 @@ class MulimgViewer (MulimgViewerGui):
             height = np.abs(y-y_0)
             if width > 5 and height > 5:
                 self.xy_magnifier = []
-                self.color_list.append(self.colourPicker_draw.GetColour())
+                # Use default red color since colourPicker_draw is not defined in GUI
+                self.color_list.append(wx.Colour(255, 0, 0))  # Default red color
 
                 show_scale = self.show_scale.GetLineText(0).split(',')
                 show_scale = [float(x) for x in show_scale]
@@ -699,7 +1182,8 @@ class MulimgViewer (MulimgViewerGui):
         else:
             # new box
             if self.magnifier.Value:
-                self.color_list.append(self.colourPicker_draw.GetColour())
+                # Use default red color since colourPicker_draw is not defined in GUI
+                self.color_list.append(wx.Colour(255, 0, 0))  # Default red color
                 try:
                     show_scale = self.show_scale.GetLineText(0).split(',')
                     show_scale = [float(x) for x in show_scale]
@@ -1330,7 +1814,8 @@ class MulimgViewer (MulimgViewerGui):
             if self.box_id != -1:
                 if self.checkBox_auto_draw_color.Value:
                     self.checkBox_auto_draw_color.Value = False
-                self.color_list[self.box_id] = self.colourPicker_draw.GetColour()
+                # Use default red color since colourPicker_draw is not defined in GUI
+                self.color_list[self.box_id] = wx.Colour(255, 0, 0)  # Default red color
                 self.refresh(event)
         event.Skip()
 

@@ -5,6 +5,9 @@ from pathlib import Path
 import cv2,os
 from concurrent.futures import ThreadPoolExecutor
 import concurrent.futures
+import atexit
+import signal
+import sys
 
 import numpy as np
 import wx
@@ -27,7 +30,6 @@ class MulimgViewer (MulimgViewerGui):
         self.UpdateUI = UpdateUI
         self.get_type = get_type
         self.create_ImgManager()
-        self.refresh_flag = False
         acceltbl = wx.AcceleratorTable([(wx.ACCEL_NORMAL, wx.WXK_UP,
                                          self.menu_up.GetId()),
                                         (wx.ACCEL_NORMAL, wx.WXK_DOWN,
@@ -359,10 +361,33 @@ class MulimgViewer (MulimgViewerGui):
     def refresh(self, event):
         if self.ImgManager.img_num != 0:
             if self.video_mode:
-                self.refresh_flag = True
+                self.video_path=[]
                 self.count_per_action = self.get_count_per_action(type=2)
                 self.ImgManager.img_count = 0
+                self.thread = int(self.m_textCtrl29.GetValue())
+                self.cache_num = int(self.m_textCtrl30.GetValue())
+                if isinstance(self.real_video_path, str):
+                    path_list = [self.real_video_path]
+                    self.count_per_action = self.get_count_per_action(type=2)
+                    self.video_path = self.init_video_frame_cache(path_list[0],num_frames=(self.cache_num+1)*self.count_per_action,
+                            max_threads=self.thread)
+                else:
+                    self.count_per_action = self.get_count_per_action(type=1)
+                    for vp in self.real_video_path:
+                        cache = self.init_video_frame_cache(
+                            Path(vp), 
+                            num_frames=(self.cache_num+1)*self.count_per_action,
+                            max_threads=self.thread
+                            )
+                        self.video_path.append(cache)
+
+                if isinstance(self.video_path,str):
+                    self.ImgManager.init(self.video_path, type=2, video_mode=self.video_mode, video_path=self.real_video_path,interval=self.interval)
+                else:
+                    self.ImgManager.init(self.video_path, type=1, video_mode=self.video_mode, video_path=self.real_video_path,interval=self.interval)
+            self.current_batch_idx = 0
             self.show_img_init()
+            self.ImgManager.set_action_count(0)
             self.show_img()
         else:
             self.SetStatusText_(
@@ -390,7 +415,10 @@ class MulimgViewer (MulimgViewerGui):
                 self.real_video_path = video_paths
                 self.thread = int(self.m_textCtrl29.GetValue())
                 self.cache_num = int(self.m_textCtrl30.GetValue())
-                self.count_per_action = self.get_count_per_action(type=1)
+                if video_paths and len(video_paths) == 1:
+                    self.count_per_action = self.get_count_per_action(type=2)
+                else:
+                    self.count_per_action = self.get_count_per_action(type=1)
                 for vp in video_paths:
                     cache = self.init_video_frame_cache(
                         Path(vp), 
@@ -398,10 +426,14 @@ class MulimgViewer (MulimgViewerGui):
                         max_threads=self.thread
                     )
                     self.video_path.append(cache)
-                self.ImgManager.init(self.video_path, type=1, video_mode=self.video_mode, video_path=video_paths,interval=self.interval)
+                if video_paths and len(video_paths) == 1:
+                    self.ImgManager.init(str(self.video_path[0]), type=2, video_mode=self.video_mode, video_path=video_paths[0],interval=self.interval)
+                else:
+                    self.ImgManager.init(self.video_path, type=1, video_mode=self.video_mode, video_path=video_paths,interval=self.interval)
             else:
                 self.ImgManager.init(
                     dlg.GetPath(), type=0, parallel_to_sequential=self.parallel_to_sequential.Value)
+            self.current_batch_idx = 0
             self.show_img_init()
             self.ImgManager.set_action_count(0)
             self.show_img()
@@ -410,14 +442,50 @@ class MulimgViewer (MulimgViewerGui):
 
     def one_dir_mul_dir_manual(self, event):
         self.SetStatusText_(["Input", "", "", "-1"])
-        try:
-            if self.ImgManager.type == 1:
-                input_path = self.ImgManager.input_path
+        if self.video_mode:
+            self.video_path = []
+            wildcard = ("Video files (*.mp4;*.avi;*.mov;*.mkv;*.wmv;*.flv)|*.mp4;*.avi;*.mov;*.mkv;*.wmv;*.flv|""All files (*.*)|*.*")
+            dlg = wx.FileDialog(
+                parent=self,                                # 或 None
+                message="Select video files",
+                wildcard=wildcard,
+                style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST | wx.FD_MULTIPLE
+            )
+            video_paths = []
+            if dlg.ShowModal() == wx.ID_OK:
+                video_paths = dlg.GetPaths()                 # ← 这是一个 list[str]
+            dlg.Destroy()
+            self.real_video_path = video_paths
+            self.thread = int(self.m_textCtrl29.GetValue())
+            self.cache_num = int(self.m_textCtrl30.GetValue())
+            if video_paths and len(video_paths) == 1:
+                self.count_per_action = self.get_count_per_action(type=2)
             else:
+                self.count_per_action = self.get_count_per_action(type=1)
+            for vp in video_paths:
+                cache = self.init_video_frame_cache(
+                    Path(vp), 
+                    num_frames=(self.cache_num+1)*self.count_per_action,
+                    max_threads=self.thread
+                    )
+                self.video_path.append(cache)
+            if video_paths and len(video_paths) == 1:
+                self.ImgManager.init(str(self.video_path[0]), type=2, video_mode=self.video_mode, video_path=video_paths[0],interval=self.interval)
+            else:
+                self.ImgManager.init(self.video_path, type=1, video_mode=self.video_mode, video_path=video_paths,interval=self.interval)
+            self.current_batch_idx = 0
+            self.show_img_init()
+            self.ImgManager.set_action_count(0)
+            self.show_img()
+        else:
+            try:
+                if self.ImgManager.type == 1:
+                    input_path = self.ImgManager.input_path
+                else:
+                    input_path = None
+            except:
                 input_path = None
-        except:
-            input_path = None
-        self.UpdateUI(1, input_path, self.parallel_to_sequential.Value)
+            self.UpdateUI(1, input_path, self.parallel_to_sequential.Value)
         self.choice_input_mode.SetSelection(2)
         self.SetStatusText_(["Input", "-1", "-1", "-1"])
 
@@ -446,6 +514,7 @@ class MulimgViewer (MulimgViewerGui):
                     self.video_path = [self.video_path]  # 单个也转成列表
             else:
                 self.ImgManager.init(dlg.GetPath(), type=2)
+            self.current_batch_idx = 0
             self.show_img_init()
             self.ImgManager.set_action_count(0)
             self.show_img()
@@ -1182,8 +1251,8 @@ class MulimgViewer (MulimgViewerGui):
                     parallel_to_sequential = self.parallel_to_sequential.Value
                 else:
                     parallel_to_sequential = False
-                self.ImgManager.init(
-                    self.ImgManager.input_path, type=self.ImgManager.type, parallel_to_sequential=parallel_to_sequential)
+                if not self.video_mode:
+                    self.ImgManager.init(self.ImgManager.input_path, type=self.ImgManager.type, parallel_to_sequential=parallel_to_sequential)
                 self.show_img_init()
                 self.ImgManager.set_action_count(action_count)
                 if self.index_table_gui:
@@ -1675,14 +1744,16 @@ class MulimgViewer (MulimgViewerGui):
 
     def next_img(self, event):
         assert hasattr(self, 'executor'), "self.executor 未初始化！"
-        self.frame_cache_dir = self.video_path
+        if isinstance(self.video_path,str):
+            self.frame_cache_dir = [self.video_path]
+        else:
+            self.frame_cache_dir = self.video_path
         # 无图片/视频直接报错
         if self.ImgManager.img_num == 0:
             self.SetStatusText_(
                 ["-1", "", "***Error: First, need to select the input dir***", "-1"]
             )
             return
-
         # ============ 视频模式逻辑修改 ============
         if self.video_mode:
             if not hasattr(self, "current_batch_idx"):
@@ -1737,16 +1808,12 @@ class MulimgViewer (MulimgViewerGui):
         # 原全局 cache_start_frame / cache_end_frame 用于参考
         global_cache_start = cache_start_batch * self.count_per_action
         global_cache_end = (cache_end_batch + 1) * self.count_per_action
-
         for video_idx, cache_dir in enumerate(self.frame_cache_dir):
             # 每个视频独立的最大帧数
             if len(self.ImgManager.img_num_list) == 1:
                 real_frame_count = self.ImgManager.img_num_list[0]
             else:
-                if self.refresh_flag:
-                    real_frame_count = self.ImgManager.img_num_list[0]
-                else:
-                    real_frame_count = self.ImgManager.img_num_list[video_idx]
+                real_frame_count = self.ImgManager.img_num_list[video_idx]
             last_valid_idx = real_frame_count - 1
 
             # 为每个视频计算独立 cache_start_frame 和 cache_end_frame
@@ -1805,25 +1872,21 @@ class MulimgViewer (MulimgViewerGui):
         cv2.imwrite(save_path, frame)
         #time.sleep(0.5)
 
-import os
-import shutil
-import atexit
-import signal
-import wx
+import os, shutil, wx
+from pathlib import Path
 
-TEMP_DIR = "video_frames"  # 你临时生成内容的目录路径（可以修改）
+TEMP_DIR = Path("video_frames")  # 帧缓存根目录
 
 def cleanup_temp_dir():
-    if os.path.exists(TEMP_DIR):
+    if TEMP_DIR.exists():
         try:
             shutil.rmtree(TEMP_DIR)
+            print(f"[INFO] 清理临时目录成功: {TEMP_DIR}")
         except Exception as e:
-            pass
+            print(f"[WARN] 清理临时目录失败: {e}")
 
-# 注册退出时自动清理
-atexit.register(cleanup_temp_dir)
-
-# 注册中断信号（如 Ctrl+C / kill）
-signal.signal(signal.SIGINT, lambda sig, frame: (cleanup_temp_dir(), exit(0)))
-signal.signal(signal.SIGTERM, lambda sig, frame: (cleanup_temp_dir(), exit(0)))
-
+class MyApp(wx.App):
+    def OnExit(self):
+        # 仅在窗口真正退出时清理
+        cleanup_temp_dir()
+        return super().OnExit()

@@ -147,13 +147,12 @@ class ImgData():
                              for f in Path(path_).iterdir()]
             if len(no_check_list) > 100:
                 self.dataset_mode = True
-                no_check_list = sorted(no_check_list, key=lambda x: int(x.split('.')[0]))
                 output.append(no_check_list)
             else:
                 self.dataset_mode = False
                 check_list = [str(f.name) for f in Path(path_).iterdir(
                 ) if f.is_file() and f.suffix.lower() in self.format_group]
-                no_check_list = sorted(no_check_list, key=lambda x: int(x.split('.')[0]))
+                check_list = np.sort(check_list)
                 output.append(check_list)
             if not self.parallel_to_sequential:
                 if i == 0:
@@ -224,88 +223,110 @@ class ImgData():
 
     def get_flist(self):
         if self.video_mode:
-                self.name_list = self.video_name_list()
-        # if self.type == 0 or self.type == 1:
-        #     # one_dir_mul_dir_auto, one_dir_mul_dir_manual
-        #     if self.parallel_to_sequential:
-        #         flist_all = []
-        #         for i in range(len(self.path_list)):
-        #             flist_all = flist_all + \
-        #                 [str(Path(self.path_list[i])/self.name_list[i][k])
-        #                  for k in range(len(self.name_list[i]))]
+            self.name_list = self.video_name_list()
+            if self.type == 0 or self.type == 1:
+            # one_dir_mul_dir_auto, one_dir_mul_dir_manual
+                if self.parallel_to_sequential:
+                    flist_all = []
+                    for i in range(len(self.path_list)):
+                        flist_all += [
+                            str(Path(self.path_list[i]) / self.name_list[i][k])
+                            for k in range(len(self.name_list[i]))
+                        ]
 
-        #         try:
-        #             flist = [flist_all[k] for k in range(
-        #                 self.img_count, self.img_count+self.count_per_action)]
-        #         except:
-        #             flist = [flist_all[k]
-        #                      for k in range(self.img_count, self.img_num)]
-
-        #     else:
-        #         flist = []
-        #         for i in range(len(self.path_list)):
-        #             for k in range(self.img_count, self.img_count + self.count_per_action):
-        #                 try:
-        #                     flist += [str(Path(self.path_list[i]) /
-        #                                 self.name_list[i][k])]
-        #                 except:
-        #                     flist += [str(Path(self.path_list[i]) /
-        #                                 self.name_list[i][-1])]
-        if self.type == 0 or self.type == 1:
-        # one_dir_mul_dir_auto, one_dir_mul_dir_manual
-            if self.parallel_to_sequential:
-                flist_all = []
-                for i in range(len(self.path_list)):
-                    flist_all += [
-                        str(Path(self.path_list[i]) / self.name_list[i][k])
-                        for k in range(len(self.name_list[i]))
-                    ]
-
-                if self.img_count >= len(flist_all):
-                    # 超出最后一帧，保留最后一张
-                    flist = [flist_all[-1]]
-                elif self.img_count + self.count_per_action > len(flist_all):
-                    flist = flist_all[self.img_count:]
-                    # 如果是空的，就保留最后一张
-                    if not flist:
+                    if self.img_count >= len(flist_all):
+                        # 超出最后一帧，保留最后一张
                         flist = [flist_all[-1]]
-                else:
-                    flist = flist_all[self.img_count:self.img_count + self.count_per_action]
+                    elif self.img_count + self.count_per_action > len(flist_all):
+                        flist = flist_all[self.img_count:]
+                        # 如果是空的，就保留最后一张
+                        if not flist:
+                            flist = [flist_all[-1]]
+                    else:
+                        flist = flist_all[self.img_count:self.img_count + self.count_per_action]
 
+                else:
+                    flist = []
+                    for i in range(len(self.path_list)):
+                        for k in range(self.count_per_action):
+                            idx = self.img_count + k
+                            try:
+                                flist.append(str(Path(self.path_list[i]) / self.name_list[i][idx]))
+                            except IndexError:
+                                # 超出范围，强制使用最后一张
+                                flist.append(str(Path(self.path_list[i]) / self.name_list[i][-1]))
+
+            elif self.type == 2:
+                self.name_list = sorted(self.name_list, key=lambda x: int(x.split('.')[0]))
+                # one_dir_mul_img
+                try:
+                    flist = [str(Path(self.path_list[0])/self.name_list[i])
+                            for i in range(self.img_count, self.img_count+self.count_per_action)]
+                except:
+                    flist = [str(Path(self.path_list[0])/self.name_list[i])
+                            for i in range(self.img_count, self.img_num)]
+            elif self.type == 3:
+                # one file list
+                # flist = self.path_list
+                try:
+                    flist = [str(Path(self.path_list[i]))
+                            for i in range(self.img_count, self.img_count+self.count_per_action)]
+                except:
+                    flist = [str(Path(self.path_list[i]))
+                            for i in range(self.img_count, self.img_num)]
             else:
                 flist = []
-                for i in range(len(self.path_list)):
-                    for k in range(self.count_per_action):
-                        idx = self.img_count + k
-                        try:
-                            flist.append(str(Path(self.path_list[i]) / self.name_list[i][idx]))
-                        except IndexError:
-                            # 超出范围，强制使用最后一张
-                            flist.append(str(Path(self.path_list[i]) / self.name_list[i][-1]))
-
-        elif self.type == 2:
-            self.name_list = sorted(self.name_list, key=lambda x: int(x.split('.')[0]))
-            # one_dir_mul_img
-            try:
-                flist = [str(Path(self.path_list[0])/self.name_list[i])
-                         for i in range(self.img_count, self.img_count+self.count_per_action)]
-            except:
-                flist = [str(Path(self.path_list[0])/self.name_list[i])
-                         for i in range(self.img_count, self.img_num)]
-        elif self.type == 3:
-            # one file list
-            # flist = self.path_list
-            try:
-                flist = [str(Path(self.path_list[i]))
-                         for i in range(self.img_count, self.img_count+self.count_per_action)]
-            except:
-                flist = [str(Path(self.path_list[i]))
-                         for i in range(self.img_count, self.img_num)]
+            self.flist = flist
+            return flist
         else:
-            flist = []
+            if self.type == 0 or self.type == 1:
+                # one_dir_mul_dir_auto, one_dir_mul_dir_manual
+                if self.parallel_to_sequential:
+                    flist_all = []
+                    for i in range(len(self.path_list)):
+                        flist_all = flist_all + \
+                            [str(Path(self.path_list[i])/self.name_list[i][k])
+                            for k in range(len(self.name_list[i]))]
 
-        self.flist = flist
-        return flist
+                    try:
+                        flist = [flist_all[k] for k in range(
+                            self.img_count, self.img_count+self.count_per_action)]
+                    except:
+                        flist = [flist_all[k]
+                                for k in range(self.img_count, self.img_num)]
+
+                else:
+                    flist = []
+                    for i in range(len(self.path_list)):
+                        for k in range(self.img_count, self.img_count+self.count_per_action):
+                            try:
+                                flist += [str(Path(self.path_list[i]) /
+                                            self.name_list[k])]
+                            except:
+                                flist += [str(Path(self.path_list[i]) /
+                                            self.name_list[-1])]
+
+            elif self.type == 2:
+                # one_dir_mul_img
+                try:
+                    flist = [str(Path(self.path_list[0])/self.name_list[i])
+                            for i in range(self.img_count, self.img_count+self.count_per_action)]
+                except:
+                    flist = [str(Path(self.path_list[0])/self.name_list[i])
+                            for i in range(self.img_count, self.img_num)]
+            elif self.type == 3:
+                # one file list
+                # flist = self.path_list
+                try:
+                    flist = [str(Path(self.path_list[i]))
+                            for i in range(self.img_count, self.img_count+self.count_per_action)]
+                except:
+                    flist = [str(Path(self.path_list[i]))
+                            for i in range(self.img_count, self.img_num)]
+            else:
+                flist = []
+            self.flist = flist
+            return flist
 
     def get_dir_num(self):
         num = len(self.path_list)

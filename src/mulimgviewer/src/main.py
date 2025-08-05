@@ -129,7 +129,7 @@ class MulimgViewer (MulimgViewerGui):
 
         # open default path
         if default_path:
-            try: 
+            try:
                 self.ImgManager.init(default_path, type=2)  # one_dir_mul_img
                 self.show_img_init()
                 self.ImgManager.set_action_count(0)
@@ -153,7 +153,7 @@ class MulimgViewer (MulimgViewerGui):
             self.thread = int(self.m_textCtrl29.GetValue())
         except ValueError:
             self.thread = 4  # 你默认的安全值
-        
+
     def check_version(self):
         t1 = threading.Thread(target=self.run, args=())
         t1.setDaemon(True)
@@ -377,7 +377,7 @@ class MulimgViewer (MulimgViewerGui):
                     self.count_per_action = self.get_count_per_action(type=1)
                     for vp in self.real_video_path:
                         cache = self.init_video_frame_cache(
-                            Path(vp), 
+                            Path(vp),
                             num_frames=(self.cache_num+1)*self.count_per_action,
                             max_threads=self.thread
                             )
@@ -423,7 +423,7 @@ class MulimgViewer (MulimgViewerGui):
                     self.count_per_action = self.get_count_per_action(type=1)
                 for vp in video_paths:
                     cache = self.init_video_frame_cache(
-                        Path(vp), 
+                        Path(vp),
                         num_frames=(self.cache_num+1)*self.count_per_action,
                         max_threads=self.thread
                     )
@@ -466,7 +466,7 @@ class MulimgViewer (MulimgViewerGui):
                 self.count_per_action = self.get_count_per_action(type=1)
             for vp in video_paths:
                 cache = self.init_video_frame_cache(
-                    Path(vp), 
+                    Path(vp),
                     num_frames=(self.cache_num+1)*self.count_per_action,
                     max_threads=self.thread
                     )
@@ -509,7 +509,7 @@ class MulimgViewer (MulimgViewerGui):
                 self.thread = int(self.m_textCtrl29.GetValue())
                 self.cache_num = int(self.m_textCtrl30.GetValue())
                 self.count_per_action = self.get_count_per_action(type=2)
-            
+
                 self.video_path = self.init_video_frame_cache(Path(video_path), num_frames=(self.cache_num+1)*self.count_per_action, max_threads=self.thread)
                 self.ImgManager.init(self.video_path, type=2, video_mode=self.video_mode, video_path = video_path,interval=self.interval)
                 if isinstance(self.video_path, str):
@@ -1648,11 +1648,11 @@ class MulimgViewer (MulimgViewerGui):
     def on_enable_video_mode(self, event):
         self.video_mode = self.m_checkBox66.GetValue()
         return self.video_mode
-        
+
     def on_enable_cache(self, event):
         self.cache_enabled = self.m_checkBox67.GetValue()
         return self.cache_enabled
-    
+
     def init_video_frame_cache(self, input_path, num_frames=8, max_threads=4):
         input_path = Path(input_path)
         output_list = []
@@ -1702,7 +1702,7 @@ class MulimgViewer (MulimgViewerGui):
 
         else:
             raise ValueError("路径既不是 .mp4 文件，也不是包含 .mp4 的目录")
-        
+
     def get_count_per_action(self,type=2):
         if type == 2:
             row_col = self.row_col.GetLineText(0).split(',')
@@ -1711,7 +1711,7 @@ class MulimgViewer (MulimgViewerGui):
         if type == 1:
             product = 1
         return product
-    
+
         # 2. 事件处理函数
     def on_interval_changed(self, event):
         val = self.m_textCtrl28.GetValue()

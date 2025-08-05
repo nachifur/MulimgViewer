@@ -19,7 +19,7 @@ class ImgData():
         self.img_num_list = []
         self.parallel_to_sequential = parallel_to_sequential
         self.interval = interval
-        
+
         self.init_flist()
         if self.parallel_to_sequential:
             if self.video_mode:
@@ -97,7 +97,7 @@ class ImgData():
     def update_state(self, path, mode):
         self.video_path = path
         self.video_mode = mode
-        
+
 
 
     def get_path_list_from_lf(self):
@@ -331,7 +331,7 @@ class ImgData():
     def get_dir_num(self):
         num = len(self.path_list)
         return num
-    
+
     def calc_max_extractable_frames(self, video_path, interval_sec=1):
         # 如果是字符串，统一转为列表
         if isinstance(video_path, str):
@@ -353,5 +353,3 @@ class ImgData():
             max_frames_list.append(max_frames)
 
         return max_frames_list
-
-

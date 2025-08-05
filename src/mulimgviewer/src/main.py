@@ -215,8 +215,10 @@ class MulimgViewer (MulimgViewerGui):
 
     def last_img(self, event):
         assert hasattr(self, 'executor'), "self.executor 未初始化！"
-        self.frame_cache_dir = self.video_path
-
+        if isinstance(self.video_path,str):
+            self.frame_cache_dir = [self.video_path]
+        else:
+            self.frame_cache_dir = self.video_path
         if self.ImgManager.img_num == 0:
             self.SetStatusText_(
                 ["-1", "", "***Error: First, need to select the input dir***", "-1"]
@@ -1872,21 +1874,24 @@ class MulimgViewer (MulimgViewerGui):
         cv2.imwrite(save_path, frame)
         #time.sleep(0.5)
 
-import os, shutil, wx
-from pathlib import Path
 
-TEMP_DIR = Path("video_frames")  # 帧缓存根目录
+import shutil
+import atexit
+import signal
+import wx
+
+TEMP_DIR = "video_frames"  # 你临时生成内容的目录路径（可以修改）
 
 def cleanup_temp_dir():
-    if TEMP_DIR.exists():
+    if os.path.exists(TEMP_DIR):
         try:
             shutil.rmtree(TEMP_DIR)
-            print(f"[INFO] 清理临时目录成功: {TEMP_DIR}")
         except Exception as e:
-            print(f"[WARN] 清理临时目录失败: {e}")
+            pass
 
-class MyApp(wx.App):
-    def OnExit(self):
-        # 仅在窗口真正退出时清理
-        cleanup_temp_dir()
-        return super().OnExit()
+# 注册退出时自动清理
+atexit.register(cleanup_temp_dir)
+
+# 注册中断信号（如 Ctrl+C / kill）
+signal.signal(signal.SIGINT, lambda sig, frame: (cleanup_temp_dir(), exit(0)))
+signal.signal(signal.SIGTERM, lambda sig, frame: (cleanup_temp_dir(), exit(0)))

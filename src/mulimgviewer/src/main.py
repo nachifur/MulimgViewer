@@ -68,6 +68,7 @@ class MulimgViewer (MulimgViewerGui):
         self.key_status = {"shift_s": 0, "ctrl": 0, "alt": 0}
         self.video_mode = False
         self.cache_enabled = False
+        self.skip_frames = self.m_textCtrl281.GetValue()
         self.count_per_action = 1
         self.indextablegui = None
         self.aboutgui = None
@@ -108,6 +109,7 @@ class MulimgViewer (MulimgViewerGui):
         self.width_setting_ = self.width_setting
         self.thread = 4
         self.cache_num = 2
+        self.play_direction = +1   # +1 正向；-1 反向
         self.frame_cache_dir = []
         self.play_timer = wx.Timer(self)
         self.Bind(wx.EVT_TIMER, self.on_play_timer, self.play_timer)
@@ -147,6 +149,14 @@ class MulimgViewer (MulimgViewerGui):
             self.cache_num = int(self.m_textCtrl30.GetValue())
         except ValueError:
             self.cache_num = 2  # 你默认的安全值
+        
+    def on_skip_changed(self, event):
+        try:
+            self.skip_frames = int(self.m_textCtrl281.GetValue())
+        except ValueError:
+            self.skip_frames = 0  # 默认：不跳帧
+        if self.skip_frames < 0:
+            self.skip_frames = 0
 
     def on_thread_change(self, event):
         try:
@@ -203,6 +213,9 @@ class MulimgViewer (MulimgViewerGui):
         elif input_mode == 1:
             self.one_dir_mul_dir_auto(event)
         elif input_mode == 2:
+            # if self.video_mode:
+            #     self.video_manual(event)
+            # else:
             self.one_dir_mul_dir_manual(event)
         elif input_mode == 3:
             self.onefilelist()
@@ -215,6 +228,18 @@ class MulimgViewer (MulimgViewerGui):
 
     def last_img(self, event):
         assert hasattr(self, 'executor'), "self.executor 未初始化！"
+        # 👉 播放中 & 非定时器触发（=用户点击）：只切方向 + 重启计时器，相位归零，不立刻退一帧
+        if getattr(self, 'is_playing', False) and not getattr(self, '_from_timer', False):
+            self.play_direction = -1
+            # 可选：更新按钮文案
+            try: self.right_arrow_button1.SetLabel("⏸")
+            except: pass
+            # 重新起表，保证切换后第一帧在完整间隔后出现
+            interval = 1.0
+            try: interval = float(self.m_textCtrl28.GetValue())
+            except: pass
+            self.play_timer.Start(int(interval * 1000), oneShot=False)
+            return
         if isinstance(self.video_path,str):
             self.frame_cache_dir = [self.video_path]
         else:
@@ -384,9 +409,9 @@ class MulimgViewer (MulimgViewerGui):
                         self.video_path.append(cache)
 
                 if isinstance(self.video_path,str):
-                    self.ImgManager.init(self.video_path, type=2, video_mode=self.video_mode, video_path=self.real_video_path,interval=self.interval)
+                    self.ImgManager.init(self.video_path, type=2, video_mode=self.video_mode, video_path=self.real_video_path,skip=self.skip_frames)
                 else:
-                    self.ImgManager.init(self.video_path, type=1, video_mode=self.video_mode, video_path=self.real_video_path,interval=self.interval)
+                    self.ImgManager.init(self.video_path, type=1, video_mode=self.video_mode, video_path=self.real_video_path,skip=self.skip_frames)
             self.current_batch_idx = 0
             self.show_img_init()
             self.ImgManager.set_action_count(0)
@@ -429,9 +454,9 @@ class MulimgViewer (MulimgViewerGui):
                     )
                     self.video_path.append(cache)
                 if video_paths and len(video_paths) == 1:
-                    self.ImgManager.init(str(self.video_path[0]), type=2, video_mode=self.video_mode, video_path=video_paths[0],interval=self.interval)
+                    self.ImgManager.init(str(self.video_path[0]), type=2, video_mode=self.video_mode, video_path=video_paths[0],skip=self.skip_frames)
                 else:
-                    self.ImgManager.init(self.video_path, type=1, video_mode=self.video_mode, video_path=video_paths,interval=self.interval)
+                    self.ImgManager.init(self.video_path, type=1, video_mode=self.video_mode, video_path=video_paths,skip=self.skip_frames)
             else:
                 self.ImgManager.init(
                     dlg.GetPath(), type=0, parallel_to_sequential=self.parallel_to_sequential.Value)
@@ -444,52 +469,41 @@ class MulimgViewer (MulimgViewerGui):
 
     def one_dir_mul_dir_manual(self, event):
         self.SetStatusText_(["Input", "", "", "-1"])
-        if self.video_mode:
-            self.video_path = []
-            wildcard = ("Video files (*.mp4;*.avi;*.mov;*.mkv;*.wmv;*.flv)|*.mp4;*.avi;*.mov;*.mkv;*.wmv;*.flv|""All files (*.*)|*.*")
-            dlg = wx.FileDialog(
-                parent=self,                                # 或 None
-                message="Select video files",
-                wildcard=wildcard,
-                style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST | wx.FD_MULTIPLE
-            )
-            video_paths = []
-            if dlg.ShowModal() == wx.ID_OK:
-                video_paths = dlg.GetPaths()                 # ← 这是一个 list[str]
-            dlg.Destroy()
-            self.real_video_path = video_paths
-            self.thread = int(self.m_textCtrl29.GetValue())
-            self.cache_num = int(self.m_textCtrl30.GetValue())
-            if video_paths and len(video_paths) == 1:
-                self.count_per_action = self.get_count_per_action(type=2)
-            else:
-                self.count_per_action = self.get_count_per_action(type=1)
-            for vp in video_paths:
-                cache = self.init_video_frame_cache(
-                    Path(vp),
+        if self.video_mode: 
+            if self.real_video_path:
+                self.video_path = []  
+                video_paths = self.real_video_path
+                self.thread = int(self.m_textCtrl29.GetValue())
+                self.cache_num = int(self.m_textCtrl30.GetValue())
+                if video_paths and len(video_paths) == 1:
+                    self.count_per_action = self.get_count_per_action(type=2)
+                else:
+                    self.count_per_action = self.get_count_per_action(type=1)
+                for vp in video_paths:
+                    cache = self.init_video_frame_cache(Path(vp),
                     num_frames=(self.cache_num+1)*self.count_per_action,
                     max_threads=self.thread
                     )
-                self.video_path.append(cache)
-            if video_paths and len(video_paths) == 1:
-                self.ImgManager.init(str(self.video_path[0]), type=2, video_mode=self.video_mode, video_path=video_paths[0],interval=self.interval)
-            else:
-                self.ImgManager.init(self.video_path, type=1, video_mode=self.video_mode, video_path=video_paths,interval=self.interval)
-            self.current_batch_idx = 0
-            self.show_img_init()
-            self.ImgManager.set_action_count(0)
-            self.show_img()
-        else:
-            try:
-                if self.ImgManager.type == 1:
-                    input_path = self.ImgManager.input_path
+                    self.video_path.append(cache)
+                if video_paths and len(video_paths) == 1:
+                    self.ImgManager.init(str(self.video_path[0]), type=2, video_mode=self.video_mode, video_path=video_paths[0],skip=self.skip_frames)
                 else:
-                    input_path = None
-            except:
+                    self.ImgManager.init(self.video_path, type=1, video_mode=self.video_mode, video_path=video_paths,skip=self.skip_frames)
+                self.current_batch_idx = 0
+                self.show_img_init()
+                self.ImgManager.set_action_count(0)
+                self.show_img()
+        try:
+            if self.ImgManager.type == 1:
+                input_path = self.ImgManager.input_path
+            else:
                 input_path = None
-            self.UpdateUI(1, input_path, self.parallel_to_sequential.Value)
+        except:
+            input_path = None
+        self.UpdateUI(1, input_path, self.parallel_to_sequential.Value)
         self.choice_input_mode.SetSelection(2)
         self.SetStatusText_(["Input", "-1", "-1", "-1"])
+        
 
     def one_dir_mul_img(self, event):
         self.SetStatusText_(
@@ -511,7 +525,7 @@ class MulimgViewer (MulimgViewerGui):
                 self.count_per_action = self.get_count_per_action(type=2)
 
                 self.video_path = self.init_video_frame_cache(Path(video_path), num_frames=(self.cache_num+1)*self.count_per_action, max_threads=self.thread)
-                self.ImgManager.init(self.video_path, type=2, video_mode=self.video_mode, video_path = video_path,interval=self.interval)
+                self.ImgManager.init(self.video_path, type=2, video_mode=self.video_mode, video_path = video_path,skip=self.skip_frames)
                 if isinstance(self.video_path, str):
                     self.video_path = [self.video_path]  # 单个也转成列表
             else:
@@ -1647,6 +1661,12 @@ class MulimgViewer (MulimgViewerGui):
 
     def on_enable_video_mode(self, event):
         self.video_mode = self.m_checkBox66.GetValue()
+        app = wx.GetApp()
+        try:
+            if hasattr(app, "frame") and len(app.frame) > 1 and app.frame[1] is not None:
+                app.frame[1].on_video_mode_change(self.video_mode)
+        except Exception as e:
+            print("[Main] forward video_mode failed:", e)
         return self.video_mode
 
     def on_enable_cache(self, event):
@@ -1722,30 +1742,51 @@ class MulimgViewer (MulimgViewerGui):
 
     def toggle_play(self, event):
         """
-        播放/暂停按钮事件
-        interval: 播放间隔（秒）
+        ▶ 按钮：正向播放/暂停
         """
         interval_str = self.m_textCtrl28.GetValue()
         try:
             interval = float(interval_str)
         except ValueError:
             interval = 1.0
-        if not self.is_playing:
-            # 开始播放
-            self.is_playing = True
-            self.play_timer.Start(int(interval * 1000))  # 转换为毫秒
-            self.right_arrow_button1.SetLabel("⏸")  # 改为暂停符号
-        else:
-            # 暂停播放
+
+        # === 修改点：不管正放还是倒放，只要在播放，就暂停 ===
+        if self.is_playing:
             self.is_playing = False
             self.play_timer.Stop()
-            self.right_arrow_button1.SetLabel("▶")  # 恢复播放符号
+            self.right_arrow_button1.SetLabel("▶")
+            return
+
+        # 未在播放 -> 开始正向播放
+        self.is_playing = True
+        self.play_direction = +1
+        self.play_timer.Start(int(interval * 1000), oneShot=False)
+        self.right_arrow_button1.SetLabel("⏸")
 
     def on_play_timer(self, event):
-        self.next_img(None)  # 每次定时调用 next_img
+        self._from_timer = True
+        try:
+            if self.play_direction >= 0:
+                self.next_img(None)
+            else:
+                self.last_img(None)
+        finally:
+            self._from_timer = False
 
     def next_img(self, event):
         assert hasattr(self, 'executor'), "self.executor 未初始化！"
+            # 👉 播放中 & 非定时器触发（=用户点击）：倒放 → 切回正放，不立刻跳帧
+        if getattr(self, 'is_playing', False) and not getattr(self, '_from_timer', False) \
+        and getattr(self, 'play_direction', 1) == -1:
+            self.play_direction = +1
+            try: self.right_arrow_button1.SetLabel("⏸")
+            except: pass
+            # 重新起表，保证切换后第一帧在完整间隔后出现
+            interval = 1.0
+            try: interval = float(self.m_textCtrl28.GetValue())
+            except: pass
+            self.play_timer.Start(int(interval * 1000), oneShot=False)
+            return
         if isinstance(self.video_path,str):
             self.frame_cache_dir = [self.video_path]
         else:
@@ -1874,6 +1915,9 @@ class MulimgViewer (MulimgViewerGui):
         cv2.imwrite(save_path, frame)
         #time.sleep(0.5)
 
+    def set_video_paths(self, paths: list[str] | list[Path]) -> None:
+        # 统一成 Path，必要时也可在这里切换到视频模式、做预处理
+        self.real_video_path = paths
 
 import shutil
 import atexit

@@ -3,7 +3,7 @@ import csv
 from pathlib import Path
 
 import numpy as np
-import cv2,math,os
+import cv2,math,os 
 
 from .utils import solve_factor
 
@@ -11,19 +11,19 @@ class ImgData():
     """Multi-image database.
     Multi-image browsing, path management, loading multi-image data, automatic layout layout, etc. """
 
-    def init(self, input_path, type=2, parallel_to_sequential=False, action_count=None, img_count=None,video_mode=False, video_path=[],interval=1):
+    def init(self, input_path, type=2, parallel_to_sequential=False, action_count=None, img_count=None,video_mode=False, video_path=[],skip=0):
         self.input_path = input_path
         self.type = type
         self.video_mode = video_mode
         self.video_path = video_path
         self.img_num_list = []
         self.parallel_to_sequential = parallel_to_sequential
-        self.interval = interval
+        self.skip = skip
 
         self.init_flist()
         if self.parallel_to_sequential:
             if self.video_mode:
-                self.img_num_list = self.calc_max_extractable_frames(self.video_path, 1)
+                self.img_num_list = self.calc_max_extractable_frames(self.video_path,skip=self.skip)
                 self.img_num = sum(self.img_num_list)
             else:
                 list_ = []
@@ -32,7 +32,7 @@ class ImgData():
                 self.img_num = len(list_)
         else:
             if self.video_mode:
-                self.img_num_list = self.calc_max_extractable_frames(self.video_path, interval_sec=self.interval)
+                self.img_num_list = self.calc_max_extractable_frames(self.video_path,skip=self.skip)
                 self.img_num = max(self.img_num_list)
             else:
                 self.img_num = len(self.name_list)
@@ -332,24 +332,42 @@ class ImgData():
         num = len(self.path_list)
         return num
 
-    def calc_max_extractable_frames(self, video_path, interval_sec=1):
-        # 如果是字符串，统一转为列表
-        if isinstance(video_path, str):
-            video_path = [video_path]
+    def calc_max_extractable_frames(self, video_path, skip = 0):
+        """
+        计算每个视频在按“跳过帧数=skip”采样时能看到的帧数。
+        - video_path: str 或 list[str]
+        - skip: 跳过的帧数（>=0）。例如：
+            skip=0 -> 0,1,2,3,...        (步长=1)
+            skip=1 -> 0,2,4,6,...        (步长=2)
+            skip=2 -> 0,3,6,9,...        (步长=3)
+        return: list[int]，与输入一一对应
+        """
+        # 统一成列表
+        paths = [video_path] if isinstance(video_path, str) else list(video_path)
 
-        max_frames_list = []
-        for path in video_path:
-            cap = cv2.VideoCapture(path)
+        # 规范化 skip，计算步长
+        s = int(skip) if isinstance(skip, int) and skip >= 0 else 0
+        step = s + 1  # 采样步长
+
+        out = []
+        for p in paths:
+            cap = cv2.VideoCapture(p)
             if not cap.isOpened():
-                max_frames_list.append(0)
+                out.append(0)
                 continue
 
-            fps = cap.get(cv2.CAP_PROP_FPS)
-            total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-            duration_sec = total_frames / fps if fps > 0 else 0
-            max_frames = math.floor(duration_sec / interval_sec)
+            # 优先用容器提供的总帧数
+            total = int(cap.get(cv2.CAP_PROP_FRAME_COUNT) or 0)
+
+            # 兜底：有些文件这里为0，尝试跳到末尾读取当前位置帧号
+            if total <= 0:
+                cap.set(cv2.CAP_PROP_POS_AVI_RATIO, 1)
+                total = int(cap.get(cv2.CAP_PROP_POS_FRAMES) or 0)
 
             cap.release()
-            max_frames_list.append(max_frames)
 
-        return max_frames_list
+            # 观看帧数：ceil(total/step) == (total + step - 1) // step
+            viewable = (max(total, 0) + step - 1) // step
+            out.append(viewable)
+
+        return out

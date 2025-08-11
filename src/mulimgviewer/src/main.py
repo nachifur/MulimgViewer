@@ -29,6 +29,7 @@ class MulimgViewer (MulimgViewerGui):
         super().__init__(parent)
         self.UpdateUI = UpdateUI
         self.get_type = get_type
+        self._is_closing = False
         self.create_ImgManager()
         acceltbl = wx.AcceleratorTable([(wx.ACCEL_NORMAL, wx.WXK_UP,
                                          self.menu_up.GetId()),
@@ -55,6 +56,7 @@ class MulimgViewer (MulimgViewerGui):
         self.img_size = [-1, -1]
         self.width = 1000
         self.height = 600
+        self.video_fps_list = []
         self.start_flag = 0
         self.x = -1
         self.x_0 = -1
@@ -114,6 +116,8 @@ class MulimgViewer (MulimgViewerGui):
         self.play_timer = wx.Timer(self)
         self.Bind(wx.EVT_TIMER, self.on_play_timer, self.play_timer)
         self.total_frames = 0
+        self._tick_running = False   # 定时器回调防重入
+        self._from_timer = False     # 区分计时器触发/用户点击
         self.executor = ThreadPoolExecutor(max_workers=int(self.m_textCtrl29.GetValue()))  # 或者你想开的线程数
 
         # Draw color to box
@@ -221,24 +225,63 @@ class MulimgViewer (MulimgViewerGui):
             self.onefilelist()
 
     def close(self, event):
-        if self.get_type() == -1:
-            self.Destroy()
-        else:
-            self.UpdateUI(-1)
+        if getattr(self, "_is_closing", False):
+            return
+        self._is_closing = True
+        self._shutdown = True  # 给后台任务一个退出信号
+
+        # 1) 停计时器
+        try:
+            if hasattr(self, "play_timer") and self.play_timer.IsRunning():
+                self.play_timer.Stop()
+        except: pass
+
+        # 2) 停播放状态（防止其它地方又续期）
+        try:
+            self.is_playing = False
+        except: pass
+
+        # 3) 关线程池（取消未开始的任务）
+        try:
+            if hasattr(self, "executor") and self.executor:
+                self.executor.shutdown(wait=False, cancel_futures=True)
+        except: pass
+
+        # 4) 关掉子窗口（如果可能还开着）
+        try:
+            if getattr(self, "indextablegui", None):
+                self.indextablegui.Destroy()
+        except: pass
+        try:
+            if getattr(self, "aboutgui", None):
+                self.aboutgui.Destroy()
+        except: pass
+
+        # 5) OpenCV 等资源
+        try:
+            import cv2
+            cv2.destroyAllWindows()
+        except: pass
+
+        # 6) 主窗口销毁 + 退出主循环（保险做法，两者都调用）
+        try: self.Destroy()
+        except: pass
+        try:
+            app = wx.GetApp()
+            if app: app.ExitMainLoop()
+        except: pass
+
 
     def last_img(self, event):
         assert hasattr(self, 'executor'), "self.executor 未初始化！"
         # 👉 播放中 & 非定时器触发（=用户点击）：只切方向 + 重启计时器，相位归零，不立刻退一帧
+            # 播放中 & 非定时器触发（=用户点击）：只切方向为倒放，不推进帧，不启动计时器
         if getattr(self, 'is_playing', False) and not getattr(self, '_from_timer', False):
             self.play_direction = -1
-            # 可选：更新按钮文案
-            try: self.right_arrow_button1.SetLabel("⏸")
-            except: pass
-            # 重新起表，保证切换后第一帧在完整间隔后出现
-            interval = 1.0
-            try: interval = float(self.m_textCtrl28.GetValue())
-            except: pass
-            self.play_timer.Start(int(interval * 1000), oneShot=False)
+            try:
+                self.right_arrow_button1.SetLabel("⏸")  # 可选：更新按钮文案
+            except Exception:
+                pass
             return
         if isinstance(self.video_path,str):
             self.frame_cache_dir = [self.video_path]
@@ -1197,19 +1240,22 @@ class MulimgViewer (MulimgViewerGui):
                              self.title_exif.Value]                     # 11
 
             if title_setting[0]:
-                if self.ImgManager.type == 0 or self.ImgManager.type == 1:
-                    # one_dir_mul_dir_auto / one_dir_mul_dir_manual
-                    if self.parallel_sequential.Value or self.parallel_to_sequential.Value:
-                        title_setting[2:7] = [False, True, True, True, False]
-                    else:
-                        title_setting[2:7] = [False, True, True, False, False]
+                if self.video_mode:
+                    title_setting[2:7] = [False, False, False, False, False]
+                else:
+                    if self.ImgManager.type == 0 or self.ImgManager.type == 1:
+                        # one_dir_mul_dir_auto / one_dir_mul_dir_manual
+                        if self.parallel_sequential.Value or self.parallel_to_sequential.Value:
+                            title_setting[2:7] = [False, True, True, True, False]
+                        else:
+                            title_setting[2:7] = [False, True, True, False, False]
 
-                elif self.ImgManager.type == 2:
-                    # one_dir_mul_img
-                    title_setting[2:7] = [False, False, True, True, False]
-                elif self.ImgManager.type == 3:
-                    # read file list from a list file
-                    title_setting[2:7] = [False, True, True, True, False]
+                    elif self.ImgManager.type == 2:
+                        # one_dir_mul_img
+                        title_setting[2:7] = [False, False, True, True, False]
+                    elif self.ImgManager.type == 3:
+                        # read file list from a list file
+                        title_setting[2:7] = [False, True, True, True, False]
 
         except:
             self.SetStatusText_(
@@ -1303,6 +1349,8 @@ class MulimgViewer (MulimgViewerGui):
                 0, copy.deepcopy(self.xy_magnifier))
             if flag == 0:
                 bmp = self.ImgManager.show_stitch_img_and_customfunc_img(self.show_custom_func.Value)
+                if self.video_mode:
+                    bmp = self._overlay_video_label(bmp)  # ← 新增
                 self.show_bmp_in_panel = bmp
                 self.img_size = bmp.size
                 bmp = self.ImgManager.ImgF.PIL2wx(bmp)
@@ -1725,9 +1773,13 @@ class MulimgViewer (MulimgViewerGui):
 
     def get_count_per_action(self,type=2):
         if type == 2:
+            s  = 1
             row_col = self.row_col.GetLineText(0).split(',')
+            s = self.row_col_one_img.GetValue().replace('，', ',')
+            r, c = map(int, [x.strip() for x in s.split(',')])
+            prod = r * c
             row_col = [int(x) for x in row_col]
-            product = row_col[0] * row_col[1]
+            product = row_col[0] * row_col[1] *prod
         if type == 1:
             product = 1
         return product
@@ -1764,28 +1816,52 @@ class MulimgViewer (MulimgViewerGui):
         self.right_arrow_button1.SetLabel("⏸")
 
     def on_play_timer(self, event):
+        if not self.is_playing:
+            return
+        if self._tick_running:
+            return
+        self._tick_running = True
         self._from_timer = True
         try:
-            if self.play_direction >= 0:
+            if getattr(self, "play_direction", +1) >= 0:
                 self.next_img(None)
             else:
                 self.last_img(None)
         finally:
             self._from_timer = False
+            self._tick_running = False
+            if self.is_playing:
+                try:
+                    interval = float(self.m_textCtrl28.GetValue())
+                except Exception:
+                    interval = 1.0
+                self.play_timer.Start(max(30, int(interval*1000)), oneShot=True)
+
+    def _start_playback(self):
+        self.is_playing = True
+        try:
+            interval = float(self.m_textCtrl28.GetValue())
+        except Exception:
+            interval = 1.0
+        self.play_timer.Start(max(30, int(interval*1000)), oneShot=True)
+
+    def _stop_playback(self):
+        self.is_playing = False
+        try:
+            if self.play_timer.IsRunning():
+                self.play_timer.Stop()
+        except Exception:
+            pass
+
 
     def next_img(self, event):
         assert hasattr(self, 'executor'), "self.executor 未初始化！"
-            # 👉 播放中 & 非定时器触发（=用户点击）：倒放 → 切回正放，不立刻跳帧
-        if getattr(self, 'is_playing', False) and not getattr(self, '_from_timer', False) \
-        and getattr(self, 'play_direction', 1) == -1:
+        if getattr(self, 'is_playing', False) and not getattr(self, '_from_timer', False):
             self.play_direction = +1
-            try: self.right_arrow_button1.SetLabel("⏸")
-            except: pass
-            # 重新起表，保证切换后第一帧在完整间隔后出现
-            interval = 1.0
-            try: interval = float(self.m_textCtrl28.GetValue())
-            except: pass
-            self.play_timer.Start(int(interval * 1000), oneShot=False)
+            try:
+                self.right_arrow_button1.SetLabel("⏸")  # 可选：更新按钮文案
+            except Exception:
+                pass
             return
         if isinstance(self.video_path,str):
             self.frame_cache_dir = [self.video_path]
@@ -1918,6 +1994,116 @@ class MulimgViewer (MulimgViewerGui):
     def set_video_paths(self, paths: list[str] | list[Path]) -> None:
         # 统一成 Path，必要时也可在这里切换到视频模式、做预处理
         self.real_video_path = paths
+
+    def _overlay_video_label(self, pil_img):
+        """
+        在视频模式下绘制 “t秒 / 第k张”。
+        - 单视频：给整张图底部画一条总标签（与你之前一样）。
+        - 多视频：给每个 tile（每个视频的那一格）分别画各自的标签，fps 来自 self.video_fps_list。
+        假设：一步只看每个视频的 1 帧（常见设置）。如果你一批显示多帧/每视频多格，见下方注释。
+        """
+        self.video_fps_list = self.ImgManager.video_fps_list
+        try:
+            from PIL import ImageDraw, ImageFont
+        except Exception:
+            return pil_img
+
+        if not getattr(self, "video_mode", False):
+            return pil_img
+
+        # 公共参数
+        skip = 0
+        try:
+            skip = int(getattr(self, "skip_frames", 0))
+        except Exception:
+            pass
+        step = skip + 1
+        batch_idx = int(getattr(self, "current_batch_idx", 0))
+        cpa = int(getattr(self, "count_per_action", 1))  # 每步显示多少帧（或格）
+
+        W, H = pil_img.size
+        draw = ImageDraw.Draw(pil_img, "RGBA")
+
+        # 字体
+        try:
+            font = ImageFont.truetype("arial.ttf", size=16)
+        except Exception:
+            font = ImageFont.load_default()
+
+        # ========== 情况 A：多视频 ==========
+        multi = isinstance(getattr(self, "real_video_path", None), (list, tuple)) and len(self.real_video_path) > 1
+        if multi:
+            fps_list = getattr(self, "video_fps_list", None)
+            if not fps_list or len(fps_list) != len(self.real_video_path):
+                # 兜底：没建或长度对不上，就全用 30
+                fps_list = [30.0] * len(self.real_video_path)
+
+            # 这表示拼图里每个 tile 的左上角坐标（与行列布局一致）
+            tile_origins = list(getattr(self.ImgManager, "xy_grid", []))
+            # 每个 tile 的尺寸（所有 tile 一致）
+            try:
+                tile_w, tile_h = list(getattr(self.ImgManager, "img_resolution_show", [W, H]))
+            except Exception:
+                tile_w, tile_h = W, H
+
+            n_tiles = len(tile_origins)
+            n_videos = len(self.real_video_path)
+            tiles_to_draw = min(n_tiles, n_videos)  # 一般一格对应一个视频
+
+            # 假设：每步每个视频只显示 1 帧 → 该视频此刻的帧号就是 batch_idx
+            # 如果你的“每步每视频多帧”并排（cpa>n_videos），见下方注释里的扩展。
+            for i in range(tiles_to_draw):
+                x0, y0 = tile_origins[i]
+                fps = float(fps_list[i] or 30.0)
+
+                frame_idx = batch_idx  # ← 常见并行方案：第 i 个 tile 就是第 i 个视频的第 batch_idx 帧
+                t_sec = (frame_idx * step) / fps
+
+                label = f"{t_sec:.2f}s / frame {frame_idx}"
+                # 文字尺寸（兼容 Pillow 版本）
+                try:
+                    bbox = draw.textbbox((0, 0), label, font=font)
+                    tw, th = bbox[2] - bbox[0], bbox[3] - bbox[1]
+                except Exception:
+                    try:
+                        tw, th = font.getsize(label)
+                    except Exception:
+                        tw, th = (len(label) * 8, max(12, int(tile_h * 0.12)))
+
+                bar_h = max(20, int(tile_h * 0.14))
+                # 画 tile 内底部白条
+                draw.rectangle([x0, y0 + tile_h - bar_h, x0 + tile_w, y0 + tile_h], fill=(255, 255, 255, 230))
+                # 居中写字
+                tx = x0 + (tile_w - tw) // 2
+                ty = y0 + tile_h - bar_h + (bar_h - th) // 2
+                draw.text((tx, ty), label, fill=(0, 0, 0, 255), font=font)
+
+            return pil_img
+
+        # ========== 情况 B：单视频（保持你之前的全图底部标签） ==========
+        fps = float(getattr(self, "video_fps", 30.0) or 30.0)
+        # 如果 cpa>1，你之前是按“批起始帧做标签”；这里保持一致：
+        frame_idx = batch_idx * cpa
+        t_sec = (frame_idx * step) / fps
+        label = f"{t_sec:.2f}s / frame {frame_idx}"
+
+        # 文字尺寸
+        try:
+            bbox = draw.textbbox((0, 0), label, font=font)
+            tw, th = bbox[2] - bbox[0], bbox[3] - bbox[1]
+        except Exception:
+            try:
+                tw, th = font.getsize(label)
+            except Exception:
+                tw, th = (len(label) * 8, max(12, int(H * 0.05)))
+
+        bar_h = max(28, int(H * 0.05))
+        draw.rectangle([0, H - bar_h, W, H], fill=(255, 255, 255, 230))
+        tx = (W - tw) // 2
+        ty = H - bar_h + (bar_h - th) // 2
+        draw.text((tx, ty), label, fill=(0, 0, 0, 255), font=font)
+        return pil_img
+
 
 import shutil
 import atexit

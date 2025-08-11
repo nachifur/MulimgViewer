@@ -14,6 +14,7 @@ class ImgData():
     def init(self, input_path, type=2, parallel_to_sequential=False, action_count=None, img_count=None,video_mode=False, video_path=[],skip=0):
         self.input_path = input_path
         self.type = type
+        self.video_fps_list = []
         self.video_mode = video_mode
         self.video_path = video_path
         self.img_num_list = []
@@ -332,15 +333,18 @@ class ImgData():
         num = len(self.path_list)
         return num
 
-    def calc_max_extractable_frames(self, video_path, skip = 0):
+    def calc_max_extractable_frames(self, video_path, skip=0, return_fps=False):
         """
-        计算每个视频在按“跳过帧数=skip”采样时能看到的帧数。
+        计算每个视频在按“跳过帧数=skip”采样时能看到的帧数，并记录 fps。
         - video_path: str 或 list[str]
-        - skip: 跳过的帧数（>=0）。例如：
-            skip=0 -> 0,1,2,3,...        (步长=1)
-            skip=1 -> 0,2,4,6,...        (步长=2)
-            skip=2 -> 0,3,6,9,...        (步长=3)
-        return: list[int]，与输入一一对应
+        - skip: 跳过的帧数（>=0），步长 = skip + 1
+        - return_fps: 若为 True，则返回 (counts, fps_list)
+        返回：
+        - 默认：list[int]  （各视频可见帧数）
+        - return_fps=True： (list[int], list[float|None])
+        同时会写入：
+        - self.video_fps_list: 与输入顺序对应的 fps 列表
+        - self.video_fps_by_path: {path: fps}
         """
         # 统一成列表
         paths = [video_path] if isinstance(video_path, str) else list(video_path)
@@ -349,25 +353,42 @@ class ImgData():
         s = int(skip) if isinstance(skip, int) and skip >= 0 else 0
         step = s + 1  # 采样步长
 
-        out = []
+        counts, fps_list = [], []
+
         for p in paths:
             cap = cv2.VideoCapture(p)
             if not cap.isOpened():
-                out.append(0)
+                counts.append(0)
+                fps_list.append(None)
                 continue
 
-            # 优先用容器提供的总帧数
+            # 总帧数
             total = int(cap.get(cv2.CAP_PROP_FRAME_COUNT) or 0)
-
-            # 兜底：有些文件这里为0，尝试跳到末尾读取当前位置帧号
             if total <= 0:
                 cap.set(cv2.CAP_PROP_POS_AVI_RATIO, 1)
                 total = int(cap.get(cv2.CAP_PROP_POS_FRAMES) or 0)
 
+            # FPS
+            fps = cap.get(cv2.CAP_PROP_FPS)
+            try:
+                fps = float(fps)
+            except Exception:
+                fps = 0.0
+            # 某些容器会返回 0/NaN，给个保底
+            if not fps or fps != fps or fps < 1e-6:
+                fps = 30.0  # 你也可以换成 None，看你后续怎么用
+
             cap.release()
 
-            # 观看帧数：ceil(total/step) == (total + step - 1) // step
+            # 可见帧数：ceil(total/step)
             viewable = (max(total, 0) + step - 1) // step
-            out.append(viewable)
+            counts.append(viewable)
+            fps_list.append(fps)
 
-        return out
+        # 持久化到实例，便于后续查
+        self.video_fps_list = fps_list
+        self.video_fps_by_path = {p: fps_list[i] for i, p in enumerate(paths)}
+
+        if return_fps:
+            return counts, fps_list
+        return counts

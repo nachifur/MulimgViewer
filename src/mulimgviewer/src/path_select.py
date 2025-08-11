@@ -31,8 +31,8 @@ class PathSelectFrame (PathSelectFrameGui):
     #     if self.video_mode:
     #         self.m_dirPicker1 = wx.FileDialog(self, "Select videos",
     #                         wildcard="Video (*.mp4;*.mov;*.avi;*.mkv)|*.mp4;*.mov;*.avi;*.mkv|All files (*.*)|*.*",
-    #                         style=wx.FD_OPEN|wx.FD_MULTIPLE|wx.FD_FILE_MUST_EXIST) 
-    
+    #                         style=wx.FD_OPEN|wx.FD_MULTIPLE|wx.FD_FILE_MUST_EXIST)
+
     def on_video_mode_change(self, value: bool):
         row = self.GetSizer().GetItem(0).GetSizer()  # 第一行的水平 sizer
         if value:  # → 视频模式：把 DirPicker 换成“选择视频(多选)”按钮

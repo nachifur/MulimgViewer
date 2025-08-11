@@ -149,7 +149,7 @@ class MulimgViewer (MulimgViewerGui):
             self.cache_num = int(self.m_textCtrl30.GetValue())
         except ValueError:
             self.cache_num = 2  # 你默认的安全值
-        
+
     def on_skip_changed(self, event):
         try:
             self.skip_frames = int(self.m_textCtrl281.GetValue())
@@ -469,9 +469,9 @@ class MulimgViewer (MulimgViewerGui):
 
     def one_dir_mul_dir_manual(self, event):
         self.SetStatusText_(["Input", "", "", "-1"])
-        if self.video_mode: 
+        if self.video_mode:
             if self.real_video_path:
-                self.video_path = []  
+                self.video_path = []
                 video_paths = self.real_video_path
                 self.thread = int(self.m_textCtrl29.GetValue())
                 self.cache_num = int(self.m_textCtrl30.GetValue())
@@ -503,7 +503,7 @@ class MulimgViewer (MulimgViewerGui):
         self.UpdateUI(1, input_path, self.parallel_to_sequential.Value)
         self.choice_input_mode.SetSelection(2)
         self.SetStatusText_(["Input", "-1", "-1", "-1"])
-        
+
 
     def one_dir_mul_img(self, event):
         self.SetStatusText_(

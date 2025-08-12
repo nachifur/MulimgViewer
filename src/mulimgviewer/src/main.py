@@ -126,59 +126,17 @@ class MulimgViewer (MulimgViewerGui):
     def EVT_MY_TEST_OnHandle(self, event):
         self.about_gui(None, update=True, new_version=event.GetEventArgs())
 
-    def process_exif(self, folder_path):
-        if self.title_exif.Value and folder_path:
-            return self.run_exif_to_csv(folder_path)
-        return True
-
-    def run_exif_to_csv(self, current_image_folder):
-        examples_dir = Path(__file__).parent.parent.parent.parent / "examples"
-        exif_to_csv_path = str(examples_dir / "exif_to_csv.py")
-        add_script_path = str(examples_dir / "add_new_info_to_img.py")
-
-        result1 = subprocess.run([sys.executable, exif_to_csv_path, current_image_folder],
-                    check=True, cwd=str(examples_dir), capture_output=True, text=True)
-        csv_file = examples_dir / "output_exif_data.csv"
-        result2 = subprocess.run([sys.executable, add_script_path, current_image_folder],
-                    check=True, cwd=str(examples_dir), capture_output=True, text=True)
-
     def on_title_exif_changed(self, event):
-        if self.title_exif.Value:
-            if hasattr(self, 'ImgManager') and hasattr(self.ImgManager, 'input_path'):
-                current_folder = self.ImgManager.input_path
-                if isinstance(current_folder, list):
-                    current_folder = current_folder[0] if current_folder else None
-
-                if current_folder:
-                    try:
-                        current_img_index = self.ImgManager.now_num if hasattr(self.ImgManager, 'now_num') else 0
-                        self.process_exif(current_folder)
-                        self.ImgManager.get_img_list(customfunc=False)
-
-                        if self.ImgManager.img_num > 0:
-                            if current_img_index < self.ImgManager.img_num:
-                                self.ImgManager.now_num = current_img_index
-                            else:
-                                self.ImgManager.now_num = 0
-                            self.refresh(event)
-                    except:
-                        pass
-        else:
-            if hasattr(self, 'ImgManager') and hasattr(self.ImgManager, 'input_path'):
-                current_folder = self.ImgManager.input_path
-                if isinstance(current_folder, list):
-                    current_folder = current_folder[0] if current_folder else None
-
-                if current_folder:
-                    current_img_index = self.ImgManager.now_num if hasattr(self.ImgManager, 'now_num') else 0
-                    self.ImgManager.get_img_list(customfunc=False)
-
-                    if self.ImgManager.img_num > 0:
-                        if current_img_index < self.ImgManager.img_num:
-                            self.ImgManager.now_num = current_img_index
-                        else:
-                            self.ImgManager.now_num = 0
-                        self.refresh(event)
+        if hasattr(self, 'ImgManager') and hasattr(self.ImgManager, 'img_list'):
+            # 直接使用已缓存的数据，无需重新处理文件
+            current_img_index = getattr(self.ImgManager, 'now_num', 0)
+            if self.ImgManager.img_num > 0:
+                if current_img_index < self.ImgManager.img_num:
+                    self.ImgManager.now_num = current_img_index
+                else:
+                    self.ImgManager.now_num = 0
+                # 只需要刷新显示，EXIF数据已在内存中
+                self.refresh(event)
         super().on_title_exif_changed(event)
 
     def check_version(self):
@@ -371,7 +329,7 @@ class MulimgViewer (MulimgViewerGui):
         if dlg.ShowModal() == wx.ID_OK:
             self.ImgManager.init(
                 dlg.GetPath(), type=0, parallel_to_sequential=self.parallel_to_sequential.Value)
-            self.process_exif(dlg.GetPath())
+            # self.process_exif(dlg.GetPath())
             self.show_img_init()
             self.ImgManager.set_action_count(0)
             self.show_img()
@@ -399,7 +357,7 @@ class MulimgViewer (MulimgViewerGui):
 
         if dlg.ShowModal() == wx.ID_OK:
             self.ImgManager.init(dlg.GetPath(), type=2)
-            self.process_exif(dlg.GetPath())
+            # self.process_exif(dlg.GetPath())
             self.show_img_init()
             self.ImgManager.set_action_count(0)
             self.show_img()

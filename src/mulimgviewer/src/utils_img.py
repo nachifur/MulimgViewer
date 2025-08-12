@@ -641,12 +641,155 @@ class ImgManager(ImgData):
         self.draw_points = []
         self.ImgF = ImgUtils()
         self.path_custom_func_path = ""
+        # 优化点1：增强EXIF缓存结构
+        self.full_exif_cache = {}  # 存储完整EXIF数据
+
+    def extract_complete_exif(self, img_path):
+            """一次性提取完整EXIF信息 - 优化点1"""
+            try:
+                # 只读取一次图像用于EXIF提取
+                with Image.open(img_path) as img:
+                    if 'exif' not in img.info:
+                        return {"raw_exif": {}, "formatted_exif": {}, "has_exif": False}
+
+                    # 使用piexif获取完整EXIF数据
+                    exif_dict = piexif.load(img.info['exif'])
+
+                    # 格式化常用EXIF字段用于快速访问
+                    formatted_exif = {}
+
+                    # 基本信息
+                    if "0th" in exif_dict:
+                        formatted_exif.update(self._extract_0th_tags(exif_dict["0th"]))
+
+                    # EXIF信息
+                    if "Exif" in exif_dict:
+                        formatted_exif.update(self._extract_exif_tags(exif_dict["Exif"]))
+
+                    # GPS信息
+                    if "GPS" in exif_dict:
+                        formatted_exif.update(self._extract_gps_tags(exif_dict["GPS"]))
+
+                    return {
+                        "raw_exif": exif_dict,
+                        "formatted_exif": formatted_exif,
+                        "has_exif": True
+                    }
+            except Exception as e:
+                return {"raw_exif": {}, "formatted_exif": {}, "has_exif": False}
+
+    def _extract_0th_tags(self, zeroth_dict):
+        """提取0th IFD标签"""
+        tags = {}
+        tag_mapping = {
+            256: "ImageWidth",
+            257: "ImageLength",
+            271: "Make",
+            272: "Model",
+            274: "Orientation",
+            282: "XResolution",
+            283: "YResolution",
+            296: "ResolutionUnit",
+            306: "DateTime",
+            270: "ImageDescription"  # 自定义标题存储位置
+        }
+
+        for tag_id, tag_name in tag_mapping.items():
+            if tag_id in zeroth_dict:
+                value = zeroth_dict[tag_id]
+                if isinstance(value, bytes):
+                    try:
+                        value = value.decode('utf-8', errors='ignore').strip()
+                    except:
+                        value = str(value)
+                tags[tag_name] = value
+
+        return tags
+
+    def _extract_exif_tags(self, exif_dict):
+        """提取EXIF IFD标签"""
+        tags = {}
+        tag_mapping = {
+            33434: "ExposureTime",
+            33437: "FNumber",
+            34850: "ExposureProgram",
+            34855: "ISOSpeedRatings",
+            36864: "ExifVersion",
+            36867: "DateTimeOriginal",
+            36868: "DateTimeDigitized",
+            37121: "ComponentsConfiguration",
+            37377: "ShutterSpeedValue",
+            37378: "ApertureValue",
+            37380: "ExposureBiasValue",
+            37381: "MaxApertureValue",
+            37383: "MeteringMode",
+            37384: "LightSource",
+            37385: "Flash",
+            37386: "FocalLength",
+            37510: "UserComment",  # 重要：用户注释
+            40960: "FlashpixVersion",
+            40961: "ColorSpace",
+            40962: "PixelXDimension",
+            40963: "PixelYDimension",
+            41728: "FileSource",
+            41729: "SceneType"
+        }
+
+        for tag_id, tag_name in tag_mapping.items():
+            if tag_id in exif_dict:
+                value = exif_dict[tag_id]
+                # 格式化特殊值
+                if tag_name == "FNumber" and hasattr(value, 'numerator'):
+                    tags[tag_name] = f"ƒ/{float(value.numerator) / float(value.denominator):.1f}"
+                elif tag_name == "ExposureTime" and hasattr(value, 'numerator'):
+                    exposure = float(value.numerator) / float(value.denominator)
+                    if exposure < 1:
+                        tags[tag_name] = f"1/{round(1/exposure)}s"
+                    else:
+                        tags[tag_name] = f"{exposure:.1f}s"
+                elif tag_name == "UserComment":
+                    # 解析自定义标题
+                    try:
+                        if isinstance(value, bytes):
+                            decoded = value.decode('utf-8', errors='ignore')
+                        else:
+                            decoded = str(value)
+                        custom_data = json.loads(decoded)
+                        tags["CustomTitle"] = custom_data.get('custom_title', 'N/A')
+                    except:
+                        tags["CustomTitle"] = "N/A"
+                    tags[tag_name] = value
+                else:
+                    tags[tag_name] = value
+
+        return tags
+
+    def _extract_gps_tags(self, gps_dict):
+        """提取GPS标签"""
+        tags = {}
+        # 基本GPS信息处理
+        gps_mapping = {
+            1: "GPSLatitudeRef",
+            2: "GPSLatitude",
+            3: "GPSLongitudeRef",
+            4: "GPSLongitude",
+            5: "GPSAltitudeRef",
+            6: "GPSAltitude"
+        }
+
+        for tag_id, tag_name in gps_mapping.items():
+            if tag_id in gps_dict:
+                tags[tag_name] = gps_dict[tag_id]
+        return tags
 
     def get_img_list(self, customfunc=False):
         img_list = []
         # load img list
         name_list = []
-        for path in self.flist:
+        # 初始化缓存
+        self.full_exif_cache = {}
+
+        for i, path in enumerate(self.flist):
             path = Path(path)
             name_list.append(path.name)
             if path.is_file() and path.suffix.lower() in self.format_group:
@@ -655,14 +798,16 @@ class ImgManager(ImgData):
                     if img.dtype != np.uint8:
                         img = (255 * img).astype(np.uint8)
                     pil_img = Image.fromarray(img)
-                    pil_img.filename = str(path)  # 加这一行
+                    # pil_img.filename = str(path)  # 加这一行
                     img_list.append(pil_img.convert('RGB'))
+                    self.full_exif_cache[i] = {"raw_exif": {}, "formatted_exif": {}, "has_exif": False}
                 else:
                     img = Image.open(path).convert('RGB')  # 改这一行
-                    img.filename = str(path)
+                    # img.filename = str(path)
                     img_list.append(img)
+                    self.full_exif_cache[i] = self.extract_complete_exif(path)
             else:
-                pass
+                self.full_exif_cache[i] = {"raw_exif": {}, "formatted_exif": {}, "has_exif": False}
         out_path_str = self.layout_params[33]
         # custom process
         if customfunc:
@@ -1005,50 +1150,6 @@ class ImgManager(ImgData):
         # else:
         #     return 2
 
-    def update_image_exif_37510(self, img_path, new_title):
-        try:
-            if not img_path.lower().endswith(('.jpg', '.jpeg', '.tiff', '.tif')):
-                return False
-            img = Image.open(img_path)
-            if 'exif' in img.info:
-                try:
-                    exif_dict = piexif.load(img.info['exif'])
-                except:
-                    exif_dict = {"0th": {}, "Exif": {}, "GPS": {}, "1st": {}, "thumbnail": None}
-            else:
-                exif_dict = {"0th": {}, "Exif": {}, "GPS": {}, "1st": {}, "thumbnail": None}
-            user_comment_tag = 0x9286
-            new_data = {"custom_title": new_title}
-            comment_data = json.dumps(new_data, ensure_ascii=False)
-            exif_dict["Exif"][user_comment_tag] = comment_data.encode('utf-8')
-            exif_bytes = piexif.dump(exif_dict)
-            img.save(img_path, exif=exif_bytes)
-            return True
-        except:
-            pass
-            return False
-
-    def get_display_title(self, img_path, original_title, title_rename_enabled):
-        if not title_rename_enabled:
-            return original_title
-        try:
-            img = Image.open(img_path)
-            exif_dict = piexif.load(img.info.get('exif', b''))
-            if 'Exif' in exif_dict and piexif.ExifIFD.UserComment in exif_dict['Exif']:
-                user_comment = exif_dict['Exif'][piexif.ExifIFD.UserComment]
-                if user_comment:
-                    if isinstance(user_comment, bytes):
-                        try:
-                            decoded_comment = user_comment[8:].decode('utf-8').strip()
-                            if decoded_comment:
-                                return decoded_comment
-                        except:
-                            pass
-                    elif isinstance(user_comment, str) and user_comment.strip():
-                        return user_comment.strip()
-            return original_title
-        except:
-            return original_title
 
     def fill_func(self, img, id=None):
         return None
@@ -1112,64 +1213,75 @@ class ImgManager(ImgData):
             self.title_setting = self.layout_params[17]
 
         if title_exif:
-            for img in self.img_list:
-                if 'exif' not in img.info:
+            for i, img in enumerate(self.img_list):
+                exif_data = self.full_exif_cache.get(i, {"formatted_exif": {}, "has_exif": False})
+
+                if not exif_data["has_exif"]:
                     title = "无EXIF信息"
                     title_list.append(title)
                     continue
-                exif = piexif.load(img.info['exif'])
-                custom_title = None
-                if 0x9286 in exif["Exif"]:
-                    try:
-                        raw_data = exif["Exif"][0x9286]
-                        json_str = raw_data.decode('utf-8')
-                        data = json.loads(json_str)
-                        custom_title = data.get('custom_title')
-                    except Exception as e:
-                        pass
+
+                formatted_exif = exif_data["formatted_exif"]
+                raw_exif = exif_data["raw_exif"]
+
+                # 获取自定义标题
+                custom_title = formatted_exif.get("CustomTitle", "N/A")
                 title_rename_enabled = len(self.title_setting) > 12 and self.title_setting[12]
 
-                if title_rename_enabled and custom_title:
+                if title_rename_enabled and custom_title and custom_title != "N/A":
                     # 情况1：勾选且有270字段
                     title_parts = [f"Name: {custom_title}"]
-                    if 270 in exif["0th"]:
+                    if "ImageDescription" in formatted_exif:
                         try:
-                            exif_dict = json.loads(exif["0th"][270])["MulimgViewer"]
-                            for key, value in exif_dict.items():
-                                if key != "Name":
-                                    title_parts.append(f"{key}: {value}")
+                            # 尝试解析JSON格式的描述
+                            desc_data = json.loads(formatted_exif["ImageDescription"])
+                            if "MulimgViewer" in desc_data:
+                                for key, value in desc_data["MulimgViewer"].items():
+                                    if key != "Name":
+                                        title_parts.append(f"{key}: {value}")
                             title = "\n".join(title_parts)
                         except:
-                            try:
-                                original_title = str(exif["0th"][270], encoding="utf-8")
-                                title = f"Name: {custom_title}\noriginal: {original_title}"
-                            except:
-                                title = f"Name: {custom_title}"
+                            # 如果不是JSON格式，显示原始描述
+                            original_desc = formatted_exif["ImageDescription"]
+                            title = f"Name: {custom_title}\noriginal: {original_desc}"
                     else:
                         title = f"Name: {custom_title}"
                 else:
                     # 其他所有情况：显示270字段的完整原始内容
-                    if 270 in exif["0th"]:
+                    if "ImageDescription" in formatted_exif:
                         try:
-                            exif_dict = json.loads(exif["0th"][270])["MulimgViewer"]
-                            title_parts = []
-                            for key, value in exif_dict.items():
-                                title_parts.append(f"{key}: {value}")
-                            title = "\n".join(title_parts)
+                            desc_data = json.loads(formatted_exif["ImageDescription"])
+                            if "MulimgViewer" in desc_data:
+                                title_parts = []
+                                for key, value in desc_data["MulimgViewer"].items():
+                                    title_parts.append(f"{key}: {value}")
+                                title = "\n".join(title_parts)
+                            else:
+                                title = formatted_exif["ImageDescription"]
                         except:
-                            try:
-                                title = str(exif["0th"][270], encoding="utf-8")
-                            except:
-                                title = "EXIF解析失败"
+                            title = formatted_exif["ImageDescription"]
                     else:
-                        if title_rename_enabled and custom_title:
-                            title = f"Name: {custom_title}"  # 情况3：勾选但没270字段
+                        if title_rename_enabled and custom_title and custom_title != "N/A":
+                            title = f"Name: {custom_title}"
                         else:
-                            title = "无标题信息"  # 情况4：未勾选且没270字段
+                            # 构建基本EXIF信息标题
+                            title_parts = []
+                            if "Make" in formatted_exif:
+                                title_parts.append(formatted_exif["Make"])
+                            if "Model" in formatted_exif:
+                                title_parts.append(formatted_exif["Model"])
+                            if "FNumber" in formatted_exif:
+                                title_parts.append(formatted_exif["FNumber"])
+                            if "ExposureTime" in formatted_exif:
+                                title_parts.append(formatted_exif["ExposureTime"])
+                            if "ISOSpeedRatings" in formatted_exif:
+                                title_parts.append(f"ISO{formatted_exif['ISOSpeedRatings']}")
+
+                            title = " | ".join(title_parts) if title_parts else "无标题信息"
 
                 title_list.append(title)
         else:
-            for path in self.flist:
+            for i, path in enumerate(self.flist):
                 path = Path(path)
                 if path.is_file() and path.suffix.lower() in self.format_group:
                     title = ""
@@ -1188,7 +1300,7 @@ class ImgManager(ImgData):
                     if self.title_setting[6]:
                         title = title+path.suffix
                     title_rename_enabled = len(self.title_setting) > 12 and self.title_setting[12]
-                    final_title = self.get_display_title(str(path), title, title_rename_enabled)
+                    final_title = self.get_display_title_from_cache(i, title, title_rename_enabled)
                     title_list.append(final_title)
 
         # get title color
@@ -1205,6 +1317,52 @@ class ImgManager(ImgData):
             title_list, standard_size, self.font, font_size)
 
         return self.title_max_size
+
+    def get_display_title_from_cache(self, img_index, original_title, title_rename_enabled):
+        """从缓存获取显示标题 - 优化点4：避免重复文件访问"""
+        if not title_rename_enabled:
+            return original_title
+
+        exif_data = self.full_exif_cache.get(img_index, {"formatted_exif": {}, "has_exif": False})
+        if exif_data["has_exif"]:
+            custom_title = exif_data["formatted_exif"].get("CustomTitle", "N/A")
+            if custom_title != "N/A":
+                return custom_title
+
+        return original_title
+
+    def update_image_exif_37510(self, img_path, new_title):
+        """更新EXIF信息并刷新缓存"""
+        try:
+            if not img_path.lower().endswith(('.jpg', '.jpeg', '.tiff', '.tif')):
+                return False
+
+            # 更新文件
+            img = Image.open(img_path)
+            if 'exif' in img.info:
+                try:
+                    exif_dict = piexif.load(img.info['exif'])
+                except:
+                    exif_dict = {"0th": {}, "Exif": {}, "GPS": {}, "1st": {}, "thumbnail": None}
+            else:
+                exif_dict = {"0th": {}, "Exif": {}, "GPS": {}, "1st": {}, "thumbnail": None}
+
+            user_comment_tag = 0x9286
+            new_data = {"custom_title": new_title}
+            comment_data = json.dumps(new_data, ensure_ascii=False)
+            exif_dict["Exif"][user_comment_tag] = comment_data.encode('utf-8')
+            exif_bytes = piexif.dump(exif_dict)
+            img.save(img_path, exif=exif_bytes)
+             # 优化点5：更新缓存而不是重新读取整个文件
+            for i, path in enumerate(self.flist):
+                if str(path) == str(img_path):
+                    if i in self.full_exif_cache:
+                        self.full_exif_cache[i]["formatted_exif"]["CustomTitle"] = new_title
+                        self.full_exif_cache[i]["raw_exif"]["Exif"][user_comment_tag] = comment_data.encode('utf-8')
+                    break
+            return True
+        except:
+            return False
 
     def img_preprocessing(self, img, rowcol=[1,1]):
         if self.custom_resolution:

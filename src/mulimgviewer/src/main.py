@@ -2508,7 +2508,6 @@ class MulimgViewer (MulimgViewerGui):
                 for cache_dir, idx in need:
                     try:
                         self.executor.submit(self._await_and_notify, cache_dir, idx, cur_gen)
-                        print(f"[await] {cache_dir}/{idx}.png gen={cur_gen}")
                     except Exception as e:
                         print("[submit await] error:", e)
 

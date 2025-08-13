@@ -321,9 +321,9 @@ class MulimgViewer (MulimgViewerGui):
 
     def one_dir_mul_dir_manual(self, event):
         self.SetStatusText_(["Input", "", "", "-1"])
-        if self.video_mode: 
+        if self.video_mode:
             if self.real_video_path:
-                self.video_path = []  
+                self.video_path = []
                 video_paths = self.real_video_path
                 self.thread = int(self.m_textCtrl29.GetValue())
                 self.cache_num = int(self.m_textCtrl30.GetValue())

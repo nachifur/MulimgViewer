@@ -851,7 +851,7 @@ class MulimgViewer (MulimgViewerGui):
                     ["-1", str(self.ImgManager.action_count), "***Error: First, need to select the input dir***", "-1"])
         self.SetStatusText_(["Save", "-1", "-1", "-1"])
 
-    
+
     def refresh(self, event):
         assert hasattr(self, 'executor'), "self.executor 未初始化！"
 
@@ -2308,7 +2308,7 @@ class MulimgViewer (MulimgViewerGui):
         else:
             raise ValueError("路径既不是 .mp4 文件，也不是包含 .mp4 的目录")
 
-    def get_count_per_action(self,type=2): 
+    def get_count_per_action(self,type=2):
         if type == 2 or type == 3:
             s  = 1
             row_col = self.row_col.GetLineText(0).split(',')
@@ -2496,7 +2496,7 @@ class MulimgViewer (MulimgViewerGui):
                 was_playing = bool(getattr(self, 'is_playing', False))
                 self._resume_after_unfreeze = getattr(self, "_resume_after_unfreeze", False) or was_playing
 
-                self._resume_play_dir = +1 
+                self._resume_play_dir = +1
 
                 # 停止播放的 UI 状态（不改索引）
                 if getattr(self, 'is_playing', False):
@@ -2583,7 +2583,7 @@ class MulimgViewer (MulimgViewerGui):
             if hasattr(self, "_pending_decode"):
                 v_pending = {idx for (vid, idx) in self._pending_decode if vid == video_idx}
 
-            # —— 删：仅删滑窗外，且不碰保护带/未落盘完整的在用帧 —— 
+            # —— 删：仅删滑窗外，且不碰保护带/未落盘完整的在用帧 ——
             try:
                 files = os.listdir(cache_dir)
             except Exception:
@@ -2847,7 +2847,7 @@ class MulimgViewer (MulimgViewerGui):
                 cap.release()
             except:
                 pass
-    
+
     def _wait_frame_ready(self, cache_dir, idx, timeout=2.0, poll=0.02, stable_checks=2):
         """等待 cache_dir/idx.png 出现并在文件大小层面稳定 stable_checks 次。"""
         target = os.path.join(cache_dir, f"{idx}.png")
@@ -3030,7 +3030,7 @@ class MulimgViewer (MulimgViewerGui):
         else:
             # 这次完成的帧属于过期世代，丢弃
             print(f"[await expired] {cache_dir}/{idx}.png expect_gen={expect_gen} cur_gen={getattr(self,'cache_gen',-1)}")
-    
+
     def _ensure_batch_ready_or_queue(self, batch_start, batch_end, gen):
         """
         确认 [batch_start, batch_end) 的帧都已在缓存；缺谁→提交定点拆帧并后台等待。
@@ -3082,7 +3082,7 @@ class MulimgViewer (MulimgViewerGui):
             return False
 
         return True
-    
+
     def _clamp_batch_and_action(self):
         """
         把 current_batch_idx/action_count 限制到“所有视频共同可见帧数”的最后一批，
@@ -3217,7 +3217,7 @@ class MulimgViewer (MulimgViewerGui):
                 return None
 
         return cache_dir
-    
+
     def _on_ready_refresh(self):
         """帧就绪后在主线程调用：解锁并刷新显示"""
         import wx
@@ -3229,7 +3229,7 @@ class MulimgViewer (MulimgViewerGui):
         try: self.SetStatusText_(["Next", "-1", "-1", "-1"])
         except: pass
 
-    
+
 
     def _cv_imwrite_atomic(self, path, img, png_level=1, max_retries=3):
         """

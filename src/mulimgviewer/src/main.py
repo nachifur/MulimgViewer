@@ -133,6 +133,7 @@ class MulimgViewer (MulimgViewerGui):
         self.check_version()
         self.video_path = None
         self.is_playing = False
+        self.manual_flag = 0
         if not hasattr(self, "_missing_by_gen"):  self._missing_by_gen = {}  # gen -> set((cache_dir, idx))
         if not hasattr(self, "_missing_lock"):
             self._missing_lock = threading.Lock()
@@ -222,12 +223,55 @@ class MulimgViewer (MulimgViewerGui):
         elif input_mode == 1:
             self.one_dir_mul_dir_auto(event)
         elif input_mode == 2:
-            # if self.video_mode:
-            #     self.video_manual(event)
-            # else:
             self.one_dir_mul_dir_manual(event)
         elif input_mode == 3:
             self.onefilelist()
+
+    def one_dir_mul_dir_auto(self, event):
+        self.SetStatusText_(["Input", "", "", "-1"])
+        if self.video_mode:
+            dlg = wx.DirDialog(None, "Select folder containing videos", style=wx.DD_DEFAULT_STYLE)
+            video_paths = []
+        else:
+            dlg = wx.DirDialog(None, "Parallel auto choose input dir", "",
+                           wx.DD_DEFAULT_STYLE | wx.DD_DIR_MUST_EXIST)
+        if dlg.ShowModal() == wx.ID_OK:
+            if self.video_mode:
+                self.video_path = []
+                selected_folder = dlg.GetPath()
+                # 遍历该文件夹及其所有子目录
+                for root, dirs, files in os.walk(selected_folder):
+                    for file in files:
+                        if file.lower().endswith(('.mp4', '.avi', '.mov')):
+                            full_path = os.path.join(root, file)
+                            video_paths.append(full_path)
+                self.real_video_path = video_paths
+                self.thread = int(self.m_textCtrl29.GetValue())
+                self.cache_num = int(self.m_textCtrl30.GetValue())
+                if video_paths and len(video_paths) == 1:
+                    self.count_per_action = self.get_count_per_action(type=2)
+                else:
+                    self.count_per_action = self.get_count_per_action(type=1)
+                for vp in video_paths:
+                    cache = self.init_video_frame_cache(
+                        Path(vp),
+                        num_frames=(self.cache_num+1)*self.count_per_action,
+                        max_threads=self.thread
+                    )
+                    self.video_path.append(cache)
+                if video_paths and len(video_paths) == 1:
+                    self.ImgManager.init(str(self.video_path[0]), type=2, video_mode=self.video_mode, video_path=video_paths[0],skip=self.skip_frames)
+                else:
+                    self.ImgManager.init(self.video_path, type=1, video_mode=self.video_mode, video_path=video_paths,skip=self.skip_frames)
+            else:
+                self.ImgManager.init(
+                    dlg.GetPath(), type=0, parallel_to_sequential=self.parallel_to_sequential.Value)
+            self.current_batch_idx = 0
+            self.show_img_init()
+            self.ImgManager.set_action_count(0)
+            self.show_img()
+            self.choice_input_mode.SetSelection(1)
+            self.SetStatusText_(["Input", "-1", "-1", "-1"])
 
     def close(self, event):
         if getattr(self, "_is_closing", False):
@@ -277,9 +321,9 @@ class MulimgViewer (MulimgViewerGui):
 
     def one_dir_mul_dir_manual(self, event):
         self.SetStatusText_(["Input", "", "", "-1"])
-        if self.video_mode:
+        if self.video_mode: 
             if self.real_video_path:
-                self.video_path = []
+                self.video_path = []  
                 video_paths = self.real_video_path
                 self.thread = int(self.m_textCtrl29.GetValue())
                 self.cache_num = int(self.m_textCtrl30.GetValue())
@@ -311,7 +355,6 @@ class MulimgViewer (MulimgViewerGui):
         self.UpdateUI(1, input_path, self.parallel_to_sequential.Value)
         self.choice_input_mode.SetSelection(2)
         self.SetStatusText_(["Input", "-1", "-1", "-1"])
-
 
     def last_img(self, event):
         assert hasattr(self, 'executor'), "self.executor 未初始化！"
@@ -853,172 +896,181 @@ class MulimgViewer (MulimgViewerGui):
 
 
     def refresh(self, event):
-        assert hasattr(self, 'executor'), "self.executor 未初始化！"
+        if self.video_mode:
+            assert hasattr(self, 'executor'), "self.executor 未初始化！"
 
-        # 无输入直接报错
-        if int(getattr(self.ImgManager, "img_num", 0)) == 0:
-            self.SetStatusText_(["-1", "", "***Error: First, need to select the input dir***", "-1"])
-            return
+            # 无输入直接报错
+            if int(getattr(self.ImgManager, "img_num", 0)) == 0:
+                self.SetStatusText_(["-1", "", "***Error: First, need to select the input dir***", "-1"])
+                return
 
-        # 冻结中：避免叠起新一轮等待
-        if getattr(self, "next_frozen", False):
-            try: self.SetStatusText_(["-1","-1","Busy decoding… (frozen)","-1"])
-            except: pass
-            return
+            # 冻结中：避免叠起新一轮等待
+            if getattr(self, "next_frozen", False):
+                try: self.SetStatusText_(["-1","-1","Busy decoding… (frozen)","-1"])
+                except: pass
+                return
 
-        # —— 记录刷新前状态 —— #
-        was_playing = bool(getattr(self, "is_playing", False))
-        old_cpa     = int(getattr(self, "count_per_action", 1) or 1)
-        old_action  = int(getattr(self.ImgManager, "action_count", getattr(self, "current_batch_idx", 0)) or 0)
-        old_abs_idx = max(0, old_action * old_cpa)
+            # —— 记录刷新前状态 —— #
+            was_playing = bool(getattr(self, "is_playing", False))
+            old_cpa     = int(getattr(self, "count_per_action", 1) or 1)
+            old_action  = int(getattr(self.ImgManager, "action_count", getattr(self, "current_batch_idx", 0)) or 0)
+            old_abs_idx = max(0, old_action * old_cpa)
 
-        # —— 读取最新参数 —— #
-        try: self.thread = int(self.m_textCtrl29.GetValue())
-        except Exception: self.thread = int(getattr(self, "thread", 4))
-        try: self.cache_num = int(self.m_textCtrl30.GetValue())
-        except Exception: self.cache_num = int(getattr(self, "cache_num", 1))
+            # —— 读取最新参数 —— #
+            try: self.thread = int(self.m_textCtrl29.GetValue())
+            except Exception: self.thread = int(getattr(self, "thread", 4))
+            try: self.cache_num = int(self.m_textCtrl30.GetValue())
+            except Exception: self.cache_num = int(getattr(self, "cache_num", 1))
 
-        vp = getattr(self, "real_video_path", None)
-        if not vp:
-            self.SetStatusText_(["-1", "", "***Error: No input video***", "-1"])
-            return
+            vp = getattr(self, "real_video_path", None)
+            if not vp:
+                self.SetStatusText_(["-1", "", "***Error: No input video***", "-1"])
+                return
 
-        # —— 计算新的 cpa，并重建缓存 —— #
-        if isinstance(vp, str):
-            new_cpa = int(self.get_count_per_action(type=2)) or 1
-        else:
-            new_cpa = int(self.get_count_per_action(type=1)) or 1
-        self.count_per_action = new_cpa
+            # —— 计算新的 cpa，并重建缓存 —— #
+            if isinstance(vp, str):
+                new_cpa = int(self.get_count_per_action(type=2)) or 1
+            else:
+                new_cpa = int(self.get_count_per_action(type=1)) or 1
+            self.count_per_action = new_cpa
 
-        if isinstance(vp, str):
-            self.video_mode = True
-            try:
-                self.video_path = self.init_video_frame_cache(
-                    vp,
-                    num_frames=(self.cache_num + 1) * new_cpa,
-                    max_threads=int(self.thread),
-                )
-            except Exception as e:
-                print("[init_video_frame_cache] single error:", e)
-                self.video_path = None
-            self.ImgManager.init(self.video_path, type=2, video_mode=True, video_path=vp, skip=getattr(self, "skip_frames", 0))
-        else:
-            self.video_mode = True
-            caches = []
-            for p in vp:
+            if isinstance(vp, str):
+                self.video_mode = True
                 try:
-                    cache = self.init_video_frame_cache(
-                        Path(p),
+                    self.video_path = self.init_video_frame_cache(
+                        vp,
                         num_frames=(self.cache_num + 1) * new_cpa,
                         max_threads=int(self.thread),
                     )
                 except Exception as e:
-                    print("[init_video_frame_cache] multi error:", e)
-                    cache = None
-                caches.append(cache)
-            self.video_path = caches
-            self.ImgManager.init(self.video_path, type=1, video_mode=True, video_path=vp, skip=getattr(self, "skip_frames", 0))
+                    print("[init_video_frame_cache] single error:", e)
+                    self.video_path = None
+                self.ImgManager.init(self.video_path, type=2, video_mode=True, video_path=vp, skip=getattr(self, "skip_frames", 0))
+            else:
+                self.video_mode = True
+                caches = []
+                for p in vp:
+                    try:
+                        cache = self.init_video_frame_cache(
+                            Path(p),
+                            num_frames=(self.cache_num + 1) * new_cpa,
+                            max_threads=int(self.thread),
+                        )
+                    except Exception as e:
+                        print("[init_video_frame_cache] multi error:", e)
+                        cache = None
+                    caches.append(cache)
+                self.video_path = caches
+                self.ImgManager.init(self.video_path, type=1, video_mode=True, video_path=vp, skip=getattr(self, "skip_frames", 0))
 
-        # 统一 frame_cache_dir
-        if isinstance(self.video_path, str):
-            self.frame_cache_dir = [self.video_path]
-        else:
-            self.frame_cache_dir = list(self.video_path or [])
+            # 统一 frame_cache_dir
+            if isinstance(self.video_path, str):
+                self.frame_cache_dir = [self.video_path]
+            else:
+                self.frame_cache_dir = list(self.video_path or [])
 
-        # —— 将旧位置映射到新 cpa —— #
-        new_action = int(old_abs_idx // new_cpa)
-        try:
-            total_frames = int(getattr(self.ImgManager, "img_num", 0))
-        except Exception:
-            total_frames = 0
-        max_action = max(0, (total_frames - 1) // new_cpa) if total_frames > 0 else 0
-        new_action = max(0, min(new_action, max_action))
-
-        try: self.ImgManager.set_action_count(new_action)
-        except Exception: pass
-        self.current_batch_idx = int(new_action)
-
-        # —— 预热滑窗到新批次 —— #
-        batch_start = new_action * new_cpa
-        if hasattr(self, "update_cache"):
-            try: self.update_cache(batch_start)
-            except Exception as e: print("[update_cache] warn:", e)
-
-        # —— 整批缺帧检查（exists && size>0）—— #
-        self.cache_gen = int(getattr(self, "cache_gen", 0)) + 1
-        cur_gen = self.cache_gen
-
-        missing = []
-        img_num_list = list(getattr(self.ImgManager, "img_num_list", [getattr(self.ImgManager, "img_num", 0)]))
-        for cache_dir, max_frame in zip(self.frame_cache_dir, img_num_list):
-            if not cache_dir:
-                continue
+            # —— 将旧位置映射到新 cpa —— #
+            new_action = int(old_abs_idx // new_cpa)
             try:
-                actual_end = min(batch_start + new_cpa, int(max_frame))
+                total_frames = int(getattr(self.ImgManager, "img_num", 0))
             except Exception:
-                actual_end = batch_start + new_cpa
-            for idx in range(batch_start, actual_end):
-                p = os.path.join(cache_dir, f"{idx}.png")
-                ready = False
+                total_frames = 0
+            max_action = max(0, (total_frames - 1) // new_cpa) if total_frames > 0 else 0
+            new_action = max(0, min(new_action, max_action))
+
+            try: self.ImgManager.set_action_count(new_action)
+            except Exception: pass
+            self.current_batch_idx = int(new_action)
+
+            # —— 预热滑窗到新批次 —— #
+            batch_start = new_action * new_cpa
+            if hasattr(self, "update_cache"):
+                try: self.update_cache(batch_start)
+                except Exception as e: print("[update_cache] warn:", e)
+
+            # —— 整批缺帧检查（exists && size>0）—— #
+            self.cache_gen = int(getattr(self, "cache_gen", 0)) + 1
+            cur_gen = self.cache_gen
+
+            missing = []
+            img_num_list = list(getattr(self.ImgManager, "img_num_list", [getattr(self.ImgManager, "img_num", 0)]))
+            for cache_dir, max_frame in zip(self.frame_cache_dir, img_num_list):
+                if not cache_dir:
+                    continue
                 try:
-                    ready = os.path.exists(p) and os.path.getsize(p) > 0
+                    actual_end = min(batch_start + new_cpa, int(max_frame))
                 except Exception:
+                    actual_end = batch_start + new_cpa
+                for idx in range(batch_start, actual_end):
+                    p = os.path.join(cache_dir, f"{idx}.png")
                     ready = False
-                if not ready:
-                    missing.append((cache_dir, idx))
+                    try:
+                        ready = os.path.exists(p) and os.path.getsize(p) > 0
+                    except Exception:
+                        ready = False
+                    if not ready:
+                        missing.append((cache_dir, idx))
 
-        # 初始化缺帧容器（兜底）
-        if not hasattr(self, "_missing_by_gen"):
-            import threading
-            self._missing_by_gen = {}
-            self._missing_lock = threading.Lock()
+            # 初始化缺帧容器（兜底）
+            if not hasattr(self, "_missing_by_gen"):
+                import threading
+                self._missing_by_gen = {}
+                self._missing_lock = threading.Lock()
 
-        if missing:
-            need = {(cd, i) for (cd, i) in missing}
-            try:
-                self._missing_lock.acquire()
-                self._missing_by_gen[cur_gen] = need
-            finally:
-                try: self._missing_lock.release()
-                except: pass
-
-            # 冻结 & 记录恢复标志（仅当刷新前在播）
-            self.next_frozen = True
-            self._resume_after_unfreeze = bool(was_playing)
-            # 刷新是“前进态”，如果你在 _unfreeze 里支持方向，可设为 +1
-            self._resume_play_dir = +1
-
-            if getattr(self, "is_playing", False):
-                self.is_playing = False
-                try: self.right_arrow_button1.SetLabel("▶")
-                except: pass
-
-            # 提交等待任务（整批）
-            for cache_dir, idx in need:
+            if missing:
+                need = {(cd, i) for (cd, i) in missing}
                 try:
-                    self.executor.submit(self._await_and_notify, cache_dir, idx, cur_gen)
-                except Exception as e:
-                    print("[submit await refresh] error:", e)
+                    self._missing_lock.acquire()
+                    self._missing_by_gen[cur_gen] = need
+                finally:
+                    try: self._missing_lock.release()
+                    except: pass
 
-            self.SetStatusText_(["-1","-1","Refreshing… (waiting batch, frozen)","-1"])
-            return
+                # 冻结 & 记录恢复标志（仅当刷新前在播）
+                self.next_frozen = True
+                self._resume_after_unfreeze = bool(was_playing)
+                # 刷新是“前进态”，如果你在 _unfreeze 里支持方向，可设为 +1
+                self._resume_play_dir = +1
 
-        # —— 整批已就绪：直接显示 —— #
-        self.show_img_init()
-        self.show_img()
-        self.SetStatusText_(["Refresh", "-1", "-1", "-1"])
+                if getattr(self, "is_playing", False):
+                    self.is_playing = False
+                    try: self.right_arrow_button1.SetLabel("▶")
+                    except: pass
 
-        # 如刷新前在播：按间隔继续播放（不立即推进）
-        if was_playing:
-            try:
-                self.is_playing = True
-                try: self.right_arrow_button1.SetLabel("⏸")
-                except: pass
-                interval_ms = int(getattr(self, "play_interval", 0.2) * 1000)
-                if hasattr(self, "play_timer"):
-                    self.play_timer.StartOnce(interval_ms)
-            except Exception:
-                pass
+                # 提交等待任务（整批）
+                for cache_dir, idx in need:
+                    try:
+                        self.executor.submit(self._await_and_notify, cache_dir, idx, cur_gen)
+                    except Exception as e:
+                        print("[submit await refresh] error:", e)
+
+                self.SetStatusText_(["-1","-1","Refreshing… (waiting batch, frozen)","-1"])
+                return
+
+            # —— 整批已就绪：直接显示 —— #
+            self.show_img_init()
+            self.show_img()
+            self.SetStatusText_(["Refresh", "-1", "-1", "-1"])
+
+            # 如刷新前在播：按间隔继续播放（不立即推进）
+            if was_playing:
+                try:
+                    self.is_playing = True
+                    try: self.right_arrow_button1.SetLabel("⏸")
+                    except: pass
+                    interval_ms = int(getattr(self, "play_interval", 0.2) * 1000)
+                    if hasattr(self, "play_timer"):
+                        self.play_timer.StartOnce(interval_ms)
+                except Exception:
+                    pass
+        else:
+            if self.ImgManager.img_num != 0:
+                self.show_img_init()
+                self.show_img()
+            else:
+                self.SetStatusText_(
+                    ["-1", "", "***Error: First, need to select the input dir***", "-1"])
+            self.SetStatusText_(["Refresh", "-1", "-1", "-1"])
 
 
     def one_dir_mul_img(self, event):

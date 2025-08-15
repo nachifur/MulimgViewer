@@ -298,10 +298,10 @@ class MulimgViewerGui ( wx.Frame ):
 
 		bSizer18 = wx.BoxSizer( wx.HORIZONTAL )
 
-		self.m_staticText2 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"RowCol", wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.m_staticText2.Wrap( -1 )
+		self.title_rename_text = wx.StaticText( self.m_panel4, wx.ID_ANY, u"RowCol", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.title_rename_text.Wrap( -1 )
 
-		bSizer18.Add( self.m_staticText2, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+		bSizer18.Add( self.title_rename_text, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
 		self.row_col = wx.TextCtrl( self.m_panel4, wx.ID_ANY, u"1,1", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
 		bSizer18.Add( self.row_col, 0, wx.ALL, 5 )
@@ -556,6 +556,16 @@ class MulimgViewerGui ( wx.Frame ):
 		self.title_down_up.Enable( False )
 
 		wSizer2.Add( self.title_down_up, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+
+		self.title_show_rename = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"Rename", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.title_show_rename.Enable( False )
+
+		wSizer2.Add( self.title_show_rename, 0, wx.ALL, 5 )
+
+		self.title_rename_text = wx.TextCtrl( self.m_panel4, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.title_rename_text.Enable( False )
+
+		wSizer2.Add( self.title_rename_text, 0, wx.ALL, 5 )
 
 		self.m_staticline20 = wx.StaticLine( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_VERTICAL )
 		wSizer2.Add( self.m_staticline20, 0, wx.EXPAND |wx.ALL, 5 )
@@ -860,7 +870,9 @@ class MulimgViewerGui ( wx.Frame ):
 		self.reset_config_button.Bind( wx.EVT_BUTTON, self.reset_configuration )
 		self.select_img_box.Bind( wx.EVT_CHECKBOX, self.select_img_box_func )
 		self.title_auto.Bind( wx.EVT_CHECKBOX, self.title_auto_fc )
+		self.title_exif.Bind( wx.EVT_CHECKBOX, self.on_title_exif_changed )
 		self.title_down_up.Bind( wx.EVT_CHECKBOX, self.title_down_up_fc )
+		self.title_show_rename.Bind( wx.EVT_CHECKBOX, self.title_rename_fc )
 		self.colourPicker_gap.Bind( wx.EVT_COLOURPICKER_CHANGED, self.colour_change )
 		self.background_slider.Bind( wx.EVT_SCROLL, self.background_alpha )
 		self.foreground_slider.Bind( wx.EVT_SCROLL, self.foreground_alpha )
@@ -956,7 +968,13 @@ class MulimgViewerGui ( wx.Frame ):
 	def title_auto_fc( self, event ):
 		event.Skip()
 
+	def on_title_exif_changed( self, event ):
+		event.Skip()
+
 	def title_down_up_fc( self, event ):
+		event.Skip()
+
+	def title_rename_fc( self, event ):
 		event.Skip()
 
 	def colour_change( self, event ):

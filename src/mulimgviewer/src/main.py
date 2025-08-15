@@ -327,7 +327,6 @@ class MulimgViewer (MulimgViewerGui):
         if dlg.ShowModal() == wx.ID_OK:
             self.ImgManager.init(
                 dlg.GetPath(), type=0, parallel_to_sequential=self.parallel_to_sequential.Value)
-            # self.process_exif(dlg.GetPath())
             self.show_img_init()
             self.ImgManager.set_action_count(0)
             self.show_img()
@@ -355,7 +354,6 @@ class MulimgViewer (MulimgViewerGui):
 
         if dlg.ShowModal() == wx.ID_OK:
             self.ImgManager.init(dlg.GetPath(), type=2)
-            # self.process_exif(dlg.GetPath())
             self.show_img_init()
             self.ImgManager.set_action_count(0)
             self.show_img()

@@ -128,14 +128,12 @@ class MulimgViewer (MulimgViewerGui):
 
     def on_title_exif_changed(self, event):
         if hasattr(self, 'ImgManager') and hasattr(self.ImgManager, 'img_list'):
-            # 直接使用已缓存的数据，无需重新处理文件
             current_img_index = getattr(self.ImgManager, 'now_num', 0)
             if self.ImgManager.img_num > 0:
                 if current_img_index < self.ImgManager.img_num:
                     self.ImgManager.now_num = current_img_index
                 else:
                     self.ImgManager.now_num = 0
-                # 只需要刷新显示，EXIF数据已在内存中
                 self.refresh(event)
         super().on_title_exif_changed(event)
 

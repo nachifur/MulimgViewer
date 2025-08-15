@@ -623,6 +623,8 @@ class ImgUtils():
                 img.save(new_path, 'PDF')
 
 class ImgManager(ImgData):
+    """Multi-image manager.
+    Multi-image parallel magnification, stitching, saving, rotation"""
     def __init__(self):
         self.layout_params = []
         self.gap_color = (0, 0, 0, 0)
@@ -646,28 +648,22 @@ class ImgManager(ImgData):
 
 
     def extract_complete_exif(self, img_path):
-        """提取完整EXIF信息 - 字段完整版"""
         try:
             with Image.open(img_path) as img:
                 if 'exif' not in img.info:
                     return {"raw_exif": {}, "formatted_exif": {}, "has_exif": False}
-
                 exif_dict = piexif.load(img.info['exif'])
                 formatted_exif = {}
                 tag_mappings = self.get_complete_tag_mappings()
-
-                # 获取启用的字段列表
                 enabled_fields = set(k for k, v in self.exif_display_config.items() if v)
-                enabled_fields.add("UserComment")  # 总是处理UserComment用于CustomTitle
+                enabled_fields.add("UserComment")
 
-                # 处理所有IFD
                 for ifd_name, ifd_data in exif_dict.items():
                     if ifd_name in tag_mappings and isinstance(ifd_data, dict):
                         mapping = tag_mappings[ifd_name]
                         for tag_id, value in ifd_data.items():
                             if tag_id in mapping:
                                 field_name = mapping[tag_id]
-                                # 只处理启用的字段或必需字段
                                 if field_name in enabled_fields or field_name in ["UserComment"]:
                                     formatted_value = self.format_field_value(field_name, value)
                                     if formatted_value is not None:
@@ -675,7 +671,6 @@ class ImgManager(ImgData):
 
                 for field_name, is_enabled in self.exif_display_config.items():
                     if is_enabled and field_name not in formatted_exif and field_name != "UserComment":
-                        print(f"添加N/A字段: {field_name}")  # 调试信息
                         formatted_exif[field_name] = "N/A"
 
                 if "UserComment" in formatted_exif:
@@ -692,9 +687,7 @@ class ImgManager(ImgData):
             return {"raw_exif": {}, "formatted_exif": {}, "has_exif": False}
 
     def format_field_value(self, field_name, value):
-        """最精简的字段格式化方法 - 一个方法搞定所有格式"""
         try:
-            # 处理分数值（Fraction 对象或元组）
             if hasattr(value, 'numerator') and hasattr(value, 'denominator'):
                 num, den = value.numerator, value.denominator
             elif isinstance(value, tuple) and len(value) == 2:
@@ -705,7 +698,6 @@ class ImgManager(ImgData):
             if num is not None and den is not None:
                 decimal_value = float(num) / float(den)
 
-                # 特殊字段格式化
                 if field_name == "FNumber":
                     return f"ƒ/{decimal_value:.1f}"
                 elif field_name == "ExposureTime":
@@ -723,7 +715,6 @@ class ImgManager(ImgData):
                 else:
                     return f"{decimal_value:.2f}"
 
-            # 特殊整数字段
             elif field_name == "ISOSpeedRatings":
                 return f"ISO{value}"
             elif field_name == "FocalLengthIn35mmFilm":
@@ -757,22 +748,16 @@ class ImgManager(ImgData):
             return str(value) if value is not None else "N/A"
 
     def format_exif_display_complete(self, formatted_exif, custom_title, title_rename_enabled, original_filename):
-        """完整的EXIF显示格式化 - 支持所有字段，空值显示N/A"""
         display_lines = []
-
-        # Name字段始终显示
         if title_rename_enabled and custom_title and custom_title != "N/A":
             display_lines.append(f"Name: {custom_title}")
         else:
             display_lines.append(f"Name: {original_filename}")
 
-        # 🔑 按JSON配置文件的顺序显示字段，空值显示N/A
         for field_name, is_enabled in self.exif_display_config.items():
             if is_enabled and field_name not in ["UserComment", "CustomTitle"]:
                 if field_name == "UserComment":
                     continue
-
-                # 获取字段值，没有则显示N/A
                 value = formatted_exif.get(field_name, "N/A")
                 display_lines.append(f"{field_name}: {value}")
 
@@ -780,6 +765,7 @@ class ImgManager(ImgData):
 
     def get_img_list(self, customfunc=False):
         img_list = []
+        # load img list
         name_list = []
         self.full_exif_cache = {}
 
@@ -800,12 +786,10 @@ class ImgManager(ImgData):
                     self.full_exif_cache[i] = self.extract_complete_exif(path)
             else:
                 self.full_exif_cache[i] = {"raw_exif": {}, "formatted_exif": {}, "has_exif": False}
-
         out_path_str = self.layout_params[33]
+        # custom process
         if customfunc:
             img_list = main_custom_func(img_list,out_path_str,name_list=name_list)
-
-
         # resolution
         width_ = []
         height_ = []
@@ -848,59 +832,42 @@ class ImgManager(ImgData):
         self.img_list = img_list
 
     def load_exif_display_config(self, force_reload=False):
-        """加载EXIF显示配置"""
         config_path = Path(__file__).parent.parent.parent / "exif_display_config.json"
 
         if force_reload or not hasattr(self, 'exif_display_config'):
             try:
-                print(f"正在加载EXIF配置: {config_path}")  # 调试信息
                 with open(config_path, 'r', encoding='utf-8') as f:
                     config = json.load(f)
-                    # 新增：配置加载后立即优化映射表
-                    print(f"配置加载成功: {list(config.keys())}")  # 调试信息
                     self._initialize_optimized_tag_mappings(config)
                     return config
-            except Exception as e:
-                print(f"加载配置失败: {e}")
+            except:
                 default_config = {
                     "Make": True, "Model": True, "ExposureTime": True,
                     "FNumber": True, "ISOSpeedRatings": True, "FocalLength": True,
                     "CustomTitle": True
                 }
-                # 新增：使用默认配置时也要优化映射表
-                self._initialize_optimized_tag_mappings(default_config)
-                return default_config
+            self._initialize_optimized_tag_mappings(default_config)
+            return default_config
         else:
-            print("使用已缓存的配置")
             return self.exif_display_config
 
-    # 添加这两个新方法
     def _initialize_optimized_tag_mappings(self, config):
-        """根据JSON配置创建优化的映射表"""
-        # 获取启用的字段
         enabled_fields = set(k for k, v in config.items() if v)
-        enabled_fields.add("UserComment")  # 必需字段
+        enabled_fields.add("UserComment")
+        self._tag_mappings_cache = {
+            ifd_name: {
+                tag_id: field_name
+                for tag_id, field_name in mapping.items()
+                if field_name in enabled_fields
+            }
+            for ifd_name, mapping in self._FULL_MAPPINGS.items()  # 使用类属性
+        }
 
-        # 完整映射表（只定义一次）
-        full_mappings = self._get_full_mappings()
-
-        # 只保留启用的字段映射
-        optimized_mappings = {}
-        for ifd_name, mapping in full_mappings.items():
-            optimized_mappings[ifd_name] = {}
-            for tag_id, field_name in mapping.items():
-                if field_name in enabled_fields:
-                    optimized_mappings[ifd_name][tag_id] = field_name
-
-        self._tag_mappings_cache = optimized_mappings
-
-    def _get_full_mappings(self):
-        """获取完整的字段映射定义"""
-        return {
-            "0th": {
-                256: "ImageWidth", 257: "ImageLength", 258: "BitsPerSample", 259: "Compression",
-                262: "PhotometricInterpretation", 271: "Make", 272: "Model", 274: "Orientation",
-                282: "XResolution", 283: "YResolution", 296: "ResolutionUnit", 306: "DateTime",
+    _FULL_MAPPINGS = {
+        "0th": {
+            256: "ImageWidth", 257: "ImageLength", 258: "BitsPerSample", 259: "Compression",
+            262: "PhotometricInterpretation", 271: "Make", 272: "Model", 274: "Orientation",
+            282: "XResolution", 283: "YResolution", 296: "ResolutionUnit", 306: "DateTime",
                 270: "ImageDescription", 305: "Software", 315: "Artist", 33432: "Copyright"
             },
             "Exif": {
@@ -935,13 +902,11 @@ class ImgManager(ImgData):
         }
 
     def get_complete_tag_mappings(self):
-        """获取优化后的标签映射字典"""
         if self._tag_mappings_cache is None:
             self._initialize_optimized_tag_mappings(self.exif_display_config)
         return self._tag_mappings_cache
 
     def update_exif_config(self, new_config):
-        """更新EXIF配置并重新优化映射表"""
         self.exif_display_config = new_config
         self._initialize_optimized_tag_mappings(new_config)
 
@@ -1360,25 +1325,19 @@ class ImgManager(ImgData):
         return self.title_max_size
 
     def get_display_title_from_cache(self, img_index, original_title, title_rename_enabled):
-        """从缓存获取显示标题 - 优化点4：避免重复文件访问"""
         if not title_rename_enabled:
             return original_title
-
         exif_data = self.full_exif_cache.get(img_index, {"formatted_exif": {}, "has_exif": False})
         if exif_data["has_exif"]:
             custom_title = exif_data["formatted_exif"].get("CustomTitle", "N/A")
             if custom_title != "N/A":
                 return custom_title
-
         return original_title
 
     def update_image_exif_37510(self, img_path, new_title):
-        """更新EXIF信息并刷新缓存"""
         try:
             if not img_path.lower().endswith(('.jpg', '.jpeg', '.tiff', '.tif')):
                 return False
-
-            # 更新文件
             img = Image.open(img_path)
             if 'exif' in img.info:
                 try:
@@ -1387,14 +1346,12 @@ class ImgManager(ImgData):
                     exif_dict = {"0th": {}, "Exif": {}, "GPS": {}, "1st": {}, "thumbnail": None}
             else:
                 exif_dict = {"0th": {}, "Exif": {}, "GPS": {}, "1st": {}, "thumbnail": None}
-
             user_comment_tag = 0x9286
             new_data = {"custom_title": new_title}
             comment_data = json.dumps(new_data, ensure_ascii=False)
             exif_dict["Exif"][user_comment_tag] = comment_data.encode('utf-8')
             exif_bytes = piexif.dump(exif_dict)
             img.save(img_path, exif=exif_bytes)
-             # 优化点5：更新缓存而不是重新读取整个文件
             for i, path in enumerate(self.flist):
                 if str(path) == str(img_path):
                     if i in self.full_exif_cache:

@@ -4,10 +4,8 @@ import threading
 from pathlib import Path
 import cv2,os,time
 from concurrent.futures import ThreadPoolExecutor
-import concurrent.futures
 import atexit
 import signal
-import sys
 
 import numpy as np
 import wx
@@ -18,9 +16,9 @@ from .about import About
 from .index_table import IndexTable
 from .utils import MyTestEvent, get_resource_path
 from .utils_img import ImgManager
-from .data import ImgData
 import json
 import shutil
+import copy
 
 class MulimgViewer (MulimgViewerGui):
 
@@ -359,9 +357,6 @@ class MulimgViewer (MulimgViewerGui):
     def last_img(self, event):
         assert hasattr(self, 'executor'), "self.executor 未初始化！"
 
-        import os, threading
-
-        # ---------- 冻结/缺帧跟踪属性（兜底） ----------
         if not hasattr(self, "next_frozen"):       self.next_frozen = False
         if not hasattr(self, "_missing_by_gen"):   self._missing_by_gen = {}   # gen -> set((cache_dir, idx))
         if not hasattr(self, "_missing_lock"):     self._missing_lock = threading.Lock()
@@ -492,26 +487,21 @@ class MulimgViewer (MulimgViewerGui):
         else:
             self.SetStatusText_(["-1", "", "***Error: First, need to select the input dir***", "-1"])
 
-
     def skip_to_n_img(self, event):
-        # 基本校验
         if self.ImgManager.img_num == 0:
             self.SetStatusText_(["-1", "", "***Error: First, need to select the input dir***", "-1"])
             return
-
-        # 当前滑块值（候选）
+        
         try:
             target = int(self.slider_img.GetValue())
         except Exception:
             target = 0
 
-        # 可选：实时回显到文本框，但不触发重活
         try:
             self.slider_value.SetValue(str(target))
         except Exception:
             pass
 
-        # —— 防抖：只在“稳定”后把最终值传给 slider_value_change(value=…) —— #
         if not hasattr(self, "_skip_timer"):
             self._debounce_ms = getattr(self, "_debounce_ms", 120)  # 停顿阈值(毫秒)，按需调 80~200
             self._skip_timer = wx.Timer(self)
@@ -677,157 +667,6 @@ class MulimgViewer (MulimgViewerGui):
         self.show_img()
         self.SetStatusText_(["Skip", "-1", "-1", "-1"])
 
-    # def slider_value_change(self, event, value=None):
-
-    #     # 1) 解析目标值（允许 0 合法；None/空串用当前计数兜底）
-    #     if value is None:
-    #         try:
-    #             s = str(self.slider_value.GetValue()).strip()
-    #         except Exception:
-    #             s = ""
-    #         if s == "":
-    #             value = int(getattr(self.ImgManager, "action_count", 0))
-    #         else:
-    #             try:
-    #                 value = int(s)
-    #             except Exception:
-    #                 self.slider_value.SetValue(str(getattr(self.ImgManager, "action_count", 0)))
-    #                 return
-
-    #     if getattr(self.ImgManager, "img_num", 0) == 0:
-    #         self.SetStatusText_(["-1", "", "***Error: First, need to select the input dir***", "-1"])
-    #         return
-
-    #     # 2) clamp & 同步 UI（先按全局最大值夹住）
-    #     try:
-    #         max_idx = max(0, int(getattr(self.ImgManager, "max_action_num", self.ImgManager.img_num)) - 1)
-    #     except Exception:
-    #         max_idx = max(0, int(self.ImgManager.img_num) - 1)
-    #     target = max(0, min(int(value), max_idx))
-
-    #     try: self.slider_value.SetValue(str(target))
-    #     except: pass
-    #     try: self.slider_img.SetValue(target)
-    #     except: pass
-
-    #     # 3) 换代 + 基础布局
-    #     self.cache_gen = getattr(self, "cache_gen", 0) + 1
-    #     cur_gen = self.cache_gen
-    #     self.show_img_init()
-
-    #     # 4) 视频模式
-    #     if getattr(self, "video_mode", False):
-    #         # 线程池兜底（首轮也能跑）
-    #         if not hasattr(self, "executor"):
-    #             from concurrent.futures import ThreadPoolExecutor
-    #             self.executor = ThreadPoolExecutor(max_workers=int(getattr(self, "thread", 4)))
-
-    #         # 缓存目录兜底：确保与 real_video_path 一一对应（只建目录，不解码）
-    #         real_paths = self.real_video_path if isinstance(self.real_video_path, (list, tuple)) else [self.real_video_path]
-    #         frame_cache_dir = [self.video_path] if isinstance(self.video_path, str) else (self.video_path or [])
-    #         if not frame_cache_dir or len(frame_cache_dir) != len(real_paths):
-    #             frame_cache_dir = []
-    #             for p in real_paths:
-    #                 if not p:
-    #                     frame_cache_dir.append(None); continue
-    #                 try:
-    #                     cache_dir = self.init_video_frame_cache(p, num_frames=0, max_threads=int(getattr(self, "thread", 4)))
-    #                 except Exception:
-    #                     base = os.path.dirname(str(p))
-    #                     cache_dir = os.path.join(base, "frames_cache")
-    #                     try: os.makedirs(cache_dir, exist_ok=True)
-    #                     except Exception: pass
-    #                 frame_cache_dir.append(cache_dir)
-    #             self.video_path = frame_cache_dir[0] if len(frame_cache_dir) == 1 else frame_cache_dir
-    #         self.frame_cache_dir = frame_cache_dir
-
-    #         # —— 统一 cpa，且把 target 对齐到“批起点” —— #
-    #         if isinstance(self.real_video_path, str):
-    #             cpa = self.get_count_per_action(type=2)
-    #         else:
-    #             cpa = self.get_count_per_action(type=1)
-    #         cpa = int(cpa) or 1
-
-    #         # 尾批处理：最大可选动作索引对齐到最后一个批起点
-    #         max_idx_batch = (max_idx // cpa) * cpa
-    #         if target > max_idx_batch:
-    #             target = max_idx_batch
-
-    #         # 对齐到批起点
-    #         target_aligned = (target // cpa) * cpa
-    #         if target_aligned != target:
-    #             target = target_aligned
-    #             # 同步 UI 到对齐后的值，避免显示与实际不一致
-    #             try: self.slider_value.SetValue(str(target))
-    #             except: pass
-    #             try: self.slider_img.SetValue(target)
-    #             except: pass
-
-    #         # 批次信息
-    #         self.ImgManager.set_action_count(target)      # 这里用对齐后的批起点
-    #         self.current_batch_idx = target // cpa
-    #         batch_start = target
-    #         batch_end   = min(batch_start + cpa, int(self.ImgManager.img_num))
-
-    #         # 可选：滑动窗口
-    #         if hasattr(self, "update_cache"):
-    #             try: self.update_cache(batch_start)
-    #             except Exception: pass
-
-    #         # 跳帧步长
-    #         try:
-    #             step = int(getattr(self, "skip_frames", 0)) + 1
-    #         except Exception:
-    #             step = 1
-
-    #         # 提交定点拆帧（对齐后的整批）
-    #         for vid_i, (cache_dir, src_path) in enumerate(zip(self.frame_cache_dir, real_paths)):
-    #             if not src_path or not cache_dir:
-    #                 continue
-    #             try:
-    #                 max_frame = int(self.ImgManager.img_num_list[vid_i])
-    #             except Exception:
-    #                 max_frame = int(self.ImgManager.img_num)
-    #             s = batch_start
-    #             e = min(batch_end, max_frame)
-    #             if s < e:
-    #                 try:
-    #                     self.executor.submit(self._predecode_exact_batch, src_path, cache_dir, s, e, step, cur_gen)
-    #                 except Exception:
-    #                     pass
-
-    #         # 缺帧检查（逐帧，避免漏检）
-    #         missing = []
-    #         img_num_list = getattr(self.ImgManager, "img_num_list", [self.ImgManager.img_num])
-    #         for vid_i, (cache_dir, max_frame) in enumerate(zip(self.frame_cache_dir, img_num_list)):
-    #             s = batch_start
-    #             e = min(batch_end, int(max_frame))
-    #             for idx in range(s, e):
-    #                 p = os.path.join(cache_dir, f"{idx}.png")
-    #                 if not (os.path.exists(p) and os.path.getsize(p) > 0):
-    #                     missing.append((cache_dir, idx))
-    #                     break
-
-    #         if missing:
-    #             for cache_dir, idx in missing:
-    #                 try:
-    #                     self.executor.submit(self._await_and_notify, cache_dir, idx, cur_gen)
-    #                 except Exception:
-    #                     pass
-    #             self.SetStatusText_(["Skip", "-1", "Decoding target frame(s)…", "-1"])
-    #             return
-
-    #         # 就绪 → 显示
-    #         self.show_img()
-    #         self.SetStatusText_(["Skip", "-1", "-1", "-1"])
-    #         return
-
-    #     # 5) 图片模式
-    #     self.ImgManager.set_action_count(target)
-    #     self.show_img()
-    #     self.SetStatusText_(["Skip", "-1", "-1", "-1"])
-
-
     def save_img(self, event):
         type_ = self.choice_output.GetSelection()
         if self.auto_save_all.Value:
@@ -893,7 +732,6 @@ class MulimgViewer (MulimgViewerGui):
                 self.SetStatusText_(
                     ["-1", str(self.ImgManager.action_count), "***Error: First, need to select the input dir***", "-1"])
         self.SetStatusText_(["Save", "-1", "-1", "-1"])
-
 
     def refresh(self, event):
         if self.video_mode:
@@ -1013,7 +851,6 @@ class MulimgViewer (MulimgViewerGui):
 
             # 初始化缺帧容器（兜底）
             if not hasattr(self, "_missing_by_gen"):
-                import threading
                 self._missing_by_gen = {}
                 self._missing_lock = threading.Lock()
 
@@ -1071,7 +908,6 @@ class MulimgViewer (MulimgViewerGui):
                 self.SetStatusText_(
                     ["-1", "", "***Error: First, need to select the input dir***", "-1"])
             self.SetStatusText_(["Refresh", "-1", "-1", "-1"])
-
 
     def one_dir_mul_img(self, event):
         self.SetStatusText_(
@@ -1826,8 +1662,6 @@ class MulimgViewer (MulimgViewerGui):
                     self.show_unit.Value ]                  # 36
 
     def show_img(self):
-        import copy
-
         # 一次性初始化：关闭擦背景/开双缓冲
         self._setup_img_panel()
 
@@ -1989,11 +1823,7 @@ class MulimgViewer (MulimgViewerGui):
         self.SetStatusText_(["Stitch", "-1", "-1", "-1"])
 
     def auto_layout(self, frame_resize=False):
-        # Auto Layout
 
-        # Get current window size
-        # self.displaySize = wx.Size(wx.DisplaySize()) # get main window size
-        # Get current window id
         displays = (wx.Display(i) for i in range(wx.Display.GetCount()))
         displays_list = [display for display in displays]
         sizes = [display.GetGeometry().GetSize() for display in displays_list]
@@ -2388,6 +2218,7 @@ class MulimgViewer (MulimgViewerGui):
         return product
 
         # 2. 事件处理函数
+    
     def on_interval_changed(self, event):
         val = self.m_textCtrl28.GetValue()
         try:
@@ -2396,9 +2227,6 @@ class MulimgViewer (MulimgViewerGui):
             self.interval = 1.0  # 你默认的安全值
 
     def toggle_play(self, event):
-        """
-        ▶ 按钮：正向播放/暂停
-        """
         interval_str = self.m_textCtrl28.GetValue()
         try:
             interval = float(interval_str)
@@ -2459,8 +2287,6 @@ class MulimgViewer (MulimgViewerGui):
     def next_img(self, event):
         assert hasattr(self, 'executor'), "self.executor 未初始化！"
 
-        # ---------- 冻结/缺帧跟踪属性（一次性兜底） ----------
-        import threading, os
         if not hasattr(self, "next_frozen"):       self.next_frozen = False
         if not hasattr(self, "_missing_by_gen"):   self._missing_by_gen = {}   # gen -> set((cache_dir, idx))
         if not hasattr(self, "_missing_lock"):     self._missing_lock = threading.Lock()
@@ -2582,7 +2408,6 @@ class MulimgViewer (MulimgViewerGui):
         self.SetStatusText_(["Next", "-1", "-1", "-1"])
 
     def update_cache(self, batch_start):
-        import os
         assert hasattr(self, 'executor'), "self.executor 未初始化！"
 
         # —— 原有参数（保留）——
@@ -2740,11 +2565,6 @@ class MulimgViewer (MulimgViewerGui):
             pass
 
         self._cv_imwrite_atomic(save_path, frame)
-
-
-    def set_video_paths(self, paths: list[str] | list[Path]) -> None:
-        # 统一成 Path，必要时也可在这里切换到视频模式、做预处理
-        self.real_video_path = paths
 
     def _overlay_video_label(self, pil_img):
         # —— 依赖 —— #
@@ -3028,7 +2848,6 @@ class MulimgViewer (MulimgViewerGui):
 
             # 集合模式（推荐）：逐个 discard，清空即解冻
             if has_set_mode:
-                import threading
                 try:
                     self._missing_lock.acquire()
                     need = self._missing_by_gen.get(expect_gen)
@@ -3084,12 +2903,6 @@ class MulimgViewer (MulimgViewerGui):
             print(f"[await expired] {cache_dir}/{idx}.png expect_gen={expect_gen} cur_gen={getattr(self,'cache_gen',-1)}")
 
     def _ensure_batch_ready_or_queue(self, batch_start, batch_end, gen):
-        """
-        确认 [batch_start, batch_end) 的帧都已在缓存；缺谁→提交定点拆帧并后台等待。
-        返回 True=就绪；False=未就绪（此时不要调用 show_img/stitch_images）。
-        """
-        import os
-
         # 映射缓存目录 & 源视频
         frame_cache_dir = [self.video_path] if isinstance(self.video_path, str) else self.video_path
         real_paths = self.real_video_path if isinstance(self.real_video_path, (list, tuple)) else [self.real_video_path]
@@ -3182,8 +2995,6 @@ class MulimgViewer (MulimgViewerGui):
         self._img_panel_ready = True
 
     def _safe_remove(self, path, max_retries=6, base_delay=0.05):
-        """Windows 友好的删除：指数退避；不行就先丢到 .trash_gc，避免 WinError 32 阻塞。"""
-        import os, time, shutil
         for i in range(max_retries):
             try:
                 os.remove(path)
@@ -3207,15 +3018,6 @@ class MulimgViewer (MulimgViewerGui):
             return False
 
     def _cache_dir_for(self, vid_i):
-        """
-        返回第 vid_i 个视频对应的帧缓存目录：
-        - 优先用 self.frame_cache_dir / self.video_path
-        - 若缺失或长度不匹配，按 real_video_path 懒建目录
-        - 始终确保目录存在
-        """
-        import os
-
-        # 统一 real_paths
         real_paths = self.real_video_path if isinstance(self.real_video_path, (list, tuple)) else [self.real_video_path]
 
         # 统一已有的缓存目录列表
@@ -3271,8 +3073,6 @@ class MulimgViewer (MulimgViewerGui):
         return cache_dir
 
     def _on_ready_refresh(self):
-        """帧就绪后在主线程调用：解锁并刷新显示"""
-        import wx
         self._is_waiting = False
         #可选：确保布局已准备
         # try: self.show_img_init()
@@ -3280,8 +3080,6 @@ class MulimgViewer (MulimgViewerGui):
         self.show_img()
         try: self.SetStatusText_(["Next", "-1", "-1", "-1"])
         except: pass
-
-
 
     def _cv_imwrite_atomic(self, path, img, png_level=1, max_retries=3):
         """
@@ -3339,11 +3137,6 @@ class MulimgViewer (MulimgViewerGui):
         try: os.path.exists(tmp) and os.remove(tmp)
         except Exception: pass
         return False
-
-
-import shutil
-import atexit
-import signal
 
 TEMP_DIR = "video_frames"  # 你临时生成内容的目录路径（可以修改）
 

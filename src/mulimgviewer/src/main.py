@@ -509,7 +509,7 @@ class MulimgViewer (MulimgViewerGui):
         if self.ImgManager.img_num == 0:
             self.SetStatusText_(["-1", "", "***Error: First, need to select the input dir***", "-1"])
             return
-        
+
         try:
             target = int(self.slider_img.GetValue())
         except Exception:
@@ -2281,7 +2281,7 @@ class MulimgViewer (MulimgViewerGui):
         return product
 
         # 2. 事件处理函数
-    
+
     def on_interval_changed(self, event):
         val = self.m_textCtrl28.GetValue()
         try:
@@ -2548,7 +2548,7 @@ class MulimgViewer (MulimgViewerGui):
                 cache_end_frame   = 0
             else:
                 if global_cache_end >= N:
-                    # —— 已经滑到尾部（或越过）：窗口锚到尾部 —— 
+                    # —— 已经滑到尾部（或越过）：窗口锚到尾部 ——
                     # 若你希望“至少保留 cpa+1”，用 max(window_len, min_tail_keep)
                     # 若你希望“恰好保留 cpa+1”，把下一行改成：keep_len = min_tail_keep
                     keep_len = max(window_len, min_tail_keep)
@@ -2556,7 +2556,7 @@ class MulimgViewer (MulimgViewerGui):
                     cache_end_frame   = N
                     cache_start_frame = max(0, N - keep_len)
                 else:
-                    # —— 正常区域：保持原窗口宽度 —— 
+                    # —— 正常区域：保持原窗口宽度 ——
                     cache_start_frame = max(0, min(int(global_cache_start), max(0, N - window_len)))
                     cache_end_frame   = min(cache_start_frame + window_len, N)
 
@@ -2627,7 +2627,7 @@ class MulimgViewer (MulimgViewerGui):
                             kfile = int(m_new.group(2))
                             phys_base = int(round(sec * fps))
                             for phys in (phys_base - 1, phys_base, phys_base + 1):
-                                if phys < 0: 
+                                if phys < 0:
                                     continue
                                 if (phys % fps_int) + 1 != kfile:
                                     continue
@@ -2794,7 +2794,7 @@ class MulimgViewer (MulimgViewerGui):
                     last_size = size
             time.sleep(poll)
         return False
-    
+
     def _await_and_notify(self, cache_dir, idx, expect_gen):
         import os, time
         try:
@@ -3387,7 +3387,7 @@ class MulimgViewer (MulimgViewerGui):
         s = max(0, int(batch_start))
         e = min(int(batch_end), max(0, n))  # 注意：开区间
 
-        # —— 生成 [s, e) 的“应当存在”的名字集合 —— 
+        # —— 生成 [s, e) 的“应当存在”的名字集合 ——
         expected_by_idx = {}
         allowed_names = set()
         for i in range(s, e):
@@ -3403,7 +3403,7 @@ class MulimgViewer (MulimgViewerGui):
                 expected_by_idx[i].add(old_name)
                 allowed_names.add(old_name)
 
-        # —— 遍历目录并删除“属于当前批次但不在 allowed 的文件” —— 
+        # —— 遍历目录并删除“属于当前批次但不在 allowed 的文件” ——
         pat_new = re.compile(r'^(\d+(?:\.\d+)?)s_frame_(\d+)\.(?:png|jpg|jpeg)$', re.I)
         pat_old = re.compile(r'^(\d+)\.(?:png|jpg|jpeg)$', re.I)
 
@@ -3453,7 +3453,7 @@ class MulimgViewer (MulimgViewerGui):
                     phys_base = int(round(sec * fps))
                     matched = False
                     for phys in (phys_base - 1, phys_base, phys_base + 1):
-                        if phys < 0: 
+                        if phys < 0:
                             continue
                         if (phys % fps_int) + 1 != kfile:
                             continue
@@ -3479,7 +3479,7 @@ class MulimgViewer (MulimgViewerGui):
             f"legacy={'keep' if keep_legacy_idx_names else 'drop'} removed={removed}")
         return removed
 
-    def _expected_path_for_idx(self, cache_dir, video_idx, idx):        
+    def _expected_path_for_idx(self, cache_dir, video_idx, idx):
         # ---------- 1) 取该视频的逻辑长度 n ----------
         n = 0
         # 优先从实例拿（外层通常已算好）
@@ -3593,7 +3593,7 @@ class MulimgViewer (MulimgViewerGui):
 
         # 两个都没有
         return new_path, False, i
-    
+
     def _collect_missing_targets(self, batch_start: int, batch_end: int):
         missing = []
         frame_cache_dirs = list(getattr(self, "frame_cache_dir", []) or [])

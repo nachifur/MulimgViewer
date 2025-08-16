@@ -26,6 +26,7 @@ class ImgData():
             if self.video_mode:
                 self.img_num_list = self.calc_max_extractable_frames(self.video_path,skip=self.skip)
                 self.img_num = sum(self.img_num_list)
+                print(f"img_num:{self.img_num}")
             else:
                 list_ = []
                 for name_list in self.name_list:
@@ -35,6 +36,7 @@ class ImgData():
             if self.video_mode:
                 self.img_num_list = self.calc_max_extractable_frames(self.video_path,skip=self.skip)
                 self.img_num = max(self.img_num_list)
+                print(f"img_num:{self.img_num}")
             else:
                 self.img_num = len(self.name_list)
         # self.set_count_per_action(1)
@@ -80,26 +82,96 @@ class ImgData():
             self.path_list = []
             self.name_list = []
 
+    import math  # 确保在文件顶部
+
     def video_name_list(self):
+        """
+        生成各视频在 UI/展示用的文件名列表，名称格式为:
+        {sec}s_frame_{k}.png
+        其中：
+        - sec 为物理时间（考虑了 skip），保留两位小数并去掉末尾 0/点；
+        - k 为该秒内第几帧，范围 1..fps_int；
+        - 仅生成 .png；
+        - 若多视频长度不一致，短的用“最后一帧的名称”补齐到最长；
+        - fps 直接来自 self.video_fps_list[vidx]；
+        - 间隔帧数 skip 来自 self.skip_frames（物理帧 = 逻辑帧 * (skip+1)）。
+        """
+        # 各视频逻辑帧数
+        img_num_list = list(getattr(self, "img_num_list", []) or [])
+        if not img_num_list:
+            return []
+
+        # 直接用 self.video_fps_list
+        fps_list = list(getattr(self, "video_fps_list", []) or [])
+        if len(fps_list) < len(img_num_list):
+            raise RuntimeError(f"[video_name_list] fps 列表长度不足：需要 {len(img_num_list)} 个，实际 {len(fps_list)}")
+
+        # 读取 skip（间隔帧），物理帧 = 逻辑帧 * step
+        try:
+            step = int(getattr(self, "skip", 0)) + 1
+        except Exception:
+            step = 1
+        if step < 1:
+            step = 1
+
+        # 需要补齐到的最大长度（兼容 self.img_num）
+        try:
+            max_len = max(int(x) for x in img_num_list) if img_num_list else 0
+        except Exception:
+            max_len = 0
+        if hasattr(self, "img_num"):
+            try:
+                max_len = max(max_len, int(self.img_num))
+            except Exception:
+                pass
+
         name_list = []
-        for img_count in self.img_num_list:
-            one_list = [f"{i}.png" for i in range(img_count)]
-            # 补充：将最后一帧重复填充到最大长度
-            if img_count < self.img_num:
-                one_list += [f"{img_count - 1}.png"] * (self.img_num - img_count)
-            name_list.append(one_list)
+        for vidx, n in enumerate(img_num_list):
+            # 校验 fps
+            fps_raw = fps_list[vidx]
+            try:
+                fps = float(fps_raw)
+                if not math.isfinite(fps) or fps <= 0:
+                    raise ValueError
+            except Exception:
+                raise RuntimeError(f"[video_name_list] 无效的 fps: video[{vidx}] -> {fps_raw}")
 
-        # 如果只有一个元素，返回一维列表
-        if len(name_list) == 1:
-            return name_list[0]
-        return name_list
+            # 用整数 fps 来计算帧号 k，避免浮点误差
+            fps_int = max(1, int(round(fps)))
 
+            # 逻辑帧数
+            try:
+                n = int(n) if n is not None else 0
+            except Exception:
+                n = 0
+
+            one = []
+            for i in range(max(n, 0)):
+                # 物理帧号（考虑 skip）
+                phys_idx = i * step
+
+                # 物理时间（秒）：用浮点 fps 更准确
+                t = phys_idx / fps
+                sec_str = f"{round(t, 2):.2f}".rstrip("0").rstrip(".") or "0"
+
+                # 该秒内第几帧（1..fps_int）
+                k = (phys_idx % fps_int) + 1
+                one.append(f"{sec_str}s_frame_{k}.png")
+
+            # 补齐：重复最后一帧名称；若视频无帧，用 0s_frame_1.png
+            last_name = one[-1] if one else "0s_frame_1.png"
+            pad = max(0, max_len - n)
+            if pad:
+                one.extend([last_name] * pad)
+
+            name_list.append(one)
+
+        # 单视频保持旧行为：返回一维列表
+        return name_list[0] if len(name_list) == 1 else name_list
 
     def update_state(self, path, mode):
         self.video_path = path
         self.video_mode = mode
-
-
 
     def get_path_list_from_lf(self):
         format_group = [".png", ".jpg", ".jpeg", ".bmp", ".tif", ".tiff"]
@@ -258,7 +330,6 @@ class ImgData():
                                 flist.append(str(Path(self.path_list[i]) / self.name_list[i][-1]))
 
             elif self.type == 2:
-                self.name_list = sorted(self.name_list, key=lambda x: int(x.split('.')[0]))
                 # one_dir_mul_img
                 try:
                     flist = [str(Path(self.path_list[0])/self.name_list[i])
@@ -339,53 +410,67 @@ class ImgData():
         - video_path: str 或 list[str]
         - skip: 跳过的帧数（>=0），步长 = skip + 1
         - return_fps: 若为 True，则返回 (counts, fps_list)
-        返回：
-        - 默认：list[int]  （各视频可见帧数）
-        - return_fps=True： (list[int], list[float|None])
-        同时会写入：
-        - self.video_fps_list: 与输入顺序对应的 fps 列表
-        - self.video_fps_by_path: {path: fps}
+        同时写入：
+        - self.video_fps_list, self.video_fps_by_path
         """
-        # 统一成列表
-        paths = [video_path] if isinstance(video_path, str) else list(video_path)
+        import cv2, os
+        import numpy as np
 
-        # 规范化 skip，计算步长
+        paths = [video_path] if isinstance(video_path, str) else list(video_path)
         s = int(skip) if isinstance(skip, int) and skip >= 0 else 0
-        step = s + 1  # 采样步长
+        step = s + 1
 
         counts, fps_list = [], []
 
         for p in paths:
             cap = cv2.VideoCapture(p)
             if not cap.isOpened():
-                counts.append(0)
-                fps_list.append(None)
-                continue
+                counts.append(0); fps_list.append(None); continue
 
-            # 总帧数
+            # 1) 名义总帧
             total = int(cap.get(cv2.CAP_PROP_FRAME_COUNT) or 0)
             if total <= 0:
-                cap.set(cv2.CAP_PROP_POS_AVI_RATIO, 1)
-                total = int(cap.get(cv2.CAP_PROP_POS_FRAMES) or 0)
+                # 旧容器兜底
+                try:
+                    cap.set(cv2.CAP_PROP_POS_AVI_RATIO, 1)
+                    total = int(cap.get(cv2.CAP_PROP_POS_FRAMES) or 0)
+                except Exception:
+                    total = 0
 
-            # FPS
+            # 2) 尾部校正：向后回退最多 3 帧，找到最后“可读”的 k
+            safe_total = total
+            if total > 0:
+                try:
+                    for back in range(0, 3):  # 回看末尾 0/1/2 帧
+                        k = total - 1 - back
+                        if k < 0: break
+                        cap.set(cv2.CAP_PROP_POS_FRAMES, int(k))
+                        ok, frame = cap.read()
+                        if ok and frame is not None and getattr(frame, "size", 0) > 0:
+                            safe_total = k + 1
+                            break
+                    else:
+                        # 尾部都读不到，整个视频可能只有 total-3 之前可用
+                        safe_total = max(0, total - 3)
+                except Exception:
+                    pass
+
+            total = max(0, safe_total)
+
+            # 3) FPS
             fps = cap.get(cv2.CAP_PROP_FPS)
-            try:
-                fps = float(fps)
-            except Exception:
-                fps = 0.0
-            # 某些容器会返回 0/NaN，给个保底
-            if not fps or fps != fps or fps < 1e-6:
-                fps = 30.0  # 你也可以换成 None，看你后续怎么用
+            try: fps = float(fps)
+            except Exception: fps = 0.0
+            if not fps or (fps != fps) or fps < 1e-6:
+                fps = 30.0  # 维持你原来的命名依赖；若不想“假 fps”，可改为 None，但要同步改写盘逻辑
 
             cap.release()
 
-            # 可见帧数：ceil(total/step)
-            viewable = (max(total, 0) + step - 1) // step
+            # 4) 采样后可见帧数（从 0 开始，range(0, total, step) 的项数）
+            viewable = (total + step - 1) // step  # = ceil(total/step)
             counts.append(viewable)
             fps_list.append(fps)
 
-        # 持久化到实例，便于后续查
         self.video_fps_list = fps_list
         self.video_fps_by_path = {p: fps_list[i] for i, p in enumerate(paths)}
 

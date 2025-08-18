@@ -26,7 +26,6 @@ class ImgData():
             if self.video_mode:
                 self.img_num_list = self.calc_max_extractable_frames(self.video_path,skip=self.skip)
                 self.img_num = sum(self.img_num_list)
-                print(f"img_num:{self.img_num}")
             else:
                 list_ = []
                 for name_list in self.name_list:
@@ -36,7 +35,6 @@ class ImgData():
             if self.video_mode:
                 self.img_num_list = self.calc_max_extractable_frames(self.video_path,skip=self.skip)
                 self.img_num = max(self.img_num_list)
-                print(f"img_num:{self.img_num}")
             else:
                 self.img_num = len(self.name_list)
         # self.set_count_per_action(1)

@@ -8,6 +8,7 @@ import atexit
 import signal
 import re
 import math
+from collections import OrderedDict
 
 import numpy as np
 import wx
@@ -114,12 +115,24 @@ class MulimgViewer (MulimgViewerGui):
         self.SashPosition = self.width-self.width_setting
         self.m_splitter1.SetSashPosition(self.SashPosition)
         self.split_changing = False
-        self.cache_gen = 0   # 导航“世代”号，用来淘汰过期等待任务
+        self.cache_gen = 0   
         self.width_setting_ = self.width_setting
         self.thread = 4
         self.cache_num = 2
         self.play_direction = +1   # +1 正向；-1 反向
         self.frame_cache_dir = []
+        self._stitch_enabled = True                 
+        self._stitch_gen = 0                        
+        self._stitch_cache = OrderedDict()          
+        self._stitch_cache_cap = 12                 
+        self._stitch_inflight = set()               
+        self._stitch_prefetch_radius_fwd = 4        
+        self._stitch_prefetch_radius_back = 2       
+        self._stitch_executor = ThreadPoolExecutor(max_workers=2)   
+        self._stitch_lock = threading.Lock()        
+        self._stitch_stats_hit = 0                  
+        self._stitch_stats_miss = 0                
+        self._last_stitch_fingerprint = None        
         self.play_timer = wx.Timer(self)
         self.Bind(wx.EVT_TIMER, self.on_play_timer, self.play_timer)
         self.total_frames = 0
@@ -312,6 +325,11 @@ class MulimgViewer (MulimgViewerGui):
             if hasattr(self, "executor") and self.executor:
                 self.executor.shutdown(wait=False, cancel_futures=True)
         except: pass
+
+        try:
+            self._stitch_executor.shutdown(wait=False, cancel_futures=True)
+        except Exception:
+            pass
 
         # 4) 关掉子窗口（如果可能还开着）
         try:
@@ -2184,7 +2202,14 @@ class MulimgViewer (MulimgViewerGui):
     #         (self.layout_params_old[19]  != self.ImgManager.layout_params[19]):
     #             action_count = self.ImgManager.action_count
     #             if self.ImgManager.type in (0, 1):
-    #                 parallel_to_sequential = self.parallel_to_sequential.Value
+    #                 try:
+    #                     parallel_to_sequential = bool(self.parallel_to_sequential.Value)
+    #                 except Exception:
+    #                     # 有些界面控件名是 parallel_sequential（老版本）
+    #                     try:
+    #                         parallel_to_sequential = bool(self.parallel_sequential.Value)
+    #                     except Exception:
+    #                         parallel_to_sequential = False
     #             else:
     #                 parallel_to_sequential = False
     #             if not self.video_mode:
@@ -2238,13 +2263,13 @@ class MulimgViewer (MulimgViewerGui):
     #         # —— 将 PIL 转成 wx.Bitmap（一次性换图，避免先白后画）——
     #         wxbmp = self.ImgManager.ImgF.PIL2wx(pil_img)
 
-    #         # ====== 仅此处改动：给像素探针留源，不再把 show_bmp_in_panel 置 None ======
+    #         # ===== 关键修补：保证像素探针有源 =====
     #         try:
     #             if getattr(self, "keep_pil_buffer", False):
-    #                 # 保持旧语义：需要长期缓存就直接保留原图（不关闭句柄）
+    #                 # 需要长期缓存：保留原图作为像素源
     #                 self.show_bmp_in_panel = pil_img
     #             else:
-    #                 # 默认：拷贝一份给 getpixel 用，然后关闭原句柄，省资源
+    #                 # 默认：复制一份给 getpixel，再关闭原句柄以省资源
     #                 self.show_bmp_in_panel = pil_img.copy()
     #                 try:
     #                     pil_img.close()
@@ -2253,7 +2278,7 @@ class MulimgViewer (MulimgViewerGui):
     #         except Exception:
     #             # 极端兜底：至少别设成 None，避免取像素崩
     #             self.show_bmp_in_panel = pil_img
-    #         # ====== 改动结束 ======
+    #         # ===== 修补结束 =====
 
     #         # 懒创建 StaticBitmap + 只绑定一次事件
     #         need_create = False
@@ -2308,21 +2333,41 @@ class MulimgViewer (MulimgViewerGui):
     #         except Exception:
     #             pass
 
-    #     # ===== 状态栏 =====
-    #     if self.ImgManager.type == 2 or (self.ImgManager.type in (0, 1) and self.parallel_sequential.Value):
+    #     # ===== 状态栏（带上界夹紧，避免 IndexError） =====
+    #     try:
+    #         par_seq_flag = bool(self.parallel_sequential.Value)
+    #     except Exception:
+    #         try:
+    #             par_seq_flag = bool(self.parallel_to_sequential.Value)
+    #         except Exception:
+    #             par_seq_flag = False
+
+    #     nl = getattr(self.ImgManager, "name_list", [])
+    #     n  = len(nl)
+    #     img_count = int(getattr(self.ImgManager, "img_count", 0) or 0)
+    #     cpa = int(getattr(self.ImgManager, "count_per_action", 1) or 1)
+    #     if n > 0:
+    #         start_idx = max(0, min(img_count, n - 1))
+    #         end_idx   = max(start_idx, min(n - 1, start_idx + cpa - 1))
+    #         left_name  = nl[start_idx]
+    #         right_name = nl[end_idx]
+    #     else:
+    #         left_name = right_name = ""
+
+    #     if self.ImgManager.type == 2 or (self.ImgManager.type in (0, 1) and par_seq_flag):
     #         try:
     #             self.SetStatusText_(["-1",
     #                                 f"{self.ImgManager.action_count}/{self.ImgManager.get_dir_num()} dir",
     #                                 f"{self.ImgManager.img_resolution[0]}x{self.ImgManager.img_resolution[1]} pixels / "
-    #                                 f"{self.ImgManager.name_list[self.ImgManager.img_count]}-"
-    #                                 f"{self.ImgManager.name_list[self.ImgManager.img_count+self.ImgManager.count_per_action-1]}",
+    #                                 f"{left_name}-{right_name}",
     #                                 "-1"])
     #         except Exception:
+    #             # 极端兜底
+    #             last_idx = max(0, n - 1)
     #             self.SetStatusText_(["-1",
     #                                 f"{self.ImgManager.action_count}/{self.ImgManager.get_dir_num()} dir",
     #                                 f"{self.ImgManager.img_resolution[0]}x{self.ImgManager.img_resolution[1]} pixels / "
-    #                                 f"{self.ImgManager.name_list[self.ImgManager.img_count]}-"
-    #                                 f"{self.ImgManager.name_list[self.ImgManager.img_num-1]}",
+    #                                 f"{nl[start_idx] if n else ''}-{nl[last_idx] if n else ''}",
     #                                 "-1"])
     #     else:
     #         self.SetStatusText_(["-1",
@@ -2350,8 +2395,15 @@ class MulimgViewer (MulimgViewerGui):
     #     self.SetStatusText_(["Stitch", "-1", "-1", "-1"])
 
     def show_img(self):
-        # 一次性初始化：关闭擦背景/开双缓冲
+    # 一次性初始化：关闭擦背景/开双缓冲
         self._setup_img_panel()
+
+        # （可选）指纹检测：外部若实现了就用，没有就跳过
+        try:
+            if hasattr(self, "_maybe_bump_by_fingerprint"):
+                self._maybe_bump_by_fingerprint("show_img")
+        except Exception:
+            pass
 
         # 若用户勾选自定义处理且没路径，先补齐
         if getattr(self, "show_custom_func", None) and self.show_custom_func.Value and self.out_path_str == "":
@@ -2384,6 +2436,13 @@ class MulimgViewer (MulimgViewerGui):
                 self.ImgManager.set_action_count(action_count)
                 if getattr(self, "index_table_gui", None):
                     self.index_table_gui.show_id_table(self.ImgManager.name_list, self.ImgManager.layout_params)
+
+                # （可选）布局变化后 bump 代数：外部若实现了就用
+                try:
+                    if hasattr(self, "_bump_stitch_gen"):
+                        self._bump_stitch_gen("layout changed")
+                except Exception:
+                    pass
         except Exception:
             pass
 
@@ -2409,23 +2468,106 @@ class MulimgViewer (MulimgViewerGui):
 
         # ======= 只调用一次 stitch_images（根据开关设置 layout_params[32]）=======
         do_custom = bool(getattr(self, "show_custom_func", None) and self.show_custom_func.Value)
-        try:
-            prev_custom_flag = self.ImgManager.layout_params[32]
-        except Exception:
-            prev_custom_flag = False
-        self.ImgManager.layout_params[32] = do_custom
-        flag = self.ImgManager.stitch_images(0, copy.deepcopy(self.xy_magnifier))
-        self.ImgManager.layout_params[32] = prev_custom_flag
 
-        if flag == 0:
-            # 生成 PIL 图（包括自定义叠加）
-            pil_img = self.ImgManager.show_stitch_img_and_customfunc_img(do_custom)
+        # 当前批次 index（用于缓存 key）
+        try:
+            cur_idx = int(getattr(self.ImgManager, "action_count", 0) or 0)
+        except Exception:
+            cur_idx = 0
+
+        # 放大镜/自定义相关的“指纹”
+        try:
+            if hasattr(self, "_magnifier_fingerprint"):
+                magnifier_fpr = self._magnifier_fingerprint()
+            else:
+                # 无工具函数时的兜底：用对象 repr/拷贝来区分
+                magnifier_fpr = repr(getattr(self, "xy_magnifier", None))
+        except Exception:
+            magnifier_fpr = "NA"
+
+        # 构建缓存 key（无工具函数时用简单 tuple 作为 key）
+        try:
+            gen_for_key = int(getattr(self, "_stitch_gen", 0))
+        except Exception:
+            gen_for_key = 0
+        if hasattr(self, "_stitch_key"):
+            try:
+                key = self._stitch_key(gen_for_key, cur_idx, do_custom, magnifier_fpr)
+            except Exception:
+                key = (gen_for_key, cur_idx, int(do_custom), magnifier_fpr)
+        else:
+            key = (gen_for_key, cur_idx, int(do_custom), magnifier_fpr)
+
+        # —— 优先尝试缓存 —— #
+        pil_img = None
+        cache_hit = False
+        flag = 0  # 兼容后面的状态栏逻辑：命中缓存等同于 flag==0 成功
+        try:
+            stitch_enabled = bool(getattr(self, "_stitch_enabled", True))
+        except Exception:
+            stitch_enabled = True
+
+        if getattr(self, "video_mode", False) and stitch_enabled:
+            try:
+                if hasattr(self, "_stitch_cache_get"):
+                    cached = self._stitch_cache_get(key)
+                else:
+                    cache = getattr(self, "_stitch_cache", None)
+                    if cache is None:
+                        cache = {}
+                        setattr(self, "_stitch_cache", cache)
+                    cached = cache.get(key)
+                if cached is not None:
+                    cache_hit = True
+                    pil_img = cached.copy()
+                    try:
+                        self._stitch_stats_hit += 1
+                    except Exception:
+                        pass
+                    # print(f"[cache] hit batch={cur_idx}")
+            except Exception:
+                pass
+
+        # —— miss：走原有 stitch 路径 —— #
+        if not cache_hit:
+            try:
+                self._stitch_stats_miss += 1
+            except Exception:
+                pass
+
+            try:
+                prev_custom_flag = self.ImgManager.layout_params[32]
+            except Exception:
+                prev_custom_flag = False
+            self.ImgManager.layout_params[32] = do_custom
+            flag = self.ImgManager.stitch_images(0, copy.deepcopy(self.xy_magnifier))
+            self.ImgManager.layout_params[32] = prev_custom_flag
+
+            if flag == 0:
+                # 生成 PIL 图（包括自定义叠加）
+                pil_img = self.ImgManager.show_stitch_img_and_customfunc_img(do_custom)
+                # 仅视频模式下把结果写入缓存（如果启用）
+                if getattr(self, "video_mode", False) and stitch_enabled and pil_img is not None:
+                    try:
+                        if hasattr(self, "_stitch_cache_put"):
+                            self._stitch_cache_put(key, pil_img.copy())
+                        else:
+                            cache = getattr(self, "_stitch_cache", None)
+                            if cache is None:
+                                cache = {}
+                                setattr(self, "_stitch_cache", cache)
+                            cache[key] = pil_img.copy()
+                    except Exception:
+                        pass
+
+        # —— 若有图，继续你的 wx 显示流程 —— #
+        if pil_img is not None:
             self.img_size = pil_img.size
 
-            # —— 将 PIL 转成 wx.Bitmap（一次性换图，避免先白后画）——
+            # 将 PIL 转成 wx.Bitmap（一次性换图，避免先白后画）
             wxbmp = self.ImgManager.ImgF.PIL2wx(pil_img)
 
-            # ===== 关键修补：保证像素探针有源 =====
+            # 保证像素探针有源
             try:
                 if getattr(self, "keep_pil_buffer", False):
                     # 需要长期缓存：保留原图作为像素源
@@ -2440,7 +2582,6 @@ class MulimgViewer (MulimgViewerGui):
             except Exception:
                 # 极端兜底：至少别设成 None，避免取像素崩
                 self.show_bmp_in_panel = pil_img
-            # ===== 修补结束 =====
 
             # 懒创建 StaticBitmap + 只绑定一次事件
             need_create = False
@@ -2476,7 +2617,7 @@ class MulimgViewer (MulimgViewerGui):
                 finally:
                     self.img_panel.Thaw()
 
-            # —— 仅在尺寸变化时变更最小尺寸 + 轻量布局 —— 
+            # 仅在尺寸变化时变更最小尺寸 + 轻量布局
             desired = wx.Size(self.img_size[0], self.img_size[1])
             if desired != getattr(self, "_last_img_min_size", None):
                 try:
@@ -2551,6 +2692,16 @@ class MulimgViewer (MulimgViewerGui):
             if getattr(self, "_last_auto_layout_size", None) != getattr(self, "_last_img_min_size", None):
                 self.auto_layout()
                 self._last_auto_layout_size = getattr(self, "_last_img_min_size", None)
+        except Exception:
+            pass
+
+        # 展示后：按播放方向触发后台预取（若外部实现）
+        try:
+            direction = +1
+            if getattr(self, "is_playing", False):
+                direction = +1 if int(getattr(self, "play_direction", +1)) >= 0 else -1
+            if hasattr(self, "_schedule_prefetch"):
+                self._schedule_prefetch(cur_idx, playing=bool(getattr(self, "is_playing", False)), direction=direction)
         except Exception:
             pass
 
@@ -4466,6 +4617,238 @@ class MulimgViewer (MulimgViewerGui):
             pass
         print(f"[imwrite] ERR replace_fail | path={new_path}")
         raise RuntimeError(f"[imwrite_atomic] 原子替换失败：{new_path}")
+    
+        # ========== 预取工具 ==========
+    def _stitch_key(self, gen, idx, do_custom, magnifier_fpr):
+        # 注意：magnifier_fpr 需要可哈希（见 _magnifier_fingerprint）
+        return (int(gen), int(idx), bool(do_custom), magnifier_fpr)
+
+    def _magnifier_fingerprint(self):
+        try:
+            # 你的 magnifier 是个 list/dict？做个稳定可哈希指纹
+            # 常见是 [x, y, r, ...] -> 转 tuple；若是 None 就给 None
+            xm = getattr(self, "xy_magnifier", None)
+            if xm is None:
+                return None
+            # 深拷并转 tuple
+            return tuple(copy.deepcopy(xm))
+        except Exception:
+            return None
+
+    def _current_stitch_fingerprint(self):
+        """
+        用于判断是否 bump generation：把影响拼接结果的关键参数糅合成一个指纹。
+        你可以按需增减字段；越保守越安全（宁可多 bump，不能用旧图）。
+        """
+        try:
+            layout = tuple(copy.deepcopy(self.ImgManager.layout_params))
+        except Exception:
+            layout = None
+        do_custom = bool(getattr(self, "show_custom_func", None) and self.show_custom_func.Value)
+        cpa = int(getattr(self, "count_per_action", getattr(self.ImgManager, "count_per_action", 1)) or 1)
+        p2s = False
+        try:
+            if hasattr(self, "parallel_to_sequential"):
+                p2s = bool(self.parallel_to_sequential.Value)
+        except Exception:
+            pass
+        magnifier_fpr = self._magnifier_fingerprint()
+        # 还可以加上 ImgManager.type、视频/图片模式等
+        return (layout, do_custom, cpa, p2s, magnifier_fpr, int(getattr(self, "video_mode", False)))
+
+    def _bump_stitch_gen(self, reason=""):
+        """设置变化后 bump 代次，并清空缓存/队列。"""
+        try:
+            self._stitch_gen += 1
+            self._stitch_cache.clear()
+            self._stitch_inflight.clear()
+        except Exception as e:
+            print("[stitch-gen] bump error:", e)
+
+    def _stitch_cache_get(self, key):
+        img = self._stitch_cache.get(key)
+        if img is not None:
+            # LRU：移动到末尾
+            self._stitch_cache.move_to_end(key, last=True)
+        return img
+
+    def _stitch_cache_put(self, key, pil_img):
+        # LRU：放入并裁旧
+        self._stitch_cache[key] = pil_img
+        self._stitch_cache.move_to_end(key, last=True)
+        while len(self._stitch_cache) > int(self._stitch_cache_cap):
+            self._stitch_cache.popitem(last=False)
+
+    def _schedule_prefetch(self, center_idx, playing=False, direction=+1):
+        """在当前批展示后触发：沿播放方向 + 少量反方向预取。仅视频模式启用。"""
+        if not getattr(self, "video_mode", False):
+            return
+        if not self._stitch_enabled:
+            return
+        try:
+            maxn = int(getattr(self.ImgManager, "max_action_num", 1))
+            if maxn <= 1:
+                return
+            gen = int(self._stitch_gen)
+            do_custom = bool(getattr(self, "show_custom_func", None) and self.show_custom_func.Value)
+            magnifier_fpr = self._magnifier_fingerprint()
+
+            # 构造目标索引列表
+            want = []
+
+            # 主方向
+            fwd_r = int(self._stitch_prefetch_radius_fwd)
+            sign = +1 if direction >= 0 else -1
+            for k in range(1, fwd_r + 1):
+                i = center_idx + sign * k
+                if 0 <= i < maxn:
+                    want.append(i)
+
+            # 反方向少量
+            back_r = int(self._stitch_prefetch_radius_back)
+            for k in range(1, back_r + 1):
+                i = center_idx - sign * k
+                if 0 <= i < maxn:
+                    want.append(i)
+
+            # 去重并提交
+            for idx in want:
+                key = self._stitch_key(gen, idx, do_custom, magnifier_fpr)
+                if key in self._stitch_inflight:
+                    continue
+                if self._stitch_cache_get(key) is not None:
+                    continue
+                self._stitch_inflight.add(key)
+                try:
+                    self._stitch_executor.submit(self._prefetch_task, gen, idx, do_custom, magnifier_fpr, key)
+                except Exception as e:
+                    print("[prefetch] submit error:", e)
+                    try:
+                        self._stitch_inflight.discard(key)
+                    except Exception:
+                        pass
+        except Exception as e:
+            print("[prefetch] schedule error:", e)
+
+    def _prefetch_task(self, gen, idx, do_custom, magnifier_fpr, key):
+        """后台计算某批次的拼接并入缓存。严禁触碰 wx；允许轻量日志。"""
+        # 版本变化/禁用时丢弃
+        if gen != self._stitch_gen or not self._stitch_enabled:
+            self._stitch_inflight.discard(key)
+            return
+
+        # 已有缓存就不算
+        if self._stitch_cache_get(key) is not None:
+            self._stitch_inflight.discard(key)
+            return
+
+        # 尝试非阻塞拿锁，避免卡 UI；拿不到就放弃这次（下次展示会再调度）
+        got = self._stitch_lock.acquire(blocking=False)
+        if not got:
+            self._stitch_inflight.discard(key)
+            return
+
+        prev_action = None
+        prev_custom = None
+        pil_img = None
+        try:
+            # 检查版本是否仍然有效
+            if gen != self._stitch_gen:
+                return
+
+            # —— 切换到目标批次（记录后恢复）——
+            try:
+                prev_action = int(getattr(self.ImgManager, "action_count", 0))
+            except Exception:
+                prev_action = None
+            try:
+                if hasattr(self.ImgManager, "set_action_count"):
+                    self.ImgManager.set_action_count(int(idx))
+                else:
+                    self.ImgManager.action_count = int(idx)
+                    try:
+                        cpa = int(getattr(self.ImgManager, "count_per_action", 1) or 1)
+                        self.ImgManager.img_count = int(idx) * cpa
+                    except Exception:
+                        pass
+            except Exception as e:
+                print("[prefetch] set_action_count warn:", e)
+                return
+
+            # 文件列表（轻量）
+            try:
+                self.ImgManager.get_flist()
+            except Exception:
+                pass
+
+            # —— 一次性设置自定义叠加标志并恢复 —— 
+            prev_custom = None
+            try:
+                prev_custom = self.ImgManager.layout_params[32]
+                self.ImgManager.layout_params[32] = bool(do_custom)
+            except Exception:
+                pass
+
+            # 真计算（和 show_img 同步的参数）
+            flag = self.ImgManager.stitch_images(0, copy.deepcopy(getattr(self, "xy_magnifier", None)))
+            # 恢复自定义标志
+            try:
+                if prev_custom is not None:
+                    self.ImgManager.layout_params[32] = prev_custom
+            except Exception:
+                pass
+
+            if flag != 0:
+                # 资源未就绪/异常，跳过。等解冻/下次调度
+                return
+
+            # 生成 PIL 图（包括自定义叠加）
+            pil_img = self.ImgManager.show_stitch_img_and_customfunc_img(bool(do_custom))
+
+        except Exception as e:
+            print(f"[prefetch] batch={idx} error:", e)
+            pil_img = None
+        finally:
+            # 恢复 action_count
+            try:
+                if prev_action is not None:
+                    if hasattr(self.ImgManager, "set_action_count"):
+                        self.ImgManager.set_action_count(int(prev_action))
+                    else:
+                        self.ImgManager.action_count = int(prev_action)
+                        try:
+                            cpa = int(getattr(self.ImgManager, "count_per_action", 1) or 1)
+                            self.ImgManager.img_count = int(prev_action) * cpa
+                        except Exception:
+                            pass
+            except Exception:
+                pass
+            try:
+                self._stitch_lock.release()
+            except Exception:
+                pass
+
+        # 入缓存
+        try:
+            if (gen == self._stitch_gen) and (pil_img is not None):
+                self._stitch_cache_put(key, pil_img)
+        except Exception as e:
+            print("[prefetch] cache put error:", e)
+        finally:
+            try:
+                self._stitch_inflight.discard(key)
+            except Exception:
+                pass
+
+    def _maybe_bump_by_fingerprint(self, reason=""):
+        """在 show_img 前后调用：指纹变化则 bump 代次。"""
+        try:
+            fp = self._current_stitch_fingerprint()
+            if fp != self._last_stitch_fingerprint:
+                self._last_stitch_fingerprint = fp
+                self._bump_stitch_gen(reason or "fingerprint change")
+        except Exception:
+            pass
 
 TEMP_DIR = "video_frames"  # 你临时生成内容的目录路径（可以修改）
 

@@ -58,10 +58,10 @@ class MulimgViewer (MulimgViewerGui):
         self.img_size = [-1, -1]
         self.width = 1000
         self.height = 600
-        self._cache_name_lock   = threading.Lock()  
-        self._cache_name_counts = {}               
-        self._cache_name_used   = set()            
-        self._video2cache       = {}               
+        self._cache_name_lock   = threading.Lock()
+        self._cache_name_counts = {}
+        self._cache_name_used   = set()
+        self._video2cache       = {}
         self._cache_fps_map     = {}
         self.video_fps_list = []
         self.start_flag = 0
@@ -115,24 +115,24 @@ class MulimgViewer (MulimgViewerGui):
         self.SashPosition = self.width-self.width_setting
         self.m_splitter1.SetSashPosition(self.SashPosition)
         self.split_changing = False
-        self.cache_gen = 0   
+        self.cache_gen = 0
         self.width_setting_ = self.width_setting
         self.thread = 4
         self.cache_num = 2
         self.play_direction = +1   # +1 正向；-1 反向
         self.frame_cache_dir = []
-        self._stitch_enabled = True                 
-        self._stitch_gen = 0                        
-        self._stitch_cache = OrderedDict()          
-        self._stitch_cache_cap = 12                 
-        self._stitch_inflight = set()               
-        self._stitch_prefetch_radius_fwd = 4        
-        self._stitch_prefetch_radius_back = 2       
-        self._stitch_executor = ThreadPoolExecutor(max_workers=2)   
-        self._stitch_lock = threading.Lock()        
-        self._stitch_stats_hit = 0                  
-        self._stitch_stats_miss = 0                
-        self._last_stitch_fingerprint = None        
+        self._stitch_enabled = True
+        self._stitch_gen = 0
+        self._stitch_cache = OrderedDict()
+        self._stitch_cache_cap = 12
+        self._stitch_inflight = set()
+        self._stitch_prefetch_radius_fwd = 4
+        self._stitch_prefetch_radius_back = 2
+        self._stitch_executor = ThreadPoolExecutor(max_workers=2)
+        self._stitch_lock = threading.Lock()
+        self._stitch_stats_hit = 0
+        self._stitch_stats_miss = 0
+        self._last_stitch_fingerprint = None
         self.play_timer = wx.Timer(self)
         self.Bind(wx.EVT_TIMER, self.on_play_timer, self.play_timer)
         self.total_frames = 0
@@ -662,7 +662,7 @@ class MulimgViewer (MulimgViewerGui):
         if self.ImgManager.img_num == 0:
             self.SetStatusText_(["-1", "", "***Error: First, need to select the input dir***", "-1"])
             return
-        
+
         try:
             target = int(self.slider_img.GetValue())
         except Exception:
@@ -2314,7 +2314,7 @@ class MulimgViewer (MulimgViewerGui):
     #             finally:
     #                 self.img_panel.Thaw()
 
-    #         # —— 仅在尺寸变化时变更最小尺寸 + 轻量布局 —— 
+    #         # —— 仅在尺寸变化时变更最小尺寸 + 轻量布局 ——
     #         desired = wx.Size(self.img_size[0], self.img_size[1])
     #         if desired != getattr(self, "_last_img_min_size", None):
     #             try:
@@ -3231,7 +3231,7 @@ class MulimgViewer (MulimgViewerGui):
         return product
 
         # 2. 事件处理函数
-    
+
     def on_interval_changed(self, event):
         val = self.m_textCtrl28.GetValue()
         try:
@@ -4197,7 +4197,7 @@ class MulimgViewer (MulimgViewerGui):
         s = max(0, int(batch_start))
         e = min(int(batch_end), max(0, n))  # 注意：开区间
 
-        # —— 生成 [s, e) 的“应当存在”的名字集合 —— 
+        # —— 生成 [s, e) 的“应当存在”的名字集合 ——
         expected_by_idx = {}
         allowed_names = set()
         for i in range(s, e):
@@ -4213,7 +4213,7 @@ class MulimgViewer (MulimgViewerGui):
                 expected_by_idx[i].add(old_name)
                 allowed_names.add(old_name)
 
-        # —— 遍历目录并删除“属于当前批次但不在 allowed 的文件” —— 
+        # —— 遍历目录并删除“属于当前批次但不在 allowed 的文件” ——
         pat_new = re.compile(r'^(\d+(?:\.\d+)?)s_frame_(\d+)\.(?:png|jpg|jpeg)$', re.I)
         pat_old = re.compile(r'^(\d+)\.(?:png|jpg|jpeg)$', re.I)
 
@@ -4263,7 +4263,7 @@ class MulimgViewer (MulimgViewerGui):
                     phys_base = int(round(sec * fps))
                     matched = False
                     for phys in (phys_base - 1, phys_base, phys_base + 1):
-                        if phys < 0: 
+                        if phys < 0:
                             continue
                         if (phys % fps_int) + 1 != kfile:
                             continue
@@ -4286,7 +4286,7 @@ class MulimgViewer (MulimgViewerGui):
             print(f"[purge] list fail: {e1!r}")
         return removed
 
-    def _expected_path_for_idx(self, cache_dir, video_idx, idx):        
+    def _expected_path_for_idx(self, cache_dir, video_idx, idx):
         # ---------- 1) 取该视频的逻辑长度 n ----------
         n = 0
         # 优先从实例拿（外层通常已算好）
@@ -4400,7 +4400,7 @@ class MulimgViewer (MulimgViewerGui):
 
         # 两个都没有
         return new_path, False, i
-    
+
     def _collect_missing_targets(self, batch_start: int, batch_end: int):
         missing = []
         frame_cache_dirs = list(getattr(self, "frame_cache_dir", []) or [])
@@ -4617,7 +4617,7 @@ class MulimgViewer (MulimgViewerGui):
             pass
         print(f"[imwrite] ERR replace_fail | path={new_path}")
         raise RuntimeError(f"[imwrite_atomic] 原子替换失败：{new_path}")
-    
+
         # ========== 预取工具 ==========
     def _stitch_key(self, gen, idx, do_custom, magnifier_fpr):
         # 注意：magnifier_fpr 需要可哈希（见 _magnifier_fingerprint）
@@ -4781,7 +4781,7 @@ class MulimgViewer (MulimgViewerGui):
             except Exception:
                 pass
 
-            # —— 一次性设置自定义叠加标志并恢复 —— 
+            # —— 一次性设置自定义叠加标志并恢复 ——
             prev_custom = None
             try:
                 prev_custom = self.ImgManager.layout_params[32]

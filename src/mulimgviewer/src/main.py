@@ -127,15 +127,9 @@ class MulimgViewer (MulimgViewerGui):
         self.about_gui(None, update=True, new_version=event.GetEventArgs())
 
     def on_title_exif_changed(self, event):
-        if hasattr(self, 'ImgManager') and hasattr(self.ImgManager, 'img_list'):
-            current_img_index = getattr(self.ImgManager, 'now_num', 0)
-            if self.ImgManager.img_num > 0:
-                if current_img_index < self.ImgManager.img_num:
-                    self.ImgManager.now_num = current_img_index
-                else:
-                    self.ImgManager.now_num = 0
-                self.refresh(event)
-        super().on_title_exif_changed(event)
+        if hasattr(self, 'ImgManager') and hasattr(self.ImgManager, 'layout_params'):
+            if len(self.ImgManager.layout_params) > 17:
+                self.ImgManager.layout_params[17][11] = self.title_exif.Value
 
     def check_version(self):
         t1 = threading.Thread(target=self.run, args=())
@@ -1507,17 +1501,6 @@ class MulimgViewer (MulimgViewerGui):
         if hasattr(self.ImgManager, 'layout_params') and len(self.ImgManager.layout_params) > 17:
             if len(self.ImgManager.layout_params[17]) > 12:
                 self.ImgManager.layout_params[17][12] = self.title_show_rename.Value
-            else:
-                pass
-        else:
-            pass
-
-        if self.ImgManager.img_num != 0:
-            self.refresh(event)
-        else:
-            self.SetStatusText_(
-                ["-1", "", "***Error: First, need to select the input dir***", "-1"])
-            pass
 
     def parallel_sequential_fc(self, event):
         if self.parallel_sequential.Value:

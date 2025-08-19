@@ -715,6 +715,17 @@ class ImgManager(ImgData):
                 else:
                     return f"{decimal_value:.2f}"
 
+            elif field_name in ["GPSLatitude", "GPSLongitude"]:
+                def dms_to_str(dms):
+                    deg = dms[0][0] / dms[0][1]
+                    min_ = dms[1][0] / dms[1][1]
+                    sec = dms[2][0] / dms[2][1]
+                    return f"{deg:.0f}°{min_:.0f}'{sec:.2f}\""
+                if isinstance(value, (list, tuple)) and len(value) == 3:
+                    return dms_to_str(value)
+                else:
+                    return str(value)
+
             elif field_name == "ISOSpeedRatings":
                 return f"ISO{value}"
             elif field_name == "FocalLengthIn35mmFilm":

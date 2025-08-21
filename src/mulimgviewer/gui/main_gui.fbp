@@ -6648,7 +6648,7 @@
                                       <property name="caption"></property>
                                       <property name="caption_visible">1</property>
                                       <property name="center_pane">0</property>
-                                      <property name="checked">0</property>
+                                      <property name="checked">1</property>
                                       <property name="close_button">1</property>
                                       <property name="context_help"></property>
                                       <property name="context_menu">1</property>
@@ -6657,7 +6657,7 @@
                                       <property name="dock_fixed">0</property>
                                       <property name="docking">Left</property>
                                       <property name="drag_accept_files">0</property>
-                                      <property name="enabled">0</property>
+                                      <property name="enabled">1</property>
                                       <property name="fg"></property>
                                       <property name="floatable">1</property>
                                       <property name="font"></property>
@@ -6693,7 +6693,6 @@
                                       <property name="window_extra_style"></property>
                                       <property name="window_name"></property>
                                       <property name="window_style"></property>
-                                      <event name="OnCheckBox">title_rename_fc</event>
                                     </object>
                                   </object>
                                   <object class="sizeritem" expanded="true">
@@ -6722,7 +6721,7 @@
                                       <property name="dock_fixed">0</property>
                                       <property name="docking">Left</property>
                                       <property name="drag_accept_files">0</property>
-                                      <property name="enabled">0</property>
+                                      <property name="enabled">1</property>
                                       <property name="fg"></property>
                                       <property name="floatable">1</property>
                                       <property name="font"></property>

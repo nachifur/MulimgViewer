@@ -1512,8 +1512,7 @@ class MulimgViewer (MulimgViewerGui):
 
     def title_auto_fc(self, event):
         titles = [self.title_down_up, self.title_show_parent,
-                  self.title_show_name, self.title_show_suffix, self.title_show_prefix, self.title_position, self.title_exif,
-                  self.title_show_rename, self.title_rename_text]
+                  self.title_show_name, self.title_show_suffix, self.title_show_prefix, self.title_position, self.title_exif]
         if self.title_auto.Value:
             for title in titles:
                 title.Enabled = False

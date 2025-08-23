@@ -14,7 +14,7 @@ def _is_video(p: str) -> bool:
 # 不写入磁盘，进程结束即清空
 _SESSION_PATHS = []          # list[str]，本次会话已选的所有视频（存在才保留）
 from typing import Optional
-_SESSION_DIR: Optional[str] = None 
+_SESSION_DIR: Optional[str] = None
 
 class _FileDrop(wx.FileDropTarget):
     def __init__(self, owner):

@@ -77,7 +77,6 @@ class PathSelectFrameGui ( wx.Frame ):
 	def __del__( self ):
 		pass
 
-
 	# Virtual event handlers, override them in your derived class
 	def frame_resize( self, event ):
 		event.Skip()

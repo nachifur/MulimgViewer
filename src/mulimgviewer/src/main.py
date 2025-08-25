@@ -879,7 +879,7 @@ class MulimgViewer (MulimgViewerGui):
                 success = self.ImgManager.update_image_exif_37510(img_path, new_title)
                 if success:
                     self.ImgManager.get_img_list()
-                    self.refresh(None)
+
                     if hasattr(self, 'title_rename_text'):
                         self.title_rename_text.SetValue("")
                     self.SetStatusText_([f"已向第 {current_index+1} 张图片注入标题: {new_title}", "-1", "-1", "-1"])

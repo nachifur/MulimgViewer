@@ -18,13 +18,11 @@ from .about import About
 from .index_table import IndexTable
 from .utils import MyTestEvent, get_resource_path
 from .utils_img import ImgManager
-from .video_select_dialog import VideoSelectDialog
 import json
 import shutil
 import copy
 
 class VideoManager:
-    """管理视频相关功能，包括帧缓存、解码和帧操作。"""
     def __init__(self, cache_dir="video_frames", max_threads=4):
         self.cache_dir = Path(cache_dir)
         self.cache_dir.mkdir(parents=True, exist_ok=True)
@@ -34,8 +32,12 @@ class VideoManager:
         self._cache_name_used = set()
         self._video2cache = {}
         self._cache_fps_map = {}
+        self._cap_pool: dict[str, cv2.VideoCapture] = {}
+        self._cap_locks: dict[str, threading.Lock] = {}
+        self._cap_global_lock = threading.Lock()
 
     def init_video_frame_cache(self, input_path, num_frames=8, max_threads=4):
+        self.max_threads = int(max_threads)
         input_path = Path(input_path)
         output_list = []
 
@@ -73,18 +75,15 @@ class VideoManager:
             fps_int = max(1, int(round(fps)))
             self._cache_fps_map[str(out_dir)] = fps
 
-            # 修改保存逻辑,使用新的命名格式
             for frame_idx in range(num_frames):
                 ret, frame = cap.read()
                 if not ret:
                     break
 
-                # 缩放逻辑保持不变
                 h, w = frame.shape[:2]
                 scale = 256 / max(h, w)
                 resized = cv2.resize(frame, (int(w * scale), int(h * scale)))
 
-                # 使用新的命名格式
                 t = frame_idx / float(fps)
                 sec_str = f"{t:.2f}".rstrip("0").rstrip(".") or "0"
                 k = (frame_idx % fps_int) + 1
@@ -112,18 +111,68 @@ class VideoManager:
     def get_fps(self, cache_dir):
         return self._cache_fps_map.get(str(cache_dir), 30.0)
 
-    def save_frame(self, video_path, frame_idx, save_path, step=1):
-        cap = cv2.VideoCapture(str(video_path))
-        if not cap.isOpened():
+    def _save_frame(self, frame_idx, video_idx, save_idx):
+        video_path = self.real_video_path if isinstance(self.real_video_path, str) else self.real_video_path[video_idx]
+        cache_dir  = self.frame_cache_dir  if isinstance(self.frame_cache_dir,  str) else self.frame_cache_dir[video_idx]
+        os.makedirs(cache_dir, exist_ok=True)
+
+        cap, lock = self.video_manager.get_cap_and_lock(str(video_path))
+        with lock:
+            fps = float(cap.get(cv2.CAP_PROP_FPS) or 0.0)
+            if not (fps > 0 and np.isfinite(fps)):
+                raise ValueError(f"[save_frame] 获取 fps 失败：{video_path}")
+            if not hasattr(self, "_cache_fps_map"): self._cache_fps_map = {}
+            self._cache_fps_map[cache_dir] = fps
+
+            try:
+                step = int(self.m_textCtrl281.GetValue() or 0)
+            except Exception:
+                step = int(getattr(self, "skip_frames", 0) or 0)
+            if step < 0: step = 0
+            step += 1
+
+            src_idx = int(frame_idx) * step
+            total = int(cap.get(cv2.CAP_PROP_FRAME_COUNT) or 0)
+            if total > 0 and src_idx >= total:
+                src_idx = total - 1
+
+            cap.set(cv2.CAP_PROP_POS_FRAMES, src_idx)
+            ret, frame = cap.read()
+
+        if not ret or frame is None:
             return
-        cap.set(cv2.CAP_PROP_POS_FRAMES, frame_idx * step)
-        ret, frame = cap.read()
-        cap.release()
-        if ret:
+
+        try:
             h, w = frame.shape[:2]
             scale = 256 / max(h, w)
-            resized = cv2.resize(frame, (int(w * scale), int(h * scale)))
-            cv2.imwrite(save_path, resized)
+            frame = cv2.resize(frame, (int(w * scale), int(h * scale)))
+        except Exception:
+            pass
+
+        save_path = os.path.join(cache_dir, f"{save_idx}.png")
+        self._cv_imwrite_atomic(save_path, frame)
+    
+    def get_cap_and_lock(self, video_path: str):
+        key = str(video_path)
+        with self._cap_global_lock:
+            lock = self._cap_locks.get(key)
+            if lock is None:
+                lock = threading.Lock()
+                self._cap_locks[key] = lock
+            cap = self._cap_pool.get(key)
+            if cap is None or (not cap.isOpened()):
+                if cap is not None:
+                    try: cap.release()
+                    except: pass
+                cap = cv2.VideoCapture(key)
+                self._cap_pool[key] = cap
+        return cap, lock
+
+    def release_all_caps(self):
+        for key, cap in list(self._cap_pool.items()):
+            try: cap.release()
+            except: pass
+        self._cap_pool.clear()
 
 class MulimgViewer (MulimgViewerGui):
 
@@ -229,7 +278,7 @@ class MulimgViewer (MulimgViewerGui):
         self._tick_running = False   # 定时器回调防重入
         self._from_timer = False     # 区分计时器触发/用户点击
         self.executor = ThreadPoolExecutor(max_workers=int(self.m_textCtrl29.GetValue()))
-
+        
         # Draw color to box
         self.colourPicker_draw.Bind(
             wx.EVT_COLOURPICKER_CHANGED, self.draw_color_change)
@@ -246,7 +295,6 @@ class MulimgViewer (MulimgViewerGui):
         if not hasattr(self, "_missing_by_gen"):  self._missing_by_gen = {}  # gen -> set((cache_dir, idx))
         if not hasattr(self, "_missing_lock"):
             self._missing_lock = threading.Lock()
-
 
         # open default path
         if default_path:
@@ -358,7 +406,6 @@ class MulimgViewer (MulimgViewerGui):
             if self.video_mode:
                 self.video_path = []
                 selected_folder = dlg.GetPath()
-                # 遍历该文件夹及其所有子目录
                 for root, dirs, files in os.walk(selected_folder):
                     for file in files:
                         if file.lower().endswith(('.mp4', '.avi', '.mov')):
@@ -398,24 +445,20 @@ class MulimgViewer (MulimgViewerGui):
         self._is_closing = True
         self._shutdown = True
 
-        # 1) 停计时器
         try:
             if hasattr(self, "play_timer") and self.play_timer.IsRunning():
                 self.play_timer.Stop()
         except: pass
 
-        # 2) 停播放状态（防止其它地方又续期）
         try:
             self.is_playing = False
         except: pass
 
-        # 3) 关线程池（取消未开始的任务）
         try:
             if hasattr(self, "executor") and self.executor:
                 self.executor.shutdown(wait=False, cancel_futures=True)
         except: pass
 
-        # 4) 关掉子窗口（如果可能还开着）
         try:
             if getattr(self, "indextablegui", None):
                 self.indextablegui.Destroy()
@@ -425,12 +468,18 @@ class MulimgViewer (MulimgViewerGui):
                 self.aboutgui.Destroy()
         except: pass
 
-        # 5) OpenCV 等资源
+        try:
+            if hasattr(self, "video_manager") and self.video_manager:
+                self.video_manager.release_all_caps()
+        except: pass
         try:
             cv2.destroyAllWindows()
         except: pass
 
-        # 6) 主窗口销毁 + 退出主循环（保险做法，两者都调用）
+        try:
+            cv2.destroyAllWindows()
+        except: pass
+
         try: self.Destroy()
         except: pass
         try:
@@ -439,82 +488,21 @@ class MulimgViewer (MulimgViewerGui):
         except: pass
 
     def one_dir_mul_dir_manual(self, event):
+        self.SetStatusText_(["Input", "", "", "-1"])
         try:
-            self.SetStatusText_(["Input", "", "", "-1"])
-        except Exception:
-            pass
-
-        if getattr(self, "video_mode", False):
-            if event is None:
-                return
-            self.video_path = []
-            if not hasattr(self, "_picking_video"):
-                self._picking_video = False
-            if self._picking_video:
-                return
-
-            self._picking_video = True
-            paths = []
-            try:
-                dlg = VideoSelectDialog(self, title="Select videos")
-                try:
-                    if dlg.ShowModal() == wx.ID_OK:
-                        try:
-                            paths = dlg.get_paths()
-                        except Exception:
-                            paths = list(getattr(dlg, "paths", []) or [])
-                finally:
-                    try:
-                        dlg.Destroy()
-                    except Exception:
-                        pass
-            finally:
-                self._picking_video = False
-
-            if not paths:
-                return
-
-            self.real_video_path = paths
-            video_paths = self.real_video_path
-            self.thread = int(self.m_textCtrl29.GetValue())
-            self.cache_num = int(self.m_textCtrl30.GetValue())
-            if video_paths and len(video_paths) == 1:
-                self.count_per_action = self.get_count_per_action(type=2)
+            if self.ImgManager.type == 1:
+                input_path = self.ImgManager.input_path
             else:
-                self.count_per_action = self.get_count_per_action(type=1)
-            for vp in video_paths:
-                cache = self.video_manager.init_video_frame_cache(
-                    Path(vp),
-                    num_frames=(self.cache_num+1)*self.count_per_action,
-                    max_threads=self.thread
-                )
-                self.video_path.append(cache)
-            if video_paths and len(video_paths) == 1:
-                self.ImgManager.init(str(self.video_path[0]), type=2, video_mode=self.video_mode, video_path=video_paths[0],skip=self.skip_frames)
-            else:
-                self.ImgManager.init(self.video_path, type=1, video_mode=self.video_mode, video_path=video_paths,skip=self.skip_frames)
-            self.current_batch_idx = 0
-            self.show_img_init()
-            self.ImgManager.set_action_count(0)
-            self.show_img()
-            self.choice_input_mode.SetSelection(2)
-            self.SetStatusText_(["Input", "-1", "-1", "-1"])
-
-        else:
-            try:
-                if self.ImgManager.type == 1:
-                    input_path = self.ImgManager.input_path
-                else:
-                    input_path = None
-            except Exception:
                 input_path = None
-            try:
-                self.UpdateUI(1, input_path, self.parallel_to_sequential.Value)
-                self.choice_input_mode.SetSelection(2)
-                self.SetStatusText_(["Input", "-1", "-1", "-1"])
-            except Exception:
-                pass
-
+        except:
+            input_path = None
+        if self.video_mode:
+            self.UpdateUI(1, None, self.parallel_to_sequential.Value,video_mode=self.video_mode)
+        else:
+            self.UpdateUI(1, input_path, self.parallel_to_sequential.Value)
+        self.choice_input_mode.SetSelection(2)
+        self.SetStatusText_(["Input", "-1", "-1", "-1"])
+    
     def last_img(self, event):
         assert hasattr(self, 'executor'), "self.executor 未初始化！"
 
@@ -561,7 +549,6 @@ class MulimgViewer (MulimgViewerGui):
                 cpa = int(getattr(self, "count_per_action", 1) or 1)
             cpa = max(1, cpa)
 
-            # 边界：已经在第一批就不用再退
             if prev_idx <= 0:
                 return
 
@@ -716,52 +703,34 @@ class MulimgViewer (MulimgViewerGui):
             target = int(self.slider_img.GetValue())
         except Exception:
             target = 0
-
-        try:
-            self.slider_value.SetValue(str(target))
-        except Exception:
-            pass
+        self.slider_value.SetValue(str(target)) 
 
         if not hasattr(self, "_skip_timer"):
             self._debounce_ms = getattr(self, "_debounce_ms", 120)
             self._skip_timer = wx.Timer(self)
-
             def _on_skip_timer(evt, _self=self):
                 tg = getattr(_self, "_pending_target", None)
-                if tg is None:
-                    return
+                if tg is None: return
                 _self._pending_target = None
                 _self.slider_value_change(None, value=tg)
-
             self._on_skip_timer = _on_skip_timer
             self.Bind(wx.EVT_TIMER, self._on_skip_timer, self._skip_timer)
 
         self._pending_target = target
-        if self._skip_timer.IsRunning():
-            self._skip_timer.Stop()
+        if self._skip_timer.IsRunning(): self._skip_timer.Stop()
         self._skip_timer.Start(self._debounce_ms, oneShot=True)
 
     def slider_value_change(self, event, value=None):
-
         if getattr(self, "next_frozen", False):
             try: self.SetStatusText_(["-1","-1","Busy decoding… (frozen)","-1"])
             except: pass
             return
 
         if value is None:
-            try:
-                s = str(self.slider_value.GetValue()).strip()
-            except Exception:
-                s = ""
-            if s == "":
-                value = int(getattr(self.ImgManager, "action_count", 0))
-            else:
-                try:
-                    value = int(s)
-                except Exception:
-                    try: self.slider_value.SetValue(str(getattr(self.ImgManager, "action_count", 0)))
-                    except: pass
-                    return
+            s = str(self.slider_value.GetValue()).strip()
+            if not s or not s.isdigit():  
+                return
+            value = int(s)
 
         if int(getattr(self.ImgManager, "img_num", 0)) == 0:
             self.SetStatusText_(["-1", "", "***Error: First, need to select the input dir***", "-1"])
@@ -772,46 +741,17 @@ class MulimgViewer (MulimgViewerGui):
         except Exception:
             max_idx = max(0, int(self.ImgManager.img_num) - 1)
         target = max(0, min(int(value), max_idx))
+        self.slider_value.SetValue(str(target)) 
 
-        try: self.slider_value.SetValue(str(target))
-        except: pass
-        try: self.slider_img.SetValue(target)
-        except: pass
+        video_mode = bool(getattr(self, "video_mode", False))
 
-        self.cache_gen = getattr(self, "cache_gen", 0) + 1
-        cur_gen = self.cache_gen
-        self.show_img_init()
-
-        if getattr(self, "video_mode", False):
-            if not hasattr(self, "executor"):
-                from concurrent.futures import ThreadPoolExecutor
-                self.executor = ThreadPoolExecutor(max_workers=int(getattr(self, "thread", 4)))
-
-            real_paths = self.real_video_path if isinstance(self.real_video_path, (list, tuple)) else [self.real_video_path]
-            frame_cache_dir = [self.video_path] if isinstance(self.video_path, str) else (self.video_path or [])
-            if not frame_cache_dir or len(frame_cache_dir) != len(real_paths):
-                frame_cache_dir = []
-                for p in real_paths:
-                    if not p:
-                        frame_cache_dir.append(None); continue
-                    try:
-                        cache_dir = self.video_manager.init_video_frame_cache(p, num_frames=0, max_threads=int(getattr(self, "thread", 4)))
-                    except Exception:
-                        base = os.path.dirname(str(p))
-                        cache_dir = os.path.join(base, "frames_cache")
-                        try: os.makedirs(cache_dir, exist_ok=True)
-                        except Exception: pass
-                    frame_cache_dir.append(cache_dir)
-                self.video_path = frame_cache_dir[0] if len(frame_cache_dir) == 1 else frame_cache_dir
-            self.frame_cache_dir = frame_cache_dir
-
-            p2s = bool(getattr(self.parallel_to_sequential, "Value", False))
-
+        if video_mode:
             if isinstance(self.real_video_path, str):
                 cpa = int(self.get_count_per_action(type=2) or 1)
             else:
                 cpa = int(self.get_count_per_action(type=1) or 1)
 
+            p2s = bool(getattr(self.parallel_to_sequential, "Value", False))
             if p2s:
                 cpa = 1
                 nlist = list(getattr(self.ImgManager, "img_num_list", []))
@@ -825,22 +765,13 @@ class MulimgViewer (MulimgViewerGui):
                             local_idx = int(target - acc)
                             break
                         acc += n
-                    else:
-                        vid_i = len(nlist) - 1
-                        local_idx = max(0, int(nlist[-1]) - 1)
                 else:
                     vid_i, local_idx = 0, int(target)
-
-                real_paths = [real_paths[vid_i]]
-                frame_cache_dir = [frame_cache_dir[vid_i]]
-                self.frame_cache_dir = frame_cache_dir
-
-                self.ImgManager.set_action_count(target)
-                self.current_batch_idx = target  # cpa=1
                 batch_start = int(local_idx)
                 batch_end   = batch_start + 1
+                self.current_batch_idx = target
+                self.current_video_idx = vid_i
             else:
-                self.ImgManager.set_action_count(target)
                 self.current_batch_idx = int(target // cpa)
                 batch_start = int(self.current_batch_idx * cpa)
                 try:
@@ -848,110 +779,22 @@ class MulimgViewer (MulimgViewerGui):
                 except Exception:
                     total = int(max_idx + 1)
                 batch_end = min(batch_start + cpa, total)
-
-            if hasattr(self, "update_cache"):
-                try: self.update_cache(batch_start)
-                except Exception: pass
-
-            try:
-                step = int(self.m_textCtrl281.GetValue() or 0)
-            except Exception:
-                step = int(getattr(self, "skip_frames", 0) or 0)
-            if step < 0: step = 0
-            step = step + 1
-
-            if p2s:
-                src_path, cache_dir = real_paths[0], frame_cache_dir[0]
-                s, e = batch_start, batch_end
-                try: self.executor.submit(self._predecode_exact_batch, src_path, cache_dir, s, e, step, cur_gen)
-                except Exception: pass
-            else:
-                for vid_i, (cache_dir, src_path) in enumerate(zip(self.frame_cache_dir, real_paths)):
-                    if not src_path or not cache_dir: continue
-                    try:
-                        try:
-                            max_frame = int(self.ImgManager.img_num_list[vid_i])
-                        except Exception:
-                            max_frame = int(self.ImgManager.img_num)
-                        s = batch_start
-                        e = min(batch_end, max_frame)
-                        if s < e:
-                            try: self.executor.submit(self._predecode_exact_batch, src_path, cache_dir, s, e, step, cur_gen)
-                            except Exception: pass
-                    except Exception:
-                        pass
-
-            if not hasattr(self, "_missing_by_gen"):
-                self._missing_by_gen = {}
-                self._missing_lock = threading.Lock()
-
-            need_pairs = set()
-            if p2s:
-                cd = frame_cache_dir[0]
-                idx = batch_start
-                ready = False
-                try:
-                    p1 = os.path.join(cd, f"{idx}.png")
-                    ready = (os.path.exists(p1) and os.path.getsize(p1) > 0)
-                except Exception:
-                    ready = False
-                if not ready:
-                    need_pairs.add((cd, idx))
-            else:
-                if hasattr(self, "_collect_missing_targets"):
-                    try:
-                        missing_info = self._collect_missing_targets(batch_start, batch_end)
-                        need_pairs = {(cd, i) for (cd, i, _exp, _clamped) in missing_info}
-                    except Exception:
-                        need_pairs = set()
-                else:
-                    need_pairs = set()
-                    img_num_list = getattr(self.ImgManager, "img_num_list", [self.ImgManager.img_num])
-                    for vid_i, (cache_dir, max_frame) in enumerate(zip(self.frame_cache_dir, img_num_list)):
-                        s = batch_start
-                        e = min(batch_end, max_frame)
-                        for idx in range(s, e):
-                            p = os.path.join(cache_dir, f"{idx}.png")
-                            try:
-                                ready = os.path.exists(p) and os.path.getsize(p) > 0
-                            except Exception:
-                                ready = False
-                            if not ready:
-                                need_pairs.add((cache_dir, idx))
-
-            if need_pairs:
-                try:
-                    self._missing_lock.acquire()
-                    self._missing_by_gen[cur_gen] = set(need_pairs)
-                finally:
-                    try: self._missing_lock.release()
-                    except: pass
-
-                self.next_frozen = True
-                self._resume_after_unfreeze = False
-                self._resume_play_dir = +1
-
-                for cache_dir, idx in need_pairs:
-                    try: self.executor.submit(self._await_and_notify, cache_dir, idx, cur_gen)
-                    except Exception: pass
-
-                try: self._image_ready = False
-                except Exception: pass
-
-                self.SetStatusText_(["-1","-1","Seeking… (waiting target frame, frozen)","-1"])
-                return
-
-            self.show_img()
-            try: self._image_ready = True
-            except Exception: pass
-            self.SetStatusText_(["Skip", "-1", "-1", "-1"])
-            return
+        else:
+            batch_start = target
+            batch_end   = target + 1
+            self.current_batch_idx = None
 
         self.ImgManager.set_action_count(target)
-        self.show_img()
-        try: self._image_ready = True
-        except Exception: pass
-        self.SetStatusText_(["Skip", "-1", "-1", "-1"])
+
+        self.cache_gen = getattr(self, "cache_gen", 0) + 1
+        self._last_seek = {
+            "gen": self.cache_gen,
+            "target": int(target),
+            "batch_start": int(batch_start),
+            "batch_end": int(batch_end),
+            "video_mode": bool(video_mode),
+        }
+        return
 
     def save_img(self, event):
         type_ = self.choice_output.GetSelection()
@@ -1023,6 +866,18 @@ class MulimgViewer (MulimgViewerGui):
         if self.video_mode:
             assert hasattr(self, 'executor'), "self.executor 未初始化！"
 
+            from concurrent.futures import ThreadPoolExecutor
+            try:
+                self.thread = int(self.m_textCtrl29.GetValue())
+            except Exception:
+                self.thread = int(getattr(self, "thread", 4))
+            try:
+                if hasattr(self, "executor") and self.executor:
+                    self.executor.shutdown(wait=False, cancel_futures=True)
+            except Exception:
+                pass
+            self.executor = ThreadPoolExecutor(max_workers=int(self.thread))
+
             if int(getattr(self.ImgManager, "img_num", 0)) == 0:
                 self.SetStatusText_(["-1", "", "***Error: First, need to select the input dir***", "-1"])
                 return
@@ -1037,8 +892,6 @@ class MulimgViewer (MulimgViewerGui):
             old_action  = int(getattr(self.ImgManager, "action_count", getattr(self, "current_batch_idx", 0)) or 0)
             old_abs_idx = max(0, old_action * old_cpa)
 
-            try: self.thread = int(self.m_textCtrl29.GetValue())
-            except Exception: self.thread = int(getattr(self, "thread", 4))
             try: self.cache_num = int(self.m_textCtrl30.GetValue())
             except Exception: self.cache_num = int(getattr(self, "cache_num", 1))
 
@@ -1054,7 +907,6 @@ class MulimgViewer (MulimgViewerGui):
             if not vp:
                 self.SetStatusText_(["-1", "", "***Error: No input video***", "-1"])
                 return
-
             if isinstance(vp, str):
                 new_cpa = int(self.get_count_per_action(type=2)) or 1
             else:
@@ -1065,7 +917,7 @@ class MulimgViewer (MulimgViewerGui):
                 try: self.ImgManager.set_count_per_action(new_cpa)
                 except Exception: self.ImgManager.count_per_action = new_cpa
             else:
-                self.ImgManager.count_per_action = new_cpa  # 回退
+                self.ImgManager.count_per_action = new_cpa
 
             try:
                 rc_text = (self.row_col.GetLineText(0) or "").replace('，', ',').strip()
@@ -1087,6 +939,7 @@ class MulimgViewer (MulimgViewerGui):
             if isinstance(vp, str):
                 self.video_mode = True
                 try:
+                    self.video_manager.max_threads = int(self.thread)
                     self.video_path = self.video_manager.init_video_frame_cache(
                         vp,
                         num_frames=(self.cache_num + 1) * new_cpa,
@@ -1097,12 +950,13 @@ class MulimgViewer (MulimgViewerGui):
                     self.video_path = None
                 self.ImgManager.init(self.video_path, type=2, video_mode=True,
                                     video_path=vp, skip=getattr(self, "skip_frames", 0),
-                                    parallel_to_sequential=p2s)  # ★
+                                    parallel_to_sequential=p2s)
             else:
                 self.video_mode = True
                 caches = []
                 for p in vp:
                     try:
+                        self.video_manager.max_threads = int(self.thread)
                         cache = self.video_manager.init_video_frame_cache(
                             Path(p),
                             num_frames=(self.cache_num + 1) * new_cpa,
@@ -1115,7 +969,7 @@ class MulimgViewer (MulimgViewerGui):
                 self.video_path = caches
                 self.ImgManager.init(self.video_path, type=1, video_mode=True,
                                     video_path=vp, skip=getattr(self, "skip_frames", 0),
-                                    parallel_to_sequential=p2s)  # ★
+                                    parallel_to_sequential=p2s)
 
             if isinstance(self.video_path, str):
                 self.frame_cache_dir = [self.video_path]
@@ -1145,6 +999,7 @@ class MulimgViewer (MulimgViewerGui):
                         pass
             except Exception:
                 pass
+
             self.current_batch_idx = int(new_action)
             batch_start = new_action * new_cpa
             if hasattr(self, "update_cache"):
@@ -1269,7 +1124,7 @@ class MulimgViewer (MulimgViewerGui):
                 self.video_path = self.video_manager.init_video_frame_cache(Path(video_path), num_frames=(self.cache_num+1)*self.count_per_action, max_threads=self.thread)
                 self.ImgManager.init(self.video_path, type=2, video_mode=self.video_mode, video_path = video_path,skip=self.skip_frames)
                 if isinstance(self.video_path, str):
-                    self.video_path = [self.video_path]  # 单个也转成列表
+                    self.video_path = [self.video_path]  
             else:
                 self.ImgManager.init(dlg.GetPath(), type=2)
             self.current_batch_idx = 0
@@ -2031,11 +1886,9 @@ class MulimgViewer (MulimgViewerGui):
 
         self.layout_params_old = list(self.ImgManager.layout_params)
 
-        # 同步 UI 数值（这几行不会触发布局）
         try: self.slider_img.SetValue(self.ImgManager.action_count)
         except: pass
-        try: self.slider_value.SetValue(str(self.ImgManager.action_count))
-        except: pass
+        self.slider_value.SetValue(str(self.ImgManager.action_count))
         try: self.slider_value_max.SetLabel(str(self.ImgManager.max_action_num-1))
         except: pass
 
@@ -2520,13 +2373,10 @@ class MulimgViewer (MulimgViewerGui):
                 row_col = [int(x) for x in row_col]
                 product = row_col[0] * row_col[1] *prod
             else:
-                if self.parallel_sequential.Value:
-                    row_col = self.row_col.GetLineText(0).split(',')
-                    s = self.row_col_one_img.GetValue().replace('，', ',')
-                    r, c = map(int, [x.strip() for x in s.split(',')])
-                    product = r * c
-                else:
-                    product = 1
+                row_col = self.row_col.GetLineText(0).split(',')
+                s = self.row_col_one_img.GetValue().replace('，', ',')
+                r, c = map(int, [x.strip() for x in s.split(',')])
+                product = r * c
         return product
 
     def on_interval_changed(self, event):
@@ -2595,15 +2445,12 @@ class MulimgViewer (MulimgViewerGui):
     def _collect_missing_targets(self, batch_start: int, batch_end: int):
         missing = []
 
-        # 1. 规范化缓存目录列表
         frame_dirs = self.frame_cache_dir if isinstance(self.frame_cache_dir, (list, tuple)) else [self.frame_cache_dir]
 
-        # 2. 检查每个视频的目标帧
         for vid_i, cache_dir in enumerate(frame_dirs):
             if not cache_dir:
                 continue
 
-            # 获取该路视频的实际帧数上限
             try:
                 n = int(self.ImgManager.img_num_list[vid_i])
             except Exception:
@@ -2612,16 +2459,13 @@ class MulimgViewer (MulimgViewerGui):
                 except Exception:
                     n = 0
 
-            # 该路的实际检查范围（夹紧到帧数内）
             s = max(0, int(batch_start))
             e = min(int(batch_end), max(0, n))
 
-            # 遍历目标帧
             for idx in range(s, e):
                 try:
                     expect_path, ready, clamped = self._expected_path_for_idx(cache_dir, vid_i, idx)
                 except Exception:
-                    # 路径计算失败，视为缺帧
                     missing.append((cache_dir, idx, None, idx))
                     continue
 
@@ -2901,48 +2745,37 @@ class MulimgViewer (MulimgViewerGui):
                         pass
 
     def _save_frame(self, frame_idx, video_idx, save_idx):
-        if isinstance(self.real_video_path, str):
-            video_path = self.real_video_path
-        else:
-            video_path = self.real_video_path[video_idx]
-        if isinstance(self.frame_cache_dir, str):
-            cache_dir = self.frame_cache_dir
-        else:
-            cache_dir = self.frame_cache_dir[video_idx]
-
+        video_path = self.real_video_path if isinstance(self.real_video_path, str) else self.real_video_path[video_idx]
+        cache_dir  = self.frame_cache_dir  if isinstance(self.frame_cache_dir,  str) else self.frame_cache_dir[video_idx]
         os.makedirs(cache_dir, exist_ok=True)
 
-        cap = cv2.VideoCapture(video_path)
-        if not cap.isOpened():
-            return
-        fps = float(cap.get(cv2.CAP_PROP_FPS) or 0)
-        if fps <= 0 or not np.isfinite(fps):
-            cap.release()
-            raise ValueError(f"[save_frame] 获取 fps 失败：{video_path}")
-        if not hasattr(self, "_cache_fps_map"): self._cache_fps_map = {}
-        self._cache_fps_map[cache_dir] = fps
+        cap, lock = self.video_manager.get_cap_and_lock(str(video_path))
+        with lock:
+            fps = float(cap.get(cv2.CAP_PROP_FPS) or 0.0)
+            if not (fps > 0 and np.isfinite(fps)):
+                raise ValueError(f"[save_frame] 获取 fps 失败：{video_path}")
+            if not hasattr(self, "_cache_fps_map"): 
+                self._cache_fps_map = {}
+            self._cache_fps_map[cache_dir] = fps
 
-        try:
-            step = int(self.m_textCtrl281.GetValue() or 0)
-        except Exception:
-            step = int(getattr(self, "skip_frames", 0) or 0)
-        if step < 0:
-            step = 0
-        step = step + 1
-        if step < 1:
-            step = 1
-        src_idx = int(frame_idx) * step
+            # 优先 GUI，失败则退到属性
+            try:
+                step = int(self.m_textCtrl281.GetValue() or 0)
+            except Exception:
+                step = int(getattr(self, "skip_frames", 0) or 0)
+            if step < 0:
+                step = 0
+            step = step + 1  # 与原逻辑一致
 
-        try:
+            src_idx = int(frame_idx) * step
             total = int(cap.get(cv2.CAP_PROP_FRAME_COUNT) or 0)
-        except Exception:
-            total = 0
-        if total > 0 and src_idx >= total:
-            src_idx = total - 1
+            if total > 0 and src_idx >= total:
+                src_idx = total - 1
 
-        cap.set(cv2.CAP_PROP_POS_FRAMES, src_idx)
-        ret, frame = cap.read()
-        cap.release()
+            cap.set(cv2.CAP_PROP_POS_FRAMES, src_idx)
+            ret, frame = cap.read()
+
+        # 这里不要 cap.release()，复用句柄
         if not ret or frame is None:
             return
 
@@ -2957,13 +2790,12 @@ class MulimgViewer (MulimgViewerGui):
         save_path = os.path.join(cache_dir, f"{save_idx}.png")
         self._cv_imwrite_atomic(save_path, frame)
 
-
     def _predecode_exact_batch(self, video_path, cache_dir, idx_start, idx_end, step, gen):
         if gen != self.cache_gen or getattr(self, "_shutdown", False):
             return
 
-        cap = cv2.VideoCapture(video_path)
-        try:
+        cap, lock = self.video_manager.get_cap_and_lock(str(video_path))
+        with lock:
             for idx in range(idx_start, idx_end):
                 if gen != self.cache_gen or getattr(self, "_shutdown", False):
                     break
@@ -2982,9 +2814,6 @@ class MulimgViewer (MulimgViewerGui):
                     continue
 
                 self._cv_imwrite_atomic(out_png, frame)
-        finally:
-            try: cap.release()
-            except: pass
 
     def _cv_imwrite_atomic(self, path, img, png_level=1, max_retries=3):
         dir_, base = os.path.split(path)
@@ -3167,27 +2996,6 @@ class MulimgViewer (MulimgViewerGui):
             pass
         raise RuntimeError(f"[imwrite_atomic] 原子替换失败：{new_path}")
 
-    def _wait_frame_ready(self, cache_dir, idx, timeout=2.0, poll=0.02, stable_checks=2):
-        """等待 cache_dir/idx.png 出现并在文件大小层面稳定 stable_checks 次。"""
-        target = os.path.join(cache_dir, f"{idx}.png")
-        deadline = time.time() + timeout
-        last_size, stable = -1, 0
-        while time.time() < deadline:
-            if os.path.exists(target):
-                try:
-                    size = os.path.getsize(target)
-                except Exception:
-                    size = -1
-                if size > 0 and size == last_size:
-                    stable += 1
-                    if stable >= stable_checks:
-                        return True
-                else:
-                    stable = 0
-                    last_size = size
-            time.sleep(poll)
-        return False
-
     def _await_and_notify(self, cache_dir, idx, expect_gen):
         try:
             frame_dirs = list(getattr(self, "frame_cache_dir", []) or [])
@@ -3261,7 +3069,6 @@ class MulimgViewer (MulimgViewerGui):
         freeze_mode = has_set or has_count
 
         def _unfreeze_and_refresh_on_main():
-            """主线程：按 _resume_after_unfreeze 决定是否续播；强制重建拼图后再显示。"""
             try:
                 if hasattr(self, "next_frozen"): self.next_frozen = False
                 if hasattr(self, "is_frozen"):   self.is_frozen   = False
@@ -3272,52 +3079,32 @@ class MulimgViewer (MulimgViewerGui):
 
                 try:
                     if want_resume:
-                        self.is_playing = True
-                        try: self.right_arrow_button1.SetLabel("⏸")
-                        except: pass
                         try:
-                            tm = getattr(self, "_play_timer", None)
-                            if tm is None:
-                                tm = wx.Timer(self)
-                                self._play_timer = tm
-                                def _tick(evt):
-                                    if not getattr(self, "is_playing", False) or getattr(self, "_shutdown", False):
-                                        try: self._play_timer.Stop()
-                                        except: pass
-                                        return
-                                    try:
-                                        self._from_timer = True
-                                        self.next_img(None)
-                                    finally:
-                                        self._from_timer = False
-                                self.Bind(wx.EVT_TIMER, _tick, tm)
-                            interval_ms = int(getattr(self, "play_interval", 0.2) * 1000)
-                            tm.StartOnce(max(1, interval_ms))
-                        except Exception as e:
-                            print(f"[unfreeze] timer fail: {e}")
-                    else:
-                        self.is_playing = False
-                        try: self.right_arrow_button1.SetLabel("▶")
-                        except: pass
-                        try:
-                            tm = getattr(self, "_play_timer", None)
-                            if tm: tm.Stop()
+                            d = int(getattr(self, "_resume_play_dir", getattr(self, "play_direction", +1)))
                         except Exception:
-                            pass
+                            d = +1
+                        self.play_direction = +1 if d >= 0 else -1
+                        self._start_playback()
+                        try: self._sync_play_label(True)
+                        except Exception: pass
+                    else:
+                        self._stop_playback()
+                        try: self._sync_play_label(False)
+                        except Exception: pass
                 except Exception as e:
-                    print(f"[unfreeze] ui sync fail: {e}")
+                    pass
 
                 try:
                     self.show_img_init()
                 except Exception as e:
-                    print(f"[unfreeze] init warn: {e}")
+                    pass
                 try:
                     self.show_img()
                 except Exception as e:
-                    print(f"[unfreeze] show warn: {e}")
+                    pass
 
             except Exception as e:
-                print(f"[unfreeze] fatal: {e}")
+                pass
 
         if freeze_mode:
             empty = False
@@ -3393,83 +3180,6 @@ class MulimgViewer (MulimgViewerGui):
         else:
             pass
 
-    def _ensure_batch_ready_or_queue(self, batch_start, batch_end, gen):
-        frame_cache_dir = [self.video_path] if isinstance(self.video_path, str) else self.video_path
-        real_paths = self.real_video_path if isinstance(self.real_video_path, (list, tuple)) else [self.real_video_path]
-
-        try:
-            step = int(self.m_textCtrl281.GetValue() or 0)
-        except Exception:
-            step = int(getattr(self, "skip_frames", 0) or 0)
-        if step < 0:
-            step = 0
-        step = step + 1
-
-        for vid_i, (cache_dir, src_path) in enumerate(frame_cache_dir):
-            try:
-                max_frame = int(self.ImgManager.img_num_list[vid_i])
-            except Exception:
-                max_frame = int(self.ImgManager.img_num_list[0])
-            s = batch_start
-            e = min(batch_end, max_frame)
-            if s < e and src_path:
-                try:
-                    self.executor.submit(self._predecode_exact_batch, src_path, cache_dir, s, e, step, gen)
-                except Exception:
-                    pass
-
-        missing = []
-        for cache_dir, max_frame in zip(frame_cache_dir, self.ImgManager.img_num_list):
-            actual_end = min(batch_end, max_frame)
-            for idx in range(batch_start, actual_end):
-                p = os.path.join(cache_dir, f"{idx}.png")
-                if not (os.path.exists(p) and os.path.getsize(p) > 0):
-                    missing.append((cache_dir, idx))
-
-        if missing:
-            for cache_dir, idx in missing:
-                try:
-                    self.executor.submit(self._await_and_notify, cache_dir, idx, gen)
-                except Exception:
-                    pass
-            self.SetStatusText_(["-1", "-1", "Decoding target frame(s)…", "-1"])
-            return False
-
-        return True
-
-    def _clamp_batch_and_action(self):
-        """
-        把 current_batch_idx/action_count 限制到“所有视频共同可见帧数”的最后一批，
-        并保持 action_count 与批次起始对齐（= batch * count_per_action）。
-        """
-        try:
-            if isinstance(self.real_video_path,str):
-                cpa = self.count_per_action(type=2)
-            else:
-                cpa = self.count_per_action(type=1)
-        except Exception:
-            cpa = 1
-
-        try:
-            max_frames = min(int(n) for n in self.ImgManager.img_num_list) if self.ImgManager.img_num_list else int(self.ImgManager.img_num)
-        except Exception:
-            max_frames = int(self.ImgManager.img_num)
-
-        if max_frames <= 0:
-            self.current_batch_idx = 0
-            self.ImgManager.set_action_count(0)
-            return
-
-        max_batch = max(0, (max_frames - 1) // cpa)
-
-        cur_batch = int(getattr(self, "current_batch_idx", 0))
-        if cur_batch > max_batch:
-            cur_batch = max_batch
-
-        target_action = cur_batch * cpa
-        self.current_batch_idx = cur_batch
-        self.ImgManager.set_action_count(target_action)
-
     def _setup_img_panel(self):
         if getattr(self, "_img_panel_ready", False):
             return
@@ -3500,60 +3210,6 @@ class MulimgViewer (MulimgViewerGui):
             return False
         except Exception:
             return False
-
-    def _cache_dir_for(self, vid_i):
-        real_paths = self.real_video_path if isinstance(self.real_video_path, (list, tuple)) else [self.real_video_path]
-
-        if hasattr(self, "frame_cache_dir") and self.frame_cache_dir:
-            fcd = self.frame_cache_dir if isinstance(self.frame_cache_dir, (list, tuple)) else [self.frame_cache_dir]
-        elif getattr(self, "video_path", None):
-            fcd = self.video_path if isinstance(self.video_path, (list, tuple)) else [self.video_path]
-        else:
-            fcd = []
-
-        cache_dir = None
-        if fcd and vid_i < len(fcd):
-            cache_dir = fcd[vid_i]
-
-        if not cache_dir:
-            p = None
-            if real_paths and vid_i < len(real_paths):
-                p = real_paths[vid_i]
-            if p:
-                try:
-                    cache_dir = self.video_manager.init_video_frame_cache(p, num_frames=0, max_threads=int(getattr(self, "thread", 4)))
-                except Exception:
-                    base = os.path.dirname(str(p))
-                    cache_dir = os.path.join(base, "frames_cache")
-                    try:
-                        os.makedirs(cache_dir, exist_ok=True)
-                    except Exception:
-                        return None
-
-                existing = []
-                if hasattr(self, "frame_cache_dir") and self.frame_cache_dir:
-                    existing = self.frame_cache_dir if isinstance(self.frame_cache_dir, (list, tuple)) else [self.frame_cache_dir]
-                elif getattr(self, "video_path", None):
-                    existing = self.video_path if isinstance(self.video_path, (list, tuple)) else [self.video_path]
-                while len(existing) <= vid_i:
-                    existing.append(None)
-                existing[vid_i] = cache_dir
-                self.frame_cache_dir = existing
-                self.video_path = existing if len(existing) > 1 else existing[0]
-
-        if cache_dir and not os.path.isdir(cache_dir):
-            try:
-                os.makedirs(cache_dir, exist_ok=True)
-            except Exception:
-                return None
-
-        return cache_dir
-
-    def _on_ready_refresh(self):
-        self._is_waiting = False
-        self.show_img()
-        try: self.SetStatusText_(["Next", "-1", "-1", "-1"])
-        except: pass
 
     def _purge_unexpected_cache_range(self, cache_dir, video_idx, batch_start, batch_end, keep_legacy_idx_names=False):
 

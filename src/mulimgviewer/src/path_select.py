@@ -1,85 +1,99 @@
-# -*- coding: utf-8 -*-
 import wx
 from ..gui.path_select_gui import PathSelectFrameGui
 from .utils import get_resource_path
-from .video_select_dialog import VideoSelectDialog
 
-VIDEO_WILDCARD = "Video (*.mp4;*.mov;*.avi;*.mkv)|*.mp4;*.mov;*.avi;*.mkv|All files (*.*)|*.*"
 
 class PathSelectFrame(PathSelectFrameGui):
-
-    def __init__(self, parent, UpdateUI, get_type, title="Parallel manual choose input directory"):
+    def __init__(self, parent, UpdateUI, get_type, video_mode=False, title = "Parallel manual choose input directory"):
         super().__init__(parent)
-        self.title = title
+
         self.UpdateUI = UpdateUI
         self.get_type = get_type
-        self.video_mode = False
-        self.Bind(wx.EVT_CLOSE, self.close)
-        self.icon = wx.Icon(get_resource_path('mulimgviewer.png'), wx.BITMAP_TYPE_PNG)
-        self.SetIcon(self.icon)
+        self.SetTitle(title)
+        self.video_mode = False  
 
-    def frame_resize(self, event):
-        self.m_richText1.SetMinSize(wx.Size((self.Size.Width, self.Size.Height)))
-        self.Layout()
-        self.Refresh()
-
-    def on_video_mode_change(self, event):
-        # 勾选/取消，只更新模式标志，不弹任何窗口
         try:
-            self.video_mode = bool(event.IsChecked())
-        except Exception:
-            # 有些场合你是直接手动传 True/False
-            self.video_mode = bool(getattr(self, "video_mode", False))
-
-        # UI 上给个轻提示（可留可删）
-        try:
-            self.SetStatusText_(["-1", "-1",
-                                "Video mode: ON" if self.video_mode else "Video mode: OFF",
-                                "-1"])
+            self.SetIcon(wx.Icon(get_resource_path("mulimgviewer.png"), wx.BITMAP_TYPE_PNG))
         except Exception:
             pass
 
-    def _choose_videos(self, event):
-        # 这个方法不再使用；保留以兼容可能的旧绑定
-        with wx.FileDialog(self, "Select videos", wildcard=VIDEO_WILDCARD,
-                           style=wx.FD_OPEN | wx.FD_MULTIPLE | wx.FD_FILE_MUST_EXIST) as dlg:
-            if dlg.ShowModal() == wx.ID_OK:
-                self.m_richText1.AppendText("\n".join(dlg.GetPaths()) + "\n")
-                paths = dlg.GetPaths()
-                self.UpdateUI(2, input_path=paths, video_mode=True)
+        self.Bind(wx.EVT_CLOSE, self._on_close)
+
+        row_sizer = self.GetSizer().GetItem(0).GetSizer()
+
+        if video_mode:
+            try:
+                self.m_dirPicker1.Unbind(wx.EVT_DIRPICKER_CHANGED)
+            except Exception:
+                pass
+            self.m_dirPicker1.Hide()
+
+            self.m_filePicker1 = wx.FilePickerCtrl(
+                self, wx.ID_ANY, wx.EmptyString, u"Select a video",
+                wildcard="Video files (*.mp4;*.avi;*.mov;*.mkv)|*.mp4;*.avi;*.mov;*.mkv",
+                style=wx.FLP_OPEN | wx.FLP_FILE_MUST_EXIST | wx.FLP_USE_TEXTCTRL
+            )
+            row_sizer.Insert(0, self.m_filePicker1, 0, wx.ALL, 5)
+            self.m_filePicker1.Bind(wx.EVT_FILEPICKER_CHANGED, self.add_video)
+
+        if not hasattr(self, "input_paths"):
+            self.input_paths = []
+
+        self.Layout()
+
+    def frame_resize(self, event):
+        self.m_richText1.SetMinSize(wx.Size(self.Size.Width, self.Size.Height))
+        self.Layout()
+        self.Refresh()
 
     def refresh_txt(self, input_path=None):
-        if input_path is None:
-            return
-        s = ""
-        for p in input_path:
-            s += p + "\n"
-        self.m_richText1.Value = s
+        if input_path:
+            self.m_richText1.Value = "\n".join(input_path) + "\n"
 
-    def close(self, event):
+    def _finalize_and_return(self):
+        """收集路径并回调，然后关闭窗口。"""
+        paths = [p for p in self.m_richText1.Value.split("\n") if p]
         if self.get_type() == -1:
             self.Destroy()
         else:
-            texts = self.m_richText1.Value
-            strlist = [i for i in texts.split('\n') if i != ""]
-            self.UpdateUI(0, input_path=strlist)
+            try:
+                self.UpdateUI(0, input_path=paths)
+            finally:
+                self.Destroy()
+    
+    def on_video_mode_change(self, video_mode):
+        self.video_mode = video_mode
+
+    def _on_close(self, event):
+        self._finalize_and_return()
+
+    def Close(self, event):  # noqa: N802  保持与生成代码绑定的名字一致
+        self._finalize_and_return()
 
     def add_dir(self, event):
-        if self.m_dirPicker1.GetPath() == "":
+        p = self.m_dirPicker1.GetPath()
+        if not p:
             return
-        texts = self.m_richText1.Value
-        strlist = [i for i in texts.split('\n') if i != ""]
-        strlist.append(self.m_dirPicker1.GetPath())
-        self.m_richText1.Value = "\n".join(strlist) + ("\n" if strlist else "")
+        cur = [x for x in self.m_richText1.Value.split("\n") if x]
+        if p not in cur:
+            cur.append(p)
+        self.m_richText1.Value = "\n".join(cur) + "\n"
+
+    def add_video(self, event):
+        p = self.m_filePicker1.GetPath()
+        if not p:
+            return
+        cur = [x for x in self.m_richText1.Value.split("\n") if x]
+        if p not in cur:
+            cur.append(p)
+        self.m_richText1.Value = "\n".join(cur) + "\n"
+        self.m_filePicker1.SetPath("")
 
     def clear_all_path(self, event):
         self.m_richText1.Clear()
 
     def clear_last_path(self, event):
-        texts = self.m_richText1.Value
-        strlist = texts.split('\n')
-        if strlist and strlist[-1] == "":
-            strlist.pop()
-        if strlist:
-            strlist = strlist[:-1]
-        self.m_richText1.Value = "\n".join([v for v in strlist if v != ""])
+        cur = [x for x in self.m_richText1.Value.split("\n") if x]
+        if cur:
+            cur.pop()
+        self.m_richText1.Value = "\n".join(cur) + ("\n" if cur else "")

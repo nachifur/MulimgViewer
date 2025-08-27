@@ -151,7 +151,7 @@ class VideoManager:
 
         save_path = os.path.join(cache_dir, f"{save_idx}.png")
         self._cv_imwrite_atomic(save_path, frame)
-    
+
     def get_cap_and_lock(self, video_path: str):
         key = str(video_path)
         with self._cap_global_lock:
@@ -278,7 +278,7 @@ class MulimgViewer (MulimgViewerGui):
         self._tick_running = False   # 定时器回调防重入
         self._from_timer = False     # 区分计时器触发/用户点击
         self.executor = ThreadPoolExecutor(max_workers=int(self.m_textCtrl29.GetValue()))
-        
+
         # Draw color to box
         self.colourPicker_draw.Bind(
             wx.EVT_COLOURPICKER_CHANGED, self.draw_color_change)
@@ -502,7 +502,7 @@ class MulimgViewer (MulimgViewerGui):
             self.UpdateUI(1, input_path, self.parallel_to_sequential.Value)
         self.choice_input_mode.SetSelection(2)
         self.SetStatusText_(["Input", "-1", "-1", "-1"])
-    
+
     def last_img(self, event):
         assert hasattr(self, 'executor'), "self.executor 未初始化！"
 
@@ -703,7 +703,7 @@ class MulimgViewer (MulimgViewerGui):
             target = int(self.slider_img.GetValue())
         except Exception:
             target = 0
-        self.slider_value.SetValue(str(target)) 
+        self.slider_value.SetValue(str(target))
 
         if not hasattr(self, "_skip_timer"):
             self._debounce_ms = getattr(self, "_debounce_ms", 120)
@@ -728,7 +728,7 @@ class MulimgViewer (MulimgViewerGui):
 
         if value is None:
             s = str(self.slider_value.GetValue()).strip()
-            if not s or not s.isdigit():  
+            if not s or not s.isdigit():
                 return
             value = int(s)
 
@@ -741,7 +741,7 @@ class MulimgViewer (MulimgViewerGui):
         except Exception:
             max_idx = max(0, int(self.ImgManager.img_num) - 1)
         target = max(0, min(int(value), max_idx))
-        self.slider_value.SetValue(str(target)) 
+        self.slider_value.SetValue(str(target))
 
         video_mode = bool(getattr(self, "video_mode", False))
 
@@ -1124,7 +1124,7 @@ class MulimgViewer (MulimgViewerGui):
                 self.video_path = self.video_manager.init_video_frame_cache(Path(video_path), num_frames=(self.cache_num+1)*self.count_per_action, max_threads=self.thread)
                 self.ImgManager.init(self.video_path, type=2, video_mode=self.video_mode, video_path = video_path,skip=self.skip_frames)
                 if isinstance(self.video_path, str):
-                    self.video_path = [self.video_path]  
+                    self.video_path = [self.video_path]
             else:
                 self.ImgManager.init(dlg.GetPath(), type=2)
             self.current_batch_idx = 0
@@ -2754,7 +2754,7 @@ class MulimgViewer (MulimgViewerGui):
             fps = float(cap.get(cv2.CAP_PROP_FPS) or 0.0)
             if not (fps > 0 and np.isfinite(fps)):
                 raise ValueError(f"[save_frame] 获取 fps 失败：{video_path}")
-            if not hasattr(self, "_cache_fps_map"): 
+            if not hasattr(self, "_cache_fps_map"):
                 self._cache_fps_map = {}
             self._cache_fps_map[cache_dir] = fps
 

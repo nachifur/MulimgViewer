@@ -20,7 +20,7 @@ class GuiManager:
         self.UpdateUI = UpdateUI
         self.get_type = get_type
         self.frameDict = {}
-        self.video_mode = video_mode  
+        self.video_mode = video_mode
 
     def GetFrame(self, type_):
         f = self.frameDict.get(type_)
@@ -65,7 +65,7 @@ class MainAPP(wx.App):
         else:
             effective_video_mode = bool(video_mode)
             self.manager.video_mode = effective_video_mode  # 记录为权威状态
-        
+
         if input_path:
             if len(input_path) != 0:
                 if self.frame[0].video_mode:

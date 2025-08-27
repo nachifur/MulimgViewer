@@ -10,7 +10,7 @@ class PathSelectFrame(PathSelectFrameGui):
         self.UpdateUI = UpdateUI
         self.get_type = get_type
         self.SetTitle(title)
-        self.video_mode = False  
+        self.video_mode = False
 
         try:
             self.SetIcon(wx.Icon(get_resource_path("mulimgviewer.png"), wx.BITMAP_TYPE_PNG))
@@ -60,7 +60,7 @@ class PathSelectFrame(PathSelectFrameGui):
                 self.UpdateUI(0, input_path=paths)
             finally:
                 self.Destroy()
-    
+
     def on_video_mode_change(self, video_mode):
         self.video_mode = video_mode
 

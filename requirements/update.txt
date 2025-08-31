@@ -1,0 +1,4 @@
+#!/usr/bin/env -S pip install -r
+# For update
+
+requests

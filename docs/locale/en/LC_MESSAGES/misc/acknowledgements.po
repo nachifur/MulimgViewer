@@ -1,0 +1,90 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2023
+# This file is distributed under the same license as the mulimgviewer
+# package.
+# nachifur <1476879092.com>, 2023.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: mulimgviewer 3.9.10\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2023-04-21 14:50+0800\n"
+"PO-Revision-Date: 2023-03-29 12:46+0800\n"
+"Last-Translator: nachifur <1476879092.com>\n"
+"Language-Team: nachifur <1476879092.com>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.12.1\n"
+
+#: ../../misc/acknowledgements.md:1
+msgid "致谢"
+msgstr "Acknowledgements"
+
+#: ../../misc/acknowledgements.md:3
+msgid "Everyone in the QQ group;"
+msgstr "Everyone in the QQ group;"
+
+#: ../../misc/acknowledgements.md:4
+msgid "nothingeasy:改进意见-(输入方式，新增：路径文件的导入和存储);"
+msgstr ""
+"nothingeasy: improvement opinions-(input method, new addition: import and"
+" storage of path files);"
+
+#: ../../misc/acknowledgements.md:5
+msgid "JuZiSYJ:改进意见-(保存带框的原始图像+并行放大);"
+msgstr ""
+"JuZiSYJ: Suggestions for improvement-(Save original image with frame + "
+"parallel zoom);"
+
+#: ../../misc/acknowledgements.md:6
+msgid "ymingsu:实现文档导入功能"
+msgstr "ymingsu: Implement `txt` import function"
+
+#: ../../misc/acknowledgements.md:7
+msgid "Faberman:"
+msgstr ""
+
+#: ../../misc/acknowledgements.md:8
+msgid "改进意见-(为图像添加titile+放大图像1:1输出);"
+msgstr ""
+"Suggestions for improvement-(add title for each image + magnified image  "
+"1:1 output);"
+
+#: ../../misc/acknowledgements.md:9
+msgid "翻译和润色英文版readme"
+msgstr "Translate and polish the English readme."
+
+#: ../../misc/acknowledgements.md:10
+msgid "stefanklut:改进意见-(不显示放大图像的边界框);"
+msgstr ""
+"stefanklut: Suggestions for improvement-(Do not display the bounding box "
+"of the enlarged image);"
+
+#: ../../misc/acknowledgements.md:11
+msgid "FunkyKoki:改进意见-(显示一半的图像+新增放大图像排布方式)."
+msgstr ""
+"FunkyKoki: Suggestions for improvement-(show half of the image + add "
+"enlarged image arrangement method)."
+
+#: ../../misc/acknowledgements.md:12
+msgid "wwhio:设置box的颜色"
+msgstr "wwhio: Set the color of the box"
+
+#: ../../misc/acknowledgements.md:13
+msgid "wzy:"
+msgstr ""
+
+#: ../../misc/acknowledgements.md:14
+msgid "为MulimgViewer带来了CI/CD等先进的开发流程"
+msgstr "Bring advanced development processes such as CI/CD to MulimgViewer"
+
+#: ../../misc/acknowledgements.md:15
+msgid "构建了readthedocs网页，并支持多语言"
+msgstr "Create readthedocs page with multi-language support"
+
+#: ../../misc/acknowledgements.md:16
+msgid "支持`pip install MulimgViewer`"
+msgstr "`pip install MulimgViewer`"
+

@@ -1,0 +1,80 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2023
+# This file is distributed under the same license as the mulimgviewer
+# package.
+# nachifur <1476879092.com>, 2023.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: mulimgviewer 3.9.10\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2023-03-29 12:46+0800\n"
+"PO-Revision-Date: 2023-03-29 12:46+0800\n"
+"Last-Translator: nachifur <1476879092.com>\n"
+"Language-Team: nachifur <1476879092.com>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.11.0\n"
+
+#: ../../../CHANGELOG.md:2
+msgid "Changelog"
+msgstr ""
+
+#: ../../../CHANGELOG.md:4
+msgid "All notable changes to this project will be documented in this file."
+msgstr ""
+
+#: ../../../CHANGELOG.md:6
+msgid ""
+"The format is based on [Keep a "
+"Changelog](https://keepachangelog.com/en/1.0.0/), and this project "
+"adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)."
+msgstr ""
+
+#: ../../../CHANGELOG.md:9
+msgid "[Unreleased]"
+msgstr ""
+
+#: ../../../CHANGELOG.md:11
+msgid "3.9.7"
+msgstr ""
+
+#: ../../../CHANGELOG.md:13
+msgid "Support/Optimize/Fix bugs"
+msgstr ""
+
+#: ../../../CHANGELOG.md:15
+msgid ""
+"Support: manually change the color of the box "
+"[issues35](https://github.com/nachifur/MulimgViewer/issues/35)"
+msgstr ""
+
+#: ../../../CHANGELOG.md:16
+msgid ""
+"Support: display boxes with different line widths on the zoomed image and"
+" the original image "
+"[issues39](https://github.com/nachifur/MulimgViewer/issues/39)"
+msgstr ""
+
+#: ../../../CHANGELOG.md:18
+msgid ""
+"Support: detects the version and prompts to update the software "
+"[issues41](https://github.com/nachifur/MulimgViewer/issues/41)"
+msgstr ""
+
+#: ../../../CHANGELOG.md:19
+msgid ""
+"Support: hide the top and right toolbars by Ctrl+H "
+"[issues42](https://github.com/nachifur/MulimgViewer/issues/42)"
+msgstr ""
+
+#: ../../../CHANGELOG.md:20
+msgid "Optimize: the GUI layout"
+msgstr ""
+
+#: ../../../CHANGELOG.md:21
+msgid "Fix bug: show RGBA"
+msgstr ""
+

@@ -1,0 +1,5 @@
+#!/usr/bin/env -S pip install -r
+
+-e .
+myst-parser
+sphinxcontrib-eval

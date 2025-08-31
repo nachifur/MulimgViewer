@@ -1,0 +1,6 @@
+test_input\01\00.jpg
+test_input\01\01.jpg
+test_input\02\00.jpg
+test_input\02\01.jpg
+test_input\03\00.jpg
+test_input\03\01.jpg

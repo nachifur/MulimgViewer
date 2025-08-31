@@ -1,0 +1,14 @@
+[Desktop Entry]
+Encoding = UTF-8
+Name = MulimgViewer
+GenericName = MulimgViewer
+GenericName[zh_CN] = 多图像浏览器
+Type = Application
+Icon = mulimgviewer
+Exec = mulimgviewer %F
+Terminal = false
+Categories = Graphics;2DGraphics;
+# https://pillow.readthedocs.io/en/stable/handbook/image-file-formats.html
+# https://pillow.readthedocs.io/en/stable/handbook/image-file-formats.html#read-only-formats
+# /usr/share/mime/image/*.xml list all mimetypes of image
+MimeType=image/bmp;image/x-dds;image/x-dib;image/x-eps;image/gif;image/x-icns;image/vnd.microsoft.icon;image/jpeg;image/jp2;image/x-pcx;image/vnd.zbrush.pcx;image/png;image/x-portable-bitmap;image/x-portable-graymap;image/x-portable-pixmap;image/x-portable-anymap;image/x-xbitmap;image/x-xpixmap;image/x-sgi;image/x-tga;image/tiff;image/x-tiff-multipage;image/webp;image/x-webp;image/x-xbitmap;image/x-fpx;image/x-gimp-gbr;image/x-photo-cd;image/x-psd;image/x-sun-raster;image/wfm;image/x-wmf;image/emf;image/x-xpixmap;

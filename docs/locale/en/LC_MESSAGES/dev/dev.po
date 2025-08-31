@@ -1,0 +1,369 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2023
+# This file is distributed under the same license as the mulimgviewer
+# package.
+# nachifur <1476879092.com>, 2023.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: mulimgviewer 3.9.10\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-07-08 08:44+0800\n"
+"PO-Revision-Date: 2023-03-29 12:46+0800\n"
+"Last-Translator: nachifur <1476879092.com>\n"
+"Language-Team: nachifur <1476879092.com>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.15.0\n"
+
+#: ../../dev/dev.md:1
+msgid "MulimgViewer开发指南"
+msgstr "MulimgViewer Development Guide"
+
+#: ../../dev/dev.md:3
+msgid "加入我们吧！"
+msgstr "Join us!"
+
+#: ../../dev/dev.md:4
+msgid "**初衷**：目前的市面上的图像浏览器不能同时显示多张图像。2020.8.10诞生的MulimgViewer，希望可以让大家方便地进行多张图像的显示和比较。恍惚一世，希望能在这个世界留下痕迹。"
+msgstr ""
+"**Original Intention**: Currently, image browsers on the market cannot "
+"display multiple images at the same time. MulimgViewer, born on August "
+"10, 2020, hopes to make it convenient for everyone to display and compare"
+" multiple images. Aspiration for a lifetime, hoping to leave a mark in "
+"this world."
+
+#: ../../dev/dev.md:6
+msgid "**定位**：MulimgViewer，即multi-image viewer。该软件**核心功能**是：多张图像并行显示、比较。"
+msgstr ""
+"**Positioning**: MulimgViewer, which stands for multi-image viewer. The "
+"core function of this software is to display and compare multiple images "
+"in parallel."
+
+#: ../../dev/dev.md:8
+msgid "**目标**：期待MulimgViewer走向世界的每一个角落。"
+msgstr "**Goal**: Hoping that MulimgViewer will reach every corner of the world."
+
+#: ../../dev/dev.md:10
+msgid "**开发**：每个人都希望定制自己的MulimgViewer，但一个包含各种各样功能的软件也许不是大家喜欢的。开发一些受众较广的功能，这会帮助到更多的人，这是我们期望的。另外，进一步完善扩展核心功能也是需要的。"
+msgstr ""
+"**Development**: Everyone wishes to customize their own MulimgViewer, but"
+" a software that contains various functions may not be liked by everyone."
+" Developing some widely applicable functions will help more people, which"
+" is what we hope for. Additionally, enhancing and expanding the core "
+"features further is also necessary."
+
+#: ../../dev/dev.md:12
+msgid "**如何参与开发？** 我们真诚地感谢您加入MulimgViewer的开发。"
+msgstr ""
+"**How to participate in development?** We sincerely appreciate your "
+"joining in the development of MulimgViewer."
+
+#: ../../dev/dev.md:15
+msgid "参与做出贡献的途径：（由易到难）"
+msgstr "Ways to contribute (listed from easiest to hardest):"
+
+#: ../../dev/dev.md:16
+msgid "项目的宣传。如：QQ、微信、知乎文章、CSDN博客、公众号等。"
+msgstr ""
+"Project Promotion. Such as: blogs, Twitter, and other social media "
+"platforms."
+
+#: ../../dev/dev.md:17
+msgid "readme的优化。如：提升readme的易读性、完善某一功能的介绍。"
+msgstr ""
+"Optimizing README. For example: improving the readability of README, "
+"enhancing the introduction of a specific feature."
+
+#: ../../dev/dev.md:18
+msgid "ubuntu和ios等平台的打包。（该功能目前由@wzy负责）"
+msgstr ""
+"Packaging for platforms such as Ubuntu and iOS. (This feature is "
+"currently managed by @wzy)"
+
+#: ../../dev/dev.md:19
+msgid "pip安装途径的支持和维护。（该功能目前由@wzy负责）"
+msgstr ""
+"Support and maintenance of pip installation method. (This feature is "
+"currently managed by @wzy)."
+
+#: ../../dev/dev.md:20
+msgid "通过issue反馈bug，并提交commit解决这个bug。"
+msgstr "Report the bug through an issue, and submit a commit to solve the bug."
+
+#: ../../dev/dev.md:21
+msgid "已有功能的改进。如：运行速度的优化、版本更新提示。"
+msgstr ""
+"Improvement of existing features. For example: optimization of running "
+"speed, version update prompt."
+
+#: ../../dev/dev.md:22
+msgid "新功能的开发。"
+msgstr "Development of new features."
+
+#: ../../dev/dev.md:23
+msgid "架构的优化。"
+msgstr "Optimization of architecture."
+
+#: ../../dev/dev.md:24
+msgid "我们期待每个用户任意的改进意见！"
+msgstr "We look forward to any improvement suggestions from each user!"
+
+#: ../../dev/dev.md:26
+msgid "新功能的开发："
+msgstr "Development of new features: "
+
+#: ../../dev/dev.md:27
+msgid "假如您有任何好的idea，在github上提一个issue。"
+msgstr "If you have any good ideas, please create an issue on Github."
+
+#: ../../dev/dev.md:28
+msgid "在这个issue中，我们可以讨论具体功能的实现细节。也可以在qq上交流，最后把讨论的结果记录到issue中。"
+msgstr ""
+"In this issue, we can discuss the implementation details of specific "
+"features and record the results of the discussion in the issue."
+
+#: ../../dev/dev.md:29
+msgid "正常的开发流程：fork到自己本地->新建一个分支->实现功能->自行调试成功->合并到主分支。"
+msgstr ""
+"The normal development process is: fork to your local repository -> "
+"create a new branch -> implement the feature -> debug it successfully -> "
+"merge it into the main branch."
+
+#: ../../dev/dev.md:30
+msgid "如果您希望深度地、持续地参与到项目的开发中，可以邮件(liujiawei18@mails.ucas.ac.cn)联系我。我会邀请您开发此软件，您可以获得直接访问该项目的权限，这有利于快速及时地更新主分支。"
+msgstr ""
+"If you wish to participate deeply and continuously in the development of "
+"the project, you can contact me by email (liujiawei18@mails.ucas.ac.cn). "
+"I will invite you to develop this software and you will be granted direct"
+" access to the project, which will facilitate quick and timely updates to"
+" the main branch."
+
+#: ../../dev/dev.md:32
+msgid "文件说明"
+msgstr "File Description"
+
+#: ../../dev/dev.md:33
+msgid "项目框架："
+msgstr "Project Framework:"
+
+#: ../../dev/dev.md:60
+msgid "开发流程"
+msgstr "Development Flow"
+
+#: ../../dev/dev.md:61
+msgid "GUI的创建"
+msgstr "GUI creation"
+
+#: ../../dev/dev.md:62
+msgid "GUI使用[wxFormBuilder](https://github.com/wxFormBuilder/wxFormBuilder)创建。wxFormBuilder的安装："
+msgstr ""
+"The GUI is created using "
+"[wxFormBuilder](https://github.com/wxFormBuilder/wxFormBuilder). "
+"wxFormBuilder is installed:"
+
+#: ../../dev/dev.md:63
+msgid "window平台可以直接下载[exe](https://github.com/wxFormBuilder/wxFormBuilder/releases)。"
+msgstr ""
+"window platform can be directly downloaded "
+"[exe](https://github.com/wxFormBuilder/wxFormBuilder/releases)"
+
+#: ../../dev/dev.md:64
+msgid "linux平台可以下载`.deb`，或者使用`.flatpak`。"
+msgstr "The linux platform can download `.deb`, or use `.flatpak`."
+
+#: ../../dev/dev.md:65
+msgid "ubuntu18.04下的安装，可以见[参考](https://nachifur.blog.csdn.net/article/details/107702485)."
+msgstr "wxFormBuilder: https://github.com/wxFormBuilder/wxFormBuilder"
+
+#: ../../dev/dev.md:66
+msgid "目前MulimgViewer使用的wxFormBuilder版本为：v3.10.1。大家也可以使用最新的版本。"
+msgstr ""
+"Currently, the version of wxFormBuilder used by MulimgViewer is v3.10.1. "
+"Everyone can also use the latest version."
+
+#: ../../dev/dev.md:68
+msgid "编写实现GUI的回调函数"
+msgstr "Implementing the callback function of GUI"
+
+#: ../../dev/dev.md:69
+msgid "为了分离GUI和功能实现，对于`MulimgViewer/src/mulimgviewer/gui`路径下的文件，不建议手动直接修改。具体的操作如下："
+msgstr ""
+"In order to separate the GUI and functionality implementation, it is not "
+"recommended to manually modify the files under the "
+"`MulimgViewer/src/mulimgviewer/gui` path. The specific steps are as "
+"follows:"
+
+#: ../../dev/dev.md:70
+msgid "wxFormBuilder创建GUI文件`MulimgViewer/src/mulimgviewer/gui/main.fbp`。"
+msgstr ""
+"create the GUI file (`MulimgViewer/src/mulimgviewer/gui/main.fbp`) by "
+"using wxFormBuilder"
+
+#: ../../dev/dev.md:71
+msgid "使用自动生成代码，生成`MulimgViewer/src/mulimgviewer/gui/main_gui.py`。只需在wxFormBuilder的GUI中，点击代码生成按钮即可生成`.py`。"
+msgstr ""
+"Use the auto-generated code to generate "
+"`MulimgViewer/src/mulimgviewer/gui/main_gui.py`. Simply click on the code"
+" generation button in wxFormBuilder's GUI to generate the .py file."
+
+#: ../../dev/dev.md:73
+msgid ""
+"![f19](https://user-"
+"images.githubusercontent.com/32936898/224470780-2f663d08-5a64-4f56-9d86-a350fbe90f81.jpg)"
+msgstr ""
+
+#: ../../dev/dev.md:73
+msgid "f19"
+msgstr ""
+
+#: ../../dev/dev.md:75
+msgid "修改`MulimgViewer/src/mulimgviewer/src/main.py`实现回调函数。"
+msgstr ""
+"Modify `MulimgViewer/src/mulimgviewer/src/main.py` to implement the "
+"callback function."
+
+#: ../../dev/dev.md:77
+msgid "事实上，wxFormBuilder生成的python的GUI代码是wxpython。更多关于回调函数、事件等可见:"
+msgstr "More information about wxpython:"
+
+#: ../../dev/dev.md:78
+msgid "[wxpython doc](https://docs.wxpython.org/index.html)"
+msgstr ""
+
+#: ../../dev/dev.md:79
+msgid ""
+"[wxpython "
+"自定义事件、线程安全、多线程交互、版本更新](https://nachifur.blog.csdn.net/article/details/124809333)"
+msgstr "[wxpython events](https://docs.wxpython.org/events_overview.html)"
+
+#: ../../dev/dev.md:81
+msgid "跨平台的支持"
+msgstr "Cross-platform support"
+
+#: ../../dev/dev.md:82
+msgid "MulimgViewer的所有功能均采用python编写，这保证了跨平台的使用。但是windows和linux的路径是有区别的。**直接使用`D:\\ncfey\\Desktop\\`，是非常糟糕的**，这会破坏跨平台。因为我们**强烈建议**使用："
+msgstr ""
+"All functionalities of MulimgViewer are implemented using Python, which "
+"ensures cross-platform compatibility. However, there are differences in "
+"the file paths between Windows and Linux. It is strongly discouraged to "
+"use D:\\ncfey\\Desktop\\ directly, as it would break cross-platform "
+"compatibility. Instead, we highly recommend using:"
+
+#: ../../dev/dev.md:86
+msgid "[pathlib使用说明](https://zhuanlan.zhihu.com/p/13978333)"
+msgstr ""
+"[pathlib usage "
+"instructions](https://docs.python.org/3/library/pathlib.html#module-"
+"pathlib)"
+
+#: ../../dev/dev.md:88
+msgid "Readme | Translation"
+msgstr ""
+
+#: ../../dev/dev.md:89
+msgid "当您提出一个issue，或者决定参与该项目的开发，可以添加到[todo.md](https://github.com/nachifur/MulimgViewer/blob/master/docs/misc/todo.md)."
+msgstr ""
+"When you raise an issue or decide to contribute to this project, you can "
+"add it to "
+"[todo.md](https://github.com/nachifur/MulimgViewer/blob/master/docs/misc/todo.md)."
+
+#: ../../dev/dev.md:90
+msgid "当您完成一个功能的时候，可以在issue中添加该功能的`md`说明。在下一个版本release的时候，我们会更新`docs`（仅包含最新release版本的功能介绍）。"
+msgstr ""
+"When you complete a feature, you can add the `md` description of that "
+"feature to the issue. When the next version is released, we will update "
+"the docs (which only contain the feature introduction for the latest "
+"**release** version)."
+
+#: ../../dev/dev.md:91
+msgid "当您完成一个功能的时候，可以添加到[acknowledgements.md](https://github.com/nachifur/MulimgViewer/blob/master/docs/misc/acknowledgements.md)."
+msgstr ""
+"When you complete a feature, you can add it to "
+"[acknowledgements.md](https://github.com/nachifur/MulimgViewer/blob/master/docs/misc/acknowledgements.md)."
+
+#: ../../dev/dev.md:93
+msgid "**翻译**：(Refer [sphinx-intl](https://sphinx-intl.readthedocs.io).)"
+msgstr "Translation"
+
+#: ../../dev/dev.md:112
+msgid "**error**: ModuleNotFoundError: No module named 'mulimgviewer'"
+msgstr ""
+
+#: ../../dev/dev.md:114
+msgid "**fix error**: set pythonpath `windows powershell`:"
+msgstr ""
+
+#: ../../dev/dev.md:120
+msgid "Release"
+msgstr "Release"
+
+#: ../../dev/dev.md:121
+#, fuzzy
+msgid "我们的下一个release版本的计划可见[projects](https://github.com/nachifur/MulimgViewer/projects)。"
+msgstr ""
+"Our plan for the next release version can be seen on the [projects "
+"page](https://github.com/nachifur/MulimgViewer/projects)."
+
+#: ../../dev/dev.md:123
+msgid "window的打包"
+msgstr "packaging for Windows"
+
+#: ../../dev/dev.md:124
+msgid "安装："
+msgstr "install"
+
+#: ../../dev/dev.md:128
+msgid "Windows打包"
+msgstr "packaging"
+
+#: ../../dev/dev.md:132
+msgid "便携版："
+msgstr "Portable version"
+
+#: ../../dev/dev.md:136
+msgid "安装版："
+msgstr "Installation version:"
+
+#: ../../dev/dev.md:137
+msgid "打包成一个文件夹："
+msgstr "Packed in a folder"
+
+#: ../../dev/dev.md:141
+msgid "使用createinstall打包成可安装的`.exe`。[createinstall使用](https://blog.csdn.net/qq_41811438/article/details/103092610)"
+msgstr ""
+"Use [createinstall](https://www.createinstall.com/) to package it as an "
+"installable `.exe`."
+
+#: ../../dev/dev.md:144
+msgid "linux/ios/arm等平台的打包"
+msgstr "packaging for linux/ios/arm"
+
+#: ../../dev/dev.md:145
+msgid "感谢@wzy。打包目前由@wzy主要负责。"
+msgstr "Thanks @wzy. This feature is currently managed by @wzy."
+
+#: ../../dev/dev.md:147
+msgid "命名"
+msgstr ""
+
+#: ../../dev/dev.md:155
+msgid "镜像维护"
+msgstr "Mirror maintenance"
+
+#: ../../dev/dev.md:156
+msgid "我们目前支持以下两个镜像，release版本需要推送到这两个站点："
+msgstr ""
+"Currently, we support the following two mirrors and the release version "
+"needs to be pushed to these two sites:"
+
+#: ../../dev/dev.md:157
+msgid "[**国内gitee镜像项目**](https://gitee.com/nachifur/MulimgViewer)"
+msgstr "[**gitee**](https://gitee.com/nachifur/MulimgViewer)"
+
+#: ../../dev/dev.md:158
+msgid "[**果壳OpenCas镜像项目**](https://github.com/opencas/MulimgViewer)"
+msgstr "[**OpenCas**](https://github.com/opencas/MulimgViewer)"
+

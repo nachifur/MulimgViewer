@@ -1,0 +1,12 @@
+#!/usr/bin/env -S rubocop -c
+---
+Layout/LineLength:
+  Max: 118
+Naming/FileName:
+  Enabled: false
+Style/StringLiterals:
+  EnforcedStyle: double_quotes
+Style/Documentation:
+  Enabled: false
+Style/FrozenStringLiteralComment:
+  Enabled: false

@@ -1,0 +1,237 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2023
+# This file is distributed under the same license as the mulimgviewer
+# package.
+# nachifur <1476879092.com>, 2023.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: mulimgviewer 3.9.10\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2024-05-18 00:01+0800\n"
+"PO-Revision-Date: 2023-03-29 12:46+0800\n"
+"Last-Translator: nachifur <1476879092.com>\n"
+"Language-Team: nachifur <1476879092.com>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.15.0\n"
+
+#: ../../resources/install.md:1
+msgid "安装"
+msgstr "Install and download"
+
+#: ../../resources/install.md:3
+msgid "Windows"
+msgstr ""
+
+#: ../../resources/install.md:5
+msgid "下载 [exe 文件](https://github.com/nachifur/MulimgViewer/releases)："
+msgstr "Download [.exe](https://github.com/nachifur/MulimgViewer/releases):"
+
+#: ../../resources/install.md:7
+msgid "安装版 `*_Setup.exe` （启动速度更快）"
+msgstr "Installation version `*_Setup.exe` (faster startup)"
+
+#: ../../resources/install.md:8
+msgid "便携版 `*_Portable.exe`"
+msgstr "Portable version `*_Portable.exe`"
+
+#: ../../resources/install.md:10
+msgid "[PYPI](https://pypi.org/project/mulimgviewer/) (测试中)"
+msgstr "[PYPI](https://pypi.org/project/mulimgviewer/) (tesing)"
+
+#: ../../resources/install.md:12
+msgid "任何安装了 [`pip`](https://github.com/pypa/pip) 的系统均可："
+msgstr "Any system with [`pip`](https://github.com/pypa/pip) can:"
+
+#: ../../resources/install.md:20
+msgid ""
+"![icon](https://user-"
+"images.githubusercontent.com/32936898/224473440-2088edd7-42e5-45a3-a403-515e2daa019a.jpg)"
+msgstr ""
+
+#: ../../resources/install.md:20
+msgid "icon"
+msgstr ""
+
+#: ../../resources/install.md:22
+msgid "[AUR](https://aur.archlinux.org/packages/python-mulimgviewer)"
+msgstr ""
+
+#: ../../resources/install.md:24
+msgid ""
+"任何安装了 [`pacman`](https://archlinux.org/pacman/) 的系统均可（尽管目前仅在 `ArchLinux` "
+"上测试过）："
+msgstr ""
+"Any system with [`pacman`](https://archlinux.org/pacman/) (although so "
+"far only tested on `ArchLinux`)"
+
+#: ../../resources/install.md:27
+msgid "[ArchLinux](https://archlinux.org/)"
+msgstr ""
+
+#: ../../resources/install.md:28
+msgid "Other Linux distributions with pacman"
+msgstr ""
+
+#: ../../resources/install.md:29
+msgid "Windows with [Msys2](https://www.msys2.org/)"
+msgstr ""
+
+#: ../../resources/install.md:30
+msgid "Android with [Termux-pacman](https://github.com/termux-pacman)"
+msgstr ""
+
+#: ../../resources/install.md:32
+#, python-format
+msgid "通过[AUR 助手](https://wiki.archlinuxcn.org/wiki/AUR_%E5%8A%A9%E6%89%8B)安装："
+msgstr ""
+"Installation via [AUR "
+"Assistant](https://wiki.archlinuxcn.org/wiki/AUR_%E5%8A%A9%E6%89%8B):"
+
+#: ../../resources/install.md:38
+msgid "brew"
+msgstr ""
+
+#: ../../resources/install.md:40
+msgid "任何安装了 [`brew`](https://github.com/Homebrew/brew) 的系统均可："
+msgstr "Any system with [`brew`](https://github.com/Homebrew/brew) can:"
+
+#: ../../resources/install.md:42
+msgid "Any Linux distributions with linuxbrew"
+msgstr ""
+
+#: ../../resources/install.md:43
+msgid "macOS with homebrew"
+msgstr ""
+
+#: ../../resources/install.md:50
+msgid "PPA （TODO）"
+msgstr ""
+
+#: ../../resources/install.md:52
+msgid "目前该软件还没有打包到 Ubuntu PPA 上。"
+msgstr "The software is not currently packaged for Ubuntu PPA."
+
+#: ../../resources/install.md:54
+msgid "这是一个临时的安装方法："
+msgstr ""
+
+#: ../../resources/install.md:64
+msgid "Nix"
+msgstr ""
+
+#: ../../resources/install.md:66
+msgid "任何安装了 [`nix`](https://github.com/NixOS/nix) 的系统均可："
+msgstr "Any system with [`nix`](https://github.com/NixOS/nix) can:"
+
+#: ../../resources/install.md:68
+msgid "Nix OS"
+msgstr ""
+
+#: ../../resources/install.md:69
+msgid "Other Linux distributions with nix"
+msgstr ""
+
+#: ../../resources/install.md:70
+msgid "macOS with nix-darwin"
+msgstr ""
+
+#: ../../resources/install.md:72
+msgid "For NixOS, add the following code to `/etc/nixos/configuration.nix`:"
+msgstr ""
+
+#: ../../resources/install.md:98
+msgid "For nix,"
+msgstr ""
+
+#: ../../resources/install.md:104
+msgid "Or just take a try without installation:"
+msgstr ""
+
+#: ../../resources/install.md:110
+msgid "运行源码 | 适合所有系统，需自行构建python环境"
+msgstr "Run with Python source code (windows/linux/ios)"
+
+#: ../../resources/install.md:111
+msgid "**任何系统**都可以使用源码运行"
+msgstr "**Any system** can be run with source code"
+
+#: ../../resources/install.md:112
+msgid "安装python环境可以使用`pip` or `conda`"
+msgstr "You can use `pip` or `conda` to install python environment"
+
+#: ../../resources/install.md:113
+msgid "建议使用Python3.6以上"
+msgstr "Python 3.6 or above is recommended"
+
+#: ../../resources/install.md:114
+msgid "[最新源码下载](https://codeload.github.com/nachifur/MulimgViewer/zip/refs/heads/master)"
+msgstr ""
+"[Latest source code "
+"download](https://codeload.github.com/nachifur/MulimgViewer/zip/refs/heads/master)"
+
+#: ../../resources/install.md:116
+msgid "1. pip 安装"
+msgstr "1.pip install"
+
+#: ../../resources/install.md:117
+msgid "pip安装：（如果安装过程出错，可以使用conda安装）"
+msgstr ""
+"**pip installation**:(If there is an error in the installation process, "
+"you can use conda.)"
+
+#: ../../resources/install.md:121 ../../resources/install.md:135
+msgid "运行："
+msgstr "**run:**"
+
+#: ../../resources/install.md:125
+msgid "安装wxpython发生错误，可以考虑跟换清华源："
+msgstr "An error occurred while installing wxpython, please consider following up with other mirrors (e.g., Tsinghua):"
+
+#: ../../resources/install.md:130
+msgid "2. conda 安装"
+msgstr "2.conda"
+
+#: ../../resources/install.md:131
+msgid "或者安装conda环境："
+msgstr "install the conda environment:"
+
+#: ../../resources/install.md:140
+msgid "3. 快速运行源代码"
+msgstr "3.Quick Run Source Code"
+
+#: ../../resources/install.md:141
+msgid "在win11上，你可以编写一个`MulimgViewer.bat`文件快速地运行源码:"
+msgstr ""
+"You can quickly run the source code by creating a `MulimgViewer.bat` file"
+" on Win11:"
+
+#: ../../resources/install.md:147
+msgid ""
+"**注意**：上述命令行适用于win11+windows "
+"terminal。其他系统和终端运行的命令行，大家可以自己探索（鼓励大家通过`issue`反馈，提供其他平台的命令行文件）。"
+msgstr ""
+"**Note**: The above command line is applicable to win11+windows terminal."
+" For the run command lines on other systems and terminals, you can "
+"explore successfully and then provide the command line files through "
+"`issue', which can help more people."
+
+#~ msgid ""
+#~ "注意，目前由于依赖项 [wxpython](https://github.com/wxWidgets/Phoenix) "
+#~ "的 "
+#~ "[bug](https://github.com/wxWidgets/Phoenix/issues/2225)，该方法可能会失败。"
+#~ msgstr ""
+#~ "\"Note that this method may currently"
+#~ " fail due to a "
+#~ "[bug](https://github.com/wxWidgets/Phoenix) in the "
+#~ "dependency "
+#~ "[wxpython](https://github.com/wxWidgets/Phoenix/issues/2225).\""
+
+#~ msgid "这是一个临时的安装方法，它避开了 `wxpython` 的 bug："
+#~ msgstr ""
+#~ "This is a temporary installation method"
+#~ " that bypasses the `wxpython` bug."
+

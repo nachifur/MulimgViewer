@@ -1,0 +1,617 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2023
+# This file is distributed under the same license as the mulimgviewer
+# package.
+# nachifur <1476879092.com>, 2023.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: mulimgviewer 3.9.10\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2023-03-29 12:46+0800\n"
+"PO-Revision-Date: 2023-03-29 12:46+0800\n"
+"Last-Translator: nachifur <1476879092.com>\n"
+"Language-Team: nachifur <1476879092.com>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.11.0\n"
+
+#: ../../resources/usage.md:1
+msgid "使用说明"
+msgstr "Usage Instructions"
+
+#: ../../resources/usage.md:3
+msgid "快捷栏"
+msgstr "Shortcut bar"
+
+#: ../../resources/usage.md:5
+msgid ""
+"![Shortcut_bar](https://user-"
+"images.githubusercontent.com/32936898/224470802-9336ba25-2cc6-49f5-9468-058281b02ff4.jpg)"
+msgstr ""
+
+#: ../../resources/usage.md:5
+msgid "Shortcut_bar"
+msgstr ""
+
+#: ../../resources/usage.md:7
+msgid "操作流程"
+msgstr "Process Flow"
+
+#: ../../resources/usage.md:9
+msgid ""
+"测试图像下载地址： "
+"[test_img.zip](https://github.com/nachifur/MulimgViewer/files/10948418/test_img.zip)"
+msgstr "**Test images pack download link**: https://github.com/nachifur/MulimgViewer/files/10948418/test_img.zip"
+
+#: ../../resources/usage.md:12
+msgid "**注意：本软件不支持自动刷新，修改布局参数之后，需要手动刷新（`Ctrl+R`）。**"
+msgstr "**Note: This software does not support automatic refresh, after modifying the layout parameters, you need to refresh manually (`Ctrl+R`).**"
+
+#: ../../resources/usage.md:14
+msgid ""
+"![Quick_start](https://user-"
+"images.githubusercontent.com/32936898/224470801-9bc4c1eb-1e9c-"
+"40bd-9382-313916331e5e.jpg)"
+msgstr ""
+
+#: ../../resources/usage.md:14
+msgid "Quick_start"
+msgstr ""
+
+#: ../../resources/usage.md:16
+msgid ""
+"在`Layout`中**填写布局参数**：`Row`（一行有几张图片）, `NumPerImg`（一个图片由几个子图片组成）, "
+"`Col`（一列有几个图片）。"
+msgstr "Fill in the layout parameters in the **Settings** panel: `Row` (number of images in a row), `NumPerImg` (number of sub-images that will be combined into a single image), `Col` (number of images in a column)."
+
+#: ../../resources/usage.md:17
+msgid "选择**输入模式**"
+msgstr "File->Open, select **input mode**:"
+
+#: ../../resources/usage.md:19
+msgid "2.1. Sequential: 一个文件夹多张图片。(`test_input/01`)"
+msgstr "2.1. Sequential: Multiple images in one folder. (`test_input/01`)"
+
+#: ../../resources/usage.md:21
+msgid "2.2. Parallel auto: 一个文件夹多个子文件夹。一个文件夹下有n个子文件夹，子文件夹中为图片。 (`test_input/`)"
+msgstr "2.2. Parallel Auto: One folder with several subfolders, each subfolder contains multiple images.  (`test_input/`)"
+
+#: ../../resources/usage.md:23
+msgid "2.3. Parallel manual: 手动选择多个子文件夹。(`test_input//01`+`test_input//02`)"
+msgstr "2.3. Parallel Manual: Manually select multiple folders. (`test_input//01`+`test_input//02`)"
+
+#: ../../resources/usage.md:25
+msgid ""
+"2.4. Image file list： 从文件导入图片列表文件。([Examples "
+"file](https://github.com/nachifur/MulimgViewer/tree/master/examples/input))"
+msgstr "2.4. Image File List: Import images according to a given list of filenames (TXT, CSV). ([Demo file](https://github.com/nachifur/MulimgViewer/tree/master/examples/input))"
+
+#: ../../resources/usage.md:27
+msgid "打开文件夹，导入路径"
+msgstr "Open the folder and import the path."
+
+#: ../../resources/usage.md:28
+msgid "这时图片显示在面板，可以使用`>`查看下一张，`<`查看上一张图片"
+msgstr "After loading the images you can use the **Next** and **Previous** buttons to switch between them."
+
+#: ../../resources/usage.md:29
+msgid "`Input/OutPut`->OutputMode, 选择输出模式"
+msgstr "`Input/OutPut`->OutputMode, select the output mode"
+
+#: ../../resources/usage.md:30
+msgid "`File->Select output path`, **选择输出的路径**。"
+msgstr "`File->Select output path`, **Select the output path**."
+
+#: ../../resources/usage.md:31
+msgid "点击保存💾️"
+msgstr "Save 💾️"
+
+#: ../../resources/usage.md:34
+msgid "快捷键"
+msgstr "Keyboard shortcuts"
+
+#: ../../resources/usage.md:35
+msgid "输入路径："
+msgstr "Input path:"
+
+#: ../../resources/usage.md:37
+msgid "Sequential: Ctrl+E"
+msgstr "Sequential: Ctrl+E"
+
+#: ../../resources/usage.md:39
+msgid "Parallel auto: Ctrl+A"
+msgstr "Parallel Auto: Ctrl+A"
+
+#: ../../resources/usage.md:41
+msgid "Parallel manual: Ctrl+M"
+msgstr "Parallel Manual: Ctrl+M"
+
+#: ../../resources/usage.md:43
+msgid "Image file list: Ctrl+F"
+msgstr "Image File List: Ctrl+F"
+
+#: ../../resources/usage.md:45
+msgid "输出路径：Ctrl+O"
+msgstr "Output path: Ctrl+O"
+
+#: ../../resources/usage.md:46
+msgid "下一张：Ctrl+N"
+msgstr "Next: Ctrl+N"
+
+#: ../../resources/usage.md:47
+msgid "上一张Ctrl+L"
+msgstr "Previous Ctrl+L"
+
+#: ../../resources/usage.md:48
+msgid "保存：Ctrl+S"
+msgstr "Save: Ctrl+S"
+
+#: ../../resources/usage.md:49
+msgid "刷新：Ctrl+R (或者鼠标右键。ps：鼠标右键具有功能复用：默认是：刷新；放大模式：新增框；选中Box:SelectBox：移动框)"
+msgstr "Refresh: Ctrl+R (Or right mouse button)"
+
+#: ../../resources/usage.md:50
+msgid "隐藏工具栏：Ctrl+H"
+msgstr "Hide toolbar: Ctrl+H"
+
+#: ../../resources/usage.md:51
+msgid "使用键盘的上下左右，可以移动图像面板里的图像。"
+msgstr "Use the keyboard arrow keys (up, down, left, right) to move the image in the image panel."
+
+#: ../../resources/usage.md:53
+msgid "功能介绍"
+msgstr "Functionality description"
+
+#: ../../resources/usage.md:55
+msgid "输入模式"
+msgstr "Input mode"
+
+#: ../../resources/usage.md:57
+msgid "`Sequential`是**串行浏览**模式，一个文件夹下有不同的图片，命名不同，用于图片的拼接。"
+msgstr "`Sequential` is a **serial browsing** mode. It is used to display and stitch multiple images with different filenames contained in a single folder."
+
+#: ../../resources/usage.md:59
+msgid ""
+"`Parallel auto`和`Parallel "
+"manual`是**并行浏览**模式（子文件夹的名称不一样），需要确保各子文件夹下面的图片命名相同，用于不同图片的对比。"
+msgstr "`Parallel Auto` and `Parallel Manual` are **parallel browsing** modes (subfolders with different names). In order to compare the images, each folder or subfolder must contain the images with the same filenames."
+
+#: ../../resources/usage.md:61
+msgid "`Image File List`是**自定义模式**，从txt, csv文件导入图片列表。支持csv文件多行多列显示。"
+msgstr "`Image File List` is a **custom mode**. You can import a list of images from TXT or CSV file. CSV supports multi-line and multi-column mode."
+
+#: ../../resources/usage.md:63
+msgid "如果需要自动排布，`NumPerImg`设为-1。"
+msgstr "For automatic image arrangement set `NumPerImg` to `-1`."
+
+#: ../../resources/usage.md:67
+msgid "输出模式"
+msgstr "Output mode"
+
+#: ../../resources/usage.md:69
+msgid "Stitch: 将拼接的图像保存到*stitch_images*目录下"
+msgstr "`stitch`: Save the stitched image to the *stitch_images* directory."
+
+#: ../../resources/usage.md:71
+msgid ""
+"Select: 分别保存当前浏览的图像到不同的文件夹，默认为copy模式，选中`MoveFile`为剪切模式。（推荐的输入模式为`Parallel"
+" auto`或`Parallel manual`，关闭`Parallel+Sequential`和`Parallel->Sequential`）"
+msgstr "`select`: Save the currently displaying images to a different folder. By default the images will be copied to a new location, you can select `MoveFile` to move them instead."
+
+#: ../../resources/usage.md:73
+msgid "Magnifer: 单独保存放大图像，方便用户的后期处理。"
+msgstr "`magnifer`: Save all the magnified areas separately."
+
+#: ../../resources/usage.md:77
+msgid "图像排列自动化"
+msgstr "Automatic image arrangement"
+
+#: ../../resources/usage.md:79
+msgid "默认：`NumPerImg` = -1，这时为程序**自动布局模式**。`NumPerImg` 的意思是几张图像合成一个图像。"
+msgstr "By default `NumPerImg = -1` and this is an **automatic layout mode**. `NumPerImg` means that several images are combined into a single image."
+
+#: ../../resources/usage.md:81
+msgid "当`NumPerImg` = 1或者>1，图像布局为**手动模式**，这时可以调整 `Row` 和 `Col`。"
+msgstr "If `NumPerImg  = 1` or `>1`, then the image layout is in **manual mode**. In this mode `Row` and `Col` numbers can be adjusted."
+
+#: ../../resources/usage.md:83
+msgid "并行模式下的串行显示"
+msgstr "Sequential browsing in a parallel mode"
+
+#: ../../resources/usage.md:85
+msgid "在`Parallel auto`和`Parallel manual`模式下，可以并行显示多个文件夹。"
+msgstr "By selecting `Parallel+Sequential` option, you can simultaneously view the first n images in folders 1-12, n can be set by `NumPerImg`."
+
+#: ../../resources/usage.md:87
+msgid "**Parallel+Sequential：**"
+msgstr ""
+
+#: ../../resources/usage.md:89
+msgid ""
+"选中`Parallel+Sequential`，在并行显示的同时，可以串行浏览每个文件夹中的前n张图片，n可由`NumPerImg`设定。例如：`Row=5`"
+" ,`NumPerImg=4`, `Col=1`, "
+"一次分别读取5个并行目录的4张图片，共20张。`Vertical`可以调整串行方向。修改`Row`和`Col`, 可以控制并行文件夹的二维排布。"
+msgstr "For example: `Row=5`, `NumPerImg=4`, `Col=1` means that MulimgViewer will show 4 images from 5 parallel directories at once, 20 images in total. Check `Vertical` to change the image layout direction."
+
+#: ../../resources/usage.md:91
+msgid ""
+"![Parallel_Sequential](https://user-"
+"images.githubusercontent.com/32936898/224482764-d5e1335d-647d-480b-"
+"ae69-2596eeff3941.jpg)"
+msgstr ""
+
+#: ../../resources/usage.md:91
+msgid "Parallel_Sequential"
+msgstr ""
+
+#: ../../resources/usage.md:93
+msgid "**Parallel->Sequential：** 将多个文件夹的所有图片，拼接成一个图片列表进行串行显示。"
+msgstr "**Parallel->Sequential:** Generate a image list containing all pictures in multiple folders, and then display them in serial."
+
+#: ../../resources/usage.md:95
+msgid "在`Parallel+Sequential`模式下，各个子文件夹下的文件名称需要一样。在`Parallel->Sequential`模式下，则不需要。"
+msgstr "In Parallel+Sequential mode, the file name under each subfolder needs to be the same, but in Parallel->Sequential mode, it is not required."
+
+#: ../../resources/usage.md:97
+msgid "自动保存"
+msgstr "Auto save"
+
+#: ../../resources/usage.md:99
+msgid "勾选自动保存`AutoSaveAll`，点击保存💾️，实现批量化操作。"
+msgstr "Select `AutoSaveAll`, then click `Save 💾️`."
+
+#: ../../resources/usage.md:101
+msgid "图像尺寸归一化"
+msgstr "Image size normalization"
+
+#: ../../resources/usage.md:103
+msgid "Fill: 图像尺寸为一组图像中的最大尺寸，填充模式(保持原始像素分辨率)"
+msgstr "`Fill`: Image size is the largest image in a group, filling mode (keep the original pixel resolution)."
+
+#: ../../resources/usage.md:105
+msgid "Crop: 图像尺寸为一组图像中的最小尺寸，裁剪模式(保持原始像素分辨率)"
+msgstr "`Crop`: Image size is the smallest image in a group, cropping mode (keep the original pixel resolution)."
+
+#: ../../resources/usage.md:107
+msgid "Resize: 图像尺寸为一组图像中的平均尺寸，缩放模式(不保持原始像素分辨率)"
+msgstr "`Resize`: Image size is an average size of all the images in a group, scaling mode (don't keep the original pixel resolution)."
+
+#: ../../resources/usage.md:111
+msgid "图像间隔"
+msgstr "Gap between images"
+
+#: ../../resources/usage.md:113
+msgid ""
+"![f12](https://user-"
+"images.githubusercontent.com/32936898/224470762-099c5217-8e8a-"
+"4f08-8257-e9b9f8d0a70c.jpg)"
+msgstr ""
+
+#: ../../resources/usage.md:113
+msgid "f12"
+msgstr ""
+
+#: ../../resources/usage.md:115
+msgid "图像填充"
+msgstr "Color fill"
+
+#: ../../resources/usage.md:117
+msgid "支持多种颜色填充。支持背景填充**透明**。**同时支持前景透明度调节**。"
+msgstr "You can use custom background and foreground colors and transparency."
+
+#: ../../resources/usage.md:119
+msgid "并行手动模式支持路径导入保存"
+msgstr "Parallel Manual mode supports file list import and export"
+
+#: ../../resources/usage.md:123
+msgid "显示、输出尺寸独立"
+msgstr "Independent display and output sizes"
+
+#: ../../resources/usage.md:125
+msgid "此功能可以保证显示的scale与输出独立。"
+msgstr "This feature provides independent view and output scales."
+
+#: ../../resources/usage.md:127
+msgid "**应用场景**："
+msgstr "**Application scenario**:"
+
+#: ../../resources/usage.md:128
+msgid "同时浏览显示100张图像，屏幕放不下，使用`Scale:Show`缩放即可"
+msgstr "When you need to display a lot of images at the same time and the screen can’t fit them all, just set `Scale:Show` to shrink the images."
+
+#: ../../resources/usage.md:129
+msgid "100张拼接造成的保存图片很大，使用`Scale:Out`可以方便控制文件大小"
+msgstr "Stitched images at 100% scale can be very large, but you can control the dimensions of the individual images by setting `Scale:Out`."
+
+#: ../../resources/usage.md:131
+msgid "并行放大"
+msgstr "Parallel zoom"
+
+#: ../../resources/usage.md:132
+msgid "**操作**:"
+msgstr "**Process Flow**:"
+
+#: ../../resources/usage.md:134
+msgid "点击放大按钮`🔍️`"
+msgstr "Click `Zoom 🔍️`"
+
+#: ../../resources/usage.md:138
+msgid "鼠标变为十字光标，在任意图片位置划框"
+msgstr "Mouse pointer will be turned into a crosshair cursor. Now you can make a selection;"
+
+#: ../../resources/usage.md:139
+msgid "选择放大区域：按住鼠标左键，移动鼠标，释放鼠标左键，显示放大结果"
+msgstr "To make a selection press and hold the left mouse button, drag mouse to draw a rectangle and then release the button — a magnified area will be displayed;"
+
+#: ../../resources/usage.md:140
+msgid "新增放大框：鼠标右键，实现多框放大"
+msgstr "Click the right mouse button to duplicate the selection."
+
+#: ../../resources/usage.md:142
+msgid "**Tip**:"
+msgstr ""
+
+#: ../../resources/usage.md:144
+msgid "开启`🔍️KeepSize`，即可获得与原始图片长宽比一样的放大结果。"
+msgstr "`🔍️KeepSize` — keep the image and the magnified area aspect ratios the same."
+
+#: ../../resources/usage.md:145
+msgid "`🔍️Scale`，默认为`-1,1`，自动设置scale。"
+msgstr "`🔍️Scale` by default is set to `-1,1`, which means the scaling factor will be chosen automatically."
+
+#: ../../resources/usage.md:146
+msgid "可以选中`Vertical`,`Crtl+R`刷新显示，放大图像放置在原图的右侧。"
+msgstr "Select `Vertical`, then press `Crtl+R` to place the magnified area on the right side of the original image."
+
+#: ../../resources/usage.md:147
+msgid "`🔍️Scale`，支持自定义倍数放大，最大不超过原图尺寸。例如：`3,3`，长宽3倍的放大。"
+msgstr "Use `🔍️Scale` to change the magnification factor, but keep in mind that the maximum size will not exceed the original image size. For example, `3,3` means enlargement by a scale factor of 3."
+
+#: ../../resources/usage.md:148
+msgid "`Box:Width`设为`2,3`。原图中的线宽是2，放大图中的线宽是3。"
+msgstr "`Box:Width` is set to `2,3`. The line width in the original image is 2, and the line width in the magnified image is 3."
+
+#: ../../resources/usage.md:149
+msgid "`Box:Width`设为`0,0`，即可隐藏框。"
+msgstr "Set `Box:Width` to `0,0` to hide the selection border."
+
+#: ../../resources/usage.md:150
+msgid "`Box:Width`单位为pixel，在所有缩放下线宽保持不变。如果在`Scale:Show`为`0.1,0.1`，`Scale:Out`为`1,1`时，显示的框的宽度合适，那么输出框的宽度可能相比图片尺寸偏小。"
+msgstr "`Box:Width` is set in pixels and remains the same in all zoom levels. If the selection border width is suitable when `Scale:show` is set to `0.1,0.1` and `Scale:Out` is set to `1,1`, then it will probably be much thinner in the output image."
+
+#: ../../resources/usage.md:151
+msgid "点击放大按钮`🔍️`之后，鼠标单击图片选中，然后使用`ctrl`+鼠标滚轮全局缩放图像。"
+msgstr "After clicking `Zoom 🔍️`, select the image by clicking the image with the left mouse button, and then use `ctrl` + mouse wheel to zoom the image globally."
+
+#: ../../resources/usage.md:152
+msgid "鼠标滚轮缩放功能，使用缩放因子控制。每次手动设置`Scale:Show`为`1,1`，缩放因子清零，界面刷新。"
+msgstr "The scroll wheel zoom function is controlled by a zoom factor. Every time you manually set `Scale:Show` to `1,1`, the zoom factor is cleared to zero."
+
+#: ../../resources/usage.md:154
+msgid "**移动box**:"
+msgstr "**Adjust the position of the selection:**"
+
+#: ../../resources/usage.md:156
+msgid "（注意：开启`Box:SelectBox`后，使用鼠标左键不能划框）"
+msgstr "Note: After selecting `SelectBox` option you cannot make a new selection by pressing the left mouse button, but you can still duplicate an existing selection by pressing the right mouse button."
+
+#: ../../resources/usage.md:157 ../../resources/usage.md:175
+msgid "选中`Box:SelectBox`"
+msgstr "Check `SelectBox`"
+
+#: ../../resources/usage.md:158
+msgid "鼠标左键单击，选中已有的放大框"
+msgstr "Position the mouse pointer inside the selection border and click the left mouse button to select it;"
+
+#: ../../resources/usage.md:159
+msgid "然后使用键盘上下左右(或者鼠标滚轮)，微调放大框(按`shift`键可以改变速度)。使用鼠标右键，快速移动放大框。"
+msgstr "Use the keyboard arrow keys to adjust the position of the selection; PS: press `shift` to change the speed or use the right mouse button to quickly move the position of box."
+
+#: ../../resources/usage.md:160
+msgid "关闭`Box:SelectBox`。"
+msgstr "Uncheck `SelectBox`."
+
+#: ../../resources/usage.md:162
+msgid "**清除放大框**："
+msgstr "**Clear a box:**"
+
+#: ../../resources/usage.md:164
+msgid "方法1："
+msgstr "Method 1:"
+
+#: ../../resources/usage.md:165
+msgid "选中`Box:SelectBox`，键盘`Del`，删除特定`box`"
+msgstr "Check `SelectBox`, click the left mouse button on a selection, press `Del` to clear the chosen selection;"
+
+#: ../../resources/usage.md:166
+msgid "关闭`Box:SelectBox`，键盘`Del`，删除所有`box`"
+msgstr "Uncheck `SelectBox`, press `Del` to clear all selections."
+
+#: ../../resources/usage.md:168
+msgid "方法2："
+msgstr "Method 2:"
+
+#: ../../resources/usage.md:169
+msgid "关闭`Box:SelectBox`"
+msgstr "Uncheck `SelectBox`"
+
+#: ../../resources/usage.md:170
+msgid "鼠标左键双击图片"
+msgstr "Double-click the left mouse button on the image"
+
+#: ../../resources/usage.md:171
+msgid "`Ctrl+R`刷新显示。"
+msgstr "Press `Ctrl+R` to clear all the selections and refresh the view"
+
+#: ../../resources/usage.md:173
+msgid "**手动修改放大框的颜色**："
+msgstr "**Manually change the color of the zoom box**."
+
+#: ../../resources/usage.md:176
+msgid "在原图片上，鼠标左键选中某个框"
+msgstr "Check `Box:SelectBox`"
+
+#: ../../resources/usage.md:177
+msgid "鼠标左键单击`Color/transparency:Draw`，选择颜色"
+msgstr "On the original image, select a box with left click"
+
+#: ../../resources/usage.md:179
+msgid "**不显示box/框**："
+msgstr "Left click `Color/transparency:Draw` and select the color"
+
+#: ../../resources/usage.md:181
+msgid "不选中`Box:InBox`，去掉原始图片上的框"
+msgstr "**Do not show box/img**"
+
+#: ../../resources/usage.md:182
+msgid "不选中`Box:In🔍️`，去掉放大图片上的框"
+msgstr "Uncheck `Box:InBox`, remove the box on the original picture"
+
+#: ../../resources/usage.md:183
+msgid "不选中`ShowImg`，不显示原始图片"
+msgstr "Uncheck `Box:In🔍️`, remove the box on the enlarged picture"
+
+#: ../../resources/usage.md:184
+msgid "不选中`Show🔍️`，不显示放大图片"
+msgstr "Uncheck `ShowImg`, the original picture will not be displayed"
+
+#: ../../resources/usage.md:186
+msgid "窗口大小自动化调节"
+msgstr "Uncheck `Show🔍️`, the enlarged picture will not be displayed"
+
+#: ../../resources/usage.md:188
+msgid "开启`AutoWinSize`，即可实现窗口自动大小调节。"
+msgstr "Automatic window size adjustment"
+
+#: ../../resources/usage.md:190
+msgid "浏览图片，精确定位"
+msgstr "Enable `AutoWinSize` for automatic window resizing."
+
+#: ../../resources/usage.md:191
+msgid "**粗定位：** 移动slider。"
+msgstr "Browse images, precise positioning"
+
+#: ../../resources/usage.md:193
+msgid "**精确定位：**"
+msgstr "Move the slider for coarse positioning."
+
+#: ../../resources/usage.md:197
+msgid "`Help`->`Index table`"
+msgstr ""
+
+#: ../../resources/usage.md:198
+msgid "查看图片显示序号"
+msgstr "Find the serial number of the image;"
+
+#: ../../resources/usage.md:199
+msgid "输入序号，回车"
+msgstr "Enter the serial number and press Enter."
+
+#: ../../resources/usage.md:201
+msgid "标题"
+msgstr "Title"
+
+#: ../../resources/usage.md:202
+msgid "**标题**"
+msgstr "**Title**"
+
+#: ../../resources/usage.md:204
+msgid "关闭`Title:Auto`之后，可以进行自定义显示标题"
+msgstr "After closing `Title:Auto`, you can customize the display title"
+
+#: ../../resources/usage.md:205
+msgid "在`Sequential`输入模式下，文件名为`01_DSC.jpg`，不选中`Prefix`和`Suffix`，文件显示为`DSC`。使用数字可以对图片文件进行排序。"
+msgstr "In the `Sequential` input mode, the file name is `01_DSC.jpg`, and the `Prefix` and `Suffix` are not selected, the file is displayed as `DSC`. Use numbers to sort image files."
+
+#: ../../resources/usage.md:207
+msgid "**字体**"
+msgstr "**Font**"
+
+#: ../../resources/usage.md:209
+msgid "建议使用安装版`_Setup.exe`"
+msgstr "It is recommended to use the installation version `_Setup.exe`"
+
+#: ../../resources/usage.md:210
+msgid ""
+"将字体`1_Calibri-Light.ttf`复制到安装目录`C:\\Program Files "
+"(x86)\\MulimgViewer\\font\\using`下"
+msgstr "Copy the font `1_Calibri-Light.ttf` to the installation directory `C:\Program Files (x86)\MulimgViewer\font\using`"
+
+#: ../../resources/usage.md:211
+msgid "`1_Calibri-Light.ttf`中的数字越小，GUI中的字体排序靠前"
+msgstr "The smaller the number in `1_Calibri-Light.ttf`, the higher the font order in the GUI"
+
+#: ../../resources/usage.md:213
+msgid "注意事项以及使用技巧"
+msgstr "Important information and useful tips"
+
+#: ../../resources/usage.md:215
+msgid "并行模式"
+msgstr "Parallel mode"
+
+#: ../../resources/usage.md:217
+msgid "使用多图浏览模式（Parallel manual和Parallel auto），对比的文件夹里面的图像命名需要一样！"
+msgstr "Make sure that image filenames in all folders/subfolders are the same when using the multi-image modes (Parallel Manual and Parallel Auto)."
+
+#: ../../resources/usage.md:218
+msgid "子文件夹的命名。如果是0,1,2...10,11，需要改为00,01,02,...10,11。因为排序时会变为：0,1,10,11,2..."
+msgstr "Subfolder naming is also important. If the names are 0,1,2...10,11, then you should change them to 00,01,02...10,11. Otherwise MulimgViewer will sort them as 0,1,10,11,2..."
+
+#: ../../resources/usage.md:220
+msgid "文件重命名工具推荐："
+msgstr "Recommended file renaming tool:"
+
+#: ../../resources/usage.md:222
+msgid "win10: [uTools](https://u.tools/)"
+msgstr ""
+
+#: ../../resources/usage.md:224
+msgid "Ubuntu:"
+msgstr ""
+
+#: ../../resources/usage.md:226
+msgid "purrr."
+msgstr ""
+
+#: ../../resources/usage.md:228
+msgid "`sudo apt install purrr`"
+msgstr ""
+
+#: ../../resources/usage.md:230
+msgid "Thunar - Bulk Rename Files."
+msgstr ""
+
+#: ../../resources/usage.md:232
+msgid "`sudo apt install thunar`"
+msgstr ""
+
+#: ../../resources/usage.md:234
+msgid ""
+"懂正则表达式的用户可以试试 [perl-"
+"rename](https://unix.stackexchange.com/questions/730894/what-are-the-"
+"different-versions-of-the-rename-command-how-do-i-use-the-perl-ver)。"
+msgstr "[Regular Expression: perl-rename](https://unix.stackexchange.com/questions/730894/what-are-the-different-versions-of-the-rename-command-how-do-i-use-the-perl-ver)"
+
+#: ../../resources/usage.md:237
+msgid "find"
+msgstr ""
+
+#: ../../resources/usage.md:245
+msgid "多图拼接，超大像素图片，窗口大小问题"
+msgstr "Multi-image stitching, high resolution images, window size issues"
+
+#: ../../resources/usage.md:247
+msgid "关闭`AutoWinSize`，最大化窗口"
+msgstr "Disable `AutoWinSize` and maximize the window."
+
+#: ../../resources/usage.md:248
+msgid "调节`Scale:Show`，`0.2,0.2`缩小，`2,2`放大"
+msgstr "Adjust `Scale:Show` as needed. For example, `0.2,0.2` to shrink, `2,2` to enlarge images."
+
+#: ../../resources/usage.md:249
+msgid "更改`TruthResolution`,将所有照片resize到同一尺寸，**对于浏览及其友好**"
+msgstr "Set `TruthResolution` to resize all the images to the same size for your viewing convenience."
+

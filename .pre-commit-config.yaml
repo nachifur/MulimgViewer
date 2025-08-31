@@ -1,0 +1,104 @@
+---
+exclude: ^src/.*/gui/.*\.py$
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: check-added-large-files
+      - id: fix-byte-order-marker
+      - id: check-case-conflict
+      - id: check-shebang-scripts-are-executable
+      - id: check-merge-conflict
+      - id: trailing-whitespace
+      - id: mixed-line-ending
+      - id: end-of-file-fixer
+        exclude: .*\.po$
+      - id: detect-private-key
+      - id: check-symlinks
+      - id: check-ast
+      - id: debug-statements
+      - id: requirements-txt-fixer
+      - id: check-xml
+      - id: check-yaml
+      - id: check-toml
+      - id: check-json
+  - repo: https://github.com/Lucas-C/pre-commit-hooks
+    rev: v1.5.5
+    hooks:
+      - id: remove-crlf
+  - repo: https://github.com/codespell-project/codespell
+    rev: v2.4.1
+    hooks:
+      - id: codespell
+        additional_dependencies:
+          - tomli
+  - repo: https://github.com/jorisroovers/gitlint
+    rev: v0.19.1
+    hooks:
+      - id: gitlint
+        args:
+          - --msg-filename
+  - repo: https://github.com/editorconfig-checker/editorconfig-checker.python
+    rev: 3.2.1
+    hooks:
+      - id: editorconfig-checker
+  - repo: https://github.com/jumanjihouse/pre-commit-hooks
+    rev: 3.0.0
+    hooks:
+      - id: check-mailmap
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.37.1
+    hooks:
+      - id: yamllint
+
+#   - repo: https://github.com/executablebooks/mdformat
+#     rev: 0.7.16
+#     hooks:
+#       - id: mdformat
+#         args:
+#           - --number
+#         additional_dependencies:
+#           - mdformat-gfm
+#           - mdformat-myst
+#           - mdformat-toc
+#           - mdformat-deflist
+#           - mdformat-beautysh
+#           - mdformat-black
+#           - mdformat-config
+#   - repo: https://github.com/DavidAnson/markdownlint-cli2
+#     rev: v0.6.0
+#     hooks:
+#       - id: markdownlint-cli2
+#         additional_dependencies:
+#           - markdown-it-texmath@0.9.1
+#   - repo: https://github.com/psf/black
+#     rev: 23.1.0
+#     hooks:
+#       - id: black
+#   - repo: https://github.com/PyCQA/isort
+#     rev: 5.12.0
+#     hooks:
+#       - id: isort
+#   - repo: https://github.com/pycqa/pydocstyle
+#     rev: 6.3.0
+#     hooks:
+#       - id: pydocstyle
+#         additional_dependencies:
+#           - tomli
+#   - repo: https://github.com/kumaraditya303/mirrors-pyright
+#     rev: v1.1.296
+#     hooks:
+#       - id: pyright
+#   - repo: https://github.com/PyCQA/bandit
+#     rev: 1.7.4
+#     hooks:
+#       - id: bandit
+#         args:
+#           - -cpyproject.toml
+#         additional_dependencies:
+#           - toml
+#
+# ci:
+#   skip:
+#     - pyright

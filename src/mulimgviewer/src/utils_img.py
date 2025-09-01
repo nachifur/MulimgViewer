@@ -1224,8 +1224,17 @@ class ImgManager(ImgData):
 
     def title_preprocessing(self, img, id):
         title_max_size = copy.deepcopy(self.title_max_size)
+        line_height = int(self.title_setting[8])
 
-        img = Image.new('RGBA', tuple(title_max_size), self.gap_color)
+        text = self.title_list[id]
+        im_tmp = Image.new('RGBA', (title_max_size[0], 1000), self.gap_color)
+        draw_tmp = ImageDraw.Draw(im_tmp)
+        if "\n" not in text:
+            bbox = draw_tmp.textbbox((0, 0), text, font=self.font)
+        else:
+            bbox = draw_tmp.multiline_textbbox((0, 0), text, font=self.font)
+
+        img = Image.new('RGBA', (title_max_size[0], bbox[3]), self.gap_color)
         draw = ImageDraw.Draw(img)
         title_size = self.title_size[id*2+1, :]
         delta_x = max(0,int((title_max_size[0]-title_size[0])/2))
@@ -1244,18 +1253,9 @@ class ImgManager(ImgData):
         elif title_position == 2:
             # right
             delta_x = title_max_size[0]-title_size[0]
-        y = 0
-        # 遍历处理过的行进行绘制
-        for line in lines:
-            # if delta_x + len(line )*one_size > title_max_size[0]:
-            #     delta_x = 0
-            if self.title_setting[2]:
-                # up
-                draw.multiline_text((delta_x, y), line, align="center",font=self.font, fill=self.text_color)
-            else:
-                # down
-                draw.multiline_text((delta_x, y), line, align="center",font=self.font, fill=self.text_color)
-            y += int(self.title_setting[8])  # 增加y轴偏移量，确保每行文本不重叠
+
+        draw.multiline_text((delta_x, -bbox[1]), text, align="left", font=self.font, fill=self.text_color)
+
         return img
 
     def title_init(self, width_2, height_2):
@@ -1285,7 +1285,7 @@ class ImgManager(ImgData):
                 exif_data = self.full_exif_cache.get(i, {"formatted_exif": {}, "has_exif": False})
 
                 if not exif_data["has_exif"]:
-                    title = "无EXIF信息"
+                    title = "No EXIF information"
                 else:
                     formatted_exif = exif_data["formatted_exif"]
                     custom_title = formatted_exif.get("CustomTitle", "N/A")

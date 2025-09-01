@@ -744,7 +744,6 @@ class MulimgViewer (MulimgViewerGui):
         refresh_id = wx.NewId()
         menu.Append(refresh_id, "🔄 refresh")
         menu.Bind(wx.EVT_MENU, self.refresh, id=refresh_id)
-        menu.AppendSeparator()
 
         if self.magnifier.Value:
             magnifier_menu = wx.Menu()
@@ -823,7 +822,6 @@ class MulimgViewer (MulimgViewerGui):
                         self.SetStatusText_(["Delete all boxes", "-1", "-1", "-1"])
                 box_menu.Bind(wx.EVT_MENU, delete_all_boxes, id=delete_all_id)
             menu.AppendSubMenu(box_menu, f"Selection box" + (f" ({self.box_id})" if self.box_id != -1 else ""))
-        menu.AppendSeparator()
 
         if hasattr(self, 'title_rename_text'):
             new_title = self.title_rename_text.GetValue().strip()
@@ -840,7 +838,6 @@ class MulimgViewer (MulimgViewerGui):
                     else:
                         self.refresh(evt)
                 title_menu.Bind(wx.EVT_MENU, inject_title, id=inject_title_id)
-                menu.AppendSeparator()
                 menu.AppendSubMenu(title_menu, "📝 Title")
         nav_menu = wx.Menu()
 
@@ -852,7 +849,6 @@ class MulimgViewer (MulimgViewerGui):
         nav_menu.Append(next_id, "Next Page")
         nav_menu.Bind(wx.EVT_MENU, self.next_img, id=next_id)
 
-        menu.AppendSeparator()
         menu.AppendSubMenu(nav_menu, "⬅️➡️ Turn Page")
 
         try:
@@ -882,13 +878,13 @@ class MulimgViewer (MulimgViewerGui):
 
                     if hasattr(self, 'title_rename_text'):
                         self.title_rename_text.SetValue("")
-                    self.SetStatusText_([f"已向第 {current_index+1} 张图片注入标题: {new_title}", "-1", "-1", "-1"])
+                    self.SetStatusText_([f"The title has been injected into {current_index+1} images: {new_title}", "-1", "-1", "-1"])
                 else:
-                    raise Exception("写入EXIF失败")
+                    raise Exception("Failed to write EXIF")
             else:
-                raise Exception(f"图片索引 {actual_img_index} 超出范围")
+                raise Exception(f"Picture index {actual_img_index} out of range")
 
-        except Exception as e:
+        except:
             pass
 
     def handle_title_injection(self, img_id = None):

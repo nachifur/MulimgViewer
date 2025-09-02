@@ -1,16 +1,18 @@
 import platform
 import threading
 from pathlib import Path
-import cv2,os,time
+import ffmpeg,os,time
 from concurrent.futures import ThreadPoolExecutor
 import atexit
 import signal
 import re
+from fractions import Fraction
 
 import numpy as np
 import wx
 from ..gui.main_gui import MulimgViewerGui
 from .path_select import on_video_mode_change
+from concurrent.futures import wait, ALL_COMPLETED
 
 from .. import __version__ as VERSION
 from .about import About
@@ -38,24 +40,41 @@ class SharedConfig:
         self.video_fps_list = [] #视频的fps
         self.batch_idx = 0 #当前批次索引
         self.count_per_action = 1 #每次处理的帧数
+        self.video_num_list = []
+        self.current_video_index = 0
+        self.last_direction = 0
 
 class VideoManager:
     def __init__(self, shared_config=None, ImgManager=None):
         self.shared_config = shared_config
+        self.ImgManager = ImgManager
         self.cache_dir = Path("Video_frames")
         self.executor = ThreadPoolExecutor(max_workers=self.shared_config.thread)
-        atexit.register(self._cleanup_cache)
-        signal.signal(signal.SIGINT, lambda sig, frame: (self._cleanup_cache(), exit(0)))
-        signal.signal(signal.SIGTERM, lambda sig, frame: (self._cleanup_cache(), exit(0)))
-    
-    def calc_max_extractable_frames_single(self, video_cap):
-        step = self.shared_config.skip_frames + 1
+        self._meta_cache = {}
+        atexit.register(self._global_cleanup_cache, str(self.cache_dir))
 
-        total = int(video_cap.get(cv2.CAP_PROP_FRAME_COUNT))
-        fps = video_cap.get(cv2.CAP_PROP_FPS)
-        
+    def calc_max_extractable_frames_single(self, video_path):
+        '''使用 ffmpeg 获取视频信息，替换 cv2.VideoCapture'''
+        step = self.shared_config.skip_frames + 1
+        fps, total = self._get_meta(video_path)
         viewable = (total + step - 1) // step
-        return viewable, fps
+        self.shared_config.video_fps_list.append(fps)
+        self.shared_config.video_num_list.append(viewable)
+
+    def _get_meta(self, video_path):
+        if video_path in self._meta_cache:
+            return self._meta_cache[video_path]
+        p = ffmpeg.probe(str(video_path))
+        vs = next(s for s in p['streams'] if s.get('codec_type')=='video')
+        rate = vs.get('avg_frame_rate') or vs.get('r_frame_rate') or '0/1'
+        fps = float(Fraction(rate)) if rate!='0/0' else 0.0
+        nb = vs.get('nb_frames')
+        if not nb: 
+            dur = float(vs.get('duration') or p.get('format', {}).get('duration') or 0)
+            nb = int(dur * fps) if fps>0 and dur>0 else 0
+        total = int(nb)
+        self._meta_cache[video_path] = (fps, total)
+        return self._meta_cache[video_path]
 
     def init_video_frame_cache(self):
         video_paths = self.shared_config.real_video_path
@@ -68,15 +87,9 @@ class VideoManager:
             out_dir = self.cache_dir / cache_name
             out_dir.mkdir(parents=True, exist_ok=True)  
             output_list.append(str(out_dir))
-        
-        return output_list
-    
-    
+        self.shared_config.video_path = output_list
+
     def update_thread_count(self, frame_num=-1):
-        '''线程更新函数,无输入情况，默认更新线程数,有拆帧数量输入时,动态调整线程数量'''
-        if hasattr(self, 'executor') and self.executor:
-            self.executor.shutdown(wait=False)
-        
         if frame_num == -1:
             thread_count = self.shared_config.thread
         else:
@@ -89,7 +102,21 @@ class VideoManager:
             else:
                 thread_count = max(4, user_max_threads)
         
-        self.executor = ThreadPoolExecutor(max_workers=thread_count)
+        current_workers = 0
+        if hasattr(self, 'executor') and self.executor:
+            try:
+                current_workers = self.executor._max_workers
+            except:
+                current_workers = 0
+        
+        if current_workers != thread_count:
+            
+            if hasattr(self, 'executor') and self.executor:
+                self.executor.shutdown(wait=False)
+            
+            self.executor = ThreadPoolExecutor(max_workers=thread_count)
+        else:
+            pass
 
     def update_cache(self):
         current_batch = self.shared_config.batch_idx
@@ -98,95 +125,200 @@ class VideoManager:
         
         cache_start = max(0, (current_batch - cache_radius) * count_per_action)
         cache_end = (current_batch + cache_radius + 1) * count_per_action
-        
-        if current_batch == 0:
-            self.init_video_frame_cache()
-        
+        self.update_thread_count(cache_end - cache_start)
+
+        if self.flag == 0:
+            self.current_video_index = 0
+
+        all_futures = []
+
         for video_idx, cache_dir in enumerate(self.shared_config.video_path):
-            frame_count = self.ImgManager.img_num_list[video_idx]
+            video_path = self.shared_config.real_video_path[video_idx]
+            
+            if self.flag == 0:
+                self.calc_max_extractable_frames_single(video_path)
+            
+            frame_count = self.shared_config.video_num_list[video_idx]
             cache_end_actual = min(cache_end, frame_count)
             
-            for idx in range(cache_start, cache_end_actual):
-                filepath = os.path.join(cache_dir, self._get_expected_filename(idx, video_idx))
-                if not (os.path.exists(filepath) and os.path.getsize(filepath) > 0):
-                    self.executor.submit(self._save_frame, idx, video_idx, idx)
-            
-            for filename in os.listdir(cache_dir):
-                if not filename.endswith('.tmp'):
-                    try:
-                        frame_idx = self._extract_frame_index(filename, video_idx)
-                        if frame_idx < cache_start or frame_idx >= cache_end_actual:
-                            os.remove(os.path.join(cache_dir, filename))
-                    except:
-                        pass
+            if cache_start < cache_end_actual:
+                fut = self.executor.submit(
+                    self._save_frame, 
+                    video_path,  
+                    cache_start,
+                    cache_end_actual - 1,
+                    video_idx
+                )
+                all_futures.append(fut)
+            else:
+                pass
 
-    def _get_expected_filename(self, idx, video_idx):
-        step = self.shared_config.skip_frames + 1
+        if all_futures:
+            wait(all_futures, return_when=ALL_COMPLETED)
+            for f in all_futures:
+                f.result()
+            for vid_i, _ in enumerate(self.shared_config.video_path):
+                self._cleanup_out_of_range_cache(vid_i, cache_start, min(cache_end, self.shared_config.video_num_list[vid_i]))
+
+        return
+
+    def _cleanup_out_of_range_cache(self, video_idx, cache_start, cache_end_actual):
+        cache_dir = self.shared_config.video_path[video_idx]
+        if not os.path.isdir(cache_dir):
+            return
+
+        grace = max(0, self.shared_config.count_per_action)  # 保留一屏作为缓冲
+        s = max(0, cache_start - grace)
+        e = cache_end_actual + grace
+
+        keep_names = { self._filename_converter(i, video_idx) for i in range(s, e) }
+
+        deleted = kept = 0
+        for filename in os.listdir(cache_dir):
+            if filename.startswith("__tmp_"):
+                continue
+            if filename not in keep_names:
+                try:
+                    os.remove(os.path.join(cache_dir, filename))
+                    deleted += 1
+                except Exception as ex:
+                    print(f"[_cleanup_out_of_range_cache] 删除失败 {filename}: {ex}")
+            else:
+                kept += 1
+        self._cleanup_dead_directories()
+
+    def _cleanup_dead_directories(self):
+        """删除不在当前video_path列表中的目录"""
+        current_video_dirs = set(self.shared_config.video_path)
         
-        phys_idx = idx * step
+        for item in self.cache_dir.iterdir():
+            if item.is_dir() and str(item) not in current_video_dirs:
+                shutil.rmtree(str(item))
 
-        fps = self.shared_config.video_fps_list[video_idx]
-
-        t = phys_idx / fps
-        sec_str = f"{t:.2f}".rstrip("0").rstrip(".") or "0"
+    def _filename_converter(self, input_value, video_idx):
+        '''双向转换：数字序号 <-> 帧秒文件名称'''
         
-        k = (phys_idx % int(fps)) + 1
-        
-        return f"{sec_str}s_frame_{k}.png"
-
-    def _extract_frame_index(self, filename, video_idx):
-        if 's_frame_' in filename:
-            parts = filename.split('s_frame_')
-            sec_str = parts[0]  # "1.25"
-            frame_in_sec = int(parts[1].split('.')[0])  # 3
-            
-            fps = self.ImgManager.video_fps_list[video_idx]
-            phys_idx = int(float(sec_str) * fps) + frame_in_sec - 1
-            
+        if isinstance(input_value, int):
             step = self.shared_config.skip_frames + 1
-            return phys_idx // step
-        else:
-            return int(filename.split('.')[0])
-
-    def _save_frame(self, frame_idx, video_idx, save_idx):
-        '''唯一的拆帧、缓存图片的函数'''
-        video_path = self.real_video_path if isinstance(self.real_video_path, str) else self.real_video_path[video_idx]
-        cache_dir  = self.frame_cache_dir  if isinstance(self.frame_cache_dir,  str) else self.frame_cache_dir[video_idx]
-        os.makedirs(cache_dir, exist_ok=True)
-
-        cap = cv2.VideoCapture(str(video_path))
-        if not cap.isOpened():
-            return
-
-            try:
-                step = int(self.m_textCtrl281.GetValue() or 0)
-            except Exception:
-                step = int(getattr(self, "skip_frames", 0) or 0)
-            if step < 0: step = 0
-            step += 1
-
-            src_idx = int(frame_idx) * step
-            total = int(cap.get(cv2.CAP_PROP_FRAME_COUNT) or 0)
-            if total > 0 and src_idx >= total:
-                src_idx = total - 1
-
-            cap.set(cv2.CAP_PROP_POS_FRAMES, src_idx)
-            ret, frame = cap.read()
-        finally:
-            cap.release()
+            phys_idx = input_value * step  # 物理帧号
+            fps = self.shared_config.video_fps_list[video_idx]
+            
+            # 计算时间
+            t = phys_idx / fps
+            sec_str = f"{t:.2f}".rstrip("0").rstrip(".") or "0"
+            
+            # 修复：直接使用物理帧号计算帧内序号
+            k = (phys_idx % int(fps)) + 1
+            
+            # 边界检查
+            if k > int(fps):
+                k = int(fps)
+            if k < 1:
+                k = 1
+            
+            return f"{sec_str}s_frame_{k}.jpeg"
         
-        if not ret or frame is None:
-            return
+        else:
+            if 's_frame_' in input_value:
+                parts = input_value.split('s_frame_')
+                sec_str = parts[0]
+                
+                fps = self.shared_config.video_fps_list[video_idx] 
+                step = self.shared_config.skip_frames + 1
+                
+                time_seconds = float(sec_str)
+                logical_idx = round(time_seconds * fps / step)
+                
+                return logical_idx
+            else:
+                return int(input_value.split('.')[0])
+            
+    def _save_frame(self, video_path, frame_start, frame_end, video_idx, max_retries=1):
+        start_time = time.time()
+        cache_dir = self.shared_config.video_path[video_idx]
+        step = self.shared_config.skip_frames + 1
+        target_size = 256
+
+        # 计算还缺哪些（不存在或0字节都视为缺失）
+        def list_missing(a, b):
+            miss = []
+            for idx in range(a, b + 1):
+                dst = os.path.join(cache_dir, self._filename_converter(idx, video_idx))
+                try:
+                    if (not os.path.exists(dst)) or os.path.getsize(dst) == 0:
+                        miss.append(idx)
+                except Exception:
+                    miss.append(idx)
+            return miss
+
+        # 把连续索引合并成区间，方便一次select抽帧
+        def chunks(seq):
+            if not seq: return []
+            run = [seq[0]]; out = []
+            for x in seq[1:]:
+                if x == run[-1] + 1: run.append(x)
+                else: out.append((run[0], run[-1])); run = [x]
+            out.append((run[0], run[-1]))
+            return out
+
+        def extract_ranges(ranges):
+            """把若干 [s,e] 区间批量抽帧到临时文件，再原子改名到目标名"""
+            for s, e in ranges:
+                n_start = s * step
+                n_end   = e * step
+                sel = f'between(n,{n_start},{n_end})*not(mod(n,{step}))'
+
+                suffix = f"{os.getpid()}_{threading.get_ident()}_{int(time.time()*1000)}"
+                tmp_tpl = os.path.join(cache_dir, f'__tmp_{video_idx}_{suffix}_%d.jpeg')
+
+                (
+                    ffmpeg
+                    .input(str(video_path))
+                    .filter('select', sel)
+                    .filter('scale', target_size, -1, force_original_aspect_ratio='decrease')
+                    .output(tmp_tpl, vsync='vfr', **{'q:v': 6}, start_number=s)
+                    .global_args('-threads', '1', '-hide_banner', '-loglevel', 'error')
+                    .overwrite_output()
+                    .run(quiet=True)
+                )
+
+                for idx in range(s, e + 1):
+                    src = os.path.join(cache_dir, f'__tmp_{video_idx}_{suffix}_{idx}.jpeg')
+                    if os.path.exists(src):
+                        if os.path.getsize(src) == 0:
+                            try: os.remove(src)
+                            except: pass
+                            continue
+                        dst = os.path.join(cache_dir, self._filename_converter(idx, video_idx))
+                        try:
+                            os.replace(src, dst)   
+                        except Exception:
+                            try: os.remove(src)
+                            except: pass
+
+        missing = list_missing(frame_start, frame_end)
+        if missing:
+            extract_ranges(chunks(missing))
+
+        attempt = 0
+        while attempt < max_retries:
+            missing = list_missing(frame_start, frame_end)
+            if not missing:
+                break
+            extract_ranges(chunks(missing))
+            attempt += 1
 
         try:
-            h, w = frame.shape[:2]
-            scale = 256 / max(h, w)
-            frame = cv2.resize(frame, (int(w * scale), int(h * scale)))
+            for name in os.listdir(cache_dir):
+                if name.startswith(f'__tmp_{video_idx}_') and name.endswith('.jpeg'):
+                    try: os.remove(os.path.join(cache_dir, name))
+                    except: pass
         except Exception:
             pass
 
-        save_path = os.path.join(cache_dir, f"{save_idx}.png")
-        self._cv_imwrite_atomic(save_path, frame)
+        end_time = time.time()
+        left = list_missing(frame_start, frame_end)
+
 
     def collect_video_paths(self, dlg, selection_type):
         '''应对不同模式下,视频文件路径的不同获得方式'''
@@ -202,7 +334,7 @@ class VideoManager:
                         if file.lower().endswith(('.mp4', '.avi', '.mov')):
                             video_paths.append(os.path.join(root, file))
                             
-            elif selection_type == 2:
+            elif selection_type == 0:
                 if selected_path.lower().endswith(('.mp4', '.avi', '.mov')):
                     video_paths.append(selected_path)
         finally:
@@ -211,30 +343,26 @@ class VideoManager:
 
     def select_video(self, type=0):
         '''不同模式下,共用初始化部分'''
-        video_paths = []
+        self.flag = 0
+        self.shared_config.video_fps_list = []
+        self.shared_config.video_num_list = []
         wildcard = "Video files (*.mp4;*.avi;*.mov)|*.mp4;*.avi;*.mov"
         if type == 1:
             dlg = wx.DirDialog(None, "Select folder containing videos", style=wx.DD_DEFAULT_STYLE)
         elif type == 0:
             dlg = wx.FileDialog(None, "Choose video file", "", "",
                                 wildcard, wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
-        video_paths = self.collect_video_paths(dlg, type)
-        if not video_paths:
+        self.shared_config.real_video_path = self.collect_video_paths(dlg, type)
+        if self.shared_config.batch_idx == 0:
+            self.init_video_frame_cache()
+        if self.shared_config.video_path == []:
             return
-
-        self.shared_config.real_video_path = video_paths
-        if len(video_paths) == 1:
-            self.shared_config.video_paths = self.init_video_frame_cache(video_paths[0], num_frames=(self.shared_config.cache_num + 1) * self.get_count_per_action(type=2), max_threads=self.shared_config.thread)
+        self.update_cache()
+        self.flag = 1
+        if len(self.shared_config.video_path) == 1:
+            self.ImgManager.init(self.shared_config.video_path[0],type=self.shared_config.input_mode,parallel_to_sequential=self.shared_config.parallel_to_sequential,video_mode=self.shared_config.video_mode,video_fps_list=self.shared_config.video_fps_list,video_num_list=self.shared_config.video_num_list)
         else:
-            self.shared_config.video_paths = self.init_video_frame_cache(video_paths,num_frames=(self.shared_config.cache_num + 1) * self.get_count_per_action(type=1), max_threads=self.shared_config.thread)
-
-        if len(self.shared_config.video_paths) == 1:
-            self.ImgManager.init(cache_path_arg,
-            type=video_type,
-            video_mode=self.video_mode,
-            video_path=video_path_arg,
-            skip=self.skip_frames
-        )
+            self.ImgManager.init(self.shared_config.video_path,type=self.shared_config.input_mode,parallel_to_sequential=self.shared_config.parallel_to_sequential,video_mode=self.shared_config.video_mode,video_fps_list=self.shared_config.video_fps_list,video_num_list=self.shared_config.video_num_list)
 
         self.current_batch_idx = 0
 
@@ -270,21 +398,35 @@ class VideoManager:
 
         return missing
 
+    @staticmethod
+    def _global_cleanup_cache(cache_dir_str):
+        '''静态方法，确保能被正确调用'''
+        try:
+            cache_dir = Path(cache_dir_str)
+            if cache_dir.exists():
+                shutil.rmtree(str(cache_dir))
+        except Exception as e:
+            print(f"[cleanup] 清理缓存失败: {e}")
+    
     def _cleanup_cache(self):
-        if self.cache_dir.exists():
-            shutil.rmtree(str(self.cache_dir))
-        
+        '''实例方法清理'''
+        self._global_cleanup_cache(str(self.cache_dir))
+    
     def __del__(self):
-        self._cleanup_cache()
+        # 保留作为备用
+        try:
+            self._cleanup_cache()
+        except:
+            pass
 
 class MulimgViewer (MulimgViewerGui):
 
     def __init__(self, parent, UpdateUI, get_type, default_path=None):
         self.shared_config = SharedConfig()
+        super().__init__(parent)
         self.create_ImgManager()
         self.video_manager = VideoManager(shared_config=self.shared_config,ImgManager=self.ImgManager)
         self.shift_pressed=False
-        super().__init__(parent)
         self.UpdateUI = UpdateUI
         self.get_type = get_type
         self._is_closing = False
@@ -395,14 +537,16 @@ class MulimgViewer (MulimgViewerGui):
     
     def on_enable_video_mode(self, event):
         self.shared_config.video_mode = self.m_checkBox66.GetValue()
-        on_video_mode_change(self.video_mode)
-    
+        on_video_mode_change(self.shared_config.video_mode)
+
     def on_interval_changed(self, event):
         self.shared_config.interval = float(self.m_textCtrl28.GetValue() or 1.0)
 
     def toggle_play(self, event):
         self.shared_config.is_playing = not self.shared_config.is_playing
         
+        if self.shared_config.is_playing:
+            self.shared_config.play_direction = 1 
         if self.shared_config.is_playing:
             interval = float(self.m_textCtrl28.GetValue() or 1.0)
             self.play_timer.Start(int(interval * 1000), oneShot=False)
@@ -478,8 +622,17 @@ class MulimgViewer (MulimgViewerGui):
         self.auto_layout(frame_resize=True)
 
     def open_all_img(self, event):
-        self.shared_config.input_mode = self.choice_input_mode.GetSelection()
         input_mode = self.choice_input_mode.GetSelection()
+        self.shared_config.batch_idx = 0
+        if input_mode == 0:
+            self.shared_config.input_mode = 2
+        elif input_mode == 1:
+            self.shared_config.input_mode = 1
+        elif input_mode == 2:
+            self.shared_config.input_mode = 1
+        else:
+            self.shared_config.input_mode = 3
+        self.ImgManager.get_video_value(video_mode=self.shared_config.video_mode, skip=self.shared_config.skip_frames)
         if input_mode == 0:
             self.one_dir_mul_img(event)
         elif input_mode == 1:
@@ -492,37 +645,48 @@ class MulimgViewer (MulimgViewerGui):
     def one_dir_mul_dir_auto(self, event):
         self.SetStatusText_(["Input", "", "", "-1"])
         if self.shared_config.video_mode:
-            VideoManager.select_video(type=1)
+            self.video_manager.select_video(type=1)
         else:
             dlg = wx.DirDialog(None, "Parallel auto choose input dir", "",
                            wx.DD_DEFAULT_STYLE | wx.DD_DIR_MUST_EXIST)
             if dlg.ShowModal() == wx.ID_OK:
                 self.ImgManager.init(dlg.GetPath(), type=0, parallel_to_sequential=self.parallel_to_sequential.Value)
-                self.show_img_init()
-                self.ImgManager.set_action_count(0)
-                self.show_img()
-                self.choice_input_mode.SetSelection(1)
-                self.SetStatusText_(["Input", "-1", "-1", "-1"])
+        self.show_img_init()
+        self.ImgManager.set_action_count(0)
+        self.show_img()
+        self.choice_input_mode.SetSelection(1)
+        self.SetStatusText_(["Input", "-1", "-1", "-1"])
 
     def close(self, event):
         if self._is_closing:
             return
         self._is_closing = True
-        self._shutdown = True
+
+        self.play_timer.Stop()
+        self.shared_config.is_playing = False
+
+        if hasattr(self, "video_manager") and hasattr(self.video_manager, "executor"):
+            self.video_manager.executor.shutdown(wait=False, cancel_futures=True)
+
+        if hasattr(self, 'show_bmp_in_panel'):
+            del self.show_bmp_in_panel
+        if hasattr(self, 'ImgManager'):
+            if hasattr(self.ImgManager, 'clear_cache'):
+                self.ImgManager.clear_cache()
+        import gc
+        gc.collect() 
+
+        cache_base = "Video_frames"
+        if os.path.isdir(cache_base):
+            shutil.rmtree(cache_base)
         
-        if hasattr(self, "play_timer"):
-            self.play_timer.Stop()
-        self.is_playing = False
-        
-        if hasattr(self, "executor"):
-            self.executor.shutdown(wait=False, cancel_futures=True)
-        
-        if hasattr(self, "indextablegui") and self.indextablegui:
+        if hasattr(self, "indextablegui") and self.indextablegui: 
             self.indextablegui.Destroy()
-        if hasattr(self, "aboutgui") and self.aboutgui:
+        if hasattr(self, "aboutgui") and self.aboutgui: 
             self.aboutgui.Destroy()
-        
+
         self.Destroy()
+        os._exit(0)
 
     def one_dir_mul_dir_manual(self, event):
         self.SetStatusText_(["Input", "", "", "-1"])
@@ -533,7 +697,7 @@ class MulimgViewer (MulimgViewerGui):
                 input_path = None
         except:
             input_path = None
-        if self.video_mode:
+        if self.shared_config.video_mode:
             self.UpdateUI(1, None, self.parallel_to_sequential.Value)
         else:
             self.UpdateUI(1, input_path, self.parallel_to_sequential.Value)
@@ -541,36 +705,69 @@ class MulimgViewer (MulimgViewerGui):
         self.SetStatusText_(["Input", "-1", "-1", "-1"])
 
     def last_img(self, event):
-        if self.shared_config.video_mode:
-            if self.shared_config.batch_idx > 0:
-                self.shared_config.batch_idx -= 1
-            VideoManager.update_cache()
-        if self.ImgManager.img_num != 0:
-            self.ImgManager.subtract()
-            self.show_img_init()
-            self.show_img()
-            self.SetStatusText_((["Last", "-1", "-1", "-1"]))
+        if self.shared_config.batch_idx == 0:
+            pass
         else:
-            self.SetStatusText_(["-1", "", "***Error: First, need to select the input dir***", "-1"])
+            if self.shared_config.video_mode:
+                if self.shared_config.is_playing:
+                    self.shared_config.play_direction = -1
+                if self.shared_config.batch_idx > 0:
+                    self.shared_config.batch_idx -= 1
+                self.video_manager.update_cache()
+            if self.ImgManager.img_num != 0:
+                self.ImgManager.subtract()
+                self.show_img_init()
+                self.show_img()
+                self.SetStatusText_((["Last", "-1", "-1", "-1"]))
+            else:
+                self.SetStatusText_(["-1", "", "***Error: First, need to select the input dir***", "-1"])
 
     def skip_to_n_img(self, event):
+        
         if self.ImgManager.img_num == 0:
             return
+
         target = int(self.slider_img.GetValue())
         self.slider_value.SetValue(str(target))
-        if self.shared_config.video_mode:
-            self.shared_config.batch_idx = int(target)
-        else:
-            self.ImgManager.set_action_count(target)
+
+        self.shared_config.batch_idx = target
+        self.ImgManager.set_action_count(target)
+
+        try:
+            et = event.GetEventType()
+            try:
+                thumb_release = wx.EVT_SCROLL_THUMBRELEASE.evtType[0]
+            except Exception:
+                thumb_release = None
+            if thumb_release and et == thumb_release:
+                self.video_manager.update_cache()
+                return
+        except Exception:
+            pass
+
+        import time
+        now = time.time()
+        last = getattr(self, "_last_slider_render_ts", 0)
+        if now - last < 0.12:   # 120ms 节流窗口
+            return
+        self._last_slider_render_ts = now
 
     def slider_value_change(self, event, value=None):
         if self.ImgManager.img_num == 0:
             return
-        target = str(self.slider_value.GetValue()).strip()
+
+        target_str = str(self.slider_value.GetValue()).strip()
+        self.slider_value.SetValue(target_str)
+
+        try:
+            target = int(target_str)
+        except Exception:
+            return
+
+        self.shared_config.batch_idx = target
+        self.ImgManager.set_action_count(target)
         if self.shared_config.video_mode:
-            self.shared_config.batch_idx = int(target)
-        else:
-            self.ImgManager.set_action_count(target)
+            self.video_manager.update_cache()
 
     def save_img(self, event):
         type_ = self.choice_output.GetSelection()
@@ -640,7 +837,23 @@ class MulimgViewer (MulimgViewerGui):
 
     def refresh(self, event):
         self.show_img_init()
-        VideoManager.update_cache()
+        
+        if self.shared_config.video_mode:
+            current_batch = self.shared_config.batch_idx
+            current_count_per_action = self.shared_config.count_per_action
+            
+            last_batch = getattr(self, '_last_refresh_batch', None)
+            last_count_per_action = getattr(self, '_last_refresh_count_per_action', None)
+            
+            if (last_batch != current_batch or 
+                last_count_per_action != current_count_per_action or
+                last_batch is None): 
+                self.video_manager.update_cache()
+                self._last_refresh_batch = current_batch
+                self._last_refresh_count_per_action = current_count_per_action
+            else:
+                pass
+        
         if self.ImgManager.img_num != 0:
             self.show_img()
         else:
@@ -650,18 +863,20 @@ class MulimgViewer (MulimgViewerGui):
     def one_dir_mul_img(self, event):
         self.SetStatusText_(
             ["Sequential choose input dir", "", "", "-1"])
-        if self.video_mode:
-            VideoManager.select_video(type=0)
+        if self.shared_config.video_mode:
+            self.video_manager.select_video(type=0)
         else:
             dlg = wx.DirDialog(None, "Choose input dir", "",
                                wx.DD_DEFAULT_STYLE | wx.DD_DIR_MUST_EXIST)
 
-        if dlg.ShowModal() == wx.ID_OK:
-            self.ImgManager.init(dlg.GetPath(), type=2)
-            self.show_img_init()
-            self.ImgManager.set_action_count(0)
-            self.show_img()
-            self.choice_input_mode.SetSelection(0)
+            if dlg.ShowModal() == wx.ID_OK:
+                self.ImgManager.init(dlg.GetPath(), type=2)
+        if self.shared_config.video_path == []:
+            return
+        self.show_img_init()
+        self.ImgManager.set_action_count(0)
+        self.show_img()
+        self.choice_input_mode.SetSelection(0)
 
         self.SetStatusText_(
             ["Sequential choose input dir", "-1", "-1", "-1"])
@@ -1221,23 +1436,41 @@ class MulimgViewer (MulimgViewerGui):
 
     def show_img_init(self):
         layout_params = self.set_img_layout()
-        if layout_params != False:
+        if self.shared_config.video_mode:
+            row_col = self.row_col.GetLineText(0).split(',')
+            row_col = [int(x) for x in row_col]
+            
+            s = self.row_col_one_img.GetValue().replace('，', ',')
+            r, c = map(int, [x.strip() for x in s.split(',')])
+            one_img_product = r * c
+            
+            if self.shared_config.input_mode in (2, 3) or (self.shared_config.input_mode in (0, 1) and self.parallel_to_sequential.Value):
+                count_per_action = row_col[0] * row_col[1] * one_img_product
+            else:
+                count_per_action = one_img_product
+            self.shared_config.count_per_action = count_per_action
+            self.ImgManager.img_num_list = self.shared_config.video_num_list
+            if self.shared_config.parallel_to_sequential:
+                if self.shared_config.video_mode:
+                    self.ImgManager.img_num = sum(self.shared_config.video_num_list)
+            else:
+                if self.shared_config.video_mode:
+                    self.ImgManager.img_num = max(self.shared_config.video_num_list)
+        if layout_params:
             # setting
             self.ImgManager.layout_params = layout_params
             if self.ImgManager.type == 0 or self.ImgManager.type == 1:
                 if self.parallel_to_sequential.Value:
-                    self.ImgManager.set_count_per_action(
-                        layout_params[0][0]*layout_params[0][1]*layout_params[1][0]*layout_params[1][1])
+                    count_per_action=layout_params[0][0]*layout_params[0][1]*layout_params[1][0]*layout_params[1][1]
                 else:
                     if self.parallel_sequential.Value:
-                        self.ImgManager.set_count_per_action(
-                            layout_params[1][0]*layout_params[1][1])
+                        count_per_action=layout_params[1][0]*layout_params[1][1]
                     else:
-                        self.ImgManager.set_count_per_action(1)
+                        count_per_action=1
             elif self.ImgManager.type == 2 or self.ImgManager.type == 3:
-                self.ImgManager.set_count_per_action(
-                    layout_params[0][0]*layout_params[0][1]*layout_params[1][0]*layout_params[1][1])
-        self.shared_config.count_per_action = self.ImgManager.count_per_action
+                count_per_action=layout_params[0][0]*layout_params[0][1]*layout_params[1][0]*layout_params[1][1]
+            self.ImgManager.set_count_per_action(count_per_action)
+        self.shared_config.count_per_action = count_per_action
 
     def set_img_layout(self):
 
@@ -1327,7 +1560,7 @@ class MulimgViewer (MulimgViewerGui):
                     if self.parallel_sequential.Value or self.parallel_to_sequential.Value:
                         title_setting[2:7] = [False, True, True, True, False]
                     else:
-                        if self.video_mode:
+                        if self.shared_config.video_mode:
                             title_setting[2:7] = [False, False, True, True, False]
                         else:
                             title_setting[2:7] = [False, True, True, False, False]
@@ -1383,191 +1616,101 @@ class MulimgViewer (MulimgViewerGui):
 
     def show_img(self):
         self._setup_img_panel()
-
-        if getattr(self, "show_custom_func", None) and self.show_custom_func.Value and self.out_path_str == "":
+        if self.show_custom_func.Value and self.out_path_str == "":
             self.out_path(None)
             self.ImgManager.layout_params[33] = self.out_path_str
-
+        # check layout_params change
         try:
-            if (self.layout_params_old[0:2] != self.ImgManager.layout_params[0:2]) or \
-            (self.layout_params_old[19]  != self.ImgManager.layout_params[19]):
+            if self.layout_params_old[0:2] != self.ImgManager.layout_params[0:2] or (self.layout_params_old[19] != self.ImgManager.layout_params[19]):
                 action_count = self.ImgManager.action_count
-                if self.ImgManager.type in (0, 1):
-                    try:
-                        parallel_to_sequential = bool(self.parallel_to_sequential.Value)
-                    except Exception:
-                        # 有些界面控件名是 parallel_sequential（老版本）
-                        try:
-                            parallel_to_sequential = bool(self.parallel_sequential.Value)
-                        except Exception:
-                            parallel_to_sequential = False
+                if self.ImgManager.type == 0 or self.ImgManager.type == 1:
+                    parallel_to_sequential = self.parallel_to_sequential.Value
                 else:
                     parallel_to_sequential = False
-                if not self.video_mode:
-                    self.ImgManager.init(
-                        self.ImgManager.input_path,
-                        type=self.ImgManager.type,
-                        parallel_to_sequential=parallel_to_sequential
-                    )
+                self.ImgManager.init(
+                    self.ImgManager.input_path, type=self.ImgManager.type, parallel_to_sequential=parallel_to_sequential)
                 self.show_img_init()
                 self.ImgManager.set_action_count(action_count)
-                if getattr(self, "index_table_gui", None):
-                    self.index_table_gui.show_id_table(self.ImgManager.name_list, self.ImgManager.layout_params)
-        except Exception:
+                if self.index_table_gui:
+                    self.index_table_gui.show_id_table(
+                        self.ImgManager.name_list, self.ImgManager.layout_params)
+        except:
             pass
 
-        self.layout_params_old = list(self.ImgManager.layout_params)
-
-        try: self.slider_img.SetValue(self.ImgManager.action_count)
-        except: pass
+        self.layout_params_old = self.ImgManager.layout_params
+        self.slider_img.SetValue(self.ImgManager.action_count)
         self.slider_value.SetValue(str(self.ImgManager.action_count))
-        try: self.slider_value_max.SetLabel(str(self.ImgManager.max_action_num-1))
-        except: pass
-
-        if self.ImgManager.max_action_num <= 0:
-            self.SetStatusText_(["-1", "-1", "***Error: no image in this dir!***", "-1"])
-            return
-
-        try: self.slider_img.SetMax(self.ImgManager.max_action_num-1)
-        except: pass
-
-        self.ImgManager.get_flist()
-
-        do_custom = bool(getattr(self, "show_custom_func", None) and self.show_custom_func.Value)
+        self.slider_value_max.SetLabel(
+            str(self.ImgManager.max_action_num-1))
+        # Destroy the window to avoid memory leaks
         try:
-            prev_custom_flag = self.ImgManager.layout_params[32]
-        except Exception:
-            prev_custom_flag = False
-        self.ImgManager.layout_params[32] = do_custom
-        flag = self.ImgManager.stitch_images(0, copy.deepcopy(self.xy_magnifier))
-        self.ImgManager.layout_params[32] = prev_custom_flag
-
-        if flag == 0:
-            pil_img = self.ImgManager.show_stitch_img_and_customfunc_img(do_custom)
-            self.img_size = pil_img.size
-
-            wxbmp = self.ImgManager.ImgF.PIL2wx(pil_img)
-
-            try:
-                if getattr(self, "keep_pil_buffer", False):
-                    self.show_bmp_in_panel = pil_img
-                else:
-                    self.show_bmp_in_panel = pil_img.copy()
-                    try:
-                        pil_img.close()
-                    except Exception:
-                        pass
-            except Exception:
-                self.show_bmp_in_panel = pil_img
-
-            need_create = False
-            if not hasattr(self, "img_last") or self.img_last is None:
-                need_create = True
-            else:
-                try:
-                    bmp = self.img_last.GetBitmap()
-                    if (not bmp) or (not bmp.IsOk()):
-                        need_create = True
-                except Exception:
-                    need_create = True
-
-            if need_create:
-                self.img_last = wx.StaticBitmap(parent=self.img_panel, bitmap=wxbmp)
-                try:
-                    self.img_last.Bind(wx.EVT_LEFT_DOWN,   self.img_left_click)
-                    self.img_last.Bind(wx.EVT_LEFT_DCLICK, self.img_left_dclick)
-                    self.img_last.Bind(wx.EVT_MOTION,      self.img_left_move)
-                    self.img_last.Bind(wx.EVT_LEFT_UP,     self.img_left_release)
-                    self.img_last.Bind(wx.EVT_RIGHT_DOWN,  self.img_right_click)
-                    self.img_last.Bind(wx.EVT_MOUSEWHEEL,  self.img_wheel)
-                    self.img_last.Bind(wx.EVT_KEY_DOWN,    self.key_down_detect)
-                    self.img_last.Bind(wx.EVT_KEY_UP,      self.key_up_detect)
-                    self.img_last.SetBackgroundStyle(wx.BG_STYLE_PAINT)
-                    self.img_last.Bind(wx.EVT_ERASE_BACKGROUND, lambda e: None)
-                except Exception:
-                    pass
-            else:
-                try:
-                    self.img_panel.Freeze()
-                    self.img_last.SetBitmap(wxbmp)
-                finally:
-                    self.img_panel.Thaw()
-
-            desired = wx.Size(self.img_size[0], self.img_size[1])
-            if desired != getattr(self, "_last_img_min_size", None):
-                try:
-                    self.img_panel.SetMinSize(desired)
-                    self._last_img_min_size = desired
-                    try: self.img_panel.Layout()
-                    except: pass
-                except Exception:
-                    pass
-
-            try:
-                if not getattr(self, "_img_focus_once", False):
-                    self.img_last.SetFocus()
-                    self._img_focus_once = True
-            except Exception:
-                pass
-
-        try:
-            par_seq_flag = bool(self.parallel_sequential.Value)
-        except Exception:
-            try:
-                par_seq_flag = bool(self.parallel_to_sequential.Value)
-            except Exception:
-                par_seq_flag = False
-
-        nl = getattr(self.ImgManager, "name_list", [])
-        n  = len(nl)
-        img_count = int(getattr(self.ImgManager, "img_count", 0) or 0)
-        cpa = int(getattr(self.ImgManager, "count_per_action", 1) or 1)
-        if n > 0:
-            start_idx = max(0, min(img_count, n - 1))
-            end_idx   = max(start_idx, min(n - 1, start_idx + cpa - 1))
-            left_name  = nl[start_idx]
-            right_name = nl[end_idx]
-        else:
-            left_name = right_name = ""
-
-        if self.ImgManager.type == 2 or (self.ImgManager.type in (0, 1) and par_seq_flag):
-            try:
-                self.SetStatusText_(["-1",
-                                    f"{self.ImgManager.action_count}/{self.ImgManager.get_dir_num()} dir",
-                                    f"{self.ImgManager.img_resolution[0]}x{self.ImgManager.img_resolution[1]} pixels / "
-                                    f"{left_name}-{right_name}",
-                                    "-1"])
-            except Exception:
-                last_idx = max(0, n - 1)
-                self.SetStatusText_(["-1",
-                                    f"{self.ImgManager.action_count}/{self.ImgManager.get_dir_num()} dir",
-                                    f"{self.ImgManager.img_resolution[0]}x{self.ImgManager.img_resolution[1]} pixels / "
-                                    f"{nl[start_idx] if n else ''}-{nl[last_idx] if n else ''}",
-                                    "-1"])
-        else:
-            self.SetStatusText_(["-1",
-                                f"{self.ImgManager.action_count}/{self.ImgManager.get_dir_num()} dir",
-                                f"{self.ImgManager.img_resolution[0]}x{self.ImgManager.img_resolution[1]} pixels / "
-                                f"{self.ImgManager.get_stitch_name()}",
-                                "-1"])
-
-        if flag == 1:
-            self.SetStatusText_(["-1",
-                                f"{self.ImgManager.action_count}/{self.ImgManager.get_dir_num()} dir",
-                                f"***Error: {self.ImgManager.name_list[self.ImgManager.action_count]}, during stitching images***",
-                                "-1"])
-        elif flag == 2:
-            self.SetStatusText_(["-1", "-1", "No image is displayed! Check Show original/Show 🔍️/Show title.", "-1"])
-
-        try:
-            if getattr(self, "_last_auto_layout_size", None) != getattr(self, "_last_img_min_size", None):
-                self.auto_layout()
-                self._last_auto_layout_size = getattr(self, "_last_img_min_size", None)
-        except Exception:
+            self.img_last.Destroy()
+        except:
             pass
 
-        self.SetStatusText_(["Stitch", "-1", "-1", "-1"])
+        # show img
+        if self.ImgManager.max_action_num > 0:
+            self.slider_img.SetMax(self.ImgManager.max_action_num-1)
+            self.ImgManager.get_flist()
 
+            # show the output image processed by the custom func; return cat(bmp, customfunc_img)
+            if self.show_custom_func.Value:
+                self.ImgManager.layout_params[32] = True  # customfunc
+                self.ImgManager.stitch_images(
+                    0, copy.deepcopy(self.xy_magnifier))
+                self.ImgManager.layout_params[32] = False  # customfunc
+            flag = self.ImgManager.stitch_images(
+                0, copy.deepcopy(self.xy_magnifier))
+            if flag == 0:
+                bmp = self.ImgManager.show_stitch_img_and_customfunc_img(self.show_custom_func.Value)
+                self.show_bmp_in_panel = bmp
+                self.img_size = bmp.size
+                bmp = self.ImgManager.ImgF.PIL2wx(bmp)
+                self.img_panel.SetSize(
+                    wx.Size(self.img_size[0]+100, self.img_size[1]+100))
+                self.img_last = wx.StaticBitmap(parent=self.img_panel,
+                                                bitmap=bmp)
+                self.img_panel.Children[0].SetFocus()
+                self.img_panel.Children[0].Bind(
+                    wx.EVT_LEFT_DOWN, self.img_left_click)
+                self.img_panel.Children[0].Bind(
+                    wx.EVT_LEFT_DCLICK, self.img_left_dclick)
+                self.img_panel.Children[0].Bind(
+                    wx.EVT_MOTION, self.img_left_move)
+                self.img_panel.Children[0].Bind(
+                    wx.EVT_LEFT_UP, self.img_left_release)
+                self.img_panel.Children[0].Bind(
+                    wx.EVT_RIGHT_DOWN, self.img_right_click)
+                self.img_panel.Children[0].Bind(
+                    wx.EVT_MOUSEWHEEL, self.img_wheel)
+                self.img_panel.Children[0].Bind(
+                    wx.EVT_KEY_DOWN, self.key_down_detect)
+                self.img_panel.Children[0].Bind(
+                    wx.EVT_KEY_UP, self.key_up_detect)
+
+            # status
+            if self.ImgManager.type == 2 or ((self.ImgManager.type == 0 or self.ImgManager.type == 1) and self.parallel_sequential.Value):
+                try:
+                    self.SetStatusText_(
+                        ["-1", str(self.ImgManager.action_count)+"/"+str(self.ImgManager.get_dir_num())+" dir", str(self.ImgManager.img_resolution[0])+"x"+str(self.ImgManager.img_resolution[1])+" pixels / "+str(self.ImgManager.name_list[self.ImgManager.img_count])+"-"+str(self.ImgManager.name_list[self.ImgManager.img_count+self.ImgManager.count_per_action-1]), "-1"])
+                except:
+                    self.SetStatusText_(
+                        ["-1", str(self.ImgManager.action_count)+"/"+str(self.ImgManager.get_dir_num())+" dir", str(self.ImgManager.img_resolution[0])+"x"+str(self.ImgManager.img_resolution[1])+" pixels / "+str(self.ImgManager.name_list[self.ImgManager.img_count])+"-"+str(self.ImgManager.name_list[self.ImgManager.img_num-1]), "-1"])
+            else:
+                self.SetStatusText_(
+                    ["-1", str(self.ImgManager.action_count)+"/"+str(self.ImgManager.get_dir_num())+" dir", str(self.ImgManager.img_resolution[0])+"x"+str(self.ImgManager.img_resolution[1])+" pixels / "+self.ImgManager.get_stitch_name(), "-1"])
+            if flag == 1:
+                self.SetStatusText_(
+                    ["-1", str(self.ImgManager.action_count)+"/"+str(self.ImgManager.get_dir_num())+" dir", "***Error: "+str(self.ImgManager.name_list[self.ImgManager.action_count]) + ", during stitching images***", "-1"])
+            if flag == 2:
+                self.SetStatusText_(
+                    ["-1", "-1", "No image is displayed! Check Show original/Show 🔍️/Show title.", "-1"])
+        else:
+            self.SetStatusText_(
+                ["-1", "-1", "***Error: no image in this dir!***", "-1"])
+        self.auto_layout()
+        self.SetStatusText_(["Stitch", "-1", "-1", "-1"])
+        
     def auto_layout(self, frame_resize=False):
         displays = (wx.Display(i) for i in range(wx.Display.GetCount()))
         displays_list = [display for display in displays]
@@ -1864,15 +2007,21 @@ class MulimgViewer (MulimgViewerGui):
         shutil.copy(output_s_json_path, output_json_path)
 
     def next_img(self, event):
-        if self.shared_config.video_mode:
-            if self.shared_config.batch_idx < int(self.ImgManager.img_num) - 1:
-                self.shared_config.batch_idx += 1
-            VideoManager.update_cache()
-        if getattr(self.ImgManager, "img_count", 0) < int(self.ImgManager.img_num) - 1:
-            self.ImgManager.add()
-        self.show_img_init()
-        self.show_img()
-        self.SetStatusText_(["Next", "-1", "-1", "-1"])
+        if self.shared_config.batch_idx >= self.ImgManager.img_num-1:
+            pass
+        else:
+            if self.shared_config.video_mode:
+                if self.shared_config.is_playing:
+                    self.shared_config.play_direction = 1
+                self.last_direction = self.shared_config.play_direction
+                if self.shared_config.batch_idx < int(self.ImgManager.img_num) - 1:
+                    self.shared_config.batch_idx += 1
+                self.video_manager.update_cache()
+            if getattr(self.ImgManager, "img_count", 0) < int(self.ImgManager.img_num) - 1:
+                self.ImgManager.add()
+            self.show_img_init()
+            self.show_img()
+            self.SetStatusText_(["Next", "-1", "-1", "-1"])
 
     def _setup_img_panel(self):
         #本函数用于防止白色背景闪烁

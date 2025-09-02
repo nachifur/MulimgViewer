@@ -61,7 +61,7 @@ class MainAPP(wx.App):
 
         if input_path:
             if len(input_path) != 0:
-                if self.frame[0].video_mode:
+                if self.frame[0].shared_config.video_mode:
                     self.video_manual(input_path)
                     self.frame[0].show_img_init()
                     self.frame[0].ImgManager.set_action_count(0)

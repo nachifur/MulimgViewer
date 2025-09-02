@@ -3,7 +3,7 @@ import csv
 from pathlib import Path
 
 import numpy as np
-import cv2,math,os
+import math,os
 
 from .utils import solve_factor
 
@@ -11,15 +11,14 @@ class ImgData():
     """Multi-image database.
     Multi-image browsing, path management, loading multi-image data, automatic layout layout, etc. """
 
-    def init(self, input_path, type=2, parallel_to_sequential=False, action_count=None, img_count=None,video_mode=False):
+    def init(self, input_path, type=2, parallel_to_sequential=False, action_count=None, img_count=None,video_mode=False,video_fps_list=[],video_num_list=[]):
         self.input_path = input_path
         self.type = type
-        self.video_fps_list = []
         self.video_mode = video_mode
         self.img_num_list = []
         self.parallel_to_sequential = parallel_to_sequential
-        self.video_fps_list = []
-        self.video_num_list = []
+        self.video_fps_list = video_fps_list
+        self.video_num_list = video_num_list
         self.skip = 0
 
         self.init_flist()
@@ -54,7 +53,7 @@ class ImgData():
             # one_dir_mul_dir_auto
             cwd = Path(self.input_path)
             self.path_list = [str(path)
-                              for path in cwd.iterdir() if cwd.is_dir() and path.is_dir()]
+                            for path in cwd.iterdir() if cwd.is_dir() and path.is_dir()]
             if len(self.path_list) == 0:
                 self.path_list = [self.input_path]
             self.path_list = np.sort(self.path_list)
@@ -62,7 +61,7 @@ class ImgData():
         elif self.type == 1:
             # one_dir_mul_dir_manual
             self.path_list = [path
-                              for path in self.input_path if Path(path).is_dir()]
+                            for path in self.input_path if Path(path).is_dir()]
             if len(self.path_list) != 0:
                 self.name_list = self.get_name_list()
             else:
@@ -101,8 +100,8 @@ class ImgData():
                 sec_str = f"{time_sec:.2f}".rstrip("0").rstrip(".") or "0"
                 
                 frame_in_sec = (physical_idx % fps_int) + 1
-                
-                filename = f"{sec_str}s_frame_{frame_in_sec}.png"
+
+                filename = f"{sec_str}s_frame_{frame_in_sec}.jpeg"
                 one_video_names.append(filename)
             
             if one_video_names and frame_count < max_len:
@@ -110,8 +109,7 @@ class ImgData():
                 one_video_names.extend([one_video_names[-1]] * padding)
             
             name_list.append(one_video_names)
-        
-        return name_list[0] if len(name_list) == 1 else name_list
+        return name_list[0] if len(self.img_num_list) == 1 else name_list
 
     def get_path_list_from_lf(self):
         format_group = [".png", ".jpg", ".jpeg", ".bmp", ".tif", ".tiff"]
@@ -335,13 +333,13 @@ class ImgData():
             else:
                 flist = []
             self.flist = flist
+        
             return flist
 
     def get_dir_num(self):
         num = len(self.path_list)
         return num
 
-    def get_video_value(self,video_fps_list,video_num_list,skip):
-        self.video_fps_list = video_fps_list
-        self.video_num_list = video_num_list
+    def get_video_value(self,video_mode,skip):
+        self.video_mode = video_mode
         self.skip = skip

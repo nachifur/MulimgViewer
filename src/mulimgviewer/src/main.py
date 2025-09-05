@@ -15,9 +15,6 @@ from .utils_img import ImgManager
 import json
 import shutil
 
-import sys
-import subprocess
-
 class MulimgViewer (MulimgViewerGui):
 
     def __init__(self, parent, UpdateUI, get_type, default_path=None):
@@ -716,6 +713,7 @@ class MulimgViewer (MulimgViewerGui):
                 self.xy_magnifier[self.box_id] = points+show_scale+[
                     self.ImgManager.title_setting[2] and self.ImgManager.title_setting[1]]
                 self.refresh(event)
+                return
         else:
             # new box
             if self.magnifier.Value:
@@ -1508,13 +1506,21 @@ class MulimgViewer (MulimgViewerGui):
 
     def title_auto_fc(self, event):
         titles = [self.title_down_up, self.title_show_parent,
-                  self.title_show_name, self.title_show_suffix, self.title_show_prefix, self.title_position, self.title_exif]
+                  self.title_show_name, self.title_show_suffix, self.title_show_prefix, self.title_position, self.title_exif, self.title_show_rename]
         if self.title_auto.Value:
             for title in titles:
                 title.Enabled = False
+            self.title_exif.SetValue(False)
+            self.title_show_rename.SetValue(False)
         else:
             for title in titles:
                 title.Enabled = True
+
+        if hasattr(self, 'ImgManager') and hasattr(self.ImgManager, 'layout_params'):
+            if len(self.ImgManager.layout_params) > 17:
+                self.ImgManager.layout_params[17][11] = self.title_exif.Value
+                if len(self.ImgManager.layout_params[17]) > 12:
+                    self.ImgManager.layout_params[17][12] = self.title_show_rename.Value
 
     def select_img_box_func(self, event):
         if self.select_img_box.Value:
@@ -1656,6 +1662,7 @@ class MulimgViewer (MulimgViewerGui):
             self.title_down_up.SetValue(data['title_down_up'])
             self.save_format.SetSelection(data['save_format'])
             self.title_show_rename.SetValue(data.get('title_show_rename', False))
+            self.ImgManager.load_exif_display_config(force_reload=True)
 
     def reset_configuration(self, event):
         json_path = Path(get_resource_path(str(Path("configs"))))

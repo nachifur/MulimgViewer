@@ -4,7 +4,7 @@
   "DateTime": false,
   "ExposureTime": true,
   "FNumber": true,
-  "ISOSpeedRatings": true,
+  "ISOSpeedRatings": false,
   "FocalLength": true,
   "Flash": true,
   "WhiteBalance": true,

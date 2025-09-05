@@ -843,12 +843,12 @@ class ImgManager(ImgData):
         self.img_list = img_list
 
     def load_exif_display_config(self, force_reload=False):
-        config_path = Path(__file__).parent.parent.parent / "exif_display_config.json"
-
+        config_path = Path(__file__).parent.parent / "configs" / "exif_display_config.json"
         if force_reload or not hasattr(self, 'exif_display_config'):
             try:
                 with open(config_path, 'r', encoding='utf-8') as f:
                     config = json.load(f)
+                    self.exif_display_config = config
                     self._initialize_optimized_tag_mappings(config)
                     return config
             except:
@@ -857,6 +857,7 @@ class ImgManager(ImgData):
                     "FNumber": True, "ISOSpeedRatings": True, "FocalLength": True,
                     "CustomTitle": True
                 }
+            self.exif_display_config = default_config
             self._initialize_optimized_tag_mappings(default_config)
             return default_config
         else:

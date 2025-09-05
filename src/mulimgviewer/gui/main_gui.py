@@ -543,6 +543,8 @@ class MulimgViewerGui ( wx.Frame ):
 
 		self.title_show_rename = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"Rename", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.title_show_rename.SetValue(True)
+		self.title_show_rename.Enable( False )
+
 		wSizer2.Add( self.title_show_rename, 0, wx.ALL, 5 )
 
 		self.title_rename_text = wx.TextCtrl( self.m_panel4, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )

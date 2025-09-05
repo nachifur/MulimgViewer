@@ -43,6 +43,7 @@ class MulimgViewer (MulimgViewerGui):
         # parameter
         self.out_path_str = ""
         self.img_name = []
+        self.selected_img_id = 0
         self.position = [0, 0]
         self.Uint = self.scrolledWindow_img.GetScrollPixelsPerUnit()
         self.Status_number = self.m_statusBar1.GetFieldsCount()
@@ -117,9 +118,15 @@ class MulimgViewer (MulimgViewerGui):
                 pass
 
         self.load_configuration( None , config_name="output.json")
+        self.Bind(wx.EVT_CONTEXT_MENU, self.on_right_click)
 
     def EVT_MY_TEST_OnHandle(self, event):
         self.about_gui(None, update=True, new_version=event.GetEventArgs())
+
+    def on_title_exif_changed(self, event):
+        if hasattr(self, 'ImgManager') and hasattr(self.ImgManager, 'layout_params'):
+            if len(self.ImgManager.layout_params) > 17:
+                self.ImgManager.layout_params[17][11] = self.title_exif.Value
 
     def check_version(self):
         t1 = threading.Thread(target=self.run, args=())
@@ -377,8 +384,10 @@ class MulimgViewer (MulimgViewerGui):
             self.show_img()
             self.choice_input_mode.SetSelection(2)
 
+
     def save_flist_parallel_manual(self, event):
         if self.out_path_str == "":
+
             self.SetStatusText_(
                 ["-1", "-1", "***Error: First, need to select the output dir***", "-1"])
         else:
@@ -557,6 +566,7 @@ class MulimgViewer (MulimgViewerGui):
             # select box
             x, y = event.GetPosition()
             id = self.get_img_id_from_point([x, y])
+            self.selected_img_id = id
             xy_grid = self.ImgManager.xy_grid[id]
             x = x-xy_grid[0]
             y = y-xy_grid[1]
@@ -687,6 +697,13 @@ class MulimgViewer (MulimgViewerGui):
         xy_grid = self.ImgManager.xy_grid[id]
         x = x-xy_grid[0]
         y = y-xy_grid[1]
+
+        menu_triggered = getattr(event, 'menu_triggered', False)
+
+        if not menu_triggered:
+            self.on_right_click(event)
+            return
+
         if self.select_img_box.Value:
             # move box
             if self.box_id != -1:
@@ -696,6 +713,7 @@ class MulimgViewer (MulimgViewerGui):
                 self.xy_magnifier[self.box_id] = points+show_scale+[
                     self.ImgManager.title_setting[2] and self.ImgManager.title_setting[1]]
                 self.refresh(event)
+                return
         else:
             # new box
             if self.magnifier.Value:
@@ -713,7 +731,174 @@ class MulimgViewer (MulimgViewerGui):
                 self.refresh(event)
                 self.SetStatusText_(["Magnifier", "-1", "-1", "-1"])
             else:
-                self.refresh(event)
+                if self.handle_title_injection(id):
+                    pass
+                else:
+                    self.refresh(event)
+        self.on_right_click(event)
+
+    def on_right_click(self, event):
+        menu = wx.Menu()
+        refresh_id = wx.NewId()
+        menu.Append(refresh_id, "🔄 refresh")
+        menu.Bind(wx.EVT_MENU, self.refresh, id=refresh_id)
+
+        if self.magnifier.Value:
+            magnifier_menu = wx.Menu()
+            new_box_id = wx.NewId()
+            magnifier_menu.Append(new_box_id, "Create a zoom box at this location")
+
+            def create_magnifier_box(evt):
+                event.menu_triggered = True
+                x, y = event.GetPosition()
+                id = self.get_img_id_from_point([x, y])
+                xy_grid = self.ImgManager.xy_grid[id]
+                x = x-xy_grid[0]
+                y = y-xy_grid[1]
+
+                if self.magnifier.Value:
+                    self.color_list.append(self.colourPicker_draw.GetColour())
+                    try:
+                        show_scale = self.show_scale.GetLineText(0).split(',')
+                        show_scale = [float(x) for x in show_scale]
+                        if len(self.xy_magnifier) == 0:
+                            default_size = 50
+                            points = self.ImgManager.ImgF.sort_box_point(
+                                [x-default_size//2, y-default_size//2, x+default_size//2, y+default_size//2],
+                                show_scale, self.ImgManager.img_resolution_origin, first_point=True)
+                            self.xy_magnifier.append(
+                                points+show_scale+[self.ImgManager.title_setting[2] and self.ImgManager.title_setting[1]])
+                        else:
+                            points = self.move_box_point(x, y, show_scale)
+                            self.xy_magnifier.append(
+                                points+show_scale+[self.ImgManager.title_setting[2] and self.ImgManager.title_setting[1]])
+                        self.refresh(evt)
+                        self.SetStatusText_(["Create a zoom box", "-1", "-1", "-1"])
+                    except Exception as e:
+                        self.SetStatusText_(["-1", f"Failed to create zoom box: {str(e)}", "-1", "-1"])
+            magnifier_menu.Bind(wx.EVT_MENU, create_magnifier_box, id=new_box_id)
+
+            if len(self.xy_magnifier) > 0:
+                magnifier_menu.AppendSeparator()
+                clear_all_id = wx.NewId()
+                magnifier_menu.Append(clear_all_id, "Clear all zoom boxes")
+                magnifier_menu.Bind(wx.EVT_MENU, self.img_left_dclick, id=clear_all_id)
+
+            menu.AppendSubMenu(magnifier_menu, "🔍 ​Zoom​")
+
+        if self.select_img_box.Value:
+            box_menu = wx.Menu()
+
+            if self.box_id != -1:
+                move_box_id = wx.NewId()
+                box_menu.Append(move_box_id, f"Move box {self.box_id} to this position")
+
+                def move_box_to_position(evt):
+                    event.menu_triggered = True
+                    self.img_right_click(event)
+                    self.refresh(evt)
+                    self.SetStatusText_([f"Move box {self.box_id}", "-1", "-1", "-1"])
+                box_menu.Bind(wx.EVT_MENU, move_box_to_position, id=move_box_id)
+                delete_box_id = wx.NewId()
+                box_menu.Append(delete_box_id, f"Delete box {self.box_id}")
+                def delete_specific_box(evt):
+                    if self.select_img_box.Value and self.box_id != -1:
+                        self.xy_magnifier.pop(self.box_id)
+                        if len(self.xy_magnifier) == 0:
+                            self.box_position.SetSelection(0)
+                        self.refresh(evt)
+                        self.SetStatusText_([f"Delete box {self.box_id}", "-1", "-1", "-1"])
+                box_menu.Bind(wx.EVT_MENU, delete_specific_box, id=delete_box_id)
+
+                delete_all_id = wx.NewId()
+                box_menu.Append(delete_all_id, "Delete all boxes")
+                def delete_all_boxes(evt):
+                    if len(self.xy_magnifier) > 0:
+                        self.xy_magnifier = []
+                        self.box_position.SetSelection(0)
+                        self.refresh(evt)
+                        self.SetStatusText_(["Delete all boxes", "-1", "-1", "-1"])
+                box_menu.Bind(wx.EVT_MENU, delete_all_boxes, id=delete_all_id)
+            menu.AppendSubMenu(box_menu, f"Selection box" + (f" ({self.box_id})" if self.box_id != -1 else ""))
+
+        if hasattr(self, 'title_rename_text'):
+            new_title = self.title_rename_text.GetValue().strip()
+            if new_title:
+                title_menu = wx.Menu()
+                inject_title_id = wx.NewId()
+                title_menu.Append(inject_title_id, f"Inject title: {new_title[:15]}...")
+                def inject_title(evt):
+                    x, y = event.GetPosition()
+                    id = self.get_img_id_from_point([x, y])
+                    success = self.handle_title_injection(id)
+                    if success:
+                        self.SetStatusText_(["Inject title success", "-1", "-1", "-1"])
+                    else:
+                        self.refresh(evt)
+                title_menu.Bind(wx.EVT_MENU, inject_title, id=inject_title_id)
+                menu.AppendSubMenu(title_menu, "📝 Title")
+        nav_menu = wx.Menu()
+
+        prev_id = wx.NewId()
+        nav_menu.Append(prev_id, "Previous Page")
+        nav_menu.Bind(wx.EVT_MENU, self.last_img, id=prev_id)
+
+        next_id = wx.NewId()
+        nav_menu.Append(next_id, "Next Page")
+        nav_menu.Bind(wx.EVT_MENU, self.next_img, id=next_id)
+
+        menu.AppendSubMenu(nav_menu, "⬅️➡️ Turn Page")
+
+        try:
+            mouse_screen_pos = wx.GetMousePosition()
+            client_pos = self.ScreenToClient(mouse_screen_pos)
+        except:
+            client_pos = wx.Point(100, 100)
+
+        self.PopupMenu(menu, client_pos)
+        menu.Destroy()
+
+    def inject_new_title(self, new_title, img_id=None):
+        try:
+            if img_id is not None:
+                current_index = img_id
+            else:
+                current_index = getattr(self, 'selected_img_id', self.ImgManager.action_count)
+            if hasattr(self.ImgManager, 'xy_grids_id_list') and current_index < len(self.ImgManager.xy_grids_id_list):
+                actual_img_index = self.ImgManager.xy_grids_id_list[current_index]
+            else:
+                actual_img_index = current_index
+            if actual_img_index < len(self.ImgManager.flist):
+                img_path = self.ImgManager.flist[actual_img_index]
+                success = self.ImgManager.update_image_exif_37510(img_path, new_title)
+                if success:
+                    self.ImgManager.get_img_list()
+
+                    if hasattr(self, 'title_rename_text'):
+                        self.title_rename_text.SetValue("")
+                    self.SetStatusText_([f"The title has been injected into {current_index+1} images: {new_title}", "-1", "-1", "-1"])
+                else:
+                    raise Exception("Failed to write EXIF")
+            else:
+                raise Exception(f"Picture index {actual_img_index} out of range")
+
+        except:
+            pass
+
+    def handle_title_injection(self, img_id = None):
+        if hasattr(self, 'title_rename_text'):
+            new_title = self.title_rename_text.GetValue().strip()
+            if new_title:
+                try:
+                    self.inject_new_title(new_title, img_id)
+                    return True
+                except:
+                    pass
+                    return False
+            else:
+                return False
+        else:
+            return False
 
     def move_box_point(self, x, y, show_scale):
         x_0, y_0, x_1, y_1 = self.xy_magnifier[0][0:4]
@@ -1001,7 +1186,8 @@ class MulimgViewer (MulimgViewerGui):
                              self.title_font_size.Value,                # 8
                              self.font_paths,                           # 9
                              self.title_position.GetSelection(),        # 10
-                             self.title_exif.Value]                     # 11
+                             self.title_exif.Value,                     # 11
+                             self.title_show_rename.Value]              # 12
 
             if title_setting[0]:
                 if self.ImgManager.type == 0 or self.ImgManager.type == 1:
@@ -1062,6 +1248,8 @@ class MulimgViewer (MulimgViewerGui):
                     self.show_unit.Value ]                  # 36
 
     def show_img(self):
+        if hasattr(self, 'm_staticText1'):
+            self.m_staticText1.Hide()
 
         if self.show_custom_func.Value and self.out_path_str == "":
             self.out_path(None)
@@ -1302,6 +1490,11 @@ class MulimgViewer (MulimgViewerGui):
         else:
             self.title_down_up.SetLabel('Down')
 
+    def title_rename_fc(self, event):
+        if hasattr(self.ImgManager, 'layout_params') and len(self.ImgManager.layout_params) > 17:
+            if len(self.ImgManager.layout_params[17]) > 12:
+                self.ImgManager.layout_params[17][12] = self.title_show_rename.Value
+
     def parallel_sequential_fc(self, event):
         if self.parallel_sequential.Value:
             self.parallel_to_sequential.Value = False
@@ -1312,13 +1505,21 @@ class MulimgViewer (MulimgViewerGui):
 
     def title_auto_fc(self, event):
         titles = [self.title_down_up, self.title_show_parent,
-                  self.title_show_name, self.title_show_suffix, self.title_show_prefix, self.title_position, self.title_exif]
+                  self.title_show_name, self.title_show_suffix, self.title_show_prefix, self.title_position, self.title_exif, self.title_show_rename]
         if self.title_auto.Value:
             for title in titles:
                 title.Enabled = False
+            self.title_exif.SetValue(False)
+            self.title_show_rename.SetValue(False)
         else:
             for title in titles:
                 title.Enabled = True
+
+        if hasattr(self, 'ImgManager') and hasattr(self.ImgManager, 'layout_params'):
+            if len(self.ImgManager.layout_params) > 17:
+                self.ImgManager.layout_params[17][11] = self.title_exif.Value
+                if len(self.ImgManager.layout_params[17]) > 12:
+                    self.ImgManager.layout_params[17][12] = self.title_show_rename.Value
 
     def select_img_box_func(self, event):
         if self.select_img_box.Value:
@@ -1402,6 +1603,7 @@ class MulimgViewer (MulimgViewerGui):
             'title_show_suffix': self.title_show_suffix.GetValue(),
             'title_down_up': self.title_down_up.GetValue(),
             'save_format': self.save_format.GetSelection(),
+            'title_show_rename': self.title_show_rename.GetValue(),
         }
         flip_cursor_path = Path(get_resource_path(str(Path("configs"))))
         flip_cursor_path = str(flip_cursor_path / "output.json")
@@ -1458,6 +1660,8 @@ class MulimgViewer (MulimgViewerGui):
             self.title_show_suffix.SetValue(data['title_show_suffix'])
             self.title_down_up.SetValue(data['title_down_up'])
             self.save_format.SetSelection(data['save_format'])
+            self.title_show_rename.SetValue(data.get('title_show_rename', False))
+            self.ImgManager.load_exif_display_config(force_reload=True)
 
     def reset_configuration(self, event):
         json_path = Path(get_resource_path(str(Path("configs"))))

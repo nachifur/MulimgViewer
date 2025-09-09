@@ -747,8 +747,11 @@ class ImgManager(ImgData):
             elif field_name == "UserComment":
                 try:
                     decoded = value.decode('utf-8', errors='ignore') if isinstance(value, bytes) else str(value)
-                    custom_data = json.loads(decoded)
-                    return custom_data.get('custom_title', str(value))
+                    try:
+                        custom_data = json.loads(decoded)
+                        return custom_data.get('custom_title', str(value))
+                    except:
+                        return decoded
                 except:
                     return str(value)
             elif isinstance(value, bytes):
@@ -1339,11 +1342,32 @@ class ImgManager(ImgData):
     def get_display_title_from_cache(self, img_index, original_title, title_rename_enabled):
         if not title_rename_enabled:
             return original_title
+
         exif_data = self.full_exif_cache.get(img_index, {"formatted_exif": {}, "has_exif": False})
         if exif_data["has_exif"]:
             custom_title = exif_data["formatted_exif"].get("CustomTitle", "N/A")
-            if custom_title != "N/A":
-                return custom_title
+            if custom_title != "N/A" and custom_title.strip():
+                # 如果有重命名内容，替换原标题中的文件名部分
+                path = Path(self.flist[img_index])
+                # 构建新标题，保持原有格式但替换名称部分
+                title_parts = []
+                if self.title_setting[3]:  # title_show_parent
+                    title_parts.append(path.parent.parts[-1])
+                if self.title_setting[4] and self.title_setting[5]:  # title_show_prefix and title_show_name
+                    if "/" in original_title:
+                        title_parts.append(custom_title)  # 使用重命名内容替换原文件名
+                    else:
+                        title_parts.append(custom_title)
+                elif self.title_setting[5]:  # title_show_name only
+                    title_parts.append(custom_title)
+                if self.title_setting[6]:  # title_show_suffix
+                    title_parts.append(path.suffix)
+                # 用适当的分隔符连接
+                if self.title_setting[3] and len(title_parts) > 1:
+                    # 如果显示父目录，用"/"分隔第一部分（父目录）和其余部分
+                    return title_parts[0] + "/" + "".join(title_parts[1:])
+                else:
+                    return "".join(title_parts)
         return original_title
 
     def update_image_exif_37510(self, img_path, new_title):
@@ -1359,16 +1383,16 @@ class ImgManager(ImgData):
             else:
                 exif_dict = {"0th": {}, "Exif": {}, "GPS": {}, "1st": {}, "thumbnail": None}
             user_comment_tag = 0x9286
-            new_data = {"custom_title": new_title}
-            comment_data = json.dumps(new_data, ensure_ascii=False)
-            exif_dict["Exif"][user_comment_tag] = comment_data.encode('utf-8')
+            # 直接存储重命名内容，不包装在JSON中
+            exif_dict["Exif"][user_comment_tag] = new_title.encode('utf-8')
             exif_bytes = piexif.dump(exif_dict)
             img.save(img_path, exif=exif_bytes)
+            # 更新缓存
             for i, path in enumerate(self.flist):
                 if str(path) == str(img_path):
                     if i in self.full_exif_cache:
                         self.full_exif_cache[i]["formatted_exif"]["CustomTitle"] = new_title
-                        self.full_exif_cache[i]["raw_exif"]["Exif"][user_comment_tag] = comment_data.encode('utf-8')
+                        self.full_exif_cache[i]["raw_exif"]["Exif"][user_comment_tag] = new_title.encode('utf-8')
                     break
             return True
         except:

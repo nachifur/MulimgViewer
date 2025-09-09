@@ -1342,47 +1342,38 @@ class ImgManager(ImgData):
     def get_display_title_from_cache(self, img_index, original_title, title_rename_enabled):
         if not title_rename_enabled:
             return original_title
-
         exif_data = self.full_exif_cache.get(img_index, {"formatted_exif": {}, "has_exif": False})
         if exif_data["has_exif"]:
             custom_title = exif_data["formatted_exif"].get("CustomTitle", "N/A")
             if custom_title != "N/A" and custom_title.strip():
                 path = Path(self.flist[img_index])
                 title_parts = []
-
-                # 根据模式决定重命名作用对象
-                if hasattr(self, 'type') and self.type in [1, 4]:
-                    # 重命名修改父目录名字
-                    if self.title_setting[3]:  # title_show_parent
-                        title_parts.append(custom_title)  # 用重命名内容替换父目录名
-                    if self.title_setting[5]:  # title_show_name
+                if hasattr(self, 'type') and self.type in [0, 1]:
+                    if self.title_setting[3]:
+                        title_parts.append(custom_title)
+                    if self.title_setting[5]:
                         if self.title_setting[3]:
                             title_parts.append("/")
                         name = path.stem
-                        if not self.title_setting[4]:  # 处理前缀
+                        if not self.title_setting[4]:
                             try:
                                 name = name.split("_", 1)[1]
                             except:
                                 pass
                         title_parts.append(name)
-                    if self.title_setting[6]:  # title_show_suffix
+                    if self.title_setting[6]:
                         title_parts.append(path.suffix)
-
                     return "".join(title_parts)
-
-                else:  # 模式1和3 (内部使用0,2) - 重命名修改图片名字
-                    # 原有逻辑：重命名修改图片名字
-                    if self.title_setting[3]:  # title_show_parent
+                else:
+                    if self.title_setting[3]:
                         title_parts.append(path.parent.parts[-1])
-                    if self.title_setting[5]:  # title_show_name
+                    if self.title_setting[5]:
                         if self.title_setting[3]:
                             title_parts.append("/")
-                        title_parts.append(custom_title)  # 用重命名内容替换文件名
-                    if self.title_setting[6]:  # title_show_suffix
+                        title_parts.append(custom_title)
+                    if self.title_setting[6]:
                         title_parts.append(path.suffix)
-
                     return "".join(title_parts)
-
         return original_title
 
     def update_image_exif_37510(self, img_path, new_title):
@@ -1398,11 +1389,9 @@ class ImgManager(ImgData):
             else:
                 exif_dict = {"0th": {}, "Exif": {}, "GPS": {}, "1st": {}, "thumbnail": None}
             user_comment_tag = 0x9286
-            # 直接存储重命名内容，不包装在JSON中
             exif_dict["Exif"][user_comment_tag] = new_title.encode('utf-8')
             exif_bytes = piexif.dump(exif_dict)
             img.save(img_path, exif=exif_bytes)
-            # 更新缓存
             for i, path in enumerate(self.flist):
                 if str(path) == str(img_path):
                     if i in self.full_exif_cache:

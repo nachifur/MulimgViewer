@@ -743,10 +743,17 @@ class MulimgViewer (MulimgViewerGui):
         menu.Append(refresh_id, "🔄 refresh")
         menu.Bind(wx.EVT_MENU, self.refresh, id=refresh_id)
 
+        prev_id = wx.NewId()
+        menu.Append(prev_id, "⬅️ Previous Page")
+        menu.Bind(wx.EVT_MENU, self.last_img, id=prev_id)
+
+        next_id = wx.NewId()
+        menu.Append(next_id, "➡️ Next Page")
+        menu.Bind(wx.EVT_MENU, self.next_img, id=next_id)
+
         if self.magnifier.Value:
-            magnifier_menu = wx.Menu()
             new_box_id = wx.NewId()
-            magnifier_menu.Append(new_box_id, "Create a zoom box at this location")
+            menu.Append(new_box_id, "🔍 Create zoom box here")
 
             def create_magnifier_box(evt):
                 event.menu_triggered = True
@@ -776,15 +783,12 @@ class MulimgViewer (MulimgViewerGui):
                         self.SetStatusText_(["Create a zoom box", "-1", "-1", "-1"])
                     except Exception as e:
                         self.SetStatusText_(["-1", f"Failed to create zoom box: {str(e)}", "-1", "-1"])
-            magnifier_menu.Bind(wx.EVT_MENU, create_magnifier_box, id=new_box_id)
+            menu.Bind(wx.EVT_MENU, create_magnifier_box, id=new_box_id)
 
-            if len(self.xy_magnifier) > 0:
-                magnifier_menu.AppendSeparator()
-                clear_all_id = wx.NewId()
-                magnifier_menu.Append(clear_all_id, "Clear all zoom boxes")
-                magnifier_menu.Bind(wx.EVT_MENU, self.img_left_dclick, id=clear_all_id)
-
-            menu.AppendSubMenu(magnifier_menu, "🔍 ​Zoom​")
+        if len(self.xy_magnifier) > 0:
+            clear_all_id = wx.NewId()
+            menu.Append(clear_all_id, "🗑️ Clear all zoom boxes")
+            menu.Bind(wx.EVT_MENU, self.img_left_dclick, id=clear_all_id)
 
         if self.select_img_box.Value:
             box_menu = wx.Menu()
@@ -809,16 +813,6 @@ class MulimgViewer (MulimgViewerGui):
                         self.refresh(evt)
                         self.SetStatusText_([f"Delete box {self.box_id}", "-1", "-1", "-1"])
                 box_menu.Bind(wx.EVT_MENU, delete_specific_box, id=delete_box_id)
-
-                delete_all_id = wx.NewId()
-                box_menu.Append(delete_all_id, "Delete all boxes")
-                def delete_all_boxes(evt):
-                    if len(self.xy_magnifier) > 0:
-                        self.xy_magnifier = []
-                        self.box_position.SetSelection(0)
-                        self.refresh(evt)
-                        self.SetStatusText_(["Delete all boxes", "-1", "-1", "-1"])
-                box_menu.Bind(wx.EVT_MENU, delete_all_boxes, id=delete_all_id)
             menu.AppendSubMenu(box_menu, f"Selection box" + (f" ({self.box_id})" if self.box_id != -1 else ""))
 
         if hasattr(self, 'title_rename_text'):
@@ -837,18 +831,6 @@ class MulimgViewer (MulimgViewerGui):
                         self.SetStatusText_(["Failed to inject title", "-1", "-1", "-1"])
                 menu.Bind(wx.EVT_MENU, inject_title_directly, id=inject_title_id)
                 menu.AppendSeparator()
-        nav_menu = wx.Menu()
-
-        prev_id = wx.NewId()
-        nav_menu.Append(prev_id, "Previous Page")
-        nav_menu.Bind(wx.EVT_MENU, self.last_img, id=prev_id)
-
-        next_id = wx.NewId()
-        nav_menu.Append(next_id, "Next Page")
-        nav_menu.Bind(wx.EVT_MENU, self.next_img, id=next_id)
-
-        menu.AppendSubMenu(nav_menu, "⬅️➡️ Turn Page")
-
         try:
             mouse_screen_pos = wx.GetMousePosition()
             client_pos = self.ScreenToClient(mouse_screen_pos)

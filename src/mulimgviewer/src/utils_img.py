@@ -553,9 +553,6 @@ class ImgUtils():
         return img
 
     def cal_txt_size_adjust_title(self, title_list, standard_size, font, font_size):
-        if not title_list or len(title_list) == 0:
-            return np.array([[standard_size, font_size]]), ["默认标题"], [standard_size, font_size]
-
         im = Image.new('RGBA', (256, 256), 0)
         draw = ImageDraw.Draw(im)
         title_size = []
@@ -763,15 +760,32 @@ class ImgManager(ImgData):
 
     def format_exif_display_complete(self, formatted_exif, custom_title, title_rename_enabled, original_filename):
         display_lines = []
-        if title_rename_enabled and custom_title and custom_title != "N/A":
-            display_lines.append(f"Name: {custom_title}")
+
+        # 根据type模式调整name显示
+        if hasattr(self, 'type') and self.type in [0, 1]:  # parallel auto 模式
+            # 对于type 0和1，显示文件夹名字作为name
+            if hasattr(self, 'flist') and len(self.flist) > 0:
+                # 找到当前图片对应的路径
+                current_img_index = getattr(self, '_current_processing_index', 0)
+                if current_img_index < len(self.flist):
+                    folder_name = Path(self.flist[current_img_index]).parent.name
+                    if title_rename_enabled and custom_title and custom_title != "N/A":
+                        display_lines.append(f"Name: {folder_name}")
+                    else:
+                        display_lines.append(f"Name: {folder_name}")
+                else:
+                    display_lines.append(f"Name: {original_filename}")
+            else:
+                display_lines.append(f"Name: {original_filename}")
         else:
-            display_lines.append(f"Name: {original_filename}")
+            # 其他模式保持原有逻辑
+            if title_rename_enabled and custom_title and custom_title != "N/A":
+                display_lines.append(f"Name: {custom_title}")
+            else:
+                display_lines.append(f"Name: {original_filename}")
 
         for field_name, is_enabled in self.exif_display_config.items():
             if is_enabled and field_name not in ["UserComment", "CustomTitle"]:
-                if field_name == "UserComment":
-                    continue
                 value = formatted_exif.get(field_name, "N/A")
                 display_lines.append(f"{field_name}: {value}")
 
@@ -1229,18 +1243,18 @@ class ImgManager(ImgData):
     def title_preprocessing(self, img, id):
         title_max_size = copy.deepcopy(self.title_max_size)
         line_height = int(self.title_setting[8])
-
         text = self.title_list[id]
         im_tmp = Image.new('RGBA', (title_max_size[0], 1000), self.gap_color)
         draw_tmp = ImageDraw.Draw(im_tmp)
+
         if "\n" not in text:
             bbox = draw_tmp.textbbox((0, 0), text, font=self.font)
         else:
             bbox = draw_tmp.multiline_textbbox((0, 0), text, font=self.font)
-
         img = Image.new('RGBA', (title_max_size[0], bbox[3]), self.gap_color)
         draw = ImageDraw.Draw(img)
         title_size = self.title_size[id*2+1, :]
+
         delta_x = max(0,int((title_max_size[0]-title_size[0])/2))
         one_size = int(int(self.title_setting[8])/2)#int(title_size[0]/int(len(self.title_list[id])))
         wrapper = textwrap.TextWrapper(width=int(int(title_max_size[0])/int(one_size)))  # 设置换行的宽度
@@ -1286,10 +1300,17 @@ class ImgManager(ImgData):
 
         if title_exif:
             for i, img in enumerate(self.img_list):
+                self._current_processing_index = i
                 exif_data = self.full_exif_cache.get(i, {"formatted_exif": {}, "has_exif": False})
 
                 if not exif_data["has_exif"]:
-                    title = "No EXIF information"
+                    formatted_exif = {}
+                    custom_title = "N/A"
+                    title_rename_enabled = len(self.title_setting) > 12 and self.title_setting[12]
+                    original_filename = Path(self.flist[i]).name
+                    title = self.format_exif_display_complete(
+                        formatted_exif, custom_title, title_rename_enabled, original_filename
+                    )
                 else:
                     formatted_exif = exif_data["formatted_exif"]
                     custom_title = formatted_exif.get("CustomTitle", "N/A")

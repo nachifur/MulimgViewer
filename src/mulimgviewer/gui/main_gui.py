@@ -547,7 +547,7 @@ class MulimgViewerGui ( wx.Frame ):
 
 		wSizer2.Add( self.title_show_rename, 0, wx.ALL, 5 )
 
-		self.title_rename_text = wx.TextCtrl( self.m_panel4, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.title_rename_text = wx.TextCtrl( self.m_panel4, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size( 100,-1 ), 0 )
 		wSizer2.Add( self.title_rename_text, 0, wx.ALL, 5 )
 
 		self.m_staticline20 = wx.StaticLine( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_VERTICAL )

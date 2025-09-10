@@ -824,19 +824,19 @@ class MulimgViewer (MulimgViewerGui):
         if hasattr(self, 'title_rename_text'):
             new_title = self.title_rename_text.GetValue().strip()
             if new_title:
-                title_menu = wx.Menu()
                 inject_title_id = wx.NewId()
-                title_menu.Append(inject_title_id, f"Inject title: {new_title[:15]}...")
-                def inject_title(evt):
+                display_title = new_title[:20] + "..." if len(new_title) > 20 else new_title
+                menu.Append(inject_title_id, f"📝 Inject title: {display_title}")
+                def inject_title_directly(evt):
                     x, y = event.GetPosition()
                     id = self.get_img_id_from_point([x, y])
                     success = self.handle_title_injection(id)
                     if success:
-                        self.SetStatusText_(["Inject title success", "-1", "-1", "-1"])
+                        self.SetStatusText_(["Title injected successfully", "-1", "-1", "-1"])
                     else:
-                        self.refresh(evt)
-                title_menu.Bind(wx.EVT_MENU, inject_title, id=inject_title_id)
-                menu.AppendSubMenu(title_menu, "📝 Title")
+                        self.SetStatusText_(["Failed to inject title", "-1", "-1", "-1"])
+                menu.Bind(wx.EVT_MENU, inject_title_directly, id=inject_title_id)
+                menu.AppendSeparator()
         nav_menu = wx.Menu()
 
         prev_id = wx.NewId()

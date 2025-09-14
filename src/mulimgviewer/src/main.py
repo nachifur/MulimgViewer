@@ -125,11 +125,6 @@ class MulimgViewer (MulimgViewerGui):
     def EVT_MY_TEST_OnHandle(self, event):
         self.about_gui(None, update=True, new_version=event.GetEventArgs())
 
-    def on_title_exif_changed(self, event):
-        if hasattr(self, 'ImgManager') and hasattr(self.ImgManager, 'layout_params'):
-            if len(self.ImgManager.layout_params) > 17:
-                self.ImgManager.layout_params[17][11] = self.title_exif.Value
-
     def check_version(self):
         t1 = threading.Thread(target=self.run, args=())
         t1.setDaemon(True)
@@ -386,10 +381,8 @@ class MulimgViewer (MulimgViewerGui):
             self.show_img()
             self.choice_input_mode.SetSelection(2)
 
-
     def save_flist_parallel_manual(self, event):
         if self.out_path_str == "":
-
             self.SetStatusText_(
                 ["-1", "-1", "***Error: First, need to select the output dir***", "-1"])
         else:
@@ -629,29 +622,23 @@ class MulimgViewer (MulimgViewerGui):
                 dir_index = 0
                 img_index = self.ImgManager.img_count + clicked_img_id
             elif self.ImgManager.type == 0 or self.ImgManager.type == 1:
-                # 多文件夹模式：clicked_img_id 对应网格位置，即目录索引
-                dir_index = clicked_img_id  # 网格位置就是目录索引
-                img_index = page_num        # 当前页码就是各目录中的图片索引
+                # 多文件夹模式
+                dir_index = clicked_img_id
+                img_index = page_num
             elif self.ImgManager.type == 3:
                 # 文件列表模式
                 if hasattr(self.ImgManager, 'xy_grids_id_list') and clicked_img_id < len(self.ImgManager.xy_grids_id_list):
                     actual_img_index = self.ImgManager.xy_grids_id_list[clicked_img_id]
                     if hasattr(self.ImgManager, 'flist') and actual_img_index < len(self.ImgManager.flist):
                         clicked_file_path = self.ImgManager.flist[actual_img_index]
-
-                        # 获取所有唯一目录
                         if isinstance(self.ImgManager.path_list, np.ndarray):
                             path_list = self.ImgManager.path_list.tolist()
                         else:
                             path_list = self.ImgManager.path_list
-
                         all_dirs = list(set(os.path.dirname(p) for p in path_list if os.path.isfile(p)))
                         all_dirs.sort()
-
                         clicked_dir = os.path.dirname(clicked_file_path)
                         dir_index = all_dirs.index(clicked_dir) if clicked_dir in all_dirs else 0
-
-                        # 计算在该目录中的图片索引
                         same_dir_files = [p for p in path_list if os.path.dirname(p) == clicked_dir]
                         same_dir_files.sort()
                         img_index = same_dir_files.index(clicked_file_path) if clicked_file_path in same_dir_files else 0
@@ -667,8 +654,6 @@ class MulimgViewer (MulimgViewerGui):
         except:
             dir_index = 0
             img_index = clicked_img_id
-
-        # 更新状态：显示正确的图片和目录索引
         click_status = f"{page_num+1}/{img_index+1}-th img {page_num+1}/{dir_index+1}-th dir"
         self.m_statusBar1.SetStatusText(click_status, 1)
 
@@ -745,7 +730,6 @@ class MulimgViewer (MulimgViewerGui):
         xy_grid = self.ImgManager.xy_grid[id]
         x = x-xy_grid[0]
         y = y-xy_grid[1]
-
         menu_triggered = getattr(event, 'menu_triggered', False)
 
         if not menu_triggered:
@@ -941,6 +925,13 @@ class MulimgViewer (MulimgViewerGui):
 
         self.PopupMenu(menu, client_pos)
         menu.Destroy()
+
+    #--exif--
+    def on_title_exif_changed(self, event):
+        if hasattr(self, 'ImgManager') and hasattr(self.ImgManager, 'layout_params'):
+            if len(self.ImgManager.layout_params) > 17:
+                self.ImgManager.layout_params[17][11] = self.title_exif.Value
+                self.load_exif_display_config(force_reload=True)
 
     def inject_new_title(self, new_title, img_id=None):
         try:
@@ -1408,49 +1399,36 @@ class MulimgViewer (MulimgViewerGui):
                 self.img_panel.Children[0].Bind(
                     wx.EVT_KEY_UP, self.key_up_detect)
 
-            # status - 统一显示格式：同时显示目录和图片信息
             page_num = self.ImgManager.action_count
-
             try:
-                # 获取当前图片索引
                 current_img = self.ImgManager.img_count
-
-                # 根据不同类型计算正确的目录索引
                 if self.ImgManager.type == 2:
-                    # 单文件夹模式：目录索引始终为0，因为只有一个文件夹
+                    # 单文件夹模式
                     dir_index = 0
                     total_dirs = 1
                 elif self.ImgManager.type == 0 or self.ImgManager.type == 1:
-                    # 多文件夹模式：目录索引就是当前页码
+                    # 多文件夹模式
                     if hasattr(self.ImgManager, 'get_dir_num'):
                         total_dirs = self.ImgManager.get_dir_num()
-                        # 在多文件夹模式下，页码直接对应目录索引
                         dir_index = page_num if page_num < total_dirs else (total_dirs - 1)
                     else:
                         total_dirs = self.ImgManager.max_action_num
                         dir_index = page_num if page_num < total_dirs else (total_dirs - 1)
                 elif self.ImgManager.type == 3:
-                    # 文件列表模式：计算当前图片所属的唯一目录索引
                     try:
                         import os
                         if hasattr(self.ImgManager, 'path_list') and len(self.ImgManager.path_list) > 0:
-                            # 获取所有唯一的目录
                             if isinstance(self.ImgManager.path_list, np.ndarray):
                                 path_list = self.ImgManager.path_list.tolist()
                             else:
                                 path_list = self.ImgManager.path_list
-
-                            # 如果path_list只有一个元素且是目录路径，说明是单目录模式
                             if len(path_list) == 1 and os.path.isdir(path_list[0]):
                                 dir_index = 0
                                 total_dirs = 1
                             else:
-                                # 多个文件路径，计算目录数
                                 all_dirs = list(set(os.path.dirname(p) for p in path_list if os.path.isfile(p)))
                                 all_dirs.sort()
                                 total_dirs = len(all_dirs)
-
-                                # 根据当前图片获取目录索引
                                 if hasattr(self.ImgManager, 'flist') and current_img < len(self.ImgManager.flist):
                                     current_file_path = self.ImgManager.flist[current_img]
                                     current_dir = os.path.dirname(current_file_path)
@@ -1466,23 +1444,17 @@ class MulimgViewer (MulimgViewerGui):
                 else:
                     dir_index = 0
                     total_dirs = 1
-
-                # 统一状态格式：页码/图片索引-th img 页码/目录索引-th dir
                 status_text = f"{page_num}/{current_img}-th img {page_num}/{dir_index}-th dir"
-
             except Exception as e:
-                # 出错时的简化显示
                 status_text = f"{page_num}/0-th img {page_num}/0-th dir"
 
             try:
                 if self.ImgManager.type == 2 or ((self.ImgManager.type == 0 or self.ImgManager.type == 1) and self.parallel_sequential.Value):
-                    # 顺序模式：显示具体图片范围
                     start_img = self.ImgManager.img_count
                     end_img = min(self.ImgManager.img_count + self.ImgManager.count_per_action - 1, self.ImgManager.img_num - 1)
                     img_range = f"{self.ImgManager.name_list[start_img]}-{self.ImgManager.name_list[end_img]}" if start_img != end_img else f"{self.ImgManager.name_list[start_img]}"
                     detail_text = f"{self.ImgManager.img_resolution[0]}x{self.ImgManager.img_resolution[1]} pixels / {img_range}"
                 else:
-                    # 并行模式：显示拼接名称
                     detail_text = f"{self.ImgManager.img_resolution[0]}x{self.ImgManager.img_resolution[1]} pixels / {self.ImgManager.get_stitch_name()}"
 
                 self.SetStatusText_(["-1", status_text, detail_text, "-1"])

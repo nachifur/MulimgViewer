@@ -15,6 +15,7 @@ from .utils_img import ImgManager
 import json
 import shutil
 import os
+import datetime
 
 class MulimgViewer (MulimgViewerGui):
 
@@ -797,6 +798,60 @@ class MulimgViewer (MulimgViewerGui):
         next_id = wx.NewId()
         menu.Append(next_id, "➡️ Next Page")
         menu.Bind(wx.EVT_MENU, self.next_img, id=next_id)
+
+        # 只在parallel+sequential模式下显示保存选项
+        if (self.ImgManager.type == 0 or self.ImgManager.type == 1) and self.parallel_sequential.Value:
+            save_single_id = wx.NewId()
+            menu.Append(save_single_id, "💾 Save current page")
+
+            def save_current_page(evt):
+                timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+                original_out_path = self.out_path_str
+                temp_out_path = os.path.join(original_out_path, f"page_{self.ImgManager.action_count}_{timestamp}")
+                self.out_path_str = temp_out_path
+                os.makedirs(temp_out_path, exist_ok=True)
+                self.save_img(evt)
+                self.out_path_str = original_out_path
+                self.SetStatusText_([f"Page {self.ImgManager.action_count} saved to {temp_out_path}", "-1", "-1", "-1"])
+            menu.Bind(wx.EVT_MENU, save_current_page, id=save_single_id)
+            save_column_id = wx.NewId()
+            menu.Append(save_column_id, "📄 Save selected column")
+
+            def save_selected_column(evt):
+                if self.out_path_str == "":
+                    self.out_path(evt)
+                    if self.out_path_str == "":
+                        return
+                x, y = event.GetPosition()
+                clicked_grid_id = self.get_img_id_from_point([x, y])
+                cols = self.ImgManager.layout_params[0][1]
+                rows = self.ImgManager.layout_params[0][0]
+                selected_col = clicked_grid_id % cols
+                timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+                temp_out_path = os.path.join(self.out_path_str, f"column_{selected_col}_{timestamp}")
+                os.makedirs(temp_out_path, exist_ok=True)
+                original_layout = self.ImgManager.layout_params[0]
+                original_ids = self.ImgManager.xy_grids_id_list.copy()
+                column_img_ids = []
+                for row in range(rows):
+                    grid_pos = row * cols + selected_col
+                    if grid_pos < len(self.ImgManager.xy_grids_id_list):
+                        column_img_ids.append(grid_pos)
+                current_flist = self.ImgManager.flist.copy()
+                column_flist = []
+                for grid_id in column_img_ids:
+                    if grid_id < len(current_flist):
+                        column_flist.append(current_flist[grid_id])
+                original_flist = self.ImgManager.flist
+                self.ImgManager.flist = column_flist
+                self.ImgManager.layout_params[0] = [len(column_flist), 1]
+                self.ImgManager.xy_grids_id_list = list(range(len(column_flist)))
+                self.ImgManager.save_img(temp_out_path, 0)
+                self.ImgManager.layout_params[0] = original_layout
+                self.ImgManager.xy_grids_id_list = original_ids
+                self.ImgManager.flist = original_flist
+                self.SetStatusText_([f"Column {selected_col} saved ({len(column_flist)} images)", "-1", "-1", "-1"])
+            menu.Bind(wx.EVT_MENU, save_selected_column, id=save_column_id)
 
         if self.magnifier.Value:
             new_box_id = wx.NewId()

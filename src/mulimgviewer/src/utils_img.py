@@ -643,6 +643,149 @@ class ImgManager(ImgData):
         self.exif_display_config = self.load_exif_display_config(force_reload=True)
         self._tag_mappings_cache = None
 
+    def get_img_list(self, customfunc=False):
+        img_list = []
+        # load img list
+        name_list = []
+        self.full_exif_cache = {}
+
+        for i, path in enumerate(self.flist):
+            path = Path(path)
+            name_list.append(path.name)
+            if path.is_file() and path.suffix.lower() in self.format_group:
+                if path.suffix.lower() in [".tiff", ".tif"]:
+                    img = imageio.imread(path)
+                    if img.dtype != np.uint8:
+                        img = (255 * img).astype(np.uint8)
+                    pil_img = Image.fromarray(img)
+                    img_list.append(pil_img.convert('RGB'))
+                    self.full_exif_cache[i] = {"raw_exif": {}, "formatted_exif": {}, "has_exif": False}
+                else:
+                    img = Image.open(path).convert('RGB')
+                    img_list.append(img)
+                    self.full_exif_cache[i] = self.extract_complete_exif(path)
+            else:
+                self.full_exif_cache[i] = {"raw_exif": {}, "formatted_exif": {}, "has_exif": False}
+        out_path_str = self.layout_params[33]
+        # custom process
+        if customfunc:
+            img_list = main_custom_func(img_list,out_path_str,name_list=name_list)
+        # resolution
+        width_ = []
+        height_ = []
+        for img in img_list:
+            width, height = img.size
+            width_.append(width)
+            height_.append(height)
+        width_ = np.sort(width_)
+        height_ = np.sort(height_)
+
+        if self.img_stitch_mode == 2:
+            width = max(width_)
+            height = max(height_)
+        elif self.img_stitch_mode == 1:
+            width = np.min(width_)
+            height = np.min(height_)
+        elif self.img_stitch_mode == 0:
+            if len(width_) > 3:
+                width = np.mean(width_[1:-1])
+                height = np.mean(height_[1:-1])
+            else:
+                width = np.mean(width_)
+                height = np.mean(height_)
+
+        if self.layout_params[6][0] == -1 or self.layout_params[6][1] == -1:
+            if self.layout_params[6][0] == -1 and self.layout_params[6][1] == -1:
+                self.img_resolution_origin = [int(width), int(height)]
+            elif self.layout_params[6][0] == -1 and self.layout_params[6][1] != -1:
+                self.img_resolution_origin = [
+                    int(width*self.layout_params[6][1]/height), int(self.layout_params[6][1])]
+            elif self.layout_params[6][0] != -1 and self.layout_params[6][1] == -1:
+                self.img_resolution_origin = [int(self.layout_params[6][0]), int(
+                    height*self.layout_params[6][0]/width)]
+            self.custom_resolution = False
+        else:
+            self.img_resolution_origin = [int(i)
+                                          for i in self.layout_params[6]]
+            self.custom_resolution = True
+
+        self.img_list = img_list
+
+    def load_exif_display_config(self, force_reload=False):
+        config_path = Path(__file__).parent.parent / "configs" / "exif_display_config.json"
+        if force_reload or not hasattr(self, 'exif_display_config'):
+            try:
+                with open(config_path, 'r', encoding='utf-8') as f:
+                    config = json.load(f)
+                    self.exif_display_config = config
+                    self._initialize_optimized_tag_mappings(config)
+                    return config
+            except:
+                default_config = {
+                    "Make": True, "Model": True, "ExposureTime": True,
+                    "FNumber": True, "ISOSpeedRatings": True, "FocalLength": True,
+                    "CustomTitle": True
+                }
+            self.exif_display_config = default_config
+            self._initialize_optimized_tag_mappings(default_config)
+            return default_config
+        else:
+            return self.exif_display_config
+
+    def get_complete_tag_mappings(self):
+        if self._tag_mappings_cache is None:
+            self._initialize_optimized_tag_mappings(self.exif_display_config)
+        return self._tag_mappings_cache
+
+    def _initialize_optimized_tag_mappings(self, config):
+        enabled_fields = set(k for k, v in config.items() if v)
+        enabled_fields.add("UserComment")
+        self._tag_mappings_cache = {
+            ifd_name: {
+                tag_id: field_name
+                for tag_id, field_name in mapping.items()
+                if field_name in enabled_fields
+            }
+            for ifd_name, mapping in self._FULL_MAPPINGS.items()
+        }
+
+    _FULL_MAPPINGS = {
+        "0th": {
+            256: "ImageWidth", 257: "ImageLength", 258: "BitsPerSample", 259: "Compression",
+            262: "PhotometricInterpretation", 271: "Make", 272: "Model", 274: "Orientation",
+            282: "XResolution", 283: "YResolution", 296: "ResolutionUnit", 306: "DateTime",
+                270: "ImageDescription", 305: "Software", 315: "Artist", 33432: "Copyright"
+            },
+            "Exif": {
+                33434: "ExposureTime", 33437: "FNumber", 34850: "ExposureProgram", 34855: "ISOSpeedRatings",
+                36864: "ExifVersion", 36867: "DateTimeOriginal", 36868: "DateTimeDigitized",
+                37121: "ComponentsConfiguration", 37377: "ShutterSpeedValue", 37378: "ApertureValue",
+                37380: "ExposureBiasValue", 37381: "MaxApertureValue", 37383: "MeteringMode",
+                37384: "LightSource", 37385: "Flash", 37386: "FocalLength", 37510: "UserComment",
+                40960: "FlashpixVersion", 40961: "ColorSpace", 40962: "PixelXDimension", 40963: "PixelYDimension",
+                41728: "FileSource", 41729: "SceneType", 37382: "SubjectDistance", 37396: "SubjectArea",
+                37500: "MakerNote", 37379: "BrightnessValue", 41994: "SubjectDistanceRange",
+                42016: "ImageUniqueID", 42032: "CameraOwnerName", 42033: "BodySerialNumber",
+                42034: "LensSpecification", 42035: "LensMake", 42036: "LensModel", 42037: "LensSerialNumber",
+                41989: "FocalLengthIn35mmFilm", 41990: "SceneCaptureType", 41991: "GainControl",
+                41992: "Contrast", 41993: "Saturation", 41994: "Sharpness", 41985: "CustomRendered",
+                41986: "ExposureMode", 41995: "SensingMethod", 41730: "CFAPattern", 40964: "RelatedSoundFile",
+                41483: "FlashEnergy", 41486: "FocalPlaneXResolution", 41487: "FocalPlaneYResolution",
+                41488: "FocalPlaneResolutionUnit", 41493: "ExposureIndex", 41987: "WhiteBalance",
+                41988: "DigitalZoomRatio"
+            },
+            "GPS": {
+                1: "GPSLatitudeRef", 2: "GPSLatitude", 3: "GPSLongitudeRef", 4: "GPSLongitude",
+                5: "GPSAltitudeRef", 6: "GPSAltitude", 7: "GPSTimeStamp", 8: "GPSSatellites",
+                9: "GPSStatus", 10: "GPSMeasureMode", 11: "GPSDOP", 12: "GPSSpeedRef",
+                13: "GPSSpeed", 14: "GPSTrackRef", 15: "GPSTrack", 16: "GPSImgDirectionRef",
+                17: "GPSImgDirection", 18: "GPSMapDatum", 19: "GPSDestLatitudeRef",
+                20: "GPSDestLatitude", 21: "GPSDestLongitudeRef", 22: "GPSDestLongitude",
+                23: "GPSDestBearingRef", 24: "GPSDestBearing", 25: "GPSDestDistanceRef",
+                26: "GPSDestDistance", 27: "GPSProcessingMethod", 28: "GPSAreaInformation",
+                29: "GPSDateStamp", 30: "GPSDifferential", 31: "GPSHPositioningError"
+            }
+        }
 
     def extract_complete_exif(self, img_path):
         try:
@@ -761,11 +904,8 @@ class ImgManager(ImgData):
     def format_exif_display_complete(self, formatted_exif, custom_title, title_rename_enabled, original_filename):
         display_lines = []
 
-        # 根据type模式调整name显示
-        if hasattr(self, 'type') and self.type in [0, 1]:  # parallel auto 模式
-            # 对于type 0和1，显示文件夹名字作为name
+        if hasattr(self, 'type') and self.type in [0, 1]:
             if hasattr(self, 'flist') and len(self.flist) > 0:
-                # 找到当前图片对应的路径
                 current_img_index = getattr(self, '_current_processing_index', 0)
                 if current_img_index < len(self.flist):
                     folder_name = Path(self.flist[current_img_index]).parent.name
@@ -778,7 +918,6 @@ class ImgManager(ImgData):
             else:
                 display_lines.append(f"Name: {original_filename}")
         else:
-            # 其他模式保持原有逻辑
             if title_rename_enabled and custom_title and custom_title != "N/A":
                 display_lines.append(f"Name: {custom_title}")
             else:
@@ -791,149 +930,68 @@ class ImgManager(ImgData):
 
         return "\n".join(display_lines)
 
-    def get_img_list(self, customfunc=False):
-        img_list = []
-        # load img list
-        name_list = []
-        self.full_exif_cache = {}
-
-        for i, path in enumerate(self.flist):
-            path = Path(path)
-            name_list.append(path.name)
-            if path.is_file() and path.suffix.lower() in self.format_group:
-                if path.suffix.lower() in [".tiff", ".tif"]:
-                    img = imageio.imread(path)
-                    if img.dtype != np.uint8:
-                        img = (255 * img).astype(np.uint8)
-                    pil_img = Image.fromarray(img)
-                    img_list.append(pil_img.convert('RGB'))
-                    self.full_exif_cache[i] = {"raw_exif": {}, "formatted_exif": {}, "has_exif": False}
+    def get_display_title_from_cache(self, img_index, original_title, title_rename_enabled):
+        if not title_rename_enabled:
+            return original_title
+        exif_data = self.full_exif_cache.get(img_index, {"formatted_exif": {}, "has_exif": False})
+        if exif_data["has_exif"]:
+            custom_title = exif_data["formatted_exif"].get("CustomTitle", "N/A")
+            if custom_title != "N/A" and custom_title.strip():
+                path = Path(self.flist[img_index])
+                title_parts = []
+                if hasattr(self, 'type') and self.type in [0, 1]:
+                    if self.title_setting[3]:
+                        title_parts.append(custom_title)
+                    if self.title_setting[5]:
+                        if self.title_setting[3]:
+                            title_parts.append("/")
+                        name = path.stem
+                        if not self.title_setting[4]:
+                            try:
+                                name = name.split("_", 1)[1]
+                            except:
+                                pass
+                        title_parts.append(name)
+                    if self.title_setting[6]:
+                        title_parts.append(path.suffix)
+                    return "".join(title_parts)
                 else:
-                    img = Image.open(path).convert('RGB')
-                    img_list.append(img)
-                    self.full_exif_cache[i] = self.extract_complete_exif(path)
+                    if self.title_setting[3]:
+                        title_parts.append(path.parent.parts[-1])
+                    if self.title_setting[5]:
+                        if self.title_setting[3]:
+                            title_parts.append("/")
+                        title_parts.append(custom_title)
+                    if self.title_setting[6]:
+                        title_parts.append(path.suffix)
+                    return "".join(title_parts)
+        return original_title
+
+    def update_image_exif_37510(self, img_path, new_title):
+        try:
+            if not img_path.lower().endswith(('.jpg', '.jpeg', '.tiff', '.tif')):
+                return False
+            img = Image.open(img_path)
+            if 'exif' in img.info:
+                try:
+                    exif_dict = piexif.load(img.info['exif'])
+                except:
+                    exif_dict = {"0th": {}, "Exif": {}, "GPS": {}, "1st": {}, "thumbnail": None}
             else:
-                self.full_exif_cache[i] = {"raw_exif": {}, "formatted_exif": {}, "has_exif": False}
-        out_path_str = self.layout_params[33]
-        # custom process
-        if customfunc:
-            img_list = main_custom_func(img_list,out_path_str,name_list=name_list)
-        # resolution
-        width_ = []
-        height_ = []
-        for img in img_list:
-            width, height = img.size
-            width_.append(width)
-            height_.append(height)
-        width_ = np.sort(width_)
-        height_ = np.sort(height_)
-
-        if self.img_stitch_mode == 2:
-            width = max(width_)
-            height = max(height_)
-        elif self.img_stitch_mode == 1:
-            width = np.min(width_)
-            height = np.min(height_)
-        elif self.img_stitch_mode == 0:
-            if len(width_) > 3:
-                width = np.mean(width_[1:-1])
-                height = np.mean(height_[1:-1])
-            else:
-                width = np.mean(width_)
-                height = np.mean(height_)
-
-        if self.layout_params[6][0] == -1 or self.layout_params[6][1] == -1:
-            if self.layout_params[6][0] == -1 and self.layout_params[6][1] == -1:
-                self.img_resolution_origin = [int(width), int(height)]
-            elif self.layout_params[6][0] == -1 and self.layout_params[6][1] != -1:
-                self.img_resolution_origin = [
-                    int(width*self.layout_params[6][1]/height), int(self.layout_params[6][1])]
-            elif self.layout_params[6][0] != -1 and self.layout_params[6][1] == -1:
-                self.img_resolution_origin = [int(self.layout_params[6][0]), int(
-                    height*self.layout_params[6][0]/width)]
-            self.custom_resolution = False
-        else:
-            self.img_resolution_origin = [int(i)
-                                          for i in self.layout_params[6]]
-            self.custom_resolution = True
-
-        self.img_list = img_list
-
-    def load_exif_display_config(self, force_reload=False):
-        config_path = Path(__file__).parent.parent / "configs" / "exif_display_config.json"
-        if force_reload or not hasattr(self, 'exif_display_config'):
-            try:
-                with open(config_path, 'r', encoding='utf-8') as f:
-                    config = json.load(f)
-                    self.exif_display_config = config
-                    self._initialize_optimized_tag_mappings(config)
-                    return config
-            except:
-                default_config = {
-                    "Make": True, "Model": True, "ExposureTime": True,
-                    "FNumber": True, "ISOSpeedRatings": True, "FocalLength": True,
-                    "CustomTitle": True
-                }
-            self.exif_display_config = default_config
-            self._initialize_optimized_tag_mappings(default_config)
-            return default_config
-        else:
-            return self.exif_display_config
-
-    def _initialize_optimized_tag_mappings(self, config):
-        enabled_fields = set(k for k, v in config.items() if v)
-        enabled_fields.add("UserComment")
-        self._tag_mappings_cache = {
-            ifd_name: {
-                tag_id: field_name
-                for tag_id, field_name in mapping.items()
-                if field_name in enabled_fields
-            }
-            for ifd_name, mapping in self._FULL_MAPPINGS.items()  # 使用类属性
-        }
-
-    _FULL_MAPPINGS = {
-        "0th": {
-            256: "ImageWidth", 257: "ImageLength", 258: "BitsPerSample", 259: "Compression",
-            262: "PhotometricInterpretation", 271: "Make", 272: "Model", 274: "Orientation",
-            282: "XResolution", 283: "YResolution", 296: "ResolutionUnit", 306: "DateTime",
-                270: "ImageDescription", 305: "Software", 315: "Artist", 33432: "Copyright"
-            },
-            "Exif": {
-                33434: "ExposureTime", 33437: "FNumber", 34850: "ExposureProgram", 34855: "ISOSpeedRatings",
-                36864: "ExifVersion", 36867: "DateTimeOriginal", 36868: "DateTimeDigitized",
-                37121: "ComponentsConfiguration", 37377: "ShutterSpeedValue", 37378: "ApertureValue",
-                37380: "ExposureBiasValue", 37381: "MaxApertureValue", 37383: "MeteringMode",
-                37384: "LightSource", 37385: "Flash", 37386: "FocalLength", 37510: "UserComment",
-                40960: "FlashpixVersion", 40961: "ColorSpace", 40962: "PixelXDimension", 40963: "PixelYDimension",
-                41728: "FileSource", 41729: "SceneType", 37382: "SubjectDistance", 37396: "SubjectArea",
-                37500: "MakerNote", 37379: "BrightnessValue", 41994: "SubjectDistanceRange",
-                42016: "ImageUniqueID", 42032: "CameraOwnerName", 42033: "BodySerialNumber",
-                42034: "LensSpecification", 42035: "LensMake", 42036: "LensModel", 42037: "LensSerialNumber",
-                41989: "FocalLengthIn35mmFilm", 41990: "SceneCaptureType", 41991: "GainControl",
-                41992: "Contrast", 41993: "Saturation", 41994: "Sharpness", 41985: "CustomRendered",
-                41986: "ExposureMode", 41995: "SensingMethod", 41730: "CFAPattern", 40964: "RelatedSoundFile",
-                41483: "FlashEnergy", 41486: "FocalPlaneXResolution", 41487: "FocalPlaneYResolution",
-                41488: "FocalPlaneResolutionUnit", 41493: "ExposureIndex", 41987: "WhiteBalance",
-                41988: "DigitalZoomRatio"
-            },
-            "GPS": {
-                1: "GPSLatitudeRef", 2: "GPSLatitude", 3: "GPSLongitudeRef", 4: "GPSLongitude",
-                5: "GPSAltitudeRef", 6: "GPSAltitude", 7: "GPSTimeStamp", 8: "GPSSatellites",
-                9: "GPSStatus", 10: "GPSMeasureMode", 11: "GPSDOP", 12: "GPSSpeedRef",
-                13: "GPSSpeed", 14: "GPSTrackRef", 15: "GPSTrack", 16: "GPSImgDirectionRef",
-                17: "GPSImgDirection", 18: "GPSMapDatum", 19: "GPSDestLatitudeRef",
-                20: "GPSDestLatitude", 21: "GPSDestLongitudeRef", 22: "GPSDestLongitude",
-                23: "GPSDestBearingRef", 24: "GPSDestBearing", 25: "GPSDestDistanceRef",
-                26: "GPSDestDistance", 27: "GPSProcessingMethod", 28: "GPSAreaInformation",
-                29: "GPSDateStamp", 30: "GPSDifferential", 31: "GPSHPositioningError"
-            }
-        }
-
-    def get_complete_tag_mappings(self):
-        if self._tag_mappings_cache is None:
-            self._initialize_optimized_tag_mappings(self.exif_display_config)
-        return self._tag_mappings_cache
+                exif_dict = {"0th": {}, "Exif": {}, "GPS": {}, "1st": {}, "thumbnail": None}
+            user_comment_tag = 0x9286
+            exif_dict["Exif"][user_comment_tag] = new_title.encode('utf-8')
+            exif_bytes = piexif.dump(exif_dict)
+            img.save(img_path, exif=exif_bytes)
+            for i, path in enumerate(self.flist):
+                if str(path) == str(img_path):
+                    if i in self.full_exif_cache:
+                        self.full_exif_cache[i]["formatted_exif"]["CustomTitle"] = new_title
+                        self.full_exif_cache[i]["raw_exif"]["Exif"][user_comment_tag] = new_title.encode('utf-8')
+                    break
+            return True
+        except:
+            return False
 
     def update_exif_config(self, new_config):
         self.exif_display_config = new_config
@@ -1360,68 +1418,6 @@ class ImgManager(ImgData):
 
         return self.title_max_size
 
-    def get_display_title_from_cache(self, img_index, original_title, title_rename_enabled):
-        if not title_rename_enabled:
-            return original_title
-        exif_data = self.full_exif_cache.get(img_index, {"formatted_exif": {}, "has_exif": False})
-        if exif_data["has_exif"]:
-            custom_title = exif_data["formatted_exif"].get("CustomTitle", "N/A")
-            if custom_title != "N/A" and custom_title.strip():
-                path = Path(self.flist[img_index])
-                title_parts = []
-                if hasattr(self, 'type') and self.type in [0, 1]:
-                    if self.title_setting[3]:
-                        title_parts.append(custom_title)
-                    if self.title_setting[5]:
-                        if self.title_setting[3]:
-                            title_parts.append("/")
-                        name = path.stem
-                        if not self.title_setting[4]:
-                            try:
-                                name = name.split("_", 1)[1]
-                            except:
-                                pass
-                        title_parts.append(name)
-                    if self.title_setting[6]:
-                        title_parts.append(path.suffix)
-                    return "".join(title_parts)
-                else:
-                    if self.title_setting[3]:
-                        title_parts.append(path.parent.parts[-1])
-                    if self.title_setting[5]:
-                        if self.title_setting[3]:
-                            title_parts.append("/")
-                        title_parts.append(custom_title)
-                    if self.title_setting[6]:
-                        title_parts.append(path.suffix)
-                    return "".join(title_parts)
-        return original_title
-
-    def update_image_exif_37510(self, img_path, new_title):
-        try:
-            if not img_path.lower().endswith(('.jpg', '.jpeg', '.tiff', '.tif')):
-                return False
-            img = Image.open(img_path)
-            if 'exif' in img.info:
-                try:
-                    exif_dict = piexif.load(img.info['exif'])
-                except:
-                    exif_dict = {"0th": {}, "Exif": {}, "GPS": {}, "1st": {}, "thumbnail": None}
-            else:
-                exif_dict = {"0th": {}, "Exif": {}, "GPS": {}, "1st": {}, "thumbnail": None}
-            user_comment_tag = 0x9286
-            exif_dict["Exif"][user_comment_tag] = new_title.encode('utf-8')
-            exif_bytes = piexif.dump(exif_dict)
-            img.save(img_path, exif=exif_bytes)
-            for i, path in enumerate(self.flist):
-                if str(path) == str(img_path):
-                    if i in self.full_exif_cache:
-                        self.full_exif_cache[i]["formatted_exif"]["CustomTitle"] = new_title
-                        self.full_exif_cache[i]["raw_exif"]["Exif"][user_comment_tag] = new_title.encode('utf-8')
-                    break
-            return True
-        except:
-            return False
 
     def img_preprocessing(self, img, rowcol=[1,1]):
         if self.custom_resolution:

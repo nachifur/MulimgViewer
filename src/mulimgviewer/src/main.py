@@ -824,7 +824,6 @@ class MulimgViewer (MulimgViewerGui):
         if (self.ImgManager.type == 0 or self.ImgManager.type == 1) and self.parallel_sequential.Value:
             save_single_id = wx.NewId()
             menu.Append(save_single_id, "💾 Save current page")
-
             def save_current_page(evt):
                 timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
                 original_out_path = self.out_path_str
@@ -836,8 +835,8 @@ class MulimgViewer (MulimgViewerGui):
                 self.SetStatusText_([f"Page {self.ImgManager.action_count} saved to {temp_out_path}", "-1", "-1", "-1"])
             menu.Bind(wx.EVT_MENU, save_current_page, id=save_single_id)
             save_column_id = wx.NewId()
-            menu.Append(save_column_id, "📄 Save selected column")
 
+            menu.Append(save_column_id, "📄 Save same position images")
             def save_selected_column(evt):
                 if self.out_path_str == "":
                     self.out_path(evt)
@@ -845,33 +844,48 @@ class MulimgViewer (MulimgViewerGui):
                         return
                 x, y = event.GetPosition()
                 clicked_grid_id = self.get_img_id_from_point([x, y])
-                cols = self.ImgManager.layout_params[0][1]
-                rows = self.ImgManager.layout_params[0][0]
-                selected_col = clicked_grid_id % cols
+                main_cols = self.ImgManager.layout_params[0][1]
+                img_cols = self.ImgManager.layout_params[1][1]
+                imgs_per_folder = self.ImgManager.layout_params[1][0] * img_cols
+                img_index_in_folder = clicked_grid_id % imgs_per_folder
                 timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-                temp_out_path = os.path.join(self.out_path_str, f"column_{selected_col}_{timestamp}")
+                temp_out_path = os.path.join(self.out_path_str, f"same_position_{img_index_in_folder}_{timestamp}")
                 os.makedirs(temp_out_path, exist_ok=True)
-                original_layout = self.ImgManager.layout_params[0]
-                original_ids = self.ImgManager.xy_grids_id_list.copy()
-                column_img_ids = []
-                for row in range(rows):
-                    grid_pos = row * cols + selected_col
-                    if grid_pos < len(self.ImgManager.xy_grids_id_list):
-                        column_img_ids.append(grid_pos)
-                current_flist = self.ImgManager.flist.copy()
-                column_flist = []
-                for grid_id in column_img_ids:
-                    if grid_id < len(current_flist):
-                        column_flist.append(current_flist[grid_id])
-                original_flist = self.ImgManager.flist
-                self.ImgManager.flist = column_flist
-                self.ImgManager.layout_params[0] = [len(column_flist), 1]
-                self.ImgManager.xy_grids_id_list = list(range(len(column_flist)))
-                self.ImgManager.save_img(temp_out_path, 0)
-                self.ImgManager.layout_params[0] = original_layout
-                self.ImgManager.xy_grids_id_list = original_ids
-                self.ImgManager.flist = original_flist
-                self.SetStatusText_([f"Column {selected_col} saved ({len(column_flist)} images)", "-1", "-1", "-1"])
+                collected_files = []
+
+                if hasattr(self.ImgManager, 'flist') and len(self.ImgManager.flist) > 0:
+                    all_dirs = sorted(list(set(os.path.dirname(p) for p in self.ImgManager.flist)))
+                    img_extensions = {'.jpg', '.jpeg', '.png', '.bmp', '.tiff', '.tif', '.gif', '.webp'}
+                    for i, folder_path in enumerate(all_dirs):
+                        if os.path.exists(folder_path):
+                            try:
+                                folder_images = sorted([
+                                    os.path.join(folder_path, f)
+                                    for f in os.listdir(folder_path)
+                                    if Path(f).suffix.lower() in img_extensions
+                                ])
+                                if img_index_in_folder < len(folder_images):
+                                    collected_files.append(folder_images[img_index_in_folder])
+                            except:
+                                pass
+                success_count = 0
+                for i, src_file in enumerate(collected_files):
+                    if os.path.exists(src_file):
+                        folder_name = os.path.basename(os.path.dirname(src_file))
+                        file_ext = Path(src_file).suffix
+                        new_name = f"{i:03d}_{folder_name}_{Path(src_file).stem}{file_ext}"
+                        dst_file = os.path.join(temp_out_path, new_name)
+
+                        try:
+                            shutil.copy2(src_file, dst_file)
+                            success_count += 1
+                        except:
+                            pass
+                if success_count > 0:
+                    self.SetStatusText_([f"Successfully saved {success_count} images at same position", "-1", "-1", "-1"])
+                else:
+                    self.SetStatusText_([f"No image found at position {img_index_in_folder}", "-1", "-1", "-1"])
+
             menu.Bind(wx.EVT_MENU, save_selected_column, id=save_column_id)
 
         if self.magnifier.Value:

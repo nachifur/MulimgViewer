@@ -821,7 +821,7 @@ class MulimgViewer (MulimgViewerGui):
         menu.Bind(wx.EVT_MENU, self.next_img, id=next_id)
 
         # 只在parallel+sequential模式下显示保存选项
-        if (self.ImgManager.type == 0 or self.ImgManager.type == 1) and self.parallel_sequential.Value:
+        if (self.ImgManager.type == 0 or self.ImgManager.type == 1) and (self.parallel_sequential.Value or self.parallel_to_sequential.Value):
             save_single_id = wx.NewId()
             menu.Append(save_single_id, "💾 Save current page")
             def save_current_page(evt):
@@ -844,7 +844,6 @@ class MulimgViewer (MulimgViewerGui):
                         return
                 x, y = event.GetPosition()
                 clicked_grid_id = self.get_img_id_from_point([x, y])
-                main_cols = self.ImgManager.layout_params[0][1]
                 img_cols = self.ImgManager.layout_params[1][1]
                 imgs_per_folder = self.ImgManager.layout_params[1][0] * img_cols
                 img_index_in_folder = clicked_grid_id % imgs_per_folder
@@ -1676,7 +1675,7 @@ class MulimgViewer (MulimgViewerGui):
             for title in titles:
                 title.Enabled = False
             self.title_exif.SetValue(False)
-            self.title_show_rename.SetValue(False)
+            #self.title_show_rename.SetValue(False)
         else:
             for title in titles:
                 title.Enabled = True

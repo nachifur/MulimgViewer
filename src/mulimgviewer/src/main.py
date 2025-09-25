@@ -622,41 +622,39 @@ class MulimgViewer (MulimgViewerGui):
             elif self.ImgManager.type in [0, 1]:
                 if hasattr(self, 'parallel_sequential') and (self.parallel_sequential.Value or self.parallel_to_sequential.Value):
                     # 并行顺序模式
-                    main_cols = self.ImgManager.layout_params[0][1]
                     img_cols = self.ImgManager.layout_params[1][1]
                     imgs_per_folder = self.ImgManager.layout_params[1][0] * img_cols
-                    total_cols = main_cols * img_cols
-                    folder_col = (clicked_img_id % total_cols) // img_cols
                     pos_in_folder = clicked_img_id % imgs_per_folder
-                    current_page = self.ImgManager.action_count
-                    actual_folder_idx = current_page * (main_cols * self.ImgManager.layout_params[0][0]) + folder_col
                     actual_folder_img_count = self.ImgManager.layout_params[1][0] * img_cols
 
                     if hasattr(self.ImgManager, 'flist') and len(self.ImgManager.flist) > 0:
                         img_index = self.ImgManager.action_count * self.ImgManager.count_per_action + clicked_img_id
+                        actual_folder_idx = self.ImgManager.action_count
                         if img_index < len(self.ImgManager.flist):
-                            current_file_path = self.ImgManager.flist[img_index]
+                            # current_file_path = self.ImgManager.flist[img_index]
+                            current_file_path = self.current_page_img_paths[clicked_img_id]
                             current_dir = os.path.dirname(current_file_path)
                             if os.path.exists(current_dir):
                                 img_extensions = {'.jpg', '.jpeg', '.png', '.bmp', '.tiff', '.tif', '.gif', '.webp'}
-                                try:
-                                    files_in_folder = [f for f in os.listdir(current_dir)
-                                                    if Path(f).suffix.lower() in img_extensions]
-                                    actual_folder_img_count = len(files_in_folder)
-                                except Exception as e:
-                                    pass
+                                files_in_folder = [
+                                    os.path.join(current_dir, f)
+                                    for f in os.listdir(current_dir)
+                                    if Path(f).suffix.lower() in img_extensions
+                                ]
+                                files_in_folder.sort()
+                                actual_folder_img_count = len(files_in_folder)
 
-                            same_dir_files = [p for p in self.ImgManager.flist if os.path.dirname(p) == current_dir]
-                            same_dir_files.sort()
+                            same_dir_files = sorted(files_in_folder)
                             if current_file_path in same_dir_files:
                                 pos_in_folder = same_dir_files.index(current_file_path)
+                            else:
+                                pos_in_folder = 0
 
                             all_dirs = sorted(list(set(os.path.dirname(p) for p in self.ImgManager.flist)))
                             if current_dir in all_dirs:
                                 actual_folder_idx = all_dirs.index(current_dir)
 
                             total_folders = len(all_dirs)
-
                     click_status = f"{pos_in_folder}-th/{actual_folder_img_count} img {actual_folder_idx}-th/{total_folders} dir"
 
                 else:
@@ -808,33 +806,32 @@ class MulimgViewer (MulimgViewerGui):
 
     def on_right_click(self, event):
         menu = wx.Menu()
-        refresh_id = wx.NewId()
+        refresh_id = wx.Window.NewControlId()
         menu.Append(refresh_id, "🔄 refresh")
         menu.Bind(wx.EVT_MENU, self.refresh, id=refresh_id)
 
-        prev_id = wx.NewId()
+        prev_id = wx.Window.NewControlId()
         menu.Append(prev_id, "⬅️ Previous Page")
         menu.Bind(wx.EVT_MENU, self.last_img, id=prev_id)
 
-        next_id = wx.NewId()
+        next_id = wx.Window.NewControlId()
         menu.Append(next_id, "➡️ Next Page")
         menu.Bind(wx.EVT_MENU, self.next_img, id=next_id)
 
         # 只在parallel+sequential模式下显示保存选项
         if (self.ImgManager.type == 0 or self.ImgManager.type == 1) and (self.parallel_sequential.Value or self.parallel_to_sequential.Value):
-            save_single_id = wx.NewId()
+            save_single_id = wx.Window.NewControlId()
             menu.Append(save_single_id, "💾 Save current page")
             def save_current_page(evt):
-                timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
                 original_out_path = self.out_path_str
-                temp_out_path = os.path.join(original_out_path, f"page_{self.ImgManager.action_count}_{timestamp}")
+                temp_out_path = os.path.join(original_out_path, f"page_{self.ImgManager.action_count}")
                 self.out_path_str = temp_out_path
                 os.makedirs(temp_out_path, exist_ok=True)
                 self.save_img(evt)
                 self.out_path_str = original_out_path
                 self.SetStatusText_([f"Page {self.ImgManager.action_count} saved to {temp_out_path}", "-1", "-1", "-1"])
             menu.Bind(wx.EVT_MENU, save_current_page, id=save_single_id)
-            save_column_id = wx.NewId()
+            save_column_id = wx.Window.NewControlId()
 
             menu.Append(save_column_id, "📄 Save same position images")
             def save_selected_column(evt):
@@ -863,8 +860,12 @@ class MulimgViewer (MulimgViewerGui):
                                     for f in os.listdir(folder_path)
                                     if Path(f).suffix.lower() in img_extensions
                                 ])
+                                if len(folder_images) == 0:
+                                    continue
                                 if img_index_in_folder < len(folder_images):
                                     collected_files.append(folder_images[img_index_in_folder])
+                                else:
+                                    collected_files.append(folder_images[-1])
                             except:
                                 pass
                 success_count = 0
@@ -872,9 +873,8 @@ class MulimgViewer (MulimgViewerGui):
                     if os.path.exists(src_file):
                         folder_name = os.path.basename(os.path.dirname(src_file))
                         file_ext = Path(src_file).suffix
-                        new_name = f"{i:03d}_{folder_name}_{Path(src_file).stem}{file_ext}"
+                        new_name = f"{folder_name}_{Path(src_file).stem}{file_ext}"
                         dst_file = os.path.join(temp_out_path, new_name)
-
                         try:
                             shutil.copy2(src_file, dst_file)
                             success_count += 1
@@ -888,7 +888,7 @@ class MulimgViewer (MulimgViewerGui):
             menu.Bind(wx.EVT_MENU, save_selected_column, id=save_column_id)
 
         if self.magnifier.Value:
-            new_box_id = wx.NewId()
+            new_box_id = wx.Window.NewControlId()
             menu.Append(new_box_id, "🔍 Create zoom box here")
 
             def create_magnifier_box(evt):
@@ -922,7 +922,7 @@ class MulimgViewer (MulimgViewerGui):
             menu.Bind(wx.EVT_MENU, create_magnifier_box, id=new_box_id)
 
         if len(self.xy_magnifier) > 0:
-            clear_all_id = wx.NewId()
+            clear_all_id = wx.Window.NewControlId()
             menu.Append(clear_all_id, "🗑️ Clear all zoom boxes")
             menu.Bind(wx.EVT_MENU, self.img_left_dclick, id=clear_all_id)
 
@@ -930,7 +930,7 @@ class MulimgViewer (MulimgViewerGui):
             box_menu = wx.Menu()
 
             if self.box_id != -1:
-                move_box_id = wx.NewId()
+                move_box_id = wx.Window.NewControlId()
                 box_menu.Append(move_box_id, f"Move box {self.box_id} to this position")
 
                 def move_box_to_position(evt):
@@ -939,7 +939,7 @@ class MulimgViewer (MulimgViewerGui):
                     self.refresh(evt)
                     self.SetStatusText_([f"Move box {self.box_id}", "-1", "-1", "-1"])
                 box_menu.Bind(wx.EVT_MENU, move_box_to_position, id=move_box_id)
-                delete_box_id = wx.NewId()
+                delete_box_id = wx.Window.NewControlId()
                 box_menu.Append(delete_box_id, f"Delete box {self.box_id}")
                 def delete_specific_box(evt):
                     if self.select_img_box.Value and self.box_id != -1:
@@ -954,7 +954,7 @@ class MulimgViewer (MulimgViewerGui):
         if hasattr(self, 'title_rename_text'):
             new_title = self.title_rename_text.GetValue().strip()
             if new_title:
-                inject_title_id = wx.NewId()
+                inject_title_id = wx.Window.NewControlId()
                 display_title = new_title[:20] + "..." if len(new_title) > 20 else new_title
                 menu.Append(inject_title_id, f"📝 Inject title: {display_title}")
                 def inject_title_directly(evt):
@@ -1413,6 +1413,7 @@ class MulimgViewer (MulimgViewerGui):
         if self.ImgManager.max_action_num > 0:
             self.slider_img.SetMax(self.ImgManager.max_action_num-1)
             self.ImgManager.get_flist()
+            self.current_page_img_paths = copy.deepcopy(self.ImgManager.flist)
 
             # show the output image processed by the custom func; return cat(bmp, customfunc_img)
             if self.customfunc.Value:
@@ -1834,3 +1835,23 @@ class MulimgViewer (MulimgViewerGui):
         output_s_json_path = str(json_path / "output_s.json")
         self.load_configuration(event, config_name="output_s.json")
         shutil.copy(output_s_json_path, output_json_path)
+
+if __name__ == "__main__":
+    print("启动 MulimgViewer ...")
+    try:
+        app = wx.App(False)
+
+        # 定义占位函数，参数要和调用时一致
+        def update_ui_stub(a, b=None, c=None):
+            print(f"UpdateUI called with: {a}, {b}, {c}")
+
+        def get_type_stub():
+            return -1
+
+        frame = MulimgViewer(None, update_ui_stub, get_type_stub)
+        frame.Show()
+        app.MainLoop()
+    except Exception as e:
+        import traceback
+        print("启动失败:", e)
+        traceback.print_exc()

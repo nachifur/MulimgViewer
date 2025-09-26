@@ -664,26 +664,32 @@ class MulimgViewer (MulimgViewerGui):
                         current_dir = os.path.dirname(current_file_path)
                         img_extensions = {'.jpg', '.jpeg', '.png', '.bmp', '.tiff', '.tif', '.gif', '.webp'}
 
-                        # 动态生成 all_flist
-                        all_flist = []
+                        all_dirs_set = set()
                         old_action_count = self.ImgManager.action_count
                         for i in range(self.ImgManager.max_action_num):
-                            self.ImgManager.set_action_count(i)
-                            self.ImgManager.get_flist()
-                            all_flist.extend(self.ImgManager.flist)
+                            try:
+                                self.ImgManager.set_action_count(i)
+                                self.ImgManager.get_flist()
+                                all_dirs_set.update(os.path.dirname(p) for p in self.ImgManager.flist)
+                            except Exception as e:
+                                pass  # 可加日志
                         self.ImgManager.set_action_count(old_action_count)  # 恢复当前页
-                        all_dirs_global = sorted(list(set(os.path.dirname(p) for p in all_flist)))
+                        all_dirs_global = sorted(list(all_dirs_set))
                         total_folders = len(all_dirs_global)
                         actual_folder_idx = all_dirs_global.index(current_dir) if current_dir in all_dirs_global else 0
 
-                        files_in_folder = [
-                            os.path.join(current_dir, f)
-                            for f in os.listdir(current_dir)
-                            if Path(f).suffix.lower() in img_extensions
-                        ]
-                        files_in_folder.sort()
-                        actual_folder_img_count = len(files_in_folder)
-                        pos_in_folder = files_in_folder.index(current_file_path) if current_file_path in files_in_folder else 0
+                        try:
+                            files_in_folder = [
+                                os.path.join(current_dir, f)
+                                for f in os.listdir(current_dir)
+                                if Path(f).suffix.lower() in img_extensions
+                            ]
+                            files_in_folder.sort()
+                            actual_folder_img_count = len(files_in_folder)
+                            pos_in_folder = files_in_folder.index(current_file_path) if current_file_path in files_in_folder else 0
+                        except Exception as e:
+                            actual_folder_img_count = 0
+                            pos_in_folder = 0
 
                         click_status = f"{pos_in_folder}-th/{actual_folder_img_count} img {actual_folder_idx}-th/{total_folders} dir"
                     else:

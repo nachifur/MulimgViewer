@@ -620,8 +620,8 @@ class MulimgViewer (MulimgViewerGui):
                 click_status = f"{img_index}-th/{total_imgs} img 0-th/1 dir"
 
             elif self.ImgManager.type in [0, 1]:
-                if hasattr(self, 'parallel_sequential') and (self.parallel_sequential.Value or self.parallel_to_sequential.Value):
-                    # 并行顺序模式
+                if hasattr(self, 'parallel_sequential') and self.parallel_sequential.Value:
+                    # parallel_sequential
                     img_cols = self.ImgManager.layout_params[1][1]
                     imgs_per_folder = self.ImgManager.layout_params[1][0] * img_cols
                     pos_in_folder = clicked_img_id % imgs_per_folder
@@ -657,8 +657,40 @@ class MulimgViewer (MulimgViewerGui):
                             total_folders = len(all_dirs)
                     click_status = f"{pos_in_folder}-th/{actual_folder_img_count} img {actual_folder_idx}-th/{total_folders} dir"
 
+                elif hasattr(self, 'parallel_to_sequential') and self.parallel_to_sequential.Value:
+                    # parallel_to_sequential
+                    if hasattr(self, 'current_page_img_paths') and clicked_img_id < len(self.current_page_img_paths):
+                        current_file_path = self.current_page_img_paths[clicked_img_id]
+                        current_dir = os.path.dirname(current_file_path)
+                        img_extensions = {'.jpg', '.jpeg', '.png', '.bmp', '.tiff', '.tif', '.gif', '.webp'}
+
+                        # 动态生成 all_flist
+                        all_flist = []
+                        old_action_count = self.ImgManager.action_count
+                        for i in range(self.ImgManager.max_action_num):
+                            self.ImgManager.set_action_count(i)
+                            self.ImgManager.get_flist()
+                            all_flist.extend(self.ImgManager.flist)
+                        self.ImgManager.set_action_count(old_action_count)  # 恢复当前页
+                        all_dirs_global = sorted(list(set(os.path.dirname(p) for p in all_flist)))
+                        total_folders = len(all_dirs_global)
+                        actual_folder_idx = all_dirs_global.index(current_dir) if current_dir in all_dirs_global else 0
+
+                        files_in_folder = [
+                            os.path.join(current_dir, f)
+                            for f in os.listdir(current_dir)
+                            if Path(f).suffix.lower() in img_extensions
+                        ]
+                        files_in_folder.sort()
+                        actual_folder_img_count = len(files_in_folder)
+                        pos_in_folder = files_in_folder.index(current_file_path) if current_file_path in files_in_folder else 0
+
+                        click_status = f"{pos_in_folder}-th/{actual_folder_img_count} img {actual_folder_idx}-th/{total_folders} dir"
+                    else:
+                        click_status = "0/0-th img 0/0-th dir"
+
                 else:
-                    # 非parallel_seqential和parallel_to_sequential下
+                    # 非parallel_seqential
                     dir_idx = self.ImgManager.action_count
                     total_dirs = self.ImgManager.max_action_num
                     current_dir_imgs = len(self.ImgManager.flist) if hasattr(self.ImgManager, 'flist') else 1
@@ -687,9 +719,9 @@ class MulimgViewer (MulimgViewerGui):
                 current_idx = self.ImgManager.action_count
                 total_count = self.ImgManager.max_action_num
                 click_status = f"{current_idx}-th/{total_count} page"
-        except Exception as e:
-            pass
+        except:
             click_status = "0/0-th img 0/0-th dir"
+
         self.m_statusBar1.SetStatusText(click_status, 1)
 
     def img_left_dclick(self, event):

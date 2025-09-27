@@ -1452,6 +1452,9 @@ class MulimgViewer (MulimgViewerGui):
             self.slider_img.SetMax(self.ImgManager.max_action_num-1)
             self.ImgManager.get_flist()
             self.current_page_img_paths = copy.deepcopy(self.ImgManager.flist)
+            expected_num = self.ImgManager.count_per_action
+            if len(self.current_page_img_paths) < expected_num:
+                self.current_page_img_paths += [None] * (expected_num - len(self.current_page_img_paths))
 
             # show the output image processed by the custom func; return cat(bmp, customfunc_img)
             if self.customfunc.Value:

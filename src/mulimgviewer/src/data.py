@@ -216,8 +216,9 @@ class ImgData():
                             flist += [str(Path(self.path_list[i]) /
                                           self.name_list[k])]
                         except:
-                            flist += [str(Path(self.path_list[i]) /
-                                          self.name_list[-1])]
+                            # flist += [str(Path(self.path_list[i]) /
+                            #               self.name_list[-1])]
+                            flist += ['']
 
         elif self.type == 2:
             # one_dir_mul_img

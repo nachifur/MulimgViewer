@@ -879,49 +879,48 @@ class MulimgViewer (MulimgViewerGui):
                         return
                 x, y = event.GetPosition()
                 clicked_grid_id = self.get_img_id_from_point([x, y])
-                img_cols = self.ImgManager.layout_params[1][1]
-                imgs_per_folder = self.ImgManager.layout_params[1][0] * img_cols
-                img_index_in_folder = clicked_grid_id % imgs_per_folder
-                timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-                temp_out_path = os.path.join(self.out_path_str, f"same_position_{img_index_in_folder}_{timestamp}")
+                if hasattr(self, 'current_page_img_paths') and clicked_grid_id < len(self.current_page_img_paths):
+                    target_name = os.path.basename(self.current_page_img_paths[clicked_grid_id])
+                else:
+                    self.SetStatusText_([f"Cannot get clicked image name", "-1", "-1", "-1"])
+                    return
+                temp_out_path = os.path.join(self.out_path_str, f"same_position_images")
                 os.makedirs(temp_out_path, exist_ok=True)
                 collected_files = []
-
                 if hasattr(self.ImgManager, 'flist') and len(self.ImgManager.flist) > 0:
                     all_dirs = sorted(list(set(os.path.dirname(p) for p in self.ImgManager.flist)))
                     img_extensions = {'.jpg', '.jpeg', '.png', '.bmp', '.tiff', '.tif', '.gif', '.webp'}
-                    for i, folder_path in enumerate(all_dirs):
+                    for folder_path in all_dirs:
                         if os.path.exists(folder_path):
                             try:
-                                folder_images = sorted([
+                                folder_images = [
                                     os.path.join(folder_path, f)
                                     for f in os.listdir(folder_path)
                                     if Path(f).suffix.lower() in img_extensions
-                                ])
-                                if len(folder_images) == 0:
-                                    continue
-                                if img_index_in_folder < len(folder_images):
-                                    collected_files.append(folder_images[img_index_in_folder])
-                                else:
-                                    collected_files.append(folder_images[-1])
+                                ]
+                                match = [f for f in folder_images if os.path.basename(f) == target_name]
+                                if match:
+                                    collected_files.append(match[0])
                             except:
                                 pass
                 success_count = 0
-                for i, src_file in enumerate(collected_files):
+                for src_file in collected_files:
                     if os.path.exists(src_file):
                         folder_name = os.path.basename(os.path.dirname(src_file))
                         file_ext = Path(src_file).suffix
-                        new_name = f"{folder_name}_{Path(src_file).stem}{file_ext}"
-                        dst_file = os.path.join(temp_out_path, new_name)
+                        new_name = f"{Path(src_file).stem}{file_ext}"
+                        sub_dir = os.path.join(temp_out_path, folder_name)
+                        os.makedirs(sub_dir, exist_ok=True)
+                        dst_file = os.path.join(sub_dir, new_name)
                         try:
                             shutil.copy2(src_file, dst_file)
                             success_count += 1
                         except:
                             pass
                 if success_count > 0:
-                    self.SetStatusText_([f"Successfully saved {success_count} images at same position", "-1", "-1", "-1"])
+                    self.SetStatusText_([f"Successfully saved {success_count} images with same name", "-1", "-1", "-1"])
                 else:
-                    self.SetStatusText_([f"No image found at position {img_index_in_folder}", "-1", "-1", "-1"])
+                    self.SetStatusText_([f"No image with name {target_name} found", "-1", "-1", "-1"])
 
             menu.Bind(wx.EVT_MENU, save_selected_column, id=save_column_id)
 
@@ -1876,23 +1875,3 @@ class MulimgViewer (MulimgViewerGui):
         output_s_json_path = str(json_path / "output_s.json")
         self.load_configuration(event, config_name="output_s.json")
         shutil.copy(output_s_json_path, output_json_path)
-
-if __name__ == "__main__":
-    print("启动 MulimgViewer ...")
-    try:
-        app = wx.App(False)
-
-        # 定义占位函数，参数要和调用时一致
-        def update_ui_stub(a, b=None, c=None):
-            print(f"UpdateUI called with: {a}, {b}, {c}")
-
-        def get_type_stub():
-            return -1
-
-        frame = MulimgViewer(None, update_ui_stub, get_type_stub)
-        frame.Show()
-        app.MainLoop()
-    except Exception as e:
-        import traceback
-        print("启动失败:", e)
-        traceback.print_exc()

@@ -30,7 +30,7 @@ jobs:
   #   runs-on: ${{ matrix.runs-on }}
   #   steps:
   #     - uses: actions/checkout@v5
-  #     - uses: actions/setup-python@v5
+  #     - uses: actions/setup-python@v6
   #       with:
   #         python-version: ${{ env.python-version }}
   #         cache: ${{ env.cache }}
@@ -55,7 +55,7 @@ jobs:
     runs-on: ${{ matrix.runs-on }}
     steps:
       - uses: actions/checkout@v5
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: ${{ env.python-version }}
           cache: ${{ env.cache }}

@@ -550,7 +550,7 @@ class MulimgViewer (MulimgViewerGui):
 
     def img_left_click(self, event):
 
-        click_status = "0/0-th img 0/0-th dir"
+        click_status = "0-th/0 img 0-th/0 dir"
 
         if self.magnifier.Value:
             x_0, y_0 = event.GetPosition()
@@ -693,7 +693,7 @@ class MulimgViewer (MulimgViewerGui):
 
                         click_status = f"{pos_in_folder}-th/{actual_folder_img_count} img {actual_folder_idx}-th/{total_folders} dir"
                     else:
-                        click_status = "0/0-th img 0/0-th dir"
+                        click_status = "0-th/0 img 0-th/0 dir"
 
                 else:
                     # 非parallel_seqential
@@ -719,14 +719,14 @@ class MulimgViewer (MulimgViewerGui):
 
                     click_status = f"{img_idx}-th/{img_total} img {dir_idx}-th/{dir_total} dir"
                 else:
-                    click_status = "0/0-th img 0/0-th dir"
+                    click_status = "0-th/0 img 0-th/0 dir"
             else:
                 # 默认模式
                 current_idx = self.ImgManager.action_count
                 total_count = self.ImgManager.max_action_num
                 click_status = f"{current_idx}-th/{total_count} page"
         except:
-            click_status = "0/0-th img 0/0-th dir"
+            click_status = "0-th/0 img 0-th/0 dir"
 
         self.m_statusBar1.SetStatusText(click_status, 1)
 
@@ -1267,6 +1267,7 @@ class MulimgViewer (MulimgViewerGui):
             elif self.ImgManager.type == 2 or self.ImgManager.type == 3:
                 self.ImgManager.set_count_per_action(
                     layout_params[0][0]*layout_params[0][1]*layout_params[1][0]*layout_params[1][1])
+            self.update_status_bar_for_current_page()
 
     def set_img_layout(self):
 
@@ -1507,7 +1508,6 @@ class MulimgViewer (MulimgViewerGui):
                         dir_index = page_num if page_num < total_dirs else (total_dirs - 1)
                 elif self.ImgManager.type == 3:
                     try:
-                        import os
                         if hasattr(self.ImgManager, 'path_list') and len(self.ImgManager.path_list) > 0:
                             if isinstance(self.ImgManager.path_list, np.ndarray):
                                 path_list = self.ImgManager.path_list.tolist()
@@ -1535,9 +1535,9 @@ class MulimgViewer (MulimgViewerGui):
                 else:
                     dir_index = 0
                     total_dirs = 1
-                status_text = f"{page_num}/{current_img}-th img {page_num}/{dir_index}-th dir"
-            except Exception as e:
-                status_text = f"{page_num}/0-th img {page_num}/0-th dir"
+                status_text = f"{page_num}-th/{current_img} img {page_num}-th/{dir_index} dir"
+            except:
+                status_text = f"{page_num}-th/0 img {page_num}-th/0 dir"
 
             try:
                 if self.ImgManager.type == 2 or ((self.ImgManager.type == 0 or self.ImgManager.type == 1) and self.parallel_sequential.Value):
@@ -1875,3 +1875,23 @@ class MulimgViewer (MulimgViewerGui):
         output_s_json_path = str(json_path / "output_s.json")
         self.load_configuration(event, config_name="output_s.json")
         shutil.copy(output_s_json_path, output_json_path)
+
+if __name__ == "__main__":
+    print("启动 MulimgViewer ...")
+    try:
+        app = wx.App(False)
+
+        # 定义占位函数，参数要和调用时一致
+        def update_ui_stub(a, b=None, c=None):
+            print(f"UpdateUI called with: {a}, {b}, {c}")
+
+        def get_type_stub():
+            return -1
+
+        frame = MulimgViewer(None, update_ui_stub, get_type_stub)
+        frame.Show()
+        app.MainLoop()
+    except Exception as e:
+        import traceback
+        print("启动失败:", e)
+        traceback.print_exc()

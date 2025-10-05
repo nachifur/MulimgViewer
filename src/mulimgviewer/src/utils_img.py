@@ -1309,26 +1309,34 @@ class ImgManager(ImgData):
             bbox = draw_tmp.textbbox((0, 0), text, font=self.font)
         else:
             bbox = draw_tmp.multiline_textbbox((0, 0), text, font=self.font)
-        img = Image.new('RGBA', (title_max_size[0], bbox[3]), self.gap_color)
+
+        actual_width = max(title_max_size[0], bbox[2] - bbox[0] + 20)  # 添加20像素边距
+        actual_height = max(bbox[3] - bbox[1], 1)  # 确保高度至少为1
+
+        img = Image.new('RGBA', (actual_width, actual_height), self.gap_color)
         draw = ImageDraw.Draw(img)
+
         title_size = self.title_size[id*2+1, :]
 
         delta_x = max(0,int((title_max_size[0]-title_size[0])/2))
-        one_size = int(int(self.title_setting[8])/2)#int(title_size[0]/int(len(self.title_list[id])))
-        wrapper = textwrap.TextWrapper(width=int(int(title_max_size[0])/int(one_size)))  # 设置换行的宽度
-        lines = self.title_list[id].split('\n')
+        # one_size = int(int(self.title_setting[8])/2)#int(title_size[0]/int(len(self.title_list[id])))
+        # wrapper = textwrap.TextWrapper(width=int(int(title_max_size[0])/int(one_size)))  # 设置换行的宽度
+        # lines = self.title_list[id].split('\n')
+
+        title_position=self.title_setting[10]
         if delta_x + title_size[0] >  title_max_size[0]:
             delta_x = 0
-        title_position=self.title_setting[10]
         if title_position == 0:
                 # left
             delta_x = 0
         elif title_position == 1:
             # center
-            delta_x = max(0,int((title_max_size[0]-title_size[0])/2))
+            # delta_x = max(0,int((title_max_size[0]-title_size[0])/2))
+            delta_x = max(0, int((actual_width - title_size[0]) / 2))
         elif title_position == 2:
             # right
-            delta_x = title_max_size[0]-title_size[0]
+            # delta_x = title_max_size[0]-title_size[0]
+            delta_x = max(0, actual_width - title_size[0])
 
         draw.multiline_text((delta_x, -bbox[1]), text, align="left", font=self.font, fill=self.text_color)
 

@@ -554,7 +554,7 @@ class MulimgViewer (MulimgViewerGui):
 
             if self.ImgManager.type == 2:
                 # 单文件夹模式
-                total_imgs = len(self.ImgManager.flist) if hasattr(self.ImgManager, 'flist') else 0
+                total_imgs = self.ImgManager.img_num
                 # 计算当前页第一张图片的索引
                 img_index = self.ImgManager.action_count * self.ImgManager.count_per_action
                 if clicked_img_id is not None:

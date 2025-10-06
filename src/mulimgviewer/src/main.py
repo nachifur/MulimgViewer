@@ -548,6 +548,161 @@ class MulimgViewer (MulimgViewerGui):
             if texts[i] != '-1':
                 self.m_statusBar1.SetStatusText(texts[i], i)
 
+    def update_status_bar_for_current_page(self, clicked_img_id=None):
+        try:
+            page_num = self.ImgManager.action_count if hasattr(self.ImgManager, 'action_count') else 0
+
+            if self.ImgManager.type == 2:
+                # 单文件夹模式
+                total_imgs = len(self.ImgManager.flist) if hasattr(self.ImgManager, 'flist') else 0
+                if clicked_img_id is not None:
+                    img_index = self.ImgManager.action_count * self.ImgManager.count_per_action + clicked_img_id
+                else:
+                    img_index = 0
+                status_text = f"{img_index}-th/{total_imgs} img 0-th/1 dir"
+
+            elif self.ImgManager.type in [0, 1]:
+                # 多文件夹模式
+                if hasattr(self.ImgManager, 'get_dir_num'):
+                    total_dirs = self.ImgManager.get_dir_num()
+                else:
+                    total_dirs = self.ImgManager.max_action_num if hasattr(self.ImgManager, 'max_action_num') else 0
+
+                if self.parallel_sequential.Value:
+                    # parallel_sequential模式
+                    img_cols = self.ImgManager.layout_params[1][1]
+                    imgs_per_folder = self.ImgManager.layout_params[1][0] * img_cols
+
+                    if clicked_img_id is not None:
+                        actual_folder_img_count = imgs_per_folder
+
+                        if hasattr(self, 'current_page_img_paths') and clicked_img_id < len(self.current_page_img_paths):
+                            current_file_path = self.current_page_img_paths[clicked_img_id]
+                            current_dir = os.path.dirname(current_file_path)
+
+                            if os.path.exists(current_dir):
+                                img_extensions = {'.jpg', '.jpeg', '.png', '.bmp', '.tiff', '.tif', '.gif', '.webp'}
+                                files_in_folder = sorted([
+                                    os.path.join(current_dir, f)
+                                    for f in os.listdir(current_dir)
+                                    if Path(f).suffix.lower() in img_extensions
+                                ])
+                                actual_folder_img_count = len(files_in_folder)
+
+                                if current_file_path in files_in_folder:
+                                    pos_in_folder = files_in_folder.index(current_file_path)
+                                else:
+                                    pos_in_folder = clicked_img_id % imgs_per_folder
+
+                                all_dirs = sorted(list(set(os.path.dirname(p) for p in self.ImgManager.flist)))
+                                actual_folder_idx = all_dirs.index(current_dir) if current_dir in all_dirs else page_num
+                            else:
+                                pos_in_folder = clicked_img_id % imgs_per_folder
+                                actual_folder_idx = page_num
+                        else:
+                            pos_in_folder = clicked_img_id % imgs_per_folder
+                            actual_folder_idx = page_num
+
+                        status_text = f"{pos_in_folder}-th/{actual_folder_img_count} img {actual_folder_idx}-th/{total_dirs} dir"
+                    else:
+                        status_text = f"0-th/{imgs_per_folder} img {page_num}-th/{total_dirs} dir"
+
+                elif self.parallel_to_sequential.Value:
+                    # parallel_to_sequential模式
+                    if clicked_img_id is not None and hasattr(self, 'current_page_img_paths') and clicked_img_id < len(self.current_page_img_paths):
+                        current_file_path = self.current_page_img_paths[clicked_img_id]
+                        current_dir = os.path.dirname(current_file_path)
+                        img_extensions = {'.jpg', '.jpeg', '.png', '.bmp', '.tiff', '.tif', '.gif', '.webp'}
+
+                        # 获取所有文件夹
+                        all_dirs_set = set()
+                        old_action_count = self.ImgManager.action_count
+                        for i in range(self.ImgManager.max_action_num):
+                            try:
+                                self.ImgManager.set_action_count(i)
+                                self.ImgManager.get_flist()
+                                all_dirs_set.update(os.path.dirname(p) for p in self.ImgManager.flist)
+                            except:
+                                pass
+                        self.ImgManager.set_action_count(old_action_count)
+
+                        all_dirs_global = sorted(list(all_dirs_set))
+                        total_dirs = len(all_dirs_global)
+                        actual_folder_idx = all_dirs_global.index(current_dir) if current_dir in all_dirs_global else 0
+
+                        try:
+                            files_in_folder = sorted([
+                                os.path.join(current_dir, f)
+                                for f in os.listdir(current_dir)
+                                if Path(f).suffix.lower() in img_extensions
+                            ])
+                            actual_folder_img_count = len(files_in_folder)
+                            pos_in_folder = files_in_folder.index(current_file_path) if current_file_path in files_in_folder else 0
+                        except:
+                            actual_folder_img_count = 0
+                            pos_in_folder = 0
+
+                        status_text = f"{pos_in_folder}-th/{actual_folder_img_count} img {actual_folder_idx}-th/{total_dirs} dir"
+                    else:
+                        try:
+                            self.ImgManager.get_flist()
+                            total_imgs = len(self.ImgManager.flist) if hasattr(self.ImgManager, 'flist') else 0
+                        except:
+                            total_imgs = 0
+                        status_text = f"0-th/{total_imgs} img {page_num}-th/{total_dirs} dir"
+                else:
+                    # 普通多文件夹模式
+                    current_dir_imgs = len(self.ImgManager.flist) if hasattr(self.ImgManager, 'flist') else 1
+                    img_id = clicked_img_id if clicked_img_id is not None else 0
+                    status_text = f"{img_id}-th/{current_dir_imgs} img {page_num}-th/{total_dirs} dir"
+
+            elif self.ImgManager.type == 3:
+                # 文件列表模式
+                if clicked_img_id is not None:
+                    img_index = self.ImgManager.action_count * self.ImgManager.count_per_action + clicked_img_id
+                    if hasattr(self.ImgManager, 'flist') and img_index < len(self.ImgManager.flist):
+                        current_file_path = self.ImgManager.flist[img_index]
+                        current_dir = os.path.dirname(current_file_path)
+
+                        same_dir_files = sorted([p for p in self.ImgManager.flist if os.path.dirname(p) == current_dir])
+                        img_idx = same_dir_files.index(current_file_path)
+                        img_total = len(same_dir_files)
+
+                        all_dirs = sorted(list(set(os.path.dirname(p) for p in self.ImgManager.flist)))
+                        dir_idx = all_dirs.index(current_dir)
+                        dir_total = len(all_dirs)
+
+                        status_text = f"{img_idx}-th/{img_total} img {dir_idx}-th/{dir_total} dir"
+                    else:
+                        status_text = "0-th/0 img 0-th/0 dir"
+                else:
+                    if hasattr(self.ImgManager, 'path_list') and len(self.ImgManager.path_list) > 0:
+                        path_list = self.ImgManager.path_list.tolist() if isinstance(self.ImgManager.path_list, np.ndarray) else self.ImgManager.path_list
+                        all_dirs = sorted(list(set(os.path.dirname(p) for p in path_list if os.path.isfile(p))))
+                        total_dirs = len(all_dirs)
+
+                        if all_dirs:
+                            first_dir = all_dirs[0]
+                            img_extensions = {'.jpg', '.jpeg', '.png', '.bmp', '.tiff', '.tif', '.gif', '.webp'}
+                            files_in_folder = [
+                                f for f in os.listdir(first_dir)
+                                if Path(f).suffix.lower() in img_extensions
+                            ] if os.path.exists(first_dir) else []
+                            total_imgs = len(files_in_folder)
+                        else:
+                            total_imgs = 0
+
+                        status_text = f"0-th/{total_imgs} img 0-th/{total_dirs} dir"
+                    else:
+                        status_text = "0-th/0 img 0-th/0 dir"
+            else:
+                status_text = "0-th/0 img 0-th/0 dir"
+
+            self.m_statusBar1.SetStatusText(status_text, 1)
+
+        except:
+            self.m_statusBar1.SetStatusText("0-th/0 img 0-th/0 dir", 1)
+
     def img_left_click(self, event):
 
         click_status = "0-th/0 img 0-th/0 dir"
@@ -612,123 +767,7 @@ class MulimgViewer (MulimgViewerGui):
         x, y = event.GetPosition()
         clicked_img_id = self.get_img_id_from_point([x, y])
 
-        try:
-            if self.ImgManager.type == 2:
-                # 单文件夹模式
-                img_index = self.ImgManager.action_count * self.ImgManager.count_per_action + clicked_img_id
-                total_imgs = len(self.ImgManager.flist) if hasattr(self.ImgManager, 'flist') else 1
-                click_status = f"{img_index}-th/{total_imgs} img 0-th/1 dir"
-
-            elif self.ImgManager.type in [0, 1]:
-                if hasattr(self, 'parallel_sequential') and self.parallel_sequential.Value:
-                    # parallel_sequential
-                    img_cols = self.ImgManager.layout_params[1][1]
-                    imgs_per_folder = self.ImgManager.layout_params[1][0] * img_cols
-                    pos_in_folder = clicked_img_id % imgs_per_folder
-                    actual_folder_img_count = self.ImgManager.layout_params[1][0] * img_cols
-
-                    if hasattr(self.ImgManager, 'flist') and len(self.ImgManager.flist) > 0:
-                        img_index = self.ImgManager.action_count * self.ImgManager.count_per_action + clicked_img_id
-                        actual_folder_idx = self.ImgManager.action_count
-                        if img_index < len(self.ImgManager.flist):
-                            # current_file_path = self.ImgManager.flist[img_index]
-                            current_file_path = self.current_page_img_paths[clicked_img_id]
-                            current_dir = os.path.dirname(current_file_path)
-                            if os.path.exists(current_dir):
-                                img_extensions = {'.jpg', '.jpeg', '.png', '.bmp', '.tiff', '.tif', '.gif', '.webp'}
-                                files_in_folder = [
-                                    os.path.join(current_dir, f)
-                                    for f in os.listdir(current_dir)
-                                    if Path(f).suffix.lower() in img_extensions
-                                ]
-                                files_in_folder.sort()
-                                actual_folder_img_count = len(files_in_folder)
-
-                            same_dir_files = sorted(files_in_folder)
-                            if current_file_path in same_dir_files:
-                                pos_in_folder = same_dir_files.index(current_file_path)
-                            else:
-                                pos_in_folder = 0
-
-                            all_dirs = sorted(list(set(os.path.dirname(p) for p in self.ImgManager.flist)))
-                            if current_dir in all_dirs:
-                                actual_folder_idx = all_dirs.index(current_dir)
-
-                            total_folders = len(all_dirs)
-                    click_status = f"{pos_in_folder}-th/{actual_folder_img_count} img {actual_folder_idx}-th/{total_folders} dir"
-
-                elif hasattr(self, 'parallel_to_sequential') and self.parallel_to_sequential.Value:
-                    # parallel_to_sequential
-                    if hasattr(self, 'current_page_img_paths') and clicked_img_id < len(self.current_page_img_paths):
-                        current_file_path = self.current_page_img_paths[clicked_img_id]
-                        current_dir = os.path.dirname(current_file_path)
-                        img_extensions = {'.jpg', '.jpeg', '.png', '.bmp', '.tiff', '.tif', '.gif', '.webp'}
-
-                        all_dirs_set = set()
-                        old_action_count = self.ImgManager.action_count
-                        for i in range(self.ImgManager.max_action_num):
-                            try:
-                                self.ImgManager.set_action_count(i)
-                                self.ImgManager.get_flist()
-                                all_dirs_set.update(os.path.dirname(p) for p in self.ImgManager.flist)
-                            except Exception as e:
-                                pass  # 可加日志
-                        self.ImgManager.set_action_count(old_action_count)  # 恢复当前页
-                        all_dirs_global = sorted(list(all_dirs_set))
-                        total_folders = len(all_dirs_global)
-                        actual_folder_idx = all_dirs_global.index(current_dir) if current_dir in all_dirs_global else 0
-
-                        try:
-                            files_in_folder = [
-                                os.path.join(current_dir, f)
-                                for f in os.listdir(current_dir)
-                                if Path(f).suffix.lower() in img_extensions
-                            ]
-                            files_in_folder.sort()
-                            actual_folder_img_count = len(files_in_folder)
-                            pos_in_folder = files_in_folder.index(current_file_path) if current_file_path in files_in_folder else 0
-                        except Exception as e:
-                            actual_folder_img_count = 0
-                            pos_in_folder = 0
-
-                        click_status = f"{pos_in_folder}-th/{actual_folder_img_count} img {actual_folder_idx}-th/{total_folders} dir"
-                    else:
-                        click_status = "0-th/0 img 0-th/0 dir"
-
-                else:
-                    # 非parallel_seqential
-                    dir_idx = self.ImgManager.action_count
-                    total_dirs = self.ImgManager.max_action_num
-                    current_dir_imgs = len(self.ImgManager.flist) if hasattr(self.ImgManager, 'flist') else 1
-                    click_status = f"{clicked_img_id}-th/{current_dir_imgs} img {dir_idx}-th/{total_dirs} dir"
-
-            elif self.ImgManager.type == 3:
-                # 文件列表模式
-                img_index = self.ImgManager.action_count * self.ImgManager.count_per_action + clicked_img_id
-                if hasattr(self.ImgManager, 'flist') and img_index < len(self.ImgManager.flist):
-                    current_file_path = self.ImgManager.flist[img_index]
-                    current_dir = os.path.dirname(current_file_path)
-
-                    same_dir_files = [p for p in self.ImgManager.flist if os.path.dirname(p) == current_dir]
-                    same_dir_files.sort()
-                    img_idx = same_dir_files.index(current_file_path)
-                    img_total = len(same_dir_files)
-                    all_dirs = sorted(list(set(os.path.dirname(p) for p in self.ImgManager.flist)))
-                    dir_idx = all_dirs.index(current_dir)
-                    dir_total = len(all_dirs)
-
-                    click_status = f"{img_idx}-th/{img_total} img {dir_idx}-th/{dir_total} dir"
-                else:
-                    click_status = "0-th/0 img 0-th/0 dir"
-            else:
-                # 默认模式
-                current_idx = self.ImgManager.action_count
-                total_count = self.ImgManager.max_action_num
-                click_status = f"{current_idx}-th/{total_count} page"
-        except:
-            click_status = "0-th/0 img 0-th/0 dir"
-
-        self.m_statusBar1.SetStatusText(click_status, 1)
+        self.update_status_bar_for_current_page(clicked_img_id)
 
     def img_left_dclick(self, event):
         if self.select_img_box.Value:
@@ -1491,54 +1530,10 @@ class MulimgViewer (MulimgViewerGui):
                 self.img_panel.Children[0].Bind(
                     wx.EVT_KEY_UP, self.key_up_detect)
 
-            page_num = self.ImgManager.action_count
-            try:
-                current_img = self.ImgManager.img_count
-                if self.ImgManager.type == 2:
-                    # 单文件夹模式
-                    dir_index = 0
-                    total_dirs = 1
-                elif self.ImgManager.type == 0 or self.ImgManager.type == 1:
-                    # 多文件夹模式
-                    if hasattr(self.ImgManager, 'get_dir_num'):
-                        total_dirs = self.ImgManager.get_dir_num()
-                        dir_index = page_num if page_num < total_dirs else (total_dirs - 1)
-                    else:
-                        total_dirs = self.ImgManager.max_action_num
-                        dir_index = page_num if page_num < total_dirs else (total_dirs - 1)
-                elif self.ImgManager.type == 3:
-                    try:
-                        if hasattr(self.ImgManager, 'path_list') and len(self.ImgManager.path_list) > 0:
-                            if isinstance(self.ImgManager.path_list, np.ndarray):
-                                path_list = self.ImgManager.path_list.tolist()
-                            else:
-                                path_list = self.ImgManager.path_list
-                            if len(path_list) == 1 and os.path.isdir(path_list[0]):
-                                dir_index = 0
-                                total_dirs = 1
-                            else:
-                                all_dirs = list(set(os.path.dirname(p) for p in path_list if os.path.isfile(p)))
-                                all_dirs.sort()
-                                total_dirs = len(all_dirs)
-                                if hasattr(self.ImgManager, 'flist') and current_img < len(self.ImgManager.flist):
-                                    current_file_path = self.ImgManager.flist[current_img]
-                                    current_dir = os.path.dirname(current_file_path)
-                                    dir_index = all_dirs.index(current_dir) if current_dir in all_dirs else 0
-                                else:
-                                    dir_index = 0
-                        else:
-                            dir_index = 0
-                            total_dirs = 1
-                    except:
-                        dir_index = 0
-                        total_dirs = 1
-                else:
-                    dir_index = 0
-                    total_dirs = 1
-                status_text = f"{page_num}-th/{current_img} img {page_num}-th/{dir_index} dir"
-            except:
-                status_text = f"{page_num}-th/0 img {page_num}-th/0 dir"
+            # 调用统一的状态栏更新方法
+            self.update_status_bar_for_current_page()
 
+            # 更新详细信息(分辨率和图片范围)
             try:
                 if self.ImgManager.type == 2 or ((self.ImgManager.type == 0 or self.ImgManager.type == 1) and self.parallel_sequential.Value):
                     start_img = self.ImgManager.img_count
@@ -1548,9 +1543,10 @@ class MulimgViewer (MulimgViewerGui):
                 else:
                     detail_text = f"{self.ImgManager.img_resolution[0]}x{self.ImgManager.img_resolution[1]} pixels / {self.ImgManager.get_stitch_name()}"
 
-                self.SetStatusText_(["-1", status_text, detail_text, "-1"])
+                # 只更新第3和第4个状态栏区域(索引2和3),保持第2个区域(索引1)不变
+                self.SetStatusText_(["-1", "-1", detail_text, "-1"])
             except:
-                self.SetStatusText_(["-1", status_text, f"{self.ImgManager.img_resolution[0]}x{self.ImgManager.img_resolution[1]} pixels", "-1"])
+                self.SetStatusText_(["-1", "-1", f"{self.ImgManager.img_resolution[0]}x{self.ImgManager.img_resolution[1]} pixels", "-1"])
 
     def auto_layout(self, frame_resize=False):
         # Auto Layout

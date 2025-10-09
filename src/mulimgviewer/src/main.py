@@ -669,11 +669,14 @@ class MulimgViewer (MulimgViewerGui):
                         else:
                             img_count_in_folder = 1
                             img_pos_in_folder = 0
-
                         status_text = f"{img_pos_in_folder}-th/{img_count_in_folder} img {dir_index}-th/{total_dirs} dir"
                     else:
-                        current_dir_imgs = len(self.ImgManager.flist) if hasattr(self.ImgManager, 'flist') else 1
-                        status_text = f"{page_num}-th/{img_count_in_folder} img 0-th/{total_dirs} dir"
+                        total_pages = 0
+                        if hasattr(self.ImgManager, 'max_action_num'):
+                            total_pages = self.ImgManager.max_action_num
+                        else:
+                            total_pages = 0
+                        status_text = f"{page_num}-th/{total_pages} img 0-th/{total_dirs} dir"
 
             elif self.ImgManager.type == 3:
                 target_img_id = clicked_img_id if clicked_img_id is not None else 0
@@ -1854,3 +1857,23 @@ class MulimgViewer (MulimgViewerGui):
         output_s_json_path = str(json_path / "output_s.json")
         self.load_configuration(event, config_name="output_s.json")
         shutil.copy(output_s_json_path, output_json_path)
+
+if __name__ == "__main__":
+    print("启动 MulimgViewer ...")
+    try:
+        app = wx.App(False)
+
+        # 定义占位函数，参数要和调用时一致
+        def update_ui_stub(a, b=None, c=None):
+            print(f"UpdateUI called with: {a}, {b}, {c}")
+
+        def get_type_stub():
+            return -1
+
+        frame = MulimgViewer(None, update_ui_stub, get_type_stub)
+        frame.Show()
+        app.MainLoop()
+    except Exception as e:
+        import traceback
+        print("启动失败:", e)
+        traceback.print_exc()

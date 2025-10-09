@@ -32,7 +32,7 @@
  "auto_layout_check": false,
  "one_img": false,
  "onetitle": false,
- "customfunc": false,
+ "show_custom_func": false,
  "show_box": true,
  "show_box_in_crop": true,
  "select_img_box": false,

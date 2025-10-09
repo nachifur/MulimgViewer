@@ -381,12 +381,12 @@ class MulimgViewerGui ( wx.Frame ):
 
 		wSizer81.Add( self.m_staticText32, 0, wx.ALL, 5 )
 
-		self.m_staticline18 = wx.StaticLine( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_VERTICAL )
-		wSizer81.Add( self.m_staticline18, 0, wx.EXPAND |wx.ALL, 5 )
-
-		self.show_unit = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"ALL", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.show_unit = wx.CheckBox( self.m_panel4, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.show_unit.SetValue(True)
 		wSizer81.Add( self.show_unit, 0, wx.ALL, 5 )
+
+		self.m_staticline18 = wx.StaticLine( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_VERTICAL )
+		wSizer81.Add( self.m_staticline18, 0, wx.EXPAND |wx.ALL, 5 )
 
 		self.show_original = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"Img", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.show_original.SetValue(True)
@@ -403,25 +403,41 @@ class MulimgViewerGui ( wx.Frame ):
 		self.m_staticline211 = wx.StaticLine( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_VERTICAL )
 		wSizer81.Add( self.m_staticline211, 0, wx.EXPAND |wx.ALL, 5 )
 
-		self.show_custom = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"ShowCustom", wx.DefaultPosition, wx.DefaultSize, 0 )
-		wSizer81.Add( self.show_custom, 0, wx.ALL, 5 )
+		self.one_img = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"OneImg", wx.DefaultPosition, wx.DefaultSize, 0 )
+		wSizer81.Add( self.one_img, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+
+		self.onetitle = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"OneTitle", wx.DefaultPosition, wx.DefaultSize, 0 )
+		wSizer81.Add( self.onetitle, 0, wx.ALL, 5 )
 
 
 		fgSizer3.Add( wSizer81, 1, wx.EXPAND, 5 )
 
 		wSizer11 = wx.WrapSizer( wx.HORIZONTAL, wx.WRAPSIZER_DEFAULT_FLAGS )
 
+		self.m_staticText382 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"CustomFunc", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText382.Wrap( -1 )
+
+		wSizer11.Add( self.m_staticText382, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+
+		self.m_staticline221 = wx.StaticLine( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_VERTICAL )
+		wSizer11.Add( self.m_staticline221, 0, wx.EXPAND |wx.ALL, 5 )
+
+		customfunc_choiceChoices = [ u"algorithm1", u"algorithm2" ]
+		self.customfunc_choice = wx.Choice( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, customfunc_choiceChoices, 0 )
+		self.customfunc_choice.SetSelection( 0 )
+		wSizer11.Add( self.customfunc_choice, 0, wx.ALL, 5 )
+
+		self.show_custom_func = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"Show", wx.DefaultPosition, wx.DefaultSize, 0 )
+		wSizer11.Add( self.show_custom_func, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+
+		self.show_all_func = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"ShowALLFunc", wx.DefaultPosition, wx.DefaultSize, 0 )
+		wSizer11.Add( self.show_all_func, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+
+		self.m_staticline23 = wx.StaticLine( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_VERTICAL )
+		wSizer11.Add( self.m_staticline23, 0, wx.EXPAND |wx.ALL, 5 )
+
 		self.auto_layout_check = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"AutoWinSize", wx.DefaultPosition, wx.DefaultSize, 0 )
 		wSizer11.Add( self.auto_layout_check, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
-
-		self.one_img = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"OneImg", wx.DefaultPosition, wx.DefaultSize, 0 )
-		wSizer11.Add( self.one_img, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
-
-		self.onetitle = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"OneTitle", wx.DefaultPosition, wx.DefaultSize, 0 )
-		wSizer11.Add( self.onetitle, 0, wx.ALL, 5 )
-
-		self.customfunc = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"CustomFunc", wx.DefaultPosition, wx.DefaultSize, 0 )
-		wSizer11.Add( self.customfunc, 0, wx.ALL, 5 )
 
 
 		fgSizer3.Add( wSizer11, 1, wx.EXPAND, 5 )

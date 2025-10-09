@@ -643,7 +643,7 @@ class ImgManager(ImgData):
         self.exif_display_config = self.load_exif_display_config(force_reload=True)
         self._tag_mappings_cache = None
 
-    def get_img_list(self, customfunc=False):
+    def get_img_list(self, show_custom_func=False):
         img_list = []
         # load img list
         name_list = []
@@ -668,7 +668,7 @@ class ImgManager(ImgData):
                 self.full_exif_cache[i] = {"raw_exif": {}, "formatted_exif": {}, "has_exif": False}
         out_path_str = self.layout_params[33]
         # custom process
-        if customfunc:
+        if show_custom_func:
             img_list = main_custom_func(img_list,out_path_str,name_list=name_list)
         # resolution
         width_ = []
@@ -1017,7 +1017,7 @@ class ImgManager(ImgData):
     def stitch_img_init(self, img_mode, draw_points, first_run=True):
         """img_mode, 0: show, 1: save"""
         # init
-        self.get_img_list(customfunc=self.layout_params[32])  # Generate image list
+        self.get_img_list(show_custom_func=self.layout_params[32])  # Generate image list
         self.set_scale_mode(img_mode=img_mode)
         if img_mode == 0:
             self.draw_points = draw_points
@@ -1783,20 +1783,19 @@ class ImgManager(ImgData):
             f_path_output = Path(self.out_path_str) / dir_name / name_f
             self.ImgF.save_img_diff_format(f_path_output,self.img,save_format=self.layout_params[35])
 
-    def show_stitch_img_and_customfunc_img(self, customfunc):
+    def show_stitch_img_and_customfunc_img(self, show_custom_func):
         show_unit = self.layout_params[36]
-        show_custom = self.layout_params[37]
         img = self.img
-        if customfunc and self.customfunc_img != None:
-            if show_unit and show_custom:
+        if show_custom_func and self.customfunc_img != None:
+            if show_unit and show_custom_func:
                 img = self.ImgF.cat_img(self.img, self.customfunc_img)
-            elif not show_unit and show_custom:
+            elif not show_unit and show_custom_func:
                 img = self.customfunc_img
-            elif show_unit and not show_custom:
+            elif show_unit and not show_custom_func:
                 img = img
         return img
 
-    def save_stitch_img_and_customfunc_img(self, out_path_str, customfunc):
+    def save_stitch_img_and_customfunc_img(self, out_path_str, show_custom_func):
         name_f = self.get_stitch_name()
         if self.type == 3: # read file list from a list file
             name_f = "from_file_"+name_f
@@ -1812,7 +1811,7 @@ class ImgManager(ImgData):
             else:
                 self.check_1.append(self.stitch_images(1))
         f_path_output = Path(out_path_str) / "stitch_img_and_customfunc_img" / name_f
-        img = self.show_stitch_img_and_customfunc_img(customfunc)
+        img = self.show_stitch_img_and_customfunc_img(show_custom_func)
         self.ImgF.save_img_diff_format(f_path_output, img, save_format=self.layout_params[35])
 
     def get_stitch_name(self):
@@ -1842,7 +1841,7 @@ class ImgManager(ImgData):
         else:
             try:
                 if self.layout_params[32]:
-                    self.get_img_list(customfunc=self.layout_params[32])  # Generate image list
+                    self.get_img_list(show_custom_func=self.layout_params[32])  # Generate image list
                 self.crop_points_process(
                     copy.deepcopy(self.draw_points), img_mode=1)
                 if self.type == 3: # read file list from a list file
@@ -1913,7 +1912,7 @@ class ImgManager(ImgData):
                             ii += 1
                         i += 1
                     if self.layout_params[32]:
-                        self.get_img_list(customfunc=False)  # Generate image list
+                        self.get_img_list(show_custom_func=False)  # Generate image list
                 # self.check_2.append(0)
             except:
                 self.check_2.append(1)

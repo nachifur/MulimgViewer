@@ -252,12 +252,12 @@ class MulimgViewer (MulimgViewerGui):
                     self.SetStatusText_(
                         ["-1", "-1", "***"+str(self.ImgManager.name_list[self.ImgManager.action_count])+", saving img***", "-1"])
                     self.ImgManager.get_flist()
-                    if self.customfunc.Value:
+                    if self.show_custom_func.Value:
                         self.ImgManager.layout_params[32] = True  # customfunc
                         self.ImgManager.save_img(self.out_path_str, type_)
                         self.ImgManager.layout_params[32] = False  # customfunc
                     self.ImgManager.save_img(self.out_path_str, type_)
-                    self.ImgManager.save_stitch_img_and_customfunc_img(self.out_path_str, self.customfunc.Value)
+                    self.ImgManager.save_stitch_img_and_customfunc_img(self.out_path_str, self.show_custom_func.Value)
 
                     self.ImgManager.add()
                 self.ImgManager.set_action_count(last_count_img)
@@ -269,12 +269,12 @@ class MulimgViewer (MulimgViewerGui):
                     ["-1", "-1", "***"+str(self.ImgManager.name_list[self.ImgManager.action_count])+", saving img...***", "-1"])
             except:
                 pass
-            if self.customfunc.Value:
+            if self.show_custom_func.Value:
                 self.ImgManager.layout_params[32] = True  # customfunc
                 self.ImgManager.save_img(self.out_path_str, type_)
                 self.ImgManager.layout_params[32] = False  # customfunc
             flag = self.ImgManager.save_img(self.out_path_str, type_)
-            self.ImgManager.save_stitch_img_and_customfunc_img(self.out_path_str, self.customfunc.Value)
+            self.ImgManager.save_stitch_img_and_customfunc_img(self.out_path_str, self.show_custom_func.Value)
 
             if flag == 0:
                 self.SetStatusText_(
@@ -1412,18 +1412,17 @@ class MulimgViewer (MulimgViewerGui):
                     magnifer_row_col,                       # 29
                     self.onetitle.Value,                    # 30
                     magnifier_out_scale,                    # 31
-                    self.customfunc.Value,                  # 32
+                    self.show_custom_func.Value,            # 32
                     self.out_path_str,                      # 33
                     self.Magnifier_format.GetSelection(),   # 34
                     self.save_format.GetSelection(),        # 35
-                    self.show_unit.Value,                   # 36
-                    self.show_custom.Value]                 # 37
+                    self.show_unit.Value ]                  # 36
 
     def show_img(self):
         if hasattr(self, 'm_staticText1'):
             self.m_staticText1.Hide()
 
-        if self.customfunc.Value and self.out_path_str == "":
+        if self.show_custom_func.Value and self.out_path_str == "":
             self.out_path(None)
             self.ImgManager.layout_params[33] = self.out_path_str
         # check layout_params change
@@ -1465,7 +1464,7 @@ class MulimgViewer (MulimgViewerGui):
                 self.current_page_img_paths += [None] * (expected_num - len(self.current_page_img_paths))
 
             # show the output image processed by the custom func; return cat(bmp, customfunc_img)
-            if self.customfunc.Value:
+            if self.show_custom_func.Value:
                 self.ImgManager.layout_params[32] = True  # customfunc
                 self.ImgManager.stitch_images(
                     0, copy.deepcopy(self.xy_magnifier))
@@ -1473,7 +1472,7 @@ class MulimgViewer (MulimgViewerGui):
             flag = self.ImgManager.stitch_images(
                 0, copy.deepcopy(self.xy_magnifier))
             if flag == 0:
-                bmp = self.ImgManager.show_stitch_img_and_customfunc_img(self.customfunc.Value)
+                bmp = self.ImgManager.show_stitch_img_and_customfunc_img(self.show_custom_func.Value)
                 self.show_bmp_in_panel = bmp
                 self.img_size = bmp.size
                 bmp = self.ImgManager.ImgF.PIL2wx(bmp)
@@ -1762,7 +1761,7 @@ class MulimgViewer (MulimgViewerGui):
             'auto_layout_check': self.auto_layout_check.GetValue(),
             'one_img': self.one_img.GetValue(),
             'onetitle': self.onetitle.GetValue(),
-            'customfunc': self.customfunc.GetValue(),
+            'customfunc': self.show_custom_func.GetValue(),
             'show_box': self.show_box.GetValue(),
             'show_box_in_crop': self.show_box_in_crop.GetValue(),
             'select_img_box': self.select_img_box.GetValue(),
@@ -1819,7 +1818,7 @@ class MulimgViewer (MulimgViewerGui):
             self.auto_layout_check.SetValue(data['auto_layout_check'])
             self.one_img.SetValue(data['one_img'])
             self.onetitle.SetValue(data['onetitle'])
-            self.customfunc.SetValue(data['customfunc'])
+            self.show_custom_func.SetValue(data['show_custom_func'])
             self.show_box.SetValue(data['show_box'])
             self.show_box_in_crop.SetValue(data['show_box_in_crop'])
             self.select_img_box.SetValue(data['select_img_box'])

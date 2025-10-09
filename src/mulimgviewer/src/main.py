@@ -651,9 +651,29 @@ class MulimgViewer (MulimgViewerGui):
                             total_imgs = 0
                         status_text = f"{pos_in_folder}-th/{total_imgs} img {page_num}-th/{total_dirs} dir"
                 else:
-                    current_dir_imgs = len(self.ImgManager.flist) if hasattr(self.ImgManager, 'flist') else 1
-                    img_id = clicked_img_id if clicked_img_id is not None else 0
-                    status_text = f"{img_id}-th/{current_dir_imgs} img {page_num}-th/{total_dirs} dir"
+                    # parallel模式(不勾选sequential)
+                    if clicked_img_id is not None and hasattr(self.ImgManager, 'flist') and clicked_img_id < len(self.ImgManager.flist):
+                        clicked_img_path = self.ImgManager.flist[clicked_img_id]
+                        clicked_dir = os.path.dirname(clicked_img_path)
+                        all_dirs = sorted(list(set(os.path.dirname(p) for p in self.ImgManager.flist)))
+                        dir_index = all_dirs.index(clicked_dir) if clicked_dir in all_dirs else page_num
+                        img_extensions = {'.jpg', '.jpeg', '.png', '.bmp', '.tiff', '.tif', '.gif', '.webp'}
+                        if os.path.exists(clicked_dir):
+                            folder_images = sorted([
+                                os.path.join(clicked_dir, f)
+                                for f in os.listdir(clicked_dir)
+                                if Path(f).suffix.lower() in img_extensions
+                            ])
+                            img_count_in_folder = len(folder_images)
+                            img_pos_in_folder = folder_images.index(clicked_img_path) if clicked_img_path in folder_images else 0
+                        else:
+                            img_count_in_folder = 1
+                            img_pos_in_folder = 0
+
+                        status_text = f"{img_pos_in_folder}-th/{img_count_in_folder} img {dir_index}-th/{total_dirs} dir"
+                    else:
+                        current_dir_imgs = len(self.ImgManager.flist) if hasattr(self.ImgManager, 'flist') else 1
+                        status_text = f"{page_num}-th/{img_count_in_folder} img 0-th/{total_dirs} dir"
 
             elif self.ImgManager.type == 3:
                 target_img_id = clicked_img_id if clicked_img_id is not None else 0
@@ -869,13 +889,7 @@ class MulimgViewer (MulimgViewerGui):
         save_single_id = wx.Window.NewControlId()
         menu.Append(save_single_id, "💾 Save")
         def save_current_page(evt):
-            original_out_path = self.out_path_str
-            temp_out_path = os.path.join(original_out_path, f"page_{self.ImgManager.action_count}")
-            self.out_path_str = temp_out_path
-            os.makedirs(temp_out_path, exist_ok=True)
             self.save_img(evt)
-            self.out_path_str = original_out_path
-            self.SetStatusText_([f"Page {self.ImgManager.action_count} saved to {temp_out_path}", "-1", "-1", "-1"])
         menu.Bind(wx.EVT_MENU, save_current_page, id=save_single_id)
 
         if (self.ImgManager.type == 0 or self.ImgManager.type == 1) and (self.parallel_sequential.Value or self.parallel_to_sequential.Value):

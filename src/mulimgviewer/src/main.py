@@ -865,21 +865,22 @@ class MulimgViewer (MulimgViewerGui):
         menu.Bind(wx.EVT_MENU, self.next_img, id=next_id)
 
         # 只在parallel+sequential模式下显示保存选项
-        if (self.ImgManager.type == 0 or self.ImgManager.type == 1) and (self.parallel_sequential.Value or self.parallel_to_sequential.Value):
-            save_single_id = wx.Window.NewControlId()
-            menu.Append(save_single_id, "💾 Save current page")
-            def save_current_page(evt):
-                original_out_path = self.out_path_str
-                temp_out_path = os.path.join(original_out_path, f"page_{self.ImgManager.action_count}")
-                self.out_path_str = temp_out_path
-                os.makedirs(temp_out_path, exist_ok=True)
-                self.save_img(evt)
-                self.out_path_str = original_out_path
-                self.SetStatusText_([f"Page {self.ImgManager.action_count} saved to {temp_out_path}", "-1", "-1", "-1"])
-            menu.Bind(wx.EVT_MENU, save_current_page, id=save_single_id)
-            save_column_id = wx.Window.NewControlId()
 
-            menu.Append(save_column_id, "📄 Save same position images")
+        save_single_id = wx.Window.NewControlId()
+        menu.Append(save_single_id, "💾 Save")
+        def save_current_page(evt):
+            original_out_path = self.out_path_str
+            temp_out_path = os.path.join(original_out_path, f"page_{self.ImgManager.action_count}")
+            self.out_path_str = temp_out_path
+            os.makedirs(temp_out_path, exist_ok=True)
+            self.save_img(evt)
+            self.out_path_str = original_out_path
+            self.SetStatusText_([f"Page {self.ImgManager.action_count} saved to {temp_out_path}", "-1", "-1", "-1"])
+        menu.Bind(wx.EVT_MENU, save_current_page, id=save_single_id)
+
+        if (self.ImgManager.type == 0 or self.ImgManager.type == 1) and (self.parallel_sequential.Value or self.parallel_to_sequential.Value):
+            save_column_id = wx.Window.NewControlId()
+            menu.Append(save_column_id, "📄 save(only select current location)")
             def save_selected_column(evt):
                 if self.out_path_str == "":
                     self.out_path(evt)

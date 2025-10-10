@@ -895,7 +895,7 @@ class MulimgViewer (MulimgViewerGui):
             self.save_img(evt)
         menu.Bind(wx.EVT_MENU, save_current_page, id=save_single_id)
 
-        if (self.ImgManager.type == 0 or self.ImgManager.type == 1) and (self.parallel_sequential.Value or self.parallel_to_sequential.Value):
+        if (self.ImgManager.type == 0 or self.ImgManager.type == 1) and (self.parallel_sequential.Value):
             save_column_id = wx.Window.NewControlId()
             menu.Append(save_column_id, "📄 save(only select current location)")
             def save_selected_column(evt):

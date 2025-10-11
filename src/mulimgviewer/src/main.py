@@ -899,55 +899,54 @@ class MulimgViewer (MulimgViewerGui):
             save_column_id = wx.Window.NewControlId()
             menu.Append(save_column_id, "📄 save(only select current location)")
             def save_selected_column(evt):
-                if self.out_path_str == "":
+                if not self.out_path_str:
                     self.out_path(evt)
-                    if self.out_path_str == "":
+                    if not self.out_path_str:
                         return
                 x, y = event.GetPosition()
                 clicked_grid_id = self.get_img_id_from_point([x, y])
                 if hasattr(self, 'current_page_img_paths') and clicked_grid_id < len(self.current_page_img_paths):
-                    target_name = os.path.basename(self.current_page_img_paths[clicked_grid_id])
+                    target_path = self.current_page_img_paths[clicked_grid_id]
                 else:
-                    self.SetStatusText_([f"Cannot get clicked image name", "-1", "-1", "-1"])
-                    return
-                temp_out_path = os.path.join(self.out_path_str, f"same_position_images")
-                os.makedirs(temp_out_path, exist_ok=True)
-                collected_files = []
-                if hasattr(self.ImgManager, 'flist') and len(self.ImgManager.flist) > 0:
-                    all_dirs = sorted(list(set(os.path.dirname(p) for p in self.ImgManager.flist)))
-                    img_extensions = {'.jpg', '.jpeg', '.png', '.bmp', '.tiff', '.tif', '.gif', '.webp'}
-                    for folder_path in all_dirs:
-                        if os.path.exists(folder_path):
-                            try:
-                                folder_images = [
-                                    os.path.join(folder_path, f)
-                                    for f in os.listdir(folder_path)
-                                    if Path(f).suffix.lower() in img_extensions
-                                ]
-                                match = [f for f in folder_images if os.path.basename(f) == target_name]
-                                if match:
-                                    collected_files.append(match[0])
-                            except:
-                                pass
-                success_count = 0
-                for src_file in collected_files:
-                    if os.path.exists(src_file):
-                        folder_name = os.path.basename(os.path.dirname(src_file))
-                        file_ext = Path(src_file).suffix
-                        new_name = f"{Path(src_file).stem}{file_ext}"
-                        sub_dir = os.path.join(temp_out_path, folder_name)
-                        os.makedirs(sub_dir, exist_ok=True)
-                        dst_file = os.path.join(sub_dir, new_name)
-                        try:
-                            shutil.copy2(src_file, dst_file)
-                            success_count += 1
-                        except:
-                            pass
-                if success_count > 0:
-                    self.SetStatusText_([f"Successfully saved {success_count} images with same name", "-1", "-1", "-1"])
-                else:
-                    self.SetStatusText_([f"No image with name {target_name} found", "-1", "-1", "-1"])
+                    actual_img_index = self.ImgManager.xy_grids_id_list[clicked_grid_id] \
+                        if hasattr(self.ImgManager, 'xy_grids_id_list') and clicked_grid_id < len(self.ImgManager.xy_grids_id_list) \
+                        else clicked_grid_id
 
+                    if not hasattr(self.ImgManager, 'flist') or actual_img_index >= len(self.ImgManager.flist):
+                        self.SetStatusText_(["Cannot get clicked image", "-1", "-1", "-1"])
+                        return
+                    target_path = self.ImgManager.flist[actual_img_index]
+                if not target_path or not os.path.exists(target_path):
+                    self.SetStatusText_(["Invalid image path", "-1", "-1", "-1"])
+                    return
+                target_name = os.path.basename(target_path)
+                original_auto_save = self.auto_save_all.Value
+                self.auto_save_all.Value = True
+                self.save_img(evt)
+                self.auto_save_all.Value = original_auto_save
+                select_folder = os.path.join(self.out_path_str, "select_images")
+                if os.path.exists(select_folder):
+                    shutil.rmtree(select_folder)
+                os.makedirs(select_folder, exist_ok=True)
+                all_dirs = sorted(set(os.path.dirname(p) for p in self.ImgManager.flist))
+                success_count = 0
+                for folder_path in all_dirs:
+                    if not os.path.exists(folder_path):
+                        continue
+                    try:
+                        target_file = os.path.join(folder_path, target_name)
+                        if os.path.exists(target_file) and os.path.isfile(target_file):
+                            folder_name = os.path.basename(folder_path)
+                            sub_dir = os.path.join(select_folder, folder_name)
+                            os.makedirs(sub_dir, exist_ok=True)
+                            shutil.copy2(target_file, os.path.join(sub_dir, target_name))
+                            success_count += 1
+                    except:
+                        pass
+                status_msg = f"Save completed! select_images updated with {success_count} images (clicked: {target_name})" \
+                    if success_count > 0 \
+                    else f"Save completed, but no matching images found for {target_name}"
+                self.SetStatusText_([status_msg, "-1", "-1", "-1"])
             menu.Bind(wx.EVT_MENU, save_selected_column, id=save_column_id)
 
         if self.magnifier.Value:
@@ -1857,23 +1856,3 @@ class MulimgViewer (MulimgViewerGui):
         output_s_json_path = str(json_path / "output_s.json")
         self.load_configuration(event, config_name="output_s.json")
         shutil.copy(output_s_json_path, output_json_path)
-
-if __name__ == "__main__":
-    print("启动 MulimgViewer ...")
-    try:
-        app = wx.App(False)
-
-        # 定义占位函数，参数要和调用时一致
-        def update_ui_stub(a, b=None, c=None):
-            print(f"UpdateUI called with: {a}, {b}, {c}")
-
-        def get_type_stub():
-            return -1
-
-        frame = MulimgViewer(None, update_ui_stub, get_type_stub)
-        frame.Show()
-        app.MainLoop()
-    except Exception as e:
-        import traceback
-        print("启动失败:", e)
-        traceback.print_exc()

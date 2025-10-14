@@ -68,7 +68,7 @@ class ImgData():
             self.name_list = []
 
     def get_path_list_from_lf(self):
-        format_group = [".png", ".jpg", ".jpeg", ".bmp", ".tif", ".tiff", ".PNG", ".JPG", ".JPEG", ".BMP", ".TIF", ".TIFF"]#改这一行
+        format_group = [".png", ".jpg", ".jpeg", ".bmp", ".tif", ".tiff", ".PNG", ".JPG", ".JPEG", ".BMP", ".TIF", ".TIFF"]
         if Path(self.input_path).suffix.lower() == '.txt':
             with open(self.input_path, "r",encoding='utf-8') as f:
                 dataset = f.read().split('\n')

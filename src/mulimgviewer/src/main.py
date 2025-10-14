@@ -48,7 +48,7 @@ class MulimgViewer (MulimgViewerGui):
         self.selected_img_id = 0
         self.position = [0, 0]
         self.Uint = self.scrolledWindow_img.GetScrollPixelsPerUnit()
-        self.Status_number = self.m_statusBar1.GetFieldsCount()
+        self.Status_number = self.ID_status_display.GetFieldsCount()
         self.img_size = [-1, -1]
         self.width = 1000
         self.height = 600
@@ -67,7 +67,7 @@ class MulimgViewer (MulimgViewerGui):
         self.icon = wx.Icon(get_resource_path(
             'mulimgviewer.png'), wx.BITMAP_TYPE_PNG)
         self.SetIcon(self.icon)
-        self.m_statusBar1.SetStatusWidths([-2, -3, -4, -2])
+        self.ID_status_display.SetStatusWidths([-2, -3, -4, -2])
         self.set_title_font()
         self.hidden_flag = 0
         self.button_open_all.SetToolTip("open")
@@ -407,7 +407,7 @@ class MulimgViewer (MulimgViewerGui):
 
         if dlg.ShowModal() == wx.ID_OK:
             self.out_path_str = dlg.GetPath()
-            self.m_statusBar1.SetStatusText(self.out_path_str, 3)
+            self.ID_status_display.SetStatusText(self.out_path_str, 3)
 
     def colour_change(self, event):
         c = self.colourPicker_gap.GetColour()
@@ -546,7 +546,7 @@ class MulimgViewer (MulimgViewerGui):
     def SetStatusText_(self, texts):
         for i in range(self.Status_number):
             if texts[i] != '-1':
-                self.m_statusBar1.SetStatusText(texts[i], i)
+                self.ID_status_display.SetStatusText(texts[i], i)
 
     def update_status_bar_for_current_page(self, clicked_img_id=None):
         try:
@@ -564,6 +564,7 @@ class MulimgViewer (MulimgViewerGui):
                 else:
                     total_dirs = self.ImgManager.max_action_num if hasattr(self.ImgManager, 'max_action_num') else 0
                 if self.parallel_sequential.Value:
+                    # parallel_sequential
                     target_img_id = clicked_img_id if clicked_img_id is not None else 0
                     if hasattr(self, 'current_page_img_paths') and target_img_id < len(self.current_page_img_paths):
                         current_file_path = self.current_page_img_paths[target_img_id]
@@ -597,6 +598,7 @@ class MulimgViewer (MulimgViewerGui):
                     status_text = f"{pos_in_folder}-th/{actual_folder_img_count} img {actual_folder_idx}-th/{total_dirs} dir"
 
                 elif self.parallel_to_sequential.Value:
+                    # parallel_to_sequential
                     target_img_id = clicked_img_id if clicked_img_id is not None else 0
                     if hasattr(self, 'current_page_img_paths') and target_img_id < len(self.current_page_img_paths):
                         current_file_path = self.current_page_img_paths[target_img_id]
@@ -651,7 +653,7 @@ class MulimgViewer (MulimgViewerGui):
                             total_imgs = 0
                         status_text = f"{pos_in_folder}-th/{total_imgs} img {page_num}-th/{total_dirs} dir"
                 else:
-                    # parallel模式(不勾选sequential)
+                    # parallel mode (do not check sequential)
                     if clicked_img_id is not None and hasattr(self.ImgManager, 'flist') and clicked_img_id < len(self.ImgManager.flist):
                         clicked_img_path = self.ImgManager.flist[clicked_img_id]
                         clicked_dir = os.path.dirname(clicked_img_path)
@@ -690,10 +692,10 @@ class MulimgViewer (MulimgViewerGui):
             else:
                 status_text = "0-th/0 img 0-th/0 dir"
 
-            self.m_statusBar1.SetStatusText(status_text, 1)
+            self.ID_status_display.SetStatusText(status_text, 1)
 
-        except Exception as e:
-            self.m_statusBar1.SetStatusText("0-th/0 img 0-th/0 dir", 1)
+        except:
+            self.ID_status_display.SetStatusText("0-th/0 img 0-th/0 dir", 1)
 
     def img_left_click(self, event):
 
@@ -801,7 +803,7 @@ class MulimgViewer (MulimgViewerGui):
         RGBA = self.show_bmp_in_panel.getpixel((int(x), int(y)))
         x = x-xy_grid[0]
         y = y-xy_grid[1]
-        self.m_statusBar1.SetStatusText(str(x)+","+str(y)+"/"+str(RGBA), 0)
+        self.ID_status_display.SetStatusText(str(x)+","+str(y)+"/"+str(RGBA), 0)
 
     def img_left_release(self, event):
         if self.magnifier.Value != False:
@@ -874,6 +876,7 @@ class MulimgViewer (MulimgViewerGui):
         self.on_right_click(event)
 
     def on_right_click(self, event):
+        # Right-click Menu​
         menu = wx.Menu()
         refresh_id = wx.Window.NewControlId()
         menu.Append(refresh_id, "🔄 refresh")
@@ -887,11 +890,10 @@ class MulimgViewer (MulimgViewerGui):
         menu.Append(next_id, "➡️ Next Page")
         menu.Bind(wx.EVT_MENU, self.next_img, id=next_id)
 
-        # 只在parallel+sequential模式下显示保存选项
-
         save_single_id = wx.Window.NewControlId()
         menu.Append(save_single_id, "💾 Save")
         def save_current_page(evt):
+            # Default Save
             self.save_img(evt)
         menu.Bind(wx.EVT_MENU, save_current_page, id=save_single_id)
 
@@ -899,12 +901,14 @@ class MulimgViewer (MulimgViewerGui):
             save_column_id = wx.Window.NewControlId()
             menu.Append(save_column_id, "📄 save(only select current location)")
             def save_selected_column(evt):
+                # save current location images in all folders
                 if not self.out_path_str:
                     self.out_path(evt)
                     if not self.out_path_str:
                         return
                 x, y = event.GetPosition()
                 clicked_grid_id = self.get_img_id_from_point([x, y])
+                # Retrieve ID information
                 if hasattr(self, 'current_page_img_paths') and clicked_grid_id < len(self.current_page_img_paths):
                     target_path = self.current_page_img_paths[clicked_grid_id]
                 else:
@@ -923,8 +927,10 @@ class MulimgViewer (MulimgViewerGui):
                 original_auto_save = self.auto_save_all.Value
                 self.auto_save_all.Value = True
                 self.save_img(evt)
+                # Call the default save function
                 self.auto_save_all.Value = original_auto_save
                 select_folder = os.path.join(self.out_path_str, "select_images")
+                # override it with the new folder selection logic
                 if os.path.exists(select_folder):
                     shutil.rmtree(select_folder)
                 os.makedirs(select_folder, exist_ok=True)
@@ -1043,7 +1049,7 @@ class MulimgViewer (MulimgViewerGui):
         if hasattr(self, 'ImgManager') and hasattr(self.ImgManager, 'layout_params'):
             if len(self.ImgManager.layout_params) > 17:
                 self.ImgManager.layout_params[17][11] = self.title_exif.Value
-                self.load_exif_display_config(force_reload=True)
+                self.ImgManager.load_exif_display_config(force_reload=True)
 
     def inject_new_title(self, new_title, img_id=None):
         try:
@@ -1515,10 +1521,7 @@ class MulimgViewer (MulimgViewerGui):
                 self.img_panel.Children[0].Bind(
                     wx.EVT_KEY_UP, self.key_up_detect)
 
-            # 调用统一的状态栏更新方法
             self.update_status_bar_for_current_page()
-
-            # 更新详细信息(分辨率和图片范围)
             try:
                 if self.ImgManager.type == 2 or ((self.ImgManager.type == 0 or self.ImgManager.type == 1) and self.parallel_sequential.Value):
                     start_img = self.ImgManager.img_count
@@ -1527,8 +1530,6 @@ class MulimgViewer (MulimgViewerGui):
                     detail_text = f"{self.ImgManager.img_resolution[0]}x{self.ImgManager.img_resolution[1]} pixels / {img_range}"
                 else:
                     detail_text = f"{self.ImgManager.img_resolution[0]}x{self.ImgManager.img_resolution[1]} pixels / {self.ImgManager.get_stitch_name()}"
-
-                # 只更新第3和第4个状态栏区域(索引2和3),保持第2个区域(索引1)不变
                 self.SetStatusText_(["-1", "-1", detail_text, "-1"])
             except:
                 self.SetStatusText_(["-1", "-1", f"{self.ImgManager.img_resolution[0]}x{self.ImgManager.img_resolution[1]} pixels", "-1"])

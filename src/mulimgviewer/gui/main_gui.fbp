@@ -9357,7 +9357,7 @@
         <property name="id">wxID_ANY</property>
         <property name="maximum_size"></property>
         <property name="minimum_size"></property>
-        <property name="name">m_statusBar1</property>
+        <property name="name">ID_status_display</property>
         <property name="permission">protected</property>
         <property name="pos"></property>
         <property name="size"></property>

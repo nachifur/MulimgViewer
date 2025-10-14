@@ -769,7 +769,7 @@ class MulimgViewerGui ( wx.Frame ):
 		self.SetSizer( fgSizer1 )
 		self.Layout()
 		fgSizer1.Fit( self )
-		self.m_statusBar1 = self.CreateStatusBar( 4, wx.STB_SIZEGRIP, wx.ID_ANY )
+		self.ID_status_display = self.CreateStatusBar( 4, wx.STB_SIZEGRIP, wx.ID_ANY )
 		self.m_menubar1 = wx.MenuBar( 0 )
 		self.m_menu1 = wx.Menu()
 		self.m_menu11 = wx.Menu()

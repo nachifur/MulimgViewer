@@ -1310,8 +1310,8 @@ class ImgManager(ImgData):
         else:
             bbox = draw_tmp.multiline_textbbox((0, 0), text, font=self.font)
 
-        actual_width = max(title_max_size[0], bbox[2] - bbox[0] + 20)  # 添加20像素边距
-        actual_height = max(bbox[3] - bbox[1], 1)  # 确保高度至少为1
+        actual_width = max(title_max_size[0], bbox[2] - bbox[0] + 20)
+        actual_height = max(bbox[3] - bbox[1], 1)
 
         img = Image.new('RGBA', (actual_width, actual_height), self.gap_color)
         draw = ImageDraw.Draw(img)
@@ -1320,7 +1320,7 @@ class ImgManager(ImgData):
 
         delta_x = max(0,int((title_max_size[0]-title_size[0])/2))
         # one_size = int(int(self.title_setting[8])/2)#int(title_size[0]/int(len(self.title_list[id])))
-        # wrapper = textwrap.TextWrapper(width=int(int(title_max_size[0])/int(one_size)))  # 设置换行的宽度
+        # wrapper = textwrap.TextWrapper(width=int(int(title_max_size[0])/int(one_size)))
         # lines = self.title_list[id].split('\n')
 
         title_position=self.title_setting[10]

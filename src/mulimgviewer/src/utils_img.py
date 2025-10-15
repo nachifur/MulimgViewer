@@ -639,9 +639,9 @@ class ImgManager(ImgData):
         self.ImgF = ImgUtils()
         self.path_custom_func_path = ""
         self.full_exif_cache = {}
-
-        self.exif_display_config = self.load_exif_display_config(force_reload=True)
+        self._full_mappings = None
         self._tag_mappings_cache = None
+        self.exif_display_config = self.load_exif_display_config(force_reload=True)
 
     def get_img_list(self, show_custom_func=False):
         img_list = []
@@ -732,6 +732,27 @@ class ImgManager(ImgData):
         else:
             return self.exif_display_config
 
+    def load_full_mappings(self):
+        if self._full_mappings is not None:
+            return self._full_mappings
+        config_path = Path(__file__).parent.parent / "configs" / "exif_tag_mappings.json"
+        if not config_path.exists():
+            self._full_mappings = {"0th": {}, "Exif": {}, "GPS": {}, "1st": {}}
+            return self._full_mappings
+        try:
+            with open(config_path, 'r', encoding='utf-8') as f:
+                mappings_json = json.load(f)
+                self._full_mappings = {}
+                for ifd_name, mapping in mappings_json.items():
+                    self._full_mappings[ifd_name] = {
+                        int(tag_id): field_name
+                        for tag_id, field_name in mapping.items()
+                    }
+                return self._full_mappings
+        except:
+            self._full_mappings = {"0th": {}, "Exif": {}, "GPS": {}, "1st": {}}
+            return self._full_mappings
+
     def get_complete_tag_mappings(self):
         if self._tag_mappings_cache is None:
             self._initialize_optimized_tag_mappings(self.exif_display_config)
@@ -740,52 +761,8 @@ class ImgManager(ImgData):
     def _initialize_optimized_tag_mappings(self, config):
         enabled_fields = set(k for k, v in config.items() if v)
         enabled_fields.add("UserComment")
-        self._tag_mappings_cache = {
-            ifd_name: {
-                tag_id: field_name
-                for tag_id, field_name in mapping.items()
-                if field_name in enabled_fields
-            }
-            for ifd_name, mapping in self._FULL_MAPPINGS.items()
-        }
-
-    _FULL_MAPPINGS = {
-        "0th": {
-            256: "ImageWidth", 257: "ImageLength", 258: "BitsPerSample", 259: "Compression",
-            262: "PhotometricInterpretation", 271: "Make", 272: "Model", 274: "Orientation",
-            282: "XResolution", 283: "YResolution", 296: "ResolutionUnit", 306: "DateTime",
-                270: "ImageDescription", 305: "Software", 315: "Artist", 33432: "Copyright"
-            },
-            "Exif": {
-                33434: "ExposureTime", 33437: "FNumber", 34850: "ExposureProgram", 34855: "ISOSpeedRatings",
-                36864: "ExifVersion", 36867: "DateTimeOriginal", 36868: "DateTimeDigitized",
-                37121: "ComponentsConfiguration", 37377: "ShutterSpeedValue", 37378: "ApertureValue",
-                37380: "ExposureBiasValue", 37381: "MaxApertureValue", 37383: "MeteringMode",
-                37384: "LightSource", 37385: "Flash", 37386: "FocalLength", 37510: "UserComment",
-                40960: "FlashpixVersion", 40961: "ColorSpace", 40962: "PixelXDimension", 40963: "PixelYDimension",
-                41728: "FileSource", 41729: "SceneType", 37382: "SubjectDistance", 37396: "SubjectArea",
-                37500: "MakerNote", 37379: "BrightnessValue", 41994: "SubjectDistanceRange",
-                42016: "ImageUniqueID", 42032: "CameraOwnerName", 42033: "BodySerialNumber",
-                42034: "LensSpecification", 42035: "LensMake", 42036: "LensModel", 42037: "LensSerialNumber",
-                41989: "FocalLengthIn35mmFilm", 41990: "SceneCaptureType", 41991: "GainControl",
-                41992: "Contrast", 41993: "Saturation", 41994: "Sharpness", 41985: "CustomRendered",
-                41986: "ExposureMode", 41995: "SensingMethod", 41730: "CFAPattern", 40964: "RelatedSoundFile",
-                41483: "FlashEnergy", 41486: "FocalPlaneXResolution", 41487: "FocalPlaneYResolution",
-                41488: "FocalPlaneResolutionUnit", 41493: "ExposureIndex", 41987: "WhiteBalance",
-                41988: "DigitalZoomRatio"
-            },
-            "GPS": {
-                1: "GPSLatitudeRef", 2: "GPSLatitude", 3: "GPSLongitudeRef", 4: "GPSLongitude",
-                5: "GPSAltitudeRef", 6: "GPSAltitude", 7: "GPSTimeStamp", 8: "GPSSatellites",
-                9: "GPSStatus", 10: "GPSMeasureMode", 11: "GPSDOP", 12: "GPSSpeedRef",
-                13: "GPSSpeed", 14: "GPSTrackRef", 15: "GPSTrack", 16: "GPSImgDirectionRef",
-                17: "GPSImgDirection", 18: "GPSMapDatum", 19: "GPSDestLatitudeRef",
-                20: "GPSDestLatitude", 21: "GPSDestLongitudeRef", 22: "GPSDestLongitude",
-                23: "GPSDestBearingRef", 24: "GPSDestBearing", 25: "GPSDestDistanceRef",
-                26: "GPSDestDistance", 27: "GPSProcessingMethod", 28: "GPSAreaInformation",
-                29: "GPSDateStamp", 30: "GPSDifferential", 31: "GPSHPositioningError"
-            }
-        }
+        full_mappings = self.load_full_mappings()
+        self._tag_mappings_cache = full_mappings
 
     def extract_complete_exif(self, img_path):
         try:

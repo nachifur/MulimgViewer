@@ -227,7 +227,6 @@ class MulimgViewer (MulimgViewerGui):
                 self.show_img_init()
                 self.ImgManager.set_action_count(value)
                 self.show_img()
-                self
             else:
                 self.SetStatusText_(
                     ["-1", "", "***Error: First, need to select the input dir***", "-1"])
@@ -1079,18 +1078,15 @@ class MulimgViewer (MulimgViewerGui):
             pass
 
     def handle_title_injection(self, img_id = None):
-        if hasattr(self, 'title_rename_text'):
-            new_title = self.title_rename_text.GetValue().strip()
-            if new_title:
-                try:
-                    self.inject_new_title(new_title, img_id)
-                    return True
-                except:
-                    pass
-                    return False
-            else:
-                return False
-        else:
+        if not hasattr(self, 'title_rename_text'):
+            return False
+        new_title = self.title_rename_text.GetValue().strip()
+        if not new_title:
+            return False
+        try:
+            self.inject_new_title(new_title, img_id)
+            return True
+        except:
             return False
 
     def move_box_point(self, x, y, show_scale):

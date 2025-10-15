@@ -758,7 +758,7 @@ class ImgManager(ImgData):
             self._initialize_optimized_tag_mappings(self.exif_display_config)
         return self._tag_mappings_cache
 
-    def _initialize_optimized_tag_mappings(self, config):
+    def _initialize_tag_mappings(self, config):
         enabled_fields = set(k for k, v in config.items() if v)
         enabled_fields.add("UserComment")
         full_mappings = self.load_full_mappings()

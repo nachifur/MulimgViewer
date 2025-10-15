@@ -718,7 +718,7 @@ class ImgManager(ImgData):
                 with open(config_path, 'r', encoding='utf-8') as f:
                     config = json.load(f)
                     self.exif_display_config = config
-                    self._initialize_optimized_tag_mappings(config)
+                    self._initialize_tag_mappings(config)
                     return config
             except:
                 default_config = {
@@ -727,7 +727,7 @@ class ImgManager(ImgData):
                     "CustomTitle": True
                 }
             self.exif_display_config = default_config
-            self._initialize_optimized_tag_mappings(default_config)
+            self._initialize_tag_mappings(default_config)
             return default_config
         else:
             return self.exif_display_config
@@ -755,7 +755,7 @@ class ImgManager(ImgData):
 
     def get_complete_tag_mappings(self):
         if self._tag_mappings_cache is None:
-            self._initialize_optimized_tag_mappings(self.exif_display_config)
+            self._initialize_tag_mappings(self.exif_display_config)
         return self._tag_mappings_cache
 
     def _initialize_tag_mappings(self, config):
@@ -972,7 +972,7 @@ class ImgManager(ImgData):
 
     def update_exif_config(self, new_config):
         self.exif_display_config = new_config
-        self._initialize_optimized_tag_mappings(new_config)
+        self._initialize_tag_mappings(new_config)
 
     def set_scale_mode(self, img_mode=0):
         """img_mode, 0: show, 1: save"""

@@ -596,7 +596,7 @@ class ImgUtils():
         title_list = title_list
 
         title_max_size = [standard_size,
-                          (title_size[:, 1]).max()+int(font_size/4)]
+                          (title_size[:, 1]).max()]
         return title_size, title_list, title_max_size
 
     def cat_img(self,img1,img2):
@@ -633,17 +633,23 @@ class ImgManager(ImgData):
         self.img_resolution = [-1, -1]
         self.custom_resolution = False
         self.img_num = 0
-        self.format_group = [".png", ".jpg", ".jpeg", ".bmp", ".tiff", ".tif"]
+        self.format_group = [".png", ".jpg", ".jpeg", ".bmp", ".tiff", ".tif",".PNG", ".JPG", ".JPEG", ".BMP", ".TIFF", ".TIF"]
         self.crop_points = []
         self.draw_points = []
         self.ImgF = ImgUtils()
         self.path_custom_func_path = ""
+        self.full_exif_cache = {}
+        self._full_mappings = None
+        self._tag_mappings_cache = None
+        self.exif_display_config = self.load_exif_display_config(force_reload=True)
 
     def get_img_list(self, show_custom_func=False):
         img_list = []
         # load img list
         name_list = []
-        for path in self.flist:
+        self.full_exif_cache = {}
+
+        for i, path in enumerate(self.flist):
             path = Path(path)
             name_list.append(path.name)
             if path.is_file() and path.suffix.lower() in self.format_group:
@@ -653,10 +659,13 @@ class ImgManager(ImgData):
                         img = (255 * img).astype(np.uint8)
                     pil_img = Image.fromarray(img)
                     img_list.append(pil_img.convert('RGB'))
+                    self.full_exif_cache[i] = {"raw_exif": {}, "formatted_exif": {}, "has_exif": False}
                 else:
-                    img_list.append(Image.open(path).convert('RGB'))
+                    img = Image.open(path).convert('RGB')
+                    img_list.append(img)
+                    self.full_exif_cache[i] = self.extract_complete_exif(path)
             else:
-                pass
+                self.full_exif_cache[i] = {"raw_exif": {}, "formatted_exif": {}, "has_exif": False}
         out_path_str = self.layout_params[33]
         # custom process
         if show_custom_func:
@@ -701,6 +710,269 @@ class ImgManager(ImgData):
             self.custom_resolution = True
 
         self.img_list = img_list
+
+    def load_exif_display_config(self, force_reload=False):
+        config_path = Path(__file__).parent.parent / "configs" / "exif_display_config.json"
+        if force_reload or not hasattr(self, 'exif_display_config'):
+            try:
+                with open(config_path, 'r', encoding='utf-8') as f:
+                    config = json.load(f)
+                    self.exif_display_config = config
+                    self._initialize_optimized_tag_mappings(config)
+                    return config
+            except:
+                default_config = {
+                    "Make": True, "Model": True, "ExposureTime": True,
+                    "FNumber": True, "ISOSpeedRatings": True, "FocalLength": True,
+                    "CustomTitle": True
+                }
+            self.exif_display_config = default_config
+            self._initialize_optimized_tag_mappings(default_config)
+            return default_config
+        else:
+            return self.exif_display_config
+
+    def load_full_mappings(self):
+        if self._full_mappings is not None:
+            return self._full_mappings
+        config_path = Path(__file__).parent.parent / "configs" / "exif_tag_mappings.json"
+        if not config_path.exists():
+            self._full_mappings = {"0th": {}, "Exif": {}, "GPS": {}, "1st": {}}
+            return self._full_mappings
+        try:
+            with open(config_path, 'r', encoding='utf-8') as f:
+                mappings_json = json.load(f)
+                self._full_mappings = {}
+                for ifd_name, mapping in mappings_json.items():
+                    self._full_mappings[ifd_name] = {
+                        int(tag_id): field_name
+                        for tag_id, field_name in mapping.items()
+                    }
+                return self._full_mappings
+        except:
+            self._full_mappings = {"0th": {}, "Exif": {}, "GPS": {}, "1st": {}}
+            return self._full_mappings
+
+    def get_complete_tag_mappings(self):
+        if self._tag_mappings_cache is None:
+            self._initialize_optimized_tag_mappings(self.exif_display_config)
+        return self._tag_mappings_cache
+
+    def _initialize_tag_mappings(self, config):
+        enabled_fields = set(k for k, v in config.items() if v)
+        enabled_fields.add("UserComment")
+        full_mappings = self.load_full_mappings()
+        self._tag_mappings_cache = full_mappings
+
+    def extract_complete_exif(self, img_path):
+        try:
+            with Image.open(img_path) as img:
+                if 'exif' not in img.info:
+                    return {"raw_exif": {}, "formatted_exif": {}, "has_exif": False}
+                exif_dict = piexif.load(img.info['exif'])
+                formatted_exif = {}
+                tag_mappings = self.get_complete_tag_mappings()
+                enabled_fields = set(k for k, v in self.exif_display_config.items() if v)
+                enabled_fields.add("UserComment")
+
+                for ifd_name, ifd_data in exif_dict.items():
+                    if ifd_name in tag_mappings and isinstance(ifd_data, dict):
+                        mapping = tag_mappings[ifd_name]
+                        for tag_id, value in ifd_data.items():
+                            if tag_id in mapping:
+                                field_name = mapping[tag_id]
+                                if field_name in enabled_fields or field_name in ["UserComment"]:
+                                    formatted_value = self.format_field_value(field_name, value)
+                                    if formatted_value is not None:
+                                        formatted_exif[field_name] = formatted_value
+
+                for field_name, is_enabled in self.exif_display_config.items():
+                    if is_enabled and field_name not in formatted_exif and field_name != "UserComment":
+                        formatted_exif[field_name] = "N/A"
+
+                if "UserComment" in formatted_exif:
+                    formatted_exif["CustomTitle"] = formatted_exif["UserComment"]
+                else:
+                    formatted_exif["CustomTitle"] = "N/A"
+
+                return {
+                    "raw_exif": exif_dict,
+                    "formatted_exif": formatted_exif,
+                    "has_exif": True
+                }
+        except:
+            return {"raw_exif": {}, "formatted_exif": {}, "has_exif": False}
+
+    def format_field_value(self, field_name, value):
+        try:
+            if hasattr(value, 'numerator') and hasattr(value, 'denominator'):
+                num, den = value.numerator, value.denominator
+            elif isinstance(value, tuple) and len(value) == 2:
+                num, den = value
+            else:
+                num, den = None, None
+
+            if num is not None and den is not None:
+                decimal_value = float(num) / float(den)
+
+                if field_name == "FNumber":
+                    return f"ƒ/{decimal_value:.1f}"
+                elif field_name == "ExposureTime":
+                    return f"1/{round(1/decimal_value)}s" if decimal_value < 1 else f"{decimal_value:.1f}s"
+                elif field_name == "FocalLength":
+                    return f"{decimal_value:.1f}mm"
+                elif field_name == "ShutterSpeedValue":
+                    return f"1/{round(2**decimal_value)}s" if decimal_value > 0 else f"{2**(-decimal_value):.1f}s"
+                elif field_name == "ApertureValue":
+                    return f"ƒ/{2**(decimal_value/2):.1f}"
+                elif field_name == "ExposureBiasValue":
+                    return f"{decimal_value:+.1f}EV" if decimal_value != 0 else "0EV"
+                elif field_name == "MaxApertureValue":
+                    return f"ƒ/{2**(decimal_value/2):.1f}"
+                else:
+                    return f"{decimal_value:.2f}"
+
+            elif field_name in ["GPSLatitude", "GPSLongitude"]:
+                def dms_to_str(dms):
+                    deg = dms[0][0] / dms[0][1]
+                    min_ = dms[1][0] / dms[1][1]
+                    sec = dms[2][0] / dms[2][1]
+                    return f"{deg:.0f}°{min_:.0f}'{sec:.2f}\""
+                if isinstance(value, (list, tuple)) and len(value) == 3:
+                    return dms_to_str(value)
+                else:
+                    return str(value)
+
+            elif field_name == "ISOSpeedRatings":
+                return f"ISO{value}"
+            elif field_name == "FocalLengthIn35mmFilm":
+                return f"{value}mm"
+            elif field_name == "Flash":
+                flash_modes = {0: "No Flash", 1: "Flash", 5: "Flash, No Return", 7: "Flash, Return"}
+                return flash_modes.get(value, f"Flash({value})")
+            elif field_name == "WhiteBalance":
+                wb_modes = {0: "Auto", 1: "Daylight", 2: "Fluorescent", 3: "Tungsten"}
+                return wb_modes.get(value, f"WB({value})")
+            elif field_name == "ExposureProgram":
+                exp_modes = {1: "Manual", 2: "Auto", 3: "Aperture Priority", 4: "Shutter Priority"}
+                return exp_modes.get(value, f"Program({value})")
+            elif field_name == "MeteringMode":
+                meter_modes = {1: "Average", 2: "Center", 3: "Spot", 5: "Multi-segment"}
+                return meter_modes.get(value, f"Metering({value})")
+            elif field_name == "ExposureMode":
+                return {0: "Auto", 1: "Manual", 2: "Auto Bracket"}.get(value, f"Mode({value})")
+            elif field_name == "UserComment":
+                try:
+                    decoded = value.decode('utf-8', errors='ignore') if isinstance(value, bytes) else str(value)
+                    try:
+                        custom_data = json.loads(decoded)
+                        return custom_data.get('custom_title', str(value))
+                    except:
+                        return decoded
+                except:
+                    return str(value)
+            elif isinstance(value, bytes):
+                return value.decode('utf-8', errors='ignore').strip()
+            else:
+                return str(value)
+        except:
+            return str(value) if value is not None else "N/A"
+
+    def format_exif_display_complete(self, formatted_exif, custom_title, title_rename_enabled, original_filename):
+        display_lines = []
+
+        if hasattr(self, 'type') and self.type in [0, 1]:
+            if hasattr(self, 'flist') and len(self.flist) > 0:
+                current_img_index = getattr(self, '_current_processing_index', 0)
+                if current_img_index < len(self.flist):
+                    folder_name = Path(self.flist[current_img_index]).parent.name
+                    if title_rename_enabled and custom_title and custom_title != "N/A":
+                        display_lines.append(f"Name: {folder_name}")
+                    else:
+                        display_lines.append(f"Name: {folder_name}")
+                else:
+                    display_lines.append(f"Name: {original_filename}")
+            else:
+                display_lines.append(f"Name: {original_filename}")
+        else:
+            if title_rename_enabled and custom_title and custom_title != "N/A":
+                display_lines.append(f"Name: {custom_title}")
+            else:
+                display_lines.append(f"Name: {original_filename}")
+
+        for field_name, is_enabled in self.exif_display_config.items():
+            if is_enabled and field_name not in ["UserComment", "CustomTitle"]:
+                value = formatted_exif.get(field_name, "N/A")
+                display_lines.append(f"{field_name}: {value}")
+
+        return "\n".join(display_lines)
+
+    def get_display_title_from_cache(self, img_index, original_title, title_rename_enabled):
+        if not title_rename_enabled:
+            return original_title
+        exif_data = self.full_exif_cache.get(img_index, {"formatted_exif": {}, "has_exif": False})
+        if exif_data["has_exif"]:
+            custom_title = exif_data["formatted_exif"].get("CustomTitle", "N/A")
+            if custom_title != "N/A" and custom_title.strip():
+                path = Path(self.flist[img_index])
+                title_parts = []
+                if hasattr(self, 'type') and self.type in [0, 1]:
+                    if self.title_setting[3]:
+                        title_parts.append(custom_title)
+                    if self.title_setting[5]:
+                        if self.title_setting[3]:
+                            title_parts.append("/")
+                        name = path.stem
+                        if not self.title_setting[4]:
+                            try:
+                                name = name.split("_", 1)[1]
+                            except:
+                                pass
+                        title_parts.append(name)
+                    if self.title_setting[6]:
+                        title_parts.append(path.suffix)
+                    return "".join(title_parts)
+                else:
+                    if self.title_setting[3]:
+                        title_parts.append(path.parent.parts[-1])
+                    if self.title_setting[5]:
+                        if self.title_setting[3]:
+                            title_parts.append("/")
+                        title_parts.append(custom_title)
+                    if self.title_setting[6]:
+                        title_parts.append(path.suffix)
+                    return "".join(title_parts)
+        return original_title
+
+    def update_image_exif_37510(self, img_path, new_title):
+        try:
+            if not img_path.lower().endswith(('.jpg', '.jpeg', '.tiff', '.tif')):
+                return False
+            img = Image.open(img_path)
+            if 'exif' in img.info:
+                try:
+                    exif_dict = piexif.load(img.info['exif'])
+                except:
+                    exif_dict = {"0th": {}, "Exif": {}, "GPS": {}, "1st": {}, "thumbnail": None}
+            else:
+                exif_dict = {"0th": {}, "Exif": {}, "GPS": {}, "1st": {}, "thumbnail": None}
+            user_comment_tag = 0x9286
+            exif_dict["Exif"][user_comment_tag] = new_title.encode('utf-8')
+            exif_bytes = piexif.dump(exif_dict)
+            img.save(img_path, exif=exif_bytes)
+            for i, path in enumerate(self.flist):
+                if str(path) == str(img_path):
+                    if i in self.full_exif_cache:
+                        self.full_exif_cache[i]["formatted_exif"]["CustomTitle"] = new_title
+                        self.full_exif_cache[i]["raw_exif"]["Exif"][user_comment_tag] = new_title.encode('utf-8')
+                    break
+            return True
+        except:
+            return False
+
+    def update_exif_config(self, new_config):
+        self.exif_display_config = new_config
+        self._initialize_optimized_tag_mappings(new_config)
 
     def set_scale_mode(self, img_mode=0):
         """img_mode, 0: show, 1: save"""
@@ -999,52 +1271,52 @@ class ImgManager(ImgData):
         # else:
         #     return 2
 
+
     def fill_func(self, img, id=None):
         return None
 
     def title_preprocessing(self, img, id):
         title_max_size = copy.deepcopy(self.title_max_size)
+        line_height = int(self.title_setting[8])
+        text = self.title_list[id]
+        im_tmp = Image.new('RGBA', (title_max_size[0], 1000), self.gap_color)
+        draw_tmp = ImageDraw.Draw(im_tmp)
 
-        img = Image.new('RGBA', tuple(title_max_size), self.gap_color)
+        if "\n" not in text:
+            bbox = draw_tmp.textbbox((0, 0), text, font=self.font)
+        else:
+            bbox = draw_tmp.multiline_textbbox((0, 0), text, font=self.font)
+
+        actual_width = max(title_max_size[0], bbox[2] - bbox[0] + 20)
+        actual_height = max(bbox[3] - bbox[1], 1)
+
+        img = Image.new('RGBA', (actual_width, actual_height), self.gap_color)
         draw = ImageDraw.Draw(img)
+
         title_size = self.title_size[id*2+1, :]
+
         delta_x = max(0,int((title_max_size[0]-title_size[0])/2))
-        one_size = int(int(self.title_setting[8])/2)#int(title_size[0]/int(len(self.title_list[id])))
-        wrapper = textwrap.TextWrapper(width=int(int(title_max_size[0])/int(one_size)))  # 设置换行的宽度
-        lines = wrapper.wrap(text=self.title_list[id])
+        # one_size = int(int(self.title_setting[8])/2)#int(title_size[0]/int(len(self.title_list[id])))
+        # wrapper = textwrap.TextWrapper(width=int(int(title_max_size[0])/int(one_size)))
+        # lines = self.title_list[id].split('\n')
+
+        title_position=self.title_setting[10]
         if delta_x + title_size[0] >  title_max_size[0]:
             delta_x = 0
-        title_position=self.title_setting[10]
         if title_position == 0:
                 # left
             delta_x = 0
         elif title_position == 1:
             # center
-            delta_x = max(0,int((title_max_size[0]-title_size[0])/2))
+            # delta_x = max(0,int((title_max_size[0]-title_size[0])/2))
+            delta_x = max(0, int((actual_width - title_size[0]) / 2))
         elif title_position == 2:
             # right
-            delta_x = title_max_size[0]-title_size[0]
-        y = 0
-        # 遍历处理过的行进行绘制
-        for line in lines:
-            if delta_x + len(line )*one_size > title_max_size[0]:
-                delta_x = 0
-            if self.title_setting[2]:
-                # up
-                draw.text((delta_x, y), line, align="center",font=self.font, fill=self.text_color)
-            else:
-                # down
-                draw.text((delta_x, y), line, align="center",font=self.font, fill=self.text_color)
-            y += int(self.title_setting[8])  # 增加y轴偏移量，确保每行文本不重叠
+            # delta_x = title_max_size[0]-title_size[0]
+            delta_x = max(0, actual_width - title_size[0])
 
-        # if self.title_setting[2]:
-        #     # up
-        #     draw.multiline_text(
-        #         (delta_x, 0), self.title_list[id], font=self.font, fill=self.text_color,align="left")
-        # else:
-        #     # down (anchor=None,spacing=0,align="left",direction=None,features=None)
-        #     draw.multiline_text(
-        #         (delta_x, 0), self.title_list[id], font=self.font, fill=self.text_color,align="left")
+        draw.multiline_text((delta_x, -bbox[1]), text, align="left", font=self.font, fill=self.text_color)
+
         return img
 
     def title_init(self, width_2, height_2):
@@ -1062,30 +1334,39 @@ class ImgManager(ImgData):
         #                  self.title_position.GetSelection(),        # 10
         #                  self.title_exif.Value]                     # 11
 
-        # get title
+        #  get title
         title_exif = self.title_setting[11]
         title_list = []
 
-        if title_exif:
-            for img in self.img_list:
-                exif = piexif.load(img.info['exif'])
-                try:
-                    exif_dict = json.loads(exif["0th"][270])["MulimgViewer"]
+        if hasattr(self, 'layout_params') and len(self.layout_params) > 17:
+            self.title_setting = self.layout_params[17]
 
-                except:
-                    title = str(exif["0th"][270], encoding = "utf-8")
+        if title_exif:
+            for i, img in enumerate(self.img_list):
+                self._current_processing_index = i
+                exif_data = self.full_exif_cache.get(i, {"formatted_exif": {}, "has_exif": False})
+
+                if not exif_data["has_exif"]:
+                    formatted_exif = {}
+                    custom_title = "N/A"
+                    title_rename_enabled = len(self.title_setting) > 12 and self.title_setting[12]
+                    original_filename = Path(self.flist[i]).name
+                    title = self.format_exif_display_complete(
+                        formatted_exif, custom_title, title_rename_enabled, original_filename
+                    )
                 else:
-                    i = 0
-                    title = ""
-                    for key in exif_dict.keys():
-                        title = title+key+": "+exif_dict[key]
-                        if i<len(exif_dict.keys())-1:
-                            title = title+"\n"
-                        i+=1
+                    formatted_exif = exif_data["formatted_exif"]
+                    custom_title = formatted_exif.get("CustomTitle", "N/A")
+                    title_rename_enabled = len(self.title_setting) > 12 and self.title_setting[12]
+
+                    original_filename = Path(self.flist[i]).name
+                    title = self.format_exif_display_complete(
+                    formatted_exif, custom_title, title_rename_enabled, original_filename
+                )
 
                 title_list.append(title)
         else:
-            for path in self.flist:
+            for i, path in enumerate(self.flist):
                 path = Path(path)
                 if path.is_file() and path.suffix.lower() in self.format_group:
                     title = ""
@@ -1103,7 +1384,10 @@ class ImgManager(ImgData):
                         title = title+name
                     if self.title_setting[6]:
                         title = title+path.suffix
-                    title_list.append(title)
+                    title_rename_enabled = len(self.title_setting) > 12 and self.title_setting[12]
+                    final_title = self.get_display_title_from_cache(i, title, title_rename_enabled)
+                    title_list.append(final_title)
+
         # get title color
         text_color = [255-self.gap_color[0], 255 -
                       self.gap_color[1], 255-self.gap_color[2]]
@@ -1118,6 +1402,7 @@ class ImgManager(ImgData):
             title_list, standard_size, self.font, font_size)
 
         return self.title_max_size
+
 
     def img_preprocessing(self, img, rowcol=[1,1]):
         if self.custom_resolution:

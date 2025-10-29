@@ -312,6 +312,23 @@ class MulimgViewerGui ( wx.Frame ):
 
 		fgSizer3.Add( bSizer18, 1, wx.EXPAND, 5 )
 
+		bSizer_func = wx.BoxSizer( wx.HORIZONTAL )
+
+		self.m_staticText_func = wx.StaticText( self.m_panel4, wx.ID_ANY, u"RowCol(Func)", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText_func.Wrap( -1 )
+
+		bSizer_func.Add( self.m_staticText_func, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+
+		self.magnifer_row_col1 = wx.TextCtrl( self.m_panel4, wx.ID_ANY, u"1,1", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
+		bSizer_func.Add( self.magnifer_row_col1, 0, wx.ALL, 5 )
+
+		self.magnifer_vertical1 = wx.CheckBox( self.m_panel4, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.magnifer_vertical1.SetValue(True)
+		bSizer_func.Add( self.magnifer_vertical1, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+
+
+		fgSizer3.Add( bSizer_func, 1, wx.EXPAND, 5 )
+
 		bSizer10 = wx.BoxSizer( wx.HORIZONTAL )
 
 		self.m_staticText4 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"RowCol->OneImg", wx.DefaultPosition, wx.DefaultSize, 0 )
@@ -422,15 +439,15 @@ class MulimgViewerGui ( wx.Frame ):
 		self.m_staticline221 = wx.StaticLine( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_VERTICAL )
 		wSizer11.Add( self.m_staticline221, 0, wx.EXPAND |wx.ALL, 5 )
 
-		customfunc_choiceChoices = [ u"algorithm1", u"algorithm2" ]
+		customfunc_choiceChoices = [ u"Image Enhancement", u"Image Darkening", u"Gaussian Blur", u"Histogram Equalization" ]
 		self.customfunc_choice = wx.Choice( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, customfunc_choiceChoices, 0 )
 		self.customfunc_choice.SetSelection( 0 )
 		wSizer11.Add( self.customfunc_choice, 0, wx.ALL, 5 )
 
-		self.show_custom_func = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"Show", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.show_custom_func = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"ShowCurrFunc", wx.DefaultPosition, wx.DefaultSize, 0 )
 		wSizer11.Add( self.show_custom_func, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
-		self.show_all_func = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"ShowALLFunc", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.show_all_func = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"ShowAllFunc", wx.DefaultPosition, wx.DefaultSize, 0 )
 		wSizer11.Add( self.show_all_func, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
 		self.m_staticline23 = wx.StaticLine( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_VERTICAL )
@@ -444,6 +461,27 @@ class MulimgViewerGui ( wx.Frame ):
 
 		self.m_staticline15 = wx.StaticLine( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_HORIZONTAL )
 		fgSizer3.Add( self.m_staticline15, 0, wx.EXPAND |wx.ALL, 5 )
+
+		wSizer12 = wx.WrapSizer( wx.HORIZONTAL, wx.WRAPSIZER_DEFAULT_FLAGS )
+
+		self.m_staticText383 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Add Func", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText383.Wrap( -1 )
+
+		wSizer12.Add( self.m_staticText383, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5 )
+
+		self.custom_algorithm_input = wx.TextCtrl( self.m_panel4, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size( 120,-1 ), wx.TE_PROCESS_ENTER )
+		self.custom_algorithm_input.SetForegroundColour( wx.SystemSettings.GetColour( wx.SYS_COLOUR_WINDOWTEXT ) )
+		self.custom_algorithm_input.SetToolTip( u"Enter algorithm folder path and press Enter" )
+
+		wSizer12.Add( self.custom_algorithm_input, 0, wx.ALL, 5 )
+
+		self.remove_algorithm_button = wx.Button( self.m_panel4, wx.ID_ANY, u"Remove", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.remove_algorithm_button.SetToolTip( u"Remove selected custom algorithm" )
+
+		wSizer12.Add( self.remove_algorithm_button, 0, wx.ALL, 5 )
+
+
+		fgSizer3.Add( wSizer12, 1, wx.EXPAND, 5 )
 
 		wSizer7 = wx.WrapSizer( wx.HORIZONTAL, wx.WRAPSIZER_DEFAULT_FLAGS )
 
@@ -733,6 +771,11 @@ class MulimgViewerGui ( wx.Frame ):
 
 		fgSizer3.Add( bSizer12, 1, wx.EXPAND, 5 )
 
+		bSizer22 = wx.BoxSizer( wx.VERTICAL )
+
+
+		fgSizer3.Add( bSizer22, 1, wx.EXPAND, 5 )
+
 		bSizer11 = wx.BoxSizer( wx.HORIZONTAL )
 
 		self.m_staticText12 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Foreground", wx.DefaultPosition, wx.DefaultSize, 0 )
@@ -867,6 +910,7 @@ class MulimgViewerGui ( wx.Frame ):
 		self.load_config_button.Bind( wx.EVT_BUTTON, self.load_configuration )
 		self.save_config_button.Bind( wx.EVT_BUTTON, self.save_configuration )
 		self.reset_config_button.Bind( wx.EVT_BUTTON, self.reset_configuration )
+		self.custom_algorithm_input.Bind( wx.EVT_TEXT_ENTER, self.add_custom_algorithm )
 		self.select_img_box.Bind( wx.EVT_CHECKBOX, self.select_img_box_func )
 		self.title_auto.Bind( wx.EVT_CHECKBOX, self.title_auto_fc )
 		self.title_exif.Bind( wx.EVT_CHECKBOX, self.on_title_exif_changed )
@@ -958,6 +1002,9 @@ class MulimgViewerGui ( wx.Frame ):
 		event.Skip()
 
 	def reset_configuration( self, event ):
+		event.Skip()
+
+	def add_custom_algorithm( self, event ):
 		event.Skip()
 
 	def select_img_box_func( self, event ):

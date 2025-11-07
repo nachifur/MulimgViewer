@@ -234,6 +234,10 @@ class MulimgViewer (MulimgViewerGui):
 
     def save_img(self, event):
         type_ = self.choice_output.GetSelection()
+        save_format = self.save_format.GetSelection()
+        if hasattr(self, 'ImgManager') and hasattr(self.ImgManager, 'layout_params'):
+            if len(self.ImgManager.layout_params) > 35:
+                self.ImgManager.layout_params[35] = save_format
         if self.auto_save_all.Value:
             last_count_img = self.ImgManager.action_count
             self.ImgManager.set_action_count(0)

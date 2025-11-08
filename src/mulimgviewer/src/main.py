@@ -7,15 +7,21 @@ import numpy as np
 import wx
 from ..gui.main_gui import MulimgViewerGui
 
-from .. import __version__ as VERSION  # type: ignore
+from .. import __version__ as VERSION
 from .about import About
 from .index_table import IndexTable
 from .utils import MyTestEvent, get_resource_path
 from .utils_img import ImgManager
+from .custom_func.main import get_available_algorithms
 import json
 import shutil
 import os
-import datetime
+import time
+import shutil
+import sys
+import sys
+import shutil
+import importlib
 
 class MulimgViewer (MulimgViewerGui):
 
@@ -102,6 +108,10 @@ class MulimgViewer (MulimgViewerGui):
         self.colourPicker_draw.Bind(
             wx.EVT_COLOURPICKER_CHANGED, self.draw_color_change)
 
+        # Set ShowAllFunc and ShowCurrFunc mutually exclusive
+        self.show_all_func.Bind(wx.EVT_CHECKBOX, self.on_show_all_func_changed)
+        self.show_custom_func.Bind(wx.EVT_CHECKBOX, self.on_show_custom_func_changed)
+
         # Check the software version
         self.myEVT_MY_TEST = wx.NewEventType()
         EVT_MY_TEST = wx.PyEventBinder(self.myEVT_MY_TEST, 1)
@@ -118,9 +128,12 @@ class MulimgViewer (MulimgViewerGui):
                 self.show_img()
             except:
                 pass
-
         self.load_configuration( None , config_name="output.json")
         self.Bind(wx.EVT_CONTEXT_MENU, self.on_right_click)
+        self.custom_algorithms = []
+        self.refresh_algorithm_list()
+        self.load_configuration( None , config_name="output.json")
+        self.customfunc_choice.Enable(True)
 
     def EVT_MY_TEST_OnHandle(self, event):
         self.about_gui(None, update=True, new_version=event.GetEventArgs())
@@ -135,7 +148,6 @@ class MulimgViewer (MulimgViewerGui):
         try:
             # make request to be an optional depend
             import requests
-
             resp = requests.get(url)
             resp.encoding = 'UTF-8'
             if resp.status_code == 200:
@@ -776,7 +788,22 @@ class MulimgViewer (MulimgViewerGui):
         if self.magnifier.Value != False and self.start_flag == 1:
             x, y = event.GetPosition()
             id = self.get_img_id_from_point([self.x_0, self.y_0])
-            xy_grid = self.ImgManager.xy_grid[id]
+            if hasattr(self.ImgManager, '_show_all_func_enabled') and self.ImgManager._show_all_func_enabled:
+
+                xy_grid_array = np.array(self.ImgManager.xy_grid)
+                xy_cur = np.array([[self.x_0, self.y_0]])
+                xy_cur = np.repeat(xy_cur, xy_grid_array.shape[0], axis=0)
+                res_ = xy_cur - xy_grid_array
+                id_list = []
+                for i in range(xy_grid_array.shape[0]):
+                    if res_[i][0] >= 0 and res_[i][1] >= 0:
+                        id_list.append(i)
+                    else:
+                        id_list.append(0)
+                actual_grid_id = max(id_list)
+                xy_grid = self.ImgManager.xy_grid[actual_grid_id]
+            else:
+                xy_grid = self.ImgManager.xy_grid[id]
             xy_limit = np.array(xy_grid) + \
                 np.array(self.ImgManager.img_resolution_show)
 
@@ -809,7 +836,26 @@ class MulimgViewer (MulimgViewerGui):
             self.start_flag = 0
 
             id = self.get_img_id_from_point([self.x_0, self.y_0])
-            xy_grid = self.ImgManager.xy_grid[id]
+            if hasattr(self.ImgManager, '_show_all_func_enabled') and self.ImgManager._show_all_func_enabled:
+
+                layout_row, layout_col = self.ImgManager._show_all_func_layout
+                original_rows, original_cols = self.ImgManager._original_row_col
+                total_cols = layout_col * original_cols
+                xy_grid_array = np.array(self.ImgManager.xy_grid)
+                xy_cur = np.array([[self.x_0, self.y_0]])
+                xy_cur = np.repeat(xy_cur, xy_grid_array.shape[0], axis=0)
+                res_ = xy_cur - xy_grid_array
+                id_list = []
+                for i in range(xy_grid_array.shape[0]):
+                    if res_[i][0] >= 0 and res_[i][1] >= 0:
+                        id_list.append(i)
+                    else:
+                        id_list.append(0)
+                actual_grid_id = max(id_list)
+                xy_grid = self.ImgManager.xy_grid[actual_grid_id]
+            else:
+                xy_grid = self.ImgManager.xy_grid[id]
+
             x = self.x-xy_grid[0]
             y = self.y-xy_grid[1]
             x_0 = self.x_0 - xy_grid[0]
@@ -832,7 +878,22 @@ class MulimgViewer (MulimgViewerGui):
     def img_right_click(self, event):
         x, y = event.GetPosition()
         id = self.get_img_id_from_point([x, y])
-        xy_grid = self.ImgManager.xy_grid[id]
+        if hasattr(self.ImgManager, '_show_all_func_enabled') and self.ImgManager._show_all_func_enabled:
+
+            xy_grid_array = np.array(self.ImgManager.xy_grid)
+            xy_cur = np.array([[x, y]])
+            xy_cur = np.repeat(xy_cur, xy_grid_array.shape[0], axis=0)
+            res_ = xy_cur - xy_grid_array
+            id_list = []
+            for i in range(xy_grid_array.shape[0]):
+                if res_[i][0] >= 0 and res_[i][1] >= 0:
+                    id_list.append(i)
+                else:
+                    id_list.append(0)
+            actual_grid_id = max(id_list)
+            xy_grid = self.ImgManager.xy_grid[actual_grid_id]
+        else:
+            xy_grid = self.ImgManager.xy_grid[id]
         x = x-xy_grid[0]
         y = y-xy_grid[1]
         menu_triggered = getattr(event, 'menu_triggered', False)
@@ -1140,7 +1201,19 @@ class MulimgViewer (MulimgViewerGui):
                     show_scale = [1, 1]
                 self.show_scale.Value = str(
                     round(show_scale[0], 2))+","+str(round(show_scale[1], 2))
+                for i in range(len(self.xy_magnifier)):
+                    x_0, y_0, x_1, y_1 = self.xy_magnifier[i][0:4]
+                    show_scale_old = self.xy_magnifier[i][4:6]
 
+                    scale_ratio = [show_scale[0]/show_scale_old[0], show_scale[1]/show_scale_old[1]]
+
+                    x_0 = int(x_0 * scale_ratio[0])
+                    x_1 = int(x_1 * scale_ratio[0])
+                    y_0 = int(y_0 * scale_ratio[1])
+                    y_1 = int(y_1 * scale_ratio[1])
+
+                    self.xy_magnifier[i][0:4] = [x_0, y_0, x_1, y_1]
+                    self.xy_magnifier[i][4:6] = show_scale
                 self.refresh(event)
             else:
                 pass
@@ -1202,10 +1275,8 @@ class MulimgViewer (MulimgViewerGui):
                 self.key_status["ctrl"] = 1
         elif event.GetKeyCode() == wx.WXK_SHIFT:
             self.shift_pressed = True
-            # 检查是否同时按下 Shift 和 'S'
         elif event.GetKeyCode() == ord('S'):
             if self.shift_pressed == True:
-                # Shift + S 被按下，做出反应
                 if self.key_status["shift_s"] == 0:
                     self.key_status["shift_s"] = 1
                 elif self.key_status["shift_s"] == 1:
@@ -1435,7 +1506,11 @@ class MulimgViewer (MulimgViewerGui):
                     self.out_path_str,                      # 33
                     self.Magnifier_format.GetSelection(),   # 34
                     self.save_format.GetSelection(),        # 35
-                    self.show_unit.Value ]                  # 36
+                    self.show_unit.Value,                   # 36
+                    self.customfunc_choice.GetSelection(),  # 37
+                    self.show_all_func.Value,               # 38
+                    self.show_all_func_layout.Value,        # 39
+                    self.func_layout_vertical.Value ]       # 40
 
     def show_img(self):
         if hasattr(self, 'm_staticText1'):
@@ -1663,6 +1738,19 @@ class MulimgViewer (MulimgViewerGui):
                 id_list.append(i)
             else:
                 id_list.append(0)
+        current_id = max(id_list)
+
+        if hasattr(self.ImgManager, '_show_all_func_enabled') and self.ImgManager._show_all_func_enabled:
+            layout_row, layout_col = self.ImgManager._show_all_func_layout
+            original_rows, original_cols = self.ImgManager._original_row_col
+            func_layout_vertical = getattr(self.ImgManager, '_func_layout_vertical', False)
+            total_cols = layout_col * original_cols
+            final_row = current_id // total_cols
+            final_col = current_id % total_cols
+            orig_row = final_row % original_rows
+            orig_col = final_col % original_cols
+            original_id = orig_row * original_cols + orig_col
+            current_id = original_id
         if img:
             return self.ImgManager.xy_grids_id_list[max(id_list)]
         else:
@@ -1717,6 +1805,16 @@ class MulimgViewer (MulimgViewerGui):
                     self.checkBox_auto_draw_color.Value = False
                 self.color_list[self.box_id] = self.colourPicker_draw.GetColour()
                 self.refresh(event)
+        event.Skip()
+
+    def on_show_all_func_changed(self, event):
+        if self.show_all_func.GetValue():
+            self.show_custom_func.SetValue(False)
+        event.Skip()
+
+    def on_show_custom_func_changed(self, event):
+        if self.show_custom_func.GetValue():
+            self.show_all_func.SetValue(False)
         event.Skip()
 
     def hidden(self, event):
@@ -1788,6 +1886,10 @@ class MulimgViewer (MulimgViewerGui):
             'title_down_up': self.title_down_up.GetValue(),
             'save_format': self.save_format.GetSelection(),
             'title_show_rename': self.title_show_rename.GetValue(),
+            'customfunc_choice': self.customfunc_choice.GetSelection(),
+            'show_all_func': self.show_all_func.GetValue(),
+            'show_all_func_layout': self.show_all_func_layout.GetValue(),
+            'func_layout_vertical': self.func_layout_vertical.GetValue(),
         }
         flip_cursor_path = Path(get_resource_path(str(Path("configs"))))
         flip_cursor_path = str(flip_cursor_path / "output.json")
@@ -1846,6 +1948,24 @@ class MulimgViewer (MulimgViewerGui):
             self.save_format.SetSelection(data['save_format'])
             self.title_show_rename.SetValue(data.get('title_show_rename', False))
             self.ImgManager.load_exif_display_config(force_reload=True)
+            if 'customfunc_choice' in data:
+                self.customfunc_choice.SetSelection(data['customfunc_choice'])
+            else:
+                self.customfunc_choice.SetSelection(0)
+            if 'show_all_func' in data:
+                self.show_all_func.SetValue(data['show_all_func'])
+            else:
+                self.show_all_func.SetValue(False)
+
+            if 'show_all_func_layout' in data:
+                self.show_all_func_layout.SetValue(data['show_all_func_layout'])
+            else:
+                self.show_all_func_layout.SetValue("2,2")
+
+            if 'func_layout_vertical' in data:
+                self.func_layout_vertical.SetValue(data['func_layout_vertical'])
+            else:
+                self.func_layout_vertical.SetValue(False)
 
     def reset_configuration(self, event):
         json_path = Path(get_resource_path(str(Path("configs"))))
@@ -1853,3 +1973,215 @@ class MulimgViewer (MulimgViewerGui):
         output_s_json_path = str(json_path / "output_s.json")
         self.load_configuration(event, config_name="output_s.json")
         shutil.copy(output_s_json_path, output_json_path)
+
+    def add_custom_algorithm(self, event):
+        algorithm_path = self.custom_algorithm_input.GetValue().strip()
+        if not algorithm_path:
+            return
+        try:
+            source_path = Path(algorithm_path)
+            if not source_path.exists():
+                wx.MessageBox(f"Path does not exist: {algorithm_path}", "Path Error", wx.OK | wx.ICON_ERROR)
+                return
+            if not source_path.is_dir():
+                wx.MessageBox(f"Path must be a folder: {algorithm_path}", "Path Error", wx.OK | wx.ICON_ERROR)
+                return
+            # Check if main.py file exists
+            main_file = source_path / "main.py"
+            if not main_file.exists():
+                wx.MessageBox(f"main.py file missing in algorithm folder: {algorithm_path}", "File Missing", wx.OK | wx.ICON_ERROR)
+                return
+        except Exception as e:
+            wx.MessageBox(f"Path format error: {str(e)}", "Path Error", wx.OK | wx.ICON_ERROR)
+            return
+        algorithm_name = source_path.name
+        current_choices = []
+        for i in range(self.customfunc_choice.GetCount()):
+            current_choices.append(self.customfunc_choice.GetString(i))
+
+        if algorithm_name in current_choices:
+            wx.MessageBox(f"Algorithm '{algorithm_name}' already exists!", "Duplicate Algorithm", wx.OK | wx.ICON_WARNING)
+            return
+        try:
+            self.copy_algorithm_from_path(source_path, algorithm_name)
+
+            self.custom_algorithms.append(algorithm_name)
+            time.sleep(0.1)
+            def update_ui():
+                self.refresh_algorithm_list()
+                try:
+                    modules_to_clear = [
+                        'mulimgviewer.src.custom_func.main',
+                        'custom_func.main',
+                        '.custom_func.main'
+                    ]
+                    for module_name in modules_to_clear:
+                        if module_name in sys.modules:
+                            del sys.modules[module_name]
+                    available_algorithms = get_available_algorithms()
+
+                    if algorithm_name in available_algorithms:
+                        index = available_algorithms.index(algorithm_name)
+                        self.customfunc_choice.SetSelection(index)
+                except Exception as e:
+                    pass
+                self.custom_algorithm_input.SetValue("")
+                self.customfunc_choice.Refresh()
+                self.customfunc_choice.Update()
+                self.Update()
+                parent = self.customfunc_choice.GetParent()
+                if parent:
+                    parent.Refresh()
+                    parent.Update()
+                self.Layout()
+                wx.MessageBox(f"Algorithm '{algorithm_name}' added successfully from path '{algorithm_path}'!", "Add Success", wx.OK | wx.ICON_INFORMATION)
+            wx.CallAfter(update_ui)
+        except Exception as e:
+            wx.MessageBox(f"Failed to add algorithm: {str(e)}", "Add Failed", wx.OK | wx.ICON_ERROR)
+
+    def copy_algorithm_from_path(self, source_path, algorithm_name):
+        target_folder = Path(__file__).parent / "custom_func" / algorithm_name
+        try:
+            if target_folder.exists():
+                shutil.rmtree(str(target_folder))
+            shutil.copytree(str(source_path), str(target_folder))
+        except Exception as e:
+            raise e
+
+    def remove_custom_algorithm(self, event):
+        selected_index = self.customfunc_choice.GetSelection()
+        if selected_index == wx.NOT_FOUND:
+            wx.MessageBox("Please select an algorithm to remove first!", "No Algorithm Selected", wx.OK | wx.ICON_WARNING)
+            return
+        selected_algorithm = self.customfunc_choice.GetString(selected_index)
+        dlg = wx.MessageDialog(self, f"Are you sure you want to remove algorithm '{selected_algorithm}'?", "Confirm Removal", wx.YES_NO | wx.ICON_QUESTION)
+        if dlg.ShowModal() == wx.ID_YES:
+            try:
+                self.remove_custom_algorithm_folder(selected_algorithm)
+
+                if selected_algorithm in self.custom_algorithms:
+                    self.custom_algorithms.remove(selected_algorithm)
+
+                modules_to_clear = [
+                    'mulimgviewer.src.custom_func.main',
+                    'custom_func.main',
+                    '.custom_func.main'
+                ]
+                for module_name in modules_to_clear:
+                    if module_name in sys.modules:
+                        del sys.modules[module_name]
+                self.refresh_algorithm_list()
+                wx.MessageBox(f"Algorithm '{selected_algorithm}' removed successfully!", "Remove Success", wx.OK | wx.ICON_INFORMATION)
+            except Exception as e:
+                wx.MessageBox(f"Failed to remove algorithm: {str(e)}", "Remove Failed", wx.OK | wx.ICON_ERROR)
+        dlg.Destroy()
+
+    def create_custom_algorithm_template(self, algorithm_name):
+        algorithm_folder = Path(__file__).parent / "custom_func" / algorithm_name
+        desktop_algorithm_folder = Path.home() / "Desktop" / algorithm_name
+        if desktop_algorithm_folder.exists() and (desktop_algorithm_folder / "main.py").exists():
+            try:
+                if algorithm_folder.exists():
+                    shutil.rmtree(str(algorithm_folder))
+                shutil.copytree(str(desktop_algorithm_folder), str(algorithm_folder))
+                return
+            except Exception as e:
+                pass
+        if not algorithm_folder.exists():
+            os.makedirs(str(algorithm_folder))
+        template_content = f'''\'\'\'
+{algorithm_name} Algorithm
+Custom algorithm - Implement your image processing logic here
+\'\'\'
+from PIL import Image
+from pathlib import Path
+import os
+
+def custom_process_img(img):
+    """
+    Custom image processing function
+    input: image(pillow)
+    output: image(pillow)
+
+    Implement your image processing algorithm here
+    Examples:
+    - img = img.convert('L')  # Convert to grayscale
+    - img = img.transpose(Image.FLIP_LEFT_RIGHT)  # Horizontal flip
+    """
+    # Default: no processing, return original image
+    return img
+
+def main(img_list, save_path, name_list=None, algorithm_name="{algorithm_name}"):
+    """
+    Batch process image list
+    """
+    i = 0
+    out_img_list = []
+    if save_path != "":
+        flag_save = True
+        save_path = Path(save_path) / "custom_func_output" / algorithm_name
+        if not save_path.exists():
+            os.makedirs(str(save_path))
+    else:
+        flag_save = False
+
+    for img in img_list:
+        img = custom_process_img(img)
+
+        out_img_list.append(img)
+        if flag_save:
+            if isinstance(name_list, list):
+                img_path = save_path / name_list[i]
+            else:
+                img_path = save_path / (str(i) + ".png")
+            img.save(str(img_path))
+        i += 1
+    return out_img_list
+'''
+
+        template_path = algorithm_folder / "main.py"
+        with open(template_path, 'w', encoding='utf-8') as f:
+            f.write(template_content)
+
+    def remove_custom_algorithm_folder(self, algorithm_name):
+        algorithm_folder = Path(__file__).parent / "custom_func" / algorithm_name
+        if algorithm_folder.exists():
+            try:
+                shutil.rmtree(str(algorithm_folder))
+            except Exception as e:
+                pass
+
+    def refresh_algorithm_list(self):
+        try:
+            modules_to_clear = [
+                'mulimgviewer.src.custom_func.main',
+                'custom_func.main',
+                '.custom_func.main'
+            ]
+            for module_name in modules_to_clear:
+                if module_name in sys.modules:
+                    del sys.modules[module_name]
+            try:
+                if 'custom_func.main' in sys.modules:
+                    importlib.reload(sys.modules['custom_func.main'])
+            except:
+                pass
+            available_algorithms = get_available_algorithms()
+            current_selection = self.customfunc_choice.GetSelection()
+            current_algorithm = ""
+            if current_selection != wx.NOT_FOUND:
+                current_algorithm = self.customfunc_choice.GetString(current_selection)
+            self.customfunc_choice.Clear()
+            for i, algorithm in enumerate(available_algorithms):
+                self.customfunc_choice.Append(algorithm)
+            if current_algorithm and current_algorithm in available_algorithms:
+                index = available_algorithms.index(current_algorithm)
+                self.customfunc_choice.SetSelection(index)
+            else:
+                self.customfunc_choice.SetSelection(0)
+        except:
+            self.customfunc_choice.Clear()
+            default_algorithms = ["Image Enhancement", "Image Darkening", "Gaussian Blur", "Histogram Equalization"]
+            for algorithm in default_algorithms:
+                self.customfunc_choice.Append(algorithm)
+            self.customfunc_choice.SetSelection(0)

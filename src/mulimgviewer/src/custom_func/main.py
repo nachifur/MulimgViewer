@@ -27,6 +27,8 @@ def get_available_algorithms():
 
 def load_algorithm_functions(algorithm_type):
     available_algorithms = get_available_algorithms()
+    if not available_algorithms:
+        return load_default_functions()
     if algorithm_type < 0 or algorithm_type >= len(available_algorithms):
         algorithm_type = 0
     algorithm_name = available_algorithms[algorithm_type]

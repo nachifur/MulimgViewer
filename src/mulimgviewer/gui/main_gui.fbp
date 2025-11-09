@@ -3792,7 +3792,7 @@
                                       <property name="validator_style">wxFILTER_NONE</property>
                                       <property name="validator_type">wxDefaultValidator</property>
                                       <property name="validator_variable"></property>
-                                      <property name="value">1,1</property>
+                                      <property name="value">2,2</property>
                                       <property name="window_extra_style"></property>
                                       <property name="window_name"></property>
                                       <property name="window_style"></property>
@@ -5343,7 +5343,7 @@
                                       <property name="caption"></property>
                                       <property name="caption_visible">1</property>
                                       <property name="center_pane">0</property>
-                                      <property name="choices">&quot;Image Enhancement&quot; &quot;Image Darkening&quot; &quot;Gaussian Blur&quot; &quot;Histogram Equalization&quot;</property>
+                                      <property name="choices">&quot;Image Enhancement&quot; &quot;Image Darkening&quot; &quot;Gaussian Blur&quot;</property>
                                       <property name="close_button">1</property>
                                       <property name="context_help"></property>
                                       <property name="context_menu">1</property>
@@ -5781,6 +5781,7 @@
                                       <property name="window_extra_style"></property>
                                       <property name="window_name"></property>
                                       <property name="window_style"></property>
+                                      <event name="OnTextEnter">add_custom_algorithm</event>
                                     </object>
                                   </object>
                                   <object class="sizeritem" expanded="true">
@@ -5855,6 +5856,7 @@
                                       <property name="window_extra_style"></property>
                                       <property name="window_name"></property>
                                       <property name="window_style"></property>
+                                      <event name="OnButtonClick">remove_custom_algorithm</event>
                                     </object>
                                   </object>
                                 </object>

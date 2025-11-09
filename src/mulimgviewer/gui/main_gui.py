@@ -319,7 +319,7 @@ class MulimgViewerGui ( wx.Frame ):
 
 		bSizer_func.Add( self.m_staticText_func, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
-		self.show_all_func_layout = wx.TextCtrl( self.m_panel4, wx.ID_ANY, u"1,1", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
+		self.show_all_func_layout = wx.TextCtrl( self.m_panel4, wx.ID_ANY, u"2,2", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
 		bSizer_func.Add( self.show_all_func_layout, 0, wx.ALL, 5 )
 
 		self.func_layout_vertical = wx.CheckBox( self.m_panel4, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
@@ -439,7 +439,7 @@ class MulimgViewerGui ( wx.Frame ):
 		self.m_staticline221 = wx.StaticLine( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_VERTICAL )
 		wSizer11.Add( self.m_staticline221, 0, wx.EXPAND |wx.ALL, 5 )
 
-		customfunc_choiceChoices = [ u"Image Enhancement", u"Image Darkening", u"Gaussian Blur", u"Histogram Equalization" ]
+		customfunc_choiceChoices = [ u"Image Enhancement", u"Image Darkening", u"Gaussian Blur" ]
 		self.customfunc_choice = wx.Choice( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, customfunc_choiceChoices, 0 )
 		self.customfunc_choice.SetSelection( 0 )
 		wSizer11.Add( self.customfunc_choice, 0, wx.ALL, 5 )
@@ -908,6 +908,8 @@ class MulimgViewerGui ( wx.Frame ):
 		self.load_config_button.Bind( wx.EVT_BUTTON, self.load_configuration )
 		self.save_config_button.Bind( wx.EVT_BUTTON, self.save_configuration )
 		self.reset_config_button.Bind( wx.EVT_BUTTON, self.reset_configuration )
+		self.custom_algorithm_input.Bind( wx.EVT_TEXT_ENTER, self.add_custom_algorithm )
+		self.m_button10.Bind( wx.EVT_BUTTON, self.remove_custom_algorithm )
 		self.select_img_box.Bind( wx.EVT_CHECKBOX, self.select_img_box_func )
 		self.title_auto.Bind( wx.EVT_CHECKBOX, self.title_auto_fc )
 		self.title_exif.Bind( wx.EVT_CHECKBOX, self.on_title_exif_changed )
@@ -999,6 +1001,12 @@ class MulimgViewerGui ( wx.Frame ):
 		event.Skip()
 
 	def reset_configuration( self, event ):
+		event.Skip()
+
+	def add_custom_algorithm( self, event ):
+		event.Skip()
+
+	def remove_custom_algorithm( self, event ):
 		event.Skip()
 
 	def select_img_box_func( self, event ):

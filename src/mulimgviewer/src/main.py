@@ -131,9 +131,8 @@ class MulimgViewer (MulimgViewerGui):
         self.load_configuration( None , config_name="output.json")
         self.Bind(wx.EVT_CONTEXT_MENU, self.on_right_click)
         self.custom_algorithms = []
-        self.refresh_algorithm_list()
+        # self.refresh_algorithm_list()
         self.load_configuration( None , config_name="output.json")
-        self.customfunc_choice.Enable(True)
 
     def EVT_MY_TEST_OnHandle(self, event):
         self.about_gui(None, update=True, new_version=event.GetEventArgs())
@@ -2023,7 +2022,7 @@ class MulimgViewer (MulimgViewerGui):
                     if algorithm_name in available_algorithms:
                         index = available_algorithms.index(algorithm_name)
                         self.customfunc_choice.SetSelection(index)
-                except Exception as e:
+                except:
                     pass
                 self.custom_algorithm_input.SetValue("")
                 self.customfunc_choice.Refresh()

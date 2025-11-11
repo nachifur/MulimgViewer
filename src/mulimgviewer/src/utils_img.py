@@ -13,6 +13,7 @@ import imageio
 
 from .data import ImgData
 from .utils import rgb2hex
+from .custom_func.main import get_available_algorithms
 
 class ImgUtils():
     """The set of functional programming modules"""
@@ -669,7 +670,8 @@ class ImgManager(ImgData):
         out_path_str = self.layout_params[33]
         # custom process
         if show_custom_func:
-            img_list = main_custom_func(img_list,out_path_str,name_list=name_list)
+            algorithm_type = self.layout_params[37] if len(self.layout_params) > 37 else 0
+            img_list = main_custom_func(img_list,out_path_str,name_list=name_list,algorithm_type=algorithm_type)
         # resolution
         width_ = []
         height_ = []
@@ -710,6 +712,144 @@ class ImgManager(ImgData):
             self.custom_resolution = True
 
         self.img_list = img_list
+
+    def get_all_func_img_list(self, show_all_func_layout, original_row_col=None, func_layout_vertical=False):
+        if original_row_col:
+            max_images_needed = original_row_col[0] * original_row_col[1]
+        else:
+            max_images_needed = len(self.flist)
+        original_img_list = []
+        name_list = []
+        loaded_count = 0
+
+        for path in self.flist:
+            if loaded_count >= max_images_needed:
+                break
+            path = Path(path)
+            name_list.append(path.name)
+            if path.is_file() and path.suffix.lower() in self.format_group:
+                if path.suffix.lower() in [".tiff", ".tif"]:
+                    img = imageio.imread(path)
+                    if img.dtype != np.uint8:
+                        img = (255 * img).astype(np.uint8)
+                    pil_img = Image.fromarray(img)
+                    original_img_list.append(pil_img.convert('RGB'))
+                else:
+                    original_img_list.append(Image.open(path).convert('RGB'))
+                loaded_count += 1
+            else:
+                pass
+
+        available_algorithms = get_available_algorithms()
+        all_func_img_lists = []
+        out_path_str = self.layout_params[33]
+        all_func_img_lists.append(original_img_list)
+        for i, algorithm_name in enumerate(available_algorithms):
+            pure_img_list = []
+            for img in original_img_list:
+                pure_img_list.append(img.copy())
+            algorithm_img_list = main_custom_func(pure_img_list, out_path_str, name_list=name_list, algorithm_type=i)
+            all_func_img_lists.append(algorithm_img_list)
+        try:
+            layout_row, layout_col = map(int, show_all_func_layout.split(','))
+        except:
+            layout_row, layout_col = 2, 2
+        final_img_list = []
+        num_images_per_set = len(original_img_list)
+
+        if original_row_col:
+            original_rows, original_cols = original_row_col
+        else:
+            try:
+                import math
+                original_rows = int(math.sqrt(num_images_per_set))
+                original_cols = math.ceil(num_images_per_set / original_rows)
+            except:
+                original_rows = 1
+                original_cols = num_images_per_set
+
+        enable_group_arrangement = True
+        if enable_group_arrangement:
+            img_groups = []
+            for orig_img_idx in range(num_images_per_set):
+                group = []
+                for func_idx in range(len(all_func_img_lists)):
+                    if orig_img_idx < len(all_func_img_lists[func_idx]):
+                        group.append(all_func_img_lists[func_idx][orig_img_idx])
+                    elif len(original_img_list) > orig_img_idx:
+
+                        group.append(original_img_list[orig_img_idx])
+                img_groups.append(group)
+            final_img_list = []
+            total_rows = layout_row * original_rows
+            total_cols = layout_col * original_cols
+            for final_row in range(total_rows):
+                for final_col in range(total_cols):
+                    if func_layout_vertical:
+                        func_row = final_row // original_rows
+                        func_col = final_col // original_cols
+                        func_idx = func_col * layout_row + func_row
+                    else:
+                        func_row = final_row // original_rows
+                        func_col = final_col // original_cols
+                        func_idx = func_row * layout_col + func_col
+                    orig_row = final_row % original_rows
+                    orig_col = final_col % original_cols
+                    orig_img_idx = orig_row * original_cols + orig_col
+                    if orig_img_idx < len(img_groups) and func_idx < len(img_groups[orig_img_idx]):
+                        final_img_list.append(img_groups[orig_img_idx][func_idx])
+                    else:
+                        if len(original_img_list) > 0:
+                            blank_img = Image.new('RGB', original_img_list[0].size, (255, 255, 255))
+                            blank_img._is_blank = True
+                            final_img_list.append(blank_img)
+                        else:
+                            blank_img = Image.new('RGB', (512, 512), (255, 255, 255))
+                            blank_img._is_blank = True
+                            final_img_list.append(blank_img)
+        else:
+            total_rows = original_rows * layout_row
+            total_cols = layout_col * original_cols
+
+            for final_row in range(total_rows):
+                for final_col in range(total_cols):
+                    orig_img_row = final_row // layout_row
+                    orig_img_col = final_col // layout_col
+                    func_row = final_row % layout_row
+                    func_col = final_col % layout_col
+                    orig_img_idx = orig_img_row * original_cols + orig_img_col
+                    func_idx = func_row * layout_col + func_col
+                    if orig_img_idx < num_images_per_set and func_idx < len(all_func_img_lists):
+                        final_img_list.append(all_func_img_lists[func_idx][orig_img_idx])
+                    else:
+                        if len(original_img_list) > 0:
+
+                            blank_img = Image.new('RGB', original_img_list[0].size, (255, 255, 255))
+                            blank_img._is_blank = True
+                            final_img_list.append(blank_img)
+                        else:
+                            blank_img = Image.new('RGB', (512, 512), (255, 255, 255))
+                            blank_img._is_blank = True
+                            final_img_list.append(blank_img)
+
+        final_img_list_with_id = []
+        for idx, img in enumerate(final_img_list):
+            if enable_group_arrangement:
+                final_row = idx // total_cols
+                final_col = idx % total_cols
+                orig_row = final_row % original_rows
+                orig_col = final_col % original_cols
+                orig_img_id = orig_row * original_cols + orig_col
+            else:
+                final_row = idx // total_cols
+                final_col = idx % total_cols
+                orig_img_row = final_row // layout_row
+                orig_img_col = final_col // layout_col
+                orig_img_id = orig_img_row * original_cols + orig_img_col
+            if not hasattr(img, '_original_id'):
+                img._original_id = orig_img_id
+            final_img_list_with_id.append(img)
+        return final_img_list_with_id
 
     def load_exif_display_config(self, force_reload=False):
         config_path = Path(__file__).parent.parent / "configs" / "exif_display_config.json"
@@ -994,7 +1134,31 @@ class ImgManager(ImgData):
     def stitch_img_init(self, img_mode, draw_points, first_run=True):
         """img_mode, 0: show, 1: save"""
         # init
-        self.get_img_list(show_custom_func=self.layout_params[32])  # Generate image list
+        show_all_func = len(self.layout_params) > 38 and self.layout_params[38]
+        if show_all_func:
+
+            current_row_col = self.layout_params[0].copy()
+            show_all_func_layout = self.layout_params[39] if len(self.layout_params) > 39 else "2,2"
+            func_layout_vertical = self.layout_params[40] if len(self.layout_params) > 40 else False
+            self.img_list = self.get_all_func_img_list(show_all_func_layout, current_row_col, func_layout_vertical)
+
+            self._blank_img_ids = set()
+            for idx, img in enumerate(self.img_list):
+                if hasattr(img, '_is_blank') and img._is_blank:
+                    self._blank_img_ids.add(idx)
+
+            layout_row, layout_col = map(int, show_all_func_layout.split(','))
+
+            self.layout_params[0] = [current_row_col[0] * layout_row, current_row_col[1] * layout_col]
+
+            self._show_all_func_enabled = True
+            self._show_all_func_layout = (layout_row, layout_col)
+            self._original_row_col = current_row_col
+            self._func_layout_vertical = func_layout_vertical
+
+        else:
+            self._show_all_func_enabled = False
+            self.get_img_list(show_custom_func=self.layout_params[32])  # Generate image list
         self.set_scale_mode(img_mode=img_mode)
         if img_mode == 0:
             self.draw_points = draw_points
@@ -1259,8 +1423,15 @@ class ImgManager(ImgData):
                     if (up and self.title_setting[2] and self.title_setting[1]) or ((not up) and self.title_setting[2] and self.title_setting[1]):
                         crop_point[1] = crop_point[1]+offset[1]
                         crop_point[3] = crop_point[3]+offset[1]
+                if hasattr(self, '_blank_img_ids') and self._blank_img_ids:
+                    filtered_xy_grid = []
+                    for idx, img_id in enumerate(self.xy_grids_id_list):
+                        if img_id not in self._blank_img_ids:
+                            filtered_xy_grid.append(self.xy_grid[idx])
+                else:
+                    filtered_xy_grid = self.xy_grid
                 self.img = self.ImgF.draw_rectangle(
-                    self.img, self.xy_grid, crop_points, self.layout_params[9], line_width=self.layout_params[10][0])
+                    self.img, filtered_xy_grid, crop_points, self.layout_params[9], line_width=self.layout_params[10][0])
             if self.layout_params[32]:
                 self.customfunc_img = self.img
         return 0
@@ -1276,7 +1447,35 @@ class ImgManager(ImgData):
         return None
 
     def title_preprocessing(self, img, id):
+        if hasattr(self, '_blank_img_ids') and id in self._blank_img_ids:
+            return None
+        if id >= len(self.title_list):
+            id = 0
         title_max_size = copy.deepcopy(self.title_max_size)
+        img = Image.new('RGBA', tuple(title_max_size), self.gap_color)
+        draw = ImageDraw.Draw(img)
+        original_id = id
+        if hasattr(self, '_original_row_col') and len(self.layout_params) > 38 and self.layout_params[38]:
+            show_all_func_layout = self.layout_params[39] if len(self.layout_params) > 39 else "2,2"
+            func_layout_vertical = getattr(self, '_func_layout_vertical', False)
+            try:
+                layout_row, layout_col = map(int, show_all_func_layout.split(','))
+                original_rows, original_cols = self._original_row_col
+                total_cols = layout_col * original_cols
+                final_row = id // total_cols
+                final_col = id % total_cols
+                orig_row = final_row % original_rows
+                orig_col = final_col % original_cols
+                original_id = orig_row * original_cols + orig_col
+            except:
+                original_id = 0
+
+        if original_id >= len(self.title_list):
+            original_id = 0
+
+        if original_id * 2 + 1 >= self.title_size.shape[0]:
+            original_id = 0
+
         line_height = int(self.title_setting[8])
         text = self.title_list[id]
         im_tmp = Image.new('RGBA', (title_max_size[0], 1000), self.gap_color)
@@ -1289,22 +1488,19 @@ class ImgManager(ImgData):
 
         actual_width = max(title_max_size[0], bbox[2] - bbox[0] + 20)
         actual_height = max(bbox[3] - bbox[1], 1)
-
         img = Image.new('RGBA', (actual_width, actual_height), self.gap_color)
         draw = ImageDraw.Draw(img)
-
-        title_size = self.title_size[id*2+1, :]
-
+        title_size = self.title_size[original_id*2+1, :]
         delta_x = max(0,int((title_max_size[0]-title_size[0])/2))
         # one_size = int(int(self.title_setting[8])/2)#int(title_size[0]/int(len(self.title_list[id])))
         # wrapper = textwrap.TextWrapper(width=int(int(title_max_size[0])/int(one_size)))
         # lines = self.title_list[id].split('\n')
-
         title_position=self.title_setting[10]
         if delta_x + title_size[0] >  title_max_size[0]:
             delta_x = 0
+        title_position=self.title_setting[10]
         if title_position == 0:
-                # left
+            # left
             delta_x = 0
         elif title_position == 1:
             # center
@@ -1316,7 +1512,6 @@ class ImgManager(ImgData):
             delta_x = max(0, actual_width - title_size[0])
 
         draw.multiline_text((delta_x, -bbox[1]), text, align="left", font=self.font, fill=self.text_color)
-
         return img
 
     def title_init(self, width_2, height_2):
@@ -1337,20 +1532,39 @@ class ImgManager(ImgData):
         #  get title
         title_exif = self.title_setting[11]
         title_list = []
-
         if hasattr(self, 'layout_params') and len(self.layout_params) > 17:
             self.title_setting = self.layout_params[17]
+        is_show_all_func = hasattr(self, '_show_all_func_enabled') and self._show_all_func_enabled
 
         if title_exif:
             for i, img in enumerate(self.img_list):
-                self._current_processing_index = i
-                exif_data = self.full_exif_cache.get(i, {"formatted_exif": {}, "has_exif": False})
+                if is_show_all_func:
+                    if hasattr(img, '_original_id'):
+                        original_id = img._original_id
+                    else:
+                        if hasattr(self, '_original_row_col'):
+                            original_rows, original_cols = self._original_row_col
+                            layout_row, layout_col = self._show_all_func_layout
+                            total_cols = layout_col * original_cols
+                            final_row = i // total_cols
+                            final_col = i % total_cols
+                            orig_row = final_row % original_rows
+                            orig_col = final_col % original_cols
+                            original_id = orig_row * original_cols + orig_col
+                        else:
+                            original_id = 0
+                else:
+                    original_id = i
+                if original_id >= len(self.flist):
+                    original_id = 0
+                self._current_processing_index = original_id
+                exif_data = self.full_exif_cache.get(original_id, {"formatted_exif": {}, "has_exif": False})
 
                 if not exif_data["has_exif"]:
                     formatted_exif = {}
                     custom_title = "N/A"
                     title_rename_enabled = len(self.title_setting) > 12 and self.title_setting[12]
-                    original_filename = Path(self.flist[i]).name
+                    original_filename = Path(self.flist[original_id]).name
                     title = self.format_exif_display_complete(
                         formatted_exif, custom_title, title_rename_enabled, original_filename
                     )
@@ -1358,36 +1572,65 @@ class ImgManager(ImgData):
                     formatted_exif = exif_data["formatted_exif"]
                     custom_title = formatted_exif.get("CustomTitle", "N/A")
                     title_rename_enabled = len(self.title_setting) > 12 and self.title_setting[12]
-
-                    original_filename = Path(self.flist[i]).name
+                    original_filename = Path(self.flist[original_id]).name
                     title = self.format_exif_display_complete(
-                    formatted_exif, custom_title, title_rename_enabled, original_filename
-                )
+                        formatted_exif, custom_title, title_rename_enabled, original_filename
+                    )
 
                 title_list.append(title)
         else:
-            for i, path in enumerate(self.flist):
-                path = Path(path)
+            for i, path_or_img in enumerate(self.img_list if is_show_all_func else self.flist):
+                if is_show_all_func:
+                    if isinstance(path_or_img, Image.Image):
+                        if hasattr(path_or_img, '_original_id'):
+                            original_id = path_or_img._original_id
+                        else:
+                            if hasattr(self, '_original_row_col'):
+                                original_rows, original_cols = self._original_row_col
+                                layout_row, layout_col = self._show_all_func_layout
+                                total_cols = layout_col * original_cols
+                                final_row = i // total_cols
+                                final_col = i % total_cols
+                                orig_row = final_row % original_rows
+                                orig_col = final_col % original_cols
+                                original_id = orig_row * original_cols + orig_col
+                            else:
+                                original_id = 0
+                    else:
+                        original_id = i
+
+                    if original_id >= len(self.flist):
+                        original_id = 0
+
+                    path = Path(self.flist[original_id])
+                else:
+                    path = Path(path_or_img)
+                    original_id = i
+
                 if path.is_file() and path.suffix.lower() in self.format_group:
                     title = ""
                     if self.title_setting[3]:
-                        title = title+path.parent.parts[-1]
+                        title = title + path.parent.parts[-1]
                     if self.title_setting[5]:
                         if self.title_setting[3]:
-                            title = title+"/"
+                            title = title + "/"
                         name = path.stem
                         if not self.title_setting[4]:
                             try:
                                 name = name.split("_", 1)[1]
                             except:
                                 pass
-                        title = title+name
+                        title = title + name
                     if self.title_setting[6]:
-                        title = title+path.suffix
+                        title = title + path.suffix
                     title_rename_enabled = len(self.title_setting) > 12 and self.title_setting[12]
-                    final_title = self.get_display_title_from_cache(i, title, title_rename_enabled)
+                    final_title = self.get_display_title_from_cache(original_id, title, title_rename_enabled)
                     title_list.append(final_title)
 
+            if len(title_list) < len(self.img_list):
+                title_list += [""] * (len(self.img_list) - len(title_list))
+
+        self.title_list = title_list
         # get title color
         text_color = [255-self.gap_color[0], 255 -
                       self.gap_color[1], 255-self.gap_color[2]]
@@ -1403,8 +1646,8 @@ class ImgManager(ImgData):
 
         return self.title_max_size
 
-
     def img_preprocessing(self, img, rowcol=[1,1]):
+        is_blank = hasattr(img, '_is_blank') and img._is_blank
         if self.custom_resolution:
             # custom image resolution
             width, height = self.img_resolution
@@ -1433,6 +1676,8 @@ class ImgManager(ImgData):
                       rowcol[1]*sub_img_width:(rowcol[1]+1)*sub_img_width, :]
             img = Image.fromarray(np.uint8(img))
 
+        if is_blank:
+            img._is_blank = True
         return img
 
     def crop_points_process(self, crop_points, img_mode=0):
@@ -1512,6 +1757,17 @@ class ImgManager(ImgData):
 
     def magnifier_preprocessing(self, img, img_mode=0, id=0):
         """img_mode, 0: show, 1: save"""
+        is_blank = False
+        if hasattr(self, '_blank_img_ids') and id in self._blank_img_ids:
+            is_blank = True
+        if hasattr(img, '_is_blank') and img._is_blank:
+            is_blank = True
+        if is_blank:
+            if img_mode:
+                return []
+            else:
+                return None
+
         # crop images
         if img_mode:
             magnifier_scale = self.layout_params[31]
@@ -1632,6 +1888,7 @@ class ImgManager(ImgData):
                     dir_name.append("stitch_images")
                     dir_name.append("magnifier_images")
 
+                show_all_func = len(self.layout_params) > 38 and self.layout_params[38]
                 if out_type == 2:
                     if not self.layout_params[32]:
                         self.save_select(dir_name)
@@ -1653,24 +1910,35 @@ class ImgManager(ImgData):
                 elif out_type == 7:
                     if not self.layout_params[32]:
                         self.save_select(dir_name[0:-2])
-                    self.save_stitch(dir_name[-2])
-                    self.save_magnifier(dir_name[-1])
-
+                    if show_all_func:
+                        original_custom_func = self.layout_params[32]
+                        original_show_all_func = self.layout_params[38]
+                        original_row_col = self.layout_params[0].copy()
+                        self.layout_params[32] = False
+                        self.layout_params[38] = False
+                        if hasattr(self, '_original_row_col') and self._original_row_col:
+                            self.layout_params[0] = self._original_row_col.copy()
+                        self.save_stitch(dir_name[-2])
+                        self.save_magnifier(dir_name[-1])
+                        self.layout_params[32] = original_custom_func
+                        self.layout_params[38] = original_show_all_func
+                        self.layout_params[0] = original_row_col
+                    else:
+                        self.save_stitch(dir_name[-2])
+                        self.save_magnifier(dir_name[-1])
+                if show_all_func:
+                    self.save_all_func_images(out_type)
                 if sum(self.check) != 0:
                     return 3
-
                 if sum(self.check_1) != 0:
                     return 2
-
                 if sum(self.check_2) != 0:
                     return 4
-
                 return 0
             else:
                 return 1
         except:
             return 5
-
 
     def save_select(self, dir_name):
         if self.layout_params[32]:
@@ -1699,7 +1967,6 @@ class ImgManager(ImgData):
                         else:
                             self.check.append(0)
             else:
-
                 if not self.parallel_to_sequential:
                     for i in range(len(dir_name)):
                         if not (Path(self.out_path_str)/"select_images"/dir_name[i]).exists():
@@ -1739,8 +2006,15 @@ class ImgManager(ImgData):
         if self.type == 3: # read file list from a list file
             name_f = "from_file_"+name_f
         if self.layout_params[32]:
-            if not (Path(self.out_path_str)/ "custom_func_output" / dir_name).exists():
-                os.makedirs(Path(self.out_path_str)/ "custom_func_output" / dir_name)
+            available_algorithms = get_available_algorithms()
+            algorithm_type = self.layout_params[37] if len(self.layout_params) > 37 else 0
+            if algorithm_type < len(available_algorithms):
+                algorithm_name = available_algorithms[algorithm_type]
+            else:
+                algorithm_name = "Unknown"
+            stitch_dir = Path(self.out_path_str) / "custom_func_output" / algorithm_name / "stitch_images"
+            if not stitch_dir.exists():
+                os.makedirs(stitch_dir)
         else:
             if not (Path(self.out_path_str)/dir_name).exists():
                 os.makedirs(Path(self.out_path_str) / dir_name)
@@ -1778,6 +2052,10 @@ class ImgManager(ImgData):
             name_f = "from_file_"+name_f
         if not (Path(out_path_str)/"stitch_img_and_customfunc_img").exists():
             os.makedirs(Path(out_path_str) / "stitch_img_and_customfunc_img")
+        original_row_col = self.layout_params[0].copy()
+        original_show_all_func = self.layout_params[38] if len(self.layout_params) > 38 else False
+        if original_show_all_func and hasattr(self, '_original_row_col') and self._original_row_col:
+            self.layout_params[0] = self._original_row_col.copy()
         if self.layout_params[7]:
             self.check_1.append(self.stitch_images(
                 1, copy.deepcopy(self.draw_points)))
@@ -1787,6 +2065,7 @@ class ImgManager(ImgData):
                     1, copy.deepcopy(self.draw_points)))
             else:
                 self.check_1.append(self.stitch_images(1))
+        self.layout_params[0] = original_row_col
         f_path_output = Path(out_path_str) / "stitch_img_and_customfunc_img" / name_f
         img = self.show_stitch_img_and_customfunc_img(show_custom_func)
         self.ImgF.save_img_diff_format(f_path_output, img, save_format=self.layout_params[35])
@@ -1811,14 +2090,31 @@ class ImgManager(ImgData):
             return str(name)
 
     def save_magnifier(self, dir_name):
+        if not self.layout_params[32]:
+            if not (Path(self.out_path_str)/dir_name).exists():
+                os.makedirs(Path(self.out_path_str) / dir_name)
+            if not (Path(self.out_path_str)/"origin_img_with_box").exists():
+                os.makedirs(Path(self.out_path_str) / "origin_img_with_box")
         try:
             tmp = self.crop_points
         except:
             pass
         else:
+            has_draw_points = hasattr(self, 'draw_points') and self.draw_points and len(self.draw_points) > 0
+            if not has_draw_points:
+                self.check_2.append(0)
+                return
             try:
                 if self.layout_params[32]:
-                    self.get_img_list(show_custom_func=self.layout_params[32])  # Generate image list
+                    from .custom_func.main import get_available_algorithms
+                    available_algorithms = get_available_algorithms()
+                    algorithm_type = self.layout_params[37] if len(self.layout_params) > 37 else 0
+                    if algorithm_type < len(available_algorithms):
+                        algorithm_name = available_algorithms[algorithm_type]
+                    else:
+                        algorithm_name = "Unknown"
+                    base_custom_path = Path(self.out_path_str) / "custom_func_output" / algorithm_name / "magnifier_images"
+                self.get_img_list(show_custom_func=self.layout_params[32])
                 self.crop_points_process(
                     copy.deepcopy(self.draw_points), img_mode=1)
                 if self.type == 3: # read file list from a list file
@@ -1900,11 +2196,17 @@ class ImgManager(ImgData):
         # save origin image
         sub_dir_name = "origin_img_with_box"
         if self.layout_params[32]:
-            if not (Path(self.out_path_str)/ "custom_func_output" ).exists():
-                os.makedirs(Path(self.out_path_str)/ "custom_func_output" )
-            if not (Path(self.out_path_str)/ "custom_func_output" /sub_dir_name).exists():
-                os.makedirs(Path(self.out_path_str)/ "custom_func_output"  /
-                            sub_dir_name)
+            available_algorithms = get_available_algorithms()
+            algorithm_type = self.layout_params[37] if len(self.layout_params) > 37 else 0
+            if algorithm_type < len(available_algorithms):
+                algorithm_name = available_algorithms[algorithm_type]
+            else:
+                algorithm_name = "Unknown"
+            base_custom_path = Path(self.out_path_str) / "custom_func_output" / algorithm_name
+            if not base_custom_path.exists():
+                os.makedirs(base_custom_path)
+            if not (base_custom_path/sub_dir_name).exists():
+                os.makedirs(base_custom_path/sub_dir_name)
         else:
             if not (Path(self.out_path_str)).exists():
                 os.makedirs(Path(self.out_path_str))
@@ -1933,6 +2235,43 @@ class ImgManager(ImgData):
                 self.ImgF.save_img_diff_format(f_path_output,img,save_format=self.layout_params[35])
             i += 1
 
+    def save_all_func_images(self, out_type):
+        from .custom_func.main import get_available_algorithms
+        available_algorithms = get_available_algorithms()
+        original_custom_func_state = self.layout_params[32]
+        original_algorithm_type = self.layout_params[37] if len(self.layout_params) > 37 else 0
+        original_show_all_func = self.layout_params[38] if len(self.layout_params) > 38 else False
+        if hasattr(self, '_original_row_col') and self._original_row_col:
+            base_row_col = self._original_row_col.copy()
+            original_row_col = self.layout_params[0].copy()
+        else:
+            base_row_col = self.layout_params[0].copy()
+            original_row_col = self.layout_params[0].copy()
+        for algorithm_idx in range(len(available_algorithms)):
+            self.layout_params[32] = True
+            self.layout_params[37] = algorithm_idx
+            self.layout_params[38] = False
+            self.layout_params[0] = base_row_col.copy()
+            algorithm_name = available_algorithms[algorithm_idx]
+            self.get_img_list(show_custom_func=True)
+            # out_type: 1=stitch, 4=magnifier, 5=stitch+magnifier, 7=select+stitch+magnifier
+            if out_type in [1, 3, 5, 7, 8]:
+                try:
+                    self.save_stitch("stitch_images")
+                except:
+                    pass
+            if out_type in [4, 5, 6, 7, 8]:
+                try:
+                    self.save_magnifier("magnifier_images")
+                except:
+                    pass
+        self.layout_params[32] = original_custom_func_state
+        self.layout_params[0] = original_row_col
+        if len(self.layout_params) > 37:
+            self.layout_params[37] = original_algorithm_type
+        if len(self.layout_params) > 38:
+            self.layout_params[38] = original_show_all_func
+
     def get_img_row_col(self, i):
         if i != None and self.one_img:
             # row_col_one_img
@@ -1959,15 +2298,12 @@ class ImgManager(ImgData):
             return None
 
     def rotate(self, id):
-        img = Image.open(self.flist[id]).convert(
-            'RGB').transpose(Image.ROTATE_270)
+        img = Image.open(self.flist[id]).convert('RGB').transpose(Image.ROTATE_270)
         self.ImgF.save_img_diff_format(self.flist[id],img,save_format=self.layout_params[35])
 
     def flip(self, id, FLIP_TOP_BOTTOM=False):
         if FLIP_TOP_BOTTOM:
-            img = Image.open(self.flist[id]).convert(
-                'RGB').transpose(Image.FLIP_TOP_BOTTOM)
+            img = Image.open(self.flist[id]).convert('RGB').transpose(Image.FLIP_TOP_BOTTOM)
         else:
-            img = Image.open(self.flist[id]).convert(
-                'RGB').transpose(Image.FLIP_LEFT_RIGHT)
+            img = Image.open(self.flist[id]).convert('RGB').transpose(Image.FLIP_LEFT_RIGHT)
         self.ImgF.save_img_diff_format(self.flist[id],img,save_format=self.layout_params[35])

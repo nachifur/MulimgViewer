@@ -1,6 +1,5 @@
 '''
-Image Enhancement Algorithm
-图像增强算法 - 提升图像对比度
+Image Enhancement Algorithm - Boosting Image Contrast
 '''
 from PIL import ImageEnhance
 from pathlib import Path

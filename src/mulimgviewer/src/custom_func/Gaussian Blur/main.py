@@ -1,3 +1,6 @@
+"""
+Gaussian Blur Image Processing Module
+"""
 from PIL import ImageFilter
 from pathlib import Path
 import os

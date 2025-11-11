@@ -7,7 +7,7 @@ import os
 
 def custom_process_img(img):
     """
-    图像增强处理函数
+    Image Enhancement Processing Function
     input: image(pillow)
     output: image(pillow)
     """
@@ -17,7 +17,7 @@ def custom_process_img(img):
 
 def main(img_list, save_path, name_list=None, algorithm_name="Image Enhancement"):
     """
-    批量处理图像列表
+    Batch process image list
     """
     i = 0
     out_img_list = []

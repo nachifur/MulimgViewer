@@ -2115,6 +2115,8 @@ class ImgManager(ImgData):
                     else:
                         algorithm_name = "Unknown"
                     base_custom_path = Path(self.out_path_str) / "processing_function" /algorithm_name / "magnifier_images"
+                else:
+                    base_custom_path = Path(self.out_path_str) / "processing_function" / "origin" / dir_name
                 self.get_img_list(show_custom_func=self.layout_params[32])
                 self.crop_points_process(copy.deepcopy(self.draw_points), img_mode=1)
                 if self.type == 3: # read file list from a list file
@@ -2214,7 +2216,6 @@ class ImgManager(ImgData):
             i += 1
 
     def save_all_func_images(self, out_type):
-        from .custom_func.main import get_available_algorithms
         available_algorithms = get_available_algorithms()
         original_custom_func_state = self.layout_params[32]
         original_algorithm_type = self.layout_params[37] if len(self.layout_params) > 37 else 0
@@ -2233,6 +2234,11 @@ class ImgManager(ImgData):
             algorithm_name = available_algorithms[algorithm_idx]
             self.get_img_list(show_custom_func=True)
             # out_type: 1=stitch, 4=magnifier, 5=stitch+magnifier, 7=select+stitch+magnifier
+            if out_type in [2, 3, 6, 7]:
+                try:
+                    self.save_select_for_algorithm(algorithm_name)
+                except:
+                    pass
             if out_type in [1, 3, 5, 7, 8]:
                 try:
                     self.save_stitch("stitch_images")
@@ -2274,6 +2280,51 @@ class ImgManager(ImgData):
             return L[i]
         else:
             return None
+
+    def save_select_for_algorithm(self, algorithm_name):
+        base_select = Path(self.out_path_str) / "processing_function" / algorithm_name / "select_images"
+        if self.type == 3:
+            sub_dir = "from_file"
+            if not (base_select / sub_dir).exists():
+                os.makedirs(base_select / sub_dir)
+            for i_ in range(min(self.count_per_action, len(self.img_list))):
+                if self.action_count * self.count_per_action + i_ < len(self.path_list):
+                    f_path = self.path_list[self.action_count * self.count_per_action + i_]
+                    str_ = Path(f_path).parent.stem + "_" + Path(f_path).stem + ".png"
+                    try:
+                        img = self.img_list[i_]
+                        img = self.img_preprocessing(img, rowcol=self.get_img_row_col(i_))
+                        f_path_output = base_select / sub_dir / str_
+                        self.ImgF.save_img_diff_format(
+                            f_path_output,
+                            img,
+                            save_format=self.layout_params[35]
+                        )
+                        self.check.append(0)
+                    except:
+                        pass
+                        self.check.append(1)
+        else:  # type == 0, 1, 2
+            for i, img in enumerate(self.img_list):
+                if i >= len(self.flist):
+                    break
+                folder_name = Path(self.flist[i]).parent.stem
+                folder_path = base_select / folder_name
+                if not folder_path.exists():
+                    os.makedirs(folder_path)
+                try:
+                    img_processed = self.img_preprocessing(img, rowcol=self.get_img_row_col(i))
+                    file_name = Path(self.flist[i]).name
+                    f_path_output = folder_path / file_name
+                    self.ImgF.save_img_diff_format(
+                        f_path_output,
+                        img_processed,
+                        save_format=self.layout_params[35]
+                    )
+                    self.check.append(0)
+                except Exception as e:
+                    print(f"[ERROR] Failed to save {file_name}: {e}")
+                    self.check.append(1)
 
     def rotate(self, id):
         img = Image.open(self.flist[id]).convert('RGB').transpose(Image.ROTATE_270)

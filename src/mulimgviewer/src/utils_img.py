@@ -1946,9 +1946,9 @@ class ImgManager(ImgData):
         else:
             if self.type == 3: # read file list from a list file
                 dir_name = ["from_file"]
-                if not (Path(self.out_path_str)/"select_images"/dir_name[0]).exists():
-                    os.makedirs(Path(self.out_path_str) /
-                                "select_images" / dir_name[0])
+                base_select = Path(self.out_path_str) / "processing_function" /"origin"/"select_images" / dir_name[0]
+                if not base_select.exists():
+                    os.makedirs(base_select)
                 for i_ in range(self.count_per_action):
                     if self.action_count*self.count_per_action+i_ < len(self.path_list):
                         f_path = self.path_list[self.action_count *
@@ -1969,9 +1969,9 @@ class ImgManager(ImgData):
             else:
                 if not self.parallel_to_sequential:
                     for i in range(len(dir_name)):
-                        if not (Path(self.out_path_str)/"select_images"/dir_name[i]).exists():
+                        if not (Path(self.out_path_str)/ "processing_function" / "origin"/ "select_images"/dir_name[i]).exists():
                             os.makedirs(Path(self.out_path_str) /
-                                        "select_images" / dir_name[i])
+                                        "processing_function" /"origin"/"select_images"/ dir_name[i])
                         if self.layout_params[22]:  # parallel_sequential
                             num_per_img = self.layout_params[1][0] * \
                                 self.layout_params[1][1]
@@ -1982,10 +1982,10 @@ class ImgManager(ImgData):
                             name = Path(f_path).name
                             try:
                                 if self.layout_params[11]:
-                                    move(f_path, Path(self.out_path_str) / "select_images" /
+                                    move(f_path, Path(self.out_path_str) / "processing_function" / "origin"/ "select_images" /
                                         dir_name[i] / name)
                                 else:
-                                    copyfile(f_path, Path(self.out_path_str) / "select_images" /
+                                    copyfile(f_path, Path(self.out_path_str) / "processing_function" / "origin"/"select_images" /
                                             dir_name[i] / name)
                             except:
                                 self.check.append(1)
@@ -2012,12 +2012,13 @@ class ImgManager(ImgData):
                 algorithm_name = available_algorithms[algorithm_type]
             else:
                 algorithm_name = "Unknown"
-            stitch_dir = Path(self.out_path_str) / "custom_func_output" / algorithm_name / "stitch_images"
+            stitch_dir = Path(self.out_path_str) / "processing_function" / algorithm_name / "stitch_images"
             if not stitch_dir.exists():
                 os.makedirs(stitch_dir)
         else:
-            if not (Path(self.out_path_str)/dir_name).exists():
-                os.makedirs(Path(self.out_path_str) / dir_name)
+            stitch_dir = Path(self.out_path_str) / "processing_function" / "origin"/ dir_name
+            if not stitch_dir.exists():
+                os.makedirs(stitch_dir)
         if self.layout_params[7]:
             self.check_1.append(self.stitch_images(
                 1, copy.deepcopy(self.draw_points)))
@@ -2028,10 +2029,10 @@ class ImgManager(ImgData):
             else:
                 self.check_1.append(self.stitch_images(1))
         if self.layout_params[32]:
-            f_path_output_customfunc = Path(self.out_path_str)/ "custom_func_output" / dir_name / name_f
+            f_path_output_customfunc = stitch_dir / name_f
             self.ImgF.save_img_diff_format(f_path_output_customfunc,self.customfunc_img,save_format=self.layout_params[35])
         else:
-            f_path_output = Path(self.out_path_str) / dir_name / name_f
+            f_path_output = stitch_dir / name_f
             self.ImgF.save_img_diff_format(f_path_output,self.img,save_format=self.layout_params[35])
 
     def show_stitch_img_and_customfunc_img(self, show_custom_func):
@@ -2050,8 +2051,9 @@ class ImgManager(ImgData):
         name_f = self.get_stitch_name()
         if self.type == 3: # read file list from a list file
             name_f = "from_file_"+name_f
-        if not (Path(out_path_str)/"stitch_img_and_customfunc_img").exists():
-            os.makedirs(Path(out_path_str) / "stitch_img_and_customfunc_img")
+        base_dir = Path(out_path_str) /"stitch_img_and_customfunc_img"
+        if not base_dir.exists():
+            os.makedirs(base_dir)
         original_row_col = self.layout_params[0].copy()
         original_show_all_func = self.layout_params[38] if len(self.layout_params) > 38 else False
         if original_show_all_func and hasattr(self, '_original_row_col') and self._original_row_col:
@@ -2093,8 +2095,6 @@ class ImgManager(ImgData):
         if not self.layout_params[32]:
             if not (Path(self.out_path_str)/dir_name).exists():
                 os.makedirs(Path(self.out_path_str) / dir_name)
-            if not (Path(self.out_path_str)/"origin_img_with_box").exists():
-                os.makedirs(Path(self.out_path_str) / "origin_img_with_box")
         try:
             tmp = self.crop_points
         except:
@@ -2106,25 +2106,23 @@ class ImgManager(ImgData):
                 return
             try:
                 if self.layout_params[32]:
-                    from .custom_func.main import get_available_algorithms
                     available_algorithms = get_available_algorithms()
                     algorithm_type = self.layout_params[37] if len(self.layout_params) > 37 else 0
                     if algorithm_type < len(available_algorithms):
                         algorithm_name = available_algorithms[algorithm_type]
                     else:
                         algorithm_name = "Unknown"
-                    base_custom_path = Path(self.out_path_str) / "custom_func_output" / algorithm_name / "magnifier_images"
+                    base_custom_path = Path(self.out_path_str) / "processing_function" /algorithm_name / "magnifier_images"
                 self.get_img_list(show_custom_func=self.layout_params[32])
                 self.crop_points_process(
                     copy.deepcopy(self.draw_points), img_mode=1)
                 if self.type == 3: # read file list from a list file
                     sub_dir_name = "from_file"
                     if self.layout_params[32]:
-                        if not (Path(self.out_path_str)/dir_name).exists():
-                            os.makedirs(Path(self.out_path_str)/ "custom_func_output" / dir_name)
-                        if not (Path(self.out_path_str)/dir_name/sub_dir_name).exists():
-                            os.makedirs(Path(self.out_path_str)/ "custom_func_output" /
-                                        dir_name/sub_dir_name)
+                        if not base_custom_path.exists():
+                            os.makedirs(base_custom_path)
+                        if not (base_custom_path/sub_dir_name).exists():
+                            os.makedirs(base_custom_path/sub_dir_name)
                     else:
                         if not (Path(self.out_path_str)/dir_name).exists():
                             os.makedirs(Path(self.out_path_str) / dir_name)
@@ -2149,8 +2147,7 @@ class ImgManager(ImgData):
                             i = 0
                             for img in img_list:
                                 if self.layout_params[32]:
-                                    f_path_output = Path(
-                                        self.out_path_str)/ "custom_func_output" / dir_name/sub_dir_name / (str_+"_magnifier_"+str(i)+".png")
+                                    f_path_output = base_custom_path/sub_dir_name / (str_+"_magnifier_"+str(i)+".png")
                                     self.ImgF.save_img_diff_format(f_path_output,img,save_format=self.layout_params[35])
                                 else:
                                     f_path_output = Path(
@@ -2165,8 +2162,8 @@ class ImgManager(ImgData):
                         img_list = self.magnifier_preprocessing(
                             self.img_preprocessing(img, rowcol=self.get_img_row_col(i)), img_mode=1)
                         if self.layout_params[32]:
-                            if not (Path(self.out_path_str)/ "custom_func_output"/dir_name/(Path(self.flist[i]).parent).stem).exists():
-                                os.makedirs(Path(self.out_path_str)/ "custom_func_output" / dir_name /
+                            if not (base_custom_path/(Path(self.flist[i]).parent).stem).exists():
+                                os.makedirs(base_custom_path /
                                             (Path(self.flist[i]).parent).stem)
                         else:
                             if not (Path(self.out_path_str)/dir_name/(Path(self.flist[i]).parent).stem).exists():
@@ -2175,7 +2172,7 @@ class ImgManager(ImgData):
                         ii = 0
                         for img in img_list:
                             if self.layout_params[32]:
-                                f_path_output = Path(self.out_path_str)/ "custom_func_output" / dir_name / (Path(self.flist[i]).parent).stem / (
+                                f_path_output = base_custom_path / (Path(self.flist[i]).parent).stem / (
                                     (Path(self.flist[i]).parent).stem+"_"+Path(self.flist[i]).stem+"_magnifier_"+str(ii)+".png")
                                 self.ImgF.save_img_diff_format(f_path_output,img,save_format=self.layout_params[35])
                             else:
@@ -2202,17 +2199,17 @@ class ImgManager(ImgData):
                 algorithm_name = available_algorithms[algorithm_type]
             else:
                 algorithm_name = "Unknown"
-            base_custom_path = Path(self.out_path_str) / "custom_func_output" / algorithm_name
+            base_custom_path = Path(self.out_path_str) / "processing_function"/ algorithm_name
             if not base_custom_path.exists():
                 os.makedirs(base_custom_path)
             if not (base_custom_path/sub_dir_name).exists():
                 os.makedirs(base_custom_path/sub_dir_name)
         else:
-            if not (Path(self.out_path_str)).exists():
-                os.makedirs(Path(self.out_path_str))
-            if not (Path(self.out_path_str)/sub_dir_name).exists():
-                os.makedirs(Path(self.out_path_str) /
-                            sub_dir_name)
+            base_custom_path = Path(self.out_path_str) / "processing_function" / "origin"
+            if not base_custom_path.exists():
+                os.makedirs(base_custom_path)
+            if not (base_custom_path/sub_dir_name).exists():
+                os.makedirs(base_custom_path/sub_dir_name)
         i = 0
         for img in self.img_list:
             img = self.img_preprocessing(img, rowcol=self.get_img_row_col(i))
@@ -2220,18 +2217,16 @@ class ImgManager(ImgData):
                 img = self.ImgF.draw_rectangle(img, self.xy_grid, self.crop_points,
                                                self.layout_params[9], line_width=self.layout_params[10][0], single_box=True)
             if self.layout_params[32]:
-                f_path_output = Path(self.out_path_str)/ "custom_func_output"/sub_dir_name/(Path(self.flist[i]).parent).stem / (
+                f_path_output = Path(self.out_path_str)/ "processing_function"/ algorithm_name/ sub_dir_name/(Path(self.flist[i]).parent).stem / (
                     (Path(self.flist[i]).parent).stem+"_"+Path(self.flist[i]).stem+".png")
-                if not (Path(self.out_path_str)/ "custom_func_output"/sub_dir_name/(Path(self.flist[i]).parent).stem).exists():
-                    os.makedirs(Path(self.out_path_str)/ "custom_func_output" /
-                                sub_dir_name/(Path(self.flist[i]).parent).stem)
+                if not (Path(self.out_path_str)/ "processing_function"/ algorithm_name/ sub_dir_name/(Path(self.flist[i]).parent).stem).exists():
+                    os.makedirs(Path(self.out_path_str)/ "processing_function"/ algorithm_name/ sub_dir_name/(Path(self.flist[i]).parent).stem)
                 self.ImgF.save_img_diff_format(f_path_output,img,save_format=self.layout_params[35])
             else:
-                f_path_output = Path(self.out_path_str)/sub_dir_name/(Path(self.flist[i]).parent).stem / (
+                f_path_output = base_custom_path/ sub_dir_name/(Path(self.flist[i]).parent).stem / (
                     (Path(self.flist[i]).parent).stem+"_"+Path(self.flist[i]).stem+".png")
-                if not (Path(self.out_path_str)/sub_dir_name/(Path(self.flist[i]).parent).stem).exists():
-                    os.makedirs(Path(self.out_path_str) /
-                                sub_dir_name/(Path(self.flist[i]).parent).stem)
+                if not (base_custom_path/ sub_dir_name/(Path(self.flist[i]).parent).stem).exists():
+                    os.makedirs(base_custom_path/ sub_dir_name/(Path(self.flist[i]).parent).stem)
                 self.ImgF.save_img_diff_format(f_path_output,img,save_format=self.layout_params[35])
             i += 1
 

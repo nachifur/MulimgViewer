@@ -23,7 +23,7 @@ def main(img_list, save_path, name_list=None, algorithm_name="Image Darkening"):
 
         out_img_list.append(img)
         if flag_save:
-            if isinstance(name_list, list):
+            if isinstance(name_list, list) and i < len(name_list):
                 img_path = save_path / name_list[i]
             else:
                 img_path = save_path / (str(i) + ".png")

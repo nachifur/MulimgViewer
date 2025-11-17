@@ -52,7 +52,7 @@ def load_default_functions():
             code = f.read()
         exec(code, namespace)
         return namespace
-    except Exception as e:
+    except:
         return {
             'custom_process_img': lambda img: img,
             'main': lambda img_list, save_path, name_list=None: img_list

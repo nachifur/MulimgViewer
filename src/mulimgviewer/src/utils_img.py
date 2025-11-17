@@ -1890,13 +1890,11 @@ class ImgManager(ImgData):
 
                 show_all_func = len(self.layout_params) > 38 and self.layout_params[38]
                 if out_type == 2:
-                    if not self.layout_params[32]:
-                        self.save_select(dir_name)
+                    self.save_select(dir_name)
                 elif out_type == 1:
                     self.save_stitch(dir_name[-1])
                 elif out_type == 3:
-                    if not self.layout_params[32]:
-                        self.save_select(dir_name[0:-1])
+                    self.save_select(dir_name[0:-1])
                     self.save_stitch(dir_name[-1])
                 elif out_type == 4:
                     self.save_magnifier(dir_name[-1])
@@ -1904,12 +1902,10 @@ class ImgManager(ImgData):
                     self.save_stitch(dir_name[0])
                     self.save_magnifier(dir_name[-1])
                 elif out_type == 6:
-                    if not self.layout_params[32]:
-                        self.save_select(dir_name[0:-1])
+                    self.save_select(dir_name[0:-1])
                     self.save_magnifier(dir_name[-1])
                 elif out_type == 7:
-                    if not self.layout_params[32]:
-                        self.save_select(dir_name[0:-2])
+                    self.save_select(dir_name[0:-2])
                     if show_all_func:
                         original_custom_func = self.layout_params[32]
                         original_show_all_func = self.layout_params[38]
@@ -1941,65 +1937,75 @@ class ImgManager(ImgData):
             return 5
 
     def save_select(self, dir_name):
+        paths_to_save = []
+        base_origin = Path(self.out_path_str) / "processing_function" / "origin"
+        paths_to_save.append(("origin", base_origin))
         if self.layout_params[32]:
-            pass
-        else:
-            if self.type == 3: # read file list from a list file
-                dir_name = ["from_file"]
-                base_select = Path(self.out_path_str) / "processing_function" /"origin"/"select_images" / dir_name[0]
+            available_algorithms = get_available_algorithms()
+            algorithm_type = self.layout_params[37] if len(self.layout_params) > 37 else 0
+            if algorithm_type < len(available_algorithms):
+                algorithm_name = available_algorithms[algorithm_type]
+                base_algorithm = Path(self.out_path_str) / "processing_function" / algorithm_name
+                paths_to_save.append((algorithm_name, base_algorithm))
+
+        for path_label, base_path in paths_to_save:
+            if self.type == 3:  # read file list from a list file
+                dir_name_local = ["from_file"]
+                base_select = base_path / "select_images" / dir_name_local[0]
                 if not base_select.exists():
                     os.makedirs(base_select)
                 for i_ in range(self.count_per_action):
-                    if self.action_count*self.count_per_action+i_ < len(self.path_list):
-                        f_path = self.path_list[self.action_count *
-                                                self.count_per_action+i_]
+                    if self.action_count * self.count_per_action + i_ < len(self.path_list):
+                        f_path = self.path_list[self.action_count * self.count_per_action + i_]
                         try:
-                            str_ = Path(f_path).parent.stem+"_"+Path(f_path).name
+                            str_ = Path(f_path).parent.stem + "_" + Path(f_path).name
 
-                            if self.layout_params[11]:
-                                move(f_path, Path(self.out_path_str) / "select_images" /
-                                    dir_name[0] / str_)
+                            if self.layout_params[11]:  # move_file
+                                if path_label == paths_to_save[-1][0]:
+                                    move(f_path, base_select / str_)
+                                else:
+                                    copyfile(f_path, base_select / str_)
                             else:
-                                copyfile(f_path, Path(self.out_path_str) / "select_images" /
-                                        dir_name[0] / str_)
+                                copyfile(f_path, base_select / str_)
                         except:
+                            pass
                             self.check.append(1)
                         else:
                             self.check.append(0)
-            else:
+            else:  # type 0, 1, 2
                 if not self.parallel_to_sequential:
                     for i in range(len(dir_name)):
-                        if not (Path(self.out_path_str)/ "processing_function" / "origin"/ "select_images"/dir_name[i]).exists():
-                            os.makedirs(Path(self.out_path_str) /
-                                        "processing_function" /"origin"/"select_images"/ dir_name[i])
+                        select_dir = base_path / "select_images" / dir_name[i]
+                        if not select_dir.exists():
+                            os.makedirs(select_dir)
                         if self.layout_params[22]:  # parallel_sequential
-                            num_per_img = self.layout_params[1][0] * \
-                                self.layout_params[1][1]
+                            num_per_img = self.layout_params[1][0] * self.layout_params[1][1]
                         else:
                             num_per_img = 1
                         for k in range(num_per_img):
-                            f_path = self.flist[i*num_per_img+k]
+                            f_path = self.flist[i * num_per_img + k]
                             name = Path(f_path).name
                             try:
-                                if self.layout_params[11]:
-                                    move(f_path, Path(self.out_path_str) / "processing_function" / "origin"/ "select_images" /
-                                        dir_name[i] / name)
+                                if self.layout_params[11]:  # move_file
+                                    if path_label == paths_to_save[-1][0]:
+                                        move(f_path, select_dir / name)
+                                    else:
+                                        copyfile(f_path, select_dir / name)
                                 else:
-                                    copyfile(f_path, Path(self.out_path_str) / "processing_function" / "origin"/"select_images" /
-                                            dir_name[i] / name)
+                                    copyfile(f_path, select_dir / name)
                             except:
+                                pass
                                 self.check.append(1)
                             else:
                                 self.check.append(0)
-
-            if self.layout_params[11]:
-                if self.action_count == 0:
-                    action_count = 0
-                else:
-                    action_count = self.action_count-1
-                self.init(self.input_path, self.type,
-                        action_count=action_count, img_count=self.img_count-1)
-                self.get_flist()
+        if self.layout_params[11]:
+            if self.action_count == 0:
+                action_count = 0
+            else:
+                action_count = self.action_count - 1
+            self.init(self.input_path, self.type,
+                      action_count=action_count, img_count=self.img_count - 1)
+            self.get_flist()
 
     def save_stitch(self, dir_name):
         name_f = self.get_stitch_name()

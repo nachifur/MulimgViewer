@@ -268,7 +268,6 @@ class MulimgViewer (MulimgViewerGui):
                         self.ImgManager.layout_params[32] = False  # customfunc
                     self.ImgManager.save_img(self.out_path_str, type_)
                     self.ImgManager.save_stitch_img_and_customfunc_img(self.out_path_str, self.show_custom_func.Value)
-
                     self.ImgManager.add()
                 self.ImgManager.set_action_count(last_count_img)
                 self.SetStatusText_(
@@ -2133,7 +2132,7 @@ def main(img_list, save_path, name_list=None, algorithm_name="{algorithm_name}")
 
         out_img_list.append(img)
         if flag_save:
-            if isinstance(name_list, list):
+            if isinstance(name_list, list) and i < len(name_list):
                 img_path = save_path / name_list[i]
             else:
                 img_path = save_path / (str(i) + ".png")

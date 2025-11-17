@@ -12,7 +12,7 @@ def main(img_list, save_path, name_list=None, algorithm_name="Image Darkening"):
     out_img_list = []
     if save_path != "":
         flag_save = True
-        save_path = Path(save_path) / "custom_func_output" / algorithm_name / "processed_img"
+        save_path = Path(save_path) / "processing_function" / algorithm_name / "processed_img"
         if not save_path.exists():
             os.makedirs(str(save_path))
     else:
@@ -23,7 +23,7 @@ def main(img_list, save_path, name_list=None, algorithm_name="Image Darkening"):
 
         out_img_list.append(img)
         if flag_save:
-            if isinstance(name_list, list):
+            if isinstance(name_list, list) and i < len(name_list):
                 img_path = save_path / name_list[i]
             else:
                 img_path = save_path / (str(i) + ".png")

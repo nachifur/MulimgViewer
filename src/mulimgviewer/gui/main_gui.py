@@ -282,6 +282,9 @@ class MulimgViewerGui ( wx.Frame ):
 
 		bSizer151.Add( self.m_staticText16, 1, wx.ALL, 5 )
 
+		self.auto_layout_check = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"AutoWinSize", wx.DefaultPosition, wx.DefaultSize, 0 )
+		bSizer151.Add( self.auto_layout_check, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+
 		self.m_staticline19 = wx.StaticLine( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_VERTICAL )
 		bSizer151.Add( self.m_staticline19, 0, wx.EXPAND |wx.ALL, 5 )
 
@@ -323,7 +326,6 @@ class MulimgViewerGui ( wx.Frame ):
 		bSizer_func.Add( self.show_all_func_layout, 0, wx.ALL, 5 )
 
 		self.func_layout_vertical = wx.CheckBox( self.m_panel4, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.func_layout_vertical.SetValue(True)
 		bSizer_func.Add( self.func_layout_vertical, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
 
@@ -372,7 +374,6 @@ class MulimgViewerGui ( wx.Frame ):
 		bSizer101.Add( self.magnifer_row_col, 0, wx.ALL, 5 )
 
 		self.magnifer_vertical = wx.CheckBox( self.m_panel4, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.magnifer_vertical.SetValue(True)
 		bSizer101.Add( self.magnifer_vertical, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
 
@@ -453,30 +454,22 @@ class MulimgViewerGui ( wx.Frame ):
 		self.m_staticline23 = wx.StaticLine( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_VERTICAL )
 		wSizer11.Add( self.m_staticline23, 0, wx.EXPAND |wx.ALL, 5 )
 
-		self.auto_layout_check = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"AutoWinSize", wx.DefaultPosition, wx.DefaultSize, 0 )
-		wSizer11.Add( self.auto_layout_check, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
-
-
-		fgSizer3.Add( wSizer11, 1, wx.EXPAND, 5 )
-
-		wSizer12 = wx.WrapSizer( wx.HORIZONTAL, wx.WRAPSIZER_DEFAULT_FLAGS )
-
-		self.m_staticText383 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Add Func", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText383 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"AddFunc", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText383.Wrap( -1 )
 
-		wSizer12.Add( self.m_staticText383, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5 )
+		wSizer11.Add( self.m_staticText383, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5 )
 
-		self.custom_algorithm_input = wx.TextCtrl( self.m_panel4, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size( 120,-1 ), wx.TE_PROCESS_ENTER )
+		self.custom_algorithm_input = wx.TextCtrl( self.m_panel4, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size( 40,-1 ), wx.TE_PROCESS_ENTER )
 		self.custom_algorithm_input.SetForegroundColour( wx.SystemSettings.GetColour( wx.SYS_COLOUR_WINDOWTEXT ) )
 		self.custom_algorithm_input.SetToolTip( u"Enter algorithm folder path and press Enter" )
 
-		wSizer12.Add( self.custom_algorithm_input, 0, wx.ALL, 5 )
+		wSizer11.Add( self.custom_algorithm_input, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
-		self.m_button10 = wx.Button( self.m_panel4, wx.ID_ANY, u"Remove", wx.DefaultPosition, wx.DefaultSize, 0 )
-		wSizer12.Add( self.m_button10, 0, wx.ALL, 5 )
+		self.m_button10 = wx.Button( self.m_panel4, wx.ID_ANY, u"DelFunc", wx.DefaultPosition, wx.Size( 60,-1 ), 0 )
+		wSizer11.Add( self.m_button10, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
 
-		fgSizer3.Add( wSizer12, 1, wx.EXPAND, 5 )
+		fgSizer3.Add( wSizer11, 1, wx.EXPAND, 5 )
 
 		self.m_staticline15 = wx.StaticLine( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_HORIZONTAL )
 		fgSizer3.Add( self.m_staticline15, 0, wx.EXPAND |wx.ALL, 5 )

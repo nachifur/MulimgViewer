@@ -25,7 +25,7 @@
  "img_vertical": false,
  "one_img_vertical": false,
  "img_unit_vertical": false,
- "magnifer_vertical": true,
+ "magnifer_vertical": false,
  "show_original": true,
  "show_magnifer": true,
  "title_show": true,

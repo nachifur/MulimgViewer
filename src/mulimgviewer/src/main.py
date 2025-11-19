@@ -272,7 +272,6 @@ class MulimgViewer (MulimgViewerGui):
                         self.ImgManager.layout_params[32] = False  # customfunc
                     self.ImgManager.save_img(self.out_path_str, type_)
                     self.ImgManager.save_stitch_img_and_customfunc_img(self.out_path_str, self.show_custom_func.Value)
-
                     self.ImgManager.add()
                 self.ImgManager.set_action_count(last_count_img)
                 self.SetStatusText_(
@@ -987,11 +986,15 @@ class MulimgViewer (MulimgViewerGui):
                     self.SetStatusText_(["Invalid image path", "-1", "-1", "-1"])
                     return
                 target_name = os.path.basename(target_path)
-                original_auto_save = self.auto_save_all.Value
-                self.auto_save_all.Value = True
-                self.save_img(evt)
+                type_ = self.choice_output.GetSelection()
+                if self.show_custom_func.Value:
+                    self.ImgManager.layout_params[32] = True
+                    self.ImgManager.save_img(self.out_path_str, type_)
+                    self.ImgManager.layout_params[32] = False
+                self.ImgManager.save_img(self.out_path_str, type_)
+                self.ImgManager.save_stitch_img_and_customfunc_img(self.out_path_str, self.show_custom_func.Value)
+
                 # Call the default save function
-                self.auto_save_all.Value = original_auto_save
                 select_folder = os.path.join(self.out_path_str, "select_images")
                 # override it with the new folder selection logic
                 if os.path.exists(select_folder):
@@ -2122,7 +2125,7 @@ def main(img_list, save_path, name_list=None, algorithm_name="{algorithm_name}")
     out_img_list = []
     if save_path != "":
         flag_save = True
-        save_path = Path(save_path) / "custom_func_output" / algorithm_name
+        save_path = Path(save_path) / "processing_function" / algorithm_name
         if not save_path.exists():
             os.makedirs(str(save_path))
     else:
@@ -2133,7 +2136,7 @@ def main(img_list, save_path, name_list=None, algorithm_name="{algorithm_name}")
 
         out_img_list.append(img)
         if flag_save:
-            if isinstance(name_list, list):
+            if isinstance(name_list, list) and i < len(name_list):
                 img_path = save_path / name_list[i]
             else:
                 img_path = save_path / (str(i) + ".png")

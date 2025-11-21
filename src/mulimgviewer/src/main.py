@@ -1610,6 +1610,9 @@ class MulimgViewer (MulimgViewerGui):
                 self.SetStatusText_(["-1", "-1", detail_text, "-1"])
             except:
                 self.SetStatusText_(["-1", "-1", f"{self.ImgManager.img_resolution[0]}x{self.ImgManager.img_resolution[1]} pixels", "-1"])
+        # Defer layout refresh to avoid forcing window resize while still updating scrollbars
+        wx.CallAfter(self.scrolledWindow_img.FitInside)
+        wx.CallAfter(self.Layout)
 
     def auto_layout(self, frame_resize=False):
         # Auto Layout

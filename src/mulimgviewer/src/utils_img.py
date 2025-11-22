@@ -552,11 +552,6 @@ class ImgUtils():
 
                             x = x_offset_0
                             y = y_offset_0+y_offset_1+y_offset_2+gap_add_new_title
-                            print("[ONETITLE] canvas size:", img.size)
-                            print("[ONETITLE] offsets:",
-                                "y0=", y_offset_0, "y1=", y_offset_1, "y2=", y_offset_2,
-                                "gap=", gap_add_new_title)
-                            print("[ONETITLE] paste at:", (x, y), "title size:", im_.size)
                             img.paste(im_, (x, y))
                             if title_hook:
                                 title_hook(title_preprocessing.__self__, img_list[iy_0, ix_0, 0, 0][1], x, y)

@@ -27,6 +27,12 @@ def main(img_list, save_path, name_list=None, algorithm_name="Image Darkening"):
                 img_path = save_path / name_list[i]
             else:
                 img_path = save_path / (str(i) + ".png")
+            # 保存 PNG，并额外保存同名 PDF 方便用户选择 PDF 输出
             img.save(str(img_path))
+            pdf_path = img_path.with_suffix(".pdf")
+            try:
+                img.convert("RGB").save(str(pdf_path), "PDF")
+            except Exception:
+                pass
         i += 1
     return out_img_list

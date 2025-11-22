@@ -843,24 +843,24 @@ class ImgManager(ImgData):
             # except Exception:
             #     pass
             # 若当前保存格式为 PDF，则将 processed_img 目录下生成的图片转换为 PDF 并移除原图
-            try:
-                save_format = self.layout_params[35] if len(self.layout_params) > 35 else 0
-                if save_format == 1 and out_path_str:
-                    available_algorithms = get_available_algorithms()
-                    algorithm_name = available_algorithms[algorithm_type] if algorithm_type < len(available_algorithms) else "Unknown"
-                    processed_dir = Path(out_path_str) / "processing_function" / algorithm_name / "processed_img"
-                    if processed_dir.exists():
-                        for img_path in list(processed_dir.glob("*")):
-                            if img_path.suffix.lower() in [".png", ".jpg", ".jpeg", ".bmp", ".tif", ".tiff"]:
-                                try:
-                                    with Image.open(img_path) as im:
-                                        pdf_path = img_path.with_suffix(".pdf")
-                                        im.convert("RGB").save(pdf_path, "PDF")
-                                    img_path.unlink()
-                                except Exception:
-                                    pass
-            except Exception:
-                pass
+            # try:
+            #     save_format = self.layout_params[35] if len(self.layout_params) > 35 else 0
+            #     if save_format == 1 and out_path_str:
+            #         available_algorithms = get_available_algorithms()
+            #         algorithm_name = available_algorithms[algorithm_type] if algorithm_type < len(available_algorithms) else "Unknown"
+            #         processed_dir = Path(out_path_str) / "processing_function" / algorithm_name / "processed_img"
+            #         if processed_dir.exists():
+            #             for img_path in list(processed_dir.glob("*")):
+            #                 if img_path.suffix.lower() in [".png", ".jpg", ".jpeg", ".bmp", ".tif", ".tiff"]:
+            #                     try:
+            #                         with Image.open(img_path) as im:
+            #                             pdf_path = img_path.with_suffix(".pdf")
+            #                             im.convert("RGB").save(pdf_path, "PDF")
+            #                         img_path.unlink()
+            #                     except Exception:
+            #                         pass
+            # except Exception:
+            #     pass
         # resolution
         width_ = []
         height_ = []
@@ -1645,13 +1645,6 @@ class ImgManager(ImgData):
             return None
         if id >= len(self.title_list):
             id = 0
-        # ensure font reflects current selection/size every render
-        try:
-            font_path = self.title_setting[9][self.title_setting[7]]
-            font_size = int(self.title_setting[8])
-            self.font = ImageFont.truetype(font_path, font_size)
-        except Exception:
-            pass
         title_max_size = copy.deepcopy(self.title_max_size)
         img = Image.new('RGBA', tuple(title_max_size), self.gap_color)
         draw = ImageDraw.Draw(img)

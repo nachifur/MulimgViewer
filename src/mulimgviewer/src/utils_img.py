@@ -552,6 +552,11 @@ class ImgUtils():
 
                             x = x_offset_0
                             y = y_offset_0+y_offset_1+y_offset_2+gap_add_new_title
+                            print("[ONETITLE] canvas size:", img.size)
+                            print("[ONETITLE] offsets:",
+                                "y0=", y_offset_0, "y1=", y_offset_1, "y2=", y_offset_2,
+                                "gap=", gap_add_new_title)
+                            print("[ONETITLE] paste at:", (x, y), "title size:", im_.size)
                             img.paste(im_, (x, y))
                             if title_hook:
                                 title_hook(title_preprocessing.__self__, img_list[iy_0, ix_0, 0, 0][1], x, y)
@@ -1461,7 +1466,6 @@ class ImgManager(ImgData):
 
     def fill_func(self, img, id=None):
         return None
-
     def title_preprocessing(self, img, id):
         layout = self._prepare_title_render(id)
         title_img = Image.new('RGBA', (layout["actual_width"], layout["actual_height"]), self.gap_color)
@@ -1501,14 +1505,10 @@ class ImgManager(ImgData):
         actual_height = max(bbox[3] - bbox[1], 1)
 
         title_size = self.title_size[id*2+1, :]
+        delta_x = max(0, int((title_max_size[0]-title_size[0]) / 2))
 
-        delta_x = max(0,int((title_max_size[0]-title_size[0])/2))
-        # one_size = int(int(self.title_setting[8])/2)#int(title_size[0]/int(len(self.title_list[id])))
-        # wrapper = textwrap.TextWrapper(width=int(int(title_max_size[0])/int(one_size)))
-        # lines = self.title_list[id].split('\n')
-
-        title_position=self.title_setting[10]
-        if delta_x + title_size[0] >  title_max_size[0]:
+        title_position = self.title_setting[10]
+        if delta_x + title_size[0] > title_max_size[0]:
             delta_x = 0
         if title_position == 0:
             delta_x = 0
@@ -1517,9 +1517,140 @@ class ImgManager(ImgData):
         elif title_position == 2:
             delta_x = max(0, actual_width - title_size[0])
 
-        draw.multiline_text((delta_x, -bbox[1]), text, align="left", font=self.font, fill=self.text_color)
+        lines = text.split("\n")
+        ascent, descent = self.font.getmetrics()
+        line_offsets = []
+        cursor = -bbox[1]
+        for idx, line in enumerate(lines):
+            line_offsets.append(cursor)
+            bbox = self.font.getbbox(line if line else " ")
+            line_height = bbox[3] - bbox[1]
+            cursor += line_height
+            if idx != len(lines) - 1:
+                cursor += spacing
+        actual_height = max(actual_height, int(cursor))
 
-        return img
+        padding_top = line_offsets[0] if line_offsets else 0
+        last_baseline = line_offsets[-1] if line_offsets else padding_top
+        padding_bottom = max(0, actual_height - int(last_baseline + ascent))
+        gap_color = self.gap_color
+        if len(gap_color) == 4:
+            bg_rgba = tuple(gap_color)
+        else:
+            bg_rgba = tuple(list(gap_color) + [255])
+
+        return {
+            "text": text,
+            "lines": lines,
+            "spacing": spacing,
+            "bbox": bbox,
+            "delta_x": delta_x,
+            "actual_width": actual_width,
+            "actual_height": actual_height,
+            "font_path": self.title_setting[9][self.title_setting[7]],
+            "font_size": int(self.title_setting[8]),
+            "color": self.text_color,
+            "line_offsets": line_offsets,
+            "ascent": ascent,
+            "descent": descent,
+            "bg_rgba": bg_rgba,
+            "padding_top": padding_top,
+            "padding_bottom": padding_bottom,
+        }
+    def title_preprocessing(self, img, id):
+        layout = self._prepare_title_render(id)
+        title_img = Image.new('RGBA', (layout["actual_width"], layout["actual_height"]), self.gap_color)
+        draw = ImageDraw.Draw(title_img)
+        if layout["line_offsets"]:
+            start_y = layout["line_offsets"][0]
+        else:
+            start_y = 0
+        draw.multiline_text(
+            (layout["delta_x"], start_y),
+            layout["text"],
+            align="left",
+            font=self.font,
+            fill=self.text_color,
+            spacing=layout["spacing"]
+        )
+        if self.collect_pdf_layers:
+            self._last_title_layout = layout
+        else:
+            self._last_title_layout = None
+        return title_img
+
+    def _prepare_title_render(self, id):
+        title_max_size = copy.deepcopy(self.title_max_size)
+        text = self.title_list[id]
+        spacing = getattr(self, "_title_line_spacing", 4)
+        tmp_width = max(title_max_size[0], 1)
+        im_tmp = Image.new('RGBA', (tmp_width, 1000), self.gap_color)
+        draw_tmp = ImageDraw.Draw(im_tmp)
+
+        if "\n" not in text:
+            bbox = draw_tmp.textbbox((0, 0), text, font=self.font)
+        else:
+            bbox = draw_tmp.multiline_textbbox((0, 0), text, font=self.font, spacing=spacing)
+
+        actual_width = max(title_max_size[0], bbox[2] - bbox[0] + 20)
+        actual_height = max(bbox[3] - bbox[1], 1)
+
+        title_size = self.title_size[id*2+1, :]
+        delta_x = max(0, int((title_max_size[0]-title_size[0]) / 2))
+
+        title_position = self.title_setting[10]
+        if delta_x + title_size[0] > title_max_size[0]:
+            delta_x = 0
+        if title_position == 0:
+            delta_x = 0
+        elif title_position == 1:
+            delta_x = max(0, int((actual_width - title_size[0]) / 2))
+        elif title_position == 2:
+            delta_x = max(0, actual_width - title_size[0])
+
+        lines = text.split("\n")
+        ascent, descent = self.font.getmetrics()
+        line_offsets = []
+        cursor = -bbox[1]
+        for idx, line in enumerate(lines):
+            line_offsets.append(cursor)
+            bbox = self.font.getbbox(line if line else " ")
+            line_height = bbox[3] - bbox[1]
+            cursor += line_height
+            if idx != len(lines) - 1:
+                cursor += spacing
+        actual_height = max(actual_height, int(cursor))
+
+        padding_top = line_offsets[0] if line_offsets else 0
+        last_baseline = line_offsets[-1] if line_offsets else padding_top
+        padding_bottom = max(0, actual_height - int(last_baseline + ascent))
+        gap_color = self.gap_color
+        if len(gap_color) == 4:
+            bg_rgba = tuple(gap_color)
+        else:
+            bg_rgba = tuple(list(gap_color) + [255])
+
+        return {
+            "text": text,
+            "lines": lines,
+            "spacing": spacing,
+            "bbox": bbox,
+            "delta_x": delta_x,
+            "actual_width": actual_width,
+            "actual_height": actual_height,
+            "font_path": self.title_setting[9][self.title_setting[7]],
+            "font_size": int(self.title_setting[8]),
+            "color": self.text_color,
+            "line_offsets": line_offsets,
+            "ascent": ascent,
+            "descent": descent,
+            "bg_rgba": bg_rgba,
+            "padding_top": padding_top,
+            "padding_bottom": padding_bottom,
+        }
+
+
+
 
     def title_init(self, width_2, height_2):
         # self.title_setting = self.layout_params[17]

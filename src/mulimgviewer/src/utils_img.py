@@ -403,7 +403,7 @@ class ImgUtils():
                     id += 1
         return output
 
-    def layout_2d(self, layout_list, gap_color, img_list, img_preprocessing, img_preprocessing_sub, vertical_list, onetitle, title_func):
+    def layout_2d(self, layout_list, gap_color, img_list, img_preprocessing, img_preprocessing_sub, vertical_list, onetitle, title_func, title_hook=None):
         # Two-dimensional arrangement
         # layout_list = [
         #                 [[row_2,col_2],[gap_x_2,gap_y_2],[width_2,height_2],[target_width_2, target_height_2],discard_table_2],
@@ -531,10 +531,13 @@ class ImgUtils():
                                         pass
                                     else:
                                         if img_preprocessing_sub[iy_2, ix_2] != []:
-                                            im_ = img_preprocessing_sub[iy_2, ix_2](
+                                            func = img_preprocessing_sub[iy_2, ix_2]
+                                            im_ = func(
                                                 im, id=img_list[iy_0, ix_0, iy_1, ix_1][1])
                                             if im_:
                                                 img.paste(im_, (x, y))
+                                                if title_hook and func == title_preprocessing:
+                                                    title_hook(func.__self__, img_list[iy_0, ix_0, iy_1, ix_1][1], x, y)
                                     i += 1
                 # show onetitle
                 if onetitle:
@@ -547,6 +550,8 @@ class ImgUtils():
                             x = x_offset_0
                             y = y_offset_0+y_offset_1+y_offset_2+gap_add_new_title
                             img.paste(im_, (x, y))
+                            if title_hook:
+                                title_hook(title_preprocessing.__self__, img_list[iy_0, ix_0, 0, 0][1], x, y)
 
         return img, xy_grids_output, xy_grids_id_list
 
@@ -608,17 +613,26 @@ class ImgUtils():
         img.paste(img2,(0,img1.size[1]))
         return img
 
-    def save_img_diff_format(self, png_path,img,save_format=0):
+    def save_img_diff_format(self, png_path,img,save_format=0,use_vector_titles=True):
         if save_format == 0:
             img.save(png_path, 'PNG')
+        elif save_format == 2:
+            rgb_img = img.convert('RGB')
+            new_path = os.path.splitext(png_path)[0] + '.jpg'
+            rgb_img.save(new_path, 'JPEG')
         else:
-            if save_format == 2:
-                rgb_img = img.convert('RGB')
-                new_path = os.path.splitext(png_path)[0] + '.jpg'
-                rgb_img.save(new_path, 'JPEG')
-            else:
-                new_path = os.path.splitext(png_path)[0] + '.pdf'
-                img.save(new_path, 'PDF')
+            new_path = os.path.splitext(png_path)[0] + '.pdf'
+            manager = getattr(self, "manager", None) if use_vector_titles else None
+            try:
+                base_img = img.copy()
+                if manager is None and hasattr(self, "img"):
+                    manager = getattr(self, "manager_ref", None)
+                if manager and getattr(manager, "pdf_title_layers", []):
+                    manager.save_pdf_with_vector_text(new_path, base_img)
+                else:
+                    base_img.save(new_path, 'PDF')
+            except ImportError:
+                base_img.save(new_path, 'PDF')
 
 class ImgManager(ImgData):
     """Multi-image manager.
@@ -638,11 +652,149 @@ class ImgManager(ImgData):
         self.crop_points = []
         self.draw_points = []
         self.ImgF = ImgUtils()
+        self.ImgF.manager = self
         self.path_custom_func_path = ""
         self.full_exif_cache = {}
         self._full_mappings = None
         self._tag_mappings_cache = None
         self.exif_display_config = self.load_exif_display_config(force_reload=True)
+        # PDF title/vector export state
+        self.collect_pdf_layers = True
+        self.pdf_title_layers = []
+        self._last_title_layout = None
+        self._pdf_font_cache = {}
+        self._title_line_spacing = 4
+    def _get_pdf_font_name(self, font_path):
+        """
+        根据字体文件路径返回已注册的字体名，避免重复注册同一个字体
+        """
+        font_path = str(font_path)
+        base_name = Path(font_path).stem.replace(" ", "_")
+        if base_name in self._pdf_font_cache:
+            return self._pdf_font_cache[base_name]
+        try:
+            from reportlab.pdfbase import pdfmetrics
+            from reportlab.pdfbase.ttfonts import TTFont
+            registered_fonts = pdfmetrics.getRegisteredFontNames()
+            if base_name not in registered_fonts:
+                pdfmetrics.registerFont(TTFont(base_name, font_path))
+            self._pdf_font_cache[base_name] = base_name
+        except Exception:
+            self._pdf_font_cache[base_name] = base_name
+        return base_name
+
+    def save_pdf_with_vector_text(self, pdf_path, base_img):
+        try:
+            from reportlab.pdfgen import canvas
+            from reportlab.lib.utils import ImageReader
+            from reportlab.pdfbase import pdfmetrics
+        except ImportError as exc:
+            # fallback to raster PDF if reportlab missing
+            base_img.save(str(pdf_path), 'PDF')
+            return
+
+        if base_img.mode not in ('RGB', 'L', 'CMYK'):
+            base_img = base_img.convert('RGB')
+        else:
+            base_img = base_img.copy()
+
+        width, height = base_img.size
+        pdf_canvas = canvas.Canvas(str(pdf_path), pagesize=(width, height))
+        img_reader = ImageReader(base_img)
+        pdf_canvas.drawImage(img_reader, 0, 0, width=width, height=height, mask='auto')
+
+        set_fill_alpha = getattr(pdf_canvas, "setFillAlpha", None)
+
+        for entry in getattr(self, "pdf_title_layers", []):
+            if not entry.get("visible", True):
+                continue
+
+            font_name = self._get_pdf_font_name(entry.get("font_path", ""))
+            font_size = entry.get("font_size", 12)
+            pdf_canvas.setFont(font_name, font_size)
+
+            bg_rgb = entry.get("bg_rgb")
+            bg_alpha = entry.get("bg_alpha", 0.0)
+            if bg_rgb and bg_alpha > 0 and set_fill_alpha:
+                set_fill_alpha(bg_alpha)
+                pdf_canvas.setFillColorRGB(*bg_rgb)
+                rect_y = height - (entry["y"] + entry["height"])
+                pdf_canvas.rect(entry["x"], rect_y, entry["width"], entry["height"], stroke=0, fill=1)
+                set_fill_alpha(1.0)
+
+            pdf_canvas.setFillColorRGB(*entry.get("color_rgb", (0, 0, 0)))
+
+            lines = entry.get("lines", [""])
+            origin_x = entry.get("x", 0) + entry.get("delta_x", 0)
+            line_offsets = entry.get("line_offsets", [])
+            ascent = entry.get("ascent", font_size)
+            descent = entry.get("descent", 0)
+            spacing = entry.get("spacing", 0)
+
+            default_step = None
+            if len(line_offsets) >= 2:
+                steps = [line_offsets[i] - line_offsets[i - 1] for i in range(1, len(line_offsets))]
+                if steps:
+                    default_step = steps[-1]
+            if default_step is None:
+                default_step = ascent + descent + spacing
+
+            for idx, line in enumerate(lines):
+                if idx < len(line_offsets):
+                    baseline_local = line_offsets[idx]
+                elif line_offsets:
+                    baseline_local = line_offsets[-1] + default_step * (idx - len(line_offsets) + 1)
+                else:
+                    baseline_local = default_step * idx
+
+                padding_top = entry.get("padding_top", 0)
+                baseline_pillow = entry.get("y", 0) + padding_top + baseline_local
+                origin_y = height - baseline_pillow - ascent
+                pdf_canvas.drawString(origin_x, origin_y, line if line else " ")
+
+        pdf_canvas.save()
+
+    def _hex_to_rgb01(self, hex_color):
+        hex_color = hex_color.lstrip('#')
+        return tuple(int(hex_color[i:i+2], 16) / 255.0 for i in (0, 2, 4))
+
+    def _rgba255_to_rgb01(self, rgba):
+        if rgba is None:
+            return None, 0.0
+        if len(rgba) == 3:
+            return tuple(channel / 255.0 for channel in rgba), 1.0
+        return tuple(channel / 255.0 for channel in rgba[:3]), rgba[3] / 255.0
+
+    def _title_capture_hook(self, manager, img_id, x, y):
+        if not self.collect_pdf_layers:
+            return
+        layout = getattr(manager, "_last_title_layout", None)
+        if not layout:
+            return
+        bg_rgb, bg_alpha = self._rgba255_to_rgb01(layout.get("bg_rgba", (255, 255, 255, 0)))
+        entry = {
+            "text": layout.get("text", ""),
+            "lines": layout.get("lines", []),
+            "font_path": layout.get("font_path", ""),
+            "font_size": layout.get("font_size", 12),
+            "color_rgb": self._hex_to_rgb01(layout.get("color", "#000000")),
+            "delta_x": layout.get("delta_x", 0),
+            "line_offsets": copy.deepcopy(layout.get("line_offsets", [])),
+            "ascent": layout.get("ascent", 0),
+            "descent": layout.get("descent", 0),
+            "spacing": layout.get("spacing", 0),
+            "bg_rgb": bg_rgb,
+            "bg_alpha": bg_alpha,
+            "padding_top": layout.get("padding_top", 0),
+            "padding_bottom": layout.get("padding_bottom", 0),
+            "x": x,
+            "y": y,
+            "width": layout.get("actual_width", 0),
+            "height": layout.get("actual_height", 0),
+            "visible": True,
+        }
+        self.pdf_title_layers.append(entry)
+        manager._last_title_layout = None
 
     def get_img_list(self, show_custom_func=False):
         img_list = []
@@ -672,6 +824,43 @@ class ImgManager(ImgData):
         if show_custom_func:
             algorithm_type = self.layout_params[37] if len(self.layout_params) > 37 else 0
             img_list = main_custom_func(img_list,out_path_str,name_list=name_list,algorithm_type=algorithm_type)
+            # 确保 processed_img 在保存图片时也落盘
+            # processed_img 按当前保存格式输出：保存图片时写图片，保存 PDF 时写 PDF
+            # try:
+            #     save_format = self.layout_params[35] if len(self.layout_params) > 35 else 0
+            #     if out_path_str:
+            #         available_algorithms = get_available_algorithms()
+            #         algorithm_name = available_algorithms[algorithm_type] if algorithm_type < len(available_algorithms) else "Unknown"
+            #         processed_dir = Path(out_path_str) / "processing_function" / algorithm_name / "processed_img"
+            #         processed_dir.mkdir(parents=True, exist_ok=True)
+            #         for i_img, img in enumerate(img_list):
+            #             if i_img < len(name_list):
+            #                 img_name = name_list[i_img]
+            #             else:
+            #                 img_name = f"{i_img}.png"
+            #             target_path = processed_dir / img_name
+            #             self.ImgF.save_img_diff_format(target_path, img, save_format=save_format, use_vector_titles=False)
+            # except Exception:
+            #     pass
+            # 若当前保存格式为 PDF，则将 processed_img 目录下生成的图片转换为 PDF 并移除原图
+            # try:
+            #     save_format = self.layout_params[35] if len(self.layout_params) > 35 else 0
+            #     if save_format == 1 and out_path_str:
+            #         available_algorithms = get_available_algorithms()
+            #         algorithm_name = available_algorithms[algorithm_type] if algorithm_type < len(available_algorithms) else "Unknown"
+            #         processed_dir = Path(out_path_str) / "processing_function" / algorithm_name / "processed_img"
+            #         if processed_dir.exists():
+            #             for img_path in list(processed_dir.glob("*")):
+            #                 if img_path.suffix.lower() in [".png", ".jpg", ".jpeg", ".bmp", ".tif", ".tiff"]:
+            #                     try:
+            #                         with Image.open(img_path) as im:
+            #                             pdf_path = img_path.with_suffix(".pdf")
+            #                             im.convert("RGB").save(pdf_path, "PDF")
+            #                         img_path.unlink()
+            #                     except Exception:
+            #                         pass
+            # except Exception:
+            #     pass
         # resolution
         width_ = []
         height_ = []
@@ -1410,8 +1599,13 @@ class ImgManager(ImgData):
             # stitch img
             # try:
                 # Two-dimensional arrangement
+            # 收集 title 布局供 PDF 矢量输出复用
+            if self.collect_pdf_layers:
+                self.pdf_title_layers.clear()
+            self._last_title_layout = None
+            title_hook = self._title_capture_hook if self.collect_pdf_layers else None
             self.img, self.xy_grid, self.xy_grids_id_list = self.ImgF.layout_2d(
-                layout_list, self.gap_color, copy.deepcopy(self.img_list), self.img_preprocessing, img_preprocessing_sub, [self.img_vertical, self.one_img_vertical, self.img_unit_vertical],self.onetitle, [self.title_init,self.title_preprocessing])
+                layout_list, self.gap_color, copy.deepcopy(self.img_list), self.img_preprocessing, img_preprocessing_sub, [self.img_vertical, self.one_img_vertical, self.img_unit_vertical],self.onetitle, [self.title_init,self.title_preprocessing], title_hook=title_hook)
 
             self.show_box = self.layout_params[14]
             if self.show_original and self.show_box and len(draw_points) != 0:
@@ -1512,6 +1706,43 @@ class ImgManager(ImgData):
             delta_x = max(0, actual_width - title_size[0])
 
         draw.multiline_text((delta_x, -bbox[1]), text, align="left", font=self.font, fill=self.text_color)
+        if self.collect_pdf_layers:
+            lines = text.split("\n")
+            spacing = getattr(self, "_title_line_spacing", 4)
+            try:
+                ascent, descent = self.font.getmetrics()
+            except:
+                ascent, descent = (0, 0)
+            # calculate per-line offsets similar to Pillow rendering
+            line_offsets = []
+            cursor = 0
+            for line in lines:
+                bbox_line = self.font.getbbox(line if line else " ")
+                line_height = bbox_line[3] - bbox_line[1]
+                line_offsets.append(cursor)
+                cursor += line_height + spacing
+            padding_top = -bbox[1] if bbox[1] < 0 else 0
+            padding_bottom = max(0, actual_height - (padding_top + cursor - spacing))
+            # shift offsets to include padding_top
+            line_offsets = [lo + padding_top for lo in line_offsets]
+            bg_color = self.gap_color if len(self.gap_color) == 4 else tuple(list(self.gap_color)+[255])
+            self._last_title_layout = {
+                "text": text,
+                "lines": lines,
+                "font_path": self.title_setting[9][self.title_setting[7]],
+                "font_size": int(self.title_setting[8]),
+                "color": self.text_color,
+                "delta_x": delta_x,
+                "line_offsets": line_offsets,
+                "ascent": ascent,
+                "descent": descent,
+                "spacing": spacing,
+                "bg_rgba": bg_color,
+                "padding_top": padding_top,
+                "padding_bottom": padding_bottom,
+                "actual_width": actual_width,
+                "actual_height": actual_height,
+            }
         return img
 
     def title_init(self, width_2, height_2):
@@ -1790,7 +2021,7 @@ class ImgManager(ImgData):
         color_list = self.layout_params[9]
         image_interp = self.layout_params[13]
         if image_interp == 1:
-            interp_ = Image.LINEAR
+            interp_ = Image.BILINEAR
         elif image_interp == 2:
             interp_ = Image.BICUBIC
         else:
@@ -1869,8 +2100,27 @@ class ImgManager(ImgData):
         self.out_path_str = out_path_str
         try:
             if out_path_str != "" and Path(out_path_str).exists():
+                # 若开启自定义算法且当前保存为图片格式，先单独生成 processed_img 目录
+                try:
+                    save_format = self.layout_params[35] if len(self.layout_params) > 35 else 0
+                    if save_format != 1 and len(self.layout_params) > 32 and self.layout_params[32]:
+                        available_algorithms = get_available_algorithms()
+                        algorithm_type = self.layout_params[37] if len(self.layout_params) > 37 else 0
+                        algorithm_type = min(algorithm_type, len(available_algorithms) - 1) if available_algorithms else 0
+                        name_list_proc = []
+                        img_list_proc = []
+                        for path in self.flist:
+                            p = Path(path)
+                            name_list_proc.append(p.name)
+                            if p.is_file() and p.suffix.lower() in self.format_group:
+                                img = Image.open(p).convert('RGB')
+                                img_list_proc.append(img)
+                        if img_list_proc:
+                            main_custom_func(img_list_proc, out_path_str, name_list=name_list_proc, algorithm_type=algorithm_type)
+                except Exception:
+                    pass
                 self.set_scale_mode(img_mode=1)
-                dir_name = [Path(path).name for path in self.path_list]
+                dir_name = [Path(path).parent.name for path in self.flist]
                 out_type = out_type+1
                 if out_type == 2:
                     pass
@@ -1947,6 +2197,10 @@ class ImgManager(ImgData):
                 algorithm_name = available_algorithms[algorithm_type]
                 base_algorithm = Path(self.out_path_str) / "processing_function" / algorithm_name
                 paths_to_save.append((algorithm_name, base_algorithm))
+            try:
+                self.get_img_list(show_custom_func=True)
+            except:
+                pass
 
         for path_label, base_path in paths_to_save:
             if self.type == 3:  # read file list from a list file
@@ -1954,45 +2208,56 @@ class ImgManager(ImgData):
                 base_select = base_path / "select_images" / dir_name_local[0]
                 if not base_select.exists():
                     os.makedirs(base_select)
+                save_format = self.layout_params[35] if len(self.layout_params) > 35 else 0
                 for i_ in range(self.count_per_action):
                     if self.action_count * self.count_per_action + i_ < len(self.path_list):
-                        f_path = self.path_list[self.action_count * self.count_per_action + i_]
+                        idx = self.action_count * self.count_per_action + i_
                         try:
+                            f_path = self.path_list[idx]
                             str_ = Path(f_path).parent.stem + "_" + Path(f_path).name
-
-                            if self.layout_params[11]:  # move_file
-                                if path_label == paths_to_save[-1][0]:
-                                    move(f_path, base_select / str_)
-                                else:
-                                    copyfile(f_path, base_select / str_)
+                            target_path = base_select / str_
+                            if save_format == 1:
+                                img = Image.open(f_path).convert("RGB")
+                                self.ImgF.save_img_diff_format(target_path, img, save_format=1, use_vector_titles=False)
                             else:
-                                copyfile(f_path, base_select / str_)
+                                copyfile(f_path, target_path)
                         except:
-                            pass
                             self.check.append(1)
                         else:
                             self.check.append(0)
             else:  # type 0, 1, 2
                 if not self.parallel_to_sequential:
+                    save_format = self.layout_params[35] if len(self.layout_params) > 35 else 0
                     for i in range(len(dir_name)):
-                        select_dir = base_path / "select_images" / dir_name[i]
-                        if not select_dir.exists():
-                            os.makedirs(select_dir)
                         if self.layout_params[22]:  # parallel_sequential
                             num_per_img = self.layout_params[1][0] * self.layout_params[1][1]
                         else:
                             num_per_img = 1
+                        base_idx = i * num_per_img
+                        if base_idx >= len(self.flist):
+                            break
+                        select_dir = base_path / "select_images" / dir_name[i]
+                        if not select_dir.exists():
+                            os.makedirs(select_dir)
                         for k in range(num_per_img):
-                            f_path = self.flist[i * num_per_img + k]
-                            name = Path(f_path).name
+                            idx = base_idx + k
+                            if idx >= len(self.flist):
+                                break
                             try:
-                                if self.layout_params[11]:  # move_file
-                                    if path_label == paths_to_save[-1][0]:
-                                        move(f_path, select_dir / name)
+                                f_path = self.flist[idx]
+                                name = Path(f_path).name
+                                if save_format == 1:
+                                    img = Image.open(f_path).convert("RGB")
+                                    target_path = select_dir / name
+                                    self.ImgF.save_img_diff_format(target_path, img, save_format=1, use_vector_titles=False)
+                                else:
+                                    if self.layout_params[11]:  # move_file
+                                        if path_label == paths_to_save[-1][0]:
+                                            move(f_path, select_dir / name)
+                                        else:
+                                            copyfile(f_path, select_dir / name)
                                     else:
                                         copyfile(f_path, select_dir / name)
-                                else:
-                                    copyfile(f_path, select_dir / name)
                             except:
                                 pass
                                 self.check.append(1)
@@ -2074,10 +2339,52 @@ class ImgManager(ImgData):
                     1, copy.deepcopy(self.draw_points)))
             else:
                 self.check_1.append(self.stitch_images(1))
+        # capture origin stitch result and title layers
+        origin_img = self.img.copy() if self.img else None
+        origin_titles = copy.deepcopy(getattr(self, "pdf_title_layers", []))
+
+        custom_img = None
+        custom_titles = []
+        if show_custom_func:
+            # run custom func stitch
+            self.layout_params[32] = True
+            self.get_img_list(show_custom_func=True)
+            if self.layout_params[7]:
+                self.check_1.append(self.stitch_images(1, copy.deepcopy(self.draw_points)))
+            else:
+                if self.show_box:
+                    self.check_1.append(self.stitch_images(1, copy.deepcopy(self.draw_points)))
+                else:
+                    self.check_1.append(self.stitch_images(1))
+            custom_img = self.img.copy() if self.img else None
+            custom_titles = copy.deepcopy(getattr(self, "pdf_title_layers", []))
+
+        # restore layout params
         self.layout_params[0] = original_row_col
+        if len(self.layout_params) > 32:
+            self.layout_params[32] = False
+
+        # compose final image and title layers
+        img = origin_img
+        merged_titles = []
+        merged_titles.extend(origin_titles)
+        if show_custom_func and custom_img:
+            if self.layout_params[36]:
+                # stack origin on top of custom
+                offset_y = origin_img.size[1] if origin_img else 0
+                shifted = copy.deepcopy(custom_titles)
+                for entry in shifted:
+                    entry["y"] = entry.get("y", 0) + offset_y
+                merged_titles.extend(shifted)
+                img = self.ImgF.cat_img(origin_img, custom_img)
+            else:
+                img = custom_img
+                merged_titles = custom_titles
+
         f_path_output = base_dir / name_f
-        img = self.show_stitch_img_and_customfunc_img(show_custom_func)
-        self.ImgF.save_img_diff_format(f_path_output, img, save_format=self.layout_params[35])
+        if img:
+            self.pdf_title_layers = merged_titles
+            self.ImgF.save_img_diff_format(f_path_output, img, save_format=self.layout_params[35], use_vector_titles=True)
 
     def get_stitch_name(self):
         name_first = self.flist[0]
@@ -2154,11 +2461,11 @@ class ImgManager(ImgData):
                             for img in img_list:
                                 if self.layout_params[32]:
                                     f_path_output = base_custom_path/sub_dir_name / (str_+"_magnifier_"+str(i)+".png")
-                                    self.ImgF.save_img_diff_format(f_path_output,img,save_format=self.layout_params[35])
+                                    self.ImgF.save_img_diff_format(f_path_output,img,save_format=self.layout_params[35], use_vector_titles=False)
                                 else:
                                     f_path_output = Path(
                                         self.out_path_str) / dir_name/sub_dir_name / (str_+"_magnifier_"+str(i)+".png")
-                                    self.ImgF.save_img_diff_format(f_path_output,img,save_format=self.layout_params[35])
+                                    self.ImgF.save_img_diff_format(f_path_output,img,save_format=self.layout_params[35], use_vector_titles=False)
                                 i += 1
                 else:
                     # origin image with box
@@ -2172,7 +2479,7 @@ class ImgManager(ImgData):
                         for ii, img_item in enumerate(img_list):
                             f_path_output = base_custom_path / folder_name / (
                                 folder_name + "_" + Path(self.flist[i]).stem + "_magnifier_" + str(ii) + ".png")
-                            self.ImgF.save_img_diff_format(f_path_output, img_item, save_format=self.layout_params[35])
+                            self.ImgF.save_img_diff_format(f_path_output, img_item, save_format=self.layout_params[35], use_vector_titles=False)
                     if self.layout_params[32]:
                         self.get_img_list(show_custom_func=False)
             except:
@@ -2199,10 +2506,13 @@ class ImgManager(ImgData):
             base_custom_path = Path(self.out_path_str) / "processing_function" / "origin"
             if not base_custom_path.exists():
                 os.makedirs(base_custom_path)
-            if not (base_custom_path/sub_dir_name).exists():
-                os.makedirs(base_custom_path/sub_dir_name)
+        if not (base_custom_path/sub_dir_name).exists():
+            os.makedirs(base_custom_path/sub_dir_name)
         i = 0
         for img in self.img_list:
+            if hasattr(self, '_blank_img_ids') and i in getattr(self, '_blank_img_ids', []):
+                i += 1
+                continue
             img = self.img_preprocessing(img, rowcol=self.get_img_row_col(i))
             if self.show_box:
                 img = self.ImgF.draw_rectangle(img, self.xy_grid, self.crop_points,
@@ -2212,13 +2522,13 @@ class ImgManager(ImgData):
                     (Path(self.flist[i]).parent).stem+"_"+Path(self.flist[i]).stem+".png")
                 if not (Path(self.out_path_str)/ "processing_function"/ algorithm_name/ sub_dir_name/(Path(self.flist[i]).parent).stem).exists():
                     os.makedirs(Path(self.out_path_str)/ "processing_function"/ algorithm_name/ sub_dir_name/(Path(self.flist[i]).parent).stem)
-                self.ImgF.save_img_diff_format(f_path_output,img,save_format=self.layout_params[35])
+                self.ImgF.save_img_diff_format(f_path_output,img,save_format=self.layout_params[35], use_vector_titles=False)
             else:
                 f_path_output = base_custom_path/ sub_dir_name/(Path(self.flist[i]).parent).stem / (
                     (Path(self.flist[i]).parent).stem+"_"+Path(self.flist[i]).stem+".png")
                 if not (base_custom_path/ sub_dir_name/(Path(self.flist[i]).parent).stem).exists():
                     os.makedirs(base_custom_path/ sub_dir_name/(Path(self.flist[i]).parent).stem)
-                self.ImgF.save_img_diff_format(f_path_output,img,save_format=self.layout_params[35])
+                self.ImgF.save_img_diff_format(f_path_output,img,save_format=self.layout_params[35], use_vector_titles=False)
             i += 1
 
     def save_all_func_images(self, out_type):

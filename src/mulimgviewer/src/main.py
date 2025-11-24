@@ -133,6 +133,7 @@ class MulimgViewer (MulimgViewerGui):
         self.custom_algorithms = []
         # self.refresh_algorithm_list()
         self.load_configuration( None , config_name="output.json")
+        self._bind_settings_wheel_guard()
 
     def EVT_MY_TEST_OnHandle(self, event):
         self.about_gui(None, update=True, new_version=event.GetEventArgs())
@@ -1850,6 +1851,47 @@ class MulimgViewer (MulimgViewerGui):
         # issue: You need to change the window size, then the scrollbar starts to display.
         self.scrolledWindow_set.FitInside()
         self.auto_layout()
+
+    def _bind_settings_wheel_guard(self):
+        swallow_types = (wx.Choice, wx.ComboBox, wx.SpinCtrl, wx.SpinCtrlDouble)
+
+        def mark_popup_open(event):
+            obj = event.GetEventObject()
+            setattr(obj, "_popup_open", True)
+            event.Skip()
+
+        def mark_popup_closed(event):
+            obj = event.GetEventObject()
+            setattr(obj, "_popup_open", False)
+            event.Skip()
+
+        def reroute_wheel(event):
+            obj = event.GetEventObject()
+            if getattr(obj, "_popup_open", False):
+                event.Skip()
+                return
+            clone = event.Clone()
+            clone.SetEventObject(self.scrolledWindow_set)
+            clone.ResumePropagation(wx.EVENT_PROPAGATE_MAX)
+            self.scrolledWindow_set.GetEventHandler().ProcessEvent(clone)
+
+        def walk(win):
+            for child in win.GetChildren():
+                if isinstance(child, swallow_types):
+                    setattr(child, "_popup_open", False)
+                    child.Bind(wx.EVT_MOUSEWHEEL, reroute_wheel)
+                    if isinstance(child, wx.Choice):
+                        child.Bind(wx.EVT_LEFT_DOWN, mark_popup_open)
+                        child.Bind(wx.EVT_CHOICE, mark_popup_closed)
+                        child.Bind(wx.EVT_KILL_FOCUS, mark_popup_closed)
+                    elif isinstance(child, wx.ComboBox):
+                        child.Bind(wx.EVT_LEFT_DOWN, mark_popup_open)
+                        child.Bind(wx.EVT_COMBOBOX, mark_popup_closed)
+                        child.Bind(wx.EVT_KILL_FOCUS, mark_popup_closed)
+                if child.GetChildren():
+                    walk(child)
+
+        walk(self.scrolledWindow_set)
 
     def save_configuration(self, event):
         data = {

@@ -537,7 +537,7 @@ class ImgUtils():
                                                 im, id=img_list[iy_0, ix_0, iy_1, ix_1][1])
                                             if im_:
                                                 if func == title_preprocessing:
-                                                    print("[PASTE TITLE cell]", 
+                                                    print("[PASTE TITLE cell]",
                                                         "level0", (iy_0, ix_0),
                                                         "level1", (iy_1, ix_1),
                                                         "level2", (iy_2, ix_2),

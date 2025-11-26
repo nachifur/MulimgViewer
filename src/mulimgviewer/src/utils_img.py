@@ -10,6 +10,7 @@ import piexif
 import wx
 from PIL import Image, ImageDraw, ImageFont
 import imageio
+import traceback
 
 from .data import ImgData
 from .utils import rgb2hex
@@ -535,6 +536,14 @@ class ImgUtils():
                                             im_ = func(
                                                 im, id=img_list[iy_0, ix_0, iy_1, ix_1][1])
                                             if im_:
+                                                if func == title_preprocessing:
+                                                    print("[PASTE TITLE cell]", 
+                                                        "level0", (iy_0, ix_0),
+                                                        "level1", (iy_1, ix_1),
+                                                        "level2", (iy_2, ix_2),
+                                                        "paste_xy", (x, y),
+                                                        "title_size", im_.size,
+                                                        "base_img_size", img.size)
                                                 img.paste(im_, (x, y))
                                                 if title_hook and func == title_preprocessing:
                                                     title_hook(func.__self__, img_list[iy_0, ix_0, iy_1, ix_1][1], x, y)
@@ -542,10 +551,11 @@ class ImgUtils():
                 # show onetitle
                 if onetitle:
                     if im:
+                        level_title = 2
                         im_ = title_preprocessing(im, id=img_list[iy_0, ix_0, 0, 0][1])
                         if im_:
-                            x_offset_2 = xy_grids[level][0, Row['level_2']-1, Col['level_2']-1]
-                            y_offset_2 = xy_grids[level][1, Row['level_2']-1, Col['level_2']-1]
+                            x_offset_2 = xy_grids[level_title][0, Row['level_2']-1, Col['level_2']-1]
+                            y_offset_2 = xy_grids[level_title][1, Row['level_2']-1, Col['level_2']-1]
 
                             x = x_offset_0
                             y = y_offset_0+y_offset_1+y_offset_2+gap_add_new_title
@@ -680,6 +690,8 @@ class ImgManager(ImgData):
                 pdfmetrics.registerFont(TTFont(base_name, font_path))
             self._pdf_font_cache[base_name] = base_name
         except Exception:
+            # 打印异常，但保留兜底缓存
+            print(f"[PDF Font Register Error] base_name={base_name}, font_path={font_path}, err={exc}")
             self._pdf_font_cache[base_name] = base_name
         return base_name
 
@@ -689,8 +701,8 @@ class ImgManager(ImgData):
             from reportlab.lib.utils import ImageReader
             from reportlab.pdfbase import pdfmetrics
         except ImportError as exc:
-            # fallback to raster PDF if reportlab missing
-            base_img.save(str(pdf_path), 'PDF')
+            print("[ImportError] reportlab not installed")
+            traceback.print_exc()
             return
 
         if base_img.mode not in ('RGB', 'L', 'CMYK'):
@@ -713,15 +725,31 @@ class ImgManager(ImgData):
             font_size = entry.get("font_size", 12)
             pdf_canvas.setFont(font_name, font_size)
 
+            # === 关键：先把 Pillow 坐标转换成 ReportLab 坐标 ===
+            # Pillow 中：entry["y"] 是标题块左上角到整张图顶部的距离（向下为正）
+            # entry["height"] 是标题块的高度
+            # ReportLab：原点在左下，向上为正
+            block_top_pillow = entry.get("y", 0)             # 标题块在整图里的“上边”位置（Pillow）
+            block_height = entry.get("height", 0)            # 标题块高度
+            overflow = (block_top_pillow + block_height) - height  # height 是整张底图高度
+            if overflow > 0:
+                block_top_pillow -= overflow
+            # 标题块底边在 PDF 坐标中的 y 值
+            block_bottom_pdf = height - (block_top_pillow + block_height)
+
+            # === 背景矩形 ===
             bg_rgb = entry.get("bg_rgb")
             bg_alpha = entry.get("bg_alpha", 0.0)
             if bg_rgb and bg_alpha > 0 and set_fill_alpha:
                 set_fill_alpha(bg_alpha)
                 pdf_canvas.setFillColorRGB(*bg_rgb)
-                rect_y = height - (entry["y"] + entry["height"])
-                pdf_canvas.rect(entry["x"], rect_y, entry["width"], entry["height"], stroke=0, fill=1)
+                # 注意：这里用 block_bottom_pdf 作为矩形的 y
+                rect_y = block_bottom_pdf
+                rect_w = entry.get("width", 0) or entry.get("actual_width", 0) or 0
+                pdf_canvas.rect(entry["x"], rect_y, rect_w, block_height, stroke=0, fill=1)
                 set_fill_alpha(1.0)
 
+            # === 文本颜色 ===
             pdf_canvas.setFillColorRGB(*entry.get("color_rgb", (0, 0, 0)))
 
             lines = entry.get("lines", [""])
@@ -731,6 +759,7 @@ class ImgManager(ImgData):
             descent = entry.get("descent", 0)
             spacing = entry.get("spacing", 0)
 
+            # 计算默认行距（用于没有 line_offsets 或溢出的情况）
             default_step = None
             if len(line_offsets) >= 2:
                 steps = [line_offsets[i] - line_offsets[i - 1] for i in range(1, len(line_offsets))]
@@ -739,20 +768,25 @@ class ImgManager(ImgData):
             if default_step is None:
                 default_step = ascent + descent + spacing
 
+            # === 行基线位置：用 block_bottom_pdf + baseline_local ===
             for idx, line in enumerate(lines):
                 if idx < len(line_offsets):
-                    baseline_local = line_offsets[idx]
+                    baseline_local = line_offsets[idx]        # 从标题块顶部到底线的距离（已经包含 padding_top）
                 elif line_offsets:
                     baseline_local = line_offsets[-1] + default_step * (idx - len(line_offsets) + 1)
                 else:
                     baseline_local = default_step * idx
 
-                padding_top = entry.get("padding_top", 0)
-                baseline_pillow = entry.get("y", 0) + padding_top + baseline_local
-                origin_y = height - baseline_pillow - ascent
+                # ReportLab 中的基线 y 坐标 = 标题块底部 + 该行在块内的偏移
+                origin_y = height - (block_top_pillow + baseline_local)
                 pdf_canvas.drawString(origin_x, origin_y, line if line else " ")
 
+
         pdf_canvas.save()
+        # 在循环绘制标题前添加
+        # print(f"=== PDF标题调试 ===")
+        # print(f"图片总高度：{height} | 标题Pillow顶部y：{entry['y']} | 标题高度：{entry['height']}")
+        # print(f"PDF转换后底部y：{block_bottom_pdf} | 文本基线偏移：{entry['line_offsets']}")
 
     def _hex_to_rgb01(self, hex_color):
         hex_color = hex_color.lstrip('#')
@@ -769,6 +803,9 @@ class ImgManager(ImgData):
         if not self.collect_pdf_layers:
             return
         layout = getattr(manager, "_last_title_layout", None)
+        # 增加一致性校验
+        if layout.get("source_id", None) not in (None, img_id):
+            return
         if not layout:
             return
         bg_rgb, bg_alpha = self._rgba255_to_rgb01(layout.get("bg_rgba", (255, 255, 255, 0)))
@@ -795,6 +832,14 @@ class ImgManager(ImgData):
         }
         self.pdf_title_layers.append(entry)
         manager._last_title_layout = None
+        print("[CAPTURE]",
+          "id", img_id,
+          "x,y", x, y,
+          "w,h", layout.get("actual_width"), layout.get("actual_height"),
+          "padding_top", layout.get("padding_top"),
+          "line_offsets", layout.get("line_offsets"),
+          "ascent,descent", layout.get("ascent"), layout.get("descent"),
+          "lines", layout.get("lines"))
 
     def get_img_list(self, show_custom_func=False):
         img_list = []
@@ -1682,6 +1727,17 @@ class ImgManager(ImgData):
 
         actual_width = max(title_max_size[0], bbox[2] - bbox[0] + 20)
         actual_height = max(bbox[3] - bbox[1], 1)
+        text_bbox_h = bbox[3] - bbox[1]
+
+        # 字体最小需要高度
+        try:
+            ascent, descent = self.font.getmetrics()
+        except:
+            ascent, descent = (0, 0)
+
+        min_font_h = ascent + descent
+
+        actual_height = max(text_bbox_h, min_font_h, 1)
         img = Image.new('RGBA', (actual_width, actual_height), self.gap_color)
         draw = ImageDraw.Draw(img)
         title_size = self.title_size[original_id*2+1, :]
@@ -1714,19 +1770,41 @@ class ImgManager(ImgData):
             except:
                 ascent, descent = (0, 0)
             # calculate per-line offsets similar to Pillow rendering
-            line_offsets = []
-            cursor = 0
+            lines = text.split("\n")
+            spacing = getattr(self, "_title_line_spacing", 4)
+
+            try:
+                ascent, descent = self.font.getmetrics()
+            except:
+                ascent, descent = (0, 0)
+
+            lines = text.split("\n")
+
+            baseline_offsets = []
+            cursor_top = 0  # 行顶累计
+
             for line in lines:
+                # ✅ 基线位置 = 行顶 + ascent
+                baseline_offsets.append(cursor_top + ascent)
+
                 bbox_line = self.font.getbbox(line if line else " ")
-                line_height = bbox_line[3] - bbox_line[1]
-                line_offsets.append(cursor)
-                cursor += line_height + spacing
+                line_h = bbox_line[3] - bbox_line[1]
+                cursor_top += line_h + spacing
+
+            # 文本总高（最后一行不再额外加 spacing）
+            text_total_h = cursor_top - spacing if lines else 0
+
+            # Pillow 那侧你是 draw.multiline_text((delta_x, -bbox[1]), ...)
+            # 所以保留这个 padding_top 来匹配“向下挪”的量
             padding_top = -bbox[1] if bbox[1] < 0 else 0
-            padding_bottom = max(0, actual_height - (padding_top + cursor - spacing))
-            # shift offsets to include padding_top
-            line_offsets = [lo + padding_top for lo in line_offsets]
-            bg_color = self.gap_color if len(self.gap_color) == 4 else tuple(list(self.gap_color)+[255])
+            padding_bottom = max(0, actual_height - (padding_top + text_total_h))
+
+            # ✅ 最终存入的 offsets = 基线 offsets + padding_top
+            line_offsets = [bo + padding_top for bo in baseline_offsets]
+
+            bg_color = self.gap_color if len(self.gap_color) == 4 else tuple(list(self.gap_color) + [255])
             self._last_title_layout = {
+                'source_id': id,
                 "text": text,
                 "lines": lines,
                 "font_path": self.title_setting[9][self.title_setting[7]],

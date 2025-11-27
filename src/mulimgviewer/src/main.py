@@ -32,7 +32,7 @@ class MulimgViewer (MulimgViewerGui):
         self.UpdateUI = UpdateUI
         self.get_type = get_type
 
-        acceltbl = wx.AcceleratorTable([(wx.ACCEL_NORMAL, wx.WXK_UP,
+        self.acceltbl = wx.AcceleratorTable([(wx.ACCEL_NORMAL, wx.WXK_UP,
                                          self.menu_up.GetId()),
                                         (wx.ACCEL_NORMAL, wx.WXK_DOWN,
                                          self.menu_down.GetId()),
@@ -43,7 +43,7 @@ class MulimgViewer (MulimgViewerGui):
                                         (wx.ACCEL_NORMAL, wx.WXK_DELETE,
                                          self.menu_delete_box.GetId())
                                         ])
-        self.SetAcceleratorTable(acceltbl)
+        self.SetAcceleratorTable(self.acceltbl)
         # self.img_Sizer = self.scrolledWindow_img.GetSizer()
         self.Bind(wx.EVT_CLOSE, self.close)
         # self.Bind(wx.EVT_PAINT, self.OnPaint)
@@ -125,7 +125,7 @@ class MulimgViewer (MulimgViewerGui):
                 self.ImgManager.init(default_path, type=2)  # one_dir_mul_img
                 self.show_img_init()
                 self.ImgManager.set_action_count(0)
-                self.show_img()
+                self.show_img(event=None)
             except:
                 pass
         self.load_configuration( None , config_name="output.json")
@@ -190,7 +190,7 @@ class MulimgViewer (MulimgViewerGui):
         elif input_mode == 2:
             self.one_dir_mul_dir_manual(event)
         elif input_mode == 3:
-            self.onefilelist()
+            self.onefilelist(event)
 
     def close(self, event):
         if self.get_type() == -1:
@@ -202,7 +202,7 @@ class MulimgViewer (MulimgViewerGui):
         if self.ImgManager.img_num != 0:
             self.show_img_init()
             self.ImgManager.add()
-            self.show_img()
+            self.show_img(event)
         else:
             self.SetStatusText_(
                 ["-1", "", "***Error: First, need to select the input dir***", "-1"])
@@ -212,7 +212,7 @@ class MulimgViewer (MulimgViewerGui):
         if self.ImgManager.img_num != 0:
             self.show_img_init()
             self.ImgManager.subtract()
-            self.show_img()
+            self.show_img(event)
         else:
             self.SetStatusText_(
                 ["-1",  "", "***Error: First, need to select the input dir***", "-1"])
@@ -222,7 +222,7 @@ class MulimgViewer (MulimgViewerGui):
         if self.ImgManager.img_num != 0:
             self.show_img_init()
             self.ImgManager.set_action_count(self.slider_img.GetValue())
-            self.show_img()
+            self.show_img(event)
         else:
             self.SetStatusText_(
                 ["-1", "", "***Error: First, need to select the input dir***", "-1"])
@@ -238,7 +238,7 @@ class MulimgViewer (MulimgViewerGui):
             if self.ImgManager.img_num != 0:
                 self.show_img_init()
                 self.ImgManager.set_action_count(value)
-                self.show_img()
+                self.show_img(event)
             else:
                 self.SetStatusText_(
                     ["-1", "", "***Error: First, need to select the input dir***", "-1"])
@@ -316,7 +316,7 @@ class MulimgViewer (MulimgViewerGui):
     def refresh(self, event):
         if self.ImgManager.img_num != 0:
             self.show_img_init()
-            self.show_img()
+            self.show_img(event)
         else:
             self.SetStatusText_(
                 ["-1", "", "***Error: First, need to select the input dir***", "-1"])
@@ -331,7 +331,7 @@ class MulimgViewer (MulimgViewerGui):
                 dlg.GetPath(), type=0, parallel_to_sequential=self.parallel_to_sequential.Value)
             self.show_img_init()
             self.ImgManager.set_action_count(0)
-            self.show_img()
+            self.show_img(event)
             self.choice_input_mode.SetSelection(1)
         self.SetStatusText_(["Input", "-1", "-1", "-1"])
 
@@ -358,13 +358,13 @@ class MulimgViewer (MulimgViewerGui):
             self.ImgManager.init(dlg.GetPath(), type=2)
             self.show_img_init()
             self.ImgManager.set_action_count(0)
-            self.show_img()
+            self.show_img(event)
             self.choice_input_mode.SetSelection(0)
 
         self.SetStatusText_(
             ["Sequential choose input dir", "-1", "-1", "-1"])
 
-    def onefilelist(self):
+    def onefilelist(self, event):
         self.SetStatusText_(["Choose the File List", "", "", "-1"])
         wildcard = "List file (*.txt; *.csv)|*.txt;*.csv|" \
             "All files (*.*)|*.*"
@@ -375,7 +375,7 @@ class MulimgViewer (MulimgViewerGui):
             self.ImgManager.init(dlg.GetPath(), type=3)
             self.show_img_init()
             self.ImgManager.set_action_count(0)
-            self.show_img()
+            self.show_img(event)
             self.choice_input_mode.SetSelection(3)
         self.SetStatusText_(["Choose the File List", "-1", "-1", "-1"])
 
@@ -392,7 +392,7 @@ class MulimgViewer (MulimgViewerGui):
                 input_path[0:-1], type=1, parallel_to_sequential=self.parallel_to_sequential.Value)
             self.show_img_init()
             self.ImgManager.set_action_count(0)
-            self.show_img()
+            self.show_img(event)
             self.choice_input_mode.SetSelection(2)
 
     def save_flist_parallel_manual(self, event):
@@ -475,6 +475,7 @@ class MulimgViewer (MulimgViewerGui):
             self.scrolledWindow_img.Scroll(
                 self.position[0]*self.Uint[0], self.position[1]*self.Uint[1])
         self.SetStatusText_(["Up",  "-1", "-1", "-1"])
+        event.Skip()
 
     def down_img(self, event):
         speed = self.get_speed(name="pixel")
@@ -503,6 +504,7 @@ class MulimgViewer (MulimgViewerGui):
                 self.scrolledWindow_img.Scroll(
                     self.position[0]*self.Uint[0], size[1])
         self.SetStatusText_(["Down",  "-1", "-1", "-1"])
+        event.Skip()
 
     def right_img(self, event):
         speed = self.get_speed(name="pixel")
@@ -531,6 +533,7 @@ class MulimgViewer (MulimgViewerGui):
                 self.scrolledWindow_img.Scroll(
                     self.position[0]*self.Uint[0], size[0])
         self.SetStatusText_(["Right",  "-1", "-1", "-1"])
+        event.Skip()
 
     def left_img(self, event):
         speed = self.get_speed(name="pixel")
@@ -556,6 +559,7 @@ class MulimgViewer (MulimgViewerGui):
                 self.scrolledWindow_img.Scroll(
                     self.position[0]*self.Uint[0], self.position[1]*self.Uint[1])
         self.SetStatusText_(["Left",  "-1", "-1", "-1"])
+        event.Skip()
 
     def SetStatusText_(self, texts):
         for i in range(self.Status_number):
@@ -1519,7 +1523,7 @@ class MulimgViewer (MulimgViewerGui):
                     self.show_all_func_layout.Value,        # 39
                     self.func_layout_vertical.Value ]       # 40
 
-    def show_img(self):
+    def show_img(self, event):
         if hasattr(self, 'm_staticText1'):
             self.m_staticText1.Hide()
 
@@ -1618,6 +1622,9 @@ class MulimgViewer (MulimgViewerGui):
             # Defer layout refresh to avoid forcing window resize while still updating scrollbars
             wx.CallAfter(self.scrolledWindow_img.FitInside)
             wx.CallAfter(self.Layout)
+
+        if event is not None:
+            event.Skip()
 
     def auto_layout(self, frame_resize=False):
         # Auto Layout
@@ -2240,3 +2247,11 @@ def main(img_list, save_path, name_list=None, algorithm_name="{algorithm_name}")
             for algorithm in default_algorithms:
                 self.customfunc_choice.Append(algorithm)
             self.customfunc_choice.SetSelection(0)
+
+    def disable_accel(self, event):
+        self.SetAcceleratorTable(wx.NullAcceleratorTable)
+        event.Skip()
+
+    def enable_accel(self, event):
+        self.SetAcceleratorTable(self.acceltbl)
+        event.Skip()

@@ -299,22 +299,6 @@ class MulimgViewerGui ( wx.Frame ):
 		self.m_staticline14 = wx.StaticLine( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_HORIZONTAL )
 		fgSizer3.Add( self.m_staticline14, 0, wx.EXPAND |wx.ALL, 5 )
 
-		bSizer18 = wx.BoxSizer( wx.HORIZONTAL )
-
-		self.title_rename_text = wx.StaticText( self.m_panel4, wx.ID_ANY, u"RowCol", wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.title_rename_text.Wrap( -1 )
-
-		bSizer18.Add( self.title_rename_text, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
-
-		self.row_col = wx.TextCtrl( self.m_panel4, wx.ID_ANY, u"1,1", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
-		bSizer18.Add( self.row_col, 0, wx.ALL, 5 )
-
-		self.img_vertical = wx.CheckBox( self.m_panel4, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
-		bSizer18.Add( self.img_vertical, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
-
-
-		fgSizer3.Add( bSizer18, 1, wx.EXPAND, 5 )
-
 		bSizer_func = wx.BoxSizer( wx.HORIZONTAL )
 
 		self.m_staticText_func = wx.StaticText( self.m_panel4, wx.ID_ANY, u"RowCol(Func)", wx.DefaultPosition, wx.DefaultSize, 0 )
@@ -330,6 +314,22 @@ class MulimgViewerGui ( wx.Frame ):
 
 
 		fgSizer3.Add( bSizer_func, 1, wx.EXPAND, 5 )
+
+		bSizer18 = wx.BoxSizer( wx.HORIZONTAL )
+
+		self.title_rename_text = wx.StaticText( self.m_panel4, wx.ID_ANY, u"RowCol", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.title_rename_text.Wrap( -1 )
+
+		bSizer18.Add( self.title_rename_text, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+
+		self.row_col = wx.TextCtrl( self.m_panel4, wx.ID_ANY, u"1,1", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
+		bSizer18.Add( self.row_col, 0, wx.ALL, 5 )
+
+		self.img_vertical = wx.CheckBox( self.m_panel4, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
+		bSizer18.Add( self.img_vertical, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+
+
+		fgSizer3.Add( bSizer18, 1, wx.EXPAND, 5 )
 
 		bSizer10 = wx.BoxSizer( wx.HORIZONTAL )
 
@@ -381,12 +381,12 @@ class MulimgViewerGui ( wx.Frame ):
 
 		bSizer4 = wx.BoxSizer( wx.HORIZONTAL )
 
-		self.m_staticText5 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Gap(XY,One,Unit,🔍️)", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText5 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Gap(Func,XY,One,Unit,🔍️)", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText5.Wrap( -1 )
 
 		bSizer4.Add( self.m_staticText5, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
-		self.gap = wx.TextCtrl( self.m_panel4, wx.ID_ANY, u"10,10,5,5,3,3,2,2", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.gap = wx.TextCtrl( self.m_panel4, wx.ID_ANY, u"10,10,10,10,5,5,3,3,2,2", wx.DefaultPosition, wx.DefaultSize, 0 )
 		bSizer4.Add( self.gap, 0, wx.ALL, 5 )
 
 
@@ -887,6 +887,8 @@ class MulimgViewerGui ( wx.Frame ):
 		self.left_arrow_button.Bind( wx.EVT_BUTTON, self.last_img )
 		self.right_arrow_button.Bind( wx.EVT_BUTTON, self.next_img )
 		self.refresh_button.Bind( wx.EVT_BUTTON, self.refresh )
+		self.slider_value.Bind( wx.EVT_KILL_FOCUS, self.enable_accel )
+		self.slider_value.Bind( wx.EVT_SET_FOCUS, self.disable_accel )
 		self.slider_value.Bind( wx.EVT_TEXT_ENTER, self.slider_value_change )
 		self.slider_img.Bind( wx.EVT_SCROLL, self.skip_to_n_img )
 		self.magnifier.Bind( wx.EVT_TOGGLEBUTTON, self.magnifier_fc )
@@ -901,12 +903,44 @@ class MulimgViewerGui ( wx.Frame ):
 		self.load_config_button.Bind( wx.EVT_BUTTON, self.load_configuration )
 		self.save_config_button.Bind( wx.EVT_BUTTON, self.save_configuration )
 		self.reset_config_button.Bind( wx.EVT_BUTTON, self.reset_configuration )
+		self.show_all_func_layout.Bind( wx.EVT_KILL_FOCUS, self.enable_accel )
+		self.show_all_func_layout.Bind( wx.EVT_SET_FOCUS, self.disable_accel )
+		self.row_col.Bind( wx.EVT_KILL_FOCUS, self.enable_accel )
+		self.row_col.Bind( wx.EVT_SET_FOCUS, self.disable_accel )
+		self.row_col_one_img.Bind( wx.EVT_KILL_FOCUS, self.enable_accel )
+		self.row_col_one_img.Bind( wx.EVT_SET_FOCUS, self.disable_accel )
+		self.row_col_img_unit.Bind( wx.EVT_KILL_FOCUS, self.enable_accel )
+		self.row_col_img_unit.Bind( wx.EVT_SET_FOCUS, self.disable_accel )
+		self.magnifer_row_col.Bind( wx.EVT_KILL_FOCUS, self.enable_accel )
+		self.magnifer_row_col.Bind( wx.EVT_SET_FOCUS, self.disable_accel )
+		self.gap.Bind( wx.EVT_KILL_FOCUS, self.enable_accel )
+		self.gap.Bind( wx.EVT_SET_FOCUS, self.disable_accel )
+		self.custom_algorithm_input.Bind( wx.EVT_KILL_FOCUS, self.enable_accel )
+		self.custom_algorithm_input.Bind( wx.EVT_SET_FOCUS, self.disable_accel )
 		self.custom_algorithm_input.Bind( wx.EVT_TEXT_ENTER, self.add_custom_algorithm )
 		self.m_button10.Bind( wx.EVT_BUTTON, self.remove_custom_algorithm )
+		self.line_width.Bind( wx.EVT_KILL_FOCUS, self.enable_accel )
+		self.line_width.Bind( wx.EVT_SET_FOCUS, self.disable_accel )
 		self.select_img_box.Bind( wx.EVT_CHECKBOX, self.select_img_box_func )
 		self.title_auto.Bind( wx.EVT_CHECKBOX, self.title_auto_fc )
 		self.title_exif.Bind( wx.EVT_CHECKBOX, self.on_title_exif_changed )
 		self.title_down_up.Bind( wx.EVT_CHECKBOX, self.title_down_up_fc )
+		self.title_rename_text.Bind( wx.EVT_KILL_FOCUS, self.enable_accel )
+		self.title_rename_text.Bind( wx.EVT_SET_FOCUS, self.disable_accel )
+		self.title_font_size.Bind( wx.EVT_KILL_FOCUS, self.enable_accel )
+		self.title_font_size.Bind( wx.EVT_SET_FOCUS, self.disable_accel )
+		self.show_scale.Bind( wx.EVT_KILL_FOCUS, self.enable_accel )
+		self.show_scale.Bind( wx.EVT_SET_FOCUS, self.disable_accel )
+		self.output_scale.Bind( wx.EVT_KILL_FOCUS, self.enable_accel )
+		self.output_scale.Bind( wx.EVT_SET_FOCUS, self.disable_accel )
+		self.magnifier_show_scale.Bind( wx.EVT_KILL_FOCUS, self.enable_accel )
+		self.magnifier_show_scale.Bind( wx.EVT_SET_FOCUS, self.disable_accel )
+		self.magnifier_out_scale.Bind( wx.EVT_KILL_FOCUS, self.enable_accel )
+		self.magnifier_out_scale.Bind( wx.EVT_SET_FOCUS, self.disable_accel )
+		self.img_resolution.Bind( wx.EVT_KILL_FOCUS, self.enable_accel )
+		self.img_resolution.Bind( wx.EVT_SET_FOCUS, self.disable_accel )
+		self.magnifer_resolution.Bind( wx.EVT_KILL_FOCUS, self.enable_accel )
+		self.magnifer_resolution.Bind( wx.EVT_SET_FOCUS, self.disable_accel )
 		self.colourPicker_gap.Bind( wx.EVT_COLOURPICKER_CHANGED, self.colour_change )
 		self.background_slider.Bind( wx.EVT_SCROLL, self.background_alpha )
 		self.foreground_slider.Bind( wx.EVT_SCROLL, self.foreground_alpha )
@@ -956,6 +990,12 @@ class MulimgViewerGui ( wx.Frame ):
 	def refresh( self, event ):
 		event.Skip()
 
+	def enable_accel( self, event ):
+		event.Skip()
+
+	def disable_accel( self, event ):
+		event.Skip()
+
 	def slider_value_change( self, event ):
 		event.Skip()
 
@@ -996,11 +1036,27 @@ class MulimgViewerGui ( wx.Frame ):
 	def reset_configuration( self, event ):
 		event.Skip()
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 	def add_custom_algorithm( self, event ):
 		event.Skip()
 
 	def remove_custom_algorithm( self, event ):
 		event.Skip()
+
+
 
 	def select_img_box_func( self, event ):
 		event.Skip()
@@ -1013,6 +1069,22 @@ class MulimgViewerGui ( wx.Frame ):
 
 	def title_down_up_fc( self, event ):
 		event.Skip()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 	def colour_change( self, event ):
 		event.Skip()

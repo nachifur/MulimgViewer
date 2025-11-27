@@ -475,7 +475,6 @@ class MulimgViewer (MulimgViewerGui):
             self.scrolledWindow_img.Scroll(
                 self.position[0]*self.Uint[0], self.position[1]*self.Uint[1])
         self.SetStatusText_(["Up",  "-1", "-1", "-1"])
-        event.Skip()
 
     def down_img(self, event):
         speed = self.get_speed(name="pixel")
@@ -504,7 +503,6 @@ class MulimgViewer (MulimgViewerGui):
                 self.scrolledWindow_img.Scroll(
                     self.position[0]*self.Uint[0], size[1])
         self.SetStatusText_(["Down",  "-1", "-1", "-1"])
-        event.Skip()
 
     def right_img(self, event):
         speed = self.get_speed(name="pixel")
@@ -533,7 +531,6 @@ class MulimgViewer (MulimgViewerGui):
                 self.scrolledWindow_img.Scroll(
                     self.position[0]*self.Uint[0], size[0])
         self.SetStatusText_(["Right",  "-1", "-1", "-1"])
-        event.Skip()
 
     def left_img(self, event):
         speed = self.get_speed(name="pixel")
@@ -559,7 +556,6 @@ class MulimgViewer (MulimgViewerGui):
                 self.scrolledWindow_img.Scroll(
                     self.position[0]*self.Uint[0], self.position[1]*self.Uint[1])
         self.SetStatusText_(["Left",  "-1", "-1", "-1"])
-        event.Skip()
 
     def SetStatusText_(self, texts):
         for i in range(self.Status_number):
@@ -1623,9 +1619,6 @@ class MulimgViewer (MulimgViewerGui):
             wx.CallAfter(self.scrolledWindow_img.FitInside)
             wx.CallAfter(self.Layout)
 
-        if event is not None:
-            event.Skip()
-
     def auto_layout(self, frame_resize=False):
         # Auto Layout
 
@@ -1817,7 +1810,6 @@ class MulimgViewer (MulimgViewerGui):
     def select_img_box_func(self, event):
         if self.select_img_box.Value:
             self.box_id = -1
-        event.Skip()
 
     def draw_color_change(self, event):
         if self.select_img_box.Value:
@@ -1826,17 +1818,14 @@ class MulimgViewer (MulimgViewerGui):
                     self.checkBox_auto_draw_color.Value = False
                 self.color_list[self.box_id] = self.colourPicker_draw.GetColour()
                 self.refresh(event)
-        event.Skip()
 
     def on_show_all_func_changed(self, event):
         if self.show_all_func.GetValue():
             self.show_custom_func.SetValue(False)
-        event.Skip()
 
     def on_show_custom_func_changed(self, event):
         if self.show_custom_func.GetValue():
             self.show_all_func.SetValue(False)
-        event.Skip()
 
     def hidden(self, event):
         if self.hidden_flag == 0:
@@ -2250,8 +2239,6 @@ def main(img_list, save_path, name_list=None, algorithm_name="{algorithm_name}")
 
     def disable_accel(self, event):
         self.SetAcceleratorTable(wx.NullAcceleratorTable)
-        event.Skip()
 
     def enable_accel(self, event):
         self.SetAcceleratorTable(self.acceltbl)
-        event.Skip()

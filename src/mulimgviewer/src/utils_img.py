@@ -11,6 +11,11 @@ import wx
 from PIL import Image, ImageDraw, ImageFont
 import imageio
 import traceback
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.pdfgen import canvas
+from reportlab.lib.utils import ImageReader
+from reportlab.pdfbase import pdfmetrics
 
 from .data import ImgData
 from .utils import rgb2hex
@@ -536,14 +541,14 @@ class ImgUtils():
                                             im_ = func(
                                                 im, id=img_list[iy_0, ix_0, iy_1, ix_1][1])
                                             if im_:
-                                                if func == title_preprocessing:
-                                                    print("[PASTE TITLE cell]",
-                                                        "level0", (iy_0, ix_0),
-                                                        "level1", (iy_1, ix_1),
-                                                        "level2", (iy_2, ix_2),
-                                                        "paste_xy", (x, y),
-                                                        "title_size", im_.size,
-                                                        "base_img_size", img.size)
+                                                # if func == title_preprocessing:
+                                                    # print("[PASTE TITLE cell]",
+                                                    #     "level0", (iy_0, ix_0),
+                                                    #     "level1", (iy_1, ix_1),
+                                                    #     "level2", (iy_2, ix_2),
+                                                    #     "paste_xy", (x, y),
+                                                    #     "title_size", im_.size,
+                                                    #     "base_img_size", img.size)
                                                 img.paste(im_, (x, y))
                                                 if title_hook and func == title_preprocessing:
                                                     title_hook(func.__self__, img_list[iy_0, ix_0, iy_1, ix_1][1], x, y)
@@ -676,21 +681,20 @@ class ImgManager(ImgData):
         self._title_line_spacing = 4
     def _get_pdf_font_name(self, font_path):
         """
-        根据字体文件路径返回已注册的字体名，避免重复注册同一个字体
+        Return the registered font name for the given font path to avoid registering the same font twice.
         """
         font_path = str(font_path)
         base_name = Path(font_path).stem.replace(" ", "_")
         if base_name in self._pdf_font_cache:
             return self._pdf_font_cache[base_name]
-        try:
-            from reportlab.pdfbase import pdfmetrics
-            from reportlab.pdfbase.ttfonts import TTFont
+        try: 
             registered_fonts = pdfmetrics.getRegisteredFontNames()
             if base_name not in registered_fonts:
                 pdfmetrics.registerFont(TTFont(base_name, font_path))
             self._pdf_font_cache[base_name] = base_name
-        except Exception:
-            # 打印异常，但保留兜底缓存
+        except Exception as exc:
+            # Log the exception but keep the fallback cache
+            traceback.print_exc()
             print(f"[PDF Font Register Error] base_name={base_name}, font_path={font_path}, err={exc}")
             self._pdf_font_cache[base_name] = base_name
         return base_name
@@ -704,7 +708,6 @@ class ImgManager(ImgData):
             print("[ImportError] reportlab not installed")
             traceback.print_exc()
             return
-
         if base_img.mode not in ('RGB', 'L', 'CMYK'):
             base_img = base_img.convert('RGB')
         else:
@@ -725,31 +728,31 @@ class ImgManager(ImgData):
             font_size = entry.get("font_size", 12)
             pdf_canvas.setFont(font_name, font_size)
 
-            # === 关键：先把 Pillow 坐标转换成 ReportLab 坐标 ===
-            # Pillow 中：entry["y"] 是标题块左上角到整张图顶部的距离（向下为正）
-            # entry["height"] 是标题块的高度
-            # ReportLab：原点在左下，向上为正
-            block_top_pillow = entry.get("y", 0)             # 标题块在整图里的“上边”位置（Pillow）
-            block_height = entry.get("height", 0)            # 标题块高度
-            overflow = (block_top_pillow + block_height) - height  # height 是整张底图高度
+            # === Key: convert Pillow coordinates to ReportLab coordinates first ===
+            # In Pillow: entry["y"] is the distance from the title block top-left to the top of the image (positive downward)
+            # entry["height"] is the height of the title block
+            # ReportLab: origin is bottom-left, positive Y goes up
+            block_top_pillow = entry.get("y", 0)             # Title block top position in the image (Pillow)
+            block_height = entry.get("height", 0)            # Title block height
+            overflow = (block_top_pillow + block_height) - height  # height is the height of the full base image
             if overflow > 0:
                 block_top_pillow -= overflow
-            # 标题块底边在 PDF 坐标中的 y 值
+            # Y coordinate of the block bottom edge in PDF coordinates
             block_bottom_pdf = height - (block_top_pillow + block_height)
 
-            # === 背景矩形 ===
+            # === Background rectangle ===
             bg_rgb = entry.get("bg_rgb")
             bg_alpha = entry.get("bg_alpha", 0.0)
             if bg_rgb and bg_alpha > 0 and set_fill_alpha:
                 set_fill_alpha(bg_alpha)
                 pdf_canvas.setFillColorRGB(*bg_rgb)
-                # 注意：这里用 block_bottom_pdf 作为矩形的 y
+                # Note: use block_bottom_pdf as the rectangle y
                 rect_y = block_bottom_pdf
                 rect_w = entry.get("width", 0) or entry.get("actual_width", 0) or 0
                 pdf_canvas.rect(entry["x"], rect_y, rect_w, block_height, stroke=0, fill=1)
                 set_fill_alpha(1.0)
 
-            # === 文本颜色 ===
+            # === Text color ===
             pdf_canvas.setFillColorRGB(*entry.get("color_rgb", (0, 0, 0)))
 
             lines = entry.get("lines", [""])
@@ -759,7 +762,7 @@ class ImgManager(ImgData):
             descent = entry.get("descent", 0)
             spacing = entry.get("spacing", 0)
 
-            # 计算默认行距（用于没有 line_offsets 或溢出的情况）
+            # Compute default line spacing (used when line_offsets are missing or overflow)
             default_step = None
             if len(line_offsets) >= 2:
                 steps = [line_offsets[i] - line_offsets[i - 1] for i in range(1, len(line_offsets))]
@@ -768,25 +771,21 @@ class ImgManager(ImgData):
             if default_step is None:
                 default_step = ascent + descent + spacing
 
-            # === 行基线位置：用 block_bottom_pdf + baseline_local ===
+            # === Baseline position: block_bottom_pdf + baseline_local ===
             for idx, line in enumerate(lines):
                 if idx < len(line_offsets):
-                    baseline_local = line_offsets[idx]        # 从标题块顶部到底线的距离（已经包含 padding_top）
+                    baseline_local = line_offsets[idx]        # Distance from block top to baseline (includes padding_top)
                 elif line_offsets:
                     baseline_local = line_offsets[-1] + default_step * (idx - len(line_offsets) + 1)
                 else:
                     baseline_local = default_step * idx
 
-                # ReportLab 中的基线 y 坐标 = 标题块底部 + 该行在块内的偏移
+                # Baseline y in ReportLab = block bottom + the line offset inside the block
                 origin_y = height - (block_top_pillow + baseline_local)
                 pdf_canvas.drawString(origin_x, origin_y, line if line else " ")
 
 
         pdf_canvas.save()
-        # 在循环绘制标题前添加
-        # print(f"=== PDF标题调试 ===")
-        # print(f"图片总高度：{height} | 标题Pillow顶部y：{entry['y']} | 标题高度：{entry['height']}")
-        # print(f"PDF转换后底部y：{block_bottom_pdf} | 文本基线偏移：{entry['line_offsets']}")
 
     def _hex_to_rgb01(self, hex_color):
         hex_color = hex_color.lstrip('#')
@@ -803,7 +802,7 @@ class ImgManager(ImgData):
         if not self.collect_pdf_layers:
             return
         layout = getattr(manager, "_last_title_layout", None)
-        # 增加一致性校验
+        # Add a consistency guard
         if layout.get("source_id", None) not in (None, img_id):
             return
         if not layout:
@@ -832,14 +831,14 @@ class ImgManager(ImgData):
         }
         self.pdf_title_layers.append(entry)
         manager._last_title_layout = None
-        print("[CAPTURE]",
-          "id", img_id,
-          "x,y", x, y,
-          "w,h", layout.get("actual_width"), layout.get("actual_height"),
-          "padding_top", layout.get("padding_top"),
-          "line_offsets", layout.get("line_offsets"),
-          "ascent,descent", layout.get("ascent"), layout.get("descent"),
-          "lines", layout.get("lines"))
+        # print("[CAPTURE]",
+        #   "id", img_id,
+        #   "x,y", x, y,
+        #   "w,h", layout.get("actual_width"), layout.get("actual_height"),
+        #   "padding_top", layout.get("padding_top"),
+        #   "line_offsets", layout.get("line_offsets"),
+        #   "ascent,descent", layout.get("ascent"), layout.get("descent"),
+        #   "lines", layout.get("lines"))
 
     def get_img_list(self, show_custom_func=False):
         img_list = []
@@ -865,12 +864,12 @@ class ImgManager(ImgData):
             else:
                 self.full_exif_cache[i] = {"raw_exif": {}, "formatted_exif": {}, "has_exif": False}
         out_path_str = self.layout_params[33]
-        # custom process
+        # custom 
         if show_custom_func:
             algorithm_type = self.layout_params[37] if len(self.layout_params) > 37 else 0
             img_list = main_custom_func(img_list,out_path_str,name_list=name_list,algorithm_type=algorithm_type)
-            # 确保 processed_img 在保存图片时也落盘
-            # processed_img 按当前保存格式输出：保存图片时写图片，保存 PDF 时写 PDF
+            # Ensure processed_img is saved when exporting images too
+            # processed_img follows the current save format: write images when saving images, write PDF when saving PDF
             # try:
             #     save_format = self.layout_params[35] if len(self.layout_params) > 35 else 0
             #     if out_path_str:
@@ -887,7 +886,7 @@ class ImgManager(ImgData):
             #             self.ImgF.save_img_diff_format(target_path, img, save_format=save_format, use_vector_titles=False)
             # except Exception:
             #     pass
-            # 若当前保存格式为 PDF，则将 processed_img 目录下生成的图片转换为 PDF 并移除原图
+            # If saving as PDF, convert images in processed_img to PDF and remove originals
             # try:
             #     save_format = self.layout_params[35] if len(self.layout_params) > 35 else 0
             #     if save_format == 1 and out_path_str:
@@ -1644,7 +1643,7 @@ class ImgManager(ImgData):
             # stitch img
             # try:
                 # Two-dimensional arrangement
-            # 收集 title 布局供 PDF 矢量输出复用
+            # Collect title layout for reuse in PDF vector output
             if self.collect_pdf_layers:
                 self.pdf_title_layers.clear()
             self._last_title_layout = None
@@ -1729,7 +1728,7 @@ class ImgManager(ImgData):
         actual_height = max(bbox[3] - bbox[1], 1)
         text_bbox_h = bbox[3] - bbox[1]
 
-        # 字体最小需要高度
+        # Fonts need at least a minimal height
         try:
             ascent, descent = self.font.getmetrics()
         except:
@@ -1781,25 +1780,23 @@ class ImgManager(ImgData):
             lines = text.split("\n")
 
             baseline_offsets = []
-            cursor_top = 0  # 行顶累计
+            cursor_top = 0 
 
             for line in lines:
-                # ✅ 基线位置 = 行顶 + ascent
                 baseline_offsets.append(cursor_top + ascent)
-
                 bbox_line = self.font.getbbox(line if line else " ")
                 line_h = bbox_line[3] - bbox_line[1]
                 cursor_top += line_h + spacing
 
-            # 文本总高（最后一行不再额外加 spacing）
+            # Total text height (last line does not add extra spacing)
             text_total_h = cursor_top - spacing if lines else 0
 
-            # Pillow 那侧你是 draw.multiline_text((delta_x, -bbox[1]), ...)
-            # 所以保留这个 padding_top 来匹配“向下挪”的量
+            # On the Pillow side you call draw.multiline_text((delta_x, -bbox[1]), ...)
+            # Keep this padding_top to match the downward shift
             padding_top = -bbox[1] if bbox[1] < 0 else 0
             padding_bottom = max(0, actual_height - (padding_top + text_total_h))
 
-            # ✅ 最终存入的 offsets = 基线 offsets + padding_top
+            # Final stored offsets = baseline offsets + padding_top
             line_offsets = [bo + padding_top for bo in baseline_offsets]
 
             bg_color = self.gap_color if len(self.gap_color) == 4 else tuple(list(self.gap_color) + [255])
@@ -2178,7 +2175,7 @@ class ImgManager(ImgData):
         self.out_path_str = out_path_str
         try:
             if out_path_str != "" and Path(out_path_str).exists():
-                # 若开启自定义算法且当前保存为图片格式，先单独生成 processed_img 目录
+                # If a custom algorithm is enabled and saving as images, generate the processed_img directory first
                 try:
                     save_format = self.layout_params[35] if len(self.layout_params) > 35 else 0
                     if save_format != 1 and len(self.layout_params) > 32 and self.layout_params[32]:

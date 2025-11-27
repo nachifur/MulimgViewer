@@ -700,14 +700,6 @@ class ImgManager(ImgData):
         return base_name
 
     def save_pdf_with_vector_text(self, pdf_path, base_img):
-        try:
-            from reportlab.pdfgen import canvas
-            from reportlab.lib.utils import ImageReader
-            from reportlab.pdfbase import pdfmetrics
-        except ImportError as exc:
-            print("[ImportError] reportlab not installed")
-            traceback.print_exc()
-            return
         if base_img.mode not in ('RGB', 'L', 'CMYK'):
             base_img = base_img.convert('RGB')
         else:

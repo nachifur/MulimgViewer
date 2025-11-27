@@ -687,7 +687,7 @@ class ImgManager(ImgData):
         base_name = Path(font_path).stem.replace(" ", "_")
         if base_name in self._pdf_font_cache:
             return self._pdf_font_cache[base_name]
-        try: 
+        try:
             registered_fonts = pdfmetrics.getRegisteredFontNames()
             if base_name not in registered_fonts:
                 pdfmetrics.registerFont(TTFont(base_name, font_path))
@@ -856,7 +856,7 @@ class ImgManager(ImgData):
             else:
                 self.full_exif_cache[i] = {"raw_exif": {}, "formatted_exif": {}, "has_exif": False}
         out_path_str = self.layout_params[33]
-        # custom 
+        # custom
         if show_custom_func:
             algorithm_type = self.layout_params[37] if len(self.layout_params) > 37 else 0
             img_list = main_custom_func(img_list,out_path_str,name_list=name_list,algorithm_type=algorithm_type)
@@ -1772,7 +1772,7 @@ class ImgManager(ImgData):
             lines = text.split("\n")
 
             baseline_offsets = []
-            cursor_top = 0 
+            cursor_top = 0
 
             for line in lines:
                 baseline_offsets.append(cursor_top + ascent)

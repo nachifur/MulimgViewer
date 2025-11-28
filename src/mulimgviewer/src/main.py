@@ -1849,41 +1849,21 @@ class MulimgViewer (MulimgViewerGui):
         self.auto_layout()
 
     def _bind_settings_wheel_guard(self):
+        # Controls that should handle the wheel event
         swallow_types = (wx.Choice, wx.ComboBox, wx.SpinCtrl, wx.SpinCtrlDouble)
 
-        def mark_popup_open(event):
-            obj = event.GetEventObject()
-            setattr(obj, "_popup_open", True)
-            event.Skip()
-
-        def mark_popup_closed(event):
-            obj = event.GetEventObject()
-            setattr(obj, "_popup_open", False)
-            event.Skip()
-
+        # Reroute wheel event to scrolled window
         def reroute_wheel(event):
-            obj = event.GetEventObject()
-            if getattr(obj, "_popup_open", False):
-                event.Skip()
-                return
             clone = event.Clone()
             clone.SetEventObject(self.scrolledWindow_set)
             clone.ResumePropagation(wx.EVENT_PROPAGATE_MAX)
             self.scrolledWindow_set.GetEventHandler().ProcessEvent(clone)
 
+        # Recursively bind wheel event to relevant controls
         def walk(win):
             for child in win.GetChildren():
                 if isinstance(child, swallow_types):
-                    setattr(child, "_popup_open", False)
                     child.Bind(wx.EVT_MOUSEWHEEL, reroute_wheel)
-                    if isinstance(child, wx.Choice):
-                        child.Bind(wx.EVT_LEFT_DOWN, mark_popup_open)
-                        child.Bind(wx.EVT_CHOICE, mark_popup_closed)
-                        child.Bind(wx.EVT_KILL_FOCUS, mark_popup_closed)
-                    elif isinstance(child, wx.ComboBox):
-                        child.Bind(wx.EVT_LEFT_DOWN, mark_popup_open)
-                        child.Bind(wx.EVT_COMBOBOX, mark_popup_closed)
-                        child.Bind(wx.EVT_KILL_FOCUS, mark_popup_closed)
                 if child.GetChildren():
                     walk(child)
 

@@ -68,7 +68,7 @@ jobs:
       - name: Build
         run: |
           python -m build
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v6
         if: runner.os == 'Linux' && ! startsWith(github.ref, 'refs/tags/')
         with:
           path: |

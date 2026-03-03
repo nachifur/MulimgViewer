@@ -135,6 +135,14 @@ class MulimgViewer (MulimgViewerGui):
         self.load_configuration( None , config_name="output.json")
         self._bind_settings_wheel_guard()
 
+        def _bind_accel_guard_recursive(parent):
+            for child in parent.GetChildren():
+                if isinstance(child, (wx.TextCtrl, wx.SpinCtrl, wx.SpinCtrlDouble)):
+                    child.Bind(wx.EVT_SET_FOCUS, self.disable_accel)
+                    child.Bind(wx.EVT_KILL_FOCUS, self.enable_accel)
+                _bind_accel_guard_recursive(child)
+        _bind_accel_guard_recursive(self)
+
     def EVT_MY_TEST_OnHandle(self, event):
         self.about_gui(None, update=True, new_version=event.GetEventArgs())
 
@@ -250,6 +258,8 @@ class MulimgViewer (MulimgViewerGui):
         if hasattr(self, 'ImgManager') and hasattr(self.ImgManager, 'layout_params'):
             if len(self.ImgManager.layout_params) > 35:
                 self.ImgManager.layout_params[35] = save_format
+            if len(self.ImgManager.layout_params) > 33:
+                self.ImgManager.layout_params[33] = self.out_path_str
         if self.auto_save_all.Value:
             last_count_img = self.ImgManager.action_count
             self.ImgManager.set_action_count(0)
@@ -283,6 +293,7 @@ class MulimgViewer (MulimgViewerGui):
                     ["-1", "-1", "***"+str(self.ImgManager.name_list[self.ImgManager.action_count])+", saving img...***", "-1"])
             except:
                 pass
+            self.ImgManager.layout_params[33] = self.out_path_str
             if self.show_custom_func.Value:
                 self.ImgManager.layout_params[32] = True  # customfunc
                 self.ImgManager.save_img(self.out_path_str, type_)
@@ -1538,8 +1549,8 @@ class MulimgViewer (MulimgViewerGui):
                     self.ImgManager.input_path, type=self.ImgManager.type, parallel_to_sequential=parallel_to_sequential)
                 self.show_img_init()
                 self.ImgManager.set_action_count(action_count)
-                if self.index_table_gui:
-                    self.index_table_gui.show_id_table(
+                if self.indextablegui:
+                    self.indextablegui.show_id_table(
                         self.ImgManager.name_list, self.ImgManager.layout_params)
         except:
             pass
@@ -2219,6 +2230,8 @@ def main(img_list, save_path, name_list=None, algorithm_name="{algorithm_name}")
 
     def disable_accel(self, event):
         self.SetAcceleratorTable(wx.NullAcceleratorTable)
+        event.Skip()
 
     def enable_accel(self, event):
         self.SetAcceleratorTable(self.acceltbl)
+        event.Skip()

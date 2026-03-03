@@ -794,6 +794,8 @@ class ImgManager(ImgData):
         if not self.collect_pdf_layers:
             return
         layout = getattr(manager, "_last_title_layout", None)
+        if not layout:
+            return
         # Add a consistency guard
         if layout.get("source_id", None) not in (None, img_id):
             return

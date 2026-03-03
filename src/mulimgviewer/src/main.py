@@ -1705,6 +1705,14 @@ class MulimgViewer (MulimgViewerGui):
         if hasattr(self.video_manager, "_last_batch"):
             self.video_manager._last_batch = None
 
+        def _bind_accel_guard_recursive(parent):
+            for child in parent.GetChildren():
+                if isinstance(child, (wx.TextCtrl, wx.SpinCtrl, wx.SpinCtrlDouble)):
+                    child.Bind(wx.EVT_SET_FOCUS, self.disable_accel)
+                    child.Bind(wx.EVT_KILL_FOCUS, self.enable_accel)
+                _bind_accel_guard_recursive(child)
+        _bind_accel_guard_recursive(self)
+
     def EVT_MY_TEST_OnHandle(self, event):
         self.about_gui(None, update=True, new_version=event.GetEventArgs())
 
@@ -1956,6 +1964,12 @@ class MulimgViewer (MulimgViewerGui):
 
     def save_img(self, event):
         type_ = self.choice_output.GetSelection()
+        save_format = self.save_format.GetSelection()
+        if hasattr(self, 'ImgManager') and hasattr(self.ImgManager, 'layout_params'):
+            if len(self.ImgManager.layout_params) > 35:
+                self.ImgManager.layout_params[35] = save_format
+            if len(self.ImgManager.layout_params) > 33:
+                self.ImgManager.layout_params[33] = self.out_path_str
         if self.auto_save_all.Value:
             last_count_img = self.ImgManager.action_count
             self.ImgManager.set_action_count(0)
@@ -1990,6 +2004,7 @@ class MulimgViewer (MulimgViewerGui):
                     ["-1", "-1", "***"+str(self.ImgManager.name_list[self.ImgManager.action_count])+", saving img...***", "-1"])
             except:
                 pass
+            self.ImgManager.layout_params[33] = self.out_path_str
             if self.show_custom_func.Value:
                 self.ImgManager.layout_params[32] = True  # customfunc
                 self.ImgManager.save_img(self.out_path_str, type_)
@@ -3704,3 +3719,11 @@ class MulimgViewer (MulimgViewerGui):
         self.img_last.Bind(wx.EVT_LEFT_UP, self.img_left_release)
         self.img_last.Bind(wx.EVT_RIGHT_DOWN, self.img_right_click)
         self.img_last.Bind(wx.EVT_MOUSEWHEEL, self.img_wheel)
+
+    def disable_accel(self, event):
+        self.SetAcceleratorTable(wx.NullAcceleratorTable)
+        event.Skip()
+
+    def enable_accel(self, event):
+        self.SetAcceleratorTable(self.acceltbl)
+        event.Skip()

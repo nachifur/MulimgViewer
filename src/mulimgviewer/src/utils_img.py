@@ -1299,7 +1299,7 @@ class ImgManager(ImgData):
                 if current_img_index < len(self.flist):
                     folder_name = Path(self.flist[current_img_index]).parent.name
                     if title_rename_enabled and custom_title and custom_title != "N/A":
-                        display_lines.append(f"Name: {folder_name}")
+                        display_lines.append(f"Name: {custom_title}")
                     else:
                         display_lines.append(f"Name: {folder_name}")
                 else:

@@ -2531,7 +2531,235 @@ class MulimgViewer (MulimgViewerGui):
                 self.refresh(event)
                 self.SetStatusText_(["Magnifier", "-1", "-1", "-1"])
             else:
-                self.refresh(event)
+                if self.handle_title_injection(id):
+                    pass
+                else:
+                    self.refresh(event)
+        self.on_right_click(event)
+
+    def on_right_click(self, event):
+        # Right-click Menu​
+        menu = wx.Menu()
+        refresh_id = wx.Window.NewControlId()
+        menu.Append(refresh_id, "🔄 refresh")
+        menu.Bind(wx.EVT_MENU, self.refresh, id=refresh_id)
+
+        prev_id = wx.Window.NewControlId()
+        menu.Append(prev_id, "⬅️ Previous Page")
+        menu.Bind(wx.EVT_MENU, self.last_img, id=prev_id)
+
+        next_id = wx.Window.NewControlId()
+        menu.Append(next_id, "➡️ Next Page")
+        menu.Bind(wx.EVT_MENU, self.next_img, id=next_id)
+
+        save_single_id = wx.Window.NewControlId()
+        menu.Append(save_single_id, "💾 Save")
+        def save_current_page(evt):
+            # Default Save
+            self.save_img(evt)
+        menu.Bind(wx.EVT_MENU, save_current_page, id=save_single_id)
+
+        if (self.ImgManager.type == 0 or self.ImgManager.type == 1) and (self.parallel_sequential.Value):
+            save_column_id = wx.Window.NewControlId()
+            menu.Append(save_column_id, "📄 save(only select current location)")
+            def save_selected_column(evt):
+                # save current location images in all folders
+                if not self.out_path_str:
+                    self.out_path(evt)
+                    if not self.out_path_str:
+                        return
+                x, y = event.GetPosition()
+                clicked_grid_id = self.get_img_id_from_point([x, y])
+                # Retrieve ID information
+                if hasattr(self, 'current_page_img_paths') and clicked_grid_id < len(self.current_page_img_paths):
+                    target_path = self.current_page_img_paths[clicked_grid_id]
+                else:
+                    actual_img_index = self.ImgManager.xy_grids_id_list[clicked_grid_id] \
+                        if hasattr(self.ImgManager, 'xy_grids_id_list') and clicked_grid_id < len(self.ImgManager.xy_grids_id_list) \
+                        else clicked_grid_id
+
+                    if not hasattr(self.ImgManager, 'flist') or actual_img_index >= len(self.ImgManager.flist):
+                        self.SetStatusText_(["Cannot get clicked image", "-1", "-1", "-1"])
+                        return
+                    target_path = self.ImgManager.flist[actual_img_index]
+                if not target_path or not os.path.exists(target_path):
+                    self.SetStatusText_(["Invalid image path", "-1", "-1", "-1"])
+                    return
+                target_name = os.path.basename(target_path)
+                type_ = self.choice_output.GetSelection()
+                if self.show_custom_func.Value:
+                    self.ImgManager.layout_params[32] = True
+                    self.ImgManager.save_img(self.out_path_str, type_)
+                    self.ImgManager.layout_params[32] = False
+                self.ImgManager.save_img(self.out_path_str, type_)
+                self.ImgManager.save_stitch_img_and_customfunc_img(self.out_path_str, self.show_custom_func.Value)
+
+                # Call the default save function
+                select_folder = os.path.join(self.out_path_str, "select_images")
+                # override it with the new folder selection logic
+                if os.path.exists(select_folder):
+                    shutil.rmtree(select_folder)
+                os.makedirs(select_folder, exist_ok=True)
+                all_dirs = sorted(set(os.path.dirname(p) for p in self.ImgManager.flist))
+                success_count = 0
+                for folder_path in all_dirs:
+                    if not os.path.exists(folder_path):
+                        continue
+                    try:
+                        target_file = os.path.join(folder_path, target_name)
+                        if os.path.exists(target_file) and os.path.isfile(target_file):
+                            folder_name = os.path.basename(folder_path)
+                            sub_dir = os.path.join(select_folder, folder_name)
+                            os.makedirs(sub_dir, exist_ok=True)
+                            shutil.copy2(target_file, os.path.join(sub_dir, target_name))
+                            success_count += 1
+                    except:
+                        pass
+                status_msg = f"Save completed! select_images updated with {success_count} images (clicked: {target_name})" \
+                    if success_count > 0 \
+                    else f"Save completed, but no matching images found for {target_name}"
+                self.SetStatusText_([status_msg, "-1", "-1", "-1"])
+            menu.Bind(wx.EVT_MENU, save_selected_column, id=save_column_id)
+
+        if self.magnifier.Value:
+            new_box_id = wx.Window.NewControlId()
+            menu.Append(new_box_id, "🔍 Create zoom box here")
+
+            def create_magnifier_box(evt):
+                event.menu_triggered = True
+                x, y = event.GetPosition()
+                id = self.get_img_id_from_point([x, y])
+                xy_grid = self.ImgManager.xy_grid[id]
+                x = x-xy_grid[0]
+                y = y-xy_grid[1]
+
+                if self.magnifier.Value:
+                    self.color_list.append(self.colourPicker_draw.GetColour())
+                    try:
+                        show_scale = self.show_scale.GetLineText(0).split(',')
+                        show_scale = [float(x) for x in show_scale]
+                        if len(self.xy_magnifier) == 0:
+                            default_size = 50
+                            points = self.ImgManager.ImgF.sort_box_point(
+                                [x-default_size//2, y-default_size//2, x+default_size//2, y+default_size//2],
+                                show_scale, self.ImgManager.img_resolution_origin, first_point=True)
+                            self.xy_magnifier.append(
+                                points+show_scale+[self.ImgManager.title_setting[2] and self.ImgManager.title_setting[1]])
+                        else:
+                            points = self.move_box_point(x, y, show_scale)
+                            self.xy_magnifier.append(
+                                points+show_scale+[self.ImgManager.title_setting[2] and self.ImgManager.title_setting[1]])
+                        self._invalidate_render_cache()
+                        self.refresh(evt)
+                        self.SetStatusText_(["Create a zoom box", "-1", "-1", "-1"])
+                    except Exception as e:
+                        self.SetStatusText_(["-1", f"Failed to create zoom box: {str(e)}", "-1", "-1"])
+            menu.Bind(wx.EVT_MENU, create_magnifier_box, id=new_box_id)
+
+        if len(self.xy_magnifier) > 0:
+            clear_all_id = wx.Window.NewControlId()
+            menu.Append(clear_all_id, "🗑️ Clear all zoom boxes")
+            menu.Bind(wx.EVT_MENU, self.img_left_dclick, id=clear_all_id)
+
+        if self.select_img_box.Value:
+            box_menu = wx.Menu()
+
+            if self.box_id != -1:
+                move_box_id = wx.Window.NewControlId()
+                box_menu.Append(move_box_id, f"Move box {self.box_id} to this position")
+
+                def move_box_to_position(evt):
+                    event.menu_triggered = True
+                    self.img_right_click(event)
+                    self._invalidate_render_cache()
+                    self.refresh(evt)
+                    self.SetStatusText_([f"Move box {self.box_id}", "-1", "-1", "-1"])
+                box_menu.Bind(wx.EVT_MENU, move_box_to_position, id=move_box_id)
+                delete_box_id = wx.Window.NewControlId()
+                box_menu.Append(delete_box_id, f"Delete box {self.box_id}")
+                def delete_specific_box(evt):
+                    if self.select_img_box.Value and self.box_id != -1:
+                        self.xy_magnifier.pop(self.box_id)
+                        if len(self.xy_magnifier) == 0:
+                            self.box_position.SetSelection(0)
+                        self._invalidate_render_cache()
+                        self.refresh(evt)
+                        self.SetStatusText_([f"Delete box {self.box_id}", "-1", "-1", "-1"])
+                box_menu.Bind(wx.EVT_MENU, delete_specific_box, id=delete_box_id)
+            menu.AppendSubMenu(box_menu, f"Selection box" + (f" ({self.box_id})" if self.box_id != -1 else ""))
+
+        if hasattr(self, 'title_rename_text'):
+            new_title = self.title_rename_text.GetValue().strip()
+            if new_title:
+                inject_title_id = wx.Window.NewControlId()
+                display_title = new_title[:20] + "..." if len(new_title) > 20 else new_title
+                menu.Append(inject_title_id, f"📝 Inject title: {display_title}")
+                def inject_title_directly(evt):
+                    x, y = event.GetPosition()
+                    id = self.get_img_id_from_point([x, y])
+                    success = self.handle_title_injection(id)
+                    if success:
+                        self.SetStatusText_(["Title injected successfully", "-1", "-1", "-1"])
+                    else:
+                        self.SetStatusText_(["Failed to inject title", "-1", "-1", "-1"])
+                menu.Bind(wx.EVT_MENU, inject_title_directly, id=inject_title_id)
+                menu.AppendSeparator()
+        try:
+            mouse_screen_pos = wx.GetMousePosition()
+            client_pos = self.ScreenToClient(mouse_screen_pos)
+        except:
+            client_pos = wx.Point(100, 100)
+
+        self.PopupMenu(menu, client_pos)
+        menu.Destroy()
+
+    #--exif--
+    def on_title_exif_changed(self, event):
+        if hasattr(self, 'ImgManager') and hasattr(self.ImgManager, 'layout_params'):
+            if len(self.ImgManager.layout_params) > 17:
+                self.ImgManager.layout_params[17][11] = self.title_exif.Value
+                self.ImgManager.load_exif_display_config(force_reload=True)
+
+    def inject_new_title(self, new_title, img_id=None):
+        try:
+            if img_id is not None:
+                current_index = img_id
+            else:
+                current_index = getattr(self, 'selected_img_id', self.ImgManager.action_count)
+            if hasattr(self.ImgManager, 'xy_grids_id_list') and current_index < len(self.ImgManager.xy_grids_id_list):
+                actual_img_index = self.ImgManager.xy_grids_id_list[current_index]
+            else:
+                actual_img_index = current_index
+            if actual_img_index < len(self.ImgManager.flist):
+                img_path = self.ImgManager.flist[actual_img_index]
+                success = self.ImgManager.update_image_exif_37510(img_path, new_title)
+                if success:
+                    self.ImgManager.get_img_list()
+                    self.show_img()
+                    self.SetStatusText("✅ Title updated successfully!")
+
+                    if hasattr(self, 'title_rename_text'):
+                        self.title_rename_text.SetValue("")
+                    self.SetStatusText_([f"The title has been injected into {current_index+1} images: {new_title}", "-1", "-1", "-1"])
+                else:
+                    raise Exception("Failed to write EXIF")
+            else:
+                raise Exception(f"Picture index {actual_img_index} out of range")
+
+        except:
+            pass
+
+    def handle_title_injection(self, img_id = None):
+        if not hasattr(self, 'title_rename_text'):
+            return False
+        new_title = self.title_rename_text.GetValue().strip()
+        if not new_title:
+            return False
+        try:
+            self.inject_new_title(new_title, img_id)
+            return True
+        except:
+            return False
 
     def move_box_point(self, x, y, show_scale):
         x_0, y_0, x_1, y_1 = self.xy_magnifier[0][0:4]

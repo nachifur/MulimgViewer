@@ -1144,6 +1144,8 @@ class MulimgViewer (MulimgViewerGui):
                 success = self.ImgManager.update_image_exif_37510(img_path, new_title)
                 if success:
                     self.ImgManager.get_img_list()
+                    self.show_img()
+                    self.SetStatusText("✅ Title updated successfully!")
 
                     if hasattr(self, 'title_rename_text'):
                         self.title_rename_text.SetValue("")

@@ -794,6 +794,8 @@ class ImgManager(ImgData):
         if not self.collect_pdf_layers:
             return
         layout = getattr(manager, "_last_title_layout", None)
+        if not layout:
+            return
         # Add a consistency guard
         if layout.get("source_id", None) not in (None, img_id):
             return
@@ -1077,11 +1079,12 @@ class ImgManager(ImgData):
         return final_img_list_with_id
 
     def load_exif_display_config(self, force_reload=False):
-        config_path = Path(__file__).parent.parent / "configs" / "exif_display_config.json"
+        config_path = Path(__file__).parent.parent / "configs" / "default_config.json"
         if force_reload or not hasattr(self, 'exif_display_config'):
             try:
                 with open(config_path, 'r', encoding='utf-8') as f:
-                    config = json.load(f)
+                    full_config = json.load(f)
+                    config = full_config.get('exif_display', {})
                     self.exif_display_config = config
                     self._initialize_tag_mappings(config)
                     return config
@@ -1100,13 +1103,14 @@ class ImgManager(ImgData):
     def load_full_mappings(self):
         if self._full_mappings is not None:
             return self._full_mappings
-        config_path = Path(__file__).parent.parent / "configs" / "exif_tag_mappings.json"
+        config_path = Path(__file__).parent.parent / "configs" / "default_config.json"
         if not config_path.exists():
             self._full_mappings = {"0th": {}, "Exif": {}, "GPS": {}, "1st": {}}
             return self._full_mappings
         try:
             with open(config_path, 'r', encoding='utf-8') as f:
-                mappings_json = json.load(f)
+                full_config = json.load(f)
+                mappings_json = full_config.get('exif_tag_mappings', {})
                 self._full_mappings = {}
                 for ifd_name, mapping in mappings_json.items():
                     self._full_mappings[ifd_name] = {
@@ -1252,7 +1256,7 @@ class ImgManager(ImgData):
                 if current_img_index < len(self.flist):
                     folder_name = Path(self.flist[current_img_index]).parent.name
                     if title_rename_enabled and custom_title and custom_title != "N/A":
-                        display_lines.append(f"Name: {folder_name}")
+                        display_lines.append(f"Name: {custom_title}")
                     else:
                         display_lines.append(f"Name: {folder_name}")
                 else:

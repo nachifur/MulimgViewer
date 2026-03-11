@@ -32,17 +32,26 @@ class MulimgViewer (MulimgViewerGui):
         self.UpdateUI = UpdateUI
         self.get_type = get_type
 
-        self.acceltbl = wx.AcceleratorTable([(wx.ACCEL_NORMAL, wx.WXK_UP,
-                                         self.menu_up.GetId()),
-                                        (wx.ACCEL_NORMAL, wx.WXK_DOWN,
-                                         self.menu_down.GetId()),
-                                        (wx.ACCEL_NORMAL, wx.WXK_RIGHT,
-                                         self.menu_right.GetId()),
-                                        (wx.ACCEL_NORMAL, wx.WXK_LEFT,
-                                         self.menu_left.GetId()),
-                                        (wx.ACCEL_NORMAL, wx.WXK_DELETE,
-                                         self.menu_delete_box.GetId())
-                                        ])
+        _key_map = {"up": wx.WXK_UP, "down": wx.WXK_DOWN, "left": wx.WXK_LEFT,
+                     "right": wx.WXK_RIGHT, "delete": wx.WXK_DELETE}
+        for c in "abcdefghijklmnopqrstuvwxyz":
+            _key_map[c] = ord(c.upper())
+        try:
+            _cfg_path = str(Path(get_resource_path(str(Path("configs")))) / "default_config.json")
+            with open(_cfg_path, 'r', encoding='utf-8') as f:
+                _hk = json.load(f).get('hotkeys', {})
+        except Exception:
+            _hk = {}
+        _actions = {"move_up": self.menu_up, "move_down": self.menu_down,
+                     "move_left": self.menu_left, "move_right": self.menu_right,
+                     "delete_box": self.menu_delete_box}
+        _defaults = {"move_up": "up", "move_down": "down", "move_left": "left",
+                      "move_right": "right", "delete_box": "delete"}
+        self.acceltbl = wx.AcceleratorTable([
+            (wx.ACCEL_NORMAL, _key_map[_hk.get(k, _defaults[k]).strip().lower()], m.GetId())
+            for k, m in _actions.items()
+            if _hk.get(k, _defaults[k]).strip().lower() in _key_map
+        ])
         self.SetAcceleratorTable(self.acceltbl)
         # self.img_Sizer = self.scrolledWindow_img.GetSizer()
         self.Bind(wx.EVT_CLOSE, self.close)
@@ -128,12 +137,20 @@ class MulimgViewer (MulimgViewerGui):
                 self.show_img(event=None)
             except:
                 pass
-        self.load_configuration( None , config_name="output.json")
+        self.load_configuration( None , config_name="default_config.json")
         self.Bind(wx.EVT_CONTEXT_MENU, self.on_right_click)
         self.custom_algorithms = []
         # self.refresh_algorithm_list()
-        self.load_configuration( None , config_name="output.json")
+        self.load_configuration( None , config_name="default_config.json")
         self._bind_settings_wheel_guard()
+
+        def _bind_accel_guard_recursive(parent):
+            for child in parent.GetChildren():
+                if isinstance(child, (wx.TextCtrl, wx.SpinCtrl, wx.SpinCtrlDouble)):
+                    child.Bind(wx.EVT_SET_FOCUS, self.disable_accel)
+                    child.Bind(wx.EVT_KILL_FOCUS, self.enable_accel)
+                _bind_accel_guard_recursive(child)
+        _bind_accel_guard_recursive(self)
 
     def EVT_MY_TEST_OnHandle(self, event):
         self.about_gui(None, update=True, new_version=event.GetEventArgs())
@@ -250,6 +267,8 @@ class MulimgViewer (MulimgViewerGui):
         if hasattr(self, 'ImgManager') and hasattr(self.ImgManager, 'layout_params'):
             if len(self.ImgManager.layout_params) > 35:
                 self.ImgManager.layout_params[35] = save_format
+            if len(self.ImgManager.layout_params) > 33:
+                self.ImgManager.layout_params[33] = self.out_path_str
         if self.auto_save_all.Value:
             last_count_img = self.ImgManager.action_count
             self.ImgManager.set_action_count(0)
@@ -283,6 +302,7 @@ class MulimgViewer (MulimgViewerGui):
                     ["-1", "-1", "***"+str(self.ImgManager.name_list[self.ImgManager.action_count])+", saving img...***", "-1"])
             except:
                 pass
+            self.ImgManager.layout_params[33] = self.out_path_str
             if self.show_custom_func.Value:
                 self.ImgManager.layout_params[32] = True  # customfunc
                 self.ImgManager.save_img(self.out_path_str, type_)
@@ -1133,6 +1153,8 @@ class MulimgViewer (MulimgViewerGui):
                 success = self.ImgManager.update_image_exif_37510(img_path, new_title)
                 if success:
                     self.ImgManager.get_img_list()
+                    self.show_img()
+                    self.SetStatusText("✅ Title updated successfully!")
 
                     if hasattr(self, 'title_rename_text'):
                         self.title_rename_text.SetValue("")
@@ -1288,6 +1310,7 @@ class MulimgViewer (MulimgViewerGui):
                     self.key_status["shift_s"] = 1
                 elif self.key_status["shift_s"] == 1:
                     self.key_status["shift_s"] = 0
+        event.Skip()
 
     def key_up_detect(self, event):
         if event.GetKeyCode() == wx.WXK_CONTROL:
@@ -1295,6 +1318,7 @@ class MulimgViewer (MulimgViewerGui):
                 self.key_status["ctrl"] = 0
         elif event.GetKeyCode() == wx.WXK_SHIFT:
             self.shift_pressed = False
+        event.Skip()
 
     def get_speed(self, name="pixel"):
         if name == "pixel":
@@ -1538,8 +1562,8 @@ class MulimgViewer (MulimgViewerGui):
                     self.ImgManager.input_path, type=self.ImgManager.type, parallel_to_sequential=parallel_to_sequential)
                 self.show_img_init()
                 self.ImgManager.set_action_count(action_count)
-                if self.index_table_gui:
-                    self.index_table_gui.show_id_table(
+                if self.indextablegui:
+                    self.indextablegui.show_id_table(
                         self.ImgManager.name_list, self.ImgManager.layout_params)
         except:
             pass
@@ -1922,16 +1946,20 @@ class MulimgViewer (MulimgViewerGui):
             'show_all_func_layout': self.show_all_func_layout.GetValue(),
             'func_layout_vertical': self.func_layout_vertical.GetValue(),
         }
-        flip_cursor_path = Path(get_resource_path(str(Path("configs"))))
-        flip_cursor_path = str(flip_cursor_path / "output.json")
-        with open(flip_cursor_path, 'w') as file:
-            json.dump(data, file, indent=1)
+        config_path = Path(get_resource_path(str(Path("configs"))))
+        config_file_path = str(config_path / "default_config.json")
+        with open(config_file_path, 'r', encoding='utf-8') as file:
+            full_config = json.load(file)
+        full_config['output'] = data
+        with open(config_file_path, 'w', encoding='utf-8') as file:
+            json.dump(full_config, file, indent=1)
 
-    def load_configuration(self, event, config_name="output.json"):
-        flip_cursor_path = Path(get_resource_path(str(Path("configs"))))
-        flip_cursor_path = str(flip_cursor_path / config_name)
-        with open(flip_cursor_path, 'r') as file:
-            data = json.load(file)
+    def load_configuration(self, event, config_name="default_config.json"):
+        config_path = Path(get_resource_path(str(Path("configs"))))
+        config_file_path = str(config_path / config_name)
+        with open(config_file_path, 'r', encoding='utf-8') as file:
+            full_config = json.load(file)
+            data = full_config.get('output', full_config)
             self.row_col.SetValue(data['row_col'])
             self.row_col_one_img.SetValue(data['row_col_one_img'])
             self.show_scale.SetValue(data['show_scale'])
@@ -2000,10 +2028,10 @@ class MulimgViewer (MulimgViewerGui):
 
     def reset_configuration(self, event):
         json_path = Path(get_resource_path(str(Path("configs"))))
-        output_json_path = str(json_path / "output.json")
-        output_s_json_path = str(json_path / "output_s.json")
-        self.load_configuration(event, config_name="output_s.json")
-        shutil.copy(output_s_json_path, output_json_path)
+        default_config_path = str(json_path / "default_config.json")
+        userdef_config_path = str(json_path / "userdef_config.json")
+        self.load_configuration(event, config_name="userdef_config.json")
+        shutil.copy(userdef_config_path, default_config_path)
 
     def add_custom_algorithm(self, event):
         algorithm_path = self.custom_algorithm_input.GetValue().strip()
@@ -2219,6 +2247,8 @@ def main(img_list, save_path, name_list=None, algorithm_name="{algorithm_name}")
 
     def disable_accel(self, event):
         self.SetAcceleratorTable(wx.NullAcceleratorTable)
+        event.Skip()
 
     def enable_accel(self, event):
         self.SetAcceleratorTable(self.acceltbl)
+        event.Skip()

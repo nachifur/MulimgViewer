@@ -34,6 +34,11 @@ class MulimgViewer (MulimgViewerGui):
         self.create_ImgManager()
         self.UpdateUI = UpdateUI
         self.get_type = get_type
+        self.window_state_path = Path(get_resource_path(str(Path("configs")))) / "window_state.json"
+        pos = self.GetPosition()
+        size = self.GetSize()
+        self._normal_window_pos = (pos[0], pos[1])
+        self._normal_window_size = (size[0], size[1])
 
         self.acceltbl = wx.AcceleratorTable([(wx.ACCEL_NORMAL, wx.WXK_UP,
                                          self.menu_up.GetId()),
@@ -138,6 +143,8 @@ class MulimgViewer (MulimgViewerGui):
         self.load_configuration( None , config_name="output.json")
         self._bind_settings_wheel_guard()
 
+        self._restore_window_state()
+
     def EVT_MY_TEST_OnHandle(self, event):
         self.about_gui(None, update=True, new_version=event.GetEventArgs())
 
@@ -205,7 +212,12 @@ class MulimgViewer (MulimgViewerGui):
             self.title_font.SetSelection(0)
 
     def frame_resize(self, event):
-        self.auto_layout(frame_resize=True)
+        if not self.IsMaximized() and not self.IsIconized():
+            pos = self.GetPosition()
+            size = self.GetSize()
+            self._normal_window_pos = (pos[0], pos[1])
+            self._normal_window_size = (size[0], size[1])
+        self.auto_layout(frame_resize=True)    
 
     def open_all_img(self, event):
         input_mode = self.choice_input_mode.GetSelection()
@@ -219,10 +231,55 @@ class MulimgViewer (MulimgViewerGui):
             self.onefilelist(event)
 
     def close(self, event):
+        self._save_window_state()
         if self.get_type() == -1:
             self.Destroy()
         else:
             self.UpdateUI(-1)
+
+    def _save_window_state(self):
+        try:
+            if self.IsMaximized():
+                x, y = self._normal_window_pos
+                w, h = self._normal_window_size
+                maximized = True
+            else:
+                pos = self.GetPosition()
+                size = self.GetSize()
+                x, y = pos[0], pos[1]
+                w, h = size[0], size[1]
+                maximized = False
+            data = {
+                "x": int(x),
+                "y": int(y),
+                "w": int(w),
+                "h": int(h),
+                "maximized": maximized,
+            }
+            with open(self.window_state_path, "w", encoding="utf-8") as file:
+                json.dump(data, file, indent=1)
+        except:
+            pass
+
+    def _restore_window_state(self):
+        if not self.window_state_path.exists():
+            return
+        try:
+            with open(self.window_state_path, "r", encoding="utf-8") as file:
+                data = json.load(file)
+            x = data["x"]
+            y = data["y"]
+            w = data["w"]
+            h = data["h"]
+            maximized = bool(data.get("maximized", False))
+            self.SetSize((w, h))
+            self.SetPosition((x, y))
+            self._normal_window_pos = (x, y)
+            self._normal_window_size = (w, h)
+            if maximized:
+                wx.CallAfter(self.Maximize, True)
+        except:
+            pass
 
     def next_img(self, event):
         if self.ImgManager.img_num != 0:

@@ -23,6 +23,9 @@ import sys
 import shutil
 import importlib
 
+import winreg
+
+
 class MulimgViewer (MulimgViewerGui):
 
     def __init__(self, parent, UpdateUI, get_type, default_path=None):
@@ -183,17 +186,40 @@ class MulimgViewer (MulimgViewerGui):
             pass
 
     def set_title_font(self):
-        font_path = Path("font")/"using"
-        font_path = Path(get_resource_path(str(font_path)))
-        files_name = [f.stem for f in font_path.iterdir()]
-        files_name = np.sort(np.array(files_name)).tolist()
-        for file_name in files_name:
-            file_name = file_name.split("_", 1)[1]
-            file_name = file_name.replace("-", " ")
-            self.title_font.Append(file_name)
-        self.title_font.SetSelection(0)
-        font_paths = [str(f) for f in font_path.iterdir()]
-        self.font_paths = np.sort(np.array(font_paths)).tolist()
+        # font_path = Path("font")/"using"
+        font_dir = Path(r"C:\Windows\Fonts")
+        font_enum = wx.FontEnumerator()
+        # font_path = Path(get_resource_path(str(font_path)))
+        font_names = sorted(set(font_enum.GetFacenames()), key=str.lower)
+        registry_fonts = {}
+        reg_path = r"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Fonts"
+        with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, reg_path) as key:
+                i = 0
+                while True:
+                    try:
+                        display_name, font_file, _ = winreg.EnumValue(key, i)
+                        i += 1
+                        if not isinstance(font_file, str):
+                            continue
+                        font_path = font_dir / font_file
+                        if not font_path.is_file():
+                            continue
+                        if font_path.suffix.lower() not in [".ttf", ".otf", ".ttc"]:
+                            continue
+                        clean_name = display_name.replace(" (TrueType)", "").replace(" (OpenType)", "")
+                        registry_fonts[clean_name.lower()] = (clean_name, str(font_path))
+                    except OSError:
+                        break       
+        font_items = []
+        for name in font_names:
+            item = registry_fonts.get(name.lower())
+            if item:
+                font_items.append(item)
+        for display_name, _ in font_items:
+            self.title_font.Append(display_name)
+        self.font_paths = [font_path for _, font_path in font_items]
+        if font_items:
+            self.title_font.SetSelection(0)
 
     def frame_resize(self, event):
         self.auto_layout(frame_resize=True)

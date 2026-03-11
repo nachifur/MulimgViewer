@@ -34,27 +34,23 @@ class MulimgViewer (MulimgViewerGui):
         self.create_ImgManager()
         self.UpdateUI = UpdateUI
         self.get_type = get_type
+        self.window_state_path = Path(get_resource_path(str(Path("configs")))) / "window_state.json"
+        pos = self.GetPosition()
+        size = self.GetSize()
+        self._normal_window_pos = (pos[0], pos[1])
+        self._normal_window_size = (size[0], size[1])
 
-        _key_map = {"up": wx.WXK_UP, "down": wx.WXK_DOWN, "left": wx.WXK_LEFT,
-                     "right": wx.WXK_RIGHT, "delete": wx.WXK_DELETE}
-        for c in "abcdefghijklmnopqrstuvwxyz":
-            _key_map[c] = ord(c.upper())
-        try:
-            _cfg_path = str(Path(get_resource_path(str(Path("configs")))) / "default_config.json")
-            with open(_cfg_path, 'r', encoding='utf-8') as f:
-                _hk = json.load(f).get('hotkeys', {})
-        except Exception:
-            _hk = {}
-        _actions = {"move_up": self.menu_up, "move_down": self.menu_down,
-                     "move_left": self.menu_left, "move_right": self.menu_right,
-                     "delete_box": self.menu_delete_box}
-        _defaults = {"move_up": "up", "move_down": "down", "move_left": "left",
-                      "move_right": "right", "delete_box": "delete"}
-        self.acceltbl = wx.AcceleratorTable([
-            (wx.ACCEL_NORMAL, _key_map[_hk.get(k, _defaults[k]).strip().lower()], m.GetId())
-            for k, m in _actions.items()
-            if _hk.get(k, _defaults[k]).strip().lower() in _key_map
-        ])
+        self.acceltbl = wx.AcceleratorTable([(wx.ACCEL_NORMAL, wx.WXK_UP,
+                                         self.menu_up.GetId()),
+                                        (wx.ACCEL_NORMAL, wx.WXK_DOWN,
+                                         self.menu_down.GetId()),
+                                        (wx.ACCEL_NORMAL, wx.WXK_RIGHT,
+                                         self.menu_right.GetId()),
+                                        (wx.ACCEL_NORMAL, wx.WXK_LEFT,
+                                         self.menu_left.GetId()),
+                                        (wx.ACCEL_NORMAL, wx.WXK_DELETE,
+                                         self.menu_delete_box.GetId())
+                                        ])
         self.SetAcceleratorTable(self.acceltbl)
         # self.img_Sizer = self.scrolledWindow_img.GetSizer()
         self.Bind(wx.EVT_CLOSE, self.close)
@@ -147,13 +143,7 @@ class MulimgViewer (MulimgViewerGui):
         self.load_configuration( None , config_name="default_config.json")
         self._bind_settings_wheel_guard()
 
-        def _bind_accel_guard_recursive(parent):
-            for child in parent.GetChildren():
-                if isinstance(child, (wx.TextCtrl, wx.SpinCtrl, wx.SpinCtrlDouble)):
-                    child.Bind(wx.EVT_SET_FOCUS, self.disable_accel)
-                    child.Bind(wx.EVT_KILL_FOCUS, self.enable_accel)
-                _bind_accel_guard_recursive(child)
-        _bind_accel_guard_recursive(self)
+        self._restore_window_state()
 
     def EVT_MY_TEST_OnHandle(self, event):
         self.about_gui(None, update=True, new_version=event.GetEventArgs())
@@ -222,7 +212,12 @@ class MulimgViewer (MulimgViewerGui):
             self.title_font.SetSelection(0)
 
     def frame_resize(self, event):
-        self.auto_layout(frame_resize=True)
+        if not self.IsMaximized() and not self.IsIconized():
+            pos = self.GetPosition()
+            size = self.GetSize()
+            self._normal_window_pos = (pos[0], pos[1])
+            self._normal_window_size = (size[0], size[1])
+        self.auto_layout(frame_resize=True)    
 
     def open_all_img(self, event):
         input_mode = self.choice_input_mode.GetSelection()
@@ -236,10 +231,55 @@ class MulimgViewer (MulimgViewerGui):
             self.onefilelist(event)
 
     def close(self, event):
+        self._save_window_state()
         if self.get_type() == -1:
             self.Destroy()
         else:
             self.UpdateUI(-1)
+
+    def _save_window_state(self):
+        try:
+            if self.IsMaximized():
+                x, y = self._normal_window_pos
+                w, h = self._normal_window_size
+                maximized = True
+            else:
+                pos = self.GetPosition()
+                size = self.GetSize()
+                x, y = pos[0], pos[1]
+                w, h = size[0], size[1]
+                maximized = False
+            data = {
+                "x": int(x),
+                "y": int(y),
+                "w": int(w),
+                "h": int(h),
+                "maximized": maximized,
+            }
+            with open(self.window_state_path, "w", encoding="utf-8") as file:
+                json.dump(data, file, indent=1)
+        except:
+            pass
+
+    def _restore_window_state(self):
+        if not self.window_state_path.exists():
+            return
+        try:
+            with open(self.window_state_path, "r", encoding="utf-8") as file:
+                data = json.load(file)
+            x = data["x"]
+            y = data["y"]
+            w = data["w"]
+            h = data["h"]
+            maximized = bool(data.get("maximized", False))
+            self.SetSize((w, h))
+            self.SetPosition((x, y))
+            self._normal_window_pos = (x, y)
+            self._normal_window_size = (w, h)
+            if maximized:
+                wx.CallAfter(self.Maximize, True)
+        except:
+            pass
 
     def next_img(self, event):
         if self.ImgManager.img_num != 0:

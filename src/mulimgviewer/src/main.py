@@ -39,19 +39,8 @@ class MulimgViewer (MulimgViewerGui):
         size = self.GetSize()
         self._normal_window_pos = (pos[0], pos[1])
         self._normal_window_size = (size[0], size[1])
-
-        self.acceltbl = wx.AcceleratorTable([(wx.ACCEL_NORMAL, wx.WXK_UP,
-                                         self.menu_up.GetId()),
-                                        (wx.ACCEL_NORMAL, wx.WXK_DOWN,
-                                         self.menu_down.GetId()),
-                                        (wx.ACCEL_NORMAL, wx.WXK_RIGHT,
-                                         self.menu_right.GetId()),
-                                        (wx.ACCEL_NORMAL, wx.WXK_LEFT,
-                                         self.menu_left.GetId()),
-                                        (wx.ACCEL_NORMAL, wx.WXK_DELETE,
-                                         self.menu_delete_box.GetId())
-                                        ])
-        self.SetAcceleratorTable(self.acceltbl)
+        self.hotkeys = self.get_default_hotkeys()
+        self.apply_hotkeys(self.hotkeys)
         # self.img_Sizer = self.scrolledWindow_img.GetSizer()
         self.Bind(wx.EVT_CLOSE, self.close)
         # self.Bind(wx.EVT_PAINT, self.OnPaint)
@@ -280,6 +269,68 @@ class MulimgViewer (MulimgViewerGui):
                 wx.CallAfter(self.Maximize, True)
         except:
             pass
+
+    def get_default_hotkeys(self):
+        return {
+            "move_up": "UP",
+            "move_down": "DOWN",
+            "move_left": "LEFT",
+            "move_right": "RIGHT",
+            "delete_box": "DELETE",
+        }
+    def parse_hotkey(self, key_name):
+        if key_name is None:
+            return None
+        key_name = str(key_name).strip().upper()
+        special_keys = {
+            "UP": wx.WXK_UP,
+            "DOWN": wx.WXK_DOWN,
+            "LEFT": wx.WXK_LEFT,
+            "RIGHT": wx.WXK_RIGHT,
+            "DELETE": wx.WXK_DELETE,
+        }
+        if key_name in special_keys:
+            return special_keys[key_name]
+        if len(key_name) == 1 and "A" <= key_name <= "Z":
+            return ord(key_name)
+        return None
+
+    def normalize_hotkeys(self, hotkeys):
+        defaults = self.get_default_hotkeys()
+        if not isinstance(hotkeys, dict):
+            return defaults.copy()
+        normalized = defaults.copy()
+        for action in defaults:
+            value = hotkeys.get(action)
+            if isinstance(value, str) and value.strip():
+                normalized[action] = value.strip().upper()
+
+        parsed_codes = []
+        for action, key_name in normalized.items():
+            keycode = self.parse_hotkey(key_name)
+            if keycode is None:
+                return defaults.copy()
+            parsed_codes.append(keycode)
+        if len(parsed_codes) != len(set(parsed_codes)):
+            return defaults.copy()
+        return normalized
+
+    def apply_hotkeys(self, hotkeys):
+        hotkeys = self.normalize_hotkeys(hotkeys)
+        action_to_menu_id = {
+            "move_up": self.menu_up.GetId(),
+            "move_down": self.menu_down.GetId(),
+            "move_left": self.menu_left.GetId(),
+            "move_right": self.menu_right.GetId(),
+            "delete_box": self.menu_delete_box.GetId(),
+        }
+        entries = []
+        for action, menu_id in action_to_menu_id.items():
+            keycode = self.parse_hotkey(hotkeys[action])
+            entries.append((wx.ACCEL_NORMAL, keycode, menu_id))
+        self.hotkeys = hotkeys
+        self.acceltbl = wx.AcceleratorTable(entries)
+        self.SetAcceleratorTable(self.acceltbl)
 
     def next_img(self, event):
         if self.ImgManager.img_num != 0:
@@ -1987,7 +2038,7 @@ class MulimgViewer (MulimgViewerGui):
             'auto_layout_check': self.auto_layout_check.GetValue(),
             'one_img': self.one_img.GetValue(),
             'onetitle': self.onetitle.GetValue(),
-            'customfunc': self.show_custom_func.GetValue(),
+            'show_custom_func': self.show_custom_func.GetValue(),
             'show_box': self.show_box.GetValue(),
             'show_box_in_crop': self.show_box_in_crop.GetValue(),
             'select_img_box': self.select_img_box.GetValue(),
@@ -2004,6 +2055,7 @@ class MulimgViewer (MulimgViewerGui):
             'show_all_func': self.show_all_func.GetValue(),
             'show_all_func_layout': self.show_all_func_layout.GetValue(),
             'func_layout_vertical': self.func_layout_vertical.GetValue(),
+            'hotkeys': self.hotkeys,
         }
         flip_cursor_path = Path(get_resource_path(str(Path("configs"))))
         flip_cursor_path = str(flip_cursor_path / "output.json")
@@ -2048,7 +2100,7 @@ class MulimgViewer (MulimgViewerGui):
             self.auto_layout_check.SetValue(data['auto_layout_check'])
             self.one_img.SetValue(data['one_img'])
             self.onetitle.SetValue(data['onetitle'])
-            self.show_custom_func.SetValue(data['show_custom_func'])
+            self.show_custom_func.SetValue(data['show_custom_func']) #customfunc?
             self.show_box.SetValue(data['show_box'])
             self.show_box_in_crop.SetValue(data['show_box_in_crop'])
             self.select_img_box.SetValue(data['select_img_box'])
@@ -2080,6 +2132,7 @@ class MulimgViewer (MulimgViewerGui):
                 self.func_layout_vertical.SetValue(data['func_layout_vertical'])
             else:
                 self.func_layout_vertical.SetValue(False)
+        self.apply_hotkeys(data.get('hotkeys', {}))
 
     def reset_configuration(self, event):
         json_path = Path(get_resource_path(str(Path("configs"))))

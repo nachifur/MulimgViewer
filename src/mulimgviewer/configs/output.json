@@ -1,5 +1,5 @@
 {
- "row_col": "1,1",
+ "row_col": "4,4",
  "row_col_one_img": "1,1",
  "show_scale": "1,1",
  "row_col_img_unit": "3,1",
@@ -44,5 +44,16 @@
  "title_show_suffix": false,
  "title_down_up": false,
  "save_format": 0,
- "title_show_rename": false
+ "title_show_rename": false,
+ "customfunc_choice": 0,
+ "show_all_func": false,
+ "show_all_func_layout": "2,2",
+ "func_layout_vertical": false,
+ "hotkeys": {
+  "move_up": "K",
+  "move_down": "J",
+  "move_left": "H",
+  "move_right": "L",
+  "delete_box": "DELETE"
+ }
 }

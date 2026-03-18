@@ -46,10 +46,15 @@
  "save_format": 0,
  "title_show_rename": false,
  "hotkeys": {
-  "move_up": "UP",
-  "move_down": "DOWN",
-  "move_left": "LEFT",
-  "move_right": "RIGHT",
-  "delete_box": "DELETE"
- }
+        "next_img": "CTRL+N",
+        "last_img": "CTRL+L",
+        "save_img": "CTRL+S",
+        "refresh": "CTRL+R",
+        "hidden": "CTRL+H",
+        "move_up": "UP",
+        "move_down": "DOWN",
+        "move_left": "LEFT",
+        "move_right": "RIGHT",
+        "delete_box": "DELETE"
+    }
 }

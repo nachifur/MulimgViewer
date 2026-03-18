@@ -50,10 +50,22 @@
  "show_all_func_layout": "2,2",
  "func_layout_vertical": false,
  "hotkeys": {
-  "move_up": "K",
-  "move_down": "J",
-  "move_left": "H",
-  "move_right": "L",
+  "next_img": "CTRL+N",
+  "last_img": "CTRL+L",
+  "save_img": "CTRL+S",
+  "refresh": "CTRL+R",
+  "hidden": "CTRL+H",
+  "move_up": "UP",
+  "move_down": "DOWN",
+  "move_left": "LEFT",
+  "move_right": "RIGHT",
   "delete_box": "DELETE"
+ },
+ "window_state": {
+  "x": 345,
+  "y": 193,
+  "w": 1026,
+  "h": 779,
+  "maximized": false
  }
 }

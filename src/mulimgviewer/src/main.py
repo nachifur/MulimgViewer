@@ -228,7 +228,7 @@ class MulimgViewer (MulimgViewerGui):
             size = self.GetSize()
             self._normal_window_pos = (pos[0], pos[1])
             self._normal_window_size = (size[0], size[1])
-        self.auto_layout(frame_resize=True)    
+        self.auto_layout(frame_resize=True)
 
     def open_all_img(self, event):
         input_mode = self.choice_input_mode.GetSelection()
@@ -315,7 +315,7 @@ class MulimgViewer (MulimgViewerGui):
             "move_right": "RIGHT",
             "delete_box": "DELETE",
         }
-    
+
     def parse_hotkey(self, key_name):
         if key_name is None:
             return None
@@ -375,7 +375,7 @@ class MulimgViewer (MulimgViewerGui):
             return defaults.copy()
         return normalized
 
-    
+
     def get_hotkey_menu_items(self):
         return {
         "next_img": (self.menu_next, "Next"),

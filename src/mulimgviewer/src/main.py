@@ -23,6 +23,9 @@ import sys
 import shutil
 import importlib
 
+import winreg
+
+
 class MulimgViewer (MulimgViewerGui):
 
     def __init__(self, parent, UpdateUI, get_type, default_path=None):
@@ -31,19 +34,13 @@ class MulimgViewer (MulimgViewerGui):
         self.create_ImgManager()
         self.UpdateUI = UpdateUI
         self.get_type = get_type
-
-        self.acceltbl = wx.AcceleratorTable([(wx.ACCEL_NORMAL, wx.WXK_UP,
-                                         self.menu_up.GetId()),
-                                        (wx.ACCEL_NORMAL, wx.WXK_DOWN,
-                                         self.menu_down.GetId()),
-                                        (wx.ACCEL_NORMAL, wx.WXK_RIGHT,
-                                         self.menu_right.GetId()),
-                                        (wx.ACCEL_NORMAL, wx.WXK_LEFT,
-                                         self.menu_left.GetId()),
-                                        (wx.ACCEL_NORMAL, wx.WXK_DELETE,
-                                         self.menu_delete_box.GetId())
-                                        ])
-        self.SetAcceleratorTable(self.acceltbl)
+        self.output_config_path = Path(get_resource_path(str(Path("configs")))) / "output.json"
+        pos = self.GetPosition()
+        size = self.GetSize()
+        self._normal_window_pos = (pos[0], pos[1])
+        self._normal_window_size = (size[0], size[1])
+        self.hotkeys = self.get_default_hotkeys()
+        self.apply_hotkeys(self.hotkeys)
         # self.img_Sizer = self.scrolledWindow_img.GetSizer()
         self.Bind(wx.EVT_CLOSE, self.close)
         # self.Bind(wx.EVT_PAINT, self.OnPaint)
@@ -135,6 +132,8 @@ class MulimgViewer (MulimgViewerGui):
         self.load_configuration( None , config_name="output.json")
         self._bind_settings_wheel_guard()
 
+        self._restore_window_state()
+
     def EVT_MY_TEST_OnHandle(self, event):
         self.about_gui(None, update=True, new_version=event.GetEventArgs())
 
@@ -166,19 +165,69 @@ class MulimgViewer (MulimgViewerGui):
             pass
 
     def set_title_font(self):
-        font_path = Path("font")/"using"
+        self.title_font.Clear()
+        sys_platform = platform.system()
+        if sys_platform.find("Windows") >= 0:
+            font_dir = Path(r"C:\Windows\Fonts")
+            font_enum = wx.FontEnumerator()
+            font_names = sorted(set(font_enum.GetFacenames()), key=str.lower)
+            registry_fonts = {}
+            reg_path = r"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Fonts"
+            try:
+                with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, reg_path) as key:
+                    i = 0
+                    while True:
+                        try:
+                            display_name, font_file, _ = winreg.EnumValue(key, i)
+                            i += 1
+                            if not isinstance(font_file, str):
+                                continue
+                            font_path = font_dir / font_file
+                            if not font_path.is_file():
+                                continue
+                            if font_path.suffix.lower() not in [".ttf", ".otf", ".ttc"]:
+                                continue
+                            clean_name = display_name.replace(" (TrueType)", "").replace(" (OpenType)", "")
+                            registry_fonts[clean_name.lower()] = (clean_name, str(font_path))
+                        except OSError:
+                            break
+            except Exception as e:
+                print("set_title_font windows error:", e)
+            font_items = []
+            for name in font_names:
+                item = registry_fonts.get(name.lower())
+                if item:
+                    font_items.append(item)
+            if font_items:
+                for display_name, _ in font_items:
+                    self.title_font.Append(display_name)
+                self.font_paths = [font_path for _, font_path in font_items]
+                self.title_font.SetSelection(0)
+                return
+
+        font_path = Path("font") / "using"
         font_path = Path(get_resource_path(str(font_path)))
         files_name = [f.stem for f in font_path.iterdir()]
         files_name = np.sort(np.array(files_name)).tolist()
+
         for file_name in files_name:
             file_name = file_name.split("_", 1)[1]
             file_name = file_name.replace("-", " ")
             self.title_font.Append(file_name)
-        self.title_font.SetSelection(0)
+
+        if files_name:
+            self.title_font.SetSelection(0)
+
         font_paths = [str(f) for f in font_path.iterdir()]
         self.font_paths = np.sort(np.array(font_paths)).tolist()
 
+
     def frame_resize(self, event):
+        if not self.IsMaximized() and not self.IsIconized():
+            pos = self.GetPosition()
+            size = self.GetSize()
+            self._normal_window_pos = (pos[0], pos[1])
+            self._normal_window_size = (size[0], size[1])
         self.auto_layout(frame_resize=True)
 
     def open_all_img(self, event):
@@ -193,10 +242,201 @@ class MulimgViewer (MulimgViewerGui):
             self.onefilelist(event)
 
     def close(self, event):
+        self._save_window_state()
         if self.get_type() == -1:
             self.Destroy()
         else:
             self.UpdateUI(-1)
+
+    def _save_window_state(self):
+        try:
+            if self.IsMaximized():
+                x, y = self._normal_window_pos
+                w, h = self._normal_window_size
+                maximized = True
+            else:
+                pos = self.GetPosition()
+                size = self.GetSize()
+                x, y = pos[0], pos[1]
+                w, h = size[0], size[1]
+                maximized = False
+            if self.output_config_path.exists():
+                with open(self.output_config_path, "r", encoding="utf-8") as file:
+                    data = json.load(file)
+            else:
+                data = {}
+            data["window_state"] = {
+                "x": int(x),
+                "y": int(y),
+                "w": int(w),
+                "h": int(h),
+                "maximized": maximized,
+            }
+            with open(self.output_config_path, "w", encoding="utf-8") as file:
+                json.dump(data, file, indent=1)
+        except:
+            pass
+
+
+    def _restore_window_state(self):
+        if not self.output_config_path.exists():
+            return
+        try:
+            with open(self.output_config_path, "r", encoding="utf-8") as file:
+                data = json.load(file)
+            window_state = data.get("window_state")
+            if not isinstance(window_state, dict):
+                return
+            x = int(window_state["x"])
+            y = int(window_state["y"])
+            w = int(window_state["w"])
+            h = int(window_state["h"])
+            maximized = bool(window_state.get("maximized", False))
+            self.SetSize((w, h))
+            self.SetPosition((x, y))
+            self._normal_window_pos = (x, y)
+            self._normal_window_size = (w, h)
+            if maximized:
+                wx.CallAfter(self.Maximize, True)
+        except:
+            pass
+
+
+    def get_default_hotkeys(self):
+        return {
+            "next_img": "CTRL+N",
+            "last_img": "CTRL+L",
+            "save_img": "CTRL+S",
+            "refresh": "CTRL+R",
+            "hidden": "CTRL+H",
+            "move_up": "UP",
+            "move_down": "DOWN",
+            "move_left": "LEFT",
+            "move_right": "RIGHT",
+            "delete_box": "DELETE",
+        }
+
+    def parse_hotkey(self, key_name):
+        if key_name is None:
+            return None
+        tokens = [token.strip().upper() for token in str(key_name).split("+") if token.strip()]
+        if not tokens:
+            return None
+        key_token = tokens[-1]
+        modifier_tokens = tokens[:-1]
+
+        modifier_map = {
+            "CTRL": wx.ACCEL_CTRL,
+            "CONTROL": wx.ACCEL_CTRL,
+            "ALT": wx.ACCEL_ALT,
+            "SHIFT": wx.ACCEL_SHIFT,
+        }
+        modifiers = wx.ACCEL_NORMAL
+        used_modifiers = set()
+        for token in modifier_tokens:
+            if token not in modifier_map:
+                return None
+            if token in used_modifiers:
+                return None
+            used_modifiers.add(token)
+            modifiers |= modifier_map[token]
+        special_keys = {
+            "UP": wx.WXK_UP,
+            "DOWN": wx.WXK_DOWN,
+            "LEFT": wx.WXK_LEFT,
+            "RIGHT": wx.WXK_RIGHT,
+            "DELETE": wx.WXK_DELETE,
+        }
+        if key_token in special_keys:
+            keycode = special_keys[key_token]
+        elif len(key_token) == 1 and "A" <= key_token <= "Z":
+            keycode = ord(key_token)
+        else:
+            return None
+        return modifiers, keycode
+
+
+    def normalize_hotkeys(self, hotkeys):
+        defaults = self.get_default_hotkeys()
+        if not isinstance(hotkeys, dict):
+            return defaults.copy()
+        normalized = defaults.copy()
+        for action in defaults:
+            value = hotkeys.get(action)
+            if isinstance(value, str) and value.strip():
+                normalized[action] = value.strip().upper()
+        parsed_shortcuts = []
+        for action, key_name in normalized.items():
+            parsed = self.parse_hotkey(key_name)
+            if parsed is None:
+                return defaults.copy()
+            parsed_shortcuts.append(parsed)
+        if len(parsed_shortcuts) != len(set(parsed_shortcuts)):
+            return defaults.copy()
+        return normalized
+
+
+    def get_hotkey_menu_items(self):
+        return {
+        "next_img": (self.menu_next, "Next"),
+        "last_img": (self.menu_last, "Last"),
+        "save_img": (self.menu_save, "Save"),
+        "refresh": (self.menu_refresh, "Refresh"),
+        "hidden": (self.menu_hidden, "Hidden"),
+        "move_up": (self.menu_up, "Up"),
+        "move_down": (self.menu_down, "Down"),
+        "move_left": (self.menu_left, "Left"),
+        "move_right": (self.menu_right, "Right"),
+        "delete_box": (self.menu_delete_box, "Delete box"),
+    }
+
+
+    def format_hotkey_for_menu(self, key_name):
+        tokens = [token.strip().upper() for token in str(key_name).split("+") if token.strip()]
+        display_map = {
+            "CTRL": "Ctrl",
+            "CONTROL": "Ctrl",
+            "ALT": "Alt",
+            "SHIFT": "Shift",
+            "UP": "ArrowUp",
+            "DOWN": "ArrowDown",
+            "LEFT": "ArrowLeft",
+            "RIGHT": "ArrowRight",
+            "DELETE": "Delete",
+        }
+        display_tokens = []
+        for token in tokens:
+            if token in display_map:
+                display_tokens.append(display_map[token])
+            elif len(token) == 1:
+                display_tokens.append(token)
+            else:
+                display_tokens.append(token.title())
+        return "+".join(display_tokens)
+
+
+    def update_hotkey_menu_labels(self):
+        menu_items = self.get_hotkey_menu_items()
+        for action, (menu_item, base_label) in menu_items.items():
+            hotkey_text = self.format_hotkey_for_menu(self.hotkeys[action])
+            menu_item.SetItemLabel(f"{base_label}\t{hotkey_text}")
+
+
+    def apply_hotkeys(self, hotkeys):
+        hotkeys = self.normalize_hotkeys(hotkeys)
+        menu_items = self.get_hotkey_menu_items()
+        entries = []
+        for action, (menu_item, _) in menu_items.items():
+            parsed = self.parse_hotkey(hotkeys[action])
+            if parsed is None:
+                continue
+            modifiers, keycode = parsed
+            entries.append((modifiers, keycode, menu_item.GetId()))
+        self.hotkeys = hotkeys
+        self.acceltbl = wx.AcceleratorTable(entries)
+        self.SetAcceleratorTable(self.acceltbl)
+        self.update_hotkey_menu_labels()
+
 
     def next_img(self, event):
         if self.ImgManager.img_num != 0:
@@ -1904,7 +2144,7 @@ class MulimgViewer (MulimgViewerGui):
             'auto_layout_check': self.auto_layout_check.GetValue(),
             'one_img': self.one_img.GetValue(),
             'onetitle': self.onetitle.GetValue(),
-            'customfunc': self.show_custom_func.GetValue(),
+            'show_custom_func': self.show_custom_func.GetValue(),
             'show_box': self.show_box.GetValue(),
             'show_box_in_crop': self.show_box_in_crop.GetValue(),
             'select_img_box': self.select_img_box.GetValue(),
@@ -1921,10 +2161,17 @@ class MulimgViewer (MulimgViewerGui):
             'show_all_func': self.show_all_func.GetValue(),
             'show_all_func_layout': self.show_all_func_layout.GetValue(),
             'func_layout_vertical': self.func_layout_vertical.GetValue(),
+            'hotkeys': self.hotkeys,
         }
-        flip_cursor_path = Path(get_resource_path(str(Path("configs"))))
-        flip_cursor_path = str(flip_cursor_path / "output.json")
-        with open(flip_cursor_path, 'w') as file:
+        if self.output_config_path.exists():
+            try:
+                with open(self.output_config_path, "r", encoding="utf-8") as file:
+                    old_data = json.load(file)
+                if "window_state" in old_data:
+                    data["window_state"] = old_data["window_state"]
+            except:
+                pass
+        with open(self.output_config_path, 'w', encoding="utf-8") as file:
             json.dump(data, file, indent=1)
 
     def load_configuration(self, event, config_name="output.json"):
@@ -1965,7 +2212,7 @@ class MulimgViewer (MulimgViewerGui):
             self.auto_layout_check.SetValue(data['auto_layout_check'])
             self.one_img.SetValue(data['one_img'])
             self.onetitle.SetValue(data['onetitle'])
-            self.show_custom_func.SetValue(data['show_custom_func'])
+            self.show_custom_func.SetValue(data['show_custom_func']) #customfunc?
             self.show_box.SetValue(data['show_box'])
             self.show_box_in_crop.SetValue(data['show_box_in_crop'])
             self.select_img_box.SetValue(data['select_img_box'])
@@ -1997,6 +2244,7 @@ class MulimgViewer (MulimgViewerGui):
                 self.func_layout_vertical.SetValue(data['func_layout_vertical'])
             else:
                 self.func_layout_vertical.SetValue(False)
+        self.apply_hotkeys(data.get('hotkeys', {}))
 
     def reset_configuration(self, event):
         json_path = Path(get_resource_path(str(Path("configs"))))

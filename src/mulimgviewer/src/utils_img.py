@@ -679,6 +679,40 @@ class ImgManager(ImgData):
         self._last_title_layout = None
         self._pdf_font_cache = {}
         self._title_line_spacing = 4
+        self._flist_groups = None
+
+    def _normalize_flist_input(self, flist):
+        """Flatten nested frame lists used by cached video/image batches."""
+        if flist is None:
+            return None, None
+        if not isinstance(flist, (list, tuple)):
+            return [flist], None
+
+        flat = []
+        groups = []
+        idx = 0
+        contains_nested = False
+
+        for item in flist:
+            if isinstance(item, (list, tuple)):
+                contains_nested = True
+                subitems = [sub for sub in item if sub is not None]
+            else:
+                subitems = [] if item is None else [item]
+
+            if not subitems:
+                groups.append((idx, idx))
+                continue
+
+            flat.extend(subitems)
+            idx_next = idx + len(subitems)
+            groups.append((idx, idx_next))
+            idx = idx_next
+
+        if not contains_nested:
+            groups = None
+
+        return flat, groups
     def _get_pdf_font_name(self, font_path):
         """
         Return the registered font name for the given font path to avoid registering the same font twice.
@@ -832,13 +866,24 @@ class ImgManager(ImgData):
         #   "ascent,descent", layout.get("ascent"), layout.get("descent"),
         #   "lines", layout.get("lines"))
 
-    def get_img_list(self, show_custom_func=False):
+    def get_img_list(self, show_custom_func=False, flist=None):
         img_list = []
         # load img list
         name_list = []
         self.full_exif_cache = {}
+        if flist is None:
+            self_flist = self.flist
+        else:
+            normalized, groups = self._normalize_flist_input(flist)
+            if normalized is None:
+                self_flist = []
+                self.flist = []
+            else:
+                self_flist = list(normalized)
+                self.flist = list(normalized)
+            self._flist_groups = groups
 
-        for i, path in enumerate(self.flist):
+        for i, path in enumerate(self_flist):
             path = Path(path)
             name_list.append(path.name)
             if path.is_file() and path.suffix.lower() in self.format_group:
@@ -1356,7 +1401,7 @@ class ImgManager(ImgData):
         self.img_resolution = self.img_resolution.tolist()
         return self.img_resolution
 
-    def stitch_img_init(self, img_mode, draw_points, first_run=True):
+    def stitch_img_init(self, img_mode, draw_points, flist=None, first_run=True):
         """img_mode, 0: show, 1: save"""
         # init
         show_all_func = len(self.layout_params) > 38 and self.layout_params[38]
@@ -1383,7 +1428,7 @@ class ImgManager(ImgData):
 
         else:
             self._show_all_func_enabled = False
-            self.get_img_list(show_custom_func=self.layout_params[32])  # Generate image list
+            self.get_img_list(show_custom_func=self.layout_params[32], flist=flist)  # Generate image list
         self.set_scale_mode(img_mode=img_mode)
         if img_mode == 0:
             self.draw_points = draw_points
@@ -1626,11 +1671,11 @@ class ImgManager(ImgData):
             img_preprocessing_sub = []
         return layout_list, img_preprocessing_sub, show_img
 
-    def stitch_images(self, img_mode, draw_points=[]):
+    def stitch_images(self, img_mode, draw_points=[], flist=None):
         """img_mode, 0: show, 1: save"""
         # init
         layout_list, img_preprocessing_sub, show_img = self.stitch_img_init(
-            img_mode, draw_points)
+            img_mode, draw_points, flist=flist)
         if show_img:
             # stitch img
             # try:
@@ -1671,6 +1716,17 @@ class ImgManager(ImgData):
             #     return 0
         # else:
         #     return 2
+
+    def clear_cache(self):
+        """Clear in-memory image objects and per-batch caches."""
+        self.img = None
+        self.customfunc_img = None
+        self.img_list = []
+        self.flist = []
+        self._flist_groups = None
+        self.full_exif_cache = {}
+        self.pdf_title_layers = []
+        self._last_title_layout = None
 
 
     def fill_func(self, img, id=None):

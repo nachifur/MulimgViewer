@@ -23,7 +23,13 @@ import sys
 import shutil
 import importlib
 
-import winreg
+try:
+    import winreg
+except ImportError:
+    winreg = None
+
+from PIL import ImageFont
+
 
 
 class MulimgViewer (MulimgViewerGui):
@@ -164,10 +170,58 @@ class MulimgViewer (MulimgViewerGui):
         except:
             pass
 
+    def _get_system_font_display_name(self, font_path):
+        try:
+            font = ImageFont.truetype(str(font_path), 12)
+            family, style = font.getname()
+        except Exception:
+            return None
+        family = family.strip() if family else ""
+        style = style.strip() if style else ""
+        if not family:
+            family = font_path.stem.replace("-", " ").replace("_", " ")
+        if style and style.lower() not in ["regular", "normal", "roman"]:
+            return f"{family} {style}"
+        return family
+
+    def _collect_font_items_from_dirs(self, font_dirs):
+        font_items = []
+        seen_names = set()
+        seen_paths = set()
+        valid_suffixes = {".ttf", ".otf", ".ttc"}
+        for font_dir in font_dirs:
+            font_dir = Path(font_dir)
+            if not font_dir.exists():
+                continue
+            try:
+                for font_path in font_dir.rglob("*"):
+                    if not font_path.is_file():
+                        continue
+                    if font_path.suffix.lower() not in valid_suffixes:
+                        continue
+                    path_str = str(font_path)
+                    path_key = path_str.lower()
+                    if path_key in seen_paths:
+                        continue
+                    display_name = self._get_system_font_display_name(font_path)
+                    if not display_name:
+                        continue
+                    name_key = display_name.lower()
+                    if name_key in seen_names:
+                        continue
+                    seen_paths.add(path_key)
+                    seen_names.add(name_key)
+                    font_items.append((display_name, path_str))
+            except Exception:
+                continue
+        return sorted(font_items, key=lambda item: item[0].lower())
+
+
     def set_title_font(self):
         self.title_font.Clear()
         sys_platform = platform.system()
-        if sys_platform.find("Windows") >= 0:
+        font_items = []
+        if sys_platform.find("Windows") >= 0 and winreg is not None:
             font_dir = Path(r"C:\Windows\Fonts")
             font_enum = wx.FontEnumerator()
             font_names = sorted(set(font_enum.GetFacenames()), key=str.lower)
@@ -191,36 +245,46 @@ class MulimgViewer (MulimgViewerGui):
                             registry_fonts[clean_name.lower()] = (clean_name, str(font_path))
                         except OSError:
                             break
-            except Exception as e:
-                print("set_title_font windows error:", e)
-            font_items = []
+            except Exception:
+                registry_fonts = {}
             for name in font_names:
                 item = registry_fonts.get(name.lower())
                 if item:
                     font_items.append(item)
-            if font_items:
-                for display_name, _ in font_items:
-                    self.title_font.Append(display_name)
-                self.font_paths = [font_path for _, font_path in font_items]
-                self.title_font.SetSelection(0)
-                return
+        elif sys_platform.find("Linux") >= 0:
+            font_dirs = [
+                Path("/usr/share/fonts"),
+                Path("/usr/local/share/fonts"),
+                Path.home() / ".fonts",
+                Path.home() / ".local" / "share" / "fonts",
+            ]
+            font_items = self._collect_font_items_from_dirs(font_dirs)
+        elif sys_platform.find("Darwin") >= 0:
+            font_dirs = [
+                Path("/System/Library/Fonts"),
+                Path("/Library/Fonts"),
+                Path.home() / "Library" / "Fonts",
+            ]
+            font_items = self._collect_font_items_from_dirs(font_dirs)
+        if font_items:
+            for display_name, _ in font_items:
+                self.title_font.Append(display_name)
 
+            self.font_paths = [font_path for _, font_path in font_items]
+            self.title_font.SetSelection(0)
+            return
         font_path = Path("font") / "using"
         font_path = Path(get_resource_path(str(font_path)))
         files_name = [f.stem for f in font_path.iterdir()]
         files_name = np.sort(np.array(files_name)).tolist()
-
         for file_name in files_name:
             file_name = file_name.split("_", 1)[1]
             file_name = file_name.replace("-", " ")
             self.title_font.Append(file_name)
-
         if files_name:
             self.title_font.SetSelection(0)
-
         font_paths = [str(f) for f in font_path.iterdir()]
         self.font_paths = np.sort(np.array(font_paths)).tolist()
-
 
     def frame_resize(self, event):
         if not self.IsMaximized() and not self.IsIconized():

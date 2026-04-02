@@ -91,12 +91,10 @@ class ImgData():
         for vidx, physical_frame_count in enumerate(self.img_num_list):
             fps = self.video_fps_list[vidx]
             fps_int = int(round(fps))
-
-            # 这里的 physical_frame_count 实际上已经是“可显示逻辑帧数”，不能再除 step
             logical_frame_count = int(physical_frame_count)
 
             one_video_names = []
-            for logical_idx in range(logical_frame_count):  # 使用逻辑帧数
+            for logical_idx in range(logical_frame_count):  # Using logical frame count
                 physical_idx = logical_idx * step
                 time_sec = physical_idx / fps
 
@@ -107,17 +105,12 @@ class ImgData():
                 filename = f"{sec_str}s_frame_{frame_in_sec}.jpeg"
                 one_video_names.append(filename)
 
-                # 打印前5个和后5个文件名的详细信息
-                if logical_idx < 5 or logical_idx >= logical_frame_count - 5:
-                    pass
-
             name_list.append(one_video_names)
 
-        # 重新计算max_len（基于逻辑帧数）
+          # Recalculate max_len (based on the number of logical frames)
         if name_list:
             max_logical_len = max(len(video_names) for video_names in name_list)
 
-            # 填充逻辑
             for vidx, one_video_names in enumerate(name_list):
                 if one_video_names and len(one_video_names) < max_logical_len:
                     padding = max_logical_len - len(one_video_names)
@@ -205,17 +198,15 @@ class ImgData():
     def set_count_per_action(self, count_per_action):
         self.count_per_action = max(1, int(count_per_action))
 
-        # 视频模式下，self.img_num 已是可显示帧数；图片模式下也是最终可遍历数量
-        # 统一按 count_per_action 计算批次数，不再额外除 skip，避免重复缩小批次。
         if self.img_num % self.count_per_action:
             self.max_action_num = int(self.img_num / self.count_per_action) + 1
         else:
             self.max_action_num = int(self.img_num / self.count_per_action)
 
-        # 保底，避免出现 0 批次导致索引问题
+        # Set a minimum to prevent indexing issues caused by zero batches
         self.max_action_num = max(1, int(self.max_action_num))
 
-        # 确保当前 action_count 在有效范围内
+        # Ensure that the current action_count is within the valid range
         if hasattr(self, "action_count"):
             if self.action_count >= self.max_action_num:
                 self.action_count = self.max_action_num - 1
@@ -280,16 +271,16 @@ class ImgData():
                 if self.parallel_to_sequential:
                     flist_all = []
 
-                    cumulative_frames = 0  # 累积帧数
+                    cumulative_frames = 0  # Cumulative Frame Count
 
                     for i in range(len(self.path_list)):
-                        actual_frame_count = self.video_num_list[i]  # 这个视频的实际可显示帧数
+                        actual_frame_count = self.video_num_list[i]  # The actual frame rate of this video
 
                         for k in range(actual_frame_count):
-                            # 关键修改：使用视频内的局部索引 k，而不是全局索引
-                            # k 是这个视频内的第几帧（考虑了跳帧后的逻辑帧号）
+                            # Key modification: use local index k within the video, not global index
+                            # k is the frame number within this video (considering skipped frames)
                             if hasattr(self, 'video_manager') and self.video_manager:
-                                filename = self.video_manager._filename_converter(k, i)  # k是局部索引
+                                filename = self.video_manager._filename_converter(k, i)  # k is the local index
                             else:
                                 filename = self.name_list[i][k] if k < len(self.name_list[i]) else self.name_list[i][-1]
 

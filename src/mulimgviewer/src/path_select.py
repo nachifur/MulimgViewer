@@ -53,7 +53,7 @@ class PathSelectFrame(PathSelectFrameGui):
                     pass
 
     def _finalize_and_return(self):
-        """收集路径并回调，然后关闭窗口。"""
+        """Collect selected paths, invoke callback, then close the window."""
         paths = [p for p in self.m_richText1.Value.split("\n") if p]
         if VIDEO_MODE:
             self.shared_config.real_video_path = paths if VIDEO_MODE else []
@@ -75,28 +75,28 @@ class PathSelectFrame(PathSelectFrameGui):
 
     def on_browse(self, event):
         paths = []
-        if VIDEO_MODE:  # 选一个或多个视频文件
+        if VIDEO_MODE:  # Select one or more video files
             wildcard = ("Video files (*.mp4;*.avi;*.mov;*.mkv)|*.mp4;*.avi;*.mov;*.mkv|"
                         "All files (*.*)|*.*")
-            # 如果上次有选择的视频文件路径，设置为初始路径
+            # If video files were selected previously, use that as the initial directory
             last_dir = self._last_video_dir if hasattr(self, '_last_video_dir') else ""
-            dlg = wx.FileDialog(None, "选择视频", last_dir,
+            dlg = wx.FileDialog(None, "Select Video", last_dir,
                                 wildcard=wildcard,
                                 style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST | wx.FD_MULTIPLE)
             if dlg.ShowModal() == wx.ID_OK:
                 paths = dlg.GetPaths()
-        else:  # 选一个或多个文件夹（不进入子文件）
+        else:  # Select one or more folders (without descending into subfolders)
             last_dir = self._last_folder_dir if hasattr(self, '_last_folder_dir') else ""
-            dlg = wx.DirDialog(self, "选择一个或多个文件夹", last_dir, style=wx.DD_DEFAULT_STYLE | wx.DD_MULTIPLE)
+            dlg = wx.DirDialog(self, "Select One or More Folders", last_dir, style=wx.DD_DEFAULT_STYLE | wx.DD_MULTIPLE)
             if dlg.ShowModal() != wx.ID_OK:
                 dlg.Destroy()
                 return
             paths = dlg.GetPaths()
             if paths:
-                self._last_folder_dir = paths[-1]  # 更新上次选择的文件夹路径
+                self._last_folder_dir = paths[-1]  # Update the last selected folder path
         dlg.Destroy()
 
-        # 更新文件路径到文本框中
+        # Update selected paths in the text box
         cur = [x for x in self.m_richText1.Value.split("\n") if x]
         if paths:
             for p in paths:
@@ -110,7 +110,7 @@ class PathSelectFrame(PathSelectFrameGui):
     def _on_close(self, event):
         self._finalize_and_return()
 
-    def Close(self, event):  # noqa: N802  保持与生成代码绑定的名字一致
+    def Close(self, event):  # noqa: N802  Keep this name to match generated-code bindings
         self._finalize_and_return()
 
     def add_dir(self, event):

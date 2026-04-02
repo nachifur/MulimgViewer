@@ -27,7 +27,7 @@ def main(img_list, save_path, name_list=None, algorithm_name="Image Darkening"):
                 img_path = save_path / name_list[i]
             else:
                 img_path = save_path / (str(i) + ".png")
-            # 保存 PNG，并额外保存同名 PDF 方便用户选择 PDF 输出
+            # Save as a PNG and also save a PDF with the same filename to allow users to choose the PDF output
             img.save(str(img_path))
             pdf_path = img_path.with_suffix(".pdf")
             try:

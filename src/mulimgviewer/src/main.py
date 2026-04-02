@@ -1425,6 +1425,15 @@ class VideoManager:
                 miss.append(idx)
         return miss
 
+try:
+    import winreg
+except ImportError:
+    winreg = None
+
+from PIL import ImageFont
+
+
+
 class MulimgViewer (MulimgViewerGui):
 
     def __init__(self, parent, UpdateUI, get_type, default_path=None):
@@ -1547,7 +1556,6 @@ class MulimgViewer (MulimgViewerGui):
                 self.show_img()
             except:
                 pass
-
         self.load_configuration( None , config_name="default_config.json")
         self.Bind(wx.EVT_CONTEXT_MENU, self.on_right_click)
         self.custom_algorithms = []
@@ -1755,8 +1763,110 @@ class MulimgViewer (MulimgViewerGui):
         except:
             pass
 
+    def _get_system_font_display_name(self, font_path):
+        try:
+            font = ImageFont.truetype(str(font_path), 12)
+            family, style = font.getname()
+        except Exception:
+            return None
+        family = family.strip() if family else ""
+        style = style.strip() if style else ""
+        if not family:
+            family = font_path.stem.replace("-", " ").replace("_", " ")
+        if style and style.lower() not in ["regular", "normal", "roman"]:
+            return f"{family} {style}"
+        return family
+
+    def _collect_font_items_from_dirs(self, font_dirs):
+        font_items = []
+        seen_names = set()
+        seen_paths = set()
+        valid_suffixes = {".ttf", ".otf", ".ttc"}
+        for font_dir in font_dirs:
+            font_dir = Path(font_dir)
+            if not font_dir.exists():
+                continue
+            try:
+                for font_path in font_dir.rglob("*"):
+                    if not font_path.is_file():
+                        continue
+                    if font_path.suffix.lower() not in valid_suffixes:
+                        continue
+                    path_str = str(font_path)
+                    path_key = path_str.lower()
+                    if path_key in seen_paths:
+                        continue
+                    display_name = self._get_system_font_display_name(font_path)
+                    if not display_name:
+                        continue
+                    name_key = display_name.lower()
+                    if name_key in seen_names:
+                        continue
+                    seen_paths.add(path_key)
+                    seen_names.add(name_key)
+                    font_items.append((display_name, path_str))
+            except Exception:
+                continue
+        return sorted(font_items, key=lambda item: item[0].lower())
+
+
     def set_title_font(self):
-        font_path = Path("font")/"using"
+        self.title_font.Clear()
+        sys_platform = platform.system()
+        font_items = []
+        if sys_platform.find("Windows") >= 0 and winreg is not None:
+            font_dir = Path(r"C:\Windows\Fonts")
+            font_enum = wx.FontEnumerator()
+            font_names = sorted(set(font_enum.GetFacenames()), key=str.lower)
+            registry_fonts = {}
+            reg_path = r"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Fonts"
+            try:
+                with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, reg_path) as key:
+                    i = 0
+                    while True:
+                        try:
+                            display_name, font_file, _ = winreg.EnumValue(key, i)
+                            i += 1
+                            if not isinstance(font_file, str):
+                                continue
+                            font_path = font_dir / font_file
+                            if not font_path.is_file():
+                                continue
+                            if font_path.suffix.lower() not in [".ttf", ".otf", ".ttc"]:
+                                continue
+                            clean_name = display_name.replace(" (TrueType)", "").replace(" (OpenType)", "")
+                            registry_fonts[clean_name.lower()] = (clean_name, str(font_path))
+                        except OSError:
+                            break
+            except Exception:
+                registry_fonts = {}
+            for name in font_names:
+                item = registry_fonts.get(name.lower())
+                if item:
+                    font_items.append(item)
+        elif sys_platform.find("Linux") >= 0:
+            font_dirs = [
+                Path("/usr/share/fonts"),
+                Path("/usr/local/share/fonts"),
+                Path.home() / ".fonts",
+                Path.home() / ".local" / "share" / "fonts",
+            ]
+            font_items = self._collect_font_items_from_dirs(font_dirs)
+        elif sys_platform.find("Darwin") >= 0:
+            font_dirs = [
+                Path("/System/Library/Fonts"),
+                Path("/Library/Fonts"),
+                Path.home() / "Library" / "Fonts",
+            ]
+            font_items = self._collect_font_items_from_dirs(font_dirs)
+        if font_items:
+            for display_name, _ in font_items:
+                self.title_font.Append(display_name)
+
+            self.font_paths = [font_path for _, font_path in font_items]
+            self.title_font.SetSelection(0)
+            return
+        font_path = Path("font") / "using"
         font_path = Path(get_resource_path(str(font_path)))
         files_name = [f.stem for f in font_path.iterdir()]
         files_name = np.sort(np.array(files_name)).tolist()
@@ -1764,11 +1874,17 @@ class MulimgViewer (MulimgViewerGui):
             file_name = file_name.split("_", 1)[1]
             file_name = file_name.replace("-", " ")
             self.title_font.Append(file_name)
-        self.title_font.SetSelection(0)
+        if files_name:
+            self.title_font.SetSelection(0)
         font_paths = [str(f) for f in font_path.iterdir()]
         self.font_paths = np.sort(np.array(font_paths)).tolist()
 
     def frame_resize(self, event):
+        if not self.IsMaximized() and not self.IsIconized():
+            pos = self.GetPosition()
+            size = self.GetSize()
+            self._normal_window_pos = (pos[0], pos[1])
+            self._normal_window_size = (size[0], size[1])
         self.auto_layout(frame_resize=True)
 
     def open_all_img(self, event):
@@ -3821,7 +3937,7 @@ class MulimgViewer (MulimgViewerGui):
             'auto_layout_check': self.auto_layout_check.GetValue(),
             'one_img': self.one_img.GetValue(),
             'onetitle': self.onetitle.GetValue(),
-            'customfunc': self.show_custom_func.GetValue(),
+            'show_custom_func': self.show_custom_func.GetValue(),
             'show_box': self.show_box.GetValue(),
             'show_box_in_crop': self.show_box_in_crop.GetValue(),
             'select_img_box': self.select_img_box.GetValue(),
@@ -3881,7 +3997,7 @@ class MulimgViewer (MulimgViewerGui):
             self.auto_layout_check.SetValue(data['auto_layout_check'])
             self.one_img.SetValue(data['one_img'])
             self.onetitle.SetValue(data['onetitle'])
-            self.show_custom_func.SetValue(data['show_custom_func'])
+            self.show_custom_func.SetValue(data['show_custom_func']) #customfunc?
             self.show_box.SetValue(data['show_box'])
             self.show_box_in_crop.SetValue(data['show_box_in_crop'])
             self.select_img_box.SetValue(data['select_img_box'])

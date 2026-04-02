@@ -3,7 +3,6 @@ import csv
 from pathlib import Path
 
 import numpy as np
-import math,os
 
 from .utils import solve_factor
 
@@ -84,10 +83,10 @@ class ImgData():
     def video_name_list(self):
         if not self.img_num_list:
             return []
-        step = self.skip + 1
-        max_len = max(self.img_num_list) if self.img_num_list else 0
 
+        step = self.skip + 1
         name_list = []
+
         for vidx, physical_frame_count in enumerate(self.img_num_list):
             fps = self.video_fps_list[vidx]
             fps_int = int(round(fps))
@@ -99,25 +98,12 @@ class ImgData():
                 time_sec = physical_idx / fps
 
                 sec_str = f"{time_sec:.2f}".rstrip("0").rstrip(".") or "0"
-
                 frame_in_sec = (physical_idx % fps_int) + 1
 
                 filename = f"{sec_str}s_frame_{frame_in_sec}.jpeg"
                 one_video_names.append(filename)
 
             name_list.append(one_video_names)
-
-          # Recalculate max_len (based on the number of logical frames)
-        if name_list:
-            max_logical_len = max(len(video_names) for video_names in name_list)
-
-            for vidx, one_video_names in enumerate(name_list):
-                if one_video_names and len(one_video_names) < max_logical_len:
-                    padding = max_logical_len - len(one_video_names)
-
-        if len(name_list) > 0:
-            for i, video_names in enumerate(name_list):
-                pass
 
         result = name_list[0] if len(self.img_num_list) == 1 else name_list
         return result
@@ -270,9 +256,6 @@ class ImgData():
             # one_dir_mul_dir_auto, one_dir_mul_dir_manual
                 if self.parallel_to_sequential:
                     flist_all = []
-
-                    cumulative_frames = 0  # Cumulative Frame Count
-
                     for i in range(len(self.path_list)):
                         actual_frame_count = self.video_num_list[i]  # The actual frame rate of this video
 

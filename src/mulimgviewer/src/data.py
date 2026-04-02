@@ -92,8 +92,8 @@ class ImgData():
             fps = self.video_fps_list[vidx]
             fps_int = int(round(fps))
 
-            # 关键修改：计算逻辑帧数（考虑跳帧）
-            logical_frame_count = physical_frame_count // step
+            # 这里的 physical_frame_count 实际上已经是“可显示逻辑帧数”，不能再除 step
+            logical_frame_count = int(physical_frame_count)
 
             one_video_names = []
             for logical_idx in range(logical_frame_count):  # 使用逻辑帧数
@@ -203,19 +203,35 @@ class ImgData():
             self.img_count -= self.count_per_action
 
     def set_count_per_action(self, count_per_action):
-        self.count_per_action = count_per_action
-        skip = self.skip + 1
+        self.count_per_action = max(1, int(count_per_action))
+
+        # 视频模式下，self.img_num 已是可显示帧数；图片模式下也是最终可遍历数量
+        # 统一按 count_per_action 计算批次数，不再额外除 skip，避免重复缩小批次。
         if self.img_num % self.count_per_action:
-            self.max_action_num = int(self.img_num/self.count_per_action/skip)+1
+            self.max_action_num = int(self.img_num / self.count_per_action) + 1
         else:
-            self.max_action_num = int(self.img_num/self.count_per_action/skip)
-         # 添加：确保当前action_count在有效范围内
-        if hasattr(self, 'action_count'):
+            self.max_action_num = int(self.img_num / self.count_per_action)
+
+        # 保底，避免出现 0 批次导致索引问题
+        self.max_action_num = max(1, int(self.max_action_num))
+
+        # 确保当前 action_count 在有效范围内
+        if hasattr(self, "action_count"):
             if self.action_count >= self.max_action_num:
                 self.action_count = self.max_action_num - 1
                 self.img_count = self.action_count * self.count_per_action
 
     def set_action_count(self, action_count):
+        if not hasattr(self, "max_action_num"):
+            self.max_action_num = 0
+        if not hasattr(self, "count_per_action"):
+            self.count_per_action = 1
+        if not hasattr(self, "img_count"):
+            self.img_count = 0
+        if self.max_action_num <= 0:
+            self.action_count = 0
+            self.img_count = 0
+            return
         if action_count < self.max_action_num:
             self.action_count = action_count
             self.img_count = self.count_per_action*self.action_count

@@ -1616,7 +1616,7 @@ class ImgManager(ImgData):
                     if row!=0 and gap_x_y_2[1][row,col]==0 and i<sum(layout_level_2):
                         gap_x_y_2[1][row,col] = self.layout_params[3][5]
 
-                if self.box_position == 0 and i<sum(layout_level_2):
+                if self.box_position == 0 and i<sum(layout_level_2) and not getattr(self, "video_mode", False):
                     if height_2[row,col]<height_2[row][0]:
                         gap_x_y_2[1][row,col] = gap_x_y_2[1][row,col]+int((height_2[row][0]-height_2[row,col])/2)
                     else:

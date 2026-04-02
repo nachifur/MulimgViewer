@@ -3765,6 +3765,27 @@ class MulimgViewer (MulimgViewerGui):
         self.scrolledWindow_set.FitInside()
         self.auto_layout()
 
+    def _bind_settings_wheel_guard(self):
+        # Controls that should handle the wheel event.
+        swallow_types = (wx.Choice, wx.ComboBox, wx.SpinCtrl, wx.SpinCtrlDouble)
+
+        # Reroute wheel events back to the settings scrolled window.
+        def reroute_wheel(event):
+            clone = event.Clone()
+            clone.SetEventObject(self.scrolledWindow_set)
+            clone.ResumePropagation(wx.EVENT_PROPAGATE_MAX)
+            self.scrolledWindow_set.GetEventHandler().ProcessEvent(clone)
+
+        # Recursively bind wheel rerouting on relevant child controls.
+        def walk(win):
+            for child in win.GetChildren():
+                if isinstance(child, swallow_types):
+                    child.Bind(wx.EVT_MOUSEWHEEL, reroute_wheel)
+                if child.GetChildren():
+                    walk(child)
+
+        walk(self.scrolledWindow_set)
+
     def save_configuration(self, event):
         data = {
             'row_col': self.row_col.GetLineText(0),

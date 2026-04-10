@@ -1554,7 +1554,7 @@ class MulimgViewer (MulimgViewerGui):
                 self.show_img_init()
                 self.ImgManager.set_action_count(0)
                 self.show_img()
-            except:
+            except Exception:
                 pass
         self.load_configuration( None , config_name="default_config.json")
         self.Bind(wx.EVT_CONTEXT_MENU, self.on_right_click)
@@ -1760,7 +1760,7 @@ class MulimgViewer (MulimgViewerGui):
                     evt = MyTestEvent(self.myEVT_MY_TEST)
                     evt.SetEventArgs(output["tag_name"])
                     wx.PostEvent(self, evt)
-        except:
+        except Exception:
             pass
 
     def _get_system_font_display_name(self, font_path):
@@ -1975,7 +1975,7 @@ class MulimgViewer (MulimgViewerGui):
                 input_path = self.ImgManager.input_path
             else:
                 input_path = None
-        except:
+        except Exception:
             input_path = None
         if self.shared_config.video_mode:
             self.UpdateUI(1, None, self.parallel_to_sequential.Value ,video_manager = self.video_manager,shared_config=self.shared_config)
@@ -2132,7 +2132,7 @@ class MulimgViewer (MulimgViewerGui):
             try:
                 self.SetStatusText_(
                     ["-1", "-1", "***"+str(self.ImgManager.name_list[self.ImgManager.action_count])+", saving img...***", "-1"])
-            except:
+            except Exception:
                 pass
             self.ImgManager.layout_params[33] = self.out_path_str
             if self.show_custom_func.Value:
@@ -2316,7 +2316,7 @@ class MulimgViewer (MulimgViewerGui):
             try:
                 np.savetxt(Path(self.out_path_str)/"input_flist_parallel_manual.txt",
                            self.ImgManager.input_path, fmt='%s')
-            except:
+            except Exception:
                 self.SetStatusText_(
                     ["-1", "-1", "***Error: First, need to select parallel manual***", "-1"])
             else:
@@ -2653,7 +2653,7 @@ class MulimgViewer (MulimgViewerGui):
                     points = self.move_box_point(x, y, show_scale)
                     self.xy_magnifier.append(
                         points+show_scale+[self.ImgManager.title_setting[2] and self.ImgManager.title_setting[1]])
-                except:
+                except Exception:
                     self.SetStatusText_(
                         ["-1",  "Drawing a box need click left mouse button!", "-1", "-1"])
 
@@ -2743,7 +2743,7 @@ class MulimgViewer (MulimgViewerGui):
                             os.makedirs(sub_dir, exist_ok=True)
                             shutil.copy2(target_file, os.path.join(sub_dir, target_name))
                             success_count += 1
-                    except:
+                    except Exception:
                         pass
                 status_msg = f"Save completed! select_images updated with {success_count} images (clicked: {target_name})" \
                     if success_count > 0 \
@@ -2837,7 +2837,7 @@ class MulimgViewer (MulimgViewerGui):
         try:
             mouse_screen_pos = wx.GetMousePosition()
             client_pos = self.ScreenToClient(mouse_screen_pos)
-        except:
+        except Exception:
             client_pos = wx.Point(100, 100)
 
         self.PopupMenu(menu, client_pos)
@@ -2876,7 +2876,7 @@ class MulimgViewer (MulimgViewerGui):
             else:
                 raise Exception(f"Picture index {actual_img_index} out of range")
 
-        except:
+        except Exception:
             pass
 
     def handle_title_injection(self, img_id = None):
@@ -2888,7 +2888,7 @@ class MulimgViewer (MulimgViewerGui):
         try:
             self.inject_new_title(new_title, img_id)
             return True
-        except:
+        except Exception:
             return False
 
     def move_box_point(self, x, y, show_scale):
@@ -3252,7 +3252,7 @@ class MulimgViewer (MulimgViewerGui):
                 elif self.ImgManager.type == 3:
                     # read file list from a list file
                     title_setting[2:7] = [False, True, True, True, False]
-        except:
+        except Exception:
             self.SetStatusText_(
                 ["-1", "-1", "***Error: setting***", "-1"])
             return False
@@ -3376,7 +3376,7 @@ class MulimgViewer (MulimgViewerGui):
                     self.slider_img.SetValue(b)
                     self.slider_value.SetValue(str(b))
                     self.slider_value_max.SetLabel(str(max(0, max_batches - 1)))
-                except:
+                except Exception:
                     pass
             else:
                 msg = str(getattr(self.shared_config, "video_last_message", "") or "").strip()
@@ -3428,7 +3428,7 @@ class MulimgViewer (MulimgViewerGui):
                             f"-{self.ImgManager.name_list[self.ImgManager.img_count + self.ImgManager.count_per_action - 1]}",
                             "-1",
                         ])
-                    except:
+                    except Exception:
                         pass
             else:
                 self.SetStatusText_(["-1", "-1", "***Error: no image in this dir!***", "-1"])

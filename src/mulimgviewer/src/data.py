@@ -293,7 +293,7 @@ class ImgData():
                     flist = [str(Path(self.path_list[0])/self.name_list[i])
                             for i in range(self.img_count, self.img_count+self.count_per_action)]
 
-                except:
+                except Exception:
                     flist = [str(Path(self.path_list[0])/self.name_list[i])
                             for i in range(self.img_count, self.img_num)]
             elif self.type == 3:
@@ -302,7 +302,7 @@ class ImgData():
                 try:
                     flist = [str(Path(self.path_list[i]))
                             for i in range(self.img_count, self.img_count+self.count_per_action)]
-                except:
+                except Exception:
                     flist = [str(Path(self.path_list[i]))
                             for i in range(self.img_count, self.img_num)]
             else:
@@ -322,7 +322,7 @@ class ImgData():
                     try:
                         flist = [flist_all[k] for k in range(
                             self.img_count, self.img_count+self.count_per_action)]
-                    except:
+                    except Exception:
                         flist = [flist_all[k]
                                 for k in range(self.img_count, self.img_num)]
 
@@ -333,7 +333,7 @@ class ImgData():
                             try:
                                 flist += [str(Path(self.path_list[i]) /
                                             self.name_list[k])]
-                            except:
+                            except Exception:
                                 flist += [str(Path(self.path_list[i]) /
                                             self.name_list[-1])]
 
@@ -342,7 +342,7 @@ class ImgData():
                 try:
                     flist = [str(Path(self.path_list[0])/self.name_list[i])
                             for i in range(self.img_count, self.img_count+self.count_per_action)]
-                except:
+                except Exception:
                     flist = [str(Path(self.path_list[0])/self.name_list[i])
                             for i in range(self.img_count, self.img_num)]
             elif self.type == 3:
@@ -351,7 +351,7 @@ class ImgData():
                 try:
                     flist = [str(Path(self.path_list[i]))
                             for i in range(self.img_count, self.img_count+self.count_per_action)]
-                except:
+                except Exception:
                     flist = [str(Path(self.path_list[i]))
                             for i in range(self.img_count, self.img_num)]
             else:

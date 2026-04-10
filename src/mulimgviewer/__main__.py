@@ -40,10 +40,18 @@ class GuiManager:
 
 
 class MainAPP(wx.App):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.manager = None
+        self.frame = [None, None]
+        self.type = 0
+        self.thread = 4
+        self.video_manager = None
+        self.shared_config = None
+        self._last_manual_paths = []
+
     def OnInit(self):
         self.manager = GuiManager(self.UpdateUI, self.get_type)
-        self._last_manual_paths = []
-        self.frame = [None, None]
         self.frame[0] = self.manager.GetFrame(0)  # 主窗口
         self.frame[1] = self.manager.GetFrame(1)  # 选择窗口
         self.frame[0].Show()

@@ -59,7 +59,8 @@ class MainAPP(wx.App):
         self.type = 0  # init show MulimgViewer
         return True
 
-    def _normalize_paths(self, paths):
+    @staticmethod
+    def _normalize_paths(paths):
         if paths is None:
             return []
         if isinstance(paths, str):
@@ -77,9 +78,9 @@ class MainAPP(wx.App):
                 normalized.append(str(item))
         return normalized
 
-    def UpdateUI(self, type, input_path=None, parallel_to_sequential=None, video_manager = None,shared_config=None):
+    def UpdateUI(self, ui_type, input_path=None, parallel_to_sequential=None, video_manager=None, shared_config=None):
         """
-        type: 1=PathSelectFrame, 0=MulimgViewer, -1=全部关闭
+        ui_type: 1=PathSelectFrame, 0=MulimgViewer, -1=全部关闭
         input_path: list[str] 或 None
         parallel_to_sequential: 保持原参数
         """
@@ -87,7 +88,7 @@ class MainAPP(wx.App):
             self.video_manager = video_manager
             self.shared_config = shared_config
             self.frame[1].set_video_manager(self.video_manager, self.shared_config)
-        self.type = type
+        self.type = ui_type
         self.thread = 4
 
         normalized_input = self._normalize_paths(input_path)
@@ -113,7 +114,7 @@ class MainAPP(wx.App):
                 self.frame[0].ImgManager.set_action_count(0)
                 self.frame[0].show_img()
 
-        if type == -1:
+        if ui_type == -1:
             try:
                 self.frame[0].close(None)
             except Exception:
@@ -124,14 +125,14 @@ class MainAPP(wx.App):
                 pass
             return True
 
-        if type == 0:
+        if ui_type == 0:
             if self.frame[1]:
                 self.frame[1].Show(False)
             self.frame[0].Show(True)
             self.SetTopWindow(self.frame[0])
             return True
 
-        if type == 1:
+        if ui_type == 1:
             try:
                 if self.frame[1]:
                     self.frame[1].Destroy()

@@ -41,7 +41,6 @@ class GuiManager:
 
 class MainAPP(wx.App):
     def __init__(self, *args, file_name=None, **kwargs):
-        super().__init__(*args, **kwargs)
         self.file_name = file_name
         self.manager = None
         self.frame = [None, None]
@@ -50,6 +49,7 @@ class MainAPP(wx.App):
         self.video_manager = None
         self.shared_config = None
         self._last_manual_paths = []
+        super().__init__(*args, **kwargs)
 
     def OnInit(self):
         self.manager = GuiManager(self.UpdateUI, self.get_type, file_name=self.file_name)

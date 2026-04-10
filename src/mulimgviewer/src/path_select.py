@@ -2,10 +2,10 @@ import wx
 from ..gui.path_select_gui import PathSelectFrameGui
 from .utils import get_resource_path
 
-VIDEO_MODE = False
-_LAST_MANUAL_PATHS = []
-
 class PathSelectFrame(PathSelectFrameGui):
+    video_mode = False
+    last_manual_paths = []
+
     def __init__(self, parent, UpdateUI, get_type, title = "Parallel manual choose input directory",video_manager=None):
         super().__init__(parent)
 
@@ -28,13 +28,13 @@ class PathSelectFrame(PathSelectFrameGui):
             self.input_paths = []
 
         self.Layout()
-        if not VIDEO_MODE and _LAST_MANUAL_PATHS:
-            self.m_richText1.Value = "\n".join(_LAST_MANUAL_PATHS) + "\n"
+        if not type(self).video_mode and type(self).last_manual_paths:
+            self.m_richText1.Value = "\n".join(type(self).last_manual_paths) + "\n"
 
     def set_video_manager(self, vm, sh):
         self.video_manager = vm
         self.shared_config = sh
-        if VIDEO_MODE and getattr(self.shared_config, "real_video_path", None):
+        if type(self).video_mode and getattr(self.shared_config, "real_video_path", None):
             paths = list(self.shared_config.real_video_path)
             wx.CallAfter(self.refresh_txt, paths)
     def frame_resize(self, _event):
@@ -54,17 +54,16 @@ class PathSelectFrame(PathSelectFrameGui):
     def _finalize_and_return(self):
         """Collect selected paths, invoke callback, then close the window."""
         paths = [p for p in self.m_richText1.Value.split("\n") if p]
-        if VIDEO_MODE:
+        if type(self).video_mode:
             self.shared_config.real_video_path = paths
             if self.shared_config.video_mode:
                 self.video_manager.select_video(type=-1)
         else:
-            global _LAST_MANUAL_PATHS
-            _LAST_MANUAL_PATHS = paths
+            type(self).last_manual_paths = paths
         if self.get_type() == -1:
             self.Destroy()
         else:
-            if VIDEO_MODE:
+            if type(self).video_mode:
                 self.Destroy()
             else:
                 try:
@@ -74,7 +73,7 @@ class PathSelectFrame(PathSelectFrameGui):
 
     def on_browse(self, _event):
         paths = []
-        if VIDEO_MODE:  # Select one or more video files
+        if type(self).video_mode:  # Select one or more video files
             wildcard = ("Video files (*.mp4;*.avi;*.mov;*.mkv)|*.mp4;*.avi;*.mov;*.mkv|"
                         "All files (*.*)|*.*")
             # If video files were selected previously, use that as the initial directory
@@ -102,9 +101,8 @@ class PathSelectFrame(PathSelectFrameGui):
                 if p not in cur:
                     cur.append(p)
             self.m_richText1.Value = "\n".join(cur) + ("\n" if cur else "")
-            if not VIDEO_MODE:
-                global _LAST_MANUAL_PATHS
-                _LAST_MANUAL_PATHS = list(cur)
+            if not type(self).video_mode:
+                type(self).last_manual_paths = list(cur)
 
     def _on_close(self, _event):
         self._finalize_and_return()
@@ -141,5 +139,4 @@ class PathSelectFrame(PathSelectFrameGui):
         self.m_richText1.Value = "\n".join(cur) + ("\n" if cur else "")
 
 def on_video_mode_change(video_mode):
-    global VIDEO_MODE
-    VIDEO_MODE = video_mode
+    PathSelectFrame.video_mode = bool(video_mode)

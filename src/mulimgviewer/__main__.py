@@ -16,9 +16,10 @@ Image.MAX_IMAGE_PIXELS = None
 
 
 class GuiManager:
-    def __init__(self, UpdateUI, get_type):
+    def __init__(self, UpdateUI, get_type, file_name=None):
         self.UpdateUI = UpdateUI
         self.get_type = get_type
+        self.file_name = file_name
         self.frameDict = {}
 
     def GetFrame(self, type_):
@@ -29,8 +30,7 @@ class GuiManager:
         return f
 
     def CreateFrame(self, type_):
-        global file_name
-        input_path = Path(file_name).parent if file_name else None
+        input_path = Path(self.file_name).parent if self.file_name else None
         if type_ == 0:
             return MulimgViewer(None, self.UpdateUI, self.get_type, default_path=input_path)
         elif type_ == 1:
@@ -40,8 +40,9 @@ class GuiManager:
 
 
 class MainAPP(wx.App):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, file_name=None, **kwargs):
         super().__init__(*args, **kwargs)
+        self.file_name = file_name
         self.manager = None
         self.frame = [None, None]
         self.type = 0
@@ -51,7 +52,7 @@ class MainAPP(wx.App):
         self._last_manual_paths = []
 
     def OnInit(self):
-        self.manager = GuiManager(self.UpdateUI, self.get_type)
+        self.manager = GuiManager(self.UpdateUI, self.get_type, file_name=self.file_name)
         self.frame[0] = self.manager.GetFrame(0)  # 主窗口
         self.frame[1] = self.manager.GetFrame(1)  # 选择窗口
         self.frame[0].Show()
@@ -138,8 +139,6 @@ class MainAPP(wx.App):
                     self.frame[1].Destroy()
             except Exception:
                 pass
-            self.frame[1] = None
-
             self.frame[1] = self.manager.CreateFrame(1)
 
             paths_to_show = None
@@ -174,9 +173,8 @@ class MainAPP(wx.App):
         return self.type
 
 def main():
-    global file_name
     file_name = sys.argv[1] if len(sys.argv) > 1 else None
-    app = MainAPP()
+    app = MainAPP(file_name=file_name)
     # 调试可打开：
     # wx.lib.inspection.InspectionTool().Show()
     app.MainLoop()

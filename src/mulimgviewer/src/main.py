@@ -1119,7 +1119,7 @@ class VideoManager:
             for name in os.listdir(cache_dir):
                 if name.startswith(f'__tmp_{video_idx}_') and name.endswith('.jpeg'):
                     try: os.remove(os.path.join(cache_dir, name))
-                    except: pass
+                    except Exception: pass
         except Exception:
             pass
 

@@ -1,5 +1,4 @@
-import wx,os
-from wx.lib.agw import multidirdialog as MDD
+import wx
 from ..gui.path_select_gui import PathSelectFrameGui
 from .utils import get_resource_path
 
@@ -15,6 +14,8 @@ class PathSelectFrame(PathSelectFrameGui):
         self.SetTitle(title)
         self.video_manager = video_manager
         self.shared_config = None
+        self._last_video_dir = ""
+        self._last_folder_dir = ""
 
         try:
             self.SetIcon(wx.Icon(get_resource_path("mulimgviewer.png"), wx.BITMAP_TYPE_PNG))
@@ -22,8 +23,6 @@ class PathSelectFrame(PathSelectFrameGui):
             pass
 
         self.Bind(wx.EVT_CLOSE, self._on_close)
-
-        row_sizer = self.GetSizer().GetItem(0).GetSizer()
 
         if not hasattr(self, "input_paths"):
             self.input_paths = []
@@ -38,7 +37,7 @@ class PathSelectFrame(PathSelectFrameGui):
         if VIDEO_MODE and getattr(self.shared_config, "real_video_path", None):
             paths = list(self.shared_config.real_video_path)
             wx.CallAfter(self.refresh_txt, paths)
-    def frame_resize(self, event):
+    def frame_resize(self, _event):
         self.m_richText1.SetMinSize(wx.Size(self.Size.Width, self.Size.Height))
         self.Layout()
         self.Refresh()
@@ -56,7 +55,7 @@ class PathSelectFrame(PathSelectFrameGui):
         """Collect selected paths, invoke callback, then close the window."""
         paths = [p for p in self.m_richText1.Value.split("\n") if p]
         if VIDEO_MODE:
-            self.shared_config.real_video_path = paths if VIDEO_MODE else []
+            self.shared_config.real_video_path = paths
             if self.shared_config.video_mode:
                 self.video_manager.select_video(type=-1)
         else:
@@ -73,20 +72,20 @@ class PathSelectFrame(PathSelectFrameGui):
                 finally:
                     self.Destroy()
 
-    def on_browse(self, event):
+    def on_browse(self, _event):
         paths = []
         if VIDEO_MODE:  # Select one or more video files
             wildcard = ("Video files (*.mp4;*.avi;*.mov;*.mkv)|*.mp4;*.avi;*.mov;*.mkv|"
                         "All files (*.*)|*.*")
             # If video files were selected previously, use that as the initial directory
-            last_dir = self._last_video_dir if hasattr(self, '_last_video_dir') else ""
+            last_dir = self._last_video_dir
             dlg = wx.FileDialog(None, "Select Video", last_dir,
                                 wildcard=wildcard,
                                 style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST | wx.FD_MULTIPLE)
             if dlg.ShowModal() == wx.ID_OK:
                 paths = dlg.GetPaths()
         else:  # Select one or more folders (without descending into subfolders)
-            last_dir = self._last_folder_dir if hasattr(self, '_last_folder_dir') else ""
+            last_dir = self._last_folder_dir
             dlg = wx.DirDialog(self, "Select One or More Folders", last_dir, style=wx.DD_DEFAULT_STYLE | wx.DD_MULTIPLE)
             if dlg.ShowModal() != wx.ID_OK:
                 dlg.Destroy()
@@ -107,13 +106,13 @@ class PathSelectFrame(PathSelectFrameGui):
                 global _LAST_MANUAL_PATHS
                 _LAST_MANUAL_PATHS = list(cur)
 
-    def _on_close(self, event):
+    def _on_close(self, _event):
         self._finalize_and_return()
 
-    def Close(self, event):  # noqa: N802  Keep this name to match generated-code bindings
+    def Close(self, _event):  # noqa: N802  Keep this name to match generated-code bindings
         self._finalize_and_return()
 
-    def add_dir(self, event):
+    def add_dir(self, _event):
         p = self.m_dirPicker1.GetPath()
         if not p:
             return
@@ -122,7 +121,7 @@ class PathSelectFrame(PathSelectFrameGui):
             cur.append(p)
         self.m_richText1.Value = "\n".join(cur) + "\n"
 
-    def add_video(self, event):
+    def add_video(self, _event):
         p = self.m_filePicker1.GetPath()
         if not p:
             return
@@ -132,15 +131,15 @@ class PathSelectFrame(PathSelectFrameGui):
         self.m_richText1.Value = "\n".join(cur) + "\n"
         self.m_filePicker1.SetPath("")
 
-    def clear_all_path(self, event):
+    def clear_all_path(self, _event):
         self.m_richText1.Clear()
 
-    def clear_last_path(self, event):
+    def clear_last_path(self, _event):
         cur = [x for x in self.m_richText1.Value.split("\n") if x]
         if cur:
             cur.pop()
         self.m_richText1.Value = "\n".join(cur) + ("\n" if cur else "")
 
 def on_video_mode_change(video_mode):
-        global VIDEO_MODE
-        VIDEO_MODE = video_mode
+    global VIDEO_MODE
+    VIDEO_MODE = video_mode

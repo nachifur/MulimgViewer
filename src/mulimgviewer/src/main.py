@@ -164,6 +164,8 @@ class VideoManager:
         self._cooldown_deadline = 0.0
         self._reported_extract_threads = False
         self._reported_stitch_threads = False
+        self._ffmpeg_bin = None
+        self._ffprobe_bin = None
         self._initialize_thread_pools()
 
     def _ui(self):
@@ -455,6 +457,22 @@ class VideoManager:
         if getattr(self.shared_config, "debug_video", False):
             print(message)
 
+    def _resolve_binary(self, tool_name):
+        if tool_name == "ffmpeg" and self._ffmpeg_bin and os.path.isabs(self._ffmpeg_bin):
+            return self._ffmpeg_bin
+        if tool_name == "ffprobe" and self._ffprobe_bin and os.path.isabs(self._ffprobe_bin):
+            return self._ffprobe_bin
+
+        resolved = shutil.which(tool_name)
+        if not resolved:
+            raise RuntimeError(f"{tool_name} not found in PATH")
+
+        if tool_name == "ffmpeg":
+            self._ffmpeg_bin = resolved
+        elif tool_name == "ffprobe":
+            self._ffprobe_bin = resolved
+        return resolved
+
     def calc_max_extractable_frames_single(self, video_path):
         '''Using FFmpeg to retrieve video information, replacing cv2.VideoCapture'''
         step = self.shared_config.skip_frames + 1
@@ -477,9 +495,10 @@ class VideoManager:
                 self._debug_video(f"[Metadata] ffmpeg.probe failed: {ex}")
 
         if not p:
+            ffprobe_bin = self._resolve_binary("ffprobe")
             cp = subprocess.run(
                 [
-                    "ffprobe",
+                    ffprobe_bin,
                     "-v", "error",
                     "-print_format", "json",
                     "-show_streams",
@@ -526,9 +545,10 @@ class VideoManager:
 
         if total <= 0:
             try:
+                ffprobe_bin = self._resolve_binary("ffprobe")
                 cp = subprocess.run(
                     [
-                        "ffprobe",
+                        ffprobe_bin,
                         "-v", "error",
                         "-select_streams", "v:0",
                         "-count_frames",
@@ -967,6 +987,11 @@ class VideoManager:
             nonlocal last_error
             for s, e in ranges:
                 if not has_ffmpeg_input:
+                    try:
+                        ffmpeg_bin = self._resolve_binary("ffmpeg")
+                    except Exception as ex:
+                        last_error = str(ex)
+                        return
                     fps = float(self.shared_config.video_fps_list[video_idx] or 0)
                     fps_safe = fps if fps > 0 else 25.0
                     for idx in range(s, e + 1):
@@ -976,7 +1001,7 @@ class VideoManager:
                         physical_frame = idx * step
                         timestamp = physical_frame / fps_safe
                         cmd = [
-                            "ffmpeg",
+                            ffmpeg_bin,
                             "-v", "error",
                             "-ss", f"{timestamp:.6f}",
                             "-i", str(video_path),
@@ -1140,10 +1165,14 @@ class VideoManager:
             pass
         else:
             self.shared_config.real_video_path = self.collect_video_paths(dlg, type)
-        if shutil.which("ffmpeg") is None or shutil.which("ffprobe") is None:
+        ffmpeg_bin = shutil.which("ffmpeg")
+        ffprobe_bin = shutil.which("ffprobe")
+        if ffmpeg_bin is None or ffprobe_bin is None:
             self._set_video_status("Error: ffmpeg/ffprobe not found in PATH")
             self.shared_config.video_path = []
             return []
+        self._ffmpeg_bin = ffmpeg_bin
+        self._ffprobe_bin = ffprobe_bin
         self._reset_for_new_selection()
         self.init_video_frame_cache()
         if self.shared_config.video_path == []:

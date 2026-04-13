@@ -1,5 +1,5 @@
 {
- "row_col": "4,4",
+ "row_col": "1,1",
  "row_col_one_img": "1,1",
  "show_scale": "1,1",
  "row_col_img_unit": "3,1",
@@ -62,8 +62,8 @@
   "delete_box": "DELETE"
  },
  "window_state": {
-  "x": 345,
-  "y": 193,
+  "x": 340,
+  "y": 120,
   "w": 1026,
   "h": 779,
   "maximized": false

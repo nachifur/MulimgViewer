@@ -1,4 +1,8 @@
 version = 1
+exclude_patterns = [
+  "src/mulimgviewer/gui/main_gui.py",
+  "src/mulimgviewer/gui/path_select_gui.py",
+]
 
 [[analyzers]]
 name = "python"

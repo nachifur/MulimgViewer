@@ -1,14 +1,8 @@
-ffmpeg-python
+#!/usr/bin/env -S pip install -r
+
 imageio
-# runtime
-numpy
+# installing wxpython will install numpy
+# numpy
 piexif
-Pillow
-
-# tests (optional)
-pytest-shutil
-requests
-wxPython
-
-# NOTE: 需要系统里有 FFmpeg 可执行文件；建议：
-# conda install -c conda-forge ffmpeg
+pillow>=9.3
+wxpython

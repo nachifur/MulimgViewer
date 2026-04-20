@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ###########################################################################
-## Python code generated with wxFormBuilder (version 4.2.1-0-g80c4cb6)
+## Python code generated with wxFormBuilder (version 3.10.1-0-g8feb16b3)
 ## http://www.wxformbuilder.org/
 ##
 ## PLEASE DO *NOT* EDIT THIS FILE!
@@ -28,8 +28,8 @@ class PathSelectFrameGui ( wx.Frame ):
 
 		utton_clear_last = wx.BoxSizer( wx.HORIZONTAL )
 
-		self.m_button3 = wx.Button( self, wx.ID_ANY, u"Browse", wx.DefaultPosition, wx.DefaultSize, 0 )
-		utton_clear_last.Add( self.m_button3, 0, wx.ALL, 5 )
+		self.m_dirPicker1 = wx.DirPickerCtrl( self, wx.ID_ANY, wx.EmptyString, u"Select a folder", wx.DefaultPosition, wx.DefaultSize, wx.DIRP_DEFAULT_STYLE )
+		utton_clear_last.Add( self.m_dirPicker1, 0, wx.ALL, 5 )
 
 		self.button_clear_all = wx.Button( self, wx.ID_ANY, u"Clear all path", wx.DefaultPosition, wx.DefaultSize, 0 )
 		utton_clear_last.Add( self.button_clear_all, 0, wx.ALL, 5 )
@@ -67,21 +67,22 @@ class PathSelectFrameGui ( wx.Frame ):
 
 		# Connect Events
 		self.Bind( wx.EVT_SIZE, self.frame_resize )
+		self.m_dirPicker1.Bind( wx.EVT_DIRPICKER_CHANGED, self.add_dir )
 		self.button_clear_all.Bind( wx.EVT_BUTTON, self.clear_all_path )
 		self.button_clear_last.Bind( wx.EVT_BUTTON, self.clear_last_path )
 		self.Bind( wx.EVT_MENU, self.clear_all_path, id = self.m_menuItem1.GetId() )
 		self.Bind( wx.EVT_MENU, self.clear_last_path, id = self.m_menuItem2.GetId() )
 		self.Bind( wx.EVT_MENU, self.Close, id = self.menu_close.GetId() )
-		self.m_button3.Bind(wx.EVT_BUTTON, self.on_browse)
 
 	def __del__( self ):
 		pass
 
-	def on_browse(self, event):
-		event.Skip()
 
 	# Virtual event handlers, override them in your derived class
 	def frame_resize( self, event ):
+		event.Skip()
+
+	def add_dir( self, event ):
 		event.Skip()
 
 	def clear_all_path( self, event ):

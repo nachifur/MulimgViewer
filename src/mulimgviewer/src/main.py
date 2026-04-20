@@ -2657,58 +2657,44 @@ class MulimgViewer (MulimgViewerGui):
                 self.refresh(event)
 
     def img_right_click(self, event):
-        # Right-click should only open menu; box creation/move is handled by menu actions.
+        x, y = event.GetPosition()
+        id = self.get_img_id_from_point([x, y])
+        xy_grid = self.ImgManager.xy_grid[id]
+        x = x-xy_grid[0]
+        y = y-xy_grid[1]
+        if self.select_img_box.Value:
+            # move box
+            if self.box_id != -1:
+                show_scale = self.show_scale.GetLineText(0).split(',')
+                show_scale = [float(x) for x in show_scale]
+                points = self.move_box_point(x, y, show_scale)
+                self.xy_magnifier[self.box_id] = points+show_scale+[
+                    self.ImgManager.title_setting[2] and self.ImgManager.title_setting[1]]
+                self._invalidate_render_cache()
+                self.refresh(event)
+        else:
+            # new box
+            if self.magnifier.Value:
+                self.color_list.append(self.colourPicker_draw.GetColour())
+                try:
+                    show_scale = self.show_scale.GetLineText(0).split(',')
+                    show_scale = [float(x) for x in show_scale]
+                    points = self.move_box_point(x, y, show_scale)
+                    self.xy_magnifier.append(
+                        points+show_scale+[self.ImgManager.title_setting[2] and self.ImgManager.title_setting[1]])
+                except Exception:
+                    self.SetStatusText_(
+                        ["-1",  "Drawing a box need click left mouse button!", "-1", "-1"])
+
+                self._invalidate_render_cache()
+                self.refresh(event)
+                self.SetStatusText_(["Magnifier", "-1", "-1", "-1"])
+            else:
+                if self.handle_title_injection(id):
+                    pass
+                else:
+                    self.refresh(event)
         self.on_right_click(event)
-
-    def _resolve_img_client_point(self, event):
-        if not getattr(self, "img_last", None):
-            return None
-        w, h = self.img_last.GetClientSize()
-        if w <= 0 or h <= 0:
-            return None
-
-        candidates = []
-        try:
-            raw_pos = event.GetPosition()
-            raw = wx.Point(int(raw_pos.x), int(raw_pos.y))
-            candidates.append(raw)  # May already be img client coords
-        except Exception:
-            raw = None
-
-        if raw is not None:
-            try:
-                candidates.append(self.img_last.ScreenToClient(raw))  # Context menu event often uses screen coords
-            except Exception:
-                pass
-            try:
-                screen_from_self = self.ClientToScreen(raw)  # Frame client coords -> screen -> img client
-                candidates.append(self.img_last.ScreenToClient(screen_from_self))
-            except Exception:
-                pass
-
-        try:
-            mouse_screen = wx.GetMousePosition()
-            candidates.append(self.img_last.ScreenToClient(mouse_screen))
-        except Exception:
-            pass
-
-        for pos in candidates:
-            if 0 <= pos.x < w and 0 <= pos.y < h:
-                return int(pos.x), int(pos.y)
-        return None
-
-    def _resolve_img_context(self, event):
-        point = self._resolve_img_client_point(event)
-        if point is None:
-            return None
-        x, y = point
-        if not hasattr(self.ImgManager, "xy_grid") or len(self.ImgManager.xy_grid) == 0:
-            return None
-        img_id = self.get_img_id_from_point([x, y])
-        xy_grid = self.ImgManager.xy_grid[img_id]
-        local_x = x - xy_grid[0]
-        local_y = y - xy_grid[1]
-        return img_id, local_x, local_y
 
     def on_right_click(self, event):
         # Right-click Menu​
@@ -2741,11 +2727,8 @@ class MulimgViewer (MulimgViewerGui):
                     self.out_path(evt)
                     if not self.out_path_str:
                         return
-                click_ctx = self._resolve_img_context(event)
-                if click_ctx is None:
-                    self.SetStatusText_(["Cannot resolve clicked image position", "-1", "-1", "-1"])
-                    return
-                clicked_grid_id, _, _ = click_ctx
+                x, y = event.GetPosition()
+                clicked_grid_id = self.get_img_id_from_point([x, y])
                 # Retrieve ID information
                 if hasattr(self, 'current_page_img_paths') and clicked_grid_id < len(self.current_page_img_paths):
                     target_path = self.current_page_img_paths[clicked_grid_id]
@@ -2802,11 +2785,13 @@ class MulimgViewer (MulimgViewerGui):
             menu.Append(new_box_id, "🔍 Create zoom box here")
 
             def create_magnifier_box(evt):
-                click_ctx = self._resolve_img_context(event)
-                if click_ctx is None:
-                    self.SetStatusText_(["-1", "Cannot resolve click position for zoom box", "-1", "-1"])
-                    return
-                _, x, y = click_ctx
+                event.menu_triggered = True
+                x, y = event.GetPosition()
+                id = self.get_img_id_from_point([x, y])
+                xy_grid = self.ImgManager.xy_grid[id]
+                x = x-xy_grid[0]
+                y = y-xy_grid[1]
+
                 if self.magnifier.Value:
                     self.color_list.append(self.colourPicker_draw.GetColour())
                     try:
@@ -2843,20 +2828,8 @@ class MulimgViewer (MulimgViewerGui):
                 box_menu.Append(move_box_id, f"Move box {self.box_id} to this position")
 
                 def move_box_to_position(evt):
-                    if not self.select_img_box.Value or self.box_id == -1:
-                        self.SetStatusText_(["-1", "Please select a box first", "-1", "-1"])
-                        return
-                    click_ctx = self._resolve_img_context(event)
-                    if click_ctx is None:
-                        self.SetStatusText_(["-1", "Cannot resolve click position for moving box", "-1", "-1"])
-                        return
-                    _, x, y = click_ctx
-                    show_scale = self.show_scale.GetLineText(0).split(',')
-                    show_scale = [float(val) for val in show_scale]
-                    points = self.move_box_point(x, y, show_scale)
-                    self.xy_magnifier[self.box_id] = points + show_scale + [
-                        self.ImgManager.title_setting[2] and self.ImgManager.title_setting[1]
-                    ]
+                    event.menu_triggered = True
+                    self.img_right_click(event)
                     self._invalidate_render_cache()
                     self.refresh(evt)
                     self.SetStatusText_([f"Move box {self.box_id}", "-1", "-1", "-1"])
@@ -2881,12 +2854,9 @@ class MulimgViewer (MulimgViewerGui):
                 display_title = new_title[:20] + "..." if len(new_title) > 20 else new_title
                 menu.Append(inject_title_id, f"📝 Inject title: {display_title}")
                 def inject_title_directly(evt):
-                    click_ctx = self._resolve_img_context(event)
-                    if click_ctx is None:
-                        self.SetStatusText_(["-1", "Cannot resolve clicked image for title injection", "-1", "-1"])
-                        return
-                    img_id, _, _ = click_ctx
-                    success = self.handle_title_injection(img_id)
+                    x, y = event.GetPosition()
+                    id = self.get_img_id_from_point([x, y])
+                    success = self.handle_title_injection(id)
                     if success:
                         self.SetStatusText_(["Title injected successfully", "-1", "-1", "-1"])
                     else:

@@ -85,15 +85,16 @@ class PathSelectFrame(PathSelectFrameGui):
                                 style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST | wx.FD_MULTIPLE)
             if dlg.ShowModal() == wx.ID_OK:
                 paths = dlg.GetPaths()
-        else:  # Select one or more folders (without descending into subfolders)
+        else:  # Select one folder at a time; repeated browse clicks accumulate selections.
             last_dir = self._last_folder_dir if hasattr(self, '_last_folder_dir') else ""
-            dlg = wx.DirDialog(self, "Select One or More Folders", last_dir, style=wx.DD_DEFAULT_STYLE | wx.DD_MULTIPLE)
+            dlg = wx.DirDialog(self, "Select Folder", last_dir, style=wx.DD_DEFAULT_STYLE | wx.DD_DIR_MUST_EXIST)
             if dlg.ShowModal() != wx.ID_OK:
                 dlg.Destroy()
                 return
-            paths = dlg.GetPaths()
-            if paths:
-                self._last_folder_dir = paths[-1]  # Update the last selected folder path
+            selected_path = dlg.GetPath()
+            if selected_path:
+                paths = [selected_path]
+                self._last_folder_dir = selected_path
         dlg.Destroy()
 
         # Update selected paths in the text box

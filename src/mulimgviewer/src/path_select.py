@@ -1,5 +1,4 @@
-import wx,os
-from wx.lib.agw import multidirdialog as MDD
+import wx
 from ..gui.path_select_gui import PathSelectFrameGui
 from .utils import get_resource_path
 

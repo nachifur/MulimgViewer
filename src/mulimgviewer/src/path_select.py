@@ -14,6 +14,8 @@ class PathSelectFrame(PathSelectFrameGui):
         self.SetTitle(title)
         self.video_manager = video_manager
         self.shared_config = None
+        self._last_folder_dir = ""
+        self._last_video_dir = ""
 
         try:
             self.SetIcon(wx.Icon(get_resource_path("mulimgviewer.png"), wx.BITMAP_TYPE_PNG))
@@ -21,8 +23,6 @@ class PathSelectFrame(PathSelectFrameGui):
             pass
 
         self.Bind(wx.EVT_CLOSE, self._on_close)
-
-        row_sizer = self.GetSizer().GetItem(0).GetSizer()
 
         if not hasattr(self, "input_paths"):
             self.input_paths = []

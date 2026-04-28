@@ -25,7 +25,10 @@ class MulimgViewerGui ( wx.Frame ):
 		fgSizer1.SetFlexibleDirection( wx.BOTH )
 		fgSizer1.SetNonFlexibleGrowMode( wx.FLEX_GROWMODE_SPECIFIED )
 
-		self.m_panel1 = wx.Panel( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.TAB_TRAVERSAL )
+		self.m_panel1 = wx.Panel( self, wx.ID_ANY, wx.DefaultPosition, wx.Size( 32,32 ), wx.TAB_TRAVERSAL )
+		self.m_panel1.SetMinSize( wx.Size( 32,32 ) )
+		self.m_panel1.SetMaxSize( wx.Size( 32,32 ) )
+
 		wSizer1 = wx.WrapSizer( wx.HORIZONTAL, wx.WRAPSIZER_DEFAULT_FLAGS )
 
 		self.button_open_all = wx.Button( self.m_panel1, wx.ID_ANY, u"📂️", wx.DefaultPosition, wx.Size( 50,30 ), wx.BORDER_NONE )
@@ -59,6 +62,11 @@ class MulimgViewerGui ( wx.Frame ):
 		self.left_arrow_button.SetFont( wx.Font( 20, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL, False, wx.EmptyString ) )
 
 		wSizer1.Add( self.left_arrow_button, 0, wx.ALL|wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL, 5 )
+
+		self.play = wx.Button( self.m_panel1, wx.ID_ANY, u"▶", wx.DefaultPosition, wx.Size( 50,30 ), 0 )
+		self.play.SetFont( wx.Font( 20, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL, False, wx.EmptyString ) )
+
+		wSizer1.Add( self.play, 0, wx.ALL, 5 )
 
 		self.right_arrow_button = wx.Button( self.m_panel1, wx.ID_ANY, u">", wx.DefaultPosition, wx.Size( 50,30 ), 0 )
 		self.right_arrow_button.SetFont( wx.Font( 20, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL, False, wx.EmptyString ) )
@@ -102,7 +110,6 @@ class MulimgViewerGui ( wx.Frame ):
 
 		self.m_panel1.SetSizer( wSizer1 )
 		self.m_panel1.Layout()
-		wSizer1.Fit( self.m_panel1 )
 		fgSizer1.Add( self.m_panel1, 1, wx.EXPAND |wx.ALL, 5 )
 
 		self.m_panel3 = wx.Panel( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.TAB_TRAVERSAL )
@@ -298,6 +305,22 @@ class MulimgViewerGui ( wx.Frame ):
 
 		self.m_staticline14 = wx.StaticLine( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_HORIZONTAL )
 		fgSizer3.Add( self.m_staticline14, 0, wx.EXPAND |wx.ALL, 5 )
+
+		bSizer181 = wx.BoxSizer( wx.HORIZONTAL )
+
+		self.m_staticText25 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"RowCol（Func）", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText25.Wrap( -1 )
+
+		bSizer181.Add( self.m_staticText25, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+
+		self.show_all_func_layout = wx.TextCtrl( self.m_panel4, wx.ID_ANY, u"2,2", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
+		bSizer181.Add( self.show_all_func_layout, 0, wx.ALL, 5 )
+
+		self.func_layout_vertical = wx.CheckBox( self.m_panel4, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
+		bSizer181.Add( self.func_layout_vertical, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+
+
+		fgSizer3.Add( bSizer181, 1, wx.EXPAND, 5 )
 
 		bSizer18 = wx.BoxSizer( wx.HORIZONTAL )
 
@@ -936,6 +959,7 @@ class MulimgViewerGui ( wx.Frame ):
 		self.out_path_button.Bind( wx.EVT_BUTTON, self.out_path )
 		self.save_butoon.Bind( wx.EVT_BUTTON, self.save_img )
 		self.left_arrow_button.Bind( wx.EVT_BUTTON, self.last_img )
+		self.play.Bind( wx.EVT_BUTTON, self.last_img )
 		self.right_arrow_button.Bind( wx.EVT_BUTTON, self.next_img )
 		self.refresh_button.Bind( wx.EVT_BUTTON, self.refresh )
 		self.slider_value.Bind( wx.EVT_TEXT_ENTER, self.slider_value_change )
@@ -998,6 +1022,7 @@ class MulimgViewerGui ( wx.Frame ):
 
 	def last_img( self, event ):
 		event.Skip()
+
 
 	def next_img( self, event ):
 		event.Skip()

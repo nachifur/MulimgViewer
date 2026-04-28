@@ -7,6 +7,7 @@ import textwrap
 from .custom_func.main import main as main_custom_func
 import numpy as np
 import piexif
+import piexif.helper
 import wx
 from PIL import Image, ImageDraw, ImageFont
 import imageio
@@ -1203,7 +1204,6 @@ class ImgManager(ImgData):
                 for field_name, is_enabled in self.exif_display_config.items():
                     if is_enabled and field_name not in formatted_exif and field_name != "UserComment":
                         formatted_exif[field_name] = "N/A"
-
                 if "UserComment" in formatted_exif:
                     formatted_exif["CustomTitle"] = formatted_exif["UserComment"]
                 else:
@@ -1277,7 +1277,13 @@ class ImgManager(ImgData):
                 return {0: "Auto", 1: "Manual", 2: "Auto Bracket"}.get(value, f"Mode({value})")
             elif field_name == "UserComment":
                 try:
-                    decoded = value.decode('utf-8', errors='ignore') if isinstance(value, bytes) else str(value)
+                    if isinstance(value, bytes):
+                        try:
+                            decoded = piexif.helper.UserComment.load(value)
+                        except Exception:
+                            decoded = value.decode('utf-8', errors='ignore')
+                    else:
+                        decoded = str(value)
                     try:
                         custom_data = json.loads(decoded)
                         return custom_data.get('custom_title', str(value))
@@ -1371,14 +1377,19 @@ class ImgManager(ImgData):
             else:
                 exif_dict = {"0th": {}, "Exif": {}, "GPS": {}, "1st": {}, "thumbnail": None}
             user_comment_tag = 0x9286
-            exif_dict["Exif"][user_comment_tag] = new_title.encode('utf-8')
+            exif_dict["Exif"][user_comment_tag] = piexif.helper.UserComment.dump(new_title, encoding="unicode")
             exif_bytes = piexif.dump(exif_dict)
             img.save(img_path, exif=exif_bytes)
             for i, path in enumerate(self.flist):
                 if str(path) == str(img_path):
                     if i in self.full_exif_cache:
+                        self.full_exif_cache[i]["has_exif"] = True
                         self.full_exif_cache[i]["formatted_exif"]["CustomTitle"] = new_title
-                        self.full_exif_cache[i]["raw_exif"]["Exif"][user_comment_tag] = new_title.encode('utf-8')
+                        if "raw_exif" not in self.full_exif_cache[i] or not isinstance(self.full_exif_cache[i]["raw_exif"], dict):
+                            self.full_exif_cache[i]["raw_exif"] = {}
+                        if "Exif" not in self.full_exif_cache[i]["raw_exif"] or not isinstance(self.full_exif_cache[i]["raw_exif"]["Exif"], dict):
+                            self.full_exif_cache[i]["raw_exif"]["Exif"] = {}
+                        self.full_exif_cache[i]["raw_exif"]["Exif"][user_comment_tag] = piexif.helper.UserComment.dump(new_title, encoding="unicode")
                     break
             return True
         except:

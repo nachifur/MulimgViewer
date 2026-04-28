@@ -16,6 +16,8 @@
 
 # MulimgViewer
 
+**注意：目前最新代码存在大量bug，如需体验新功能，请使用这个版本的代码：https://github.com/nachifur/MulimgViewer/tree/0d6e6a5570eeb6076342590078516de212cb3375**
+
 Doc: [**English Doc**](https://mulimgviewer.readthedocs.io/en/latest/) | [**完整官网文档**](https://mulimgviewer.readthedocs.io) | [**Wiki**](https://github.com/nachifur/MulimgViewer/wiki)
 
 

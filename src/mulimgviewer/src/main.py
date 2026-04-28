@@ -1605,7 +1605,7 @@ class MulimgViewer (MulimgViewerGui):
                 self.video_manager.update_thread_count()
 
     def on_enable_video_mode(self, event):
-        self.shared_config.video_mode = self.m_checkBox66.GetValue()
+        self.shared_config.video_mode = self.m_checkBox33.GetValue()
         on_video_mode_change(self.shared_config.video_mode)
 
         # Manage the image stitch pool based on mode
@@ -3837,7 +3837,8 @@ class MulimgViewer (MulimgViewerGui):
 
     def title_auto_fc(self, event):
         titles = [self.title_down_up, self.title_show_parent,
-                  self.title_show_name, self.title_show_suffix, self.title_show_prefix, self.title_position, self.title_exif]
+                  self.title_show_name, self.title_show_suffix, self.title_show_prefix,
+                  self.title_position, self.title_exif, self.m_checkBox31, self.m_textCtrl16]
         if self.title_auto.Value:
             for title in titles:
                 title.Enabled = False

@@ -2923,9 +2923,29 @@ class MulimgViewer (MulimgViewerGui):
     def img_right_click(self, event):
         x, y = event.GetPosition()
         id = self.get_img_id_from_point([x, y])
-        xy_grid = self.ImgManager.xy_grid[id]
+        if hasattr(self.ImgManager, '_show_all_func_enabled') and self.ImgManager._show_all_func_enabled:
+            xy_grid_array = np.array(self.ImgManager.xy_grid)
+            xy_cur = np.array([[x, y]])
+            xy_cur = np.repeat(xy_cur, xy_grid_array.shape[0], axis=0)
+            res_ = xy_cur - xy_grid_array
+            id_list = []
+            for i in range(xy_grid_array.shape[0]):
+                if res_[i][0] >= 0 and res_[i][1] >= 0:
+                    id_list.append(i)
+                else:
+                    id_list.append(0)
+            actual_grid_id = max(id_list)
+            xy_grid = self.ImgManager.xy_grid[actual_grid_id]
+        else:
+            xy_grid = self.ImgManager.xy_grid[id]
         x = x-xy_grid[0]
         y = y-xy_grid[1]
+        menu_triggered = getattr(event, 'menu_triggered', False)
+
+        if not menu_triggered:
+            self.on_right_click(event)
+            return
+
         if self.select_img_box.Value:
             # move box
             if self.box_id != -1:

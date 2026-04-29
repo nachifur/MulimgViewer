@@ -2122,9 +2122,13 @@ class MulimgViewer (MulimgViewerGui):
             modifiers |= modifier_map[token]
         special_keys = {
             "UP": wx.WXK_UP,
+            "ARROWUP": wx.WXK_UP,
             "DOWN": wx.WXK_DOWN,
+            "ARROWDOWN": wx.WXK_DOWN,
             "LEFT": wx.WXK_LEFT,
+            "ARROWLEFT": wx.WXK_LEFT,
             "RIGHT": wx.WXK_RIGHT,
+            "ARROWRIGHT": wx.WXK_RIGHT,
             "DELETE": wx.WXK_DELETE,
         }
         if key_token in special_keys:
@@ -2175,10 +2179,14 @@ class MulimgViewer (MulimgViewerGui):
             "CONTROL": "Ctrl",
             "ALT": "Alt",
             "SHIFT": "Shift",
-            "UP": "ArrowUp",
-            "DOWN": "ArrowDown",
-            "LEFT": "ArrowLeft",
-            "RIGHT": "ArrowRight",
+            "UP": "Up",
+            "ARROWUP": "Up",
+            "DOWN": "Down",
+            "ARROWDOWN": "Down",
+            "LEFT": "Left",
+            "ARROWLEFT": "Left",
+            "RIGHT": "Right",
+            "ARROWRIGHT": "Right",
             "DELETE": "Delete",
         }
         return "+".join(display_map.get(token, token.title() if len(token) > 1 else token) for token in tokens)
@@ -2506,7 +2514,7 @@ class MulimgViewer (MulimgViewerGui):
         self.SetStatusText_(
             ["Sequential choose input dir", "-1", "-1", "-1"])
 
-    def onefilelist(self):
+    def onefilelist(self, event=None):
         self.SetStatusText_(["Choose the File List", "", "", "-1"])
         # Initialize the image stitch pool
         self._init_image_stitch_executor()

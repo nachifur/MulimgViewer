@@ -2468,6 +2468,7 @@ class MulimgViewer (MulimgViewerGui):
         """Clear current cache to force restitching (shared by video/image modes)."""
         self.shared_config.image_cache_img = []
         self.shared_config.image_cache_paths = []
+        self._image_reference_resolution_origin = None
         cache = getattr(self.shared_config, "cache_img", None)
         if isinstance(cache, list):
             for i in range(len(cache)):
@@ -3404,6 +3405,8 @@ class MulimgViewer (MulimgViewerGui):
 
         if layout_params:
             self.ImgManager.layout_params = layout_params
+            self.ImgManager._show_all_func_expanded_row_col = None
+            self._image_reference_resolution_origin = None
 
             # Key: skip generic recompute in video mode to avoid resetting count_per_action back to 1
             if not self.shared_config.video_mode:
@@ -3705,30 +3708,31 @@ class MulimgViewer (MulimgViewerGui):
 
         if self.ImgManager.max_action_num > 0:
             current_batch = max(0, min(int(getattr(self.shared_config, "batch_idx", 0)), self.ImgManager.max_action_num - 1))
-            self._update_image_cache(current_batch)
-
-            cache_list = self.shared_config.image_cache_img
-            path_cache = self.shared_config.image_cache_paths
 
             self.slider_img.SetMax(self.ImgManager.max_action_num - 1)
             self.slider_img.SetValue(current_batch)
             self.slider_value.SetValue(str(current_batch))
             self.slider_value_max.SetLabel(str(self.ImgManager.max_action_num - 1))
 
-            pil_img = cache_list[current_batch] if current_batch < len(cache_list) else None
+            with self._image_stitch_lock:
+                flist = self._get_image_flist(current_batch)
+                pil_img = None
+                flag = 1
+                if flist:
+                    self.ImgManager.set_action_count(current_batch)
+                    self.ImgManager.img_count = current_batch * self.ImgManager.count_per_action
+                    pil_img, flag = self.compose_current_frame(batch_idx=current_batch, flist=flist)
 
-            if pil_img is not None:
+            if pil_img is not None and flag == 0:
                 self.show_bmp_in_panel = pil_img
                 self.img_size = pil_img.size
-                self._debug_image(f"[ImageCache] hit batch={current_batch}")
                 self.display_bitmap(False, pil_img)
 
                 # Update ImgManager state for UI use
                 self.ImgManager.action_count = current_batch
                 self.ImgManager.img_count = current_batch * self.ImgManager.count_per_action
-                if current_batch < len(path_cache) and path_cache[current_batch] is not None:
-                    self.ImgManager.flist = path_cache[current_batch]
-                    self.current_page_img_paths = copy.deepcopy(path_cache[current_batch])
+                self.ImgManager.flist = flist
+                self.current_page_img_paths = copy.deepcopy(flist)
 
                 if self.ImgManager.type in (2, 3):
                     try:
@@ -3796,17 +3800,18 @@ class MulimgViewer (MulimgViewerGui):
         try:
             # Process current batch synchronously so it's immediately available
             if cache_list[batch_idx] is None:
-                flist = self._get_image_flist(batch_idx)
-                if flist:
-                    self.ImgManager.set_action_count(batch_idx)
-                    self.ImgManager.img_count = batch_idx * self.ImgManager.count_per_action
-                    pil_img, flag = self.compose_current_frame(batch_idx=batch_idx, flist=flist)
-                    if flag == 0:
-                        path_list[batch_idx] = flist
-                        self._debug_image(f"[ImageCache] sync write batch={batch_idx}")
-                    else:
-                        cache_list[batch_idx] = None
-                        path_list[batch_idx] = None
+                with self._image_stitch_lock:
+                    flist = self._get_image_flist(batch_idx)
+                    if flist:
+                        self.ImgManager.set_action_count(batch_idx)
+                        self.ImgManager.img_count = batch_idx * self.ImgManager.count_per_action
+                        pil_img, flag = self.compose_current_frame(batch_idx=batch_idx, flist=flist)
+                        if flag == 0:
+                            path_list[batch_idx] = flist
+                            self._debug_image(f"[ImageCache] sync write batch={batch_idx}")
+                        else:
+                            cache_list[batch_idx] = None
+                            path_list[batch_idx] = None
 
             # Pre-stitch other batches asynchronously via thread pool
             for t in range(window_start, window_end + 1):
@@ -3856,6 +3861,45 @@ class MulimgViewer (MulimgViewerGui):
             cache_list[t] = None
             path_list[t] = None
 
+    def _compact_row_col_for_count(self, count):
+        if count <= 1:
+            return [1, 1]
+        row = int(math.sqrt(count))
+        while row > 1 and count % row != 0:
+            row -= 1
+        col = int(math.ceil(count / row))
+        return [min(row, col), max(row, col)]
+
+    def _calc_reference_resolution_origin(self, flist):
+        widths = []
+        heights = []
+        for path in flist:
+            try:
+                with Image.open(path) as img:
+                    widths.append(img.size[0])
+                    heights.append(img.size[1])
+            except Exception:
+                pass
+        if not widths or not heights:
+            return None
+
+        widths = np.sort(widths)
+        heights = np.sort(heights)
+        if self.ImgManager.img_stitch_mode == 2:
+            width = max(widths)
+            height = max(heights)
+        elif self.ImgManager.img_stitch_mode == 1:
+            width = np.min(widths)
+            height = np.min(heights)
+        else:
+            if len(widths) > 3:
+                width = np.mean(widths[1:-1])
+                height = np.mean(heights[1:-1])
+            else:
+                width = np.mean(widths)
+                height = np.mean(heights)
+        return [int(width), int(height)]
+
     def compose_current_frame(self, batch_idx=0, flist=None):
         """
         Only generate the stitched result for the current frame; do not touch UI state.
@@ -3863,18 +3907,54 @@ class MulimgViewer (MulimgViewerGui):
         - pil_img: PIL.Image or None
         - flag: 0 means success; other values follow ImgManager.stitch_images semantics
         """
-        if self.show_custom_func.Value:
-            self.ImgManager.layout_params[32] = True
-            self.ImgManager.stitch_images(0, copy.deepcopy(self.xy_magnifier))
-            self.ImgManager.layout_params[32] = False
+        original_row_col = None
+        original_resolution_setting = None
+        full_capacity = None
+        try:
+            if flist is not None and not getattr(self.shared_config, "video_mode", False):
+                row_col = self.ImgManager.layout_params[0]
+                row_col_one_img = self.ImgManager.layout_params[1]
+                one_img_capacity = max(1, row_col_one_img[0] * row_col_one_img[1])
+                full_capacity = max(1, row_col[0] * row_col[1] * one_img_capacity)
+                if 0 < len(flist) < full_capacity:
+                    original_row_col = row_col.copy()
+                    compact_count = int(math.ceil(len(flist) / one_img_capacity))
+                    self.ImgManager.layout_params[0] = self._compact_row_col_for_count(compact_count)
+                    self.ImgManager._show_all_func_expanded_row_col = None
 
-        stitch_start = time.time()
-        flag = self.ImgManager.stitch_images(0, copy.deepcopy(self.xy_magnifier), flist=flist)
-        stitch_duration = time.time() - stitch_start
-        if flag != 0:
-            return None, flag
+                    resolution_setting = self.ImgManager.layout_params[6]
+                    if -1 in resolution_setting:
+                        reference_resolution = getattr(self, "_image_reference_resolution_origin", None)
+                        if reference_resolution is None:
+                            reference_flist = self._get_image_flist(0)
+                            if len(reference_flist) >= full_capacity:
+                                reference_resolution = self._calc_reference_resolution_origin(
+                                    reference_flist[:full_capacity])
+                        if reference_resolution is not None:
+                            original_resolution_setting = resolution_setting.copy()
+                            self.ImgManager.layout_params[6] = reference_resolution
 
-        pil_img = self.ImgManager.show_stitch_img_and_customfunc_img(self.show_custom_func.Value)
+            if self.show_custom_func.Value:
+                self.ImgManager.layout_params[32] = True
+                self.ImgManager.stitch_images(0, copy.deepcopy(self.xy_magnifier), flist=flist)
+                self.ImgManager.layout_params[32] = False
+
+            stitch_start = time.time()
+            flag = self.ImgManager.stitch_images(0, copy.deepcopy(self.xy_magnifier), flist=flist)
+            stitch_duration = time.time() - stitch_start
+            if flag != 0:
+                return None, flag
+
+            pil_img = self.ImgManager.show_stitch_img_and_customfunc_img(self.show_custom_func.Value)
+            if (flist is not None and full_capacity is not None
+                    and len(flist) >= full_capacity and -1 in self.ImgManager.layout_params[6]):
+                self._image_reference_resolution_origin = self.ImgManager.img_resolution_origin.copy()
+        finally:
+            if original_resolution_setting is not None:
+                self.ImgManager.layout_params[6] = original_resolution_setting
+            if original_row_col is not None:
+                self.ImgManager.layout_params[0] = original_row_col
+                self.ImgManager._show_all_func_expanded_row_col = None
 
         self.show_bmp_in_panel = pil_img
         self.img_size = pil_img.size
@@ -3912,7 +3992,7 @@ class MulimgViewer (MulimgViewerGui):
             pil_img = cache[b]
 
         try:
-            if pil_img is not None:
+            if video_mode and pil_img is not None:
                 arr = np.array(pil_img.convert("RGBA"), dtype=np.uint8)
 
                 bg_rgb = np.array(self.ImgManager.gap_color[:3], dtype=np.int16)
@@ -4434,10 +4514,12 @@ class MulimgViewer (MulimgViewerGui):
     def on_show_all_func_changed(self, event):
         if self.show_all_func.GetValue():
             self.show_custom_func.SetValue(False)
+        self._invalidate_render_cache()
 
     def on_show_custom_func_changed(self, event):
         if self.show_custom_func.GetValue():
             self.show_all_func.SetValue(False)
+        self._invalidate_render_cache()
 
     def next_img(self, event):
         if self.shared_config.video_mode and self.shared_config.is_playing and not getattr(self, "_from_timer", False):

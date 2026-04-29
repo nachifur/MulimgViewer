@@ -986,16 +986,28 @@ class ImgManager(ImgData):
 
         self.img_list = img_list
 
-    def get_all_func_img_list(self, show_all_func_layout, original_row_col=None, func_layout_vertical=False):
+    def get_all_func_img_list(self, show_all_func_layout, original_row_col=None, func_layout_vertical=False, flist=None):
+        if flist is None:
+            self_flist = self.flist
+        else:
+            normalized, groups = self._normalize_flist_input(flist)
+            if normalized is None:
+                self_flist = []
+                self.flist = []
+            else:
+                self_flist = list(normalized)
+                self.flist = list(normalized)
+            self._flist_groups = groups
+
         if original_row_col:
             max_images_needed = original_row_col[0] * original_row_col[1]
         else:
-            max_images_needed = len(self.flist)
+            max_images_needed = len(self_flist)
         original_img_list = []
         name_list = []
         loaded_count = 0
 
-        for path in self.flist:
+        for path in self_flist:
             if loaded_count >= max_images_needed:
                 break
             path = Path(path)
@@ -1422,27 +1434,37 @@ class ImgManager(ImgData):
         show_all_func = len(self.layout_params) > 38 and self.layout_params[38]
         if show_all_func:
 
-            current_row_col = self.layout_params[0].copy()
             show_all_func_layout = self.layout_params[39] if len(self.layout_params) > 39 else "2,2"
             func_layout_vertical = self.layout_params[40] if len(self.layout_params) > 40 else False
-            self.img_list = self.get_all_func_img_list(show_all_func_layout, current_row_col, func_layout_vertical)
+            layout_row, layout_col = map(int, show_all_func_layout.split(','))
+            current_row_col = self.layout_params[0].copy()
+            if getattr(self, '_show_all_func_enabled', False) and hasattr(self, '_original_row_col'):
+                expanded_row_col = getattr(self, '_show_all_func_expanded_row_col', None)
+                if expanded_row_col and current_row_col == expanded_row_col:
+                    current_row_col = self._original_row_col.copy()
+            self.img_list = self.get_all_func_img_list(
+                show_all_func_layout, current_row_col, func_layout_vertical, flist=flist)
 
             self._blank_img_ids = set()
             for idx, img in enumerate(self.img_list):
                 if hasattr(img, '_is_blank') and img._is_blank:
                     self._blank_img_ids.add(idx)
 
-            layout_row, layout_col = map(int, show_all_func_layout.split(','))
-
             self.layout_params[0] = [current_row_col[0] * layout_row, current_row_col[1] * layout_col]
 
             self._show_all_func_enabled = True
             self._show_all_func_layout = (layout_row, layout_col)
             self._original_row_col = current_row_col
+            self._show_all_func_expanded_row_col = self.layout_params[0].copy()
             self._func_layout_vertical = func_layout_vertical
 
         else:
             self._show_all_func_enabled = False
+            self._show_all_func_expanded_row_col = None
+            self._blank_img_ids = set()
+            self._original_row_col = None
+            self._show_all_func_layout = None
+            self._func_layout_vertical = False
             self.get_img_list(show_custom_func=self.layout_params[32], flist=flist)  # Generate image list
         self.set_scale_mode(img_mode=img_mode)
         if img_mode == 0:

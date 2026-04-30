@@ -1,7 +1,7 @@
 import platform
 import threading
 from pathlib import Path
-import ffmpeg,os,time,math
+import ffmpeg, os, time, math, sys
 from concurrent.futures import ThreadPoolExecutor, Future
 import atexit
 import weakref
@@ -4459,6 +4459,7 @@ class MulimgViewer (MulimgViewerGui):
 
         try:
             self.copy_algorithm_from_path(source_path, algorithm_name)
+            self._clear_custom_algorithm_modules()
             self.refresh_algorithm_list()
             available_algorithms = get_available_algorithms()
             if algorithm_name in available_algorithms:
@@ -4474,6 +4475,15 @@ class MulimgViewer (MulimgViewerGui):
         if target_folder.exists():
             shutil.rmtree(str(target_folder))
         shutil.copytree(str(source_path), str(target_folder))
+
+    def _clear_custom_algorithm_modules(self):
+        for module_name in (
+            "mulimgviewer.src.custom_func.main",
+            "custom_func.main",
+            ".custom_func.main",
+        ):
+            if module_name in sys.modules:
+                del sys.modules[module_name]
 
     def remove_custom_algorithm(self, event):
         selected_index = self.customfunc_choice.GetSelection()
@@ -4491,6 +4501,7 @@ class MulimgViewer (MulimgViewerGui):
         if dlg.ShowModal() == wx.ID_YES:
             try:
                 self.remove_custom_algorithm_folder(selected_algorithm)
+                self._clear_custom_algorithm_modules()
                 self.refresh_algorithm_list()
                 wx.MessageBox(f"Algorithm '{selected_algorithm}' removed successfully!", "Remove Success", wx.OK | wx.ICON_INFORMATION)
             except Exception as exc:
@@ -4502,8 +4513,74 @@ class MulimgViewer (MulimgViewerGui):
         if algorithm_folder.exists():
             shutil.rmtree(str(algorithm_folder))
 
+    def create_custom_algorithm_template(self, algorithm_name):
+        algorithm_folder = Path(__file__).parent / "custom_func" / algorithm_name
+        desktop_algorithm_folder = Path.home() / "Desktop" / algorithm_name
+        if desktop_algorithm_folder.exists() and (desktop_algorithm_folder / "main.py").exists():
+            try:
+                if algorithm_folder.exists():
+                    shutil.rmtree(str(algorithm_folder))
+                shutil.copytree(str(desktop_algorithm_folder), str(algorithm_folder))
+                return
+            except Exception:
+                pass
+        if not algorithm_folder.exists():
+            os.makedirs(str(algorithm_folder))
+        template_content = f"""'''
+{algorithm_name} Algorithm
+Custom algorithm - Implement your image processing logic here
+'''
+from PIL import Image
+from pathlib import Path
+import os
+
+def custom_process_img(img):
+    \"\"\"
+    Custom image processing function
+    input: image(pillow)
+    output: image(pillow)
+
+    Implement your image processing algorithm here
+    Examples:
+    - img = img.convert('L')  # Convert to grayscale
+    - img = img.transpose(Image.FLIP_LEFT_RIGHT)  # Horizontal flip
+    \"\"\"
+    return img
+
+def main(img_list, save_path, name_list=None, algorithm_name="{algorithm_name}"):
+    \"\"\"
+    Batch process image list
+    \"\"\"
+    i = 0
+    out_img_list = []
+    if save_path != "":
+        flag_save = True
+        save_path = Path(save_path) / "processing_function" / algorithm_name
+        if not save_path.exists():
+            os.makedirs(str(save_path))
+    else:
+        flag_save = False
+
+    for img in img_list:
+        img = custom_process_img(img)
+
+        out_img_list.append(img)
+        if flag_save:
+            if isinstance(name_list, list) and i < len(name_list):
+                img_path = save_path / name_list[i]
+            else:
+                img_path = save_path / (str(i) + ".png")
+            img.save(str(img_path))
+        i += 1
+    return out_img_list
+"""
+        template_path = algorithm_folder / "main.py"
+        with open(template_path, "w", encoding="utf-8") as f:
+            f.write(template_content)
+
     def refresh_algorithm_list(self):
         try:
+            self._clear_custom_algorithm_modules()
             available_algorithms = get_available_algorithms()
             current_selection = self.customfunc_choice.GetSelection()
             current_algorithm = ""

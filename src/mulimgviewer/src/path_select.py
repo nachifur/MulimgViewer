@@ -110,6 +110,9 @@ class PathSelectFrame(PathSelectFrameGui):
     def _on_close(self, event):
         self._finalize_and_return()
 
+    def close(self, event):
+        self._finalize_and_return()
+
     def Close(self, event):  # noqa: N802  Keep this name to match generated-code bindings
         self._finalize_and_return()
 

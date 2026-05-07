@@ -25,10 +25,7 @@ class MulimgViewerGui ( wx.Frame ):
 		fgSizer1.SetFlexibleDirection( wx.BOTH )
 		fgSizer1.SetNonFlexibleGrowMode( wx.FLEX_GROWMODE_SPECIFIED )
 
-		self.m_panel1 = wx.Panel( self, wx.ID_ANY, wx.DefaultPosition, wx.Size( 32,32 ), wx.TAB_TRAVERSAL )
-		self.m_panel1.SetMinSize( wx.Size( 32,32 ) )
-		self.m_panel1.SetMaxSize( wx.Size( 32,32 ) )
-
+		self.m_panel1 = wx.Panel( self, wx.ID_ANY, wx.DefaultPosition, wx.Size( -1,-1 ), wx.TAB_TRAVERSAL )
 		wSizer1 = wx.WrapSizer( wx.HORIZONTAL, wx.WRAPSIZER_DEFAULT_FLAGS )
 
 		self.button_open_all = wx.Button( self.m_panel1, wx.ID_ANY, u"📂️", wx.DefaultPosition, wx.Size( 50,30 ), wx.BORDER_NONE )
@@ -110,6 +107,7 @@ class MulimgViewerGui ( wx.Frame ):
 
 		self.m_panel1.SetSizer( wSizer1 )
 		self.m_panel1.Layout()
+		wSizer1.Fit( self.m_panel1 )
 		fgSizer1.Add( self.m_panel1, 1, wx.EXPAND |wx.ALL, 5 )
 
 		self.m_panel3 = wx.Panel( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.TAB_TRAVERSAL )
@@ -536,72 +534,55 @@ class MulimgViewerGui ( wx.Frame ):
 		self.m_staticline16 = wx.StaticLine( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_HORIZONTAL )
 		fgSizer3.Add( self.m_staticline16, 0, wx.EXPAND |wx.ALL, 5 )
 
-		bSizer17 = wx.BoxSizer( wx.VERTICAL )
+		wSizer12 = wx.WrapSizer( wx.HORIZONTAL, wx.WRAPSIZER_DEFAULT_FLAGS )
 
 		self.m_staticText411 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Video", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText411.Wrap( -1 )
 
 		self.m_staticText411.SetFont( wx.Font( 12, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD, False, wx.EmptyString ) )
 
-		bSizer17.Add( self.m_staticText411, 0, wx.ALL, 5 )
+		wSizer12.Add( self.m_staticText411, 0, wx.ALL, 5 )
 
-		self.m_checkBox33 = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"Enable Video Mode", wx.DefaultPosition, wx.DefaultSize, 0 )
-		bSizer17.Add( self.m_checkBox33, 0, wx.ALL, 5 )
+		self.m_staticline25 = wx.StaticLine( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_VERTICAL )
+		wSizer12.Add( self.m_staticline25, 0, wx.EXPAND |wx.ALL, 5 )
 
-		bSizer182 = wx.BoxSizer( wx.HORIZONTAL )
+		self.m_checkBox33 = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"Video Mode", wx.DefaultPosition, wx.DefaultSize, 0 )
+		wSizer12.Add( self.m_checkBox33, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
-		self.m_staticText24 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Frame Interval（s）", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText24 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Interval (s)", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText24.Wrap( -1 )
 
-		bSizer182.Add( self.m_staticText24, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+		wSizer12.Add( self.m_staticText24, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
-		self.row_col1 = wx.TextCtrl( self.m_panel4, wx.ID_ANY, u"1.0", wx.DefaultPosition, wx.Size( 30,-1 ), 0 )
-		bSizer182.Add( self.row_col1, 0, wx.ALL, 5 )
+		self.row_col1 = wx.TextCtrl( self.m_panel4, wx.ID_ANY, u"1.0", wx.DefaultPosition, wx.Size( 40,-1 ), 0 )
+		wSizer12.Add( self.row_col1, 0, wx.ALL, 5 )
 
-
-		bSizer17.Add( bSizer182, 1, wx.EXPAND, 5 )
-
-		bSizer1821 = wx.BoxSizer( wx.HORIZONTAL )
-
-		self.m_staticText241 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Parallel Threads", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText241 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Threads", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText241.Wrap( -1 )
 
-		bSizer1821.Add( self.m_staticText241, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+		wSizer12.Add( self.m_staticText241, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
-		self.row_col11 = wx.TextCtrl( self.m_panel4, wx.ID_ANY, u"4", wx.DefaultPosition, wx.Size( 20,-1 ), 0 )
-		bSizer1821.Add( self.row_col11, 0, wx.ALL, 5 )
+		self.row_col11 = wx.TextCtrl( self.m_panel4, wx.ID_ANY, u"4", wx.DefaultPosition, wx.Size( 40,-1 ), 0 )
+		wSizer12.Add( self.row_col11, 0, wx.ALL, 5 )
 
-
-		bSizer17.Add( bSizer1821, 1, wx.EXPAND, 5 )
-
-		bSizer1822 = wx.BoxSizer( wx.HORIZONTAL )
-
-		self.m_staticText242 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Cached Frames（±）", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText242 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Cached Frames", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText242.Wrap( -1 )
 
-		bSizer1822.Add( self.m_staticText242, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+		wSizer12.Add( self.m_staticText242, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
-		self.row_col12 = wx.TextCtrl( self.m_panel4, wx.ID_ANY, u"2", wx.DefaultPosition, wx.Size( 20,-1 ), 0 )
-		bSizer1822.Add( self.row_col12, 0, wx.ALL, 5 )
-
-
-		bSizer17.Add( bSizer1822, 1, wx.EXPAND, 5 )
-
-		bSizer1823 = wx.BoxSizer( wx.HORIZONTAL )
+		self.row_col12 = wx.TextCtrl( self.m_panel4, wx.ID_ANY, u"2", wx.DefaultPosition, wx.Size( 40,-1 ), 0 )
+		wSizer12.Add( self.row_col12, 0, wx.ALL, 5 )
 
 		self.m_staticText243 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Skip Frame", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText243.Wrap( -1 )
 
-		bSizer1823.Add( self.m_staticText243, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+		wSizer12.Add( self.m_staticText243, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
-		self.row_col13 = wx.TextCtrl( self.m_panel4, wx.ID_ANY, u"0", wx.DefaultPosition, wx.Size( 20,-1 ), 0 )
-		bSizer1823.Add( self.row_col13, 0, wx.ALL, 5 )
-
-
-		bSizer17.Add( bSizer1823, 1, wx.EXPAND, 5 )
+		self.row_col13 = wx.TextCtrl( self.m_panel4, wx.ID_ANY, u"0", wx.DefaultPosition, wx.Size( 40,-1 ), 0 )
+		wSizer12.Add( self.row_col13, 0, wx.ALL, 5 )
 
 
-		fgSizer3.Add( bSizer17, 1, wx.EXPAND, 5 )
+		fgSizer3.Add( wSizer12, 1, wx.EXPAND, 5 )
 
 		self.m_staticline24 = wx.StaticLine( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_HORIZONTAL )
 		fgSizer3.Add( self.m_staticline24, 0, wx.EXPAND |wx.ALL, 5 )
@@ -612,7 +593,6 @@ class MulimgViewerGui ( wx.Frame ):
 		self.m_staticText33.Wrap( -1 )
 
 		self.m_staticText33.SetFont( wx.Font( 12, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD, False, wx.EmptyString ) )
-		self.m_staticText33.Enable( False )
 
 		wSizer2.Add( self.m_staticText33, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 

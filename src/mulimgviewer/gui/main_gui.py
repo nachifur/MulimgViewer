@@ -632,24 +632,27 @@ class MulimgViewerGui ( wx.Frame ):
 
 		wSizer2.Add( self.title_show_suffix, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
+		self.title_down_up = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"Down", wx.Point( -1,-1 ), wx.Size( 50,-1 ), 0 )
+		self.title_down_up.Enable( False )
+
+		wSizer2.Add( self.title_down_up, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+
 		title_positionChoices = [ u"left", u"center", u"right" ]
-		self.title_position = wx.Choice( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.Size( 45,-1 ), title_positionChoices, 0 )
+		self.title_position = wx.Choice( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.Size( -1,-1 ), title_positionChoices, 0 )
 		self.title_position.SetSelection( 1 )
 		self.title_position.Enable( False )
 
 		wSizer2.Add( self.title_position, 0, wx.ALL, 5 )
 
-		self.title_down_up = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"Down", wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.title_down_up.Enable( False )
-
-		wSizer2.Add( self.title_down_up, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+		self.m_staticline26 = wx.StaticLine( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_VERTICAL )
+		wSizer2.Add( self.m_staticline26, 0, wx.EXPAND |wx.ALL, 5 )
 
 		self.m_checkBox31 = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"Rename", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_checkBox31.Enable( False )
 
-		wSizer2.Add( self.m_checkBox31, 0, wx.ALL, 5 )
+		wSizer2.Add( self.m_checkBox31, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
-		self.m_textCtrl16 = wx.TextCtrl( self.m_panel4, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_textCtrl16 = wx.TextCtrl( self.m_panel4, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size( 75,-1 ), 0 )
 		self.m_textCtrl16.Enable( False )
 
 		wSizer2.Add( self.m_textCtrl16, 0, wx.ALL, 5 )
@@ -666,7 +669,7 @@ class MulimgViewerGui ( wx.Frame ):
 		wSizer2.Add( self.title_font_size, 0, wx.ALL, 5 )
 
 		title_fontChoices = []
-		self.title_font = wx.Choice( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.Size( 80,-1 ), title_fontChoices, 0 )
+		self.title_font = wx.Choice( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.Size( 110,-1 ), title_fontChoices, 0 )
 		self.title_font.SetSelection( 0 )
 		wSizer2.Add( self.title_font, 0, wx.ALL, 5 )
 

@@ -14,7 +14,7 @@ def main(img_list, save_path, name_list=None, algorithm_name="Gaussian Blur"):
     out_img_list = []
     if save_path != "":
         flag_save = True
-        base_save_path = Path(save_path) / "custom_func_output" / algorithm_name / "processed_img"
+        base_save_path = Path(save_path) / "processing_function" / algorithm_name / "processed_img"
         if not base_save_path.exists():
             os.makedirs(str(base_save_path))
     else:

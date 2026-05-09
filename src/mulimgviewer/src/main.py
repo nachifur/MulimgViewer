@@ -2414,7 +2414,11 @@ class MulimgViewer (MulimgViewerGui):
                 self.ImgManager.save_img(self.out_path_str, type_)
                 self.ImgManager.layout_params[32] = False  # customfunc
             flag = self.ImgManager.save_img(self.out_path_str, type_)
-            self.ImgManager.save_stitch_img_and_customfunc_img(self.out_path_str, self.show_custom_func.Value)
+            self.ImgManager.save_stitch_img_and_customfunc_img(
+                self.out_path_str,
+                self.show_custom_func.Value,
+                getattr(self, "show_bmp_in_panel", None),
+            )
 
             if flag == 0:
                 self.SetStatusText_(
@@ -3139,7 +3143,11 @@ class MulimgViewer (MulimgViewerGui):
                     self.ImgManager.save_img(self.out_path_str, type_)
                     self.ImgManager.layout_params[32] = False
                 self.ImgManager.save_img(self.out_path_str, type_)
-                self.ImgManager.save_stitch_img_and_customfunc_img(self.out_path_str, self.show_custom_func.Value)
+                self.ImgManager.save_stitch_img_and_customfunc_img(
+                    self.out_path_str,
+                    self.show_custom_func.Value,
+                    getattr(self, "show_bmp_in_panel", None),
+                )
 
                 # Call the default save function
                 select_folder = os.path.join(self.out_path_str, "select_images")
@@ -4537,44 +4545,77 @@ class MulimgViewer (MulimgViewerGui):
     def add_custom_algorithm(self, event):
         algorithm_path = self.custom_algorithm_input.GetValue().strip()
         if not algorithm_path:
-            event.Skip() if hasattr(event, "Skip") else None
             return
 
-        source_path = Path(algorithm_path)
-        if not source_path.exists():
-            wx.MessageBox(f"Path does not exist: {algorithm_path}", "Path Error", wx.OK | wx.ICON_ERROR)
-            return
-        if not source_path.is_dir():
-            wx.MessageBox(f"Path must be a folder: {algorithm_path}", "Path Error", wx.OK | wx.ICON_ERROR)
-            return
-        if not (source_path / "main.py").exists():
-            wx.MessageBox(f"main.py file missing in algorithm folder: {algorithm_path}", "File Missing", wx.OK | wx.ICON_ERROR)
+        try:
+            source_path = Path(algorithm_path)
+            if not source_path.exists():
+                wx.MessageBox(f"Path does not exist: {algorithm_path}", "Path Error", wx.OK | wx.ICON_ERROR)
+                return
+            if not source_path.is_dir():
+                wx.MessageBox(f"Path must be a folder: {algorithm_path}", "Path Error", wx.OK | wx.ICON_ERROR)
+                return
+            if not (source_path / "main.py").exists():
+                wx.MessageBox(f"main.py file missing in algorithm folder: {algorithm_path}", "File Missing", wx.OK | wx.ICON_ERROR)
+                return
+        except Exception as exc:
+            wx.MessageBox(f"Path format error: {exc}", "Path Error", wx.OK | wx.ICON_ERROR)
             return
 
         algorithm_name = source_path.name
-        existing = [self.customfunc_choice.GetString(i) for i in range(self.customfunc_choice.GetCount())]
-        if algorithm_name in existing:
+        current_choices = [self.customfunc_choice.GetString(i) for i in range(self.customfunc_choice.GetCount())]
+        if algorithm_name in current_choices:
             wx.MessageBox(f"Algorithm '{algorithm_name}' already exists!", "Duplicate Algorithm", wx.OK | wx.ICON_WARNING)
             return
 
         try:
             self.copy_algorithm_from_path(source_path, algorithm_name)
-            self._clear_custom_algorithm_modules()
-            self.refresh_algorithm_list()
-            available_algorithms = get_available_algorithms()
-            if algorithm_name in available_algorithms:
-                self.customfunc_choice.SetSelection(available_algorithms.index(algorithm_name))
-            self.custom_algorithm_input.SetValue("")
-            self.Layout()
-            wx.MessageBox(f"Algorithm '{algorithm_name}' added successfully!", "Add Success", wx.OK | wx.ICON_INFORMATION)
+            self.custom_algorithms.append(algorithm_name)
+
+            import time
+            time.sleep(0.1)
+
+            def update_ui():
+                self.refresh_algorithm_list()
+                try:
+                    modules_to_clear = [
+                        'mulimgviewer.src.custom_func.main',
+                        'custom_func.main',
+                        '.custom_func.main'
+                    ]
+                    for module_name in modules_to_clear:
+                        if module_name in sys.modules:
+                            del sys.modules[module_name]
+                    from .custom_func.main import get_available_algorithms
+                    available_algorithms = get_available_algorithms()
+                    if algorithm_name in available_algorithms:
+                        self.customfunc_choice.SetSelection(available_algorithms.index(algorithm_name))
+                except Exception:
+                    pass
+
+                self.custom_algorithm_input.SetValue("")
+                self.customfunc_choice.Refresh()
+                self.customfunc_choice.Update()
+                self.Update()
+                parent = self.customfunc_choice.GetParent()
+                if parent:
+                    parent.Refresh()
+                    parent.Update()
+                self.Layout()
+                wx.MessageBox(f"Algorithm '{algorithm_name}' added successfully from path '{algorithm_path}'!", "Add Success", wx.OK | wx.ICON_INFORMATION)
+
+            wx.CallAfter(update_ui)
         except Exception as exc:
             wx.MessageBox(f"Failed to add algorithm: {exc}", "Add Failed", wx.OK | wx.ICON_ERROR)
 
     def copy_algorithm_from_path(self, source_path, algorithm_name):
         target_folder = Path(__file__).parent / "custom_func" / algorithm_name
-        if target_folder.exists():
-            shutil.rmtree(str(target_folder))
-        shutil.copytree(str(source_path), str(target_folder))
+        try:
+            if target_folder.exists():
+                shutil.rmtree(str(target_folder))
+            shutil.copytree(str(source_path), str(target_folder))
+        except Exception as exc:
+            raise exc
 
     def _clear_custom_algorithm_modules(self):
         for module_name in (
@@ -4601,7 +4642,16 @@ class MulimgViewer (MulimgViewerGui):
         if dlg.ShowModal() == wx.ID_YES:
             try:
                 self.remove_custom_algorithm_folder(selected_algorithm)
-                self._clear_custom_algorithm_modules()
+                if selected_algorithm in self.custom_algorithms:
+                    self.custom_algorithms.remove(selected_algorithm)
+                modules_to_clear = [
+                    'mulimgviewer.src.custom_func.main',
+                    'custom_func.main',
+                    '.custom_func.main'
+                ]
+                for module_name in modules_to_clear:
+                    if module_name in sys.modules:
+                        del sys.modules[module_name]
                 self.refresh_algorithm_list()
                 wx.MessageBox(f"Algorithm '{selected_algorithm}' removed successfully!", "Remove Success", wx.OK | wx.ICON_INFORMATION)
             except Exception as exc:
@@ -4611,7 +4661,10 @@ class MulimgViewer (MulimgViewerGui):
     def remove_custom_algorithm_folder(self, algorithm_name):
         algorithm_folder = Path(__file__).parent / "custom_func" / algorithm_name
         if algorithm_folder.exists():
-            shutil.rmtree(str(algorithm_folder))
+            try:
+                shutil.rmtree(str(algorithm_folder))
+            except Exception:
+                pass
 
     def create_custom_algorithm_template(self, algorithm_name):
         algorithm_folder = Path(__file__).parent / "custom_func" / algorithm_name
@@ -4645,6 +4698,7 @@ def custom_process_img(img):
     - img = img.convert('L')  # Convert to grayscale
     - img = img.transpose(Image.FLIP_LEFT_RIGHT)  # Horizontal flip
     \"\"\"
+    # Default: no processing, return original image
     return img
 
 def main(img_list, save_path, name_list=None, algorithm_name="{algorithm_name}"):
@@ -4655,7 +4709,7 @@ def main(img_list, save_path, name_list=None, algorithm_name="{algorithm_name}")
     out_img_list = []
     if save_path != "":
         flag_save = True
-        save_path = Path(save_path) / "processing_function" / algorithm_name
+        save_path = Path(save_path) / "custom_func_output" / algorithm_name
         if not save_path.exists():
             os.makedirs(str(save_path))
     else:
@@ -4666,7 +4720,7 @@ def main(img_list, save_path, name_list=None, algorithm_name="{algorithm_name}")
 
         out_img_list.append(img)
         if flag_save:
-            if isinstance(name_list, list) and i < len(name_list):
+            if isinstance(name_list, list):
                 img_path = save_path / name_list[i]
             else:
                 img_path = save_path / (str(i) + ".png")
@@ -4681,6 +4735,7 @@ def main(img_list, save_path, name_list=None, algorithm_name="{algorithm_name}")
     def refresh_algorithm_list(self):
         try:
             self._clear_custom_algorithm_modules()
+            from .custom_func.main import get_available_algorithms
             available_algorithms = get_available_algorithms()
             current_selection = self.customfunc_choice.GetSelection()
             current_algorithm = ""
@@ -4694,7 +4749,11 @@ def main(img_list, save_path, name_list=None, algorithm_name="{algorithm_name}")
             elif available_algorithms:
                 self.customfunc_choice.SetSelection(0)
         except Exception:
-            pass
+            self.customfunc_choice.Clear()
+            default_algorithms = ["Image Enhancement", "Image Darkening", "Gaussian Blur", "Histogram Equalization"]
+            for algorithm in default_algorithms:
+                self.customfunc_choice.Append(algorithm)
+            self.customfunc_choice.SetSelection(0)
 
     def on_show_all_func_changed(self, event):
         if self.show_all_func.GetValue():

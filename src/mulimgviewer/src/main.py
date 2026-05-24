@@ -2012,6 +2012,7 @@ class MulimgViewer (MulimgViewerGui):
                            wx.DD_DEFAULT_STYLE | wx.DD_DIR_MUST_EXIST)
             if dlg.ShowModal() == wx.ID_OK:
                 self.ImgManager.init(dlg.GetPath(), type=0, parallel_to_sequential=self.parallel_to_sequential.Value)
+                self._reset_image_direct_render_state(reset_position=True)
         self.show_img_init()
         self.ImgManager.set_action_count(0)
         self.show_img()
@@ -2447,6 +2448,8 @@ class MulimgViewer (MulimgViewerGui):
         if getattr(self, "_parallel_switch_dirty", False):
             self._apply_parallel_switch()
             self._parallel_switch_dirty = False
+        if not getattr(self.shared_config, "video_mode", False):
+            self._reset_image_direct_render_state(reset_position=False)
         self.show_img_init()
         if getattr(self.shared_config, "video_mode", False):
             self._last_refresh_batch = None
@@ -2522,6 +2525,16 @@ class MulimgViewer (MulimgViewerGui):
         if vm is not None and hasattr(vm, "_last_batch"):
             vm._last_batch = None
 
+    def _reset_image_direct_render_state(self, reset_position=False):
+        """Reset image-mode display state without relying on page image cache."""
+        self.shared_config.image_cache_img = []
+        self.shared_config.image_cache_paths = []
+        self._image_layout_token = None
+        self._image_reference_resolution_origin = None
+        self._last_image_auto_layout_size = None
+        if reset_position:
+            self.shared_config.batch_idx = 0
+
     def one_dir_mul_img(self, event):
         self.SetStatusText_(
             ["Sequential choose input dir", "", "", "-1"])
@@ -2538,6 +2551,7 @@ class MulimgViewer (MulimgViewerGui):
 
             if dlg.ShowModal() == wx.ID_OK:
                 self.ImgManager.init(dlg.GetPath(), type=2)
+                self._reset_image_direct_render_state(reset_position=True)
         if self.shared_config.video_mode:
             if self.shared_config.video_path == []:
                 return
@@ -2562,6 +2576,7 @@ class MulimgViewer (MulimgViewerGui):
 
         if dlg.ShowModal() == wx.ID_OK:
             self.ImgManager.init(dlg.GetPath(), type=3)
+            self._reset_image_direct_render_state(reset_position=True)
             self.show_img_init()
             self.ImgManager.set_action_count(0)
             self.show_img()
@@ -2582,6 +2597,7 @@ class MulimgViewer (MulimgViewerGui):
                 input_path = f.read().split('\n')
             self.ImgManager.init(
                 input_path[0:-1], type=1, parallel_to_sequential=self.parallel_to_sequential.Value)
+            self._reset_image_direct_render_state(reset_position=True)
             self.show_img_init()
             self.ImgManager.set_action_count(0)
             self.show_img()
@@ -3508,9 +3524,10 @@ class MulimgViewer (MulimgViewerGui):
         if not getattr(self.shared_config, "video_mode", False):
             layout_token = repr(layout_params)
             if layout_token != getattr(self, "_image_layout_token", None):
-                self._debug_image(f"[ImageCache] reset, previous_batches={len(self.shared_config.image_cache_img)}")
+                self._debug_image(f"[ImageRender] layout changed, previous_cached_pages={len(self.shared_config.image_cache_img)}")
                 self.shared_config.image_cache_img = []
                 self.shared_config.image_cache_paths = []
+                self._last_image_auto_layout_size = None
                 self._image_layout_token = layout_token
 
         count_per_action = getattr(self.shared_config, "count_per_action", 1)
@@ -3896,7 +3913,10 @@ class MulimgViewer (MulimgViewerGui):
         else:
             self.SetStatusText_(["-1", "-1", "***Error: no image in this dir!***", "-1"])
 
-        self.auto_layout()
+        current_img_size = tuple(self.img_size) if self.img_size not in (None, [-1, -1]) else None
+        if current_img_size != getattr(self, "_last_image_auto_layout_size", None):
+            self.auto_layout()
+            self._last_image_auto_layout_size = current_img_size
         self.SetStatusText_(["Stitch", "-1", "-1", "-1"])
 
     def _get_image_flist(self, batch_idx: int):
@@ -4104,21 +4124,12 @@ class MulimgViewer (MulimgViewerGui):
         self.img_size = pil_img.size
 
         video_mode = getattr(self.shared_config, "video_mode", False)
-        cache_list = self.shared_config.cache_img if video_mode else self.shared_config.image_cache_img
-        path_cache = self.shared_config.image_cache_paths if not video_mode else None
-        need = batch_idx + 1 - len(cache_list)
-        if need > 0:
-            cache_list.extend([None] * need)
-            if path_cache is not None:
-                path_cache.extend([None] * need)
-        cache_list[batch_idx] = pil_img
-
-        if not video_mode:
-            store_list = flist if flist is not None else getattr(self.ImgManager, "flist", None)
-            if path_cache is not None:
-                path_cache[batch_idx] = list(store_list) if store_list else None
-
         if video_mode:
+            cache_list = self.shared_config.cache_img
+            need = batch_idx + 1 - len(cache_list)
+            if need > 0:
+                cache_list.extend([None] * need)
+            cache_list[batch_idx] = pil_img
             vm = getattr(self, "video_manager", None)
             if vm and pil_img is not None:
                 vm.perf_monitor.record_stitch(stitch_duration)

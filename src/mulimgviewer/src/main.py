@@ -3725,8 +3725,36 @@ class MulimgViewer (MulimgViewerGui):
                     self.show_all_func_layout.Value,        # 39
                     self.func_layout_vertical.Value ]       # 40
 
+    def _processing_preview_needs_output_path(self):
+        """Return True when the current preview will write custom-processed output."""
+        try:
+            if getattr(self.shared_config, "video_mode", False):
+                return False
+            if hasattr(self, "show_custom_func") and self.show_custom_func.GetValue():
+                return True
+            if hasattr(self, "show_all_func") and self.show_all_func.GetValue():
+                return True
+            layout_params = getattr(self.ImgManager, "layout_params", [])
+            custom_enabled = len(layout_params) > 32 and bool(layout_params[32])
+            show_all_enabled = len(layout_params) > 38 and bool(layout_params[38])
+            return custom_enabled or show_all_enabled
+        except Exception:
+            return False
+
+    def _ensure_processing_output_path(self):
+        """Prompt once before previewing processing features that need an output path."""
+        if not self._processing_preview_needs_output_path():
+            return
+        if self.out_path_str == "":
+            self.out_path(None)
+        layout_params = getattr(self.ImgManager, "layout_params", [])
+        if len(layout_params) > 33:
+            layout_params[33] = self.out_path_str
+
     def show_img(self):
         self._setup_img_panel()
+
+        self._ensure_processing_output_path()
 
         # Video mode: always read from cache_img[b]; do not stitch on demand
         if getattr(self.shared_config, "video_mode", False):

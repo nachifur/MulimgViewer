@@ -8,6 +8,7 @@ try:
 # from mulimgviewer._metainfo import author, copyright, project  # type: ignore
     from mulimgviewer import html_favicon
 except:
+    version = "3.9.7"
     pass
 
 __all__ = ["version", "author", "copyright", "project", "html_favicon"]
@@ -19,6 +20,11 @@ __all__ = ["version", "author", "copyright", "project", "html_favicon"]
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 
 # -- Project information -----------------------------------------------------
+project = "MulimgViewer"
+author = "Jiawei Liu"
+copyright = "2026, Jiawei Liu"
+release = version
+
 language = "zh_CN"
 locale_dirs = ["locale"]
 gettext_compact = False

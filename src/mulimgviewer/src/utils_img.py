@@ -907,7 +907,7 @@ class ImgManager(ImgData):
         # custom
         if show_custom_func:
             algorithm_type = self.layout_params[37] if len(self.layout_params) > 37 else 0
-            img_list = main_custom_func(img_list,out_path_str,name_list=name_list,algorithm_type=algorithm_type)
+            img_list = main_custom_func(img_list, out_path_str, name_list=name_list, algorithm_type=algorithm_type)
             # Ensure processed_img is saved when exporting images too
             # processed_img follows the current save format: write images when saving images, write PDF when saving PDF
             # try:
@@ -2260,25 +2260,6 @@ class ImgManager(ImgData):
         self.out_path_str = out_path_str
         try:
             if out_path_str != "" and Path(out_path_str).exists():
-                # If a custom algorithm is enabled and saving as images, generate the processed_img directory first
-                try:
-                    save_format = self.layout_params[35] if len(self.layout_params) > 35 else 0
-                    if save_format != 1 and len(self.layout_params) > 32 and self.layout_params[32]:
-                        available_algorithms = get_available_algorithms()
-                        algorithm_type = self.layout_params[37] if len(self.layout_params) > 37 else 0
-                        algorithm_type = min(algorithm_type, len(available_algorithms) - 1) if available_algorithms else 0
-                        name_list_proc = []
-                        img_list_proc = []
-                        for path in self.flist:
-                            p = Path(path)
-                            name_list_proc.append(p.name)
-                            if p.is_file() and p.suffix.lower() in self.format_group:
-                                img = Image.open(p).convert('RGB')
-                                img_list_proc.append(img)
-                        if img_list_proc:
-                            main_custom_func(img_list_proc, out_path_str, name_list=name_list_proc, algorithm_type=algorithm_type)
-                except Exception:
-                    pass
                 self.set_scale_mode(img_mode=1)
                 dir_name = [Path(path).parent.name for path in self.flist]
                 out_type = out_type+1
@@ -2300,11 +2281,13 @@ class ImgManager(ImgData):
 
                 show_all_func = len(self.layout_params) > 38 and self.layout_params[38]
                 if out_type == 2:
-                    self.save_select(dir_name)
+                    if not self.layout_params[32]:
+                        self.save_select(dir_name)
                 elif out_type == 1:
                     self.save_stitch(dir_name[-1])
                 elif out_type == 3:
-                    self.save_select(dir_name[0:-1])
+                    if not self.layout_params[32]:
+                        self.save_select(dir_name[0:-1])
                     self.save_stitch(dir_name[-1])
                 elif out_type == 4:
                     self.save_magnifier(dir_name[-1])
@@ -2312,10 +2295,12 @@ class ImgManager(ImgData):
                     self.save_stitch(dir_name[0])
                     self.save_magnifier(dir_name[-1])
                 elif out_type == 6:
-                    self.save_select(dir_name[0:-1])
+                    if not self.layout_params[32]:
+                        self.save_select(dir_name[0:-1])
                     self.save_magnifier(dir_name[-1])
                 elif out_type == 7:
-                    self.save_select(dir_name[0:-2])
+                    if not self.layout_params[32]:
+                        self.save_select(dir_name[0:-2])
                     if show_all_func:
                         original_custom_func = self.layout_params[32]
                         original_show_all_func = self.layout_params[38]
@@ -2347,25 +2332,73 @@ class ImgManager(ImgData):
             return 5
 
     def save_select(self, dir_name):
-        paths_to_save = []
-        base_origin = Path(self.out_path_str) / "processing_function" / "origin"
-        paths_to_save.append(("origin", base_origin))
         if self.layout_params[32]:
+            paths_to_save = []
+            base_origin = Path(self.out_path_str) / "processing_function" / "origin"
+            paths_to_save.append(("origin", base_origin))
             available_algorithms = get_available_algorithms()
             algorithm_type = self.layout_params[37] if len(self.layout_params) > 37 else 0
             if algorithm_type < len(available_algorithms):
                 algorithm_name = available_algorithms[algorithm_type]
                 base_algorithm = Path(self.out_path_str) / "processing_function" / algorithm_name
                 paths_to_save.append((algorithm_name, base_algorithm))
-            try:
-                self.get_img_list(show_custom_func=True)
-            except:
-                pass
 
-        for path_label, base_path in paths_to_save:
+            for path_label, base_path in paths_to_save:
+                if self.type == 3:  # read file list from a list file
+                    dir_name_local = ["from_file"]
+                    base_select = base_path / "select_images" / dir_name_local[0]
+                    if not base_select.exists():
+                        os.makedirs(base_select)
+                    for i_ in range(self.count_per_action):
+                        if self.action_count * self.count_per_action + i_ < len(self.path_list):
+                            f_path = self.path_list[self.action_count * self.count_per_action + i_]
+                            try:
+                                str_ = Path(f_path).parent.stem + "_" + Path(f_path).name
+                                if self.layout_params[11]:  # move_file
+                                    if path_label == paths_to_save[-1][0]:
+                                        move(f_path, base_select / str_)
+                                    else:
+                                        copyfile(f_path, base_select / str_)
+                                else:
+                                    copyfile(f_path, base_select / str_)
+                            except:
+                                pass
+                                self.check.append(1)
+                            else:
+                                self.check.append(0)
+                else:  # type 0, 1, 2
+                    if not self.parallel_to_sequential:
+                        for i in range(len(dir_name)):
+                            select_dir = base_path / "select_images" / dir_name[i]
+                            if not select_dir.exists():
+                                os.makedirs(select_dir)
+                            if self.layout_params[22]:  # parallel_sequential
+                                num_per_img = self.layout_params[1][0] * self.layout_params[1][1]
+                            else:
+                                num_per_img = 1
+                            for k in range(num_per_img):
+                                idx = i * num_per_img + k
+                                if idx >= len(self.flist):
+                                    break
+                                f_path = self.flist[idx]
+                                name = Path(f_path).name
+                                try:
+                                    if self.layout_params[11]:  # move_file
+                                        if path_label == paths_to_save[-1][0]:
+                                            move(f_path, select_dir / name)
+                                        else:
+                                            copyfile(f_path, select_dir / name)
+                                    else:
+                                        copyfile(f_path, select_dir / name)
+                                except:
+                                    pass
+                                    self.check.append(1)
+                                else:
+                                    self.check.append(0)
+        else:
             if self.type == 3:  # read file list from a list file
                 dir_name_local = ["from_file"]
-                base_select = base_path / "select_images" / dir_name_local[0]
+                base_select = Path(self.out_path_str) / "processing_function" / "origin" / "select_images" / dir_name_local[0]
                 if not base_select.exists():
                     os.makedirs(base_select)
                 save_format = self.layout_params[35] if len(self.layout_params) > 35 else 0
@@ -2396,7 +2429,7 @@ class ImgManager(ImgData):
                         base_idx = i * num_per_img
                         if base_idx >= len(self.flist):
                             break
-                        select_dir = base_path / "select_images" / dir_name[i]
+                        select_dir = Path(self.out_path_str) / "processing_function" / "origin" / "select_images" / dir_name[i]
                         if not select_dir.exists():
                             os.makedirs(select_dir)
                         for k in range(num_per_img):
@@ -2412,10 +2445,7 @@ class ImgManager(ImgData):
                                     self.ImgF.save_img_diff_format(target_path, img, save_format=1, use_vector_titles=False)
                                 else:
                                     if self.layout_params[11]:  # move_file
-                                        if path_label == paths_to_save[-1][0]:
-                                            move(f_path, select_dir / name)
-                                        else:
-                                            copyfile(f_path, select_dir / name)
+                                        move(f_path, select_dir / name)
                                     else:
                                         copyfile(f_path, select_dir / name)
                             except:
@@ -2478,7 +2508,7 @@ class ImgManager(ImgData):
                 img = img
         return img
 
-    def save_stitch_img_and_customfunc_img(self, out_path_str, show_custom_func):
+    def save_stitch_img_and_customfunc_img(self, out_path_str, show_custom_func, displayed_img=None):
         self.out_path_str = out_path_str
         name_f = self.get_stitch_name()
         if self.type == 3: # read file list from a list file
@@ -2486,6 +2516,15 @@ class ImgManager(ImgData):
         base_dir = Path(self.out_path_str)/ "stitch_img_and_customfunc_img"
         if not base_dir.exists():
             os.makedirs(base_dir)
+        f_path_output = base_dir / name_f
+        if displayed_img is not None:
+            self.ImgF.save_img_diff_format(
+                f_path_output,
+                displayed_img.copy(),
+                save_format=self.layout_params[35],
+                use_vector_titles=False,
+            )
+            return
         original_row_col = self.layout_params[0].copy()
         original_show_all_func = self.layout_params[38] if len(self.layout_params) > 38 else False
         if original_show_all_func and hasattr(self, '_original_row_col') and self._original_row_col:
@@ -2541,7 +2580,6 @@ class ImgManager(ImgData):
                 img = custom_img
                 merged_titles = custom_titles
 
-        f_path_output = base_dir / name_f
         if img:
             self.pdf_title_layers = merged_titles
             self.ImgF.save_img_diff_format(f_path_output, img, save_format=self.layout_params[35], use_vector_titles=True)

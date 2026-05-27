@@ -2012,6 +2012,7 @@ class MulimgViewer (MulimgViewerGui):
                            wx.DD_DEFAULT_STYLE | wx.DD_DIR_MUST_EXIST)
             if dlg.ShowModal() == wx.ID_OK:
                 self.ImgManager.init(dlg.GetPath(), type=0, parallel_to_sequential=self.parallel_to_sequential.Value)
+                self._reset_image_direct_render_state(reset_position=True)
         self.show_img_init()
         self.ImgManager.set_action_count(0)
         self.show_img()
@@ -2414,7 +2415,11 @@ class MulimgViewer (MulimgViewerGui):
                 self.ImgManager.save_img(self.out_path_str, type_)
                 self.ImgManager.layout_params[32] = False  # customfunc
             flag = self.ImgManager.save_img(self.out_path_str, type_)
-            self.ImgManager.save_stitch_img_and_customfunc_img(self.out_path_str, self.show_custom_func.Value)
+            self.ImgManager.save_stitch_img_and_customfunc_img(
+                self.out_path_str,
+                self.show_custom_func.Value,
+                getattr(self, "show_bmp_in_panel", None),
+            )
 
             if flag == 0:
                 self.SetStatusText_(
@@ -2443,6 +2448,8 @@ class MulimgViewer (MulimgViewerGui):
         if getattr(self, "_parallel_switch_dirty", False):
             self._apply_parallel_switch()
             self._parallel_switch_dirty = False
+        if not getattr(self.shared_config, "video_mode", False):
+            self._reset_image_direct_render_state(reset_position=False)
         self.show_img_init()
         if getattr(self.shared_config, "video_mode", False):
             self._last_refresh_batch = None
@@ -2518,6 +2525,16 @@ class MulimgViewer (MulimgViewerGui):
         if vm is not None and hasattr(vm, "_last_batch"):
             vm._last_batch = None
 
+    def _reset_image_direct_render_state(self, reset_position=False):
+        """Reset image-mode display state without relying on page image cache."""
+        self.shared_config.image_cache_img = []
+        self.shared_config.image_cache_paths = []
+        self._image_layout_token = None
+        self._image_reference_resolution_origin = None
+        self._last_image_auto_layout_size = None
+        if reset_position:
+            self.shared_config.batch_idx = 0
+
     def one_dir_mul_img(self, event):
         self.SetStatusText_(
             ["Sequential choose input dir", "", "", "-1"])
@@ -2534,6 +2551,7 @@ class MulimgViewer (MulimgViewerGui):
 
             if dlg.ShowModal() == wx.ID_OK:
                 self.ImgManager.init(dlg.GetPath(), type=2)
+                self._reset_image_direct_render_state(reset_position=True)
         if self.shared_config.video_mode:
             if self.shared_config.video_path == []:
                 return
@@ -2558,6 +2576,7 @@ class MulimgViewer (MulimgViewerGui):
 
         if dlg.ShowModal() == wx.ID_OK:
             self.ImgManager.init(dlg.GetPath(), type=3)
+            self._reset_image_direct_render_state(reset_position=True)
             self.show_img_init()
             self.ImgManager.set_action_count(0)
             self.show_img()
@@ -2578,6 +2597,7 @@ class MulimgViewer (MulimgViewerGui):
                 input_path = f.read().split('\n')
             self.ImgManager.init(
                 input_path[0:-1], type=1, parallel_to_sequential=self.parallel_to_sequential.Value)
+            self._reset_image_direct_render_state(reset_position=True)
             self.show_img_init()
             self.ImgManager.set_action_count(0)
             self.show_img()
@@ -3139,7 +3159,11 @@ class MulimgViewer (MulimgViewerGui):
                     self.ImgManager.save_img(self.out_path_str, type_)
                     self.ImgManager.layout_params[32] = False
                 self.ImgManager.save_img(self.out_path_str, type_)
-                self.ImgManager.save_stitch_img_and_customfunc_img(self.out_path_str, self.show_custom_func.Value)
+                self.ImgManager.save_stitch_img_and_customfunc_img(
+                    self.out_path_str,
+                    self.show_custom_func.Value,
+                    getattr(self, "show_bmp_in_panel", None),
+                )
 
                 # Call the default save function
                 select_folder = os.path.join(self.out_path_str, "select_images")
@@ -3500,9 +3524,10 @@ class MulimgViewer (MulimgViewerGui):
         if not getattr(self.shared_config, "video_mode", False):
             layout_token = repr(layout_params)
             if layout_token != getattr(self, "_image_layout_token", None):
-                self._debug_image(f"[ImageCache] reset, previous_batches={len(self.shared_config.image_cache_img)}")
+                self._debug_image(f"[ImageRender] layout changed, previous_cached_pages={len(self.shared_config.image_cache_img)}")
                 self.shared_config.image_cache_img = []
                 self.shared_config.image_cache_paths = []
+                self._last_image_auto_layout_size = None
                 self._image_layout_token = layout_token
 
         count_per_action = getattr(self.shared_config, "count_per_action", 1)
@@ -3717,8 +3742,36 @@ class MulimgViewer (MulimgViewerGui):
                     self.show_all_func_layout.Value,        # 39
                     self.func_layout_vertical.Value ]       # 40
 
+    def _processing_preview_needs_output_path(self):
+        """Return True when the current preview will write custom-processed output."""
+        try:
+            if getattr(self.shared_config, "video_mode", False):
+                return False
+            if hasattr(self, "show_custom_func") and self.show_custom_func.GetValue():
+                return True
+            if hasattr(self, "show_all_func") and self.show_all_func.GetValue():
+                return True
+            layout_params = getattr(self.ImgManager, "layout_params", [])
+            custom_enabled = len(layout_params) > 32 and bool(layout_params[32])
+            show_all_enabled = len(layout_params) > 38 and bool(layout_params[38])
+            return custom_enabled or show_all_enabled
+        except Exception:
+            return False
+
+    def _ensure_processing_output_path(self):
+        """Prompt once before previewing processing features that need an output path."""
+        if not self._processing_preview_needs_output_path():
+            return
+        if self.out_path_str == "":
+            self.out_path(None)
+        layout_params = getattr(self.ImgManager, "layout_params", [])
+        if len(layout_params) > 33:
+            layout_params[33] = self.out_path_str
+
     def show_img(self):
         self._setup_img_panel()
+
+        self._ensure_processing_output_path()
 
         # Video mode: always read from cache_img[b]; do not stitch on demand
         if getattr(self.shared_config, "video_mode", False):
@@ -3860,7 +3913,10 @@ class MulimgViewer (MulimgViewerGui):
         else:
             self.SetStatusText_(["-1", "-1", "***Error: no image in this dir!***", "-1"])
 
-        self.auto_layout()
+        current_img_size = tuple(self.img_size) if self.img_size not in (None, [-1, -1]) else None
+        if current_img_size != getattr(self, "_last_image_auto_layout_size", None):
+            self.auto_layout()
+            self._last_image_auto_layout_size = current_img_size
         self.SetStatusText_(["Stitch", "-1", "-1", "-1"])
 
     def _get_image_flist(self, batch_idx: int):
@@ -4068,21 +4124,12 @@ class MulimgViewer (MulimgViewerGui):
         self.img_size = pil_img.size
 
         video_mode = getattr(self.shared_config, "video_mode", False)
-        cache_list = self.shared_config.cache_img if video_mode else self.shared_config.image_cache_img
-        path_cache = self.shared_config.image_cache_paths if not video_mode else None
-        need = batch_idx + 1 - len(cache_list)
-        if need > 0:
-            cache_list.extend([None] * need)
-            if path_cache is not None:
-                path_cache.extend([None] * need)
-        cache_list[batch_idx] = pil_img
-
-        if not video_mode:
-            store_list = flist if flist is not None else getattr(self.ImgManager, "flist", None)
-            if path_cache is not None:
-                path_cache[batch_idx] = list(store_list) if store_list else None
-
         if video_mode:
+            cache_list = self.shared_config.cache_img
+            need = batch_idx + 1 - len(cache_list)
+            if need > 0:
+                cache_list.extend([None] * need)
+            cache_list[batch_idx] = pil_img
             vm = getattr(self, "video_manager", None)
             if vm and pil_img is not None:
                 vm.perf_monitor.record_stitch(stitch_duration)
@@ -4537,44 +4584,77 @@ class MulimgViewer (MulimgViewerGui):
     def add_custom_algorithm(self, event):
         algorithm_path = self.custom_algorithm_input.GetValue().strip()
         if not algorithm_path:
-            event.Skip() if hasattr(event, "Skip") else None
             return
 
-        source_path = Path(algorithm_path)
-        if not source_path.exists():
-            wx.MessageBox(f"Path does not exist: {algorithm_path}", "Path Error", wx.OK | wx.ICON_ERROR)
-            return
-        if not source_path.is_dir():
-            wx.MessageBox(f"Path must be a folder: {algorithm_path}", "Path Error", wx.OK | wx.ICON_ERROR)
-            return
-        if not (source_path / "main.py").exists():
-            wx.MessageBox(f"main.py file missing in algorithm folder: {algorithm_path}", "File Missing", wx.OK | wx.ICON_ERROR)
+        try:
+            source_path = Path(algorithm_path)
+            if not source_path.exists():
+                wx.MessageBox(f"Path does not exist: {algorithm_path}", "Path Error", wx.OK | wx.ICON_ERROR)
+                return
+            if not source_path.is_dir():
+                wx.MessageBox(f"Path must be a folder: {algorithm_path}", "Path Error", wx.OK | wx.ICON_ERROR)
+                return
+            if not (source_path / "main.py").exists():
+                wx.MessageBox(f"main.py file missing in algorithm folder: {algorithm_path}", "File Missing", wx.OK | wx.ICON_ERROR)
+                return
+        except Exception as exc:
+            wx.MessageBox(f"Path format error: {exc}", "Path Error", wx.OK | wx.ICON_ERROR)
             return
 
         algorithm_name = source_path.name
-        existing = [self.customfunc_choice.GetString(i) for i in range(self.customfunc_choice.GetCount())]
-        if algorithm_name in existing:
+        current_choices = [self.customfunc_choice.GetString(i) for i in range(self.customfunc_choice.GetCount())]
+        if algorithm_name in current_choices:
             wx.MessageBox(f"Algorithm '{algorithm_name}' already exists!", "Duplicate Algorithm", wx.OK | wx.ICON_WARNING)
             return
 
         try:
             self.copy_algorithm_from_path(source_path, algorithm_name)
-            self._clear_custom_algorithm_modules()
-            self.refresh_algorithm_list()
-            available_algorithms = get_available_algorithms()
-            if algorithm_name in available_algorithms:
-                self.customfunc_choice.SetSelection(available_algorithms.index(algorithm_name))
-            self.custom_algorithm_input.SetValue("")
-            self.Layout()
-            wx.MessageBox(f"Algorithm '{algorithm_name}' added successfully!", "Add Success", wx.OK | wx.ICON_INFORMATION)
+            self.custom_algorithms.append(algorithm_name)
+
+            import time
+            time.sleep(0.1)
+
+            def update_ui():
+                self.refresh_algorithm_list()
+                try:
+                    modules_to_clear = [
+                        'mulimgviewer.src.custom_func.main',
+                        'custom_func.main',
+                        '.custom_func.main'
+                    ]
+                    for module_name in modules_to_clear:
+                        if module_name in sys.modules:
+                            del sys.modules[module_name]
+                    from .custom_func.main import get_available_algorithms
+                    available_algorithms = get_available_algorithms()
+                    if algorithm_name in available_algorithms:
+                        self.customfunc_choice.SetSelection(available_algorithms.index(algorithm_name))
+                except Exception:
+                    pass
+
+                self.custom_algorithm_input.SetValue("")
+                self.customfunc_choice.Refresh()
+                self.customfunc_choice.Update()
+                self.Update()
+                parent = self.customfunc_choice.GetParent()
+                if parent:
+                    parent.Refresh()
+                    parent.Update()
+                self.Layout()
+                wx.MessageBox(f"Algorithm '{algorithm_name}' added successfully from path '{algorithm_path}'!", "Add Success", wx.OK | wx.ICON_INFORMATION)
+
+            wx.CallAfter(update_ui)
         except Exception as exc:
             wx.MessageBox(f"Failed to add algorithm: {exc}", "Add Failed", wx.OK | wx.ICON_ERROR)
 
     def copy_algorithm_from_path(self, source_path, algorithm_name):
         target_folder = Path(__file__).parent / "custom_func" / algorithm_name
-        if target_folder.exists():
-            shutil.rmtree(str(target_folder))
-        shutil.copytree(str(source_path), str(target_folder))
+        try:
+            if target_folder.exists():
+                shutil.rmtree(str(target_folder))
+            shutil.copytree(str(source_path), str(target_folder))
+        except Exception as exc:
+            raise exc
 
     def _clear_custom_algorithm_modules(self):
         for module_name in (
@@ -4601,7 +4681,16 @@ class MulimgViewer (MulimgViewerGui):
         if dlg.ShowModal() == wx.ID_YES:
             try:
                 self.remove_custom_algorithm_folder(selected_algorithm)
-                self._clear_custom_algorithm_modules()
+                if selected_algorithm in self.custom_algorithms:
+                    self.custom_algorithms.remove(selected_algorithm)
+                modules_to_clear = [
+                    'mulimgviewer.src.custom_func.main',
+                    'custom_func.main',
+                    '.custom_func.main'
+                ]
+                for module_name in modules_to_clear:
+                    if module_name in sys.modules:
+                        del sys.modules[module_name]
                 self.refresh_algorithm_list()
                 wx.MessageBox(f"Algorithm '{selected_algorithm}' removed successfully!", "Remove Success", wx.OK | wx.ICON_INFORMATION)
             except Exception as exc:
@@ -4611,7 +4700,10 @@ class MulimgViewer (MulimgViewerGui):
     def remove_custom_algorithm_folder(self, algorithm_name):
         algorithm_folder = Path(__file__).parent / "custom_func" / algorithm_name
         if algorithm_folder.exists():
-            shutil.rmtree(str(algorithm_folder))
+            try:
+                shutil.rmtree(str(algorithm_folder))
+            except Exception:
+                pass
 
     def create_custom_algorithm_template(self, algorithm_name):
         algorithm_folder = Path(__file__).parent / "custom_func" / algorithm_name
@@ -4645,6 +4737,7 @@ def custom_process_img(img):
     - img = img.convert('L')  # Convert to grayscale
     - img = img.transpose(Image.FLIP_LEFT_RIGHT)  # Horizontal flip
     \"\"\"
+    # Default: no processing, return original image
     return img
 
 def main(img_list, save_path, name_list=None, algorithm_name="{algorithm_name}"):
@@ -4681,6 +4774,7 @@ def main(img_list, save_path, name_list=None, algorithm_name="{algorithm_name}")
     def refresh_algorithm_list(self):
         try:
             self._clear_custom_algorithm_modules()
+            from .custom_func.main import get_available_algorithms
             available_algorithms = get_available_algorithms()
             current_selection = self.customfunc_choice.GetSelection()
             current_algorithm = ""
@@ -4694,7 +4788,11 @@ def main(img_list, save_path, name_list=None, algorithm_name="{algorithm_name}")
             elif available_algorithms:
                 self.customfunc_choice.SetSelection(0)
         except Exception:
-            pass
+            self.customfunc_choice.Clear()
+            default_algorithms = ["Image Enhancement", "Image Darkening", "Gaussian Blur", "Histogram Equalization"]
+            for algorithm in default_algorithms:
+                self.customfunc_choice.Append(algorithm)
+            self.customfunc_choice.SetSelection(0)
 
     def on_show_all_func_changed(self, event):
         if self.show_all_func.GetValue():

@@ -2320,6 +2320,9 @@ class ImgManager(ImgData):
                         original_custom_func = self.layout_params[32]
                         original_show_all_func = self.layout_params[38]
                         original_row_col = self.layout_params[0].copy()
+                        original_original_row_col = copy.deepcopy(
+                            getattr(self, "_original_row_col", None)
+                        )
                         self.layout_params[32] = False
                         self.layout_params[38] = False
                         if hasattr(self, '_original_row_col') and self._original_row_col:
@@ -2329,6 +2332,7 @@ class ImgManager(ImgData):
                         self.layout_params[32] = original_custom_func
                         self.layout_params[38] = original_show_all_func
                         self.layout_params[0] = original_row_col
+                        self._original_row_col = original_original_row_col
                     else:
                         self.save_stitch(dir_name[-2])
                         self.save_magnifier(dir_name[-1])
@@ -2434,37 +2438,74 @@ class ImgManager(ImgData):
 
     def save_stitch(self, dir_name):
         name_f = self.get_stitch_name()
-        if self.type == 3: # read file list from a list file
-            name_f = "from_file_"+name_f
-        if self.layout_params[32]:
-            available_algorithms = get_available_algorithms()
-            algorithm_type = self.layout_params[37] if len(self.layout_params) > 37 else 0
-            if algorithm_type < len(available_algorithms):
-                algorithm_name = available_algorithms[algorithm_type]
+        if self.type == 3:  # read file list from a list file
+            name_f = "from_file_" + name_f
+
+        restore_show_all = None
+        if (not self.layout_params[32]
+                and len(self.layout_params) > 38
+                and self.layout_params[38]
+                and getattr(self, "_original_row_col", None)):
+            restore_show_all = {
+                "row_col": self.layout_params[0].copy(),
+                "show_all": self.layout_params[38],
+                "enabled": getattr(self, "_show_all_func_enabled", False),
+                "layout": copy.deepcopy(getattr(self, "_show_all_func_layout", None)),
+                "original_row_col": copy.deepcopy(getattr(self, "_original_row_col", None)),
+                "expanded_row_col": copy.deepcopy(getattr(self, "_show_all_func_expanded_row_col", None)),
+                "func_layout_vertical": getattr(self, "_func_layout_vertical", False),
+                "blank_img_ids": copy.deepcopy(getattr(self, "_blank_img_ids", set())),
+            }
+            self.layout_params[38] = False
+            self.layout_params[0] = restore_show_all["original_row_col"].copy()
+        try:
+            if self.layout_params[32]:
+                available_algorithms = get_available_algorithms()
+                algorithm_type = self.layout_params[37] if len(self.layout_params) > 37 else 0
+                if algorithm_type < len(available_algorithms):
+                    algorithm_name = available_algorithms[algorithm_type]
+                else:
+                    algorithm_name = "Unknown"
+                stitch_dir = Path(self.out_path_str) / "processing_function" / algorithm_name / "stitch_images"
+                if not stitch_dir.exists():
+                    os.makedirs(stitch_dir)
             else:
-                algorithm_name = "Unknown"
-            stitch_dir = Path(self.out_path_str) / "processing_function" / algorithm_name / "stitch_images"
-            if not stitch_dir.exists():
-                os.makedirs(stitch_dir)
-        else:
-            stitch_dir = Path(self.out_path_str) / "processing_function" / "origin"/ dir_name
-            if not stitch_dir.exists():
-                os.makedirs(stitch_dir)
-        if self.layout_params[7]:
-            self.check_1.append(self.stitch_images(
-                1, copy.deepcopy(self.draw_points)))
-        else:
-            if self.show_box:
-                self.check_1.append(self.stitch_images(
-                    1, copy.deepcopy(self.draw_points)))
+                stitch_dir = Path(self.out_path_str) / "processing_function" / "origin" / dir_name
+                if not stitch_dir.exists():
+                    os.makedirs(stitch_dir)
+
+            if self.layout_params[7]:
+                self.check_1.append(self.stitch_images(1, copy.deepcopy(self.draw_points)))
             else:
-                self.check_1.append(self.stitch_images(1))
-        if self.layout_params[32]:
-            f_path_output_customfunc = stitch_dir / name_f
-            self.ImgF.save_img_diff_format(f_path_output_customfunc,self.customfunc_img,save_format=self.layout_params[35])
-        else:
-            f_path_output = stitch_dir / name_f
-            self.ImgF.save_img_diff_format(f_path_output,self.img,save_format=self.layout_params[35])
+                if self.show_box:
+                    self.check_1.append(self.stitch_images(1, copy.deepcopy(self.draw_points)))
+                else:
+                    self.check_1.append(self.stitch_images(1))
+
+            if self.layout_params[32]:
+                f_path_output_customfunc = stitch_dir / name_f
+                self.ImgF.save_img_diff_format(
+                    f_path_output_customfunc,
+                    self.customfunc_img,
+                    save_format=self.layout_params[35]
+                )
+            else:
+                f_path_output = stitch_dir / name_f
+                self.ImgF.save_img_diff_format(
+                    f_path_output,
+                    self.img,
+                    save_format=self.layout_params[35]
+                )
+        finally:
+            if restore_show_all is not None:
+                self.layout_params[0] = restore_show_all["row_col"]
+                self.layout_params[38] = restore_show_all["show_all"]
+                self._show_all_func_enabled = restore_show_all["enabled"]
+                self._show_all_func_layout = restore_show_all["layout"]
+                self._original_row_col = restore_show_all["original_row_col"]
+                self._show_all_func_expanded_row_col = restore_show_all["expanded_row_col"]
+                self._func_layout_vertical = restore_show_all["func_layout_vertical"]
+                self._blank_img_ids = restore_show_all["blank_img_ids"]
 
     def show_stitch_img_and_customfunc_img(self, show_custom_func):
         show_unit = self.layout_params[36]
@@ -2478,7 +2519,7 @@ class ImgManager(ImgData):
                 img = img
         return img
 
-    def save_stitch_img_and_customfunc_img(self, out_path_str, show_custom_func):
+    def save_stitch_img_and_customfunc_img(self, out_path_str, show_custom_func, preview_img=None):
         self.out_path_str = out_path_str
         name_f = self.get_stitch_name()
         if self.type == 3: # read file list from a list file
@@ -2486,6 +2527,15 @@ class ImgManager(ImgData):
         base_dir = Path(self.out_path_str)/ "stitch_img_and_customfunc_img"
         if not base_dir.exists():
             os.makedirs(base_dir)
+        if preview_img is not None:
+            f_path_output = base_dir / name_f
+            self.ImgF.save_img_diff_format(
+                f_path_output,
+                preview_img,
+                save_format=self.layout_params[35],
+                use_vector_titles=False
+            )
+            return
         original_row_col = self.layout_params[0].copy()
         original_show_all_func = self.layout_params[38] if len(self.layout_params) > 38 else False
         if original_show_all_func and hasattr(self, '_original_row_col') and self._original_row_col:
@@ -2696,6 +2746,7 @@ class ImgManager(ImgData):
         original_custom_func_state = self.layout_params[32]
         original_algorithm_type = self.layout_params[37] if len(self.layout_params) > 37 else 0
         original_show_all_func = self.layout_params[38] if len(self.layout_params) > 38 else False
+        original_original_row_col = copy.deepcopy(getattr(self, "_original_row_col", None))
         if hasattr(self, '_original_row_col') and self._original_row_col:
             base_row_col = self._original_row_col.copy()
             original_row_col = self.layout_params[0].copy()
@@ -2731,6 +2782,7 @@ class ImgManager(ImgData):
             self.layout_params[37] = original_algorithm_type
         if len(self.layout_params) > 38:
             self.layout_params[38] = original_show_all_func
+        self._original_row_col = original_original_row_col
 
     def get_img_row_col(self, i):
         if i != None and self.one_img:

@@ -2414,7 +2414,12 @@ class MulimgViewer (MulimgViewerGui):
                 self.ImgManager.save_img(self.out_path_str, type_)
                 self.ImgManager.layout_params[32] = False  # customfunc
             flag = self.ImgManager.save_img(self.out_path_str, type_)
-            self.ImgManager.save_stitch_img_and_customfunc_img(self.out_path_str, self.show_custom_func.Value)
+
+            self.ImgManager.save_stitch_img_and_customfunc_img(
+                self.out_path_str,
+                self.show_custom_func.Value,
+                self.show_bmp_in_panel.copy() if hasattr(self, "show_bmp_in_panel") and self.show_bmp_in_panel is not None else None
+            )
 
             if flag == 0:
                 self.SetStatusText_(
@@ -2443,6 +2448,13 @@ class MulimgViewer (MulimgViewerGui):
         if getattr(self, "_parallel_switch_dirty", False):
             self._apply_parallel_switch()
             self._parallel_switch_dirty = False
+        if (not getattr(self.shared_config, "video_mode", False)
+            and self.out_path_str == ""
+            and ((hasattr(self, "show_custom_func") and self.show_custom_func.GetValue())
+                 or (hasattr(self, "show_all_func") and self.show_all_func.GetValue()))):
+            self.out_path(None)
+            if self.out_path_str == "":
+                return
         self.show_img_init()
         if getattr(self.shared_config, "video_mode", False):
             self._last_refresh_batch = None

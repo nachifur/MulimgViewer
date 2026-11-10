@@ -3136,7 +3136,7 @@ class MulimgViewer (MulimgViewerGui):
         self.shared_config.batch_idx = clamped
         self.ImgManager.action_count = clamped
         self.ImgManager.img_count = clamped * self.ImgManager.count_per_action
-        
+
         # ★ 修改：视频模式下，先异步更新缓存，让UI能立即显示已有的缓存
         #   而不是阻塞等待新缓存生成
         if self.shared_config.video_mode:
@@ -3325,11 +3325,11 @@ class MulimgViewer (MulimgViewerGui):
                 target = int(self.slider_value.GetValue().strip())
             except (ValueError, AttributeError):
                 target = self.shared_config.batch_idx
-            
+
             # 限制目标在有效范围内
             max_allowed = max(0, self.ImgManager.max_action_num - 1)
             clamped = min(max(0, target), max_allowed)
-            
+
             # 更新状态
             self.shared_config.batch_idx = clamped
             self.ImgManager.action_count = clamped
@@ -3341,7 +3341,7 @@ class MulimgViewer (MulimgViewerGui):
                     target = int(self.slider_value.GetValue().strip())
                 except (ValueError, AttributeError):
                     target = self.ImgManager.action_count
-                
+
                 # 重新计算 max_action_num（以防图片数量变化）
                 count = max(1, self.ImgManager.count_per_action)
                 img_num = int(getattr(self.ImgManager, "img_num", 0) or 0)
@@ -3350,16 +3350,16 @@ class MulimgViewer (MulimgViewerGui):
                 else:
                     max_batches = 1
                 self.ImgManager.max_action_num = max(1, max_batches)
-                
+
                 # 限制目标在有效范围内
                 max_allowed = max(0, self.ImgManager.max_action_num - 1)
                 clamped = min(max(0, target), max_allowed)
-                
+
                 # 更新状态
                 self.shared_config.batch_idx = clamped
                 self.ImgManager.action_count = clamped
                 self.ImgManager.img_count = clamped * self.ImgManager.count_per_action
-            
+
             self.show_img(preserve_text_value=True)
         else:
             self.SetStatusText_(["-1", "", "***Error: First, need to select the input dir***", "-1"])
@@ -5111,7 +5111,7 @@ class MulimgViewer (MulimgViewerGui):
                 self.image_stitch_executor.submit(
                     self._stitch_image_batch, t, cache_list, path_list
                 )
-    
+
     def _stitch_image_batch(self, t, cache_list, path_list):
         """Image-stitch task executed in the thread pool."""
         # Protect the state snapshot, stitching and restoration with the same lock.

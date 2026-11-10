@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="28b7fabb-32db-4462-bf59-957c34a411b8" name="Changes" comment="fix: 修改小bug" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <favorite-branches>
+      <branch-storage>
+        <map>
+          <entry type="LOCAL">
+            <value>
+              <list>
+                <branch-info repo="$PROJECT_DIR$" source="fix2" />
+              </list>
+            </value>
+          </entry>
+        </map>
+      </branch-storage>
+    </favorite-branches>
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$" value="fix2" />
+      </map>
+    </option>
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="MarkdownSettingsMigration">
+    <option name="stateVersion" value="1" />
+  </component>
+  <component name="ProjectId" id="3H6vs8XdJGgXfFDUxYmxceJk6DS" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;,
+    &quot;last_opened_file_path&quot;: &quot;D:/QLDownload/Anaconda/Scripts/conda.exe&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  }
+}</component>
+  <component name="PyConsoleOptionsProvider">
+    <option name="myPythonConsoleState">
+      <console-settings>
+        <option name="useSoftWraps" value="true" />
+      </console-settings>
+    </option>
+  </component>
+  <component name="RunManager">
+    <configuration name="MulimgViewer" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="MulimgViewer" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/MulimgViewer.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Python.MulimgViewer" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="28b7fabb-32db-4462-bf59-957c34a411b8" name="Changes" comment="" />
+      <created>1785201537866</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1785201537866</updated>
+      <workItem from="1785201540662" duration="6199000" />
+      <workItem from="1785676132077" duration="1002000" />
+      <workItem from="1785677160082" duration="823000" />
+      <workItem from="1786010849279" duration="352000" />
+      <workItem from="1786525621072" duration="8473000" />
+      <workItem from="1786587103924" duration="4810000" />
+      <workItem from="1786619949032" duration="641000" />
+      <workItem from="1786685951147" duration="6447000" />
+      <workItem from="1786699532728" duration="264000" />
+      <workItem from="1787285071104" duration="741000" />
+      <workItem from="1787291913147" duration="76000" />
+      <workItem from="1787405553748" duration="87000" />
+      <workItem from="1787841040596" duration="565000" />
+    </task>
+    <task id="LOCAL-00001" summary="fix: 修复了第一个Bug 1. Video:interval(s)，点击播放后不能编辑。">
+      <option name="closed" value="true" />
+      <created>1785203395267</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1785203395267</updated>
+    </task>
+    <task id="LOCAL-00002" summary="fix: 修复了第3个Bug 3. 切换视频图片帧一闪一闪。">
+      <option name="closed" value="true" />
+      <created>1785204919464</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1785204919464</updated>
+    </task>
+    <task id="LOCAL-00003" summary="fix: 修复了第2个Bug  多个视频并行播放，拼接线程没有起作用">
+      <option name="closed" value="true" />
+      <created>1785208749019</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1785208749019</updated>
+    </task>
+    <task id="LOCAL-00004" summary="fix: 修复了第4个Bug  视频打开分辨率被缩放的问题">
+      <option name="closed" value="true" />
+      <created>1786545082685</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1786545082685</updated>
+    </task>
+    <task id="LOCAL-00005" summary="fix: 修复了第5个Bug  点击下一帧播放会有延迟，">
+      <option name="closed" value="true" />
+      <created>1786589878451</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1786589878451</updated>
+    </task>
+    <task id="LOCAL-00006" summary="fix: 把视频模式下拼接的帧图片保存在磁盘">
+      <option name="closed" value="true" />
+      <created>1786692429755</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1786692429755</updated>
+    </task>
+    <task id="LOCAL-00007" summary="fix: 修改小bug">
+      <option name="closed" value="true" />
+      <created>1787405609488</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1787405609488</updated>
+    </task>
+    <option name="localTasksCounter" value="8" />
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="fix: 修复了第一个Bug 1. Video:interval(s)，点击播放后不能编辑。" />
+    <MESSAGE value="fix: 修复了第3个Bug 3. 切换视频图片帧一闪一闪。" />
+    <MESSAGE value="fix: 修复了第2个Bug  多个视频并行播放，拼接线程没有起作用" />
+    <MESSAGE value="fix: 修复了第4个Bug  视频打开分辨率被缩放的问题" />
+    <MESSAGE value="fix: 修复了第5个Bug  点击下一帧播放会有延迟，" />
+    <MESSAGE value="fix: 把视频模式下拼接的帧图片保存在磁盘" />
+    <MESSAGE value="fix: 修改小bug" />
+    <option name="LAST_COMMIT_MESSAGE" value="fix: 修改小bug" />
+  </component>
+  <component name="com.intellij.coverage.CoverageDataManagerImpl">
+    <SUITE FILE_PATH="coverage/MulimgViewer$MulimgViewer.coverage" NAME="MulimgViewer Coverage Results" MODIFIED="1787291917771" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+  </component>
+</project>

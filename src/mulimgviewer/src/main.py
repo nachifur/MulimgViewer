@@ -180,10 +180,15 @@ class VideoManager:
         self.stitch_executor = None
         self._stitch_lock = threading.Lock()
         self._meta_cache = {}
+        self._fast_seek_paths = {}
         self._pending_extract = {}
         self._pending_stitch_async = 0
         self._pending_lock = threading.Lock()
         self._last_batch = None
+        # ★ 拼接缓存上下文指纹: 记录"已拼接批次是按什么参数生成的"。
+        #   只有这些参数变化时, 已拼接的批次才会失效; 回退/跳页不影响, 可以直接复用缓存。
+        self._cache_context = None
+        self._cache_context_initialized = False
         self._total_threads = max(2, int(getattr(self.shared_config, "thread", 2) or 2))
         # Initial thread allocation for frame splitting/merging: at least one thread for each
         default_extract = max(1, self._total_threads - 1)
@@ -259,6 +264,131 @@ class VideoManager:
         except Exception as ex:
             self._debug_video(f"[DiskCache] cleanup failed error={ex}")
 
+    # ========== 拼接缓存上下文 / 复用 ==========
+
+    def _cache_context_token(self):
+        """拼接缓存上下文指纹。
+
+        这里只包含"会改变某个 batch 拼接成什么图"的参数:
+        视频列表、每视频帧数、每批帧数、并行转串行、抽帧步长。
+        布局(放大框/行列/间距等)由 show_img_init() 的 layout_token 单独负责作废。
+        """
+        try:
+            video_path = tuple(str(p) for p in (getattr(self.shared_config, "video_path", []) or []))
+        except Exception:
+            video_path = ()
+        try:
+            video_num = tuple(int(x or 0) for x in (getattr(self.shared_config, "video_num_list", []) or []))
+        except Exception:
+            video_num = ()
+        return (
+            video_path,
+            video_num,
+            int(getattr(self.shared_config, "count_per_action", 1) or 1),
+            bool(getattr(self.shared_config, "parallel_to_sequential", False)),
+            int(getattr(self.shared_config, "skip_frames", 0) or 0),
+        )
+
+    def _cache_context_changed(self):
+        """拼接上下文是否变化。变化时旧的拼接结果全部作废。"""
+        token = self._cache_context_token()
+        if not self._cache_context_initialized:
+            # 第一次: 只记录指纹, 不作废(缓存本来就是空的)
+            self._cache_context = token
+            self._cache_context_initialized = True
+            return False
+        if self._cache_context == token:
+            return False
+        self._cache_context = token
+        self._invalidate_stitch_cache()
+        return True
+
+    def _invalidate_stitch_cache(self):
+        """作废所有已拼接的批次(内存 + 磁盘)。"""
+        try:
+            cache = getattr(self.shared_config, "cache_img", None)
+            if cache:
+                for i in range(len(cache)):
+                    cache[i] = None
+        except Exception as ex:
+            self._debug_video(f"[StitchCache] invalidate memory failed error={ex}")
+        try:
+            if self.disk_cache_dir.exists():
+                for cache_file in self.disk_cache_dir.glob("batch_*.png"):
+                    try:
+                        cache_file.unlink()
+                    except Exception:
+                        pass
+        except Exception as ex:
+            self._debug_video(f"[StitchCache] invalidate disk failed error={ex}")
+
+    def _cached_batch_path(self, global_idx):
+        """取已拼接批次的缓存路径; 缓存无效(为空 / 磁盘文件已被清理)时返回 None。
+
+        磁盘缓存会按窗口清理, 所以内存里记下的路径可能已经指向不存在的文件,
+        这种情况必须当作"没有缓存"处理, 否则会出现 Load cache failed。
+        """
+        cache = getattr(self.shared_config, "cache_img", None)
+        if not cache:
+            return None
+        try:
+            if global_idx < 0 or global_idx >= len(cache):
+                return None
+        except Exception:
+            return None
+        entry = cache[global_idx]
+        if not entry:
+            return None
+        if isinstance(entry, str):
+            try:
+                if os.path.exists(entry) and os.path.getsize(entry) > 0:
+                    return entry
+            except Exception:
+                pass
+            # 文件已被清理 → 缓存失效
+            try:
+                cache[global_idx] = None
+            except Exception:
+                pass
+            return None
+        return entry
+
+    def _display_cache_ready(self, local_b, base_global, radius, max_batch):
+        """窗口 [b-R, b+R] 内的批次是否都已经有可用的拼接缓存。
+
+        ★ 必须检查"整个窗口"(前方 + 历史), 不能只看"前方 + 上一批":
+          - 缓存窗口会随当前位置移动, 尾部的批次会被磁盘清理删掉;
+          - 以前只检查 [b, b+R] 和 b-1, 于是回退到"尾部已被清理"的位置时
+            被误判成"已就绪" -> update_cache 直接短路返回 -> 缺失的那一张
+            永远补不回来 (磁盘上就是少一张的样子)。
+
+        全都就绪 -> 这一步不需要做任何缓存维护, 直接显示即可 (见 update_cache 里的短路)。
+        只要有一段是冷的, 就老老实实走完整流程。
+        """
+        try:
+            local_b = int(local_b)
+            radius = max(1, int(radius))
+            max_batch = int(max_batch)
+        except Exception:
+            return False
+        if local_b < 0 or local_b >= max_batch:
+            return False
+
+        parallel_to_seq = bool(getattr(self.shared_config, "parallel_to_sequential", False))
+
+        def _global(t):
+            return (int(base_global) + t) if parallel_to_seq else t
+
+        # ★ 整个窗口 [b-R, b+R] 都要有缓存才算就绪 (尾部历史也要检查)。
+        look_start = max(0, local_b - radius)
+        look_end = min(local_b + radius, max_batch - 1)
+        if look_end < look_start:
+            return False
+        for t in range(look_start, look_end + 1):
+            if self._cached_batch_path(_global(t)) is None:
+                return False
+        return True
+
     def _ui(self):
         return self._owner()
 
@@ -309,6 +439,10 @@ class VideoManager:
 
         self._last_batch = None
         self._meta_cache.clear()
+        self._fast_seek_paths.clear()
+        # 新选的视频: 拼接上下文重新开始, 不再沿用上一批视频的指纹
+        self._cache_context = None
+        self._cache_context_initialized = False
 
         with self._pending_lock:
             for fut in self._pending_extract.values():
@@ -556,6 +690,30 @@ class VideoManager:
         self.shared_config.video_fps_list.append(fps)
         self.shared_config.video_num_list.append(viewable)
 
+    def _probe_json(self, args, what="ffprobe"):
+        '''Run ffprobe and parse its JSON output.
+
+        ffprobe writes UTF-8. On a Chinese-locale Windows the default text codec
+        is cp936(GBK), so letting subprocess decode it raises UnicodeDecodeError
+        inside its reader thread, which leaves stdout as None and used to
+        surface as a bogus "no video stream found".
+        '''
+        cp = subprocess.run(
+            ["ffprobe", "-v", "error"] + [str(a) for a in args],
+            capture_output=True,
+            encoding="utf-8",
+            errors="replace",
+            check=False,
+        )
+        if cp.returncode != 0:
+            raise RuntimeError(
+                f"{what} failed (code={cp.returncode}): {(cp.stderr or '').strip()}"
+            )
+        try:
+            return json.loads(cp.stdout or "{}")
+        except Exception as ex:
+            raise RuntimeError(f"{what} json parse failed: {ex}")
+
     def _get_meta(self, video_path):
         '''How to get the FPS and total frame count of a video using FFmpeg'''
         if video_path in self._meta_cache:
@@ -570,25 +728,15 @@ class VideoManager:
                 self._debug_video(f"[Metadata] ffmpeg.probe failed: {ex}")
 
         if not p:
-            cp = subprocess.run(
+            p = self._probe_json(
                 [
-                    "ffprobe",
-                    "-v", "error",
                     "-print_format", "json",
                     "-show_streams",
                     "-show_format",
                     str(video_path),
                 ],
-                capture_output=True,
-                text=True,
-                check=False,
+                what="ffprobe",
             )
-            if cp.returncode != 0:
-                raise RuntimeError(f"ffprobe failed (code={cp.returncode}): {cp.stderr.strip()}")
-            try:
-                p = json.loads(cp.stdout or "{}")
-            except Exception as ex:
-                raise RuntimeError(f"ffprobe json parse failed: {ex}")
 
         streams = p.get("streams", []) if isinstance(p, dict) else []
         vs = next((s for s in streams if s.get('codec_type') == 'video'), None)
@@ -630,7 +778,8 @@ class VideoManager:
                         str(video_path),
                     ],
                     capture_output=True,
-                    text=True,
+                    encoding="utf-8",
+                    errors="replace",
                     check=False,
                 )
                 probe_txt = (cp.stdout or "").strip().splitlines()
@@ -649,6 +798,26 @@ class VideoManager:
         if total <= 0:
             # At least allow the first frame to be rendered to prevent the UI from remaining in a permanent "Waiting" state
             total = 1
+
+        # Seeking by timestamp is reliable for ordinary CFR streams whose
+        # reported frame rates and duration agree. Keep uncertain streams on
+        # the absolute-frame path below.
+        try:
+            average_rate = Fraction(vs.get('avg_frame_rate') or '0/1')
+            nominal_rate = Fraction(vs.get('r_frame_rate') or '0/1')
+            reported_frames = int(vs.get('nb_frames') or 0)
+            stream_duration = float(vs.get('duration') or 0)
+            stream_start = float(vs.get('start_time') or 0)
+            self._fast_seek_paths[str(video_path)] = (
+                average_rate > 0
+                and average_rate == nominal_rate
+                and reported_frames > 0
+                and stream_duration > 0
+                and abs(stream_start) < 0.001
+                and abs(reported_frames / fps - stream_duration) <= max(0.1, 2 / fps)
+            )
+        except (TypeError, ValueError, ZeroDivisionError):
+            self._fast_seek_paths[str(video_path)] = False
 
         self._meta_cache[video_path] = (fps, total)
         return self._meta_cache[video_path]
@@ -701,9 +870,13 @@ class VideoManager:
         R = max(1, int(getattr(self.shared_config, "cache_num", 1)))
         k = max(1, int(getattr(self.shared_config, "count_per_action", 1)))
 
-        last_batch = getattr(self, "_last_batch", None)
-        sequential_forward = (last_batch is not None and b == last_batch + 1)
-        force_rebuild_window = not sequential_forward
+        # ★ 只有"拼接上下文"变了才重建整窗缓存。
+        #   旧逻辑是 `sequential_forward = (b == last_batch + 1)`, 也就是"只要不是顺序前进"
+        #   (回退、跳页、刷新) 就把窗口内所有已拼接批次清空、重新拼接一遍。
+        #   结果就是回退时完全用不到已有缓存 —— 明明 batch-1 的拼接图还在磁盘上,
+        #   却要重新抽帧 + 重新拼接, 白白卡一下。
+        #   现在改成: 上下文没变就复用缓存, 只补齐缺失的批次。
+        force_rebuild_window = self._cache_context_changed()
 
         if not getattr(self.shared_config, "video_fps_list", []) or not getattr(self.shared_config, "video_num_list", []):
             for vp in getattr(self.shared_config, "real_video_path", []):
@@ -753,11 +926,23 @@ class VideoManager:
             self._set_video_status(f"Video batch invalid: n={n}, k={k}")
             return
 
-        extract_end = min(local_b + R, max_batch - 1)
-        stitch_end = min(local_b + max(R - 1, 0), max_batch - 1)
-        prev_guard = R
-        window_start = max(0, local_b - prev_guard)
-        window_end = extract_end
+        # ★ 缓存直显短路: 目标批次 + 后面几批的拼接结果都已经在缓存窗口里,
+        #   说明上次前进时已经预取好了。这一步(点上一帧 / 回退 / 在窗口内跳页)
+        #   只需要把已有的拼接图贴到界面上, 不必再走抽帧检查 / 重新拼接 /
+        #   窗口清理 —— 那几步在缓存已热时纯属白做, 是回退卡顿的剩余来源。
+        if not force_rebuild_window and self._display_cache_ready(local_b, base_global, R, max_batch):
+            self._last_batch = b
+            return
+
+        # ★ 窗口口径统一: [b-R, b+R], 前后各 R 个, 共 2R+1 张。
+        #   extract_end / stitch_end / window_start / window_end 必须一致,
+        #   否则会出现"磁盘上少一张"的情况:
+        #     - stitch_end 比 window_end 小 -> 历史帧不拼接 (少一张)
+        #     - 短路检查不含 b-R -> 清理删掉 b-R 后永远补不回来 (少一张)
+        window_start = max(0, local_b - R)
+        window_end = min(local_b + R, max_batch - 1)
+        extract_end = window_end
+        stitch_end = window_end
         extract_threads = getattr(self.executor, "_max_workers", 0)
         stitch_threads = getattr(self.stitch_executor, "_max_workers", 0)
         if not hasattr(self.shared_config, "cache_img") or self.shared_config.cache_img is None:
@@ -767,39 +952,33 @@ class VideoManager:
             self.shared_config.cache_img.extend([None] * (required_len - len(self.shared_config.cache_img)))
 
         if force_rebuild_window:
-            max_clear = stitch_end
-            for t in range(window_start, max_clear + 1):
-                global_t = (base_global + t) if parallel_to_seq else t
-                if 0 <= global_t < len(self.shared_config.cache_img):
-                    self.shared_config.cache_img[global_t] = None
+            # 上下文变化: 所有已拼接批次作废(内存 + 磁盘)
+            self._invalidate_stitch_cache()
 
-        # 1. 当前帧和历史帧：同步拼接
-        for t in range(window_start, local_b + 1):  # 包括当前帧
-            self._ensure_batch_extracted(video_idx, t, wait=True)
-            if t <= stitch_end:
-                global_t = (base_global + t) if parallel_to_seq else t
-                # ★ 强制同步拼接（确保当前帧可用）
-                if self.shared_config.cache_img[global_t] is None:
-                    self._stitch_batch(video_idx, t, global_t)
-
+        # 1. 当前帧：先同步抽帧 + 同步拼接，保证回退/跳页时目标帧立刻可用
         global_local = (base_global + local_b) if parallel_to_seq else local_b
         self._ensure_batch_extracted(video_idx, local_b, wait=True)
-        if local_b <= stitch_end:
-            if force_rebuild_window or self.shared_config.cache_img[global_local] is None:
-                self._stitch_batch(video_idx, local_b, global_local)
+        if self._cached_batch_path(global_local) is None:
+            self._stitch_batch(video_idx, local_b, global_local)
 
-        # 2. 未来帧：异步预取
-        for t in range(local_b + 1, extract_end + 1):
+        # 2. 历史帧：命中缓存直接跳过（回退时基本都是命中），未命中才同步补齐，
+        #    放在当前帧之后处理，避免为了预热历史帧而拖慢本次显示。
+        for t in range(window_start, local_b):  # 不含当前帧
+            self._ensure_batch_extracted(video_idx, t, wait=True)
             global_t = (base_global + t) if parallel_to_seq else t
-            async_prefetch = (t <= stitch_end)
-            wait_for_extract = not async_prefetch
-            result = self._ensure_batch_extracted(video_idx, t, wait=wait_for_extract)
-            if async_prefetch:
-                if self._should_schedule_stitch(global_t):
-                    if isinstance(result, Future):
-                        result.add_done_callback(partial(self._post_extract_stitch, video_idx, t, global_t))
-                    else:
-                        self._schedule_stitch(video_idx, t, global_t)
+            if self._cached_batch_path(global_t) is None:
+                self._stitch_batch(video_idx, t, global_t)
+
+        # 3. 未来帧：异步抽帧 + 抽完自动拼接
+        #    ★ 整个窗口 [b-R, b+R] 都必须拼接，包括两端。
+        for t in range(local_b + 1, window_end + 1):
+            global_t = (base_global + t) if parallel_to_seq else t
+            result = self._ensure_batch_extracted(video_idx, t, wait=False)
+            if self._should_schedule_stitch(global_t):
+                if isinstance(result, Future):
+                    result.add_done_callback(partial(self._post_extract_stitch, video_idx, t, global_t))
+                else:
+                    self._schedule_stitch(video_idx, t, global_t)
 
         start_tuple = self._batch_range(n, k, window_start)
         end_tuple = self._batch_range(n, k, window_end)
@@ -809,8 +988,15 @@ class VideoManager:
         self._debug_video(f"[CacheSchedule] done batch={b} window=[{window_start},{window_end}] extract_threads={extract_threads} stitch_threads={stitch_threads} keep_frame_range=[{keep_start_idx},{keep_end_idx})")
 
         # **清理窗口外的磁盘缓存**
-        # 用户期望窗口: [local_b - R, local_b + R] (2R+1 张, 含历史帧)
-        self._cleanup_disk_cache_out_of_window(int(window_start), int(window_end))
+        # 用户期望窗口: [b-R, b+R] (2R+1 张, 含历史帧)
+        # ★ 磁盘文件名用的是"全局批次号":
+        #     - 普通单视频: 局部号 == 全局号
+        #     - 并行转串行: 全局号 = base_global + 局部号
+        #   清理范围必须用全局号算, 否则会删掉刚写好的文件 / 留下该删的文件。
+        #   同时要用 window_end (已按视频长度截断), 保证收尾帧附近的范围不会溢出。
+        disk_lo = (base_global + window_start) if parallel_to_seq else window_start
+        disk_hi = (base_global + window_end) if parallel_to_seq else window_end
+        self._cleanup_disk_cache_out_of_window(int(disk_lo), int(disk_hi))
         self._last_batch = b
         self._mark_batch_processed()
 
@@ -841,8 +1027,6 @@ class VideoManager:
         if window_end < window_start:
             window_end = window_start
 
-        stitch_limit = min(global_b + max(window_radius - 1, 0), global_max_batch - 1)
-
         cache = getattr(self.shared_config, "cache_img", None)
         if cache is None:
             self.shared_config.cache_img = cache = []
@@ -850,49 +1034,44 @@ class VideoManager:
             cache.extend([None] * (window_end + 1 - len(cache)))
 
         if force_rebuild:
-            for t in range(window_start, stitch_limit + 1):
-                if t < len(cache):
-                    cache[t] = None
+            # 上下文变化: 所有已拼接批次作废(内存 + 磁盘)
+            self._invalidate_stitch_cache()
+        elif self._display_cache_ready(global_b, 0, window_radius, global_max_batch):
+            # ★ 同上: 缓存已热时直接返回, 不做任何抽帧检查 / 拼接 / 窗口清理
+            return
 
         extract_threads = getattr(self.executor, "_max_workers", 0)
         stitch_threads = getattr(self.stitch_executor, "_max_workers", 0)
 
-        ##b3 ←旧代码，全部同步，stitch_executor 完全没用上     b5
-        # for t in range(window_start, window_end + 1):
-        #     for vid, max_b in enumerate(max_batches):
-        #         if max_b <= 0 or t >= max_b:
-        #             continue
-        #         wait_for_extract = (t <= stitch_limit)
-        #         self._ensure_batch_extracted(vid, t, wait=wait_for_extract)
-        #     if t <= stitch_limit and cache[t] is None:
-        #         self._stitch_batch_multi(t)
-
-        for t in range(window_start, window_end + 1):
-            is_current_or_past = (t <= global_batch)
-            is_prefetch = (t > global_batch and t <= stitch_limit)
-
-            # 1. 提取阶段
-            extract_futs_for_t = []
+        def queue_extracts(batch):
+            futures = []
             for vid, max_b in enumerate(max_batches):
-                if max_b <= 0 or t >= max_b:
+                if max_b <= 0 or batch >= max_b:
                     continue
-                if is_current_or_past:
-                    # ★ 当前帧/历史帧：同步等待
-                    self._ensure_batch_extracted(vid, t, wait=True)
-                else:
-                    # 未来帧：异步提取
-                    fut = self._ensure_batch_extracted(vid, t, wait=False)
-                    if hasattr(fut, "result"):
-                        extract_futs_for_t.append(fut)
+                result = self._ensure_batch_extracted(vid, batch, wait=False)
+                if isinstance(result, Future):
+                    futures.append(result)
+            return futures
 
-            # 2. 拼接阶段
-            if t <= stitch_limit and cache[t] is None:
-                if is_current_or_past:
-                    # ★ 当前帧/历史帧：同步拼接
-                    self._stitch_batch_multi(t)
-                else:
-                    # 未来帧：异步拼接
-                    self._schedule_stitch_multi(t, extract_futs_for_t)
+        # Handle the requested batch first. Submit all videos before waiting so
+        # the extraction pool can work on several streams at the same time.
+        if self._cached_batch_path(global_b) is None:
+            target_futures = queue_extracts(global_b)
+            for fut in target_futures:
+                fut.result()
+            self._stitch_batch_multi(global_b)
+
+        # Prefetch the whole window [global_b - R, global_b + R].
+        # ★ 以前只沿播放方向预取, 而且最远端 (distance == window_radius) 只抽帧不拼接,
+        #   于是磁盘上的拼接图永远比窗口少一张。这里改成整个窗口都排上拼接任务,
+        #   方向无关, 全部异步, 不阻塞当前帧显示。
+        for batch in range(window_start, window_end + 1):
+            if batch == global_b:
+                continue
+            if self._cached_batch_path(batch) is not None:
+                continue
+            extract_futures = queue_extracts(batch)
+            self._schedule_stitch_multi(batch, extract_futures)
 
         for vid, max_b in enumerate(max_batches):
             if max_b <= 0:
@@ -1076,6 +1255,8 @@ class VideoManager:
         #target_size = 256
         #enable_debug_scale = bool(getattr(self.shared_config, "debug_video", False))
         last_error = None
+        owned_tmp_prefixes = []
+        fast_seek = self._fast_seek_paths.get(str(video_path), False)
         has_ffmpeg_input = callable(getattr(ffmpeg, "input", None))
 
         def list_missing(a, b):
@@ -1098,10 +1279,36 @@ class VideoManager:
             out.append((run[0], run[-1]))
             return out
 
-        def extract_ranges(ranges):
+        def extract_ranges(ranges, allow_fast_seek=True):
             nonlocal last_error
             for s, e in ranges:
-                if not has_ffmpeg_input:
+                if fast_seek and allow_fast_seek:
+                    fps = float(self.shared_config.video_fps_list[video_idx])
+                    suffix = f"{os.getpid()}_{threading.get_ident()}_{time.time_ns()}"
+                    tmp_prefix = f"__tmp_{video_idx}_{suffix}_"
+                    owned_tmp_prefixes.append(tmp_prefix)
+                    tmp_tpl = os.path.join(cache_dir, f"{tmp_prefix}%d.jpeg")
+                    cmd = [
+                        "ffmpeg", "-hide_banner", "-loglevel", "error",
+                        "-threads", "1", "-ss", f"{s * step / fps:.9f}",
+                        "-i", str(video_path), "-map", "0:v:0",
+                    ]
+                    if step > 1:
+                        cmd.extend(["-vf", f"select=not(mod(n\\,{step}))"])
+                    cmd.extend([
+                        "-vsync", "0", "-frames:v", str(e - s + 1),
+                        "-q:v", "6", "-start_number", str(s), "-y", tmp_tpl,
+                    ])
+                    try:
+                        cp = subprocess.run(
+                            cmd, capture_output=True, encoding="utf-8",
+                            errors="replace", check=False,
+                        )
+                        if cp.returncode != 0:
+                            last_error = (cp.stderr or cp.stdout or "").strip() or f"ffmpeg exit code {cp.returncode}"
+                    except Exception as ex:
+                        last_error = str(ex)
+                elif not has_ffmpeg_input:
                     fps = float(self.shared_config.video_fps_list[video_idx] or 0)
                     fps_safe = fps if fps > 0 else 25.0
                     for idx in range(s, e + 1):
@@ -1120,57 +1327,59 @@ class VideoManager:
                             "-y", dst,
                         ]
                         try:
-                            cp = subprocess.run(cmd, capture_output=True, text=True, check=False)
+                            cp = subprocess.run(cmd, capture_output=True, encoding="utf-8", errors="replace", check=False)
                             if cp.returncode != 0:
                                 last_error = (cp.stderr or cp.stdout or "").strip() or f"ffmpeg exit code {cp.returncode}"
                         except Exception as ex:
                             last_error = str(ex)
                     continue
 
-                physical_frames = []
-                for logical_idx in range(s, e + 1):
-                    physical_frame = logical_idx * step
-                    physical_frames.append(physical_frame)
-                if not physical_frames:
-                    continue
+                if not (fast_seek and allow_fast_seek):
+                    physical_frames = []
+                    for logical_idx in range(s, e + 1):
+                        physical_frame = logical_idx * step
+                        physical_frames.append(physical_frame)
+                    if not physical_frames:
+                        continue
 
-                if len(physical_frames) == 1:
-                    sel = f'eq(n,{physical_frames[0]})'
-                else:
-                    frame_conditions = [f'eq(n,{pf})' for pf in physical_frames]
-                    sel = '+'.join(frame_conditions)
+                    if len(physical_frames) == 1:
+                        sel = f'eq(n,{physical_frames[0]})'
+                    else:
+                        frame_conditions = [f'eq(n,{pf})' for pf in physical_frames]
+                        sel = '+'.join(frame_conditions)
 
-                suffix = f"{os.getpid()}_{threading.get_ident()}_{int(time.time()*1000)}"
-                tmp_tpl = os.path.join(cache_dir, f'__tmp_{video_idx}_{suffix}_%d.jpeg')
+                    suffix = f"{os.getpid()}_{threading.get_ident()}_{time.time_ns()}"
+                    tmp_prefix = f'__tmp_{video_idx}_{suffix}_'
+                    owned_tmp_prefixes.append(tmp_prefix)
+                    tmp_tpl = os.path.join(cache_dir, f'__tmp_{video_idx}_{suffix}_%d.jpeg')
 
-                try:
-                    # stream = (
-                    #     ffmpeg
-                    #     .input(str(video_path))
-                    #     .filter('select', sel)
-                    # )
-                    # if enable_debug_scale:
-                    #     stream = stream.filter('scale', target_size, -1, force_original_aspect_ratio='decrease')
+                    try:
+                        # stream = (
+                        #     ffmpeg
+                        #     .input(str(video_path))
+                        #     .filter('select', sel)
+                        # )
+                        # if enable_debug_scale:
+                        #     stream = stream.filter('scale', target_size, -1, force_original_aspect_ratio='decrease')
 
-                    #b4 修改
+                        #b4 修改
 
-                    stream = (
-                        ffmpeg
-                        .input(str(video_path))
-                        .filter('select', sel)
-                    )
+                        stream = (
+                            ffmpeg
+                            .input(str(video_path))
+                            .filter('select', sel)
+                        )
 
-                    (
-                        stream
-                        .output(tmp_tpl, vsync='vfr', **{'q:v': 6}, start_number=s)
-                        .global_args('-threads', '1', '-hide_banner', '-loglevel', 'error')
-                        .overwrite_output()
-                        .run(quiet=True)
-                    )
-                except Exception as ex:
-                    last_error = str(ex)
-                    self._debug_video(f"[Extract] error: ffmpeg processing failed, reason={ex}")
-                tmp_prefix = f'__tmp_{video_idx}_{suffix}_'
+                        (
+                            stream
+                            .output(tmp_tpl, vsync='vfr', **{'q:v': 6}, start_number=s)
+                            .global_args('-threads', '1', '-hide_banner', '-loglevel', 'error')
+                            .overwrite_output()
+                            .run(quiet=True)
+                        )
+                    except Exception as ex:
+                        last_error = str(ex)
+                        self._debug_video(f"[Extract] error: ffmpeg processing failed, reason={ex}")
                 tmp_map = {}
                 try:
                     for name in os.listdir(cache_dir):
@@ -1222,7 +1431,9 @@ class VideoManager:
             missing = list_missing(frame_start, frame_end)
             if not missing:
                 break
-            extract_ranges(chunks(missing))
+            # If timestamp seeking did not produce every requested frame,
+            # retry with the original absolute-frame selection.
+            extract_ranges(chunks(missing), allow_fast_seek=False)
             attempt += 1
 
         missing = list_missing(frame_start, frame_end)
@@ -1235,7 +1446,7 @@ class VideoManager:
 
         try:
             for name in os.listdir(cache_dir):
-                if name.startswith(f'__tmp_{video_idx}_') and name.endswith('.jpeg'):
+                if name.endswith('.jpeg') and any(name.startswith(prefix) for prefix in owned_tmp_prefixes):
                     try: os.remove(os.path.join(cache_dir, name))
                     except: pass
         except Exception:
@@ -1340,9 +1551,12 @@ class VideoManager:
         if type == -1:
             ui = self._ui()
             if ui:
+                # ★ 顺序很重要：show_img_init() 会因布局变化清空视频缓存，
+                #   所以必须先重建布局，再重新抽帧+拼接，最后显示。
+                #   否则 show_img() 拿到的 cache_img 是空的，只会停在 "Waiting for batch 0"。
                 wx.CallAfter(ui.show_img_init)
                 self.ImgManager.set_action_count(0)
-                wx.CallAfter(ui.show_img)
+                wx.CallAfter(ui._rebuild_video_cache_and_show)
                 if hasattr(ui, "_reset_image_view_origin"):
                     wx.CallAfter(ui._reset_image_view_origin)
         return self.shared_config.real_video_path
@@ -1372,12 +1586,9 @@ class VideoManager:
         return frames
 
     def _should_schedule_stitch(self, global_idx: int):
-        cache = getattr(self.shared_config, "cache_img", None)
-        if cache is None:
-            return False
-        if global_idx < 0 or global_idx >= len(cache):
-            return False
-        return cache[global_idx] is None
+        # ★ 用 _cached_batch_path 判断: 缓存为空、或磁盘文件已被窗口清理掉, 才需要拼接。
+        #   直接看 cache_img[idx] is None 会把"路径已失效"的条目当成已缓存, 导致再也不拼接。
+        return self._cached_batch_path(global_idx) is None
 
     def _post_extract_stitch(self, video_idx: int, local_b: int, global_b: int, fut: Future):
         if fut.cancelled():
@@ -1837,6 +2048,14 @@ class MulimgViewer (MulimgViewerGui):
                 field.Bind(wx.EVT_SET_FOCUS, self.disable_accel)
                 field.Bind(wx.EVT_KILL_FOCUS, self.enable_accel)
                 field.Bind(wx.EVT_KILL_FOCUS, handler)
+                # ★ 回车直接提交: 单行 TextCtrl 默认不处理回车, 必须显式加上
+                #   TE_PROCESS_ENTER, 否则 EVT_TEXT_ENTER 永远不触发。
+                #   有了它, 输入框里按回车就等于"改好了", 不用再点别处失焦。
+                try:
+                    field.SetStyle(field.GetStyle() | wx.TE_PROCESS_ENTER)
+                    field.Bind(wx.EVT_TEXT_ENTER, self.on_video_field_enter)
+                except Exception:
+                    pass
 
     def _handle_custom_algorithm_key(self, event):
         if event.GetKeyCode() in (wx.WXK_RETURN, wx.WXK_NUMPAD_ENTER):
@@ -1860,23 +2079,126 @@ class MulimgViewer (MulimgViewerGui):
         else:
             vm.stitch_executor = ThreadPoolExecutor(max_workers=desired_stitch)
 
+    # ========== 视频设置数值框的提交 ==========
+    # ★ 这些框以前只靠 EVT_KILL_FOCUS 才写回 shared_config, 而 refresh() 是直接读
+    #   shared_config 的。于是"改了生不生效"完全取决于一个看不见的事件:
+    #     - 从菜单/快捷键刷新时输入框不会失焦, 改动被静默丢弃;
+    #     - 输入非法内容时 int() 会在事件处理里抛异常, 值悄悄保持旧的, 而输入框
+    #       一直显示着你打的字 —— 看上去就是"改了没反应";
+    #     - 生效了也没有任何回显, 光标 "|" 一直留在框里, 分不清到底提交没有。
+    #   现在统一走 _commit_video_settings(): 读框 -> 校验 -> 归一化 -> 写回框里,
+    #   保证输入框显示的永远是当前真正生效的值, refresh() 开头也会主动提交一次。
+    def _commit_video_settings(self):
+        """把视频设置里的数值输入框提交到 shared_config, 并把框里的文本归一化。"""
+
+        def _read_number(field, default, minimum, integer=True):
+            try:
+                raw = str(field.GetValue()).strip()
+            except Exception:
+                raw = ""
+            value = default
+            if raw:
+                try:
+                    value = int(float(raw)) if integer else float(raw)
+                except (TypeError, ValueError):
+                    value = default
+            try:
+                value = max(minimum, value)
+            except (TypeError, ValueError):
+                value = default
+            return value
+
+        # ---- 播放间隔 ----
+        interval = _read_number(self.m_textCtrl28, 1.0, 0.05, integer=False)
+        if abs(float(self.shared_config.interval) - interval) > 1e-9:
+            self.shared_config.interval = interval
+            # 播放中改间隔, 立即重启 timer 让新值生效
+            if getattr(self.shared_config, "is_playing", False):
+                try:
+                    self.play_timer.Stop()
+                    self.play_timer.Start(int(interval * 1000), oneShot=False)
+                except Exception:
+                    pass
+
+        # ---- 线程数 ----
+        threads = _read_number(self.m_textCtrl29, 4, 1)
+        if threads != self.shared_config.thread:
+            self.shared_config.thread = threads
+            # 立即刷新线程池分配
+            if hasattr(self, "video_manager"):
+                try:
+                    self.video_manager.update_thread_count()
+                except Exception:
+                    pass
+
+        # ---- Cached Frames (缓存帧数) ----
+        self.shared_config.cache_num = _read_number(self.m_textCtrl30, 2, 1)
+
+        # ---- Skip Frame (跳过帧数) ----
+        skip = _read_number(self.m_textCtrl281, 0, 0)
+        self.shared_config.skip_frames = skip
+        self.ImgManager.skip = skip
+
+        # 归一化: 输入框里显示的必须是当前真正生效的值
+        for field, value in ((self.m_textCtrl28, self.shared_config.interval),
+                              (self.m_textCtrl29, self.shared_config.thread),
+                              (self.m_textCtrl30, self.shared_config.cache_num),
+                              (self.m_textCtrl281, self.shared_config.skip_frames)):
+            try:
+                text = str(value)
+                if str(field.GetValue()).strip() != text:
+                    field.SetValue(text)
+            except Exception:
+                pass
+
+    def _blur_settings_field(self):
+        """刷新/回车提交后, 如果光标还停在设置区的输入框里, 把焦点挪走。
+
+        否则输入框一直闪着 "|" 光标, 看着就像刚才那次修改没提交上去。
+        """
+        try:
+            focus = wx.Window.FindFocus()
+        except Exception:
+            return
+        if focus is None:
+            return
+        settings = getattr(self, "scrolledWindow_set", None)
+        node = focus
+        while node is not None:
+            if node is settings:
+                break
+            node = node.GetParent()
+        else:
+            return
+        target = getattr(self, "refresh_button", None)
+        if target is None:
+            return
+        try:
+            target.SetFocus()
+        except Exception:
+            pass
+
+    def on_video_field_enter(self, event):
+        """在视频设置的数值框里按回车: 立刻提交, 并把光标收掉。"""
+        self._commit_video_settings()
+        self._blur_settings_field()
+        if event is not None:
+            event.Skip()
+
     def on_cache_num_change(self, event):
-        self.shared_config.cache_num = int(self.m_textCtrl30.GetValue() or 2)
+        self._commit_video_settings()
+        if event is not None:
+            event.Skip()
 
     def on_skip_changed(self, event):
-        self.shared_config.skip_frames = max(0, int(self.m_textCtrl281.GetValue() or 0))
-        self.ImgManager.skip = max(0, int(self.m_textCtrl281.GetValue() or 0))
+        self._commit_video_settings()
+        if event is not None:
+            event.Skip()
 
     def on_thread_change(self, event):
-        new_thread_count = int(self.m_textCtrl29.GetValue() or 4)
-        old_thread_count = self.shared_config.thread
-
-        # Update only when thread count actually changes
-        if new_thread_count != old_thread_count:
-            self.shared_config.thread = new_thread_count
-            # Immediately refresh thread-pool allocation
-            if hasattr(self, 'video_manager'):
-                self.video_manager.update_thread_count()
+        self._commit_video_settings()
+        if event is not None:
+            event.Skip()
 
     def on_enable_video_mode(self, event):
         prev_video_mode = self.shared_config.video_mode
@@ -1896,19 +2218,94 @@ class MulimgViewer (MulimgViewerGui):
             if prev_video_mode:
                 self._clear_video_mode_cache()
 
+        # ★ 切换模式后自动刷新并显示。
+        #   进入视频模式时如果已经选过视频，立即重建缓存并显示首帧；
+        #   如果还没选视频，给出明确提示，而不是停在 "Waiting for batch 0"。
+        self._auto_refresh_after_mode_switch()
+
+    def _auto_refresh_after_mode_switch(self):
+        """模式切换后自动刷新显示。
+
+        进入视频模式时:
+        - 已经有选好的视频 -> 重建抽帧/拼接缓存并显示首帧;
+        - 还没有选视频     -> 状态栏给出明确提示, 避免一直显示 "Waiting for batch 0"。
+        """
+        if getattr(self, "_is_closing", False):
+            return
+        if not getattr(self.shared_config, "video_mode", False):
+            return
+        try:
+            if not getattr(self.shared_config, "real_video_path", None):
+                self.SetStatusText_([
+                    "-1", "-1",
+                    "***Video mode: please select a video input***", "-1"])
+                return
+
+            self.shared_config.batch_idx = 0
+            self.show_img_init()
+            self.ImgManager.set_action_count(0)
+            # show_img_init() 会因布局变化清空视频缓存, 这里必须重新抽帧+拼接
+            self.video_manager.update_cache()
+            self.show_img()
+        except Exception as ex:
+            if getattr(self.shared_config, "debug_video", False):
+                print(f"[VideoMode] auto refresh after mode switch failed: {ex}")
+
+    def _rebuild_video_cache_for_batch(self, batch_idx):
+        """当前批次没有可用缓存时, 主动重建(抽帧 + 拼接), 返回缓存 PNG 路径。
+
+        返回 None 表示无法重建(未选视频 / 抽帧失败 / 拼接失败)。
+        """
+        vm = getattr(self, "video_manager", None)
+        if vm is None:
+            return None
+        if not getattr(self.shared_config, "video_path", None):
+            return None
+        if not getattr(self.shared_config, "real_video_path", None):
+            return None
+        try:
+            self.shared_config.batch_idx = int(batch_idx)
+            vm.update_cache()
+        except Exception as ex:
+            if getattr(self.shared_config, "debug_video", False):
+                print(f"[VideoMode] rebuild cache failed batch={batch_idx} error={ex}")
+            return None
+
+        # ★ 复用已有缓存时统一走 _video_cached_batch_path 做有效性校验
+        entry = self._video_cached_batch_path(int(batch_idx))
+        if entry:
+            return entry
+        return None
+
+    def _video_cached_batch_path(self, batch_idx):
+        """取视频模式指定批次已拼接好的缓存图路径; 缓存无效时返回 None。"""
+        vm = getattr(self, "video_manager", None)
+        if vm is None:
+            return None
+        try:
+            return vm._cached_batch_path(int(batch_idx))
+        except Exception:
+            return None
+
+    def _rebuild_video_cache_and_show(self):
+        """视频模式下：重建当前批次缓存后再显示（供 CallAfter 延迟调用）。"""
+        if getattr(self, "_is_closing", False):
+            return
+        if not getattr(self.shared_config, "video_mode", False):
+            return
+        try:
+            self._rebuild_video_cache_for_batch(int(self.shared_config.batch_idx))
+            self.show_img()
+        except Exception as ex:
+            if getattr(self.shared_config, "debug_video", False):
+                print(f"[VideoMode] rebuild cache and show failed: {ex}")
+
     # def on_interval_changed(self, event):
     #     self.shared_config.interval = float(self.m_textCtrl28.GetValue() or 1.0)
     #b1 修改
     def on_interval_changed(self, event):
-        try:
-            new_interval = max(0.05, float(self.m_textCtrl28.GetValue() or 1.0))
-        except (ValueError, TypeError):
-            new_interval = 1.0
-        self.shared_config.interval = new_interval
-        #★ 播放中修改 interval 时，立即重启 timer 使新值生效
-        if getattr(self.shared_config, "is_playing", False) and not getattr(self, "_play_timer_suspended", False):
-            self.play_timer.Stop()
-            self.play_timer.Start(int(new_interval * 1000), oneShot=False)
+        # 统一走 _commit_video_settings (读框 -> 校验 -> 归一化 -> 写回)
+        self._commit_video_settings()
         event.Skip()
 
     def toggle_play(self, event):
@@ -1919,17 +2316,11 @@ class MulimgViewer (MulimgViewerGui):
                 self.last_direction = 1
             self.shared_config.play_direction = getattr(self, "last_direction", 1)
         if self.shared_config.is_playing:
-            try:
-                interval = max(0.05, float(self.m_textCtrl28.GetValue() or 1.0))
-            except (ValueError, TypeError):
-                interval = 1.0
-            self.shared_config.interval = interval
+            interval = float(self.m_textCtrl28.GetValue() or 1.0)
             self.play_timer.Start(int(interval * 1000), oneShot=False)
             label = "⏸"
         else:
             self.play_timer.Stop()
-            self._cancel_pending_frame_wait()
-            self._play_timer_suspended = False
             label = "▶"
 
         vm = getattr(self, "video_manager", None)
@@ -1956,30 +2347,22 @@ class MulimgViewer (MulimgViewerGui):
         if self.shared_config.video_mode:
             self._parallel_switch_dirty = True
         else:
-            img_mgr = getattr(self, "ImgManager", None)
-            if (
-                img_mgr
-                and getattr(img_mgr, "input_path", None)
-                and getattr(img_mgr, "type", None) in (0, 1)
-            ):
-                try:
-                    img_mgr.init(
-                        img_mgr.input_path,
-                        img_mgr.type,
-                        parallel_to_sequential=False,
-                        action_count=0,
-                        img_count=0,
-                        video_mode=False,
-                        skip=getattr(img_mgr, "skip", 0),
-                    )
-                    img_mgr.set_action_count(0)
-                    self.shared_config.batch_idx = 0
-                    self.shared_config.image_cache_img = []
-                    self.shared_config.image_cache_paths = []
-                    self.show_img_init()
-                    self.show_img()
-                except Exception:
-                    pass
+            # ★ 图片模式：不再立刻重建 + 重绘。
+            #   这里只把状态标记为"待应用"，等用户手动刷新（⟳ / 菜单 Refresh）时
+            #   由 _apply_parallel_switch() 统一重建并显示，避免切换瞬间就重扫目录、重拼接。
+            self._parallel_switch_dirty = True
+            self._notify_parallel_switch_pending()
+
+    def _notify_parallel_switch_pending(self):
+        """提示用户: 并行/串行读取方式已改变, 需要手动刷新后生效。"""
+        if getattr(self.shared_config, "video_mode", False):
+            return
+        try:
+            self.SetStatusText_([
+                "-1", "-1",
+                "***Parallel setting changed, press Refresh to apply***", "-1"])
+        except Exception:
+            pass
 
     def _suspend_play_timer_for_wait(self):
         """暂停播放 timer，防止等待拼接期间继续前进/跳帧"""
@@ -1998,16 +2381,10 @@ class MulimgViewer (MulimgViewerGui):
         self._play_timer_suspended = False
         if getattr(self.shared_config, "is_playing", False):
             try:
-                interval = max(0.05, float(getattr(self.shared_config, "interval", 1.0)))
-                self.play_timer.Start(int(interval * 1000), oneShot=False)
+                interval_ms = int(self.shared_config.play_interval * 1000)
+                self.play_timer.Start(interval_ms)
             except Exception:
                 pass
-
-    def _schedule_frame_wait(self):
-        """Pause playback until the current video batch is cached."""
-        target_batch = int(self.shared_config.batch_idx)
-        self._suspend_play_timer_for_wait()
-        self._schedule_frame_wait_retry(target_batch)
 
     def _schedule_frame_wait_retry(self, target_batch: int, retry_ms: int = 80):
         """短暂延迟后重新检查目标帧是否就绪，不改变 batch_idx，不跳帧"""
@@ -2062,33 +2439,20 @@ class MulimgViewer (MulimgViewerGui):
         if self.shared_config.video_mode:
             self._parallel_switch_dirty = True
         else:
-            img_mgr = getattr(self, "ImgManager", None)
-            if (
-                img_mgr
-                and getattr(img_mgr, "input_path", None)
-                and getattr(img_mgr, "type", None) in (0, 1)
-            ):
-                try:
-                    img_mgr.init(
-                        img_mgr.input_path,
-                        img_mgr.type,
-                        parallel_to_sequential=value,
-                        action_count=0,
-                        img_count=0,
-                        video_mode=False,
-                        skip=getattr(img_mgr, "skip", 0),
-                    )
-                    img_mgr.set_action_count(0)
-                    self.shared_config.batch_idx = 0
-                    self.shared_config.image_cache_img = []
-                    self.shared_config.image_cache_paths = []
-                    self.show_img_init()
-                    self.show_img()
-                except Exception:
-                    pass
+            # ★ 图片模式：同样不在切换瞬间重建 + 重绘，改为标记待应用，
+            #   由用户手动刷新时通过 _apply_parallel_switch() 统一处理。
+            self._parallel_switch_dirty = True
+            self._notify_parallel_switch_pending()
 
     def _apply_parallel_switch(self):
+        """应用 parallel / parallel+sequential 开关的变化。
+
+        视频模式: 重新计算总帧数与每批帧数。
+        图片模式: 按新的读取顺序（parallel_to_sequential / parallel_sequential）
+                  重新初始化 ImgManager，并清空图片模式的渲染缓存。
+        """
         if not getattr(self.shared_config, "video_mode", False):
+            self._apply_parallel_switch_image()
             return
 
         nums = [int(x) for x in getattr(self.shared_config, "video_num_list", []) if x is not None]
@@ -2120,6 +2484,38 @@ class MulimgViewer (MulimgViewerGui):
         self.shared_config.cache_img = []
         if hasattr(self.video_manager, "_last_batch"):
             self.video_manager._last_batch = None
+
+    def _apply_parallel_switch_image(self):
+        """图片模式下应用 parallel / parallel+sequential 的变化。
+
+        手动刷新时调用：按新的读取方式重新初始化 ImgManager，
+        并清空图片模式的渲染缓存，让随后的 show_img_init()/show_img()
+        按新布局重新拼接显示。
+        """
+        img_mgr = getattr(self, "ImgManager", None)
+        if (
+            not img_mgr
+            or not getattr(img_mgr, "input_path", None)
+            or getattr(img_mgr, "type", None) not in (0, 1)
+        ):
+            return
+        try:
+            img_mgr.init(
+                img_mgr.input_path,
+                img_mgr.type,
+                parallel_to_sequential=bool(self.shared_config.parallel_to_sequential),
+                action_count=0,
+                img_count=0,
+                video_mode=False,
+                skip=getattr(img_mgr, "skip", 0),
+            )
+            img_mgr.set_action_count(0)
+            self.shared_config.batch_idx = 0
+            self.shared_config.image_cache_img = []
+            self.shared_config.image_cache_paths = []
+        except Exception as ex:
+            if getattr(self.shared_config, "debug_image", False):
+                print(f"[ImageMode] apply parallel switch failed: {ex}")
 
     def EVT_MY_TEST_OnHandle(self, event):
         self.about_gui(None, update=True, new_version=event.GetEventArgs())
@@ -2309,6 +2705,10 @@ class MulimgViewer (MulimgViewerGui):
                 self.ImgManager.init(dlg.GetPath(), type=0, parallel_to_sequential=self.parallel_to_sequential.Value)
         self.show_img_init()
         self.ImgManager.set_action_count(0)
+        if self.shared_config.video_mode:
+            # ★ show_img_init() 会因布局参数变化清空视频缓存，
+            #   必须在它之后重新抽帧+拼接, 否则首帧缺失只会显示 "Waiting for batch 0"。
+            self.video_manager.update_cache()
         self.show_img()
         self._reset_image_view_origin()
         self.choice_input_mode.SetSelection(1)
@@ -2568,17 +2968,16 @@ class MulimgViewer (MulimgViewerGui):
 
     def one_dir_mul_dir_manual(self, event):
         self.SetStatusText_(["Input", "", "", "-1"])
-        try:
-            if self.ImgManager.type == 1:
-                input_path = self.ImgManager.input_path
-            else:
-                input_path = None
-        except:
-            input_path = None
+        # ★ 打开 "Parallel manual" 选择窗口时, 路径列表一律为空。
+        #   以前这里会把 ImgManager.input_path(当前已打开的目录, 顺序/并行自动模式选中的那个)
+        #   或者上一次手动选择的结果传过去, 于是选择框里会出现"这次并没有选"的路径。
+        #   用户以为只挑了新目录, 关闭时旧目录却被一起提交,
+        #   在图片/视频模式之间来回切换时尤其容易把路径带错。
+        #   现在不预填: 列表里看到的就是这次真正要用的路径集合。
         if self.shared_config.video_mode:
             self.UpdateUI(1, None, self.parallel_to_sequential.Value ,video_manager = self.video_manager,shared_config=self.shared_config)
         else:
-            self.UpdateUI(1, input_path, self.parallel_to_sequential.Value)
+            self.UpdateUI(1, None, self.parallel_to_sequential.Value)
         self.SetStatusText_(["Input", "-1", "-1", "-1"])
 
     #b5
@@ -2616,8 +3015,8 @@ class MulimgViewer (MulimgViewerGui):
             if self.shared_config.batch_idx > 0:
                 self.shared_config.batch_idx -= 1
 
-            # ★ 关键：先更新缓存，再展示
-            self.video_manager.update_cache()
+            # ★ 修改：异步更新缓存，让UI立即响应而不是阻塞
+            wx.CallAfter(self.video_manager.update_cache)
 
         if self.shared_config.video_mode:
             if self.ImgManager.img_count != 0:
@@ -2684,9 +3083,10 @@ class MulimgViewer (MulimgViewerGui):
         self.ImgManager.action_count = clamped
         self.ImgManager.img_count = clamped * self.ImgManager.count_per_action
 
-        # In video mode, prepare cache in the background without rendering
+        # ★ 修改：视频模式下，先异步更新缓存，让UI能立即显示已有的缓存
+        #   而不是阻塞等待新缓存生成
         if getattr(self.shared_config, "video_mode", False):
-            self.video_manager.update_cache()
+            wx.CallAfter(self.video_manager.update_cache)
 
         # 刷新显示，保留文本框的值
         self.show_img(preserve_text_value=True)
@@ -2736,8 +3136,12 @@ class MulimgViewer (MulimgViewerGui):
         self.shared_config.batch_idx = clamped
         self.ImgManager.action_count = clamped
         self.ImgManager.img_count = clamped * self.ImgManager.count_per_action
+
+        # ★ 修改：视频模式下，先异步更新缓存，让UI能立即显示已有的缓存
+        #   而不是阻塞等待新缓存生成
         if self.shared_config.video_mode:
-            self.video_manager.update_cache()
+            # 异步更新缓存（不阻塞UI）
+            wx.CallAfter(self.video_manager.update_cache)
 
         # 刷新显示，保留文本框的值
         self.show_img(preserve_text_value=True)
@@ -2829,6 +3233,11 @@ class MulimgViewer (MulimgViewerGui):
         if getattr(self, "_parallel_switch_dirty", False):
             self._apply_parallel_switch()
             self._parallel_switch_dirty = False
+        # ★ 先把设置区数值框的内容提交进来, 再往下走。
+        #   以前 refresh() 直接读 shared_config, 而数值框只在"失去焦点"时才写回,
+        #   所以用菜单/快捷键(Ctrl+R)刷新时, 刚改的 Cached Frames 会被静默丢弃。
+        if getattr(self.shared_config, "video_mode", False):
+            self._commit_video_settings()
         if (not getattr(self.shared_config, "video_mode", False)
             and self.out_path_str == ""
             and ((hasattr(self, "show_custom_func") and self.show_custom_func.GetValue())
@@ -2954,6 +3363,10 @@ class MulimgViewer (MulimgViewerGui):
             self.show_img(preserve_text_value=True)
         else:
             self.SetStatusText_(["-1", "", "***Error: First, need to select the input dir***", "-1"])
+        # ★ 刷新完把设置区输入框的光标收掉, 否则框里一直闪着 "|",
+        #   看上去就像刚才那次修改没提交成功。
+        if getattr(self.shared_config, "video_mode", False):
+            self._blur_settings_field()
         self.SetStatusText_(["Refresh", "-1", "-1", "-1"])
 
     def _invalidate_render_cache(self):
@@ -3097,6 +3510,10 @@ class MulimgViewer (MulimgViewerGui):
                 return
         self.show_img_init()
         self.ImgManager.set_action_count(0)
+        if self.shared_config.video_mode:
+            # ★ show_img_init() 会因布局参数变化清空视频缓存，
+            #   必须在它之后重新抽帧+拼接, 否则首帧缺失只会显示 "Waiting for batch 0"。
+            self.video_manager.update_cache()
         self.show_img()
         self._reset_image_view_origin()
         self.choice_input_mode.SetSelection(0)
@@ -4053,14 +4470,83 @@ class MulimgViewer (MulimgViewerGui):
             self.SetCursor(wx.Cursor(wx.CURSOR_ARROW))
         self.Refresh()
 
+    def _list_file_signature(self):
+        """图片列表文件(type 3)的内容指纹: 路径 + 字节数 + 修改时间。
+
+        列表文件是用户在外部用编辑器改的, 同一个路径对应的内容随时可能变,
+        所以"要不要作废缓存"不能只看路径, 必须带上内容指纹。
+        """
+        img_mgr = getattr(self, "ImgManager", None)
+        if img_mgr is None or getattr(img_mgr, "type", None) != 3:
+            return None
+        try:
+            list_path = Path(str(getattr(img_mgr, "input_path", "")))
+            if not list_path.is_file():
+                return None
+            stat = list_path.stat()
+            return (str(list_path), int(stat.st_size), int(stat.st_mtime_ns))
+        except Exception:
+            return None
+
+    def _reload_list_file_if_changed(self):
+        """列表文件在外部被改过 -> 重新读取一遍, 并返回当前指纹。
+
+        场景: 用 "Image File List" 打开 1.txt, 之后在外部改了 1.txt 里的图片路径,
+        再重新选择同一个 1.txt (或者直接按刷新) —— 页面必须显示新路径的图片。
+
+        以前 ImgManager 只在第一次 init 时读一次列表, 之后即使重新选择同一个文件
+        也不会重读; 再叠加上拼接结果被缓存住, 于是页面看上去"完全没变化"。
+        这里用文件指纹(大小+修改时间)判断内容是否变化, 变了就重读。
+        """
+        signature = self._list_file_signature()
+        if signature is None:
+            return None
+        last = getattr(self, "_list_file_last_signature", None)
+        self._list_file_last_signature = signature
+        if last is None or last == signature:
+            # 第一次拿到指纹(刚 init 完) 或者 文件内容没变 -> 不需要重读
+            return signature
+        try:
+            self.ImgManager.init(
+                self.ImgManager.input_path,
+                type=3,
+                parallel_to_sequential=bool(
+                    getattr(self.shared_config, "parallel_to_sequential", False)),
+            )
+            self.ImgManager.set_action_count(0)
+            self.shared_config.batch_idx = 0
+            self._debug_image(
+                f"[ImageList] list file changed, reloaded: {self.ImgManager.input_path}")
+        except Exception as ex:
+            if getattr(self.shared_config, "debug_image", False):
+                print(f"[ImageList] reload list file failed: {ex}")
+        return signature
+
     def show_img_init(self):
+        # ★ 图片模式下待应用的 parallel / parallel+sequential 切换在这里统一生效。
+        #   勾选开关时不做任何重建（避免切换瞬间就重扫目录 + 重拼接），
+        #   而是在下一次真正重绘之前（手动刷新 / 翻页 / 放大框变化等）才应用，
+        #   保证数据模型与界面开关始终一致，不会出现 count_per_action 与 flist 错位。
+        if (getattr(self, "_parallel_switch_dirty", False)
+                and not getattr(self.shared_config, "video_mode", False)):
+            self._parallel_switch_dirty = False
+            self._apply_parallel_switch_image()
+
+        # ★ 列表文件(type 3)可能在外部被改过: 先比指纹, 变了就重新读取一遍。
+        #   这一步放在 set_img_layout() 之前, 保证后面的布局/批数计算用的是最新列表。
+        list_signature = self._reload_list_file_if_changed()
+
         layout_params = self.set_img_layout()
         # ★ 修复：图片模式 + 视频模式 都要在 layout 变化时清空缓存与磁盘缓存文件
         vm = getattr(self, "video_manager", None)
         layout_token = repr(layout_params)
         if not getattr(self.shared_config, "video_mode", False):
+            # ★ 缓存 token 里带上列表文件的内容指纹:
+            #   以前 token 只有 (布局, 类型, 输入路径), 同一个 1.txt 改内容再重新选择时
+            #   token 不变 -> 内存缓存和磁盘 PNG 都不作废 -> 页面还是旧的拼接图。
             image_token = (layout_token, getattr(self.ImgManager, "type", None),
-                           repr(getattr(self.ImgManager, "input_path", None)))
+                           repr(getattr(self.ImgManager, "input_path", None)),
+                           list_signature)
             if image_token != getattr(self, "_image_layout_token", None):
                 with self._image_stitch_lock:
                     self._debug_image(f"[ImageCache] reset, previous_batches={len(self.shared_config.image_cache_img)}")
@@ -4329,7 +4815,16 @@ class MulimgViewer (MulimgViewerGui):
             b = int(self.shared_config.batch_idx)
 
             # 从磁盘加载图像（cache_entry 现在是文件路径字符串）
-            cache_entry = self.shared_config.cache_img[b] if 0 <= b < len(self.shared_config.cache_img) else None
+            # ★ 走 _video_cached_batch_path: 磁盘缓存按窗口清理过, 内存里记下的路径
+            #   可能已经失效, 这里统一判定为"无缓存", 交给下面的重建流程, 避免 Load cache failed。
+            cache_entry = self._video_cached_batch_path(b)
+
+            # ★ 当前批次没有可用缓存时（非播放状态）主动重建一次。
+            #   典型场景：从图片模式切到视频模式、或刚选完视频时，
+            #   show_img_init() 会因布局参数变化清空视频缓存，
+            #   导致首帧缺失而一直停在 "Waiting for batch N"，必须手动刷新才恢复。
+            if cache_entry is None and not getattr(self.shared_config, "is_playing", False):
+                cache_entry = self._rebuild_video_cache_for_batch(b)
 
             if cache_entry is not None:
                 # cache_entry 是文件路径字符串
@@ -4369,7 +4864,6 @@ class MulimgViewer (MulimgViewerGui):
                             pass
 
                     self._cancel_pending_frame_wait()
-                    self._resume_play_timer_after_wait()
 
                 except Exception as ex:
                     self.SetStatusText_(["-1", "-1", f"***Load cache failed: {ex}***", "-1"])
@@ -5540,8 +6034,8 @@ def main(img_list, save_path, name_list=None, algorithm_name="{algorithm_name}")
             if self.shared_config.batch_idx < int(self.ImgManager.img_num) - 1:
                 self.shared_config.batch_idx += 1
 
-            # ★ 关键：先更新缓存，再展示
-            self.video_manager.update_cache()
+            # ★ 修改：异步更新缓存，让UI立即响应而不是阻塞
+            wx.CallAfter(self.video_manager.update_cache)
 
         if getattr(self.ImgManager, "img_count", 0) < int(self.ImgManager.img_num) - 1:
             self.ImgManager.add()

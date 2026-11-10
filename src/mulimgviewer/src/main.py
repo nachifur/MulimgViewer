@@ -2381,32 +2381,51 @@ class MulimgViewer (MulimgViewerGui):
         self._play_timer_suspended = False
         if getattr(self.shared_config, "is_playing", False):
             try:
-                interval_ms = int(self.shared_config.play_interval * 1000)
+                interval_ms = max(1, int(float(self.shared_config.interval) * 1000))
                 self.play_timer.Start(interval_ms)
             except Exception:
                 pass
 
-    def _schedule_frame_wait_retry(self, target_batch: int, retry_ms: int = 80):
+    def _schedule_frame_wait(self, retry_ms: int = 80):
+        """播放时目标批次还没拼接好: 暂停 timer, 轮询等待该帧就绪后再继续播放。
+
+        show_img() 在缓存未命中且正在播放时会走到这里。此前这里直接调用了一个
+        并不存在的方法(_schedule_frame_wait), 于是播放时一旦遇到"这一帧还没拼完"
+        就抛 AttributeError, 播放直接中断。
+        """
+        target_batch = int(getattr(self.shared_config, "batch_idx", 0))
+        self._suspend_play_timer_for_wait()
+        self._schedule_frame_wait_retry(target_batch, retry_ms, attempt=0)
+
+    def _schedule_frame_wait_retry(self, target_batch: int, retry_ms: int = 80, attempt: int = 0):
         """短暂延迟后重新检查目标帧是否就绪，不改变 batch_idx，不跳帧"""
         self._cancel_pending_frame_wait()
+
+        # 等待上限: 约 10 秒仍拼不出来就放弃本次等待, 让播放继续/停下,
+        # 避免在拼接一直失败时陷入无限轮询。
+        max_attempts = max(1, int(10000 / max(1, retry_ms)))
 
         def _check():
             self._pending_frame_wait_timer = None
             if not getattr(self.shared_config, "is_playing", False):
+                # 播放已被用户暂停/停止: 清掉挂起标记, 免得下次播放时 timer 起不来
+                self._play_timer_suspended = False
                 return
             if int(self.shared_config.batch_idx) != target_batch:
                 # 用户在等待期间手动切换了帧，放弃本次等待
                 self._resume_play_timer_after_wait()
                 return
 
-            cache = self.shared_config.cache_img
-            if 0 <= target_batch < len(cache) and cache[target_batch] is not None:
+            if self._video_cached_batch_path(target_batch) is not None:
                 # 目标帧终于就绪，恢复播放并展示
                 self._resume_play_timer_after_wait()
                 self.show_img()
+            elif attempt >= max_attempts:
+                # 等太久了: 恢复 timer, 由下一拍继续尝试, 不再原地卡住播放
+                self._resume_play_timer_after_wait()
             else:
                 # 仍未就绪，继续轮询等待（不跳帧）
-                self._schedule_frame_wait_retry(target_batch, retry_ms)
+                self._schedule_frame_wait_retry(target_batch, retry_ms, attempt + 1)
 
         self._pending_frame_wait_timer = wx.CallLater(retry_ms, _check)
 

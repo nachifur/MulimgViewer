@@ -653,6 +653,24 @@ class ImgUtils():
 class ImgManager(ImgData):
     """Multi-image manager.
     Multi-image parallel magnification, stitching, saving, rotation"""
+    def video_stitch_snapshot(self):
+        """Copy render inputs without retaining/copying previous frame pixels."""
+        result = copy.copy(self)
+        pixel_state = {'img', 'customfunc_img', 'img_list', 'full_exif_cache', 'pdf_title_layers'}
+        # Dataset lists are replaced on selection, and read-only while rendering.
+        # Copying every filename for every cached batch is proportional to video length.
+        dataset_state = {'name_list', 'path_list', 'input_path', 'img_num_list',
+                         'video_num_list', 'video_fps_list'}
+        for name, value in self.__dict__.items():
+            if name in pixel_state or name in dataset_state:
+                continue
+            if isinstance(value, (list, dict, set)):
+                setattr(result, name, copy.deepcopy(value))
+        result.clear_cache()
+        result.ImgF = copy.copy(self.ImgF)
+        result.ImgF.manager = result
+        return result
+
     def __init__(self):
         self.layout_params = []
         self.gap_color = (0, 0, 0, 0)

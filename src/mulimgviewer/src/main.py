@@ -33,28 +33,62 @@ import copy
 class PerformanceMonitor:
     """Lightweight collector for extraction/stitch/render metrics."""
 
-    def __init__(self, eval_batch_window=15, eval_time_window=10.0):
+    def __init__(self, eval_batch_window=5, eval_time_window=0.5):
+        self._lock = threading.RLock()
         self.extract_history = deque(maxlen=60)
+        self.extract_by_video = {}
         self.stitch_history = deque(maxlen=60)
+        self.display_history = deque(maxlen=30)
         self.render_history = deque(maxlen=30)
         self.buffer_history = deque(maxlen=60)
         self.eval_batch_window = max(1, int(eval_batch_window))
-        self.eval_time_window = max(1.0, float(eval_time_window))
+        self.eval_time_window = max(0.1, float(eval_time_window))
         self.processed_batches = 0
         self.last_eval_batch = 0
         self.last_eval_time = 0.0
         self.last_render_timestamp = None
+        self.last_render_batch = None
 
-    def record_extract(self, duration):
-        if duration is not None and duration >= 0:
-            self.extract_history.append(float(duration))
+    def record_extract(self, duration, batches=1, video_idx=0):
+        if duration is not None and math.isfinite(duration) and duration >= 0 and batches > 0:
+            cost = float(duration) / batches
+            with self._lock:
+                self.extract_history.extend([cost] * min(60, max(1, int(batches))))
+                self.extract_by_video.setdefault(video_idx, deque(maxlen=24)).extend(
+                    [cost] * min(24, max(1, int(batches))))
 
     def record_stitch(self, duration):
-        if duration is not None and duration >= 0:
-            self.stitch_history.append(float(duration))
+        if duration is not None and math.isfinite(duration) and duration >= 0:
+            with self._lock:
+                self.stitch_history.append(float(duration))
+
+    def record_display(self, duration):
+        if duration is not None and math.isfinite(duration) and duration >= 0:
+            with self._lock:
+                self.display_history.append(float(duration))
+
+    def stage_costs(self, video_indices, cached=False):
+        """Seconds of work per displayed batch, without playback timer delays."""
+        with self._lock:
+            if not self.display_history:
+                return None
+            display = sorted(list(self.display_history)[-12:])
+            display_cost = display[int((len(display) - 1) * 0.75)]
+            if cached:
+                return 0.0, 0.0, display_cost
+            extract_cost = 0.0
+            for vid in video_indices:
+                samples = self.extract_by_video.get(vid)
+                if not samples:
+                    return None
+                extract_cost += self._avg(list(samples)[-12:])
+            stitch_cost = self._avg(list(self.stitch_history)[-12:])
+            if stitch_cost is None:
+                return None
+            return extract_cost, stitch_cost, display_cost
 
     def record_render_interval(self, interval):
-        if interval is not None and interval > 0:
+        if interval is not None and math.isfinite(interval) and interval > 0:
             self.render_history.append(float(interval))
 
     def record_buffer_depth(self, depth):
@@ -65,7 +99,7 @@ class PerformanceMonitor:
         self.processed_batches += 1
 
     def should_evaluate(self):
-        now = time.time()
+        now = time.perf_counter()
         if self.processed_batches - self.last_eval_batch >= self.eval_batch_window:
             return True
         if now - self.last_eval_time >= self.eval_time_window:
@@ -74,24 +108,34 @@ class PerformanceMonitor:
 
     def mark_evaluated(self):
         self.last_eval_batch = self.processed_batches
-        self.last_eval_time = time.time()
+        self.last_eval_time = time.perf_counter()
 
     def reset_render_clock(self):
         self.last_render_timestamp = None
+        self.last_render_batch = None
 
-    def push_render_event(self):
-        now = time.time()
+    def push_render_event(self, batch=None, direction=1):
+        if batch is not None and batch == self.last_render_batch:
+            return False
+        now = time.perf_counter()
         last = self.last_render_timestamp
-        if last is not None:
+        adjacent = (batch is None or self.last_render_batch is None
+                    or batch == self.last_render_batch + (1 if direction >= 0 else -1))
+        if not adjacent:
+            self.render_history.clear()
+        if last is not None and adjacent:
             interval = now - last
             if interval > 0:
                 self.record_render_interval(interval)
         self.last_render_timestamp = now
+        self.last_render_batch = batch
+        return True
 
     def _avg(self, data):
         if not data:
             return None
-        return sum(data) / len(data)
+        values = list(data)
+        return sum(values) / len(values)
 
     def extract_avg(self):
         return self._avg(self.extract_history)
@@ -112,14 +156,8 @@ class PerformanceMonitor:
     def get_fps(self):
         """计算渲染 FPS（基于 render_history）"""
         if not self.render_history:
-            # fallback: 从 stitch_history 估算
-            if self.stitch_history:
-                avg_time = sum(self.stitch_history) / len(self.stitch_history)
-                return 1.0 / avg_time if avg_time > 0 else 0.0
             return 0.0
         intervals = list(self.render_history)
-        if len(intervals) < 2:
-            return 0.0
         avg_interval = sum(intervals) / len(intervals)
         return 1.0 / avg_interval if avg_interval > 0 else 0.0
 
@@ -134,10 +172,12 @@ class SharedConfig:
     def __init__(self):
         '''Variables shared by MulimgViewer and VideoManager.'''
         self.cache_num = 2 #Number of caches
+        self.cache_multiplier = 1 # Outer video cache radius / priority radius
         self.skip_frames = 0 #Number of frames to skip
         self.thread = 4 #Number of threads
         self.video_mode = False #Video mode
         self.interval = 1.0 #Playback interval
+        self.manual_interval = None # Last user-entered video interval; auto writes never change it
         self.is_playing = False #Whether currently playing
         self.play_direction = 1 #Playback direction
         self.real_video_path = [] #Actual video paths, ending in mp4
@@ -182,6 +222,25 @@ class VideoManager:
         self._meta_cache = {}
         self._fast_seek_paths = {}
         self._pending_extract = {}
+        self._cache_guard = threading.RLock()
+        self._cache_io_lock = threading.RLock()
+        self._cache_request_lock = threading.Lock()
+        self._cache_executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix='video-schedule')
+        self._cache_update_future = None
+        self._cache_request = None
+        self._cache_request_serial = 0
+        self._worker_context = threading.local()
+        self._window_token = None
+        self._raw_windows = {}
+        self._stitch_window = (0, -1)
+        self._window_stitches = {}
+        self._maintenance_executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="video-cleanup")
+        self._display_executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="video-display")
+        self._cleanup_future = None
+        self._display_future = None
+        self._display_serial = 0
+        self._render_snapshot = None
+        self._batch_render_states = {}
         self._pending_stitch_async = 0
         self._pending_lock = threading.Lock()
         self._last_batch = None
@@ -259,6 +318,8 @@ class VideoManager:
                     idx = int(cache_file.stem.split('_')[1])
                     if idx < window_start or idx > window_end:
                         cache_file.unlink()
+                        if 0 <= idx < len(self.shared_config.cache_img):
+                            self.shared_config.cache_img[idx] = None
                 except Exception:
                     pass
         except Exception as ex:
@@ -266,27 +327,28 @@ class VideoManager:
 
     # ========== 拼接缓存上下文 / 复用 ==========
 
-    def _cache_context_token(self):
+    def _cache_context_token(self, config=None):
         """拼接缓存上下文指纹。
 
         这里只包含"会改变某个 batch 拼接成什么图"的参数:
         视频列表、每视频帧数、每批帧数、并行转串行、抽帧步长。
         布局(放大框/行列/间距等)由 show_img_init() 的 layout_token 单独负责作废。
         """
+        config = self.shared_config if config is None else config
         try:
-            video_path = tuple(str(p) for p in (getattr(self.shared_config, "video_path", []) or []))
+            video_path = tuple(str(p) for p in (getattr(config, "video_path", []) or []))
         except Exception:
             video_path = ()
         try:
-            video_num = tuple(int(x or 0) for x in (getattr(self.shared_config, "video_num_list", []) or []))
+            video_num = tuple(int(x or 0) for x in (getattr(config, "video_num_list", []) or []))
         except Exception:
             video_num = ()
         return (
             video_path,
             video_num,
-            int(getattr(self.shared_config, "count_per_action", 1) or 1),
-            bool(getattr(self.shared_config, "parallel_to_sequential", False)),
-            int(getattr(self.shared_config, "skip_frames", 0) or 0),
+            int(getattr(config, "count_per_action", 1) or 1),
+            bool(getattr(config, "parallel_to_sequential", False)),
+            int(getattr(config, "skip_frames", 0) or 0),
         )
 
     def _cache_context_changed(self):
@@ -305,24 +367,20 @@ class VideoManager:
 
     def _invalidate_stitch_cache(self):
         """作废所有已拼接的批次(内存 + 磁盘)。"""
-        try:
-            cache = getattr(self.shared_config, "cache_img", None)
-            if cache:
-                for i in range(len(cache)):
-                    cache[i] = None
-        except Exception as ex:
-            self._debug_video(f"[StitchCache] invalidate memory failed error={ex}")
-        try:
-            if self.disk_cache_dir.exists():
-                for cache_file in self.disk_cache_dir.glob("batch_*.png"):
-                    try:
-                        cache_file.unlink()
-                    except Exception:
-                        pass
-        except Exception as ex:
-            self._debug_video(f"[StitchCache] invalidate disk failed error={ex}")
+        with self._cache_guard:
+            self._invalidate_stitch_cache_locked()
 
-    def _cached_batch_path(self, global_idx):
+    def _invalidate_stitch_cache_locked(self):
+        self._window_generation = getattr(self, "_window_generation", 0) + 1
+        self._window_token = None
+        self.shared_config.cache_img = []
+        self._display_serial += 1
+        self._render_snapshot = None
+        self._batch_render_states.clear()
+        self.perf_monitor = PerformanceMonitor()
+        self._schedule_video_cleanup()
+
+    def _cached_batch_path(self, global_idx, validate=True):
         """取已拼接批次的缓存路径; 缓存无效(为空 / 磁盘文件已被清理)时返回 None。
 
         磁盘缓存会按窗口清理, 所以内存里记下的路径可能已经指向不存在的文件,
@@ -339,6 +397,8 @@ class VideoManager:
         entry = cache[global_idx]
         if not entry:
             return None
+        if not validate:
+            return entry
         if isinstance(entry, str):
             try:
                 if os.path.exists(entry) and os.path.getsize(entry) > 0:
@@ -406,7 +466,11 @@ class VideoManager:
         ui = self._ui()
         if ui:
             try:
-                ui.SetStatusText_(["-1", "-1", f"***{msg}***", "-1"])
+                values = ["-1", "-1", f"***{msg}***", "-1"]
+                if wx.IsMainThread():
+                    ui.SetStatusText_(values)
+                else:
+                    wx.CallAfter(ui.SetStatusText_, values)
             except Exception:
                 pass
 
@@ -424,6 +488,16 @@ class VideoManager:
         self._reported_stitch_threads = False
 
     def _reset_for_new_selection(self):
+        with self._cache_guard:
+            self._window_token = None
+            self._render_snapshot = None
+            self._batch_render_states.clear()
+            self._display_serial += 1
+            self._window_generation = getattr(self, "_window_generation", 0) + 1
+            self._raw_windows = {}
+            self._stitch_window = (0, -1)
+            for future in list(self._window_stitches.values()):
+                future.cancel()
         monitor = getattr(self, "perf_monitor", None)
         if monitor is not None:
             self.perf_monitor = PerformanceMonitor(monitor.eval_batch_window, monitor.eval_time_window)
@@ -444,8 +518,8 @@ class VideoManager:
         self._cache_context = None
         self._cache_context_initialized = False
 
-        with self._pending_lock:
-            for fut in self._pending_extract.values():
+        with self._cache_guard:
+            for fut in list(self._pending_extract.values()):
                 fut.cancel()
             self._pending_extract.clear()
             self._pending_stitch_async = 0
@@ -497,33 +571,45 @@ class VideoManager:
     def _enforce_thread_budget(self):
         total_budget = max(2, int(getattr(self.shared_config, "thread", 2) or 2))
         self._total_threads = total_budget
-        current_total = self._extract_threads + self._stitch_threads
+        extract_threads, stitch_threads = self._extract_threads, self._stitch_threads
+        current_total = extract_threads + stitch_threads
 
         if current_total > total_budget:
             # Due to budget cuts, we need to reduce the number of threads.
             excess = current_total - total_budget
-            if self._extract_threads > self._stitch_threads:
-                self._extract_threads = max(1, self._extract_threads - excess)
+            if extract_threads > stitch_threads:
+                extract_threads = max(1, extract_threads - excess)
             else:
-                self._stitch_threads = max(1, self._stitch_threads - excess)
+                stitch_threads = max(1, stitch_threads - excess)
         elif current_total < total_budget:
             # Increase the budget, prioritizing the addition of frame-splitting threads
             available = total_budget - current_total
-            self._extract_threads += available
+            extract_threads += available
 
-        self._apply_thread_plan(self._extract_threads, self._stitch_threads)
+        self._apply_thread_plan(extract_threads, stitch_threads)
 
     def _apply_interval_recommendation(self, recommended):
         ui = self._ui()
         try:
+            if not math.isfinite(recommended):
+                return
+            recommended = max(0.001, math.ceil(recommended * 1000 - 1e-9) / 1000.0)
+            manual = getattr(self.shared_config, 'manual_interval', None)
+            if manual is not None:
+                recommended = max(recommended, manual)
+            field = getattr(ui, 'row_col1', None) if ui else None
+            if field is not None and field.HasFocus():
+                return
             current = float(getattr(self.shared_config, "interval", recommended) or recommended)
-            if abs(current - recommended) <= 1e-3:
+            if abs(current - recommended) < 1e-9:
                 return
             self.shared_config.interval = recommended
             if ui:
-                ui.m_textCtrl28.SetValue(f"{recommended:.3f}")
-                if getattr(ui.shared_config, "is_playing", False):
-                    ui.play_timer.Start(int(recommended * 1000), oneShot=False)
+                if field is not None:
+                    field.ChangeValue(f"{recommended:.3f}")
+                if (getattr(ui.shared_config, "is_playing", False)
+                        and not getattr(ui, '_play_timer_suspended', False)):
+                    ui._schedule_next_video_tick()
         except Exception as exc:
             pass
 
@@ -533,8 +619,9 @@ class VideoManager:
             return 0
         current = int(getattr(self.shared_config, "batch_idx", 0))
         depth = 0
-        for idx in range(current, len(cache)):
-            if cache[idx] is None:
+        direction = 1 if int(getattr(self.shared_config, 'play_direction', 1)) >= 0 else -1
+        for idx in range(current + direction, len(cache) if direction > 0 else -1, direction):
+            if not cache[idx]:
                 break
             depth += 1
         return depth
@@ -548,135 +635,69 @@ class VideoManager:
         self._record_buffer_depth()
         self._maybe_evaluate_performance()
 
-    def _maybe_evaluate_performance(self):
-        if not self.perf_monitor.should_evaluate():
+    def _playback_video_indices(self):
+        cfg = self.shared_config
+        k = max(1, int(cfg.count_per_action))
+        counts = [(int(n) + k - 1) // k for n in cfg.video_num_list]
+        batch = int(cfg.batch_idx)
+        if cfg.parallel_to_sequential:
+            base = 0
+            for vid, count in enumerate(counts):
+                if base <= batch < base + count:
+                    return [vid], sum(counts)
+                base += count
+            return [], sum(counts)
+        return [vid for vid, count in enumerate(counts) if batch < count], max(counts, default=0)
+
+    def _maybe_evaluate_performance(self, force=False):
+        """Seek the fastest measured pipeline rate, excluding pacing/wait time."""
+        cfg = self.shared_config
+        monitor = self.perf_monitor
+        if not cfg.video_mode or not cfg.is_playing:
             return
-
-        extract_avg = self.perf_monitor.extract_avg()
-        stitch_avg = self.perf_monitor.stitch_avg()
-        render_min = self.perf_monitor.render_min()
-        buffer_min = self.perf_monitor.buffer_min()
-        frame_interval = max(0.1, float(getattr(self.shared_config, "interval", 1.0) or 1.0))
-
-        self.perf_monitor.mark_evaluated()
-
-        if extract_avg is None or stitch_avg is None:
+        if not force and not monitor.should_evaluate():
             return
-
-        # Available thread budget
-        total_budget = max(2, int(getattr(self.shared_config, "thread", 2) or 2))
-
-        # Current thread configuration
-        extract_threads = max(1, self._extract_threads)
-        stitch_threads = max(1, self._stitch_threads)
-
-        # Thread demand estimation
-        required_extract = math.ceil(extract_avg / frame_interval)
-        required_stitch = math.ceil(stitch_avg / frame_interval)
-
-        # Rendering decision: If actual data is available, use the actual minimum value; otherwise, use the estimated value.
-        if render_min is not None:
-            render_value = render_min
-            render_met = render_value <= frame_interval
-        else:
-            estimated = max(extract_avg / extract_threads, stitch_avg / stitch_threads)
-            render_value = estimated
-            render_met = estimated <= frame_interval
-
-        # Buffer decision
-        cache_target = max(1, int(getattr(self.shared_config, "cache_num", 1)) - 1)
-        if cache_target <= 0:
-            cache_target = 1
-        buffer_ok = (buffer_min is None) or (buffer_min >= cache_target)
-
-        # Thread load estimation (based on the number of pending tasks)
-        with self._pending_lock:
-            pending_extract = len(self._pending_extract)
-            pending_stitch = max(0, self._pending_stitch_async)
-        extract_load = (pending_extract + extract_threads) / max(1, extract_threads)
-        stitch_load = (pending_stitch + stitch_threads) / max(1, stitch_threads)
-
-        now = time.time()
-        cooldown_active = now < self._cooldown_deadline
-
-        success = render_met and buffer_ok and extract_load <= 1.1 and stitch_load <= 1.1
-        if success:
-            self._success_streak += 1
-            self._failure_streak = 0
-        else:
-            self._failure_streak += 1
-            self._success_streak = 0
-
-        # Ensure that the thread budget is not less than the minimum required value
-        required_extract = max(1, required_extract)
-        required_stitch = max(1, required_stitch)
-
-        # Record the recommended frame interval
-        recommended = None
-        if total_budget < required_extract + required_stitch:
-            best_extract = max(1, total_budget - 1)
-            best_stitch = max(1, total_budget - best_extract)
-            recommended = max(
-                extract_avg / max(1, best_extract),
-                stitch_avg / max(1, best_stitch)
-            )
-        elif not render_met:
-            # Even if the thread budget is sufficient, recommendations will still be provided if the actual rendering performance falls short of the target.
-            recommended = max(
-                render_value,
-                extract_avg / max(1, extract_threads),
-                stitch_avg / max(1, stitch_threads)
-            )
-
-        if recommended is not None:
-            recommended = round(max(recommended, frame_interval), 3)
-            self.shared_config.interval_recommend = recommended
-            self._apply_interval_recommendation(recommended)
-        else:
-            self.shared_config.interval_recommend = None
-
-        # During the cooling-off period, only recommendations will be updated; no adjustments will be made to the thread.
-
-        if cooldown_active:
+        if len(monitor.display_history) < (1 if force else 3):
             return
-
-        # Multiple failures -> Try adding a thread
-        if self._failure_streak >= 2:
-            added = False
-            if extract_threads < required_extract and extract_threads + stitch_threads < total_budget:
-                new_extract = min(required_extract, total_budget - stitch_threads)
-                self._apply_thread_plan(new_extract, stitch_threads)
-                added = True
-            if not added and stitch_threads < required_stitch and self._extract_threads + self._stitch_threads < total_budget:
-                new_stitch = min(required_stitch, total_budget - extract_threads)
-                self._apply_thread_plan(extract_threads, new_stitch)
-                added = True
-            if not added and extract_threads + stitch_threads < total_budget:
-                # If there is no clear gap, assign 1 lane to the side with higher traffic volume
-                if extract_load >= stitch_load and extract_threads + stitch_threads + 1 <= total_budget:
-                    self._apply_thread_plan(extract_threads + 1, stitch_threads)
-                elif stitch_load > extract_load and extract_threads + stitch_threads + 1 <= total_budget:
-                    self._apply_thread_plan(extract_threads, stitch_threads + 1)
-            if added or self._failure_streak >= 2:
-                self._cooldown_deadline = time.time() + self.perf_monitor.eval_time_window
-                self._failure_streak = 0
-                self._success_streak = 0
+        indices, total = self._playback_video_indices()
+        direction = 1 if int(cfg.play_direction) >= 0 else -1
+        remaining = (total - 1 - int(cfg.batch_idx)) if direction > 0 else int(cfg.batch_idx)
+        depth = self._compute_buffer_depth()
+        cached = remaining >= 0 and depth >= remaining
+        costs = monitor.stage_costs(indices, cached=cached)
+        if costs is None:
             return
+        monitor.mark_evaluated()
+        extract_work, stitch_work, display_cost = costs
+        budget = max(2, int(cfg.thread))
+        extract_threads, stitch_threads = self._extract_threads, self._stitch_threads
 
-        # Reached the limit multiple times -> Try reducing the number of threads
-        if self._success_streak >= 3:
-            new_extract = extract_threads
-            new_stitch = stitch_threads
-            if extract_threads > required_extract and extract_load <= 0.8:
-                new_extract = max(required_extract, extract_threads - 1)
-            elif stitch_threads > required_stitch and stitch_load <= 0.8:
-                new_stitch = max(required_stitch, stitch_threads - 1)
+        def period(extract, stitch):
+            return max(extract_work / extract, stitch_work / stitch, display_cost)
 
-            if new_extract != extract_threads or new_stitch != stitch_threads:
-                self._apply_thread_plan(new_extract, new_stitch)
-                self._cooldown_deadline = time.time() + self.perf_monitor.eval_time_window
-            self._success_streak = 0
-            self._failure_streak = 0
+        # A resize must not overlap running pools or strand their pending work.
+        # Preserve the full user budget; redistribute it only for a measured gain.
+        if not cached:
+            best = min(range(1, budget), key=lambda e: (
+                period(e, budget - e), abs(e - extract_threads)))
+            # A conservative lock-free status read is sufficient for tuning;
+            # never wait on a producer from the GUI's presentation callback.
+            busy = bool(self._pending_extract or self._window_stitches or self.cache_update_pending())
+            now = time.perf_counter()
+            if (not busy and now >= self._cooldown_deadline
+                    and period(best, budget - best) < period(extract_threads, stitch_threads) * 0.9):
+                self._apply_thread_plan(best, budget - best)
+                self._cooldown_deadline = now + 1.0
+                extract_threads, stitch_threads = self._extract_threads, self._stitch_threads
+
+        # Quantize upwards to wx's millisecond timer, with a small jitter margin.
+        target = max(0.001, math.ceil(period(extract_threads, stitch_threads) * 1.02 * 1000 - 1e-9) / 1000.0)
+        cfg.interval_recommend = target
+        # Speed up when production has at least one future frame ready. An empty
+        # queue can slow playback, but must not trigger an unverified speed-up.
+        if target < float(cfg.interval) and remaining > 0 and depth == 0:
+            return
+        self._apply_interval_recommendation(target)
 
     def _debug_video(self, message):
         if getattr(self.shared_config, "debug_video", False):
@@ -860,241 +881,444 @@ class VideoManager:
             print(f"[ThreadUpdate] total_budget={self._total_threads}, extract={self._extract_threads}, stitch={self._stitch_threads}")
 
     def update_cache(self):
-        if not getattr(self.shared_config, "video_mode", False):
+        """Capture GUI inputs and coalesce requests; never scan files on the GUI."""
+        if (getattr(self, '_closed', False) or not self.shared_config.video_mode
+                or not self.shared_config.video_path):
             return
-        if not getattr(self.shared_config, "video_path", None):
-            self._set_video_status("Video path empty: please reselect input")
+        self._cache_context_changed()
+        ui = self._ui()
+        if (ui is not None and hasattr(ui, '_capture_video_render_snapshot')
+                and self.shared_config.video_num_list and self.shared_config.video_fps_list):
+            ui._capture_video_render_snapshot()
+        config = copy.copy(self.shared_config)
+        for name in ('video_path', 'real_video_path', 'video_num_list', 'video_fps_list'):
+            setattr(config, name, tuple(getattr(config, name)))
+        with self._cache_request_lock:
+            self._cache_request_serial += 1
+            self._cache_request = (self._cache_request_serial, config,
+                                   getattr(self, '_window_generation', 0))
+            if self._cache_update_future is None or self._cache_update_future.done():
+                def drain():
+                    while True:
+                        with self._cache_request_lock:
+                            request = self._cache_request
+                            self._cache_request = None
+                            if request is None or getattr(self, '_closed', False):
+                                self._cache_update_future = None
+                                return
+                        try:
+                            self._update_cache_worker(*request)
+                        except Exception as ex:
+                            self._set_video_status(f'Video cache update failed: {ex}')
+                self._cache_update_future = self._cache_executor.submit(drain)
+
+    def cache_update_pending(self):
+        future = getattr(self, '_cache_update_future', None)
+        return future is not None and not future.done()
+
+    def _update_cache_worker(self, serial, cfg, generation):
+        """Prioritize the inner window; batch-prefetch and retain the outer window.
+
+        No decoding, stitching, image loading or cleanup blocks the caller.
+        Each contiguous missing run
+        shares one extraction Future across its batches and all dependent stitches.
+        """
+        if getattr(self, '_closed', False) or not cfg.video_mode or not cfg.video_path:
             return
+        if not cfg.video_num_list or not cfg.video_fps_list:
+            for path in cfg.real_video_path:
+                self.calc_max_extractable_frames_single(path)
+            ui = self._ui()
+            if ui is not None and hasattr(ui, '_rebuild_video_cache_and_show'):
+                wx.CallAfter(ui._rebuild_video_cache_and_show)
+            return
+        k = max(1, int(cfg.count_per_action))
+        inner = max(1, int(cfg.cache_num))
+        multiplier = max(1, int(getattr(cfg, "cache_multiplier", 1)))
+        outer = inner * multiplier
+        counts = [(int(n) + k - 1) // k for n in cfg.video_num_list]
+        sequential = bool(cfg.parallel_to_sequential)
+        total = sum(counts) if sequential else max(counts, default=0)
+        if total <= 0:
+            return
+        b = max(0, min(int(cfg.batch_idx), total - 1))
+        lo, hi = max(0, b - outer), min(total - 1, b + outer)
 
-        b = int(getattr(self.shared_config, "batch_idx", 0))
-        R = max(1, int(getattr(self.shared_config, "cache_num", 1)))
-        k = max(1, int(getattr(self.shared_config, "count_per_action", 1)))
+        def sources(batch):
+            if sequential:
+                base = 0
+                for vid, count in enumerate(counts):
+                    if base <= batch < base + count:
+                        return [(vid, batch - base)]
+                    base += count
+                return []
+            # Ended streams keep their final frame, matching the existing viewer.
+            return [(vid, min(batch, count - 1)) for vid, count in enumerate(counts) if count > 0]
 
-        # ★ 只有"拼接上下文"变了才重建整窗缓存。
-        #   旧逻辑是 `sequential_forward = (b == last_batch + 1)`, 也就是"只要不是顺序前进"
-        #   (回退、跳页、刷新) 就把窗口内所有已拼接批次清空、重新拼接一遍。
-        #   结果就是回退时完全用不到已有缓存 —— 明明 batch-1 的拼接图还在磁盘上,
-        #   却要重新抽帧 + 重新拼接, 白白卡一下。
-        #   现在改成: 上下文没变就复用缓存, 只补齐缺失的批次。
-        force_rebuild_window = self._cache_context_changed()
-
-        if not getattr(self.shared_config, "video_fps_list", []) or not getattr(self.shared_config, "video_num_list", []):
-            for vp in getattr(self.shared_config, "real_video_path", []):
-                self.calc_max_extractable_frames_single(vp)
-
-        parallel_to_seq = bool(getattr(self.shared_config, "parallel_to_sequential", False))
-        video_paths = getattr(self.shared_config, "video_path", [])
-        multi_video = (not parallel_to_seq and len(video_paths) > 1)
-
-        if multi_video:
-            self._update_cache_multi_video(
-                global_batch=b,
-                window_radius=R,
-                count_per_action=k,
-                force_rebuild=force_rebuild_window
+        with self._cache_guard:
+            if (serial != self._cache_request_serial or generation != getattr(self, '_window_generation', 0)
+                    or self._cache_context_token(cfg) != self._cache_context_token()):
+                return
+            cfg.cache_img = self.shared_config.cache_img
+            token = (self._cache_context_token(cfg), generation)
+            # For multiplier >= 2, refill when either expandable edge is at
+            # most cache_num batches away (including equality).
+            # Moving the outer boundary at every step would still launch one
+            # decoder per new edge frame, defeating the purpose of batching.
+            old_lo, old_hi = self._stitch_window
+            near_edge = multiplier >= 2 and (
+                (old_lo > 0 and b - old_lo <= inner)
+                or (old_hi < total - 1 and old_hi - b <= inner)
             )
-            self._last_batch = b
-            self._mark_batch_processed()
-            return
+            if (token == self._window_token and outer == getattr(self, "_outer_radius", None)
+                    and not near_edge
+                    and old_lo <= max(0, b - inner)
+                    and min(total - 1, b + inner) <= old_hi):
+                lo, hi = old_lo, old_hi
+            self._outer_radius = outer
+            if token != self._window_token:
+                for future in set(self._pending_extract.values()):
+                    future.cancel()
+                self._pending_extract.clear()
+                self._window_token = token
+            self._stitch_window = (lo, hi)
+            for old_batch in list(self._batch_render_states):
+                if not lo <= old_batch <= hi:
+                    self._batch_render_states.pop(old_batch, None)
+            for (old_token, batch), future in list(self._window_stitches.items()):
+                if old_token != token or not lo <= batch <= hi:
+                    future.cancel()
+            self._raw_windows = {}
+            for batch in range(lo, hi + 1):
+                for vid, local in sources(batch):
+                    start, end = self._batch_range(int(cfg.video_num_list[vid]), k, local)
+                    old = self._raw_windows.get(vid, (start, end + 1))
+                    self._raw_windows[vid] = (min(old[0], start), max(old[1], end + 1))
+            if len(cfg.cache_img) <= hi:
+                cfg.cache_img.extend([None] * (hi + 1 - len(cfg.cache_img)))
+            if old_lo != lo or old_hi != hi:
+                self._schedule_video_cleanup()
 
-        base_global = 0
-        video_idx = 0
-        local_b = 0
+        # The GUI displays the previous frame while the requested one is prepared.
+        if self._cached_batch_path(b, validate=False) is None:
+            for vid, local in sources(b):
+                self._queue_extract_run(vid, local, local, token, cfg)
+            self._queue_window_stitch(b, sources(b), token)
 
-        if parallel_to_seq:
-            cum = 0
-            for i in range(len(self.shared_config.video_path)):
-                n_i = int(self.shared_config.video_num_list[i])
-                max_b_i = (n_i + k - 1) // k if n_i > 0 else 1
-                if b < cum + max_b_i:
-                    video_idx = i
-                    local_b = b - cum
-                    base_global = cum
-                    break
-
-            self.current_active_video_idx = video_idx
-        else:
-            video_idx = 0
-            n0 = int(self.shared_config.video_num_list[video_idx])
-            max_b_0 = (n0 + k - 1) // k if n0 > 0 else 1
-            local_b = b if b < max_b_0 else (max_b_0 - 1)
-            base_global = 0
-
-        n = int(self.shared_config.video_num_list[video_idx])
-        max_batch = (n + k - 1) // k if n > 0 else 1
-        if max_batch <= 0:
-            self._set_video_status(f"Video batch invalid: n={n}, k={k}")
-            return
-
-        # ★ 缓存直显短路: 目标批次 + 后面几批的拼接结果都已经在缓存窗口里,
-        #   说明上次前进时已经预取好了。这一步(点上一帧 / 回退 / 在窗口内跳页)
-        #   只需要把已有的拼接图贴到界面上, 不必再走抽帧检查 / 重新拼接 /
-        #   窗口清理 —— 那几步在缓存已热时纯属白做, 是回退卡顿的剩余来源。
-        if not force_rebuild_window and self._display_cache_ready(local_b, base_global, R, max_batch):
-            self._last_batch = b
-            return
-
-        # ★ 窗口口径统一: [b-R, b+R], 前后各 R 个, 共 2R+1 张。
-        #   extract_end / stitch_end / window_start / window_end 必须一致,
-        #   否则会出现"磁盘上少一张"的情况:
-        #     - stitch_end 比 window_end 小 -> 历史帧不拼接 (少一张)
-        #     - 短路检查不含 b-R -> 清理删掉 b-R 后永远补不回来 (少一张)
-        window_start = max(0, local_b - R)
-        window_end = min(local_b + R, max_batch - 1)
-        extract_end = window_end
-        stitch_end = window_end
-        extract_threads = getattr(self.executor, "_max_workers", 0)
-        stitch_threads = getattr(self.stitch_executor, "_max_workers", 0)
-        if not hasattr(self.shared_config, "cache_img") or self.shared_config.cache_img is None:
-            self.shared_config.cache_img = []
-        required_len = (base_global + window_end + 1) if parallel_to_seq else (window_end + 1)
-        if len(self.shared_config.cache_img) < required_len:
-            self.shared_config.cache_img.extend([None] * (required_len - len(self.shared_config.cache_img)))
-
-        if force_rebuild_window:
-            # 上下文变化: 所有已拼接批次作废(内存 + 磁盘)
-            self._invalidate_stitch_cache()
-
-        # 1. 当前帧：先同步抽帧 + 同步拼接，保证回退/跳页时目标帧立刻可用
-        global_local = (base_global + local_b) if parallel_to_seq else local_b
-        self._ensure_batch_extracted(video_idx, local_b, wait=True)
-        if self._cached_batch_path(global_local) is None:
-            self._stitch_batch(video_idx, local_b, global_local)
-
-        # 2. 历史帧：命中缓存直接跳过（回退时基本都是命中），未命中才同步补齐，
-        #    放在当前帧之后处理，避免为了预热历史帧而拖慢本次显示。
-        for t in range(window_start, local_b):  # 不含当前帧
-            self._ensure_batch_extracted(video_idx, t, wait=True)
-            global_t = (base_global + t) if parallel_to_seq else t
-            if self._cached_batch_path(global_t) is None:
-                self._stitch_batch(video_idx, t, global_t)
-
-        # 3. 未来帧：异步抽帧 + 抽完自动拼接
-        #    ★ 整个窗口 [b-R, b+R] 都必须拼接，包括两端。
-        for t in range(local_b + 1, window_end + 1):
-            global_t = (base_global + t) if parallel_to_seq else t
-            result = self._ensure_batch_extracted(video_idx, t, wait=False)
-            if self._should_schedule_stitch(global_t):
-                if isinstance(result, Future):
-                    result.add_done_callback(partial(self._post_extract_stitch, video_idx, t, global_t))
-                else:
-                    self._schedule_stitch(video_idx, t, global_t)
-
-        start_tuple = self._batch_range(n, k, window_start)
-        end_tuple = self._batch_range(n, k, window_end)
-        keep_start_idx = start_tuple[0] if start_tuple and start_tuple[0] is not None else 0
-        keep_end_idx = (end_tuple[1] + 1) if end_tuple and end_tuple[1] is not None else keep_start_idx
-        self._cleanup_out_of_range_cache(video_idx, keep_start_idx, keep_end_idx)
-        self._debug_video(f"[CacheSchedule] done batch={b} window=[{window_start},{window_end}] extract_threads={extract_threads} stitch_threads={stitch_threads} keep_frame_range=[{keep_start_idx},{keep_end_idx})")
-
-        # **清理窗口外的磁盘缓存**
-        # 用户期望窗口: [b-R, b+R] (2R+1 张, 含历史帧)
-        # ★ 磁盘文件名用的是"全局批次号":
-        #     - 普通单视频: 局部号 == 全局号
-        #     - 并行转串行: 全局号 = base_global + 局部号
-        #   清理范围必须用全局号算, 否则会删掉刚写好的文件 / 留下该删的文件。
-        #   同时要用 window_end (已按视频长度截断), 保证收尾帧附近的范围不会溢出。
-        disk_lo = (base_global + window_start) if parallel_to_seq else window_start
-        disk_hi = (base_global + window_end) if parallel_to_seq else window_end
-        self._cleanup_disk_cache_out_of_window(int(disk_lo), int(disk_hi))
+        direction = -1 if int(getattr(cfg, "play_direction", 1)) < 0 else 1
+        # Inner forward, inner backward, outer forward, outer backward.
+        stages = []
+        for first, last in ((1, inner), (inner + 1, max(b - lo, hi - b))):
+            for sign in (direction, -direction):
+                stages.append([b + sign * d for d in range(first, last + 1)
+                               if lo <= b + sign * d <= hi])
+        for batches in stages:
+            if serial != self._cache_request_serial or token != self._window_token:
+                return
+            needed = [t for t in batches if self._cached_batch_path(t, validate=False) is None]
+            runs = {}
+            for batch in needed:
+                for vid, local in sources(batch):
+                    runs.setdefault(vid, []).append(local)
+            for vid, locals_ in runs.items():
+                self._queue_extract_run(vid, min(locals_), max(locals_), token, cfg)
+            for batch in needed:
+                self._queue_window_stitch(batch, sources(batch), token)
         self._last_batch = b
-        self._mark_batch_processed()
+        ui = self._ui()
+        if (ui is not None and hasattr(ui, '_video_frame_ready')
+                and serial == self._cache_request_serial and int(self.shared_config.batch_idx) == b
+                and self._cached_batch_path(b, validate=False) is not None):
+            wx.CallAfter(ui._video_frame_ready, b, token)
 
-    def _update_cache_multi_video(self, global_batch: int, window_radius: int, count_per_action: int, force_rebuild: bool):
-        video_paths = getattr(self.shared_config, "video_path", [])
-        num_videos = len(video_paths)
-        if num_videos == 0:
-            return
-
-        max_batches = []
-        video_frame_counts = []
-        for vid in range(num_videos):
-            n = int(self.shared_config.video_num_list[vid]) if vid < len(self.shared_config.video_num_list) else 0
-            video_frame_counts.append(n)
-            if n > 0:
-                max_batches.append((n + count_per_action - 1) // count_per_action)
-            else:
-                max_batches.append(0)
-
-        global_max_batch = max(max_batches) if max_batches else 0
-        if global_max_batch <= 0:
-            self._set_video_status("Video batch invalid: no available batches")
-            return
-
-        global_b = global_batch if global_batch < global_max_batch else (global_max_batch - 1)
-        window_start = max(0, global_b - window_radius)
-        window_end = min(global_max_batch - 1, global_b + window_radius)
-        if window_end < window_start:
-            window_end = window_start
-
-        cache = getattr(self.shared_config, "cache_img", None)
-        if cache is None:
-            self.shared_config.cache_img = cache = []
-        if len(cache) <= window_end:
-            cache.extend([None] * (window_end + 1 - len(cache)))
-
-        if force_rebuild:
-            # 上下文变化: 所有已拼接批次作废(内存 + 磁盘)
-            self._invalidate_stitch_cache()
-        elif self._display_cache_ready(global_b, 0, window_radius, global_max_batch):
-            # ★ 同上: 缓存已热时直接返回, 不做任何抽帧检查 / 拼接 / 窗口清理
-            return
-
-        extract_threads = getattr(self.executor, "_max_workers", 0)
-        stitch_threads = getattr(self.stitch_executor, "_max_workers", 0)
-
-        def queue_extracts(batch):
-            futures = []
-            for vid, max_b in enumerate(max_batches):
-                if max_b <= 0 or batch >= max_b:
+    def _trim_video_window(self):
+        """Scan and mutate files on workers; state locks never span file I/O."""
+        with self._cache_guard:
+            token = self._window_token
+            window = self._stitch_window
+            raw_windows = dict(self._raw_windows)
+            config = copy.copy(self.shared_config)
+        for path in self.disk_cache_dir.glob("batch_*.png"):
+            try:
+                idx = int(path.stem.split('_')[1])
+                with self._cache_io_lock:
+                    with self._cache_guard:
+                        if token != self._window_token or window != self._stitch_window:
+                            return
+                        cache = self.shared_config.cache_img
+                        remove = not window[0] <= idx <= window[1] or idx >= len(cache) or cache[idx] != str(path)
+                    if remove:
+                        path.unlink()
+                        with self._cache_guard:
+                            if cache is self.shared_config.cache_img and idx < len(cache):
+                                cache[idx] = None
+            except (OSError, ValueError):
+                pass
+        for vid, directory in enumerate(config.video_path):
+            start, end = raw_windows.get(vid, (0, 0))
+            names = {self._filename_converter(i, vid, config) for i in range(start, end)}
+            for path in Path(directory).glob("*.jpeg"):
+                if path.name.startswith("__tmp_") or path.name in names:
                     continue
-                result = self._ensure_batch_extracted(vid, batch, wait=False)
-                if isinstance(result, Future):
-                    futures.append(result)
-            return futures
+                with self._cache_io_lock:
+                    with self._cache_guard:
+                        if token != self._window_token or raw_windows != self._raw_windows:
+                            return
+                    try:
+                        path.unlink()
+                    except OSError:
+                        pass
 
-        # Handle the requested batch first. Submit all videos before waiting so
-        # the extraction pool can work on several streams at the same time.
-        if self._cached_batch_path(global_b) is None:
-            target_futures = queue_extracts(global_b)
-            for fut in target_futures:
-                fut.result()
-            self._stitch_batch_multi(global_b)
-
-        # Prefetch the whole window [global_b - R, global_b + R].
-        # ★ 以前只沿播放方向预取, 而且最远端 (distance == window_radius) 只抽帧不拼接,
-        #   于是磁盘上的拼接图永远比窗口少一张。这里改成整个窗口都排上拼接任务,
-        #   方向无关, 全部异步, 不阻塞当前帧显示。
-        for batch in range(window_start, window_end + 1):
-            if batch == global_b:
+        # Retire obsolete directories quickly, then delete them without holding
+        # the state lock. Both resolved targets must remain inside cache_dir.
+        root = self.cache_dir.resolve()
+        reserved = {Path(p).resolve() for p in config.video_path}
+        reserved.update((self.disk_cache_dir.resolve(), self.image_disk_cache_dir.resolve()))
+        try:
+            directories = list(self.cache_dir.iterdir())
+        except OSError:
+            return
+        for directory in directories:
+            if not directory.is_dir() or directory.resolve().parent != root:
                 continue
-            if self._cached_batch_path(batch) is not None:
+            if directory.resolve() in reserved:
                 continue
-            extract_futures = queue_extracts(batch)
-            self._schedule_stitch_multi(batch, extract_futures)
-
-        for vid, max_b in enumerate(max_batches):
-            if max_b <= 0:
+            retired = self.cache_dir / f"__discard_{os.getpid()}_{time.time_ns()}"
+            if retired.resolve().parent != root:
                 continue
-            local_b = global_b if global_b < max_b else (max_b - 1)
-            local_start = max(0, local_b - window_radius)
-            local_end = min(max_b - 1, local_b + window_radius)
-            if local_end < local_start:
-                local_end = local_start
-            start_tuple = self._batch_range(video_frame_counts[vid], count_per_action, local_start)
-            end_tuple = self._batch_range(video_frame_counts[vid], count_per_action, local_end)
-            keep_start_idx = start_tuple[0] if start_tuple and start_tuple[0] is not None else 0
-            keep_end_idx = (end_tuple[1] + 1) if end_tuple and end_tuple[1] is not None else keep_start_idx
-            self._cleanup_out_of_range_cache(vid, keep_start_idx, keep_end_idx)
+            with self._cache_io_lock:
+                with self._cache_guard:
+                    if token != self._window_token:
+                        return
+                try:
+                    directory.rename(retired)
+                except OSError:
+                    continue
+                if token != self._window_token:
+                    if not directory.exists():
+                        retired.rename(directory)
+                    return
+            shutil.rmtree(str(retired), ignore_errors=True)
 
-        self._debug_video(
-            f"[CacheSchedule](multi-video) done batch={global_batch} window=[{window_start},{window_end}] "
-            f"extract_threads={extract_threads} stitch_threads={stitch_threads}"
-        )
+    def _schedule_video_cleanup(self):
+        with self._cache_guard:
+            if getattr(self, '_closed', False):
+                return
+            self._cleanup_revision = getattr(self, "_cleanup_revision", 0) + 1
+            if self._cleanup_future is None or self._cleanup_future.done():
+                def drain():
+                    while True:
+                        with self._cache_guard:
+                            revision = self._cleanup_revision
+                        self._trim_video_window()
+                        with self._cache_guard:
+                            if revision == self._cleanup_revision:
+                                self._cleanup_future = None
+                                return
+                self._cleanup_future = self._maintenance_executor.submit(drain)
 
-        # **清理窗口外的磁盘缓存 (多视频路径补漏)**
-        # 窗口: [global_b - R, global_b + R],与单视频路径保持一致。
-        self._cleanup_disk_cache_out_of_window(int(window_start), int(window_end))
+    def _queue_extract_run(self, vid, first, last, token, config=None):
+        """Coalesce unclaimed neighboring batches into one decoder invocation."""
+        futures = []
+        config = self.shared_config if config is None else config
+        k = max(1, int(config.count_per_action))
+        n = int(config.video_num_list[vid])
+        missing = {}
+        for local in range(first, last + 1):
+            start, end = self._batch_range(n, k, local)
+            missing[local] = bool(self._list_missing_range(vid, start, end, config))
+        with self._cache_guard:
+            if token != self._window_token:
+                return []
+            run = []
+
+            def submit():
+                if not run:
+                    return
+                keys = tuple((vid, t) for t in run)
+                start = run[0] * k
+                end = min(n - 1, (run[-1] + 1) * k - 1)
+                path = config.real_video_path[vid]
+
+                def extract():
+                    self._worker_context.token = token
+                    try:
+                        with self._cache_guard:
+                            keep_start, keep_end = self._raw_windows.get(vid, (0, 0))
+                            active_start, active_end = max(start, keep_start), min(end, keep_end - 1)
+                        if token == self._window_token and active_start <= active_end:
+                            self._save_frame(path, active_start, active_end, vid, config=config)
+                    finally:
+                        self._schedule_video_cleanup()
+                        del self._worker_context.token
+
+                future = self.executor.submit(extract)
+                for key in keys:
+                    self._pending_extract[key] = future
+                futures.append(future)
+
+                def done(completed):
+                    with self._cache_guard:
+                        for key in keys:
+                            if self._pending_extract.get(key) is completed:
+                                self._pending_extract.pop(key, None)
+                future.add_done_callback(done)
+                run.clear()
+
+            for local in range(first, last + 1):
+                pending = self._pending_extract.get((vid, local))
+                if pending is not None or not missing[local]:
+                    submit()
+                    if pending is not None:
+                        futures.append(pending)
+                else:
+                    run.append(local)
+            submit()
+        return futures
+
+    def _run_window_stitch(self, batch, sources, token):
+        with self._cache_guard:
+            lo, hi = self._stitch_window
+            if token != self._window_token or not lo <= batch <= hi:
+                return
+            if self._cached_batch_path(batch, validate=False) is not None:
+                return
+            # Do not publish incomplete multi-video composites after decode failure.
+            config = copy.copy(self.shared_config)
+            snapshot = self._render_snapshot
+            single = config.parallel_to_sequential or len(config.video_path) == 1
+        k = max(1, int(config.count_per_action))
+        for vid, local in sources:
+            start, end = self._batch_range(int(config.video_num_list[vid]), k, local)
+            if self._list_missing_range(vid, start, end, config):
+                return
+        groups = [self._collect_batch_frame_paths(vid, local, config) for vid, local in sources]
+        # No cache guard spans pixel processing or PNG compression.
+        started = time.perf_counter()
+        if snapshot is None:
+            # Compatibility for headless owners providing a pure compose method.
+            ui = self._ui()
+            pil_img, flag = ui.compose_current_frame(batch, flist=groups[0] if single else groups)
+            state = {}
+        else:
+            template, points, custom = snapshot
+            manager = template.video_stitch_snapshot()
+            manager.set_action_count(batch)
+            flist = groups[0] if single else groups
+            if custom:
+                manager.layout_params[32] = True
+                manager.stitch_images(0, copy.deepcopy(points), flist=flist)
+                manager.layout_params[32] = False
+            flag = manager.stitch_images(0, copy.deepcopy(points), flist=flist)
+            pil_img = manager.show_stitch_img_and_customfunc_img(custom) if flag == 0 else None
+            state = {name: getattr(manager, name) for name in (
+                'xy_grid', 'xy_grids_id_list', 'crop_points', 'img_resolution_origin',
+                'img_resolution_show', 'gap_color', 'title_setting', 'pdf_title_layers',
+                '_last_title_layout', 'flist', '_flist_groups',
+            ) if hasattr(manager, name)}
+        if pil_img is None or flag != 0:
+            self._set_video_status(f"Video stitch failed: batch={batch}, flag={flag}")
+            return
+        temporary = self.disk_cache_dir / f"__tmp_batch_{batch}_{threading.get_ident()}_{time.time_ns()}.png"
+        try:
+            pil_img.save(str(temporary), format='PNG', compress_level=1)
+            with self._cache_io_lock:
+                with self._cache_guard:
+                    lo, hi = self._stitch_window
+                    if token != self._window_token or not lo <= batch <= hi:
+                        return
+                destination = self._get_disk_cache_path(batch)
+                os.replace(str(temporary), str(destination))
+                with self._cache_guard:
+                    lo, hi = self._stitch_window
+                    valid = token == self._window_token and lo <= batch <= hi
+                    if valid:
+                        self.shared_config.cache_img[batch] = str(destination)
+                        self._batch_render_states[batch] = state
+                        for old_batch in list(self._batch_render_states):
+                            if not lo <= old_batch <= hi:
+                                self._batch_render_states.pop(old_batch, None)
+                        self.perf_monitor.record_stitch(time.perf_counter() - started)
+                if not valid:
+                    destination.unlink()
+                    return
+            ui = self._ui()
+            if (ui is not None and hasattr(ui, "_video_frame_ready")
+                    and int(self.shared_config.batch_idx) == batch):
+                wx.CallAfter(ui._video_frame_ready, batch, token)
+        finally:
+            try:
+                temporary.unlink()
+            except OSError:
+                pass
+
+    def _queue_window_stitch(self, batch, sources, token):
+        with self._cache_guard:
+            lo, hi = self._stitch_window
+            if getattr(self, '_closed', False) or token != self._window_token or not lo <= batch <= hi:
+                return
+            key = (token, batch)
+            if key in self._window_stitches:
+                return
+            dependencies = set(self._pending_extract.get((vid, local)) for vid, local in sources)
+            dependencies.discard(None)
+
+            def stitch():
+                try:
+                    for future in dependencies:
+                        future.result()
+                    self._run_window_stitch(batch, sources, token)
+                except Exception as ex:
+                    self._debug_video(f"[WindowStitch] batch={batch}: {ex}")
+
+            future = self.stitch_executor.submit(stitch)
+            self._window_stitches[key] = future
+            with self._pending_lock:
+                self._pending_stitch_async += 1
+
+            def done(completed):
+                with self._cache_guard:
+                    self._window_stitches.pop(key, None)
+                with self._pending_lock:
+                    self._pending_stitch_async = max(0, self._pending_stitch_async - 1)
+            future.add_done_callback(done)
+
+    @staticmethod
+    def _prepare_video_image(path, gap_color):
+        """Decode, trim and create RGBA bytes in a worker, with no wx calls."""
+        with Image.open(path) as opened:
+            original = opened.convert('RGBA')
+        image = original
+        try:
+            arr = np.array(original, dtype=np.uint8)
+            bg_rgb = np.array(gap_color[:3], dtype=np.int16)
+            content = (np.max(np.abs(arr[:, :, :3].astype(np.int16) - bg_rgb), axis=2) > 6) & (arr[:, :, 3] > 8)
+            if np.any(content):
+                h, w = content.shape
+                ys_thr = np.where(content.sum(axis=1) > max(12, int(w * 0.01)))[0]
+                xs_thr = np.where(content.sum(axis=0) > max(12, int(h * 0.01)))[0]
+                ys_any = np.where(content.any(axis=1))[0]
+                xs_any = np.where(content.any(axis=0))[0]
+                if ys_any.size and xs_any.size:
+                    y0 = int(ys_thr[0]) if ys_thr.size else int(ys_any[0])
+                    x0 = int(xs_thr[0]) if xs_thr.size else int(xs_any[0])
+                    image = original.crop((x0, y0, int(xs_any[-1]) + 1, int(ys_any[-1]) + 1))
+        except Exception:
+            pass
+        return original, image, image.tobytes()
+
+    def shutdown(self):
+        """Invalidate callbacks and stop accepting work without waiting on the GUI."""
+        with self._cache_guard:
+            self._window_token = None
+            self._display_serial += 1
+            self._closed = True
+        kwargs = {'wait': False}
+        if sys.version_info >= (3, 9):
+            kwargs['cancel_futures'] = True
+        for pool in (self._cache_executor, self.executor, self.stitch_executor, self._maintenance_executor, self._display_executor):
+            if pool is not None:
+                pool.shutdown(**kwargs)
 
     def _ensure_batch_extracted(self, video_idx: int, local_b: int, wait: bool = True):
         n = self.shared_config.video_num_list[video_idx]
@@ -1201,21 +1425,22 @@ class VideoManager:
 
     def _cleanup_dead_directories(self):
         """Delete directories that are no longer in the current video_path list."""
-        current_video_dirs = set(self.shared_config.video_path)
+        current_video_dirs = {Path(p).resolve() for p in self.shared_config.video_path}
 
         for item in self.cache_dir.iterdir():
-            if item.is_dir() and str(item) not in current_video_dirs:
+            if item.is_dir() and item.resolve() not in current_video_dirs:
                 # Never delete the stitch_cache directory itself
-                if item.resolve() == self.disk_cache_dir.resolve():
+                if item.resolve() in (self.disk_cache_dir.resolve(), self.image_disk_cache_dir.resolve()):
                     continue
                 shutil.rmtree(str(item))
 
-    def _filename_converter(self, input_value, video_idx):
+    def _filename_converter(self, input_value, video_idx, config=None):
         '''Bidirectional conversion: logical index <-> timestamp/frame filename.'''
+        config = config if config is not None else self.shared_config
         if isinstance(input_value, int):
-            step = self.shared_config.skip_frames + 1
+            step = config.skip_frames + 1
             phys_idx = input_value * step
-            fps = float(self.shared_config.video_fps_list[video_idx] or 0)
+            fps = float(config.video_fps_list[video_idx] or 0)
             fps_int = max(1, int(round(fps))) if fps > 0 else 1
             fps_safe = fps if fps > 0 else float(fps_int)
 
@@ -1246,11 +1471,16 @@ class VideoManager:
             else:
                 return int(input_value.split('.')[0])
 
-    def _save_frame(self, video_path, frame_start, frame_end, video_idx, max_retries=1):
+    def _save_frame(self, video_path, frame_start, frame_end, video_idx, max_retries=1, config=None):
         '''Extract and save frames with ffmpeg.'''
-        step = self.shared_config.skip_frames + 1
-        start_time = time.time()
-        cache_dir = self.shared_config.video_path[video_idx]
+        config = config if config is not None else copy.copy(self.shared_config)
+        token = getattr(self._worker_context, "token", None)
+        if token is not None and token != self._window_token:
+            return
+        step = config.skip_frames + 1
+        start_time = time.perf_counter()
+        cache_dir = config.video_path[video_idx]
+        filename_for = lambda idx: self._filename_converter(idx, video_idx, config)
         #b4 修改  去掉这个缩放耦合，让抽帧永远保持原始分辨率
         #target_size = 256
         #enable_debug_scale = bool(getattr(self.shared_config, "debug_video", False))
@@ -1262,7 +1492,7 @@ class VideoManager:
         def list_missing(a, b):
             miss = []
             for idx in range(a, b + 1):
-                dst = os.path.join(cache_dir, self._filename_converter(idx, video_idx))
+                dst = os.path.join(cache_dir, filename_for(idx))
                 try:
                     if (not os.path.exists(dst)) or os.path.getsize(dst) == 0:
                         miss.append(idx)
@@ -1282,8 +1512,10 @@ class VideoManager:
         def extract_ranges(ranges, allow_fast_seek=True):
             nonlocal last_error
             for s, e in ranges:
+                if token is not None and token != self._window_token:
+                    return
                 if fast_seek and allow_fast_seek:
-                    fps = float(self.shared_config.video_fps_list[video_idx])
+                    fps = float(config.video_fps_list[video_idx])
                     suffix = f"{os.getpid()}_{threading.get_ident()}_{time.time_ns()}"
                     tmp_prefix = f"__tmp_{video_idx}_{suffix}_"
                     owned_tmp_prefixes.append(tmp_prefix)
@@ -1297,6 +1529,7 @@ class VideoManager:
                         cmd.extend(["-vf", f"select=not(mod(n\\,{step}))"])
                     cmd.extend([
                         "-vsync", "0", "-frames:v", str(e - s + 1),
+                        "-threads:v", "1",
                         "-q:v", "6", "-start_number", str(s), "-y", tmp_tpl,
                     ])
                     try:
@@ -1308,32 +1541,6 @@ class VideoManager:
                             last_error = (cp.stderr or cp.stdout or "").strip() or f"ffmpeg exit code {cp.returncode}"
                     except Exception as ex:
                         last_error = str(ex)
-                elif not has_ffmpeg_input:
-                    fps = float(self.shared_config.video_fps_list[video_idx] or 0)
-                    fps_safe = fps if fps > 0 else 25.0
-                    for idx in range(s, e + 1):
-                        dst = os.path.join(cache_dir, self._filename_converter(idx, video_idx))
-                        if os.path.exists(dst) and os.path.getsize(dst) > 0:
-                            continue
-                        physical_frame = idx * step
-                        timestamp = physical_frame / fps_safe
-                        cmd = [
-                            "ffmpeg",
-                            "-v", "error",
-                            "-ss", f"{timestamp:.6f}",
-                            "-i", str(video_path),
-                            "-frames:v", "1",
-                            "-q:v", "6",
-                            "-y", dst,
-                        ]
-                        try:
-                            cp = subprocess.run(cmd, capture_output=True, encoding="utf-8", errors="replace", check=False)
-                            if cp.returncode != 0:
-                                last_error = (cp.stderr or cp.stdout or "").strip() or f"ffmpeg exit code {cp.returncode}"
-                        except Exception as ex:
-                            last_error = str(ex)
-                    continue
-
                 if not (fast_seek and allow_fast_seek):
                     physical_frames = []
                     for logical_idx in range(s, e + 1):
@@ -1364,19 +1571,31 @@ class VideoManager:
 
                         #b4 修改
 
-                        stream = (
-                            ffmpeg
-                            .input(str(video_path))
-                            .filter('select', sel)
-                        )
+                        stream = None
+                        if has_ffmpeg_input:
+                            stream = ffmpeg.input(str(video_path), threads=1).filter('select', sel)
 
-                        (
-                            stream
-                            .output(tmp_tpl, vsync='vfr', **{'q:v': 6}, start_number=s)
-                            .global_args('-threads', '1', '-hide_banner', '-loglevel', 'error')
-                            .overwrite_output()
-                            .run(quiet=True)
-                        )
+                        if has_ffmpeg_input:
+                            (
+                                stream
+                                .output(tmp_tpl, vsync='vfr', vframes=e - s + 1, threads=1, **{'q:v': 6}, start_number=s)
+                                .global_args('-threads', '1', '-hide_banner', '-loglevel', 'error')
+                                .overwrite_output()
+                                .run(quiet=True)
+                            )
+                        else:
+                            # Keep absolute frame indexing even without ffmpeg-python.
+                            cmd = [
+                                'ffmpeg', '-hide_banner', '-loglevel', 'error',
+                                '-threads', '1', '-i', str(video_path), '-map', '0:v:0',
+                                '-vf', 'select=' + sel.replace(',', r'\,'),
+                                '-vsync', '0', '-frames:v', str(e - s + 1),
+                                '-threads:v', '1',
+                                '-q:v', '6', '-start_number', str(s), '-y', tmp_tpl,
+                            ]
+                            cp = subprocess.run(cmd, capture_output=True, encoding='utf-8', errors='replace', check=False)
+                            if cp.returncode:
+                                last_error = cp.stderr or cp.stdout
                     except Exception as ex:
                         last_error = str(ex)
                         self._debug_video(f"[Extract] error: ffmpeg processing failed, reason={ex}")
@@ -1413,9 +1632,21 @@ class VideoManager:
                         except Exception:
                             pass
                         continue
-                    dst = os.path.join(cache_dir, self._filename_converter(idx, video_idx))
+                    dst = os.path.join(cache_dir, filename_for(idx))
                     try:
-                        os.replace(src, dst)
+                        with self._cache_io_lock:
+                            with self._cache_guard:
+                                keep_start, keep_end = self._raw_windows.get(video_idx, (0, 0))
+                                valid = token is None or (token == self._window_token and keep_start <= idx < keep_end)
+                            if valid:
+                                os.replace(src, dst)
+                                with self._cache_guard:
+                                    keep_start, keep_end = self._raw_windows.get(video_idx, (0, 0))
+                                    valid = token is None or (token == self._window_token and keep_start <= idx < keep_end)
+                                if not valid:
+                                    os.remove(dst)
+                            else:
+                                os.remove(src)
                     except Exception:
                         try:
                             os.remove(src)
@@ -1423,11 +1654,15 @@ class VideoManager:
                             pass
 
         missing = list_missing(frame_start, frame_end)
+        k = max(1, int(config.count_per_action))
+        requested_batches = len({idx // k for idx in missing})
         if missing:
             extract_ranges(chunks(missing))
 
         attempt = 0
         while attempt < max_retries:
+            if token is not None and token != self._window_token:
+                break
             missing = list_missing(frame_start, frame_end)
             if not missing:
                 break
@@ -1437,7 +1672,7 @@ class VideoManager:
             attempt += 1
 
         missing = list_missing(frame_start, frame_end)
-        if missing:
+        if missing and (token is None or token == self._window_token):
             detail = f"video={video_idx}, miss={missing[:5]}"
             if last_error:
                 detail = f"{detail}, err={last_error}"
@@ -1452,8 +1687,9 @@ class VideoManager:
         except Exception:
             pass
 
-        end_time = time.time()
-        self.perf_monitor.record_extract(end_time - start_time)
+        if requested_batches and (token is None or token == self._window_token):
+            self.perf_monitor.record_extract(time.perf_counter() - start_time,
+                                             requested_batches, video_idx)
 
     def collect_video_paths(self, dlg, selection_type):
         '''Collect video file paths for different selection modes.'''
@@ -1561,11 +1797,12 @@ class VideoManager:
                     wx.CallAfter(ui._reset_image_view_origin)
         return self.shared_config.real_video_path
 
-    def _collect_batch_frame_paths(self, video_idx: int, batch_idx: int):
-        if video_idx >= len(getattr(self.shared_config, "video_path", [])):
+    def _collect_batch_frame_paths(self, video_idx: int, batch_idx: int, config=None):
+        config = self.shared_config if config is None else config
+        if video_idx >= len(getattr(config, "video_path", [])):
             return []
-        n = int(self.shared_config.video_num_list[video_idx]) if video_idx < len(self.shared_config.video_num_list) else 0
-        k = max(1, int(getattr(self.shared_config, "count_per_action", 1)))
+        n = int(config.video_num_list[video_idx]) if video_idx < len(config.video_num_list) else 0
+        k = max(1, int(getattr(config, "count_per_action", 1)))
         if n <= 0:
             return []
         max_batch = (n + k - 1) // k if n > 0 else 0
@@ -1576,13 +1813,14 @@ class VideoManager:
         if cs is None or ce is None or cs > ce:
             return []
 
-        v_dir = self.shared_config.video_path[video_idx]
+        v_dir = config.video_path[video_idx]
         frames = []
-        for idx in range(cs, ce + 1):
-            fn = self._filename_converter(idx, video_idx)
-            p = os.path.join(v_dir, fn)
-            if os.path.exists(p):
-                frames.append(p)
+        with self._cache_io_lock:
+            for idx in range(cs, ce + 1):
+                fn = self._filename_converter(idx, video_idx, config)
+                p = os.path.join(v_dir, fn)
+                if os.path.exists(p):
+                    frames.append(p)
         return frames
 
     def _should_schedule_stitch(self, global_idx: int):
@@ -1833,18 +2071,22 @@ class VideoManager:
         end = min(n - 1, start + k - 1)
         return (start, end)
 
-    def _list_missing_range(self, video_idx, a, b):
+    def _list_missing_range(self, video_idx, a, b, config=None):
         if a is None or b is None or a > b:
             return []
-        cache_dir = os.path.abspath(self.shared_config.video_path[video_idx])
+        config = self.shared_config if config is None else config
+        cache_dir = os.path.abspath(config.video_path[video_idx])
         miss = []
-        for idx in range(a, b + 1):
-            filename = self._filename_converter(idx, video_idx)
-            path = os.path.join(cache_dir, filename)
-            ok = os.path.exists(path)
-            sz = (os.path.getsize(path) if ok else -1)
-            if not ok or sz <= 0:
-                miss.append(idx)
+        with self._cache_io_lock:
+            for idx in range(a, b + 1):
+                filename = self._filename_converter(idx, video_idx, config)
+                path = os.path.join(cache_dir, filename)
+                try:
+                    size = os.path.getsize(path)
+                except OSError:
+                    size = 0
+                if size <= 0:
+                    miss.append(idx)
         return miss
 
 try:
@@ -2004,6 +2246,7 @@ class MulimgViewer (MulimgViewerGui):
                 setattr(self, legacy_name, getattr(self, current_name))
 
     def _bind_compat_events(self):
+        self.row_col1.Bind(wx.EVT_TEXT, self._on_interval_text_edited)
         if hasattr(self, "title_exif"):
             self.title_exif.Bind(wx.EVT_CHECKBOX, self.on_title_exif_changed)
 
@@ -2040,6 +2283,7 @@ class MulimgViewer (MulimgViewerGui):
             ("m_textCtrl28", self.on_interval_changed),
             ("m_textCtrl29", self.on_thread_change),
             ("m_textCtrl30", self.on_cache_num_change),
+            ("cache_multiplier", self.on_cache_num_change),
             ("m_textCtrl281", self.on_skip_changed),
         ]
         for field_name, handler in video_field_handlers:
@@ -2100,23 +2344,38 @@ class MulimgViewer (MulimgViewerGui):
             if raw:
                 try:
                     value = int(float(raw)) if integer else float(raw)
-                except (TypeError, ValueError):
+                except (TypeError, ValueError, OverflowError):
                     value = default
             try:
+                if not math.isfinite(value):
+                    value = default
                 value = max(minimum, value)
             except (TypeError, ValueError):
                 value = default
             return value
 
         # ---- 播放间隔 ----
-        interval = _read_number(self.m_textCtrl28, 1.0, 0.05, integer=False)
+        interval = _read_number(self.row_col1, 1.0,
+                                0.001 if self.shared_config.video_mode else 0.05, integer=False)
+        if self.shared_config.video_mode:
+            interval = math.ceil(interval * 1000 - 1e-9) / 1000.0
+            if (getattr(self, '_interval_user_edited', False)
+                    or abs(float(self.shared_config.interval) - interval) > 1e-9):
+                self.shared_config.manual_interval = interval
+            self._interval_user_edited = False
+            manual = self.shared_config.manual_interval
+            if manual is not None:
+                interval = max(manual, self.shared_config.interval_recommend or 0.0)
         if abs(float(self.shared_config.interval) - interval) > 1e-9:
             self.shared_config.interval = interval
             # 播放中改间隔, 立即重启 timer 让新值生效
             if getattr(self.shared_config, "is_playing", False):
                 try:
-                    self.play_timer.Stop()
-                    self.play_timer.Start(int(interval * 1000), oneShot=False)
+                    if self.shared_config.video_mode:
+                        if not getattr(self, '_play_timer_suspended', False):
+                            self._schedule_next_video_tick()
+                    else:
+                        self.play_timer.Start(max(1, math.ceil(interval * 1000)), oneShot=False)
                 except Exception:
                     pass
 
@@ -2133,6 +2392,7 @@ class MulimgViewer (MulimgViewerGui):
 
         # ---- Cached Frames (缓存帧数) ----
         self.shared_config.cache_num = _read_number(self.m_textCtrl30, 2, 1)
+        self.shared_config.cache_multiplier = _read_number(self.cache_multiplier, 1, 1)
 
         # ---- Skip Frame (跳过帧数) ----
         skip = _read_number(self.m_textCtrl281, 0, 0)
@@ -2143,11 +2403,15 @@ class MulimgViewer (MulimgViewerGui):
         for field, value in ((self.m_textCtrl28, self.shared_config.interval),
                               (self.m_textCtrl29, self.shared_config.thread),
                               (self.m_textCtrl30, self.shared_config.cache_num),
+                              (self.cache_multiplier, self.shared_config.cache_multiplier),
                               (self.m_textCtrl281, self.shared_config.skip_frames)):
             try:
                 text = str(value)
                 if str(field.GetValue()).strip() != text:
-                    field.SetValue(text)
+                    if field is self.row_col1:
+                        field.ChangeValue(text)
+                    else:
+                        field.SetValue(text)
             except Exception:
                 pass
 
@@ -2251,8 +2515,99 @@ class MulimgViewer (MulimgViewerGui):
             if getattr(self.shared_config, "debug_video", False):
                 print(f"[VideoMode] auto refresh after mode switch failed: {ex}")
 
+    def _capture_video_render_snapshot(self):
+        """Capture wx controls on the GUI thread; workers use a private model."""
+        vm = self.video_manager
+        if len(self.ImgManager.layout_params) <= 32:
+            self.show_img_init()
+        custom = bool(self.show_custom_func.GetValue())
+        key = (repr(self.ImgManager.layout_params), repr(self.xy_magnifier), custom,
+               vm._cache_context_token())
+        if vm._render_snapshot is None or key != getattr(vm, '_render_snapshot_key', None):
+            vm._render_snapshot = (self.ImgManager.video_stitch_snapshot(),
+                                   copy.deepcopy(self.xy_magnifier), custom)
+            vm._render_snapshot_key = key
+
+    def _video_frame_ready(self, batch, token):
+        if (not getattr(self, '_is_closing', False) and self.shared_config.video_mode
+                and self.video_manager._window_token == token
+                and int(self.shared_config.batch_idx) == batch):
+            self.show_img()
+
+    def _request_video_display(self, batch, path):
+        """Prepare a PNG in a worker; only the latest request may paint."""
+        vm = self.video_manager
+        token = vm._window_token
+        key = (batch, path, token)
+        if key == getattr(self, '_video_display_key', None):
+            self._resume_play_timer_after_wait()
+            return
+        if key == getattr(vm, '_display_key', None) and getattr(vm, '_display_delivery_pending', False):
+            return
+        vm._display_serial += 1
+        serial = vm._display_serial
+        vm._display_key = key
+        vm._display_delivery_pending = True
+        if vm._display_future is not None:
+            vm._display_future.cancel()
+        if self.shared_config.is_playing:
+            self._suspend_play_timer_for_wait()
+        gap_color = tuple(self.ImgManager.gap_color)
+        def prepare():
+            started = time.perf_counter()
+            pixels = vm._prepare_video_image(path, gap_color)
+            return pixels, time.perf_counter() - started
+        future = vm._display_executor.submit(prepare)
+        vm._display_future = future
+        owner_ref = weakref.ref(self)
+
+        def done(completed):
+            if completed.cancelled():
+                return
+            try:
+                result, error = completed.result(), None
+            except Exception as ex:
+                result, error = None, str(ex)
+            def deliver():
+                owner = owner_ref()
+                if (owner is None or getattr(owner, '_is_closing', False)
+                        or not owner.shared_config.video_mode
+                        or serial != vm._display_serial or token != vm._window_token
+                        or int(owner.shared_config.batch_idx) != batch):
+                    return
+                if error:
+                    vm._display_delivery_pending = False
+                    with vm._cache_guard:
+                        cache = owner.shared_config.cache_img
+                        if 0 <= batch < len(cache) and cache[batch] == path:
+                            cache[batch] = None
+                    owner.SetStatusText_(['-1', '-1', f'***Load cache failed: {error}***', '-1'])
+                    vm.update_cache()
+                    if owner.shared_config.is_playing:
+                        owner._schedule_frame_wait()
+                    return
+                pixels, load_cost = result
+                original, prepared, rgba = pixels
+                paint_started = time.perf_counter()
+                for name, value in vm._batch_render_states.get(batch, {}).items():
+                    setattr(owner.ImgManager, name, value)
+                owner.ImgManager.img = original
+                owner.show_bmp_in_panel = original
+                owner.img_size = original.size
+                owner.display_bitmap(True, prepared, prepared_rgba=rgba)
+                owner._video_display_key = key
+                vm._display_delivery_pending = False
+                vm.perf_monitor.record_display(load_cost + time.perf_counter() - paint_started)
+                if owner.shared_config.is_playing and vm.perf_monitor.push_render_event(
+                        batch, owner.shared_config.play_direction):
+                    vm._mark_batch_processed()
+                owner._cancel_pending_frame_wait()
+                owner._resume_play_timer_after_wait()
+            wx.CallAfter(deliver)
+        future.add_done_callback(done)
+
     def _rebuild_video_cache_for_batch(self, batch_idx):
-        """当前批次没有可用缓存时, 主动重建(抽帧 + 拼接), 返回缓存 PNG 路径。
+        """安排后台拆帧和拼接；当前批次已经就绪时返回缓存 PNG 路径。
 
         返回 None 表示无法重建(未选视频 / 抽帧失败 / 拼接失败)。
         """
@@ -2283,12 +2638,12 @@ class MulimgViewer (MulimgViewerGui):
         if vm is None:
             return None
         try:
-            return vm._cached_batch_path(int(batch_idx))
+            return vm._cached_batch_path(int(batch_idx), validate=False)
         except Exception:
             return None
 
     def _rebuild_video_cache_and_show(self):
-        """视频模式下：重建当前批次缓存后再显示（供 CallAfter 延迟调用）。"""
+        """安排当前批次后台重建，并显示已有画面或等待状态。"""
         if getattr(self, "_is_closing", False):
             return
         if not getattr(self.shared_config, "video_mode", False):
@@ -2303,12 +2658,18 @@ class MulimgViewer (MulimgViewerGui):
     # def on_interval_changed(self, event):
     #     self.shared_config.interval = float(self.m_textCtrl28.GetValue() or 1.0)
     #b1 修改
+    def _on_interval_text_edited(self, event):
+        self._interval_user_edited = True
+        event.Skip()
+
     def on_interval_changed(self, event):
         # 统一走 _commit_video_settings (读框 -> 校验 -> 归一化 -> 写回)
         self._commit_video_settings()
         event.Skip()
 
     def toggle_play(self, event):
+        if self.shared_config.video_mode:
+            self._commit_video_settings()
         self.shared_config.is_playing = not self.shared_config.is_playing
 
         if self.shared_config.is_playing:
@@ -2316,8 +2677,13 @@ class MulimgViewer (MulimgViewerGui):
                 self.last_direction = 1
             self.shared_config.play_direction = getattr(self, "last_direction", 1)
         if self.shared_config.is_playing:
-            interval = float(self.m_textCtrl28.GetValue() or 1.0)
-            self.play_timer.Start(int(interval * 1000), oneShot=False)
+            self._play_timer_suspended = False
+            self._video_tick_started_at = None
+            if self.shared_config.video_mode:
+                self._schedule_next_video_tick()
+            else:
+                interval = float(self.m_textCtrl28.GetValue() or 1.0)
+                self.play_timer.Start(max(1, math.ceil(interval * 1000)), oneShot=False)
             label = "⏸"
         else:
             self.play_timer.Stop()
@@ -2327,17 +2693,45 @@ class MulimgViewer (MulimgViewerGui):
         if vm:
             vm.perf_monitor.reset_render_clock()
             vm.perf_monitor.render_history.clear()
+            if self.shared_config.is_playing and self.shared_config.video_mode:
+                vm._maybe_evaluate_performance(force=True)
 
         self.right_arrow_button1.SetLabel(label)
 
     def on_play_timer(self, event):
         if self.shared_config.is_playing:
+            if self.shared_config.video_mode:
+                if getattr(self, '_play_timer_suspended', False):
+                    return
+                self._video_tick_started_at = time.perf_counter()
             self._from_timer = True
-            if self.shared_config.play_direction >= 0:
-                self.next_img(None)  # Forward playback
-            else:
-                self.last_img(None)  # Reverse playback
-            self._from_timer = False
+            try:
+                if self.shared_config.play_direction >= 0:
+                    self.next_img(None)  # Forward playback
+                else:
+                    self.last_img(None)  # Reverse playback
+            finally:
+                self._from_timer = False
+
+    def _schedule_next_video_tick(self):
+        """Pace request-to-request, subtracting time already spent on this frame."""
+        if (not self.shared_config.is_playing or getattr(self, '_is_closing', False)
+                or getattr(self, '_play_timer_suspended', False)):
+            return
+        started = getattr(self, '_video_tick_started_at', None)
+        elapsed = max(0.0, time.perf_counter() - started) if started is not None else 0.0
+        delay = max(0.0, float(self.shared_config.interval) - elapsed)
+        self._video_timer_generation = getattr(self, '_video_timer_generation', 0) + 1
+        # A positive native timer gives paint/input/idle events a chance to run;
+        # chaining CallAfter indefinitely can keep the GUI queue continuously busy.
+        self.play_timer.Start(min(2147483647, max(1, math.ceil(delay * 1000 - 1e-9))), oneShot=True)
+
+    def _dispatch_video_tick(self, generation):
+        if (generation == getattr(self, '_video_timer_generation', None)
+                and self.shared_config.video_mode and self.shared_config.is_playing
+                and not getattr(self, '_is_closing', False)
+                and not getattr(self, '_play_timer_suspended', False)):
+            self.on_play_timer(None)
 
     def parallel_sequential_fc(self, event):
         self.shared_config.parallel_sequential = self.parallel_sequential.GetValue()
@@ -2369,6 +2763,7 @@ class MulimgViewer (MulimgViewerGui):
         if getattr(self, "_play_timer_suspended", False):
             return
         self._play_timer_suspended = True
+        self._video_timer_generation = getattr(self, '_video_timer_generation', 0) + 1
         try:
             self.play_timer.Stop()
         except Exception:
@@ -2381,8 +2776,11 @@ class MulimgViewer (MulimgViewerGui):
         self._play_timer_suspended = False
         if getattr(self.shared_config, "is_playing", False):
             try:
-                interval_ms = max(1, int(float(self.shared_config.interval) * 1000))
-                self.play_timer.Start(interval_ms)
+                if self.shared_config.video_mode:
+                    self._schedule_next_video_tick()
+                else:
+                    interval_ms = max(1, math.ceil(float(self.shared_config.interval) * 1000))
+                    self.play_timer.Start(interval_ms)
             except Exception:
                 pass
 
@@ -2418,7 +2816,6 @@ class MulimgViewer (MulimgViewerGui):
 
             if self._video_cached_batch_path(target_batch) is not None:
                 # 目标帧终于就绪，恢复播放并展示
-                self._resume_play_timer_after_wait()
                 self.show_img()
             elif attempt >= max_attempts:
                 # 等太久了: 恢复 timer, 由下一拍继续尝试, 不再原地卡住播放
@@ -2759,13 +3156,7 @@ class MulimgViewer (MulimgViewerGui):
 
         # Release thread pools
         if hasattr(self, "video_manager"):
-            shutdown_kwargs = {"wait": False}
-            if sys.version_info >= (3, 9):
-                shutdown_kwargs["cancel_futures"] = True
-            if hasattr(self.video_manager, "executor") and self.video_manager.executor:
-                self.video_manager.executor.shutdown(**shutdown_kwargs)
-            if hasattr(self.video_manager, "stitch_executor") and self.video_manager.stitch_executor:
-                self.video_manager.stitch_executor.shutdown(**shutdown_kwargs)
+            self.video_manager.shutdown()
 
         # Release the image-mode stitch pool
         self._shutdown_image_stitch_executor()
@@ -3034,7 +3425,7 @@ class MulimgViewer (MulimgViewerGui):
             if self.shared_config.batch_idx > 0:
                 self.shared_config.batch_idx -= 1
 
-            # ★ 修改：异步更新缓存，让UI立即响应而不是阻塞
+            # CallAfter defers lightweight scheduling on the GUI thread.
             wx.CallAfter(self.video_manager.update_cache)
 
         if self.shared_config.video_mode:
@@ -3399,6 +3790,8 @@ class MulimgViewer (MulimgViewerGui):
                 cache[i] = None
         self._last_refresh_batch = None
         vm = getattr(self, "video_manager", None)
+        if vm is not None:
+            vm._invalidate_stitch_cache()
         if vm is not None and hasattr(vm, "_last_batch"):
             vm._last_batch = None
 
@@ -3412,6 +3805,9 @@ class MulimgViewer (MulimgViewerGui):
         """
         vm = getattr(self, "video_manager", None)
 
+        if vm is not None:
+            vm._invalidate_stitch_cache()
+
         # 1. Clear in-memory stitch cache (list of PNG paths from video mode)
         self.shared_config.cache_img = []
 
@@ -3423,7 +3819,7 @@ class MulimgViewer (MulimgViewerGui):
             if hasattr(vm, "_meta_cache") and isinstance(vm._meta_cache, dict):
                 vm._meta_cache.clear()
             try:
-                pending_lock = getattr(vm, "_pending_lock", None)
+                pending_lock = getattr(vm, "_cache_guard", None)
                 if pending_lock is not None:
                     with pending_lock:
                         for fut in list(getattr(vm, "_pending_extract", {}).values()):
@@ -4588,21 +4984,13 @@ class MulimgViewer (MulimgViewerGui):
             # 避免旧尺寸的拼接帧被后续 show_img/update_cache 错误复用
             if layout_token != getattr(self, "_video_layout_token", None):
                 try:
-                    if not hasattr(self.shared_config, "cache_img") or self.shared_config.cache_img is None:
+                    if vm is not None:
+                        vm._invalidate_stitch_cache()
+                    elif not hasattr(self.shared_config, "cache_img") or self.shared_config.cache_img is None:
                         self.shared_config.cache_img = []
                     else:
                         for i in range(len(self.shared_config.cache_img)):
                             self.shared_config.cache_img[i] = None
-                except Exception:
-                    pass
-                # 清空视频模式磁盘缓存 (stitch_cache/batch_*.png)
-                try:
-                    if vm is not None and hasattr(vm, "disk_cache_dir") and vm.disk_cache_dir.exists():
-                        for cache_file in vm.disk_cache_dir.glob("batch_*.png"):
-                            try:
-                                cache_file.unlink()
-                            except Exception:
-                                pass
                 except Exception:
                     pass
                 # 强制 video_manager 在下次 update_cache 中重建窗口
@@ -4838,7 +5226,7 @@ class MulimgViewer (MulimgViewerGui):
             #   可能已经失效, 这里统一判定为"无缓存", 交给下面的重建流程, 避免 Load cache failed。
             cache_entry = self._video_cached_batch_path(b)
 
-            # ★ 当前批次没有可用缓存时（非播放状态）主动重建一次。
+            # 当前批次未就绪且暂停时，安排后台重建；完成回调负责显示。
             #   典型场景：从图片模式切到视频模式、或刚选完视频时，
             #   show_img_init() 会因布局参数变化清空视频缓存，
             #   导致首帧缺失而一直停在 "Waiting for batch N"，必须手动刷新才恢复。
@@ -4848,10 +5236,8 @@ class MulimgViewer (MulimgViewerGui):
             if cache_entry is not None:
                 # cache_entry 是文件路径字符串
                 try:
-                    pil_img = Image.open(cache_entry)
                     self.shared_config.video_last_message = ""
-
-                    self.display_bitmap(True, pil_img)
+                    self._request_video_display(b, cache_entry)
 
                     # 更新状态栏（保留 FPS 计算逻辑，但不显示）
                     self.SetStatusText_([
@@ -5403,7 +5789,7 @@ class MulimgViewer (MulimgViewerGui):
     #     wx.CallAfter(self.scrolledWindow_img.Scroll, 0, 0)
     #     self.scrolledWindow_img.Refresh()
 
-    def display_bitmap(self, video_mode, pil_img):
+    def display_bitmap(self, video_mode, pil_img, prepared_rgba=None):
         dbg_batch = int(getattr(self.shared_config, "batch_idx", -1))
 
         if pil_img is None and video_mode:
@@ -5414,7 +5800,7 @@ class MulimgViewer (MulimgViewerGui):
             pil_img = cache[b]
 
         try:
-            if video_mode and pil_img is not None:
+            if video_mode and pil_img is not None and prepared_rgba is None:
                 arr = np.array(pil_img.convert("RGBA"), dtype=np.uint8)
                 bg_rgb = np.array(self.ImgManager.gap_color[:3], dtype=np.int16)
                 rgb = arr[:, :, :3].astype(np.int16)
@@ -5452,12 +5838,16 @@ class MulimgViewer (MulimgViewerGui):
         self._last_display_logical_size = logical_size
 
         # ★ Freeze 必须在一切 layout 操作之前，否则无效
+        bmp = (wx.Bitmap.FromBufferRGBA(logical_w, logical_h, prepared_rgba)
+               if prepared_rgba is not None else self.ImgManager.ImgF.PIL2wx(pil_img))
+        frozen = False
         try:
-            self.scrolledWindow_img.Freeze()
+            if size_changed:
+                self.scrolledWindow_img.Freeze()
+                frozen = True
         except Exception:
             pass
 
-        bmp = self.ImgManager.ImgF.PIL2wx(pil_img)
         self._set_placeholder_visible(False)
 
         if hasattr(self, "img_last") and self.img_last:
@@ -5495,7 +5885,8 @@ class MulimgViewer (MulimgViewerGui):
         self.position = [0, 0]
 
         try:
-            self.scrolledWindow_img.Thaw()
+            if frozen:
+                self.scrolledWindow_img.Thaw()
         except Exception:
             pass
         # ★ 删除 Refresh()：Thaw() 本身触发延迟重绘，再调 Refresh() 造成第二次绘制
@@ -6082,6 +6473,8 @@ def main(img_list, save_path, name_list=None, algorithm_name="{algorithm_name}")
     def _set_placeholder_visible(self, visible: bool):
         if not hasattr(self, "m_staticText1") or not self.m_staticText1:
             return
+        if getattr(self, '_placeholder_visible', None) == bool(visible):
+            return
         try:
             if visible:
                 self.m_staticText1.Show()
@@ -6089,6 +6482,7 @@ def main(img_list, save_path, name_list=None, algorithm_name="{algorithm_name}")
                 self.m_staticText1.Hide()
             self.scrolledWindow_img.GetSizer().Layout()
             self.scrolledWindow_img.Layout()
+            self._placeholder_visible = bool(visible)
         except Exception:
             pass
 
@@ -6102,6 +6496,8 @@ def main(img_list, save_path, name_list=None, algorithm_name="{algorithm_name}")
     def _ensure_img_bindings(self):
         if not getattr(self, "img_last", None):
             return
+        if getattr(self, '_img_bindings_target', None) is self.img_last:
+            return
         self.img_last.Bind(wx.EVT_LEFT_DOWN, self.img_left_click)
         self.img_last.Bind(wx.EVT_LEFT_DCLICK, self.img_left_dclick)
         self.img_last.Bind(wx.EVT_MOTION, self.img_left_move)
@@ -6110,6 +6506,7 @@ def main(img_list, save_path, name_list=None, algorithm_name="{algorithm_name}")
         self.img_last.Bind(wx.EVT_MOUSEWHEEL, self.img_wheel)
         self.img_last.Bind(wx.EVT_KEY_DOWN, self.key_down_detect)
         self.img_last.Bind(wx.EVT_KEY_UP, self.key_up_detect)
+        self._img_bindings_target = self.img_last
 
     def disable_accel(self, event):
         self.SetAcceleratorTable(wx.NullAcceleratorTable)

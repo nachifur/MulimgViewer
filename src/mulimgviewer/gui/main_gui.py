@@ -573,6 +573,14 @@ class MulimgViewerGui ( wx.Frame ):
 		self.row_col12 = wx.TextCtrl( self.m_panel4, wx.ID_ANY, u"2", wx.DefaultPosition, wx.Size( 40,-1 ), 0 )
 		wSizer12.Add( self.row_col12, 0, wx.ALL, 5 )
 
+		self.m_staticText46 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Cache Multiplier", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText46.Wrap( -1 )
+
+		wSizer12.Add( self.m_staticText46, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+
+		self.cache_multiplier = wx.TextCtrl( self.m_panel4, wx.ID_ANY, u"1", wx.DefaultPosition, wx.Size( 40,-1 ), 0 )
+		wSizer12.Add( self.cache_multiplier, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+
 		self.m_staticText243 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Skip Frame", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText243.Wrap( -1 )
 

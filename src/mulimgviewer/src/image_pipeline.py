@@ -45,6 +45,7 @@ class ImagePipeline:
         self.last_error = None
         self._pump_queued = False
         self._legacy_cleaned = False
+        self._published_files = {}
 
     def _schedule(self):
         with self.lock:
@@ -118,13 +119,14 @@ class ImagePipeline:
                 if valid:
                     self.output_pixels = max(self.output_pixels, pixels)
                     self.input_pixels = max(self.input_pixels, inputs)
-                # Temporaries have unique generation names; no stale writer can
-                # overwrite a fresh selection's cache.
+                # Workers write generation-specific temporaries; only this
+                # coordinator publishes validated results to the shared filenames.
                 self.lock.release()
                 try:
                     if valid:
-                        path = self.directory / f'image_{generation}_batch_{batch}.png'
+                        path = self.directory / f'batch_{batch}.png'
                         os.replace(temporary, path)
+                        self._published_files[path] = path.stat()
                     else:
                         Path(temporary).unlink(missing_ok=True)
                 except OSError as exc:
@@ -168,12 +170,26 @@ class ImagePipeline:
                         legacy.rmdir()  # Only remove an empty legacy cache folder.
                     except OSError:
                         pass
-                for path in self.directory.glob('image_*_batch_*.png'):
-                    if str(path) not in keep:
+                # Retire legacy names once; new files share the video's naming
+                # format. Only delete PNGs published by this pipeline, and leave
+                # replacements by the video writer untouched after a mode switch.
+                if not getattr(self, '_names_migrated', False):
+                    for path in self.directory.glob('image_*_batch_*.png'):
                         try:
                             path.unlink(missing_ok=True)
                         except OSError:
                             pass
+                    self._names_migrated = True
+                for path, published in list(self._published_files.items()):
+                    if str(path) not in keep:
+                        try:
+                            current = path.stat()
+                            if (current.st_dev, current.st_ino, current.st_mtime_ns, current.st_size) == (
+                                    published.st_dev, published.st_ino, published.st_mtime_ns, published.st_size):
+                                path.unlink(missing_ok=True)
+                        except OSError:
+                            pass
+                        self._published_files.pop(path, None)
             finally:
                 self.lock.acquire()
             self.retired_pools = [pool for pool in self.retired_pools

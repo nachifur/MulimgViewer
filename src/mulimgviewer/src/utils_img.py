@@ -688,6 +688,7 @@ class ImgManager(ImgData):
         self.custom_resolution = False
         self.img_num = 0
         self.format_group = [".png", ".jpg", ".jpeg", ".bmp", ".tiff", ".tif",".PNG", ".JPG", ".JPEG", ".BMP", ".TIFF", ".TIF"]
+        self.title_max_size = [0, 0]  # No title has been measured before the first page.
         self.crop_points = []
         self.draw_points = []
         self.ImgF = ImgUtils()
@@ -2157,12 +2158,12 @@ class ImgManager(ImgData):
             scale = [show_scale[0]/show_scale_old[0],
                      show_scale[1]/show_scale_old[1]]
 
-            offset = [self.title_max_size[0]+self.layout_params[3]
-                      [4], self.title_max_size[1]+self.layout_params[3][5]]
-
             if crop_point_scale[6]:
-                crop_point[1] = crop_point[1]-offset[1]
-                crop_point[3] = crop_point[3]-offset[1]
+                # A box drawn below a title uses the title geometry of the
+                # displayed page, preserved in video render snapshots.
+                offset_y = self.title_max_size[1] + self.layout_params[3][5]
+                crop_point[1] -= offset_y
+                crop_point[3] -= offset_y
 
             crop_point[0] = int(crop_point[0]*scale[0])
             crop_point[1] = int(crop_point[1]*scale[1])

@@ -249,7 +249,7 @@ class SharedConfig:
         self.cache_img = [] #Position to store stitched images
         self.image_cache_img = [] #Image mode stitch cache False
         self.image_cache_paths = [] #Image mode cache path list
-        self.image_disk_cache_dir = "Video_frames/stitch_cache"
+        self.image_disk_cache_dir = "cache_frames/stitch_cache"
         self.debug_video = False #Video mode debug output
         self.debug_image = False #Image mode debug output
         self.debug_thread = False #Thread debug output
@@ -263,9 +263,9 @@ class VideoManager:
         self._owner = weakref.ref(owner)
         self.shared_config = shared_config
         self.ImgManager = ImgManager
-        self.cache_dir = Path("Video_frames")
+        self.cache_dir = Path("cache_frames")
         # 新增：磁盘缓存目录
-        self.disk_cache_dir = Path("Video_frames") / "stitch_cache"
+        self.disk_cache_dir = Path("cache_frames") / "stitch_cache"
         self.disk_cache_dir.mkdir(parents=True, exist_ok=True)
         # 新增：图像模式磁盘缓存目录
         self.image_disk_cache_dir = self.disk_cache_dir
@@ -1584,13 +1584,21 @@ class VideoManager:
 
         # Retire obsolete directories quickly, then delete them without holding
         # the state lock. Both resolved targets must remain inside cache_dir.
-        root = self.cache_dir.resolve()
-        reserved = {Path(p).resolve() for p in config.video_path}
-        reserved.update((self.disk_cache_dir.resolve(), self.image_disk_cache_dir.resolve()))
+        reserved_paths = [Path(p) for p in config.video_path]
+        reserved_paths.extend((self.disk_cache_dir, self.image_disk_cache_dir))
+        # Active directories need no filesystem canonicalization on every
+        # refill. Unknown candidates still receive ALL resolved-path safety
+        # checks before any rename/delete, including aliases/junctions.
+        reserved_names = {os.path.normcase(os.path.abspath(p)) for p in reserved_paths}
         try:
-            directories = list(self.cache_dir.iterdir())
+            directories = [p for p in self.cache_dir.iterdir()
+                           if os.path.normcase(os.path.abspath(p)) not in reserved_names]
         except OSError:
             return
+        if not directories:
+            return
+        root = self.cache_dir.resolve()
+        reserved = {p.resolve() for p in reserved_paths}
         for directory in directories:
             if not directory.is_dir() or directory.resolve().parent != root:
                 continue
@@ -1781,7 +1789,7 @@ class VideoManager:
             pil_img = manager.show_stitch_img_and_customfunc_img(custom) if flag == 0 else None
             state = {name: getattr(manager, name) for name in (
                 'xy_grid', 'xy_grids_id_list', 'crop_points', 'img_resolution_origin',
-                'img_resolution_show', 'gap_color', 'title_setting', 'pdf_title_layers',
+                'img_resolution_show', 'gap_color', 'title_setting', 'title_max_size', 'pdf_title_layers',
                 '_last_title_layout', 'flist', '_flist_groups',
             ) if hasattr(manager, name)}
         if pil_img is None or flag != 0:
@@ -4129,7 +4137,7 @@ class MulimgViewer (MulimgViewerGui):
         gc.collect()
 
         # ★ 修复：用 try/except 包装 rmtree，避免目录被线程持有时抛出未捕获异常
-        cache_base = "Video_frames"
+        cache_base = "cache_frames"
         try:
             if os.path.isdir(cache_base):
                 shutil.rmtree(cache_base, ignore_errors=False)
@@ -4758,7 +4766,7 @@ class MulimgViewer (MulimgViewerGui):
         """Clear every piece of local state owned by video mode.
 
         Called when leaving video mode for image mode so that stale video
-        stitches (in-memory PNG paths and on-disk Video_frames/stitch_cache
+        stitches (in-memory PNG paths and on-disk cache_frames/stitch_cache
         files) cannot leak into the image-mode render path or get re-displayed
         if the user toggles video mode back on without a fresh selection.
         """

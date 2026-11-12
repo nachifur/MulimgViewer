@@ -18,6 +18,7 @@ from reportlab.pdfgen import canvas
 from reportlab.lib.utils import ImageReader
 from reportlab.pdfbase import pdfmetrics
 
+from .video_memory import LazyVideoImage
 from .data import ImgData
 from .utils import rgb2hex
 from .custom_func.main import get_available_algorithms
@@ -461,6 +462,9 @@ class ImgUtils():
             i += 1
 
         # Construct a blank image
+        memory_limit = getattr(getattr(self,'manager',None), '_video_memory_budget', None)
+        if memory_limit is not None and target_width * target_height * 16 > memory_limit:
+            raise MemoryError('Video canvas exceeds the memory budget; reduce preview size or layout')
         img = Image.new('RGBA', (target_width, target_height), gap_color)
 
         # Fill the image
@@ -916,6 +920,9 @@ class ImgManager(ImgData):
                     pil_img = Image.fromarray(img)
                     img_list.append(pil_img.convert('RGB'))
                     self.full_exif_cache[i] = {"raw_exif": {}, "formatted_exif": {}, "has_exif": False}
+                elif getattr(self, '_video_lazy_frames', False) and not show_custom_func:
+                    img_list.append(LazyVideoImage(path, getattr(self, '_video_pixel_provider', None)))
+                    self.full_exif_cache[i] = {'raw_exif': {}, 'formatted_exif': {}, 'has_exif': False}
                 else:
                     img = Image.open(path).convert('RGB')
                     img_list.append(img)

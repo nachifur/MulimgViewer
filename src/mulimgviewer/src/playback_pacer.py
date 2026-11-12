@@ -83,8 +83,8 @@ class PlaybackPacer:
             self._context(context)
             self.last_request = current
             lo, hi = window
-            self.pending = {batch for batch in self.pending if lo <= batch <= hi}
             wanted = set(wanted)
+            self.pending = {batch for batch in self.pending if lo <= batch <= hi and batch in wanted}
             if not self.pending:
                 self.active_since = self.checkpoint = now if wanted else None
                 self.produced = 0

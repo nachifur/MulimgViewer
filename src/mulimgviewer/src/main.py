@@ -30,6 +30,10 @@ from .image_pipeline import ImagePipeline
 from .memory_reclaim import MemoryReclaimer
 from .video_tools import resolve_video_tools
 from .resource_monitor import ResourceMonitor, run_video_process
+from .pipeline_executor import PipelineWorkers
+from .admission_optimizer import AdaptiveAdmissionBudget
+from .video_decoder import DecoderBank
+from .video_memory import PixelCache
 from .playback_pacer import PlaybackPacer, ProductionJob, completion_estimates, refill_guard
 from .thread_optimizer import (AdaptiveThreadAllocator, optimize_thread_allocation,
                                available_memory_bytes, stitch_memory_limit, buffer_levels, buffer_priority)
@@ -268,6 +272,8 @@ class VideoManager:
         self.image_disk_cache_dir.mkdir(parents=True, exist_ok=True)
         self.perf_monitor = PerformanceMonitor()
         self._playback_pacer = PlaybackPacer()
+        self._admission_optimizer = AdaptiveAdmissionBudget()
+        self._produced_pages = 0
         self._pacing_model_period = None
         self._pacing_notification_pending = False
         self.executor = None
@@ -277,7 +283,12 @@ class VideoManager:
         self._video_dimensions = {}
         self._fast_seek_paths = {}
         self._pending_extract = {}
+        self._raw_batch_futures = {}
+        self._pixel_cache = PixelCache()
+        self._decoder_bank = DecoderBank()
+        self._configure_video_memory()
         self._cache_guard = threading.RLock()
+        self._raw_io_locks = {}
         self._cache_io_lock = threading.RLock()
         self._cache_request_lock = threading.Lock()
         self._cache_executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix='video-schedule')
@@ -404,6 +415,10 @@ class VideoManager:
         self._window_generation = getattr(self, "_window_generation", 0) + 1
         self._window_token = None
         self._raw_ready_batches = set()
+        for future in self._raw_batch_futures.values():
+            future.cancel()
+        self._raw_batch_futures.clear()
+        self._pixel_cache.clear()
         self.shared_config.cache_img = []
         self._display_serial += 1
         self._render_snapshot = None
@@ -513,21 +528,61 @@ class VideoManager:
     def _clear_video_status(self):
         self._set_video_message("")
 
+    def _raw_io_lock(self, video_idx, config=None):
+        config = self.shared_config if config is None else config
+        directory = os.path.normcase(os.path.abspath(config.video_path[video_idx]))
+        with self._cache_guard:
+            lock = self._raw_io_locks.get(directory)
+            if lock is None:
+                lock = self._raw_io_locks[directory] = threading.RLock()
+            return lock
+
+    def _configure_video_memory(self):
+        budget = getattr(self.shared_config, 'memory_budget', None)
+        # Optional accelerators are SMALL byte caps, never the whole outer
+        # window. Disk-backed originals/PNGs remain authoritative.
+        self._pixel_cache.configure(min(256 * 1024**2, int(budget * .08)) if budget else 0)
+        self._decoder_bank.configure(min(1024 * 1024**2, int(budget * .20)) if budget else 64 * 1024**2)
+        maintenance = getattr(self, '_maintenance_executor', None)
+        if maintenance is not None and not getattr(self, '_closed', False):
+            maintenance.submit(self._decoder_bank.trim)
+
     def _initialize_thread_pools(self):
-        retired = getattr(self, '_retired_pools', [])
-        self._retired_pools = [pool for pool in retired
-                              if any(thread.is_alive() for thread in pool._threads)]
-        if self.executor:
-            self.executor.shutdown(wait=False)
-            self._retired_pools.append(self.executor)
-        if self.stitch_executor:
-            self.stitch_executor.shutdown(wait=False)
-            self._retired_pools.append(self.stitch_executor)
-        self.executor = ThreadPoolExecutor(max_workers=self._extract_threads)
-        self.stitch_executor = ThreadPoolExecutor(max_workers=self._stitch_threads)
-        self._reported_extract_threads = False
-        self._reported_stitch_threads = False
+        group = getattr(self, '_pipeline_workers', None)
+        if group is None:
+            group = self._pipeline_workers = PipelineWorkers(self._extract_threads, self._stitch_threads)
+            self.executor, self.stitch_executor = group.stages
+        output, inputs = self._estimated_stitch_pixels()
+        group.configure(self._extract_threads, self._stitch_threads, self._planning_memory_budget(),
+                        (self._decoder_working_set(), max(64 * 1024**2, 16*output + 9*inputs)),
+                        total_budget=self._admission_limit())
         self._publish_thread_allocation()
+
+    def _admission_limit(self):
+        cfg = self.shared_config
+        indices, _ = self._playback_video_indices()
+        budget = max(2, int(cfg.thread))
+        # Single-video native decode parallelism is already tuned separately.
+        # Probe only producer concurrency; never change playback timing here.
+        return self._admission_optimizer.configure(
+            budget, (self._pacing_context(), tuple(indices)),
+            enabled=cfg.video_mode and cfg.power_mode >= 3 and len(indices) >= 2 and budget >= 4,
+            warmup=max(8, 2*int(cfg.cache_num)*int(cfg.cache_multiplier)+1))
+
+    def _maybe_tune_admission(self):
+        cfg = self.shared_config
+        if not cfg.video_mode or not cfg.is_playing:
+            return
+        self._admission_limit()
+        with self._cache_guard:
+            produced = self._produced_pages
+        manual = getattr(cfg, 'manual_interval', None)
+        changed = self._admission_optimizer.observe(
+            time.perf_counter(), produced, self._compute_buffer_depth(),
+            target_buffer=max(1, int(cfg.cache_num)),
+            manual_limited=manual is not None and cfg.interval <= max(.001,manual)*1.05)
+        if changed is not None:
+            self._initialize_thread_pools()
 
     def _publish_thread_allocation(self):
         self.shared_config.thread_allocation = dict(
@@ -690,72 +745,21 @@ class VideoManager:
             self._apply_thread_plan(extract_threads, stitch_threads)
 
     def _request_thread_plan(self, extract, stitch):
-        """Queue a resize barrier on the cache coordinator, never on the GUI."""
+        # Existing tasks retain their permits until finished. New admissions
+        # immediately follow the new stage quotas and shared total budget.
+        # There is no cancel/drain/rebuild barrier on the cache coordinator.
         with self._cache_guard:
             if getattr(self, '_closed', False):
                 return
-            self._pending_thread_plan = (extract, stitch, int(self.shared_config.thread),
-                                         getattr(self, '_window_generation', 0), self._thread_allocator)
-            executor = getattr(self, '_cache_executor', None)
-            if executor is not None and not getattr(self, '_rebalance_queued', False):
-                self._rebalance_queued = True
-                executor.submit(self._rebalance_thread_pools)
+            self._pending_thread_plan = None
+            self._rebalance_queued = False
+            self._apply_thread_plan(extract, stitch)
+            self._cooldown_deadline = time.perf_counter() + 2.0
 
     def _rebalance_thread_pools(self):
-        """Stop adding jobs, drain producers, then replace pools within budget."""
-        canceled_request = None
-        reschedule = False
-        resize_started = time.perf_counter()
-        try:
-            while True:
-                with self._cache_guard:
-                    request = getattr(self, '_pending_thread_plan', None)
-                    if request is None:
-                        return
-                    extract, stitch, budget, generation, allocator = request
-                    if (getattr(self, '_closed', False) or budget != int(self.shared_config.thread)
-                            or generation != getattr(self, '_window_generation', 0)
-                            or allocator is not self._thread_allocator):
-                        self._pending_thread_plan = None
-                        return
-                # Let a new cold jump establish its window before draining, so
-                # resizing cannot hold a navigation request behind old prefetch.
-                latest = getattr(self, '_cache_request', None)
-                if latest is not None:
-                    lo, hi = self._stitch_window
-                    if not lo <= int(latest[1].batch_idx) <= hi:
-                        return
-                with self._cache_guard:
-                    if request is not canceled_request:
-                        # Preserve running work and completed PNGs, but do not
-                        # drain the entire queued outer window on old quotas.
-                        queued = set(self._pending_extract.values()) | set(self._window_stitches.values())
-                        for future in queued:
-                            future.cancel()
-                        canceled_request = request
-                        reschedule = True
-                    futures = {future for future in
-                               set(self._pending_extract.values()) | set(self._window_stitches.values())
-                               if not future.done()}
-                if not futures:
-                    break
-                wait(futures, timeout=0.1)
-            with self._cache_guard:
-                if (request == self._pending_thread_plan and budget == int(self.shared_config.thread)
-                        and generation == getattr(self, '_window_generation', 0)
-                        and allocator is self._thread_allocator and not getattr(self, '_closed', False)):
-                    self._apply_thread_plan(extract, stitch)
-                    with self.perf_monitor._lock:
-                        self.perf_monitor.resize_history.append(time.perf_counter() - resize_started)
-                    self._cooldown_deadline = time.perf_counter() + 2.0
-                    self._pending_thread_plan = None
-        finally:
-            self._rebalance_queued = False
-            if reschedule and not getattr(self, '_closed', False):
-                config = copy.copy(self.shared_config)
-                for name in ('video_path', 'real_video_path', 'video_num_list', 'video_fps_list'):
-                    setattr(config, name, tuple(getattr(config, name)))
-                self._enqueue_cache_config(config, only_if_empty=True)
+        # Compatibility with old queued coordinator callbacks.
+        self._pending_thread_plan = None
+        self._rebalance_queued = False
 
     def _apply_interval_recommendation(self, recommended, reschedule=True):
         ui = self._ui()
@@ -851,6 +855,7 @@ class VideoManager:
     def _mark_batch_processed(self):
         self.perf_monitor.mark_processed_batch()
         self._record_buffer_depth()
+        self._maybe_tune_admission()
         self._maybe_evaluate_performance()
         self._refresh_playback_interval()
 
@@ -872,7 +877,7 @@ class VideoManager:
             timing = dict(getattr(future, 'video_timing', {}))
             return ProductionJob(future, timing.get('queued_at', now), timing.get('started_at'),
                 timing.get('expected_seconds') or max(.001, default),
-                tuple(getattr(future, 'video_dependencies', ())))
+                tuple(getattr(dep, 'video_parent', dep) for dep in getattr(future, 'video_dependencies', ())))
         inputs = completion_estimates([describe(f, raw_default) for f in raw], self._extract_threads, now)
         outputs = completion_estimates([describe(f, stitch_default) for f in stitched], self._stitch_threads, now, inputs)
         return outputs.get(target)
@@ -918,7 +923,7 @@ class VideoManager:
     def _decoder_working_set(self):
         dimensions = getattr(self, '_video_dimensions', {})
         pixels = max((int(w) * int(h) for w, h in dimensions.values()), default=1920 * 1080)
-        return max(64 * 1024 ** 2, pixels * 16)
+        return max(64 * 1024 ** 2, pixels * 32)
 
     def _planning_memory_budget(self):
         memory = getattr(self.shared_config, 'memory_budget', None)
@@ -927,6 +932,7 @@ class VideoManager:
         available = available_memory_bytes()
         # Mode fractions already reserve RAM for GUI/system. Do not apply the
         # old fixed 50% reserve again, which effectively erased Maximum's gain.
+        memory = max(1, memory - getattr(getattr(self, '_pixel_cache', None), 'limit', 0) - getattr(getattr(self, '_decoder_bank', None), 'limit', 0))
         return min(memory, int(available * .9)) if available is not None else memory
 
     def _extract_memory_limit(self):
@@ -943,10 +949,33 @@ class VideoManager:
         ui = self._ui()
         size = getattr(ui, 'img_size', None) if ui is not None else None
         dimensions = getattr(self, '_video_dimensions', {})
-        pixels = sum(dimensions.get(str(path), (0, 0))[0] * dimensions.get(str(path), (0, 0))[1]
-                     for path in self.shared_config.real_video_path)
-        pixels *= max(1, int(self.shared_config.count_per_action))
-        output = int(size[0]) * int(size[1]) if size and len(size) == 2 else pixels
+        areas = [int(dimensions.get(str(path), (0, 0))[0]) * int(dimensions.get(str(path), (0, 0))[1])
+                 for path in self.shared_config.real_video_path]
+        pixels = sum(areas) * max(1, int(self.shared_config.count_per_action))
+        snapshot = getattr(self, '_render_snapshot', None)
+        lazy = snapshot is not None and not snapshot[2] and not (len(snapshot[0].layout_params)>38 and snapshot[0].layout_params[38])
+        valid_size = size is not None and len(size) == 2 and min(size) > 0
+        output = int(size[0])*int(size[1]) if valid_size else pixels
+        if lazy:
+            # [-1,-1] is the initial GUI placeholder, NOT a one-pixel canvas.
+            # A previous layout's measured size is also not evidence for the
+            # new layout. Use geometry until a page from THIS context paints.
+            pixels = max(areas, default=0)
+            display_key = getattr(ui, '_video_display_key', None)
+            same_layout = display_key is not None and getattr(self,'_window_token',None) is not None and display_key[-1] == self._window_token
+            if not valid_size or not same_layout:
+                params = snapshot[0].layout_params
+                resolution = params[6]
+                slots = max(1, len(areas)*int(self.shared_config.count_per_action))
+                grid_slots = 1
+                for grid in params[:3]:
+                    if isinstance(grid,(list,tuple)) and len(grid)==2:
+                        grid_slots *= max(1,int(grid[0]))*max(1,int(grid[1]))
+                slots = max(slots,grid_slots)
+                if len(resolution)==2 and min(resolution)>0:
+                    output = int(resolution[0])*int(resolution[1])*slots*4
+                else:
+                    output = max(areas,default=0)*slots*4
         return output, pixels or output
 
     def _stitch_thread_limit(self, maximum, extract_threads=None):
@@ -1340,8 +1369,8 @@ class VideoManager:
         """Prioritize the inner window; batch-prefetch and retain the outer window.
 
         No decoding, stitching, image loading or cleanup blocks the caller.
-        Each contiguous missing run
-        shares one extraction Future across its batches and all dependent stitches.
+        Each contiguous missing run reuses one decoder lease. Per-batch
+        completion handles release stitches before the entire run finishes.
         """
         if getattr(self, '_closed', False) or not cfg.video_mode or not cfg.video_path:
             return
@@ -1352,6 +1381,15 @@ class VideoManager:
             if ui is not None and hasattr(ui, '_rebuild_video_cache_and_show'):
                 wx.CallAfter(ui._rebuild_video_cache_and_show)
             return
+        output, inputs = self._estimated_stitch_pixels()
+        geometry = (int(self.shared_config.thread),self.shared_config.memory_budget,output,inputs)
+        if geometry != getattr(self,'_admission_geometry',None):
+            self._admission_geometry = geometry
+            if self._extract_threads+self._stitch_threads < int(self.shared_config.thread):
+                # The initial policy may have been seeded before the GUI's
+                # layout snapshot existed. Replan NOW, not after first paint.
+                self._enforce_thread_budget()
+        self._initialize_thread_pools()
         k = max(1, int(cfg.count_per_action))
         inner = max(1, int(cfg.cache_num))
         multiplier = max(1, int(getattr(cfg, "cache_multiplier", 1)))
@@ -1396,6 +1434,12 @@ class VideoManager:
                         capacity_period = min(supply, capacity_period)
                     period = max(cfg.manual_interval or .001, capacity_period)
                     guard = refill_guard(inner, multiplier, period, lead)
+                if self._decoder_bank.available:
+                    # Persistent codecs have no per-refill process startup.
+                    # Refill while the INNER edge is still R pages from the
+                    # outer edge, instead of waiting for the center to get R
+                    # pages away. Keep at least one new page per move.
+                    guard = min(outer-1, max(guard, 2*inner))
             near_edge = multiplier >= 2 and (
                 (old_lo > 0 and b - old_lo <= guard)
                 or (old_hi < total - 1 and old_hi - b <= guard)
@@ -1433,13 +1477,23 @@ class VideoManager:
             if old_lo != lo or old_hi != hi:
                 self._schedule_video_cleanup()
 
+        allowed_pixels = {str(self._get_disk_cache_path(batch)) for batch in range(lo, hi+1)}
+        for vid, (first, last) in self._raw_windows.items():
+            allowed_pixels.update(os.path.join(cfg.video_path[vid], self._filename_converter(i, vid, cfg))
+                                  for i in range(first, last))
+        self._pixel_cache.prune(allowed_pixels)
         # The GUI displays the previous frame while the requested one is prepared.
         direction = -1 if int(getattr(cfg, 'play_direction', 1)) < 0 else 1
-        wanted = [batch for batch in range(lo, hi+1)
-                  if self._cached_batch_path(batch, validate=False) is None]
-        self._playback_pacer.request(self._pacing_context(token, cfg), wanted, (lo, hi),
-                                     b, direction, time.perf_counter())
-        if self._cached_batch_path(b, validate=False) is None:
+        # Registration and PNG publication share the same state lock. A PNG
+        # finishing between the missing scan and request must not leave a
+        # phantom pending page that makes full-cache idle look like production.
+        with self._cache_guard:
+            wanted = [batch for batch in range(lo, hi+1)
+                      if self._cached_batch_path(batch, validate=False) is None]
+            self._playback_pacer.request(self._pacing_context(token, cfg), wanted, (lo, hi),
+                                         b, direction, time.perf_counter())
+        streaming = cfg.is_playing and self._decoder_bank.available
+        if not streaming and self._cached_batch_path(b, validate=False) is None:
             for vid, local in sources(b):
                 self._queue_extract_run(vid, local, local, token, cfg)
             self._queue_window_stitch(b, sources(b), token)
@@ -1454,6 +1508,11 @@ class VideoManager:
         for sign, first, last in ordering:
             stages.append([b + sign * d for d in range(first, last + 1)
                            if lo <= b + sign * d <= hi])
+        if streaming:
+            stages = [[b] + [b + direction*d for d in range(1, max(b-lo, hi-b)+1)
+                              if lo <= b + direction*d <= hi],
+                      [b - direction*d for d in range(1, max(b-lo, hi-b)+1)
+                       if lo <= b - direction*d <= hi]]
         for batches in stages:
             if serial != self._cache_request_serial or token != self._window_token:
                 return
@@ -1485,6 +1544,7 @@ class VideoManager:
         def current():
             return (token == self._window_token and generation == getattr(self, '_window_generation', 0)
                     and paths == tuple(self.shared_config.video_path))
+        self._decoder_bank.trim(set(str(p) for p in config.real_video_path))
         for path in self.disk_cache_dir.glob("batch_*.png"):
             try:
                 idx = int(path.stem.split('_')[1])
@@ -1507,7 +1567,7 @@ class VideoManager:
             for path in Path(directory).glob("*.jpeg"):
                 if path.name.startswith("__tmp_") or path.name in names:
                     continue
-                with self._cache_io_lock:
+                with self._raw_io_lock(vid, config):
                     with self._cache_guard:
                         if not current() or raw_windows != self._raw_windows:
                             return
@@ -1565,50 +1625,73 @@ class VideoManager:
                 self._cleanup_future = self._maintenance_executor.submit(drain)
 
     def _queue_extract_run(self, vid, first, last, token, config=None):
-        """Coalesce unclaimed neighboring batches into one decoder invocation."""
+        """Coalesce unknown neighboring batches and publish each batch early."""
         futures = []
         config = self.shared_config if config is None else config
         k = max(1, int(config.count_per_action))
         n = int(config.video_num_list[vid])
+        with self._cache_guard:
+            ready = set(self._raw_ready_batches)
+            pending_keys = set(self._pending_extract)
         missing = {}
         for local in range(first, last + 1):
-            start, end = self._batch_range(n, k, local)
-            missing[local] = bool(self._list_missing_range(vid, start, end, config))
+            key = (vid,local)
+            if key in ready:
+                missing[local] = False
+            elif key in pending_keys:
+                missing[local] = None  # Pending is NOT proof that pixels exist.
+            else:
+                start, end = self._batch_range(n, k, local)
+                missing[local] = bool(self._list_missing_range(vid, start, end, config))
         with self._cache_guard:
             if token != self._window_token:
                 return []
             for local, is_missing in missing.items():
-                self._mark_raw_batch_ready(vid, local, token, not is_missing)
+                if is_missing is not None:
+                    self._mark_raw_batch_ready(vid, local, token, not is_missing)
             run = []
 
             def submit():
                 if not run:
                     return
                 keys = tuple((vid, t) for t in run)
+                batch_futures = {key: Future() for key in keys}
+                self._raw_batch_futures.update(batch_futures)
                 worker_plan = (self._extract_threads, self._stitch_threads)
                 timing = dict(queued_at=time.perf_counter(), started_at=None,
                               expected_seconds=self.perf_monitor.service_estimates(vid))
                 start = run[0] * k
                 end = min(n - 1, (run[-1] + 1) * k - 1)
                 path = config.real_video_path[vid]
+                streams = 1 if config.parallel_to_sequential else max(1,len(config.real_video_path))
+                native_threads = max(1,self._extract_threads//streams) if self._decoder_bank.available else 1
 
                 def extract():
                     timing['started_at'] = time.perf_counter()
+                    worker_plan = (self._extract_threads, self._stitch_threads)
                     self._worker_context.token = token
                     self._worker_context.plan = worker_plan
                     try:
                         with self._cache_guard:
                             keep_start, keep_end = self._raw_windows.get(vid, (0, 0))
                             active_start, active_end = max(start, keep_start), min(end, keep_end - 1)
+                        self._worker_context.native_threads = getattr(future,'pipeline_cpu_cost',1)
                         if token == self._window_token and active_start <= active_end:
                             self._save_frame(path, active_start, active_end, vid, config=config)
+                            for _, local in keys:
+                                self._publish_raw_ready(vid, local, token, config)
                     finally:
-                        self._schedule_video_cleanup()
+                        # Window/context changes already request a coalesced
+                        # cleanup. Every frame publication checks that window;
+                        # do not rescan 100 directories after EACH decoder run.
                         del self._worker_context.token
                         del self._worker_context.plan
+                        del self._worker_context.native_threads
 
-                future = self.executor.submit(extract)
+                future = self.executor.submit(extract, resource_key=vid, cpu_cost=native_threads)
                 future.video_timing = timing
+                for key in keys:
+                    self._raw_batch_futures[key].video_parent = future
                 for key in keys:
                     self._pending_extract[key] = future
                 futures.append(future)
@@ -1618,6 +1701,15 @@ class VideoManager:
                         for key in keys:
                             if self._pending_extract.get(key) is completed:
                                 self._pending_extract.pop(key, None)
+                        for key, handle in batch_futures.items():
+                            if self._raw_batch_futures.get(key) is handle:
+                                self._raw_batch_futures.pop(key, None)
+                        for frame_future in batch_futures.values():
+                            if frame_future is not None and not frame_future.done():
+                                if completed.cancelled():
+                                    frame_future.cancel()
+                                else:
+                                    frame_future.set_result(False)
                 future.add_done_callback(done)
                 run.clear()
 
@@ -1646,7 +1738,9 @@ class VideoManager:
         k = max(1, int(config.count_per_action))
         for vid, local in sources:
             start, end = self._batch_range(int(config.video_num_list[vid]), k, local)
-            missing = self._list_missing_range(vid, start, end, config)
+            with self._cache_guard:
+                known_ready = (vid, local) in self._raw_ready_batches
+            missing = [] if known_ready else self._list_missing_range(vid, start, end, config)
             self._mark_raw_batch_ready(vid, local, token, not missing)
             if missing:
                 return
@@ -1661,6 +1755,16 @@ class VideoManager:
         else:
             template, points, custom = snapshot
             manager = template.video_stitch_snapshot()
+            manager._video_lazy_frames = not custom and not (len(template.layout_params) > 38 and template.layout_params[38])
+            manager._video_pixel_provider = self._pixel_cache.get
+            working = self._planning_memory_budget()
+            if working is not None:
+                _, inputs = self._estimated_stitch_pixels()
+                per_page = min(working, self._pipeline_workers.costs[1])
+                if not manager._video_lazy_frames and inputs*9 >= per_page:
+                    self._set_video_status('Video layout/custom processing exceeds the memory budget; reduce layout or preview size')
+                    return
+                manager._video_memory_budget = max(1, per_page - inputs*9)
             manager.set_action_count(batch)
             flist = groups[0] if single else groups
             if custom:
@@ -1675,6 +1779,9 @@ class VideoManager:
                 '_last_title_layout', 'flist', '_flist_groups',
             ) if hasattr(manager, name)}
         if pil_img is None or flag != 0:
+            with self._cache_guard:
+                if token == self._window_token:
+                    self._raw_ready_batches.difference_update(sources)
             self._set_video_status(f"Video stitch failed: batch={batch}, flag={flag}")
             return
         temporary = self.disk_cache_dir / f"__tmp_batch_{batch}_{threading.get_ident()}_{time.time_ns()}.png"
@@ -1691,11 +1798,13 @@ class VideoManager:
                     lo, hi = self._stitch_window
                     valid = token == self._window_token and lo <= batch <= hi
                     if valid:
+                        self._pixel_cache.put(str(destination), pil_img, priority=True)
                         self.shared_config.cache_img[batch] = str(destination)
                         self._batch_render_states[batch] = state
                         for old_batch in list(self._batch_render_states):
                             if not lo <= old_batch <= hi:
                                 self._batch_render_states.pop(old_batch, None)
+                        self._produced_pages += 1
                         self.perf_monitor.record_stitch(time.perf_counter() - started, plan=plan)
                         self._playback_pacer.publish(self._pacing_context(token, config), batch,
                                                      time.perf_counter(), max(1, int(config.cache_num)))
@@ -1729,7 +1838,8 @@ class VideoManager:
             key = (token, batch)
             if key in self._window_stitches:
                 return
-            dependencies = {self._pending_extract.get((vid, local)) for vid, local in sources}
+            dependencies = {self._raw_batch_futures.get((vid, local), self._pending_extract.get((vid, local)))
+                            for vid, local in sources if (vid, local) not in self._raw_ready_batches}
             dependencies.discard(None)
             completion = Future()
             completion.video_batch = batch
@@ -1774,11 +1884,21 @@ class VideoManager:
                     if not completion.set_running_or_notify_cancel():
                         return
                     timing['started_at'] = time.perf_counter()
+                    worker_plan = (self._extract_threads, self._stitch_threads)
                     try:
                         self._run_window_stitch(batch, sources, token, worker_plan)
                     except Exception as ex:
+                        # A user/cleanup tool may remove source JPEGs after
+                        # readiness was published. Retry must revalidate them,
+                        # not trust a stale ready bit forever.
+                        if not isinstance(ex, MemoryError):
+                            with self._cache_guard:
+                                if token == self._window_token:
+                                    self._raw_ready_batches.difference_update(sources)
                         completion.set_exception(ex)
                         self._debug_video(f"[WindowStitch] batch={batch}: {ex}")
+                        if isinstance(ex, MemoryError):
+                            self._set_video_status(str(ex))
                     else:
                         completion.set_result(None)
                 try:
@@ -1789,11 +1909,14 @@ class VideoManager:
             dependency.add_done_callback(ready)
         ready()
 
-    @staticmethod
-    def _prepare_video_image(path, gap_color):
+    def _prepare_video_image(self, path, gap_color):
         """Decode, trim and create RGBA bytes in a worker, with no wx calls."""
-        with Image.open(path) as opened:
-            original = opened.convert('RGBA')
+        cached = self._pixel_cache.get(str(path))
+        if cached is None:
+            with Image.open(path) as opened:
+                original = opened.convert('RGBA')
+        else:
+            original = cached.convert('RGBA')
         image = original
         try:
             arr = np.array(original, dtype=np.uint8)
@@ -1819,12 +1942,14 @@ class VideoManager:
             self._window_token = None
             self._display_serial += 1
             self._closed = True
+        self._decoder_bank.configure(0)
+        self._maintenance_executor.submit(self._decoder_bank.close)
         kwargs = {'wait': False}
         if sys.version_info >= (3, 9):
             kwargs['cancel_futures'] = True
         for pool in (self._cache_executor, self.executor, self.stitch_executor, self._maintenance_executor, self._display_executor):
             if pool is not None:
-                pool.shutdown(**kwargs)
+                pool.shutdown(wait=False) if pool is self._maintenance_executor else pool.shutdown(**kwargs)
 
     def _ensure_batch_extracted(self, video_idx: int, local_b: int, wait: bool = True):
         n = self.shared_config.video_num_list[video_idx]
@@ -1977,8 +2102,103 @@ class VideoManager:
             else:
                 return int(input_value.split('.')[0])
 
+    def _publish_raw_ready(self, vid, local, token, config):
+        k = max(1, int(config.count_per_action))
+        start, end = self._batch_range(int(config.video_num_list[vid]), k, local)
+        if self._list_missing_range(vid, start, end, config):
+            return
+        self._mark_raw_batch_ready(vid, local, token, True)
+        with self._cache_guard:
+            future = self._raw_batch_futures.get((vid, local)) if token == self._window_token else None
+            if future is not None and not future.done():
+                future.set_result(True)
+
+    def _decode_incremental(self, path, first, last, vid, config):
+        bank = self._decoder_bank
+        if getattr(self,'_closed',False):
+            return True
+        if not bank.available or str(path) in bank.disabled:
+            return False
+        token = getattr(self._worker_context, 'token', None)
+        if token is not None and token != self._window_token:
+            return True
+        missing = set(self._list_missing_range(vid, first, last, config))
+        if not missing:
+            return True
+        started = time.perf_counter()
+        k, step = max(1, int(config.count_per_action)), max(1, int(config.skip_frames)+1)
+        dimensions = self._video_dimensions.get(str(path), (1920, 1080))
+        def cancelled():
+            if getattr(self, '_closed', False) or (token is not None and token != self._window_token):
+                return True
+            lo, hi = self._raw_windows.get(vid, (first, last+1))
+            return token is not None and (hi <= first or lo > last)
+        try:
+            with bank.lease(path, float(config.video_fps_list[vid]),
+                            self._fast_seek_paths.get(str(path), False), dimensions[0]*dimensions[1],
+                            getattr(self._worker_context,'native_threads',1)) as decoder:
+                for physical, image in decoder.frames(min(missing)*step, max(missing)*step, step, cancelled):
+                    index = physical // step
+                    if index not in missing:
+                        continue
+                    with self._cache_guard:
+                        lo, hi = self._raw_windows.get(vid, (first, last+1))
+                        if token is not None and (token != self._window_token or not lo <= index < hi):
+                            continue
+                    destination = os.path.join(config.video_path[vid], self._filename_converter(index, vid, config))
+                    temporary = os.path.join(config.video_path[vid], '__tmp_native_%s_%s.jpeg' %
+                                             (threading.get_ident(), time.time_ns()))
+                    try:
+                        image.save(temporary, format='JPEG', quality=90)
+                        preview, preview_key = None, None
+                        snapshot = self._render_snapshot
+                        if snapshot is not None and not snapshot[2]:
+                            target = tuple(int(v) for v in snapshot[0].layout_params[6])
+                            if len(target)==2 and min(target)>0 and target[0]*target[1]*4 <= self._pixel_cache.limit:
+                                preview = image.resize(target, Image.BICUBIC) if target != image.size else image
+                                preview_key = ('preview', destination, target, int(Image.BICUBIC))
+                        with self._raw_io_lock(vid, config):
+                            with self._cache_guard:
+                                lo, hi = self._raw_windows.get(vid, (first, last+1))
+                                valid = token is None or (token == self._window_token and lo <= index < hi)
+                            if valid:
+                                # Filesystem/antivirus latency must never hold
+                                # the state lock used by the GUI or other videos.
+                                os.replace(temporary, destination)
+                                with self._cache_guard:
+                                    lo, hi = self._raw_windows.get(vid, (first,last+1))
+                                    valid = token is None or (token == self._window_token and lo <= index < hi)
+                                    if valid:
+                                        self._pixel_cache.put(destination, image)
+                                        if preview is not None:
+                                            self._pixel_cache.put(preview_key, preview, owner=destination, priority=True)
+                                if not valid:
+                                    os.remove(destination)
+                        if valid and (index == int(config.video_num_list[vid])-1 or (index+1) % k == 0):
+                            self._publish_raw_ready(vid, index//k, token, config)
+                    finally:
+                        try:
+                            os.remove(temporary)
+                        except OSError:
+                            pass
+            lo, hi = self._raw_windows.get(vid, (first, last+1)) if token is not None else (first, last+1)
+            if not cancelled() and self._list_missing_range(vid, max(first,lo), min(last,hi-1), config):
+                raise RuntimeError('Native decoder did not produce all requested ordinal frames')
+            self.perf_monitor.record_extract(time.perf_counter()-started, len({i//k for i in missing}), vid,
+                                            plan=getattr(self._worker_context, 'plan', None))
+            return True
+        except Exception as ex:
+            if cancelled():
+                return True
+            bank.disabled.add(str(path))
+            self._debug_video('Native decode fallback: %s: %s' % (path, ex))
+            return False
+
     def _save_frame(self, video_path, frame_start, frame_end, video_idx, max_retries=1, config=None):
-        '''Extract and save frames with ffmpeg.'''
+        '''Decode incrementally when available, otherwise use the exact FFmpeg fallback.'''
+        config = config if config is not None else copy.copy(self.shared_config)
+        if self._decode_incremental(video_path, frame_start, frame_end, video_idx, config):
+            return
         config = config if config is not None else copy.copy(self.shared_config)
         token = getattr(self._worker_context, "token", None)
         if token is not None and token != self._window_token:
@@ -1996,6 +2216,12 @@ class VideoManager:
         has_ffmpeg_input = callable(getattr(ffmpeg, "input", None))
 
         def list_missing(a, b):
+            if token is not None:
+                with self._cache_guard:
+                    if token != self._window_token:
+                        return []
+                    lo, hi = self._raw_windows.get(video_idx, (a, b+1))
+                a, b = max(a,lo), min(b,hi-1)
             miss = []
             for idx in range(a, b + 1):
                 dst = os.path.join(cache_dir, filename_for(idx))
@@ -2148,7 +2374,7 @@ class VideoManager:
                         continue
                     dst = os.path.join(cache_dir, filename_for(idx))
                     try:
-                        with self._cache_io_lock:
+                        with self._raw_io_lock(video_idx, config):
                             with self._cache_guard:
                                 keep_start, keep_end = self._raw_windows.get(video_idx, (0, 0))
                                 valid = token is None or (token == self._window_token and keep_start <= idx < keep_end)
@@ -2340,8 +2566,12 @@ class VideoManager:
             return []
 
         v_dir = config.video_path[video_idx]
+        with self._cache_guard:
+            known_ready = (video_idx, clamped_idx) in self._raw_ready_batches
+        if known_ready:
+            return [os.path.join(v_dir, self._filename_converter(idx, video_idx, config)) for idx in range(cs,ce+1)]
         frames = []
-        with self._cache_io_lock:
+        with self._raw_io_lock(video_idx, config):
             for idx in range(cs, ce + 1):
                 fn = self._filename_converter(idx, video_idx, config)
                 p = os.path.join(v_dir, fn)
@@ -2603,7 +2833,7 @@ class VideoManager:
         config = self.shared_config if config is None else config
         cache_dir = os.path.abspath(config.video_path[video_idx])
         miss = []
-        with self._cache_io_lock:
+        with self._raw_io_lock(video_idx, config):
             for idx in range(a, b + 1):
                 filename = self._filename_converter(idx, video_idx, config)
                 path = os.path.join(cache_dir, filename)
@@ -2845,20 +3075,8 @@ class MulimgViewer (MulimgViewerGui):
         event.Skip()
 
     def _rebuild_threads(self, n):
-        n = max(int(n), 1)
-        vm = self.video_manager
-
-        if getattr(vm, "executor", None):
-            vm.executor.shutdown(wait=False)
-        vm.executor = ThreadPoolExecutor(max_workers=n)
-
-        desired_stitch = 2 if n >= 2 else 1
-        if getattr(vm, "stitch_executor", None):
-            if vm.stitch_executor._max_workers != desired_stitch:
-                vm.stitch_executor.shutdown(wait=False)
-                vm.stitch_executor = ThreadPoolExecutor(max_workers=desired_stitch)
-        else:
-            vm.stitch_executor = ThreadPoolExecutor(max_workers=desired_stitch)
+        # Legacy refresh/configuration entry: honor power_mode's shared budget.
+        self.video_manager.update_thread_count()
 
     # ========== 视频设置数值框的提交 ==========
     # ★ 这些框以前只靠 EVT_KILL_FOCUS 才写回 shared_config, 而 refresh() 是直接读
@@ -3034,6 +3252,7 @@ class MulimgViewer (MulimgViewerGui):
         self.shared_config.power_mode = policy.mode
         self.shared_config.thread = policy.workers
         self.shared_config.memory_budget = policy.memory
+        self.video_manager._configure_video_memory()
         self._resource_policy_key = key
         self.resource_monitor.reset()
         self.video_manager._playback_pacer.reset()
@@ -3082,6 +3301,8 @@ class MulimgViewer (MulimgViewerGui):
                     return False
             return True
         def retire():
+            vm._pipeline_workers.trim_idle()
+            vm._decoder_bank.trim()
             old_work.clear()  # Do not retain Future result/exception pixel buffers.
             with vm._cache_guard:
                 pools = getattr(vm, '_retired_pools', [])
@@ -4536,6 +4757,8 @@ class MulimgViewer (MulimgViewerGui):
 
         if vm is not None:
             vm._invalidate_stitch_cache()
+            vm._decoder_bank.configure(0)
+            vm._maintenance_executor.submit(vm._decoder_bank.trim)
 
         # 1. Clear in-memory stitch cache (list of PNG paths from video mode)
         self.shared_config.cache_img = []

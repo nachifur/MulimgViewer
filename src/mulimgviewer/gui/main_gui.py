@@ -253,10 +253,15 @@ class MulimgViewerGui ( wx.Frame ):
 
 		fgSizer3.Add( wSizer3, 1, wx.EXPAND, 5 )
 
+		self.m_staticline28 = wx.StaticLine( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_HORIZONTAL )
+		fgSizer3.Add( self.m_staticline28, 0, wx.EXPAND |wx.ALL, 5 )
+
 		wSizer112 = wx.WrapSizer( wx.HORIZONTAL, wx.WRAPSIZER_DEFAULT_FLAGS )
 
 		self.m_staticText361 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Config", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText361.Wrap( -1 )
+
+		self.m_staticText361.SetFont( wx.Font( wx.NORMAL_FONT.GetPointSize(), wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD, False, wx.EmptyString ) )
 
 		wSizer112.Add( self.m_staticText361, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
@@ -274,6 +279,42 @@ class MulimgViewerGui ( wx.Frame ):
 
 
 		fgSizer3.Add( wSizer112, 1, wx.EXPAND, 5 )
+
+		wSizer13 = wx.WrapSizer( wx.HORIZONTAL, wx.WRAPSIZER_DEFAULT_FLAGS )
+
+		self.m_staticText47 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Performance && Cache", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText47.Wrap( -1 )
+
+		self.m_staticText47.SetFont( wx.Font( wx.NORMAL_FONT.GetPointSize(), wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD, False, wx.EmptyString ) )
+
+		wSizer13.Add( self.m_staticText47, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+
+		self.m_staticline27 = wx.StaticLine( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_VERTICAL )
+		wSizer13.Add( self.m_staticline27, 0, wx.EXPAND |wx.ALL, 5 )
+
+		power_modeChoices = [ u"1.Eco", u"2.Balanced", u"3.Performance", u"4.Maximum" ]
+		self.power_mode = wx.Choice( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.Size( 90,-1 ), power_modeChoices, 0 )
+		self.power_mode.SetSelection( 1 )
+		wSizer13.Add( self.power_mode, 0, wx.ALL, 5 )
+
+		self.m_staticText242 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Cache Frames", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText242.Wrap( -1 )
+
+		wSizer13.Add( self.m_staticText242, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+
+		self.cache_frames = wx.TextCtrl( self.m_panel4, wx.ID_ANY, u"2", wx.DefaultPosition, wx.Size( 20,-1 ), 0 )
+		wSizer13.Add( self.cache_frames, 0, wx.ALL, 5 )
+
+		self.m_staticText46 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Cache Multiplier", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText46.Wrap( -1 )
+
+		wSizer13.Add( self.m_staticText46, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+
+		self.cache_multiplier = wx.TextCtrl( self.m_panel4, wx.ID_ANY, u"1", wx.DefaultPosition, wx.Size( 20,-1 ), 0 )
+		wSizer13.Add( self.cache_multiplier, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+
+
+		fgSizer3.Add( wSizer13, 1, wx.EXPAND, 5 )
 
 		self.m_staticline13 = wx.StaticLine( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_HORIZONTAL )
 		fgSizer3.Add( self.m_staticline13, 0, wx.EXPAND |wx.ALL, 5 )
@@ -557,36 +598,12 @@ class MulimgViewerGui ( wx.Frame ):
 		self.row_col1 = wx.TextCtrl( self.m_panel4, wx.ID_ANY, u"1.0", wx.DefaultPosition, wx.Size( 40,-1 ), 0 )
 		wSizer12.Add( self.row_col1, 0, wx.ALL, 5 )
 
-		self.m_staticText241 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Threads", wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.m_staticText241.Wrap( -1 )
-
-		wSizer12.Add( self.m_staticText241, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
-
-		self.row_col11 = wx.TextCtrl( self.m_panel4, wx.ID_ANY, u"4", wx.DefaultPosition, wx.Size( 40,-1 ), 0 )
-		wSizer12.Add( self.row_col11, 0, wx.ALL, 5 )
-
-		self.m_staticText242 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Cached Frames", wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.m_staticText242.Wrap( -1 )
-
-		wSizer12.Add( self.m_staticText242, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
-
-		self.row_col12 = wx.TextCtrl( self.m_panel4, wx.ID_ANY, u"2", wx.DefaultPosition, wx.Size( 40,-1 ), 0 )
-		wSizer12.Add( self.row_col12, 0, wx.ALL, 5 )
-
-		self.m_staticText46 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Cache Multiplier", wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.m_staticText46.Wrap( -1 )
-
-		wSizer12.Add( self.m_staticText46, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
-
-		self.cache_multiplier = wx.TextCtrl( self.m_panel4, wx.ID_ANY, u"1", wx.DefaultPosition, wx.Size( 40,-1 ), 0 )
-		wSizer12.Add( self.cache_multiplier, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
-
 		self.m_staticText243 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Skip Frame", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText243.Wrap( -1 )
 
 		wSizer12.Add( self.m_staticText243, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
-		self.row_col13 = wx.TextCtrl( self.m_panel4, wx.ID_ANY, u"0", wx.DefaultPosition, wx.Size( 40,-1 ), 0 )
+		self.row_col13 = wx.TextCtrl( self.m_panel4, wx.ID_ANY, u"0", wx.DefaultPosition, wx.Size( 30,-1 ), 0 )
 		wSizer12.Add( self.row_col13, 0, wx.ALL, 5 )
 
 

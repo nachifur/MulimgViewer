@@ -1,5 +1,8 @@
 {
  "output": {
+  "power_mode": 2,
+  "cache_frames": "2",
+  "cache_multiplier": "1",
   "row_col": "1,1",
   "row_col_one_img": "1,1",
   "show_scale": "1,1",
@@ -271,10 +274,10 @@
   }
  },
  "window_state": {
-  "x": 0,
-  "y": 0,
-  "w": 1440,
-  "h": 900,
-  "maximized": true
+  "x": 137,
+  "y": 263,
+  "w": 1398,
+  "h": 1000,
+  "maximized": false
  }
 }

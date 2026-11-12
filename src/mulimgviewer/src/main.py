@@ -25,6 +25,10 @@ from .index_table import IndexTable
 from .custom_func.main import get_available_algorithms
 from .utils import MyTestEvent, get_resource_path
 from .utils_img import ImgManager
+from .resource_policy import resource_budget
+from .image_pipeline import ImagePipeline
+from .memory_reclaim import MemoryReclaimer
+from .video_tools import resolve_video_tools
 from .thread_optimizer import (AdaptiveThreadAllocator, optimize_thread_allocation,
                                available_memory_bytes, stitch_memory_limit)
 import json
@@ -193,7 +197,9 @@ class SharedConfig:
         self.cache_num = 2 #Number of caches
         self.cache_multiplier = 1 # Outer video cache radius / priority radius
         self.skip_frames = 0 #Number of frames to skip
-        self.thread = 4 #Number of threads
+        self.power_mode = 2 # 1 Eco, 2 Balanced, 3 Performance, 4 Maximum
+        self.memory_budget = None # Soft budget for concurrent pixel working sets
+        self.thread = 4 # Internal processing budget; populated from power_mode
         self.thread_allocation = None # Actual extract/stitch pool sizes
         self.thread_allocation_recommend = None
         self.video_mode = False #Video mode
@@ -215,7 +221,7 @@ class SharedConfig:
         self.cache_img = [] #Position to store stitched images
         self.image_cache_img = [] #Image mode stitch cache False
         self.image_cache_paths = [] #Image mode cache path list
-        self.image_disk_cache_dir = "Video_frames/image_stitch_cache"  # 图像模式磁盘缓存目录
+        self.image_disk_cache_dir = "Video_frames/stitch_cache"
         self.debug_video = False #Video mode debug output
         self.debug_image = False #Image mode debug output
         self.debug_thread = False #Thread debug output
@@ -234,7 +240,7 @@ class VideoManager:
         self.disk_cache_dir = Path("Video_frames") / "stitch_cache"
         self.disk_cache_dir.mkdir(parents=True, exist_ok=True)
         # 新增：图像模式磁盘缓存目录
-        self.image_disk_cache_dir = Path("Video_frames") / "image_stitch_cache"
+        self.image_disk_cache_dir = self.disk_cache_dir
         self.image_disk_cache_dir.mkdir(parents=True, exist_ok=True)
         self.perf_monitor = PerformanceMonitor()
         self.executor = None
@@ -279,7 +285,7 @@ class VideoManager:
         self._success_streak = 0
         self._failure_streak = 0
         self._cooldown_deadline = 0.0
-        self._thread_allocator = AdaptiveThreadAllocator()
+        self._thread_allocator = AdaptiveThreadAllocator(throughput_first=True)
         self._pending_thread_plan = None
         self._rebalance_queued = False
         self._reported_extract_threads = False
@@ -302,36 +308,6 @@ class VideoManager:
         except Exception as ex:
             self._debug_video(f"[DiskCache] save failed batch={batch_idx} error={ex}")
             return None
-
-    # ========== 图像模式磁盘缓存方法 ==========
-    def _get_image_disk_cache_path(self, batch_idx):
-        """生成图像模式磁盘缓存文件路径"""
-        return self.image_disk_cache_dir / f"batch_{batch_idx}.png"
-
-    def _save_image_to_disk_cache(self, pil_img, batch_idx):
-        """将图像模式的PIL图像保存到磁盘，返回文件路径"""
-        if pil_img is None:
-            return None
-        try:
-            cache_path = self._get_image_disk_cache_path(batch_idx)
-            pil_img.save(str(cache_path), format='PNG', compress_level=1)
-            return str(cache_path)
-        except Exception as ex:
-            self._debug_video(f"[ImageDiskCache] save failed batch={batch_idx} error={ex}")
-            return None
-
-    def _load_image_from_disk_cache(self, batch_idx):
-        """从磁盘加载图像模式的缓存图像"""
-        cache_path = self._get_image_disk_cache_path(batch_idx)
-        if not cache_path.exists():
-            return None
-        try:
-            return Image.open(cache_path)
-        except Exception as ex:
-            self._debug_video(f"[ImageDiskCache] load failed batch={batch_idx} error={ex}")
-            return None
-
-    # ========== 图像模式磁盘缓存方法结束 ==========
 
     def _cleanup_disk_cache_out_of_window(self, window_start, window_end):
         """清理窗口外的磁盘缓存"""
@@ -403,7 +379,7 @@ class VideoManager:
         self._render_snapshot = None
         self._batch_render_states.clear()
         self.perf_monitor = PerformanceMonitor()
-        self._thread_allocator = AdaptiveThreadAllocator()
+        self._thread_allocator = AdaptiveThreadAllocator(throughput_first=True)
         self._optimizer_seen = {}
         self._pending_thread_plan = None
         self._schedule_video_cleanup()
@@ -506,10 +482,15 @@ class VideoManager:
         self._set_video_message("")
 
     def _initialize_thread_pools(self):
+        retired = getattr(self, '_retired_pools', [])
+        self._retired_pools = [pool for pool in retired
+                              if any(thread.is_alive() for thread in pool._threads)]
         if self.executor:
             self.executor.shutdown(wait=False)
+            self._retired_pools.append(self.executor)
         if self.stitch_executor:
             self.stitch_executor.shutdown(wait=False)
+            self._retired_pools.append(self.stitch_executor)
         self.executor = ThreadPoolExecutor(max_workers=self._extract_threads)
         self.stitch_executor = ThreadPoolExecutor(max_workers=self._stitch_threads)
         self._reported_extract_threads = False
@@ -521,7 +502,7 @@ class VideoManager:
             budget=max(2, int(self.shared_config.thread)),
             extract=self._extract_threads, stitch=self._stitch_threads)
         ui = self._ui()
-        if ui is not None and hasattr(ui, 'row_col11'):
+        if ui is not None and hasattr(ui, 'power_mode') and self.shared_config.video_mode:
             allocation = dict(self.shared_config.thread_allocation)
             pending = getattr(self, '_pending_thread_plan', None)
             def show_allocation():
@@ -532,14 +513,14 @@ class VideoManager:
                         f"budget: {allocation['budget']}")
                     if pending:
                         text += f"\nPending: extract {pending[0]}, stitch {pending[1]}"
-                    owner.row_col11.SetToolTip(text)
+                    owner.power_mode.SetToolTip(text)
             wx.CallAfter(show_allocation)
         if getattr(self.shared_config, 'debug_thread', False):
             print(f"[ThreadAllocation] {self.shared_config.thread_allocation}")
 
     def _reset_for_new_selection(self):
         with self._cache_guard:
-            self._thread_allocator = AdaptiveThreadAllocator()
+            self._thread_allocator = AdaptiveThreadAllocator(throughput_first=True)
             self._optimizer_seen = {}
             self._pending_thread_plan = None
             self._window_token = None
@@ -604,6 +585,10 @@ class VideoManager:
         total_budget = max(2, int(getattr(self.shared_config, "thread", 2) or 2))
         extract_threads = max(1, int(extract_threads))
         stitch_threads = max(1, int(stitch_threads))
+        memory = getattr(self.shared_config, 'memory_budget', None)
+        if memory is not None:
+            extract_threads = min(extract_threads, self._extract_memory_limit())
+            stitch_threads = min(stitch_threads, self._stitch_thread_limit(stitch_threads, extract_threads))
         if extract_threads + stitch_threads > total_budget:
             overflow = extract_threads + stitch_threads - total_budget
             # Prioritize reclamation from threads with a higher count
@@ -648,6 +633,22 @@ class VideoManager:
             # Increase the budget, prioritizing the addition of frame-splitting threads
             available = total_budget - current_total
             extract_threads += available
+
+        if getattr(self.shared_config, 'memory_budget', None) is not None:
+            # Seed a joint feasible plan, rather than giving all new lanes to
+            # decoders and clipping composition to one afterwards.
+            indices, total = self._playback_video_indices()
+            costs = self.perf_monitor.stage_costs(indices)
+            work = costs[:2] if costs is not None else (max(1, len(indices)), 1.0)
+            output, inputs = self._estimated_stitch_pixels()
+            composition = max(64 * 1024 ** 2, 16 * output + 9 * inputs)
+            span = min(max(1, total), 2 * self.shared_config.cache_num * self.shared_config.cache_multiplier + 1)
+            plan = optimize_thread_allocation(total_budget, *work, 0.0,
+                max_extract_tasks=max(1, len(indices)) * (5 if self.shared_config.cache_multiplier > 1 else 3),
+                max_stitch_tasks=span, current=(self._extract_threads, self._stitch_threads),
+                prefer_capacity=True, memory_budget=self._planning_memory_budget(),
+                extract_memory=self._decoder_working_set(), stitch_memory=composition)
+            extract_threads, stitch_threads = plan.extract, plan.stitch
 
         if (extract_threads, stitch_threads) == (self._extract_threads, self._stitch_threads):
             self._apply_thread_plan(extract_threads, stitch_threads)
@@ -766,17 +767,48 @@ class VideoManager:
             return [], sum(counts)
         return [vid for vid, count in enumerate(counts) if batch < count], max(counts, default=0)
 
-    def _stitch_thread_limit(self, maximum):
+    def _decoder_working_set(self):
+        dimensions = getattr(self, '_video_dimensions', {})
+        pixels = max((int(w) * int(h) for w, h in dimensions.values()), default=1920 * 1080)
+        return max(64 * 1024 ** 2, pixels * 16)
+
+    def _planning_memory_budget(self):
+        memory = getattr(self.shared_config, 'memory_budget', None)
+        if memory is None:
+            return None
+        available = available_memory_bytes()
+        # Mode fractions already reserve RAM for GUI/system. Do not apply the
+        # old fixed 50% reserve again, which effectively erased Maximum's gain.
+        return min(memory, int(available * .9)) if available is not None else memory
+
+    def _extract_memory_limit(self):
+        memory = self._planning_memory_budget()
+        if memory is None:
+            return max(1, int(self.shared_config.thread) - 1)
+        output, inputs = self._estimated_stitch_pixels()
+        # Reserve a full composition before decoder lanes, including a dense
+        # layout's decoded inputs, rather than reserving only a fixed 64 MiB.
+        composition = max(64 * 1024 ** 2, 16 * output + 9 * inputs)
+        return max(1, (memory - composition) // self._decoder_working_set())
+
+    def _estimated_stitch_pixels(self):
         ui = self._ui()
         size = getattr(ui, 'img_size', None) if ui is not None else None
-        if not size or len(size) != 2:
-            return maximum
-        output = int(size[0]) * int(size[1])
         dimensions = getattr(self, '_video_dimensions', {})
         pixels = sum(dimensions.get(str(path), (0, 0))[0] * dimensions.get(str(path), (0, 0))[1]
                      for path in self.shared_config.real_video_path)
         pixels *= max(1, int(self.shared_config.count_per_action))
-        return stitch_memory_limit(output, pixels or output, available_memory_bytes(), maximum)
+        output = int(size[0]) * int(size[1]) if size and len(size) == 2 else pixels
+        return output, pixels or output
+
+    def _stitch_thread_limit(self, maximum, extract_threads=None):
+        output, pixels = self._estimated_stitch_pixels()
+        memory = self._planning_memory_budget()
+        available = available_memory_bytes()
+        if memory is not None:
+            memory = max(1, memory - (extract_threads or self._extract_threads) * self._decoder_working_set())
+            available = memory * 2
+        return stitch_memory_limit(output, pixels or output, available, maximum)
 
     def _maybe_evaluate_performance(self, force=False):
         """Seek the fastest measured pipeline rate, excluding pacing/wait time."""
@@ -810,8 +842,11 @@ class VideoManager:
         if window[0] <= int(cfg.batch_idx) <= window[1]:
             span = window[1] - window[0] + 1
         if not cached:
-            span = self._stitch_thread_limit(span)
+            # Joint solver considers other extraction counts; do not constrain
+            # it to RAM left over by the CURRENT, possibly oversized decoder pool.
+            span = self._stitch_thread_limit(span, extract_threads=1)
         extract_cap = max(1, len(indices)) * (5 if multiplier > 1 else 3)
+        extract_cap = min(extract_cap, self._extract_memory_limit())
         # Configured workers beyond available work/memory do not add capacity.
         model_costs = (extract_work * extract_threads / min(extract_threads, extract_cap),
                        stitch_work * stitch_threads / min(stitch_threads, span), display_cost)
@@ -820,12 +855,12 @@ class VideoManager:
         if not cached:
             profile = tuple(indices)
             if profile != getattr(self, '_thread_profile', profile):
-                self._thread_allocator = AdaptiveThreadAllocator()
+                self._thread_allocator = AdaptiveThreadAllocator(throughput_first=True)
                 self._optimizer_seen = {}
             self._thread_profile = profile
             allocator = getattr(self, '_thread_allocator', None)
             if allocator is None:
-                allocator = self._thread_allocator = AdaptiveThreadAllocator()
+                allocator = self._thread_allocator = AdaptiveThreadAllocator(throughput_first=True)
             revisions = getattr(monitor, 'plan_revisions', {})
             revision = revisions.get(current, (len(monitor.extract_history), len(monitor.stitch_history)))
             seen = getattr(self, '_optimizer_seen', {})
@@ -838,11 +873,15 @@ class VideoManager:
             pending_stitches = list(self._window_stitches.values())
             waiting = sum(not f.done() and getattr(f, 'video_waiting_for_extract', False) for f in pending_stitches)
             ready = sum(not f.done() and not getattr(f, 'video_waiting_for_extract', False) for f in pending_stitches)
+            output, inputs = self._estimated_stitch_pixels()
             proposal = allocator.recommend(budget, model_costs, current, extract_cap, span,
                                              allow_probe=usable and depth > 0,
                                              extract_backlog=len(set(self._pending_extract.values())),
                                              stitch_waiting=waiting, stitch_ready=ready,
-                                             buffer_depth=depth, buffer_target=inner)
+                                             buffer_depth=depth, buffer_target=inner,
+                                             memory_budget=self._planning_memory_budget(),
+                                             extract_memory=self._decoder_working_set(),
+                                             stitch_memory=max(64 * 1024 ** 2, 16 * output + 9 * inputs))
             self.shared_config.thread_allocation_recommend = {
                 'extract': proposal.extract, 'stitch': proposal.stitch,
                 'estimated_period': proposal.period, 'reason': proposal.reason,
@@ -858,7 +897,7 @@ class VideoManager:
                 else:
                     self._apply_thread_plan(proposal.extract, proposal.stitch)
                     self._cooldown_deadline = now + 1.0
-                    actual_period = proposal.period
+                    actual_period = max(proposal.period, display_cost)
 
         # Quantize upwards to wx's millisecond timer, with a small jitter margin.
         target = max(0.001, math.ceil(actual_period * 1.02 * 1000 - 1e-9) / 1000.0)
@@ -881,6 +920,13 @@ class VideoManager:
         self.shared_config.video_fps_list.append(fps)
         self.shared_config.video_num_list.append(viewable)
 
+    def _video_command(self, name):
+        return getattr(self, '_video_tools', {}).get(name, name)
+
+    def _video_process_options(self):
+        return dict(env=getattr(self, '_video_tools_env', None),
+                    creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0))
+
     def _probe_json(self, args, what="ffprobe"):
         '''Run ffprobe and parse its JSON output.
 
@@ -890,11 +936,12 @@ class VideoManager:
         surface as a bogus "no video stream found".
         '''
         cp = subprocess.run(
-            ["ffprobe", "-v", "error"] + [str(a) for a in args],
+            [self._video_command('ffprobe'), "-v", "error"] + [str(a) for a in args],
             capture_output=True,
             encoding="utf-8",
             errors="replace",
             check=False,
+            **self._video_process_options(),
         )
         if cp.returncode != 0:
             raise RuntimeError(
@@ -961,7 +1008,7 @@ class VideoManager:
             try:
                 cp = subprocess.run(
                     [
-                        "ffprobe",
+                        self._video_command('ffprobe'),
                         "-v", "error",
                         "-select_streams", "v:0",
                         "-count_frames",
@@ -973,6 +1020,7 @@ class VideoManager:
                     encoding="utf-8",
                     errors="replace",
                     check=False,
+                    **self._video_process_options(),
                 )
                 probe_txt = (cp.stdout or "").strip().splitlines()
                 if probe_txt:
@@ -1733,7 +1781,7 @@ class VideoManager:
                     owned_tmp_prefixes.append(tmp_prefix)
                     tmp_tpl = os.path.join(cache_dir, f"{tmp_prefix}%d.jpeg")
                     cmd = [
-                        "ffmpeg", "-hide_banner", "-loglevel", "error",
+                        self._video_command('ffmpeg'), "-hide_banner", "-loglevel", "error",
                         "-threads", "1", "-ss", f"{s * step / fps:.9f}",
                         "-i", str(video_path), "-map", "0:v:0",
                     ]
@@ -1748,6 +1796,7 @@ class VideoManager:
                         cp = subprocess.run(
                             cmd, capture_output=True, encoding="utf-8",
                             errors="replace", check=False,
+                            **self._video_process_options(),
                         )
                         if cp.returncode != 0:
                             last_error = (cp.stderr or cp.stdout or "").strip() or f"ffmpeg exit code {cp.returncode}"
@@ -1788,24 +1837,30 @@ class VideoManager:
                             stream = ffmpeg.input(str(video_path), threads=1).filter('select', sel)
 
                         if has_ffmpeg_input:
-                            (
+                            cmd = (
                                 stream
                                 .output(tmp_tpl, vsync='vfr', vframes=e - s + 1, threads=1, **{'q:v': 6}, start_number=s)
                                 .global_args('-threads', '1', '-hide_banner', '-loglevel', 'error')
                                 .overwrite_output()
-                                .run(quiet=True)
+                                .compile(cmd=self._video_command('ffmpeg'))
                             )
+                            cp = subprocess.run(cmd, capture_output=True, encoding='utf-8',
+                                                errors='replace', check=False,
+                                                **self._video_process_options())
+                            if cp.returncode:
+                                last_error = cp.stderr or cp.stdout
                         else:
                             # Keep absolute frame indexing even without ffmpeg-python.
                             cmd = [
-                                'ffmpeg', '-hide_banner', '-loglevel', 'error',
+                                self._video_command('ffmpeg'), '-hide_banner', '-loglevel', 'error',
                                 '-threads', '1', '-i', str(video_path), '-map', '0:v:0',
                                 '-vf', 'select=' + sel.replace(',', r'\,'),
                                 '-vsync', '0', '-frames:v', str(e - s + 1),
                                 '-threads:v', '1',
                                 '-q:v', '6', '-start_number', str(s), '-y', tmp_tpl,
                             ]
-                            cp = subprocess.run(cmd, capture_output=True, encoding='utf-8', errors='replace', check=False)
+                            cp = subprocess.run(cmd, capture_output=True, encoding='utf-8', errors='replace', check=False,
+                                                **self._video_process_options())
                             if cp.returncode:
                                 last_error = cp.stderr or cp.stdout
                     except Exception as ex:
@@ -1944,8 +1999,10 @@ class VideoManager:
             pass
         else:
             self.shared_config.real_video_path = self.collect_video_paths(dlg, type)
-        if shutil.which("ffmpeg") is None or shutil.which("ffprobe") is None:
-            self._set_video_status("Error: ffmpeg/ffprobe not found in PATH")
+        try:
+            self._video_tools, self._video_tools_env = resolve_video_tools()
+        except (OSError, ValueError) as ex:
+            self._set_video_status(f"Error: {ex}")
             self.shared_config.video_path = []
             return []
         self._reset_for_new_selection()
@@ -2326,6 +2383,9 @@ class MulimgViewer (MulimgViewerGui):
         self.create_ImgManager()
         self.video_manager = VideoManager(owner=self,shared_config=self.shared_config,ImgManager=self.ImgManager)
         self.image_stitch_executor = None  # Image-mode stitch thread pool
+        self.image_pipeline = ImagePipeline(self.video_manager.disk_cache_dir,
+                                            self._image_frame_ready, wx.CallAfter)
+        self.memory_reclaimer = MemoryReclaimer()
         self._image_stitch_lock = threading.Lock()  # Lock for image stitching state
         self.shift_pressed=False
         self.UpdateUI = UpdateUI
@@ -2450,8 +2510,7 @@ class MulimgViewer (MulimgViewerGui):
             "title_rename_text": "m_textCtrl16",
             "custom_algorithm_input": "m_textCtrl15",
             "m_textCtrl28": "row_col1",
-            "m_textCtrl29": "row_col11",
-            "m_textCtrl30": "row_col12",
+            "m_textCtrl30": "cache_frames",
             "m_textCtrl281": "row_col13",
             "right_arrow_button1": "play",
         }
@@ -2460,7 +2519,8 @@ class MulimgViewer (MulimgViewerGui):
                 setattr(self, legacy_name, getattr(self, current_name))
 
     def _bind_compat_events(self):
-        self.row_col11.Bind(wx.EVT_ENTER_WINDOW, self._show_thread_pipeline_status)
+        self.power_mode.Bind(wx.EVT_ENTER_WINDOW, self._show_thread_pipeline_status)
+        self.power_mode.Bind(wx.EVT_CHOICE, self.on_power_mode_changed)
         self.row_col1.Bind(wx.EVT_TEXT, self._on_interval_text_edited)
         if hasattr(self, "title_exif"):
             self.title_exif.Bind(wx.EVT_CHECKBOX, self.on_title_exif_changed)
@@ -2496,8 +2556,7 @@ class MulimgViewer (MulimgViewerGui):
 
         video_field_handlers = [
             ("m_textCtrl28", self.on_interval_changed),
-            ("m_textCtrl29", self.on_thread_change),
-            ("m_textCtrl30", self.on_cache_num_change),
+            ("cache_frames", self.on_cache_num_change),
             ("cache_multiplier", self.on_cache_num_change),
             ("m_textCtrl281", self.on_skip_changed),
         ]
@@ -2594,19 +2653,11 @@ class MulimgViewer (MulimgViewerGui):
                 except Exception:
                     pass
 
-        # ---- 线程数 ----
-        threads = _read_number(self.m_textCtrl29, 4, 1)
-        if threads != self.shared_config.thread:
-            self.shared_config.thread = threads
-            # 立即刷新线程池分配
-            if hasattr(self, "video_manager"):
-                try:
-                    self.video_manager.update_thread_count()
-                except Exception:
-                    pass
+        # Global performance policy applies to images and videos alike.
+        self._apply_resource_policy()
 
         # ---- Cached Frames (缓存帧数) ----
-        self.shared_config.cache_num = _read_number(self.m_textCtrl30, 2, 1)
+        self.shared_config.cache_num = _read_number(self.cache_frames, 2, 1)
         self.shared_config.cache_multiplier = _read_number(self.cache_multiplier, 1, 1)
 
         # ---- Skip Frame (跳过帧数) ----
@@ -2616,8 +2667,7 @@ class MulimgViewer (MulimgViewerGui):
 
         # 归一化: 输入框里显示的必须是当前真正生效的值
         for field, value in ((self.m_textCtrl28, self.shared_config.interval),
-                              (self.m_textCtrl29, self.shared_config.thread),
-                              (self.m_textCtrl30, self.shared_config.cache_num),
+                              (self.cache_frames, self.shared_config.cache_num),
                               (self.cache_multiplier, self.shared_config.cache_multiplier),
                               (self.m_textCtrl281, self.shared_config.skip_frames)):
             try:
@@ -2666,6 +2716,8 @@ class MulimgViewer (MulimgViewerGui):
 
     def on_cache_num_change(self, event):
         self._commit_video_settings()
+        if getattr(self.ImgManager, 'type', None) is not None:
+            self.show_img()
         if event is not None:
             event.Skip()
 
@@ -2679,9 +2731,110 @@ class MulimgViewer (MulimgViewerGui):
         if event is not None:
             event.Skip()
 
+    def _apply_resource_policy(self):
+        mode = self.power_mode.GetSelection() + 1
+        key = mode, bool(self.shared_config.video_mode)
+        previous_key = getattr(self, '_resource_policy_key', None)
+        if key == previous_key:
+            return
+        # Keep a common reference when comparing modes. Sampling only free RAM
+        # again after our own caches warmed could make Maximum's budget smaller.
+        if not hasattr(self, '_resource_memory_reference'):
+            self._resource_memory_reference = available_memory_bytes()
+        policy = resource_budget(mode, self.shared_config.video_mode,
+                                 available=self._resource_memory_reference)
+        self.shared_config.power_mode = policy.mode
+        self.shared_config.thread = policy.workers
+        self.shared_config.memory_budget = policy.memory
+        self._resource_policy_key = key
+        if self.shared_config.video_mode:
+            with self.video_manager._cache_guard:
+                self.video_manager._thread_allocator = AdaptiveThreadAllocator(throughput_first=True)
+                self.video_manager._optimizer_seen = {}
+                self.video_manager._pending_thread_plan = None
+                self.video_manager._cooldown_deadline = 0.0
+            self.video_manager.update_thread_count()
+        self._show_resource_tooltip()
+        if previous_key is not None and mode < previous_key[0]:
+            self._request_memory_reclaim()
+        else:
+            self.memory_reclaimer.cancel()
+
+    def _request_memory_reclaim(self):
+        """Wait for old work off-GUI, join retired pools, then return free RAM."""
+        vm, pipeline = self.video_manager, self.image_pipeline
+        with vm._cache_guard:
+            old_work = list(set(vm._pending_extract.values()) | set(vm._window_stitches.values()))
+        with pipeline.lock:
+            old_work.extend(pipeline.running.values())
+        owner_ref = weakref.ref(self)
+        def ready():
+            owner = owner_ref()
+            if owner is None or getattr(owner, '_is_closing', False):
+                return True
+            if any(not future.done() for future in old_work):
+                return False
+            if (owner.shared_config.video_mode
+                    and vm._extract_threads + vm._stitch_threads > owner.shared_config.thread):
+                # A concurrent layout invalidation can cancel a queued resize.
+                # Reissue the smaller budget without requiring another GUI edit.
+                vm.update_thread_count()
+                return False
+            with vm._cache_guard:
+                if vm._pending_thread_plan is not None:
+                    return False
+            with pipeline.lock:
+                if (not owner.shared_config.video_mode and pipeline.window is not None
+                        and (pipeline.budget != owner.shared_config.thread
+                             or pipeline.memory != owner.shared_config.memory_budget
+                             or pipeline.workers != pipeline.desired_workers)):
+                    return False
+            return True
+        def retire():
+            old_work.clear()  # Do not retain Future result/exception pixel buffers.
+            with vm._cache_guard:
+                pools = getattr(vm, '_retired_pools', [])
+                vm._retired_pools = []
+            with pipeline.lock:
+                pools += pipeline.retired_pools
+                pipeline.retired_pools = []
+            for pool in pools:
+                pool.shutdown(wait=True)
+            pools.clear()
+        def allow_trim():
+            owner = owner_ref()
+            if owner is None or getattr(owner, '_is_closing', False) or owner.shared_config.is_playing:
+                return False
+            with vm._cache_guard:
+                video_busy = bool(vm._pending_extract or vm._window_stitches
+                                  or getattr(vm, '_display_delivery_pending', False))
+            with pipeline.lock:
+                return not video_busy and not pipeline.running and pipeline.display_key is None
+        self.memory_reclaimer.request(ready, retire, allow_trim)
+
+    def on_power_mode_changed(self, event):
+        self._commit_video_settings()
+        if getattr(self.ImgManager, 'type', None) is not None:
+            if self.shared_config.video_mode:
+                self.video_manager.update_cache()
+            self.show_img()
+        if event is not None:
+            event.Skip()
+
+    def _show_resource_tooltip(self):
+        if self.shared_config.video_mode:
+            self.video_manager._publish_thread_allocation()
+        else:
+            pipeline = self.image_pipeline
+            self.shared_config.thread_allocation = dict(budget=self.shared_config.thread,
+                extract=0, stitch=pipeline.workers or pipeline.desired_workers)
+            self.power_mode.SetToolTip(
+                f"Stitch: {pipeline.workers or pipeline.desired_workers}; budget: {self.shared_config.thread}")
+
     def on_enable_video_mode(self, event):
         prev_video_mode = self.shared_config.video_mode
         self.shared_config.video_mode = self.m_checkBox33.GetValue()
+        self._apply_resource_policy()
         on_video_mode_change(self.shared_config.video_mode)
 
         # Manage the image stitch pool based on mode
@@ -2784,6 +2937,8 @@ class MulimgViewer (MulimgViewerGui):
             except Exception as ex:
                 result, error = None, str(ex)
             def deliver():
+                if vm._display_future is completed:
+                    vm._display_future = None
                 owner = owner_ref()
                 if (owner is None or getattr(owner, '_is_closing', False)
                         or not owner.shared_config.video_mode
@@ -2874,7 +3029,7 @@ class MulimgViewer (MulimgViewerGui):
     #     self.shared_config.interval = float(self.m_textCtrl28.GetValue() or 1.0)
     #b1 修改
     def _show_thread_pipeline_status(self, event):
-        self.video_manager._publish_thread_allocation()
+        self._show_resource_tooltip()
         event.Skip()
 
     def _on_interval_text_edited(self, event):
@@ -2887,8 +3042,7 @@ class MulimgViewer (MulimgViewerGui):
         event.Skip()
 
     def toggle_play(self, event):
-        if self.shared_config.video_mode:
-            self._commit_video_settings()
+        self._commit_video_settings()
         self.shared_config.is_playing = not self.shared_config.is_playing
 
         if self.shared_config.is_playing:
@@ -3055,12 +3209,17 @@ class MulimgViewer (MulimgViewerGui):
             self._pending_frame_wait_timer = None
 
     def _init_image_stitch_executor(self):
-        """Initialize the image-mode stitch pool (fixed single worker)."""
-        if self.image_stitch_executor is None:
-            self.image_stitch_executor = ThreadPoolExecutor(max_workers=1)
+        """The bounded image pipeline creates its pool lazily in the background."""
+        pass
 
     def _shutdown_image_stitch_executor(self):
         """Shut down the image-mode stitch pool."""
+        if hasattr(self, 'image_pipeline'):
+            if getattr(self, '_is_closing', False):
+                self.image_pipeline.close()
+                self.memory_reclaimer.close()
+            else:
+                self.image_pipeline.invalidate()
         if self.image_stitch_executor is not None:
             self.image_stitch_executor.shutdown(wait=False)
             self.image_stitch_executor = None
@@ -3878,8 +4037,7 @@ class MulimgViewer (MulimgViewerGui):
         # ★ 先把设置区数值框的内容提交进来, 再往下走。
         #   以前 refresh() 直接读 shared_config, 而数值框只在"失去焦点"时才写回,
         #   所以用菜单/快捷键(Ctrl+R)刷新时, 刚改的 Cached Frames 会被静默丢弃。
-        if getattr(self.shared_config, "video_mode", False):
-            self._commit_video_settings()
+        self._commit_video_settings()
         if (not getattr(self.shared_config, "video_mode", False)
             and self.out_path_str == ""
             and ((hasattr(self, "show_custom_func") and self.show_custom_func.GetValue())
@@ -4015,6 +4173,8 @@ class MulimgViewer (MulimgViewerGui):
         """Clear current cache to force restitching (shared by video/image modes)."""
         self.shared_config.image_cache_img = []
         self.shared_config.image_cache_paths = []
+        if hasattr(self, 'image_pipeline'):
+            self.image_pipeline.invalidate()
         self._image_reference_resolution_origin = None
         cache = getattr(self.shared_config, "cache_img", None)
         if isinstance(cache, list):
@@ -4092,46 +4252,11 @@ class MulimgViewer (MulimgViewerGui):
         # in the image-mode path on the next refresh().
         self._parallel_switch_dirty = False
 
-        # 5. Clear on-disk video stitch cache (Video_frames/stitch_cache).
-        try:
-            if vm is not None and hasattr(vm, "disk_cache_dir"):
-                cache_root = Path(str(vm.disk_cache_dir))
-                if cache_root.exists():
-                    for cache_file in cache_root.glob("batch_*.png"):
-                        try:
-                            cache_file.unlink()
-                        except Exception:
-                            pass
-        except Exception:
-            pass
-
-        # 6. Also wipe the per-video JPEG working directories, since they
-        #    are no longer referenced after mode switch.
-        try:
-            cache_base = Path("Video_frames")
-            if cache_base.exists():
-                stitch_cache = (
-                    Path(str(getattr(vm, "disk_cache_dir", cache_base / "stitch_cache")))
-                    if vm is not None
-                    else cache_base / "stitch_cache"
-                )
-                image_cache = cache_base / "image_stitch_cache"
-                for entry in cache_base.iterdir():
-                    if not entry.is_dir():
-                        continue
-                    try:
-                        if stitch_cache.exists() and entry.resolve() == stitch_cache.resolve():
-                            continue
-                        if image_cache.exists() and entry.resolve() == image_cache.resolve():
-                            continue
-                    except Exception:
-                        pass
-                    try:
-                        shutil.rmtree(str(entry), ignore_errors=True)
-                    except Exception:
-                        pass
-        except Exception:
-            pass
+        # The existing generation-aware maintenance worker removes obsolete
+        # video PNGs/JPEG directories. It preserves the shared stitch directory
+        # and never makes a mode-switch GUI handler scan or delete files.
+        if vm is not None:
+            vm._schedule_video_cleanup()
 
         if getattr(self.shared_config, "debug_video", False):
             print("[VideoMode] cleared local cache on video->image transition")
@@ -5208,16 +5333,9 @@ class MulimgViewer (MulimgViewerGui):
                     self.shared_config.image_cache_img = []
                     self.shared_config.image_cache_paths = []
                     self._image_layout_token = image_token
-                    # 清空图片模式磁盘缓存
-                    try:
-                        if vm is not None and hasattr(vm, "image_disk_cache_dir") and vm.image_disk_cache_dir.exists():
-                            for cache_file in vm.image_disk_cache_dir.glob("batch_*.png"):
-                                try:
-                                    cache_file.unlink()
-                                except Exception:
-                                    pass
-                    except Exception:
-                        pass
+                    # Invalidation is state-only; scanning/deleting PNGs stays
+                    # on the image coordinator, never under a GUI-held lock.
+                    self.image_pipeline.invalidate()
         else:
             # 视频模式：layout 参数变化时清空 cache_img 与磁盘缓存，
             # 避免旧尺寸的拼接帧被后续 show_img/update_cache 错误复用
@@ -5548,10 +5666,11 @@ class MulimgViewer (MulimgViewerGui):
             self.m_statusBar1.SetStatusText("", 1)
             return
 
-        # ========== 图片模式（保持内存缓存）==========
+        # ========== 图片模式：后台拼接、磁盘缓存、后台准备显示 ==========
         if self.ImgManager.max_action_num > 0:
             current_batch = max(0, min(int(getattr(self.shared_config, "batch_idx", 0)),
                                        self.ImgManager.max_action_num - 1))
+            self.shared_config.batch_idx = current_batch
 
             # 更新滑块位置、最大值和文本框
             if hasattr(self, "slider_img") and self.slider_img:
@@ -5577,91 +5696,15 @@ class MulimgViewer (MulimgViewerGui):
             # 更新图片缓存
             self._update_image_cache(current_batch)
 
-            # 从内存缓存获取图像（保持原有逻辑）
-            cache_list = self.shared_config.image_cache_img
-            cache_entry = cache_list[current_batch] if 0 <= current_batch < len(cache_list) else None
-
-            if cache_entry is not None:
-                # ★ 修改：支持从磁盘路径加载图像
-                if isinstance(cache_entry, str):
-                    # 从磁盘路径加载
-                    vm = getattr(self, "video_manager", None)
-                    if vm:
-                        pil_img = vm._load_image_from_disk_cache(current_batch)
-                    else:
-                        pil_img = Image.open(cache_entry)
-                    if pil_img is None:
-                        # 磁盘加载失败，标记为未命中
-                        cache_entry = None
-                        pil_img = None
-                        flag = 1
-                    else:
-                        flag = 0
-                else:
-                    # 内存缓存命中，直接使用 PIL.Image 对象
-                    pil_img = cache_entry
-                    flag = 0
-                flist = self.shared_config.image_cache_paths[current_batch] if current_batch < len(
-                    self.shared_config.image_cache_paths) else None
-            else:
-                # 缓存未命中：同步拼接
-                with self._image_stitch_lock:
-                    flist = self._get_image_flist(current_batch)
-                    pil_img = None
-                    flag = 1
-                    if flist:
-                        self.ImgManager.set_action_count(current_batch)
-                        self.ImgManager.img_count = current_batch * self.ImgManager.count_per_action
-                        pil_img, flag = self.compose_current_frame(batch_idx=current_batch, flist=flist)
-
-            if pil_img is not None and flag == 0:
-                self.show_bmp_in_panel = pil_img
-                self.img_size = pil_img.size
-                self.display_bitmap(False, pil_img)
-
-                # 更新 ImgManager 状态（用于 UI 显示）。与后台拼接共用同一把锁，
-                # 避免预取下一页时将当前页 flist 写回，造成图片与标题错位。
-                with self._image_stitch_lock:
-                    self.ImgManager.action_count = current_batch
-                    self.ImgManager.img_count = current_batch * self.ImgManager.count_per_action
-                    self.ImgManager.flist = flist
-                self.current_page_img_paths = copy.deepcopy(flist) if flist else []
-
-                # 显示详细状态信息（根据类型不同格式化）
-                if flist:
-                    flist_display = [os.path.basename(p) for p in flist[:3]]
-                    if len(flist) > 3:
-                        flist_display.append(f"... +{len(flist) - 3}")
-                    file_info = ", ".join(flist_display)
-                else:
-                    file_info = "No files"
-
-                if self.ImgManager.type in (2, 3):
-                    try:
-                        self.SetStatusText_([
-                            "-1",
-                            f"{current_batch}/{self.ImgManager.max_action_num-1}",
-                            f"{self.ImgManager.img_resolution[0]}x{self.ImgManager.img_resolution[1]} pixels / "
-                            f"{self.ImgManager.name_list[self.ImgManager.img_count]}"
-                            f"-{self.ImgManager.name_list[self.ImgManager.img_count + self.ImgManager.count_per_action - 1]}",
-                            "-1",
-                        ])
-                    except Exception:
-                        pass
-                else:
-                    # type 0 或 1：只设置第 3 列，让 update_status_bar_for_current_page 设置第 1 列
-                    self.SetStatusText_(["-1", "-1", file_info, "-1"])
-
-                # 调用 update_status_bar_for_current_page 显示详细信息
-                self.update_status_bar_for_current_page()
-            else:
-                # 拼接失败
-                self.SetStatusText_([
-                    str(current_batch),
+            if self.shared_config.is_playing:
+                self._suspend_play_timer_for_wait()
+            if not self.image_pipeline.prepare_display(current_batch, self._deliver_image_frame):
+                self.SetStatusText_([str(current_batch),
                     str(self.ImgManager.max_action_num - 1),
-                    "Stitch failed",
-                    "-1"
-                ])
+                    f"Waiting for batch {current_batch}...", "-1"])
+            elif self.image_pipeline.displayed_key is not None:
+                if self.image_pipeline.displayed_key[1] == current_batch:
+                    self._resume_play_timer_after_wait()
         else:
             # 无图像数据
             self.SetStatusText_(["-1", "-1", "No images", "-1"])
@@ -5683,124 +5726,57 @@ class MulimgViewer (MulimgViewerGui):
             if orig_flist is not None:
                 self.ImgManager.flist = orig_flist
 
-    #b5
     def _update_image_cache(self, batch_idx: int):
-        max_batch = self.ImgManager.max_action_num - 1
-        if max_batch < 0:
+        if self.ImgManager.max_action_num <= 0:
             return
+        self._apply_resource_policy()
+        # Snapshot GUI inputs once per render context. Each batch then clones
+        # this template without copying dataset filenames or touching live state.
+        context = (getattr(self, '_image_layout_token', None),
+                   id(self.shared_config.image_cache_img),
+                   id(self.ImgManager.name_list), id(self.ImgManager.path_list),
+                   repr(self.xy_magnifier), bool(self.show_custom_func.GetValue()))
+        if context != getattr(self, '_image_snapshot_key', None):
+            self._image_snapshot_key = context
+            self._image_snapshot = self.ImgManager.video_stitch_snapshot()
+        self.image_pipeline.request(self._image_snapshot, copy.deepcopy(self.xy_magnifier),
+            self.show_custom_func.GetValue(), context, batch_idx,
+            self.ImgManager.max_action_num, self.shared_config.cache_num,
+            self.shared_config.cache_multiplier, self.shared_config.thread,
+            self.shared_config.memory_budget, self.shared_config.play_direction)
 
-        R = max(1, int(getattr(self.shared_config, "cache_num", 1)))
-        prev_guard = R
-        window_start = max(0, batch_idx - prev_guard)
-        window_end = min(max_batch, batch_idx + R - 1)
+    def _image_frame_ready(self, batch, generation, error=None):
+        if (getattr(self, '_is_closing', False) or self.shared_config.video_mode
+                or generation != self.image_pipeline.generation
+                or batch != int(self.shared_config.batch_idx)):
+            return
+        self._show_resource_tooltip()
+        if error:
+            self.SetStatusText_(['-1', '-1', f'***{error}***', '-1'])
+            self._resume_play_timer_after_wait()
+            return
+        self.image_pipeline.prepare_display(batch, self._deliver_image_frame)
 
-        cache_list = self.shared_config.image_cache_img
-        path_list = self.shared_config.image_cache_paths
-        if len(cache_list) <= window_end:
-            cache_list.extend([None] * (window_end + 1 - len(cache_list)))
-        if len(path_list) <= window_end:
-            path_list.extend([None] * (window_end + 1 - len(path_list)))
-
-        with self._image_stitch_lock:
-            orig_action = self.ImgManager.action_count
-            orig_img_count = getattr(self.ImgManager, "img_count", 0)
-            orig_flist = getattr(self.ImgManager, "flist", None)
-
-        if self.image_stitch_executor is None:
-            self._init_image_stitch_executor()
-
-        try:
-            # ★ 改动：当前帧同步拼接（确保立即可用）
-            if cache_list[batch_idx] is None:
-                with self._image_stitch_lock:
-                    flist = self._get_image_flist(batch_idx)
-                    if flist:
-                        self.ImgManager.set_action_count(batch_idx)
-                        self.ImgManager.img_count = batch_idx * self.ImgManager.count_per_action
-                        pil_img, flag = self.compose_current_frame(batch_idx=batch_idx, flist=flist)
-                        if flag == 0:
-                            # ★ 修改：优先保存到磁盘，失败则保存到内存
-                            vm = getattr(self, "video_manager", None)
-                            disk_path = None
-                            if vm:
-                                disk_path = vm._save_image_to_disk_cache(pil_img, batch_idx)
-                            if disk_path:
-                                cache_list[batch_idx] = disk_path  # 存储磁盘路径
-                            else:
-                                cache_list[batch_idx] = pil_img  # 降级到内存
-                            path_list[batch_idx] = flist
-                            self._debug_image(f"[ImageCache] sync write batch={batch_idx}")
-                        else:
-                            cache_list[batch_idx] = None
-                            path_list[batch_idx] = None
-
-            # 清理窗口外的缓存
-            for idx in range(len(cache_list)):
-                if idx < window_start or idx > window_end:
-                    cache_list[idx] = None
-                    if idx < len(path_list):
-                        path_list[idx] = None
-        finally:
-            with self._image_stitch_lock:
-                self.ImgManager.action_count = orig_action
-                self.ImgManager.img_count = orig_img_count
-                if orig_flist is not None:
-                    self.ImgManager.flist = orig_flist
-
-        # 其他帧异步预取：先恢复共享的 ImgManager 状态，再启动线程
-        for t in range(window_start, window_end + 1):
-            if t == batch_idx:
-                continue
-            if cache_list[t] is None:
-                self.image_stitch_executor.submit(
-                    self._stitch_image_batch, t, cache_list, path_list
-                )
-
-    def _stitch_image_batch(self, t, cache_list, path_list):
-        """Image-stitch task executed in the thread pool."""
-        # Protect the state snapshot, stitching and restoration with the same lock.
-        with self._image_stitch_lock:
-            if cache_list is not self.shared_config.image_cache_img:
-                return
-            orig_action = self.ImgManager.action_count
-            orig_img_count = getattr(self.ImgManager, "img_count", 0)
-            orig_flist = getattr(self.ImgManager, "flist", None)
-            try:
-                flist = self._get_image_flist(t)
-                if not flist:
-                    cache_list[t] = None
-                    path_list[t] = None
-                    return
-
-                # Set state and stitch while holding the lock
-                self.ImgManager.set_action_count(t)
-                self.ImgManager.img_count = t * self.ImgManager.count_per_action
-                pil_img, flag = self.compose_current_frame(batch_idx=t, flist=flist)
-
-                if flag != 0:
-                    cache_list[t] = None
-                    path_list[t] = None
-                else:
-                    # ★ 修改：优先保存到磁盘，失败则保存到内存
-                    vm = getattr(self, "video_manager", None)
-                    disk_path = None
-                    if vm:
-                        disk_path = vm._save_image_to_disk_cache(pil_img, t)
-                    if disk_path:
-                        cache_list[t] = disk_path  # 存储磁盘路径
-                    else:
-                        cache_list[t] = pil_img  # 降级到内存
-                    path_list[t] = list(flist)  # ★ 修复：使用显式传递的 flist 副本
-                    self._debug_image(f"[ImageCache] async write batch={t} thread={threading.current_thread().name}")
-            except Exception as e:
-                self._debug_image(f"[ImageCache] async stitch failed batch={t} error={e}")
-                cache_list[t] = None
-                path_list[t] = None
-            finally:
-                self.ImgManager.action_count = orig_action
-                self.ImgManager.img_count = orig_img_count
-                if orig_flist is not None:
-                    self.ImgManager.flist = orig_flist
+    def _deliver_image_frame(self, batch, generation, pixels, state, error):
+        if (getattr(self, '_is_closing', False) or self.shared_config.video_mode
+                or generation != self.image_pipeline.generation
+                or batch != int(self.shared_config.batch_idx)):
+            return
+        if error:
+            self.SetStatusText_(['-1', '-1', f'***Load cache failed: {error}***', '-1'])
+            return
+        image, rgba = pixels
+        for name, value in state.items():
+            setattr(self.ImgManager, name, value)
+        self.ImgManager.img = image
+        self.ImgManager.action_count = batch
+        self.ImgManager.img_count = batch * self.ImgManager.count_per_action
+        self.current_page_img_paths = copy.deepcopy(state.get('flist', []))
+        self.show_bmp_in_panel, self.img_size = image, image.size
+        self.display_bitmap(False, image, prepared_rgba=rgba)
+        self.update_status_bar_for_current_page()
+        self._show_resource_tooltip()
+        self._resume_play_timer_after_wait()
 
     def _compact_row_col_for_count(self, count):
         if count <= 1:
@@ -6349,6 +6325,9 @@ class MulimgViewer (MulimgViewerGui):
 
     def save_configuration(self, event):
         data = {
+            'power_mode': self.power_mode.GetSelection() + 1,
+            'cache_frames': self.cache_frames.GetValue(),
+            'cache_multiplier': self.cache_multiplier.GetValue(),
             'row_col': self.row_col.GetLineText(0),
             'row_col_one_img': self.row_col_one_img.GetLineText(0),
             'show_scale': self.show_scale.GetLineText(0),
@@ -6415,6 +6394,15 @@ class MulimgViewer (MulimgViewerGui):
         with open(config_file_path, 'r', encoding='utf-8') as file:
             full_config = json.load(file)
             data = full_config.get('output', full_config)
+            # Old configurations without the new global settings use defaults.
+            try:
+                mode = max(1, min(4, int(data.get('power_mode', 2))))
+            except (TypeError, ValueError):
+                mode = 2
+            self.power_mode.SetSelection(mode - 1)
+            self.cache_frames.ChangeValue(str(data.get('cache_frames', data.get('row_col12', 2))))
+            self.cache_multiplier.ChangeValue(str(data.get('cache_multiplier', 1)))
+            self._commit_video_settings()
             self.row_col.SetValue(data['row_col'])
             self.row_col_one_img.SetValue(data['row_col_one_img'])
             self.show_scale.SetValue(data['show_scale'])

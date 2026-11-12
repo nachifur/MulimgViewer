@@ -54,12 +54,14 @@ def stitch_memory_limit(output_pixels, input_pixels, available_bytes, maximum):
 
 def optimize_thread_allocation(total_threads, extract_work, stitch_work, display_cost,
                                extract_serial=0.0, stitch_serial=0.0,
-                               max_extract_tasks=None, max_stitch_tasks=None, current=None):
+                               max_extract_tasks=None, max_stitch_tasks=None, current=None,
+                               prefer_capacity=False, memory_budget=None,
+                               extract_memory=0, stitch_memory=0):
     """Find the global integer minimum of this model by finite enumeration.
 
-    The budget is a ceiling: unnecessary threads are left unused if display or
-    available tasks limit throughput. Equal-cost plans prefer fewer workers,
-    then the smaller change from the current allocation.
+    The budget is a ceiling. prefer_capacity uses more feasible workers for
+    equal predictions; the legacy default prefers fewer. Joint working-set
+    constraints are evaluated for each pair, not clipped after solving.
     """
     budget = int(total_threads)
     if budget < 2:
@@ -76,14 +78,19 @@ def optimize_thread_allocation(total_threads, extract_work, stitch_work, display
     best, best_key = None, None
     for extract in range(1, emax + 1):
         for stitch in range(1, min(smax, budget - extract) + 1):
+            if (memory_budget is not None
+                    and extract * extract_memory + stitch * stitch_memory > memory_budget):
+                continue
             period = max(costs[0] * (extract_serial + (1 - extract_serial) / extract),
                          costs[1] * (stitch_serial + (1 - stitch_serial) / stitch), costs[2])
             # Round only the tie key, not the returned physical prediction.
-            key = (round(period, 12), extract + stitch,
+            key = (round(period, 12), -(extract + stitch) if prefer_capacity else extract + stitch,
                    abs(extract - current[0]) + abs(stitch - current[1]), extract)
             if best_key is None or key < best_key:
                 best, best_key = ThreadAllocation(extract, stitch, period), key
-    return best
+    # One lane per stage is the minimum usable pipeline even if a single
+    # composition itself exceeds the soft memory estimate.
+    return best or ThreadAllocation(1, 1, max(costs), 'memory-minimum')
 
 
 class AdaptiveThreadAllocator:
@@ -93,9 +100,12 @@ class AdaptiveThreadAllocator:
     stage fit work(n)=a*n+b with a,b>=0; the corresponding period is a+b/n.
     This captures loss of scaling from contention/GIL/serialized operations.
     The fit is an estimate; a new plan is always an online trial, not a promise
-    of the globally fastest allocation on unknown hardware.
+    of the globally fastest allocation on unknown hardware. throughput_first
+    optimizes production independently of GUI display time and suppresses
+    resource-only reductions; contention losses still trigger trial rollback.
     """
-    def __init__(self, validation_samples=3, probe_every=8):
+    def __init__(self, validation_samples=3, probe_every=8, throughput_first=False):
+        self.throughput_first = throughput_first
         self.observations = {}
         self.validation_samples = max(1, int(validation_samples))
         self.probe_every = max(2, int(probe_every))
@@ -133,6 +143,10 @@ class AdaptiveThreadAllocator:
     def measured_period(plan, costs):
         return max(costs[0] / plan[0], costs[1] / plan[1], costs[2])
 
+    def _period(self, plan, costs):
+        return self.measured_period(plan, (costs[0], costs[1],
+                                           0.0 if self.throughput_first else costs[2]))
+
     def _serial_fraction(self, stage):
         points = [(plan[stage], self._mean(plan)[stage]) for plan in self.observations]
         if len({n for n, _ in points}) < 2:
@@ -160,15 +174,19 @@ class AdaptiveThreadAllocator:
             return
         if old != new and old in self.observations:
             self.trial = dict(source=old, target=new, samples=0,
-                              baseline=self.measured_period(old, self._mean(old)))
+                              baseline=self._period(old, self._mean(old)))
 
     def recommend(self, total_threads, costs, current, max_extract_tasks=None,
                   max_stitch_tasks=None, allow_probe=True, extract_backlog=0,
-                  stitch_waiting=0, stitch_ready=0, buffer_depth=None, buffer_target=1):
+                  stitch_waiting=0, stitch_ready=0, buffer_depth=None, buffer_target=1,
+                  memory_budget=None, extract_memory=0, stitch_memory=0):
         current = tuple(current)
         budget = int(total_threads)
+        def fits(plan):
+            return (memory_budget is None
+                    or plan[0] * extract_memory + plan[1] * stitch_memory <= memory_budget)
         infeasible = (sum(current) > budget or current[0] > (max_extract_tasks or budget - 1)
-                      or current[1] > (max_stitch_tasks or budget - 1))
+                      or current[1] > (max_stitch_tasks or budget - 1) or not fits(current))
         if infeasible:
             self.trial = None
         low_buffer = buffer_depth is not None and buffer_depth < max(1, buffer_target)
@@ -182,21 +200,26 @@ class AdaptiveThreadAllocator:
                 room += 1
             extract = min(room, max_extract_tasks or budget - 1, extract_backlog,
                           max(current[0] + 1, current[0] * 2))
-            if extract > current[0]:
+            while extract > current[0] and not fits((extract, stitch)):
+                extract -= 1
+            if extract > current[0] and not infeasible:
                 return ThreadAllocation(extract, stitch,
                     self.measured_period((extract, stitch), costs), 'upstream-starved')
         if low_buffer and stitch_ready > current[1] and sum(current) < budget:
             stitch = min(budget - current[0], max_stitch_tasks or budget - 1,
                          stitch_ready, current[1] * 2)
-            if stitch > current[1]:
+            while stitch > current[1] and not fits((current[0], stitch)):
+                stitch -= 1
+            if stitch > current[1] and not infeasible:
                 return ThreadAllocation(current[0], stitch,
                     self.measured_period((current[0], stitch), costs), 'ready-backlog')
         if self.trial and current == self.trial['target']:
             trial = self.trial
             if trial['samples'] < self.validation_samples:
                 return ThreadAllocation(*current, self.measured_period(current, costs), 'validate')
-            actual = self.measured_period(current, self._mean(current))
-            if actual > trial['baseline'] * 1.10 and sum(trial['source']) <= budget:
+            actual = self._period(current, self._mean(current))
+            if (actual > trial['baseline'] * 1.10 and sum(trial['source']) <= budget
+                    and fits(trial['source'])):
                 self.blocked_until[current] = self.revision + 16
                 source = (min(trial['source'][0], max_extract_tasks or budget - 1),
                           min(trial['source'][1], max_stitch_tasks or budget - 1))
@@ -206,15 +229,24 @@ class AdaptiveThreadAllocator:
         # Normalize the fitted scaling shape to the most recent workload.
         ebase = costs[0] / (1 + ae * (current[0] - 1))
         sbase = costs[1] / (1 + ass * (current[1] - 1))
-        plan = optimize_thread_allocation(budget, ebase, sbase, costs[2], ae, ass,
-                                          max_extract_tasks, max_stitch_tasks, current)
-        score = self.measured_period(current, costs)
+        display_floor = 0.0 if self.throughput_first else costs[2]
+        plan = optimize_thread_allocation(budget, ebase, sbase, display_floor, ae, ass,
+                                          max_extract_tasks, max_stitch_tasks, current,
+                                          self.throughput_first, memory_budget, extract_memory, stitch_memory)
+        score = self._period(current, costs)
         proposed = (plan.extract, plan.stitch)
         blocked = self.blocked_until.get(proposed, 0) > self.revision
         if infeasible:
             return ThreadAllocation(plan.extract, plan.stitch, plan.period, 'capacity')
         useful = plan.period < score * 0.95 or (plan.period <= score * 1.02 and sum(proposed) < sum(current))
         resource_only = plan.period >= score * 0.95 and sum(proposed) < sum(current)
+        if self.throughput_first:
+            # Never shrink simply to save workers or because GUI service time
+            # masks production gains. Growing capacity is an online trial;
+            # shrinking requires an estimated throughput gain and validation.
+            useful = (plan.period < score * .95 or
+                      (plan.period <= score * 1.02 and sum(proposed) > sum(current)))
+            resource_only = False
         if resource_only and buffer_depth is not None:
             samples = len(self.observations.get(current, ()))
             if low_buffer or stitch_waiting or stitch_ready or extract_backlog or samples < self.validation_samples:
@@ -223,15 +255,17 @@ class AdaptiveThreadAllocator:
             return plan
         # Occasionally test a nearby unmeasured plan; feedback can expose a
         # scaling limit that an initially ideal model cannot predict.
-        if allow_probe and self.revision - self.last_probe >= self.probe_every and score > costs[2] * 1.05:
+        if allow_probe and self.revision - self.last_probe >= self.probe_every and score > display_floor * 1.05:
             candidates = []
             for e, s in ((current[0] + 1, current[1] - 1), (current[0] - 1, current[1] + 1),
                          (current[0] + 1, current[1]), (current[0], current[1] + 1)):
                 if (e < 1 or s < 1 or e + s > budget
                         or e > (max_extract_tasks or budget - 1) or s > (max_stitch_tasks or budget - 1)):
                     continue
+                if not fits((e, s)):
+                    continue
                 if (e, s) not in self.observations and self.blocked_until.get((e, s), 0) <= self.revision:
-                    candidates.append((max(ebase * (ae + (1-ae)/e), sbase * (ass + (1-ass)/s), costs[2]), e, s))
+                    candidates.append((max(ebase * (ae + (1-ae)/e), sbase * (ass + (1-ass)/s), display_floor), e, s))
             if candidates:
                 period, e, s = min(candidates)
                 self.last_probe = self.revision

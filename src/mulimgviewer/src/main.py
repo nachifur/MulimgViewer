@@ -565,7 +565,11 @@ class VideoManager:
         # Single-video native decode parallelism is already tuned separately.
         # Probe only producer concurrency; never change playback timing here.
         return self._admission_optimizer.configure(
-            budget, (self._pacing_context(), tuple(indices)),
+            # Never compare total-concurrency trials across different stage
+            # reservations: that changes the experiment and invalidates its
+            # incumbent. Stage tuning settles before total-cap probing resumes.
+            budget, (self._pacing_context(), tuple(indices),
+                     self._extract_threads, self._stitch_threads),
             enabled=cfg.video_mode and cfg.power_mode >= 3 and len(indices) >= 2 and budget >= 4,
             warmup=max(8, 2*int(cfg.cache_num)*int(cfg.cache_multiplier)+1))
 
@@ -2139,7 +2143,7 @@ class VideoManager:
             with bank.lease(path, float(config.video_fps_list[vid]),
                             self._fast_seek_paths.get(str(path), False), dimensions[0]*dimensions[1],
                             getattr(self._worker_context,'native_threads',1)) as decoder:
-                for physical, image in decoder.frames(min(missing)*step, max(missing)*step, step, cancelled):
+                for physical, image in decoder.frames(min(missing)*step, max(missing)*step, step, cancelled, buffer_images=True):
                     index = physical // step
                     if index not in missing:
                         continue

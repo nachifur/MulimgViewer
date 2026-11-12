@@ -9,51 +9,75 @@ class PixelCache:
         self.lock = threading.RLock()
         self.limit, self.bytes = max(0, int(limit)), 0
         self.entries = OrderedDict()
+        self._raw = OrderedDict()
+        self._priority = OrderedDict()
+        self.priority_bytes = 0
 
     def configure(self, limit):
         with self.lock:
             self.limit = max(0, int(limit))
             self._trim()
 
+    def _remove(self, key):
+        entry = self.entries.pop(key)
+        self.bytes -= entry[1]
+        if entry[3]:
+            self.priority_bytes -= entry[1]
+            del self._priority[key]
+        else:
+            del self._raw[key]
+
     def _trim(self):
+        # Two LRU indexes avoid scanning every protected preview for each raw
+        # frame insertion. Both the victim lookup and byte accounting are O(1).
         while self.bytes > self.limit and self.entries:
-            key = next((k for k,v in self.entries.items() if not v[3]), next(iter(self.entries)))
-            self.bytes -= self.entries.pop(key)[1]
+            self._remove(next(iter(self._raw or self._priority)))
 
     def put(self, key, image, owner=None, priority=False):
-        # Pillow RGB storage can use four bytes/pixel internally. Account for
-        # that instead of assuming len(getbands()) bytes for RGB images.
         key = str(key)
-        weight = image.width * image.height * max(4, len(image.getbands()))
+        weight = max(image.width * image.height * max(4, len(image.getbands())),
+                     int(getattr(image, '_video_buffer_bytes', 0)))
         with self.lock:
             if weight > self.limit:
                 return False
-            if not priority and weight + sum(v[1] for v in self.entries.values() if v[3]) > self.limit:
+            old = self.entries.get(key)
+            protected = self.priority_bytes - (old[1] if old and old[3] else 0)
+            if not priority and weight + protected > self.limit:
                 return False
-            old = self.entries.pop(key, None)
-            if old:
-                self.bytes -= old[1]
+            if old is not None:
+                self._remove(key)
             self.entries[key] = image, weight, str(owner) if owner is not None else key, priority
             self.bytes += weight
+            if priority:
+                self.priority_bytes += weight
+                self._priority[key] = None
+            else:
+                self._raw[key] = None
             self._trim()
             return True
 
     def get(self, key):
+        key = str(key)
         with self.lock:
-            entry = self.entries.get(str(key))
+            entry = self.entries.get(key)
             if entry is None:
                 return None
-            self.entries.move_to_end(str(key))
+            self.entries.move_to_end(key)
+            (self._priority if entry[3] else self._raw).move_to_end(key)
             return entry[0]  # Immutable by convention; consumers resize/copy.
 
     def prune(self, allowed):
         with self.lock:
             for key in list(self.entries):
                 if self.entries[key][2] not in allowed:
-                    self.bytes -= self.entries.pop(key)[1]
+                    self._remove(key)
 
     def clear(self):
-        self.prune(set())
+        with self.lock:
+            self.entries.clear()
+            self._raw.clear()
+            self._priority.clear()
+            self.bytes = self.priority_bytes = 0
 
 
 class LazyVideoImage:

@@ -82,7 +82,25 @@ class DecoderSession:
         yield frame
         yield from iterator
 
-    def frames(self, first, last, step, cancelled):
+    @staticmethod
+    def _buffered_image(frame):
+        # Let Pillow's native raw decoder read the strided RGB plane directly.
+        # This removes PyAV.to_image's Python row loop, bytearray and bytes
+        # copies. The resulting RGB image OWNS its pixels; it never aliases a
+        # codec buffer or depends on decoder/container lifetime.
+        try:
+            rgb = frame.reformat(format='rgb24')
+            plane = rgb.planes[0]
+            if plane.line_size < rgb.width * 3 or plane.buffer_size < plane.line_size * rgb.height:
+                raise ValueError('Unsupported video buffer stride')
+            return Image.frombytes('RGB', (rgb.width, rgb.height), plane,
+                                   'raw', 'RGB', plane.line_size, 1)
+        except (AttributeError, TypeError, ValueError, NotImplementedError):
+            # Keep the established conversion for older buffer APIs/formats.
+            # Do not catch MemoryError and allocate another full-size image.
+            return frame.to_image()
+
+    def frames(self, first, last, step, cancelled, buffer_images=False):
         opened = self.container is None
         if opened:
             self._open()
@@ -113,7 +131,7 @@ class DecoderSession:
                         raise ValueError('Display-matrix API unavailable; use FFmpeg autorotation')
                     if values[0]*values[4]-values[1]*values[3] < 0 or rotation % 90:
                         raise ValueError('Unsupported display transform; use FFmpeg autorotation')
-                image = frame.to_image()
+                image = self._buffered_image(frame) if buffer_images else frame.to_image()
                 transform = {90:Image.ROTATE_90,180:Image.ROTATE_180,270:Image.ROTATE_270}.get(int(rotation)%360)
                 if transform is not None:
                     image = image.transpose(transform)

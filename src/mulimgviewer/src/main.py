@@ -687,7 +687,9 @@ class VideoManager:
                 extract_threads = max(1, total_budget - stitch_threads)
 
         if extract_threads == self._extract_threads and stitch_threads == self._stitch_threads:
-            self._publish_thread_allocation()
+            # Equal stage reservations do not imply an unchanged global CPU,
+            # memory or admission-search budget after a power-mode switch.
+            self._initialize_thread_pools()
             return
 
         previous = (self._extract_threads, self._stitch_threads)
@@ -3618,6 +3620,9 @@ class MulimgViewer (MulimgViewerGui):
             vm.perf_monitor.reset_render_clock()
             vm.perf_monitor.render_history.clear()
             if self.shared_config.is_playing and self.shared_config.video_mode:
+                vm._admission_limit()
+                vm._admission_optimizer.restart_observation()
+                vm._initialize_thread_pools()
                 vm._maybe_evaluate_performance(force=True)
 
         self.right_arrow_button1.SetLabel(label)

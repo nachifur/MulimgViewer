@@ -1,4 +1,4 @@
-﻿"""Bounded online search for useful producer concurrency, independent of wx."""
+"""Bounded online search for useful producer concurrency, independent of wx."""
 import math
 import threading
 from collections import deque
@@ -35,6 +35,23 @@ class AdaptiveAdmissionBudget:
         self.phase_count = 0
         self.reason = reason
         return self.limit
+
+    def restart_observation(self):
+        """Exclude explicit user pauses, retaining the best resource limit.
+
+        Cache-miss waits are NOT pauses: their time must remain in measured
+        supply. Call this only on an explicit playback restart.
+        """
+        with self.lock:
+            if self.key is None:
+                return
+            self.limit = self.best
+            self.best_period = None
+            self.start = self.start_produced = None
+            self.phase_count = self.cooldown = 0
+            self.visited.clear()
+            self.settling = 2 if self.frames >= self.warmup else 0
+            self.reason = 'resume' if self.frames >= self.warmup else 'warmup'
 
     def observe(self, now, produced, buffered, target_buffer=2, manual_limited=False):
         """Only completed display events enter; count actual produced pages.

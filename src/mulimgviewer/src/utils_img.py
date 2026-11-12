@@ -673,6 +673,7 @@ class ImgManager(ImgData):
 
     def __init__(self):
         self.layout_params = []
+        self.type = None  # No input has been selected yet.
         self.gap_color = (0, 0, 0, 0)
         self.img = None
         self.customfunc_img = None

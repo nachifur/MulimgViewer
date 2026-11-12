@@ -18,8 +18,55 @@ class ThreadAllocation(NamedTuple):
     reason: str = 'model'
 
 
+class BufferLevels(NamedTuple):
+    low: int
+    critical: int
+    recover: int
+    capacity: int
+
+
+def buffer_levels(cache_frames, capacity, interval, refill_latency=0., switch_latency=0.):
+    """R pages warn, ceil(R/2) pages are critical; measured lead time can warn earlier."""
+    radius, capacity = max(1, int(cache_frames)), max(0, int(capacity))
+    lead = max(0., float(refill_latency)) + max(0., float(switch_latency))
+    low = min(capacity, max(radius, math.ceil(lead / max(.001, float(interval)) - 1e-9)))
+    critical = min(capacity, max(1, math.ceil(radius / 2)))
+    recover = min(capacity, max(low + max(1, math.ceil(radius / 2)), math.ceil(radius * 1.5)))
+    return BufferLevels(low, critical, recover, capacity)
+
+
+def buffer_priority(stitched, raw, stitched_levels, raw_levels, previous=None):
+    """Compare output pages and UNUSED raw pages beyond the output frontier."""
+    s, r = stitched_levels, raw_levels
+    s_low = stitched < s.capacity and stitched <= s.low
+    r_low = raw < r.capacity and raw <= r.low
+    # Input starvation must not be answered by creating more waiting composers.
+    if s_low and raw == 0 and r_low:
+        return 'raw'
+    if s_low and stitched <= s.critical and raw > 0:
+        return 'stitch'
+    if r_low and raw <= r.critical and stitched > s.critical:
+        return 'raw'
+    if previous == 'stitch' and stitched < s.recover and stitched < s.capacity and raw > 0:
+        return 'stitch'
+    if previous == 'raw' and raw < r.recover and raw < r.capacity:
+        return 'raw'
+    if s_low and r_low:
+        return 'stitch' if raw > 0 else 'raw'
+    if s_low and (raw >= r.recover or raw >= r.capacity):
+        return 'stitch'
+    if r_low and (stitched >= s.recover or stitched >= s.capacity):
+        return 'raw'
+    return None
+
+
 def available_memory_bytes():
-    """Best-effort available physical RAM; no process creation or filesystem I/O."""
+    """Best-effort available physical RAM without launching a helper process."""
+    try:
+        import psutil
+        return int(psutil.virtual_memory().available)
+    except (ImportError, AttributeError, OSError, ValueError):
+        pass
     try:
         if os.name == 'nt':
             import ctypes
@@ -106,6 +153,7 @@ class AdaptiveThreadAllocator:
     """
     def __init__(self, validation_samples=3, probe_every=8, throughput_first=False):
         self.throughput_first = throughput_first
+        self.buffer_priority = None
         self.observations = {}
         self.validation_samples = max(1, int(validation_samples))
         self.probe_every = max(2, int(probe_every))
@@ -179,7 +227,9 @@ class AdaptiveThreadAllocator:
     def recommend(self, total_threads, costs, current, max_extract_tasks=None,
                   max_stitch_tasks=None, allow_probe=True, extract_backlog=0,
                   stitch_waiting=0, stitch_ready=0, buffer_depth=None, buffer_target=1,
-                  memory_budget=None, extract_memory=0, stitch_memory=0):
+                  memory_budget=None, extract_memory=0, stitch_memory=0,
+                  raw_buffer_depth=None, stitched_levels=None, raw_levels=None,
+                  cpu_headroom=False, power_mode=2):
         current = tuple(current)
         budget = int(total_threads)
         def fits(plan):
@@ -190,6 +240,68 @@ class AdaptiveThreadAllocator:
         if infeasible:
             self.trial = None
         low_buffer = buffer_depth is not None and buffer_depth < max(1, buffer_target)
+        if cpu_headroom and power_mode >= 3 and not infeasible:
+            # Move UNUSED quotas to jobs that can actually execute. Do not
+            # take lanes needed by the other stage's existing ready work.
+            growth = 2. if power_mode >= 4 else 1.5
+            raw_demand = max(1, min(current[0], extract_backlog))
+            stitch_demand = max(1, min(current[1], stitch_ready))
+            if stitch_ready > current[1]:
+                target = min(max_stitch_tasks or budget-1, budget-raw_demand,
+                             stitch_ready, max(current[1]+1, math.ceil(current[1]*growth)))
+                for stitch in range(target, current[1], -1):
+                    extract = min(current[0], budget-stitch)
+                    if extract >= raw_demand and fits((extract, stitch)):
+                        return ThreadAllocation(extract, stitch, self._period((extract, stitch), costs), 'ready-capacity')
+            if extract_backlog > current[0]:
+                target = min(max_extract_tasks or budget-1, budget-stitch_demand,
+                             extract_backlog, max(current[0]+1, math.ceil(current[0]*growth)))
+                for extract in range(target, current[0], -1):
+                    stitch = min(current[1], budget-extract)
+                    if stitch >= stitch_demand and fits((extract, stitch)):
+                        return ThreadAllocation(extract, stitch, self._period((extract, stitch), costs), 'ready-capacity')
+        if raw_buffer_depth is not None and stitched_levels is not None and raw_levels is not None:
+            self.buffer_priority = buffer_priority(buffer_depth, raw_buffer_depth,
+                stitched_levels, raw_levels, self.buffer_priority)
+            if not infeasible and self.buffer_priority == 'stitch' and stitch_ready > current[1]:
+                target = min(budget - 1, max_stitch_tasks or budget - 1,
+                             stitch_ready, max(current[1] + 1, 2 * current[1]))
+                for stitch in range(target, current[1], -1):
+                    extract = min(current[0], budget - stitch)
+                    while extract >= 1 and not fits((extract, stitch)):
+                        extract -= 1
+                    if extract >= 1:
+                        return ThreadAllocation(extract, stitch, self._period((extract, stitch), costs),
+                                                'stitch-buffer-low')
+            if not infeasible and self.buffer_priority == 'raw' and extract_backlog > current[0]:
+                target = min(budget - 1, max_extract_tasks or budget - 1,
+                             extract_backlog, max(current[0] + 1, 2 * current[0]))
+                for extract in range(target, current[0], -1):
+                    stitch = min(current[1], budget - extract)
+                    while stitch >= 1 and not fits((extract, stitch)):
+                        stitch -= 1
+                    if stitch >= 1:
+                        return ThreadAllocation(extract, stitch, self._period((extract, stitch), costs),
+                                                'raw-buffer-low')
+            if self.buffer_priority is not None and not infeasible:
+                return ThreadAllocation(*current, self._period(current, costs), 'hold-buffer-priority')
+            # Explicit inventories replace the older output-only heuristic.
+            low_buffer = False
+        if (low_buffer and stitch_ready > current[1] and not infeasible
+                and (stitch_waiting == 0 or
+                     (stitch_ready >= 2 * stitch_waiting and extract_backlog <= current[0]))):
+            # Finished raw frames are already waiting to be composed. Borrow
+            # upstream lanes even when the entire budget is allocated.
+            target = min(budget - 1, max_stitch_tasks or budget - 1,
+                         stitch_ready, max(current[1] + 1, current[1] * 2))
+            for stitch in range(target, current[1], -1):
+                extract = min(current[0], budget - stitch)
+                while extract >= 1 and not fits((extract, stitch)):
+                    extract -= 1
+                if extract >= 1:
+                    reason = 'downstream-starved' if extract < current[0] else 'ready-backlog'
+                    return ThreadAllocation(extract, stitch,
+                        self._period((extract, stitch), costs), reason)
         if low_buffer and stitch_waiting > 0 and extract_backlog > current[0]:
             # Input starvation: increase upstream capacity first, not waiting
             # stitch workers. Use spare budget or one unused downstream lane.

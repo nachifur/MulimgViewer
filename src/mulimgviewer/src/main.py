@@ -25,12 +25,14 @@ from .index_table import IndexTable
 from .custom_func.main import get_available_algorithms
 from .utils import MyTestEvent, get_resource_path
 from .utils_img import ImgManager
-from .resource_policy import resource_budget
+from .resource_policy import resource_budget, positive_cache_integer
 from .image_pipeline import ImagePipeline
 from .memory_reclaim import MemoryReclaimer
 from .video_tools import resolve_video_tools
+from .resource_monitor import ResourceMonitor, run_video_process
+from .playback_pacer import PlaybackPacer, ProductionJob, completion_estimates, refill_guard
 from .thread_optimizer import (AdaptiveThreadAllocator, optimize_thread_allocation,
-                               available_memory_bytes, stitch_memory_limit)
+                               available_memory_bytes, stitch_memory_limit, buffer_levels, buffer_priority)
 import json
 import shutil
 import copy
@@ -42,6 +44,9 @@ class PerformanceMonitor:
     def __init__(self, eval_batch_window=5, eval_time_window=0.5):
         self._lock = threading.RLock()
         self.extract_history = deque(maxlen=60)
+        self.extract_run_history = deque(maxlen=30)
+        self.extract_runs_by_video = {}
+        self.resize_history = deque(maxlen=20)
         self.extract_by_video = {}
         self.extract_by_plan = {}
         self.stitch_by_plan = {}
@@ -62,6 +67,8 @@ class PerformanceMonitor:
         if duration is not None and math.isfinite(duration) and duration >= 0 and batches > 0:
             cost = float(duration) / batches
             with self._lock:
+                self.extract_run_history.append(float(duration))
+                self.extract_runs_by_video.setdefault(video_idx, deque(maxlen=12)).append(float(duration))
                 self.extract_history.extend([cost] * min(60, max(1, int(batches))))
                 self.extract_by_video.setdefault(video_idx, deque(maxlen=24)).extend(
                     [cost] * min(24, max(1, int(batches))))
@@ -72,6 +79,23 @@ class PerformanceMonitor:
                         [cost] * min(24, max(1, int(batches))))
                     if len(self.extract_by_plan) > 32:
                         self.extract_by_plan.pop(next(iter(self.extract_by_plan)))
+
+    def buffer_latencies(self):
+        """Conservative completion/switch lead times, without GUI filesystem access."""
+        def percentile(values):
+            values = sorted(list(values)[-12:])
+            return values[math.ceil(.9 * len(values)) - 1] if values else 0.
+        with self._lock:
+            return (percentile(self.extract_run_history), percentile(self.stitch_history),
+                    percentile(self.resize_history))
+
+    def service_estimates(self, video=None):
+        with self._lock:
+            samples = self.stitch_history if video is None else self.extract_runs_by_video.get(video, self.extract_run_history)
+            values = list(samples)[-12:]
+            # P90 is for early refill warnings, not every job's normal ETA:
+            # applying tail latency to every queued job compounds slowdown.
+            return sum(values) / len(values) if values else 0.
 
     def record_stitch(self, duration, plan=None):
         if duration is not None and math.isfinite(duration) and duration >= 0:
@@ -243,6 +267,9 @@ class VideoManager:
         self.image_disk_cache_dir = self.disk_cache_dir
         self.image_disk_cache_dir.mkdir(parents=True, exist_ok=True)
         self.perf_monitor = PerformanceMonitor()
+        self._playback_pacer = PlaybackPacer()
+        self._pacing_model_period = None
+        self._pacing_notification_pending = False
         self.executor = None
         self.stitch_executor = None
         self._stitch_lock = threading.Lock()
@@ -260,6 +287,7 @@ class VideoManager:
         self._worker_context = threading.local()
         self._window_token = None
         self._raw_windows = {}
+        self._raw_ready_batches = set()
         self._stitch_window = (0, -1)
         self._window_stitches = {}
         self._maintenance_executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="video-cleanup")
@@ -291,6 +319,7 @@ class VideoManager:
         self._reported_extract_threads = False
         self._reported_stitch_threads = False
         self._initialize_thread_pools()
+        self._last_thread_resize = time.perf_counter()
 
 
     def _get_disk_cache_path(self, batch_idx):
@@ -374,11 +403,14 @@ class VideoManager:
     def _invalidate_stitch_cache_locked(self):
         self._window_generation = getattr(self, "_window_generation", 0) + 1
         self._window_token = None
+        self._raw_ready_batches = set()
         self.shared_config.cache_img = []
         self._display_serial += 1
         self._render_snapshot = None
         self._batch_render_states.clear()
         self.perf_monitor = PerformanceMonitor()
+        self._playback_pacer.reset()
+        self._pacing_model_period = None
         self._thread_allocator = AdaptiveThreadAllocator(throughput_first=True)
         self._optimizer_seen = {}
         self._pending_thread_plan = None
@@ -503,18 +535,14 @@ class VideoManager:
             extract=self._extract_threads, stitch=self._stitch_threads)
         ui = self._ui()
         if ui is not None and hasattr(ui, 'power_mode') and self.shared_config.video_mode:
-            allocation = dict(self.shared_config.thread_allocation)
-            pending = getattr(self, '_pending_thread_plan', None)
             def show_allocation():
                 owner = self._ui()
                 if owner is not None and not getattr(owner, '_is_closing', False):
-                    text = (
-                        f"Extract: {allocation['extract']}, stitch: {allocation['stitch']}; "
-                        f"budget: {allocation['budget']}")
-                    if pending:
-                        text += f"\nPending: extract {pending[0]}, stitch {pending[1]}"
-                    owner.power_mode.SetToolTip(text)
-            wx.CallAfter(show_allocation)
+                    owner._refresh_power_tooltip()
+            if wx.IsMainThread():
+                show_allocation()
+            else:
+                wx.CallAfter(show_allocation)
         if getattr(self.shared_config, 'debug_thread', False):
             print(f"[ThreadAllocation] {self.shared_config.thread_allocation}")
 
@@ -529,6 +557,7 @@ class VideoManager:
             self._display_serial += 1
             self._window_generation = getattr(self, "_window_generation", 0) + 1
             self._raw_windows = {}
+            self._raw_ready_batches = set()
             self._stitch_window = (0, -1)
             for future in list(self._window_stitches.values()):
                 future.cancel()
@@ -610,6 +639,7 @@ class VideoManager:
         self._extract_threads = extract_threads
         self._stitch_threads = stitch_threads
         self._initialize_thread_pools()
+        self._last_thread_resize = time.perf_counter()
         allocator = getattr(self, '_thread_allocator', None)
         if allocator is not None:
             allocator.applied(previous, (extract_threads, stitch_threads))
@@ -673,6 +703,9 @@ class VideoManager:
 
     def _rebalance_thread_pools(self):
         """Stop adding jobs, drain producers, then replace pools within budget."""
+        canceled_request = None
+        reschedule = False
+        resize_started = time.perf_counter()
         try:
             while True:
                 with self._cache_guard:
@@ -685,9 +718,6 @@ class VideoManager:
                             or allocator is not self._thread_allocator):
                         self._pending_thread_plan = None
                         return
-                    futures = set(self._pending_extract.values()) | set(self._window_stitches.values())
-                if not futures:
-                    break
                 # Let a new cold jump establish its window before draining, so
                 # resizing cannot hold a navigation request behind old prefetch.
                 latest = getattr(self, '_cache_request', None)
@@ -695,18 +725,39 @@ class VideoManager:
                     lo, hi = self._stitch_window
                     if not lo <= int(latest[1].batch_idx) <= hi:
                         return
+                with self._cache_guard:
+                    if request is not canceled_request:
+                        # Preserve running work and completed PNGs, but do not
+                        # drain the entire queued outer window on old quotas.
+                        queued = set(self._pending_extract.values()) | set(self._window_stitches.values())
+                        for future in queued:
+                            future.cancel()
+                        canceled_request = request
+                        reschedule = True
+                    futures = {future for future in
+                               set(self._pending_extract.values()) | set(self._window_stitches.values())
+                               if not future.done()}
+                if not futures:
+                    break
                 wait(futures, timeout=0.1)
             with self._cache_guard:
                 if (request == self._pending_thread_plan and budget == int(self.shared_config.thread)
                         and generation == getattr(self, '_window_generation', 0)
                         and allocator is self._thread_allocator and not getattr(self, '_closed', False)):
                     self._apply_thread_plan(extract, stitch)
-                    self._cooldown_deadline = time.perf_counter() + 1.0
+                    with self.perf_monitor._lock:
+                        self.perf_monitor.resize_history.append(time.perf_counter() - resize_started)
+                    self._cooldown_deadline = time.perf_counter() + 2.0
                     self._pending_thread_plan = None
         finally:
             self._rebalance_queued = False
+            if reschedule and not getattr(self, '_closed', False):
+                config = copy.copy(self.shared_config)
+                for name in ('video_path', 'real_video_path', 'video_num_list', 'video_fps_list'):
+                    setattr(config, name, tuple(getattr(config, name)))
+                self._enqueue_cache_config(config, only_if_empty=True)
 
-    def _apply_interval_recommendation(self, recommended):
+    def _apply_interval_recommendation(self, recommended, reschedule=True):
         ui = self._ui()
         try:
             if not math.isfinite(recommended):
@@ -715,7 +766,7 @@ class VideoManager:
             manual = getattr(self.shared_config, 'manual_interval', None)
             if manual is not None:
                 recommended = max(recommended, manual)
-            field = getattr(ui, 'row_col1', None) if ui else None
+            field = getattr(ui, 'interval', None) if ui else None
             if field is not None and field.HasFocus():
                 return
             current = float(getattr(self.shared_config, "interval", recommended) or recommended)
@@ -725,7 +776,7 @@ class VideoManager:
             if ui:
                 if field is not None:
                     field.ChangeValue(f"{recommended:.3f}")
-                if (getattr(ui.shared_config, "is_playing", False)
+                if (reschedule and getattr(ui.shared_config, "is_playing", False)
                         and not getattr(ui, '_play_timer_suspended', False)):
                     ui._schedule_next_video_tick()
         except Exception as exc:
@@ -748,10 +799,107 @@ class VideoManager:
         depth = self._compute_buffer_depth()
         self.perf_monitor.record_buffer_depth(depth)
 
+    @staticmethod
+    def _video_batch_sources(batch, cfg):
+        k = max(1, int(cfg.count_per_action))
+        counts = [(int(n) + k - 1) // k for n in cfg.video_num_list]
+        if cfg.parallel_to_sequential:
+            base = 0
+            for vid, count in enumerate(counts):
+                if base <= batch < base + count:
+                    return [(vid, batch - base)]
+                base += count
+            return []
+        return [(vid, min(batch, count - 1)) for vid, count in enumerate(counts) if count > 0]
+
+    def _raw_buffer_inventory(self, stitched_depth):
+        """Unused raw pages AFTER the contiguous PNG frontier; state-only on GUI."""
+        if not hasattr(self, '_raw_ready_batches'):
+            return None
+        cfg = self.shared_config
+        current = int(cfg.batch_idx)
+        direction = 1 if int(cfg.play_direction) >= 0 else -1
+        with self._cache_guard:
+            lo, hi = self._stitch_window
+            if not lo <= current <= hi:
+                return None
+            ready = set(self._raw_ready_batches)
+        capacity = hi - current if direction > 0 else current - lo
+        raw_capacity = max(0, capacity - stitched_depth)
+        raw = 0
+        for distance in range(stitched_depth + 1, capacity + 1):
+            batch = current + direction * distance
+            sources = self._video_batch_sources(batch, cfg)
+            if not sources or not all(source in ready for source in sources):
+                break
+            raw += 1
+        return raw, raw_capacity, capacity
+
+    def _mark_raw_batch_ready(self, vid, local, token, ready):
+        with self._cache_guard:
+            if token != self._window_token:
+                return
+            k = max(1, int(self.shared_config.count_per_action))
+            start, end = self._batch_range(int(self.shared_config.video_num_list[vid]), k, local)
+            lo, hi = self._raw_windows.get(vid, (0, 0))
+            ready = ready and lo <= start and end < hi
+            if ready:
+                self._raw_ready_batches.add((vid, local))
+            else:
+                self._raw_ready_batches.discard((vid, local))
+
     def _mark_batch_processed(self):
         self.perf_monitor.mark_processed_batch()
         self._record_buffer_depth()
         self._maybe_evaluate_performance()
+        self._refresh_playback_interval()
+
+    def _pacing_context(self, token=None, config=None):
+        config = self.shared_config if config is None else config
+        return (self._window_token if token is None else token,
+                1 if int(config.play_direction) >= 0 else -1)
+
+    def _next_stitch_eta(self, batch, now):
+        """Estimate the first missing PNG using in-memory queue/dependency state."""
+        with self._cache_guard:
+            raw = list(dict.fromkeys(f for f in self._pending_extract.values() if not f.done()))
+            stitched = [f for f in self._window_stitches.values() if not f.done()]
+            target = self._window_stitches.get((self._window_token, batch))
+        if target is None:
+            return None
+        raw_default, stitch_default, _ = self.perf_monitor.buffer_latencies()
+        def describe(future, default):
+            timing = dict(getattr(future, 'video_timing', {}))
+            return ProductionJob(future, timing.get('queued_at', now), timing.get('started_at'),
+                timing.get('expected_seconds') or max(.001, default),
+                tuple(getattr(future, 'video_dependencies', ())))
+        inputs = completion_estimates([describe(f, raw_default) for f in raw], self._extract_threads, now)
+        outputs = completion_estimates([describe(f, stitch_default) for f in stitched], self._stitch_threads, now, inputs)
+        return outputs.get(target)
+
+    def _refresh_playback_interval(self, model_period=None, reschedule=True):
+        cfg = self.shared_config
+        pacer = getattr(self, '_playback_pacer', None)
+        if pacer is None or not cfg.video_mode or not cfg.is_playing:
+            return
+        if model_period is not None:
+            self._pacing_model_period = model_period
+        _, total = self._playback_video_indices()
+        direction = 1 if int(cfg.play_direction) >= 0 else -1
+        remaining = max(0, total - 1 - int(cfg.batch_idx) if direction > 0 else int(cfg.batch_idx))
+        depth = min(remaining, self._compute_buffer_depth())
+        with self.perf_monitor._lock:
+            display = sorted(list(self.perf_monitor.display_history)[-12:])
+        display_cost = display[int((len(display)-1)*.75)] if display else .001
+        now = time.perf_counter()
+        eta = self._next_stitch_eta(int(cfg.batch_idx) + direction * (depth+1), now) if remaining > depth else None
+        fallback = self._pacing_model_period or max(display_cost,
+            self.perf_monitor.service_estimates() / max(1, self._stitch_threads))
+        interval, details = pacer.recommend(self._pacing_context(), now, depth,
+            max(1, int(cfg.cache_num)), remaining, cfg.manual_interval, display_cost, fallback, eta)
+        cfg.interval_recommend = max(.001, math.ceil(interval * 1000 - 1e-9) / 1000.)
+        cfg.interval_prediction = details
+        self._apply_interval_recommendation(cfg.interval_recommend, reschedule=reschedule)
 
     def _playback_video_indices(self):
         cfg = self.shared_config
@@ -816,9 +964,28 @@ class VideoManager:
         monitor = self.perf_monitor
         if not cfg.video_mode or not cfg.is_playing:
             return
-        if not force and not monitor.should_evaluate():
+        depth = self._compute_buffer_depth()
+        inner = max(1, int(cfg.cache_num))
+        play_direction = 1 if int(cfg.play_direction) >= 0 else -1
+        pressure = [f for f in self._window_stitches.values() if not f.done()
+                    and (getattr(f, 'video_batch', int(cfg.batch_idx)) - int(cfg.batch_idx)) * play_direction >= 0]
+        ready_pressure = sum(not getattr(f, 'video_waiting_for_extract', False) for f in pressure)
+        urgent_pressure = depth < inner and ready_pressure > self._stitch_threads
+        inventory = self._raw_buffer_inventory(depth)
+        stitched_thresholds = raw_thresholds = None
+        priority = None
+        if inventory is not None:
+            raw_depth, raw_capacity, capacity = inventory
+            raw_latency, stitch_latency, switch_latency = monitor.buffer_latencies()
+            stitched_thresholds = buffer_levels(inner, capacity, cfg.interval, stitch_latency, switch_latency)
+            raw_thresholds = buffer_levels(inner, raw_capacity, cfg.interval, raw_latency, switch_latency)
+            previous = getattr(getattr(self, '_thread_allocator', None), 'buffer_priority', None)
+            priority = buffer_priority(depth, raw_depth, stitched_thresholds, raw_thresholds, previous)
+            urgent_pressure = ((priority == 'stitch' and ready_pressure > self._stitch_threads)
+                               or (priority == 'raw' and len(set(self._pending_extract.values())) > self._extract_threads))
+        if not force and not urgent_pressure and not monitor.should_evaluate():
             return
-        if len(monitor.display_history) < (1 if force else 3):
+        if len(monitor.display_history) < (1 if force or urgent_pressure else 3):
             return
         indices, total = self._playback_video_indices()
         direction = 1 if int(cfg.play_direction) >= 0 else -1
@@ -870,36 +1037,62 @@ class VideoManager:
                 allocator.observe(current, *model_costs)
                 seen[stamp] = revision
                 self._optimizer_seen = seen
-            pending_stitches = list(self._window_stitches.values())
+            pending_stitches = [f for f in self._window_stitches.values()
+                if (getattr(f, 'video_batch', int(cfg.batch_idx)) - int(cfg.batch_idx)) * direction >= 0]
             waiting = sum(not f.done() and getattr(f, 'video_waiting_for_extract', False) for f in pending_stitches)
             ready = sum(not f.done() and not getattr(f, 'video_waiting_for_extract', False) for f in pending_stitches)
             output, inputs = self._estimated_stitch_pixels()
+            owner = self._ui()
+            resource_monitor = getattr(owner, 'resource_monitor', None) if owner is not None else None
+            resource_stats = resource_monitor.read_snapshot() if resource_monitor is not None else {}
+            cpu_usage = resource_stats.get('cpu')
+            cpu_target = min(100., budget / max(1, os.cpu_count() or 1) * 100)
+            cpu_headroom = cpu_usage is not None and cpu_usage < cpu_target * .85
             proposal = allocator.recommend(budget, model_costs, current, extract_cap, span,
-                                             allow_probe=usable and depth > 0,
+                                             allow_probe=usable and depth >= min(inner, max(1, remaining)),
                                              extract_backlog=len(set(self._pending_extract.values())),
                                              stitch_waiting=waiting, stitch_ready=ready,
                                              buffer_depth=depth, buffer_target=inner,
                                              memory_budget=self._planning_memory_budget(),
                                              extract_memory=self._decoder_working_set(),
-                                             stitch_memory=max(64 * 1024 ** 2, 16 * output + 9 * inputs))
+                                             stitch_memory=max(64 * 1024 ** 2, 16 * output + 9 * inputs),
+                                             raw_buffer_depth=inventory[0] if inventory is not None else None,
+                                             stitched_levels=stitched_thresholds, raw_levels=raw_thresholds,
+                                             cpu_headroom=cpu_headroom, power_mode=getattr(cfg, 'power_mode', 2))
             self.shared_config.thread_allocation_recommend = {
                 'extract': proposal.extract, 'stitch': proposal.stitch,
                 'estimated_period': proposal.period, 'reason': proposal.reason,
                 'stitch_task_limit': span,
+                'raw_buffer': inventory[0] if inventory is not None else None,
+                'stitched_buffer': depth,
+                'stitched_levels': stitched_thresholds,
+                'raw_levels': raw_thresholds,
+                'cpu_headroom': cpu_headroom,
             }
             busy = bool(self._pending_extract or self._window_stitches or self.cache_update_pending())
             now = time.perf_counter()
-            if ((proposal.extract, proposal.stitch) != current and usable
+            urgent = proposal.reason in ('downstream-starved', 'ready-backlog', 'upstream-starved', 'capacity',
+                                         'stitch-buffer-low', 'raw-buffer-low')
+            may_apply = usable or proposal.reason in ('downstream-starved', 'ready-backlog',
+                                                     'stitch-buffer-low', 'raw-buffer-low', 'ready-capacity')
+            critical = (stitched_thresholds is not None and priority == 'stitch' and depth <= stitched_thresholds.critical
+                        or raw_thresholds is not None and priority == 'raw' and inventory[0] <= raw_thresholds.critical)
+            stable = (now - getattr(self, '_last_thread_resize', 0.0) >= (.1 if critical else .25) if urgent
+                      else now >= self._cooldown_deadline and depth >= min(inner, max(1, remaining)))
+            if ((proposal.extract, proposal.stitch) != current and may_apply
                     and getattr(self, '_pending_thread_plan', None) is None
-                    and now >= self._cooldown_deadline):
+                    and stable):
                 if busy:
                     self._request_thread_plan(proposal.extract, proposal.stitch)
                 else:
                     self._apply_thread_plan(proposal.extract, proposal.stitch)
-                    self._cooldown_deadline = now + 1.0
+                    self._cooldown_deadline = now + 2.0
                     actual_period = max(proposal.period, display_cost)
 
-        # Quantize upwards to wx's millisecond timer, with a small jitter margin.
+        if getattr(self, '_playback_pacer', None) is not None:
+            self._refresh_playback_interval(actual_period)
+            return
+        # Compatibility for model-only, headless owners without the live pacer.
         target = max(0.001, math.ceil(actual_period * 1.02 * 1000 - 1e-9) / 1000.0)
         cfg.interval_recommend = target
         # Speed up when production has at least one future frame ready. An empty
@@ -935,7 +1128,7 @@ class VideoManager:
         inside its reader thread, which leaves stdout as None and used to
         surface as a bogus "no video stream found".
         '''
-        cp = subprocess.run(
+        cp = run_video_process(
             [self._video_command('ffprobe'), "-v", "error"] + [str(a) for a in args],
             capture_output=True,
             encoding="utf-8",
@@ -1006,7 +1199,7 @@ class VideoManager:
 
         if total <= 0:
             try:
-                cp = subprocess.run(
+                cp = run_video_process(
                     [
                         self._video_command('ffprobe'),
                         "-v", "error",
@@ -1112,7 +1305,13 @@ class VideoManager:
         config = copy.copy(self.shared_config)
         for name in ('video_path', 'real_video_path', 'video_num_list', 'video_fps_list'):
             setattr(config, name, tuple(getattr(config, name)))
+        self._enqueue_cache_config(config)
+
+    def _enqueue_cache_config(self, config, only_if_empty=False):
+        """Worker-safe rescheduling after queued work yields to a new plan."""
         with self._cache_request_lock:
+            if only_if_empty and self._cache_request is not None:
+                return
             self._cache_request_serial += 1
             self._cache_request = (self._cache_request_serial, config,
                                    getattr(self, '_window_generation', 0))
@@ -1187,9 +1386,19 @@ class VideoManager:
             # Moving the outer boundary at every step would still launch one
             # decoder per new edge frame, defeating the purpose of batching.
             old_lo, old_hi = self._stitch_window
+            guard = inner
+            if cfg.is_playing and multiplier >= 2:
+                lead = self._playback_pacer.first_ready_delay()
+                supply = self._playback_pacer.supply_period()
+                if lead is not None:
+                    capacity_period = self._pacing_model_period or float(cfg.interval)
+                    if supply is not None:
+                        capacity_period = min(supply, capacity_period)
+                    period = max(cfg.manual_interval or .001, capacity_period)
+                    guard = refill_guard(inner, multiplier, period, lead)
             near_edge = multiplier >= 2 and (
-                (old_lo > 0 and b - old_lo <= inner)
-                or (old_hi < total - 1 and old_hi - b <= inner)
+                (old_lo > 0 and b - old_lo <= guard)
+                or (old_hi < total - 1 and old_hi - b <= guard)
             )
             if (token == self._window_token and outer == getattr(self, "_outer_radius", None)
                     and not near_edge
@@ -1215,24 +1424,36 @@ class VideoManager:
                     start, end = self._batch_range(int(cfg.video_num_list[vid]), k, local)
                     old = self._raw_windows.get(vid, (start, end + 1))
                     self._raw_windows[vid] = (min(old[0], start), max(old[1], end + 1))
+            self._raw_ready_batches = {(vid, local) for vid, local in self._raw_ready_batches
+                if vid in self._raw_windows
+                and self._raw_windows[vid][0] <= local * k
+                and min((local + 1) * k, int(cfg.video_num_list[vid])) <= self._raw_windows[vid][1]}
             if len(cfg.cache_img) <= hi:
                 cfg.cache_img.extend([None] * (hi + 1 - len(cfg.cache_img)))
             if old_lo != lo or old_hi != hi:
                 self._schedule_video_cleanup()
 
         # The GUI displays the previous frame while the requested one is prepared.
+        direction = -1 if int(getattr(cfg, 'play_direction', 1)) < 0 else 1
+        wanted = [batch for batch in range(lo, hi+1)
+                  if self._cached_batch_path(batch, validate=False) is None]
+        self._playback_pacer.request(self._pacing_context(token, cfg), wanted, (lo, hi),
+                                     b, direction, time.perf_counter())
         if self._cached_batch_path(b, validate=False) is None:
             for vid, local in sources(b):
                 self._queue_extract_run(vid, local, local, token, cfg)
             self._queue_window_stitch(b, sources(b), token)
 
         direction = -1 if int(getattr(cfg, "play_direction", 1)) < 0 else 1
-        # Inner forward, inner backward, outer forward, outer backward.
+        # Playback prioritizes forward supply before reverse prefetch.
         stages = []
-        for first, last in ((1, inner), (inner + 1, max(b - lo, hi - b))):
-            for sign in (direction, -direction):
-                stages.append([b + sign * d for d in range(first, last + 1)
-                               if lo <= b + sign * d <= hi])
+        ranges = ((1, inner), (inner + 1, max(b-lo, hi-b)))
+        ordering = ([(sign, first, last) for sign in (direction, -direction) for first, last in ranges]
+                    if cfg.is_playing else
+                    [(sign, first, last) for first, last in ranges for sign in (direction, -direction)])
+        for sign, first, last in ordering:
+            stages.append([b + sign * d for d in range(first, last + 1)
+                           if lo <= b + sign * d <= hi])
         for batches in stages:
             if serial != self._cache_request_serial or token != self._window_token:
                 return
@@ -1356,6 +1577,8 @@ class VideoManager:
         with self._cache_guard:
             if token != self._window_token:
                 return []
+            for local, is_missing in missing.items():
+                self._mark_raw_batch_ready(vid, local, token, not is_missing)
             run = []
 
             def submit():
@@ -1363,11 +1586,14 @@ class VideoManager:
                     return
                 keys = tuple((vid, t) for t in run)
                 worker_plan = (self._extract_threads, self._stitch_threads)
+                timing = dict(queued_at=time.perf_counter(), started_at=None,
+                              expected_seconds=self.perf_monitor.service_estimates(vid))
                 start = run[0] * k
                 end = min(n - 1, (run[-1] + 1) * k - 1)
                 path = config.real_video_path[vid]
 
                 def extract():
+                    timing['started_at'] = time.perf_counter()
                     self._worker_context.token = token
                     self._worker_context.plan = worker_plan
                     try:
@@ -1382,6 +1608,7 @@ class VideoManager:
                         del self._worker_context.plan
 
                 future = self.executor.submit(extract)
+                future.video_timing = timing
                 for key in keys:
                     self._pending_extract[key] = future
                 futures.append(future)
@@ -1419,7 +1646,9 @@ class VideoManager:
         k = max(1, int(config.count_per_action))
         for vid, local in sources:
             start, end = self._batch_range(int(config.video_num_list[vid]), k, local)
-            if self._list_missing_range(vid, start, end, config):
+            missing = self._list_missing_range(vid, start, end, config)
+            self._mark_raw_batch_ready(vid, local, token, not missing)
+            if missing:
                 return
         groups = [self._collect_batch_frame_paths(vid, local, config) for vid, local in sources]
         # No cache guard spans pixel processing or PNG compression.
@@ -1468,10 +1697,19 @@ class VideoManager:
                             if not lo <= old_batch <= hi:
                                 self._batch_render_states.pop(old_batch, None)
                         self.perf_monitor.record_stitch(time.perf_counter() - started, plan=plan)
+                        self._playback_pacer.publish(self._pacing_context(token, config), batch,
+                                                     time.perf_counter(), max(1, int(config.cache_num)))
                 if not valid:
                     destination.unlink()
                     return
             ui = self._ui()
+            if (ui is not None and hasattr(ui, '_video_buffer_changed')
+                    and self.shared_config.is_playing):
+                with self._cache_guard:
+                    notify_pacing = not self._pacing_notification_pending
+                    self._pacing_notification_pending = True
+                if notify_pacing:
+                    wx.CallAfter(ui._video_buffer_changed, token)
             if (ui is not None and hasattr(ui, "_video_frame_ready")
                     and int(self.shared_config.batch_idx) == batch):
                 wx.CallAfter(ui._video_frame_ready, batch, token)
@@ -1494,6 +1732,11 @@ class VideoManager:
             dependencies = {self._pending_extract.get((vid, local)) for vid, local in sources}
             dependencies.discard(None)
             completion = Future()
+            completion.video_batch = batch
+            completion.video_dependencies = tuple(dependencies)
+            timing = dict(queued_at=time.perf_counter(), started_at=None,
+                          expected_seconds=self.perf_monitor.service_estimates())
+            completion.video_timing = timing
             completion.video_waiting_for_extract = bool(dependencies)
             self._window_stitches[key] = completion
             with self._pending_lock:
@@ -1525,9 +1768,12 @@ class VideoManager:
                     completion.cancel()
                     return
                 worker_plan = (self._extract_threads, self._stitch_threads)
+                timing['queued_at'] = time.perf_counter()
+                timing['expected_seconds'] = self.perf_monitor.service_estimates()
                 def stitch():
                     if not completion.set_running_or_notify_cancel():
                         return
+                    timing['started_at'] = time.perf_counter()
                     try:
                         self._run_window_stitch(batch, sources, token, worker_plan)
                     except Exception as ex:
@@ -1793,7 +2039,7 @@ class VideoManager:
                         "-q:v", "6", "-start_number", str(s), "-y", tmp_tpl,
                     ])
                     try:
-                        cp = subprocess.run(
+                        cp = run_video_process(
                             cmd, capture_output=True, encoding="utf-8",
                             errors="replace", check=False,
                             **self._video_process_options(),
@@ -1844,7 +2090,7 @@ class VideoManager:
                                 .overwrite_output()
                                 .compile(cmd=self._video_command('ffmpeg'))
                             )
-                            cp = subprocess.run(cmd, capture_output=True, encoding='utf-8',
+                            cp = run_video_process(cmd, capture_output=True, encoding='utf-8',
                                                 errors='replace', check=False,
                                                 **self._video_process_options())
                             if cp.returncode:
@@ -1859,7 +2105,7 @@ class VideoManager:
                                 '-threads:v', '1',
                                 '-q:v', '6', '-start_number', str(s), '-y', tmp_tpl,
                             ]
-                            cp = subprocess.run(cmd, capture_output=True, encoding='utf-8', errors='replace', check=False,
+                            cp = run_video_process(cmd, capture_output=True, encoding='utf-8', errors='replace', check=False,
                                                 **self._video_process_options())
                             if cp.returncode:
                                 last_error = cp.stderr or cp.stdout
@@ -1954,6 +2200,15 @@ class VideoManager:
                     except: pass
         except Exception:
             pass
+
+        if token is not None:
+            # Reuse the final missing-frame scan already performed above;
+            # publishing readiness must not add per-frame filesystem scans.
+            missing_batches = {idx // k for idx in missing}
+            for local in range(frame_start // k, frame_end // k + 1):
+                start, end = self._batch_range(int(config.video_num_list[video_idx]), k, local)
+                if frame_start <= start and end <= frame_end:
+                    self._mark_raw_batch_ready(video_idx, local, token, local not in missing_batches)
 
         if requested_batches and (token is None or token == self._window_token):
             self.perf_monitor.record_extract(time.perf_counter() - start_time,
@@ -2386,6 +2641,14 @@ class MulimgViewer (MulimgViewerGui):
         self.image_pipeline = ImagePipeline(self.video_manager.disk_cache_dir,
                                             self._image_frame_ready, wx.CallAfter)
         self.memory_reclaimer = MemoryReclaimer()
+        owner_ref = weakref.ref(self)
+        def metrics_ready():
+            def update():
+                owner = owner_ref()
+                if owner is not None and not getattr(owner, '_is_closing', False):
+                    owner._refresh_power_tooltip()
+            wx.CallAfter(update)
+        self.resource_monitor = ResourceMonitor(notify=metrics_ready)
         self._image_stitch_lock = threading.Lock()  # Lock for image stitching state
         self.shift_pressed=False
         self.UpdateUI = UpdateUI
@@ -2509,7 +2772,7 @@ class MulimgViewer (MulimgViewerGui):
             "title_show_rename": "m_checkBox31",
             "title_rename_text": "m_textCtrl16",
             "custom_algorithm_input": "m_textCtrl15",
-            "m_textCtrl28": "row_col1",
+            "m_textCtrl28": "interval",
             "m_textCtrl30": "cache_frames",
             "m_textCtrl281": "row_col13",
             "right_arrow_button1": "play",
@@ -2521,7 +2784,7 @@ class MulimgViewer (MulimgViewerGui):
     def _bind_compat_events(self):
         self.power_mode.Bind(wx.EVT_ENTER_WINDOW, self._show_thread_pipeline_status)
         self.power_mode.Bind(wx.EVT_CHOICE, self.on_power_mode_changed)
-        self.row_col1.Bind(wx.EVT_TEXT, self._on_interval_text_edited)
+        self.interval.Bind(wx.EVT_TEXT, self._on_interval_text_edited)
         if hasattr(self, "title_exif"):
             self.title_exif.Bind(wx.EVT_CHECKBOX, self.on_title_exif_changed)
 
@@ -2555,7 +2818,7 @@ class MulimgViewer (MulimgViewerGui):
                 field.Bind(wx.EVT_KILL_FOCUS, self.enable_accel)
 
         video_field_handlers = [
-            ("m_textCtrl28", self.on_interval_changed),
+            ("interval", self.on_interval_changed),
             ("cache_frames", self.on_cache_num_change),
             ("cache_multiplier", self.on_cache_num_change),
             ("m_textCtrl281", self.on_skip_changed),
@@ -2629,7 +2892,7 @@ class MulimgViewer (MulimgViewerGui):
             return value
 
         # ---- 播放间隔 ----
-        interval = _read_number(self.row_col1, 1.0,
+        interval = _read_number(self.interval, 1.0,
                                 0.001 if self.shared_config.video_mode else 0.05, integer=False)
         if self.shared_config.video_mode:
             interval = math.ceil(interval * 1000 - 1e-9) / 1000.0
@@ -2657,8 +2920,31 @@ class MulimgViewer (MulimgViewerGui):
         self._apply_resource_policy()
 
         # ---- Cached Frames (缓存帧数) ----
-        self.shared_config.cache_num = _read_number(self.cache_frames, 2, 1)
-        self.shared_config.cache_multiplier = _read_number(self.cache_multiplier, 1, 1)
+        invalid_cache_fields = set()
+        errors = []
+        for field, attribute, label in ((self.cache_frames, 'cache_num', 'Cache frames'),
+                                         (self.cache_multiplier, 'cache_multiplier', 'Cache multiplier')):
+            if not hasattr(field, '_cache_input_background'):
+                field._cache_input_background = field.GetBackgroundColour()
+                tip = field.GetToolTip()
+                field._cache_input_tip = tip.GetTip() if tip else 'Integer >= 1'
+            try:
+                value = positive_cache_integer(field.GetValue())
+            except ValueError:
+                invalid_cache_fields.add(id(field))
+                effective = getattr(self.shared_config, attribute)
+                message = f'{label}: enter an integer >= 1; current effective value: {effective}'
+                errors.append(message)
+                field.SetBackgroundColour(wx.Colour(255, 225, 225))
+                field.SetToolTip(message)
+            else:
+                setattr(self.shared_config, attribute, value)
+                field.SetBackgroundColour(field._cache_input_background)
+                field.SetToolTip(field._cache_input_tip)
+            field.Refresh()
+        self._performance_input_errors = errors
+        if errors:
+            self.SetStatusText_(['-1', '-1', '***Invalid parameter: ' + '; '.join(errors) + '***', '-1'])
 
         # ---- Skip Frame (跳过帧数) ----
         skip = _read_number(self.m_textCtrl281, 0, 0)
@@ -2666,14 +2952,16 @@ class MulimgViewer (MulimgViewerGui):
         self.ImgManager.skip = skip
 
         # 归一化: 输入框里显示的必须是当前真正生效的值
-        for field, value in ((self.m_textCtrl28, self.shared_config.interval),
+        for field, value in ((self.interval, self.shared_config.interval),
                               (self.cache_frames, self.shared_config.cache_num),
                               (self.cache_multiplier, self.shared_config.cache_multiplier),
                               (self.m_textCtrl281, self.shared_config.skip_frames)):
             try:
+                if id(field) in invalid_cache_fields:
+                    continue
                 text = str(value)
                 if str(field.GetValue()).strip() != text:
-                    if field is self.row_col1:
+                    if field is self.interval:
                         field.ChangeValue(text)
                     else:
                         field.SetValue(text)
@@ -2747,6 +3035,9 @@ class MulimgViewer (MulimgViewerGui):
         self.shared_config.thread = policy.workers
         self.shared_config.memory_budget = policy.memory
         self._resource_policy_key = key
+        self.resource_monitor.reset()
+        self.video_manager._playback_pacer.reset()
+        self.video_manager._pacing_model_period = None
         if self.shared_config.video_mode:
             with self.video_manager._cache_guard:
                 self.video_manager._thread_allocator = AdaptiveThreadAllocator(throughput_first=True)
@@ -2828,8 +3119,36 @@ class MulimgViewer (MulimgViewerGui):
             pipeline = self.image_pipeline
             self.shared_config.thread_allocation = dict(budget=self.shared_config.thread,
                 extract=0, stitch=pipeline.workers or pipeline.desired_workers)
-            self.power_mode.SetToolTip(
-                f"Stitch: {pipeline.workers or pipeline.desired_workers}; budget: {self.shared_config.thread}")
+            self._refresh_power_tooltip()
+
+    def _refresh_power_tooltip(self):
+        if getattr(self, '_is_closing', False):
+            return
+        cfg = self.shared_config
+        if cfg.video_mode:
+            vm = self.video_manager
+            text = f"Extract: {vm._extract_threads}, stitch: {vm._stitch_threads}; budget: {cfg.thread}"
+            pending = vm._pending_thread_plan
+            if pending:
+                text += f"\nPending: extract {pending[0]}, stitch {pending[1]}"
+        else:
+            pipeline = self.image_pipeline
+            text = f"Stitch: {pipeline.workers or pipeline.desired_workers}; budget: {cfg.thread}"
+        monitor = getattr(self, 'resource_monitor', None)
+        stats = monitor.read_snapshot() if monitor is not None else {}
+        cpu, memory, fps = stats.get('cpu'), stats.get('memory'), stats.get('fps')
+        if cpu is None or memory is None:
+            text += '\nCPU / RAM avg (10s): sampling...' if stats.get('available', True) else '\nCPU / RAM: unavailable (psutil)'
+        else:
+            usage = f'{memory / 1024**3:.2f} GiB' if memory >= 1024**3 else f'{memory / 1024**2:.0f} MiB'
+            text += f'\nCPU avg (10s): {cpu:.1f}%; RAM avg: {usage}'
+        text += ('\nPlayback: paused' if not cfg.is_playing else
+                 f'\nPlayback: {fps:.1f} FPS' if fps is not None else '\nPlayback: sampling...')
+        tooltip = self.power_mode.GetToolTip()
+        if tooltip is None:
+            self.power_mode.SetToolTip(text)
+        elif tooltip.GetTip() != text:
+            tooltip.SetTip(text)
 
     def on_enable_video_mode(self, event):
         prev_video_mode = self.shared_config.video_mode
@@ -2902,6 +3221,14 @@ class MulimgViewer (MulimgViewerGui):
                 and int(self.shared_config.batch_idx) == batch):
             self.show_img()
 
+    def _video_buffer_changed(self, token):
+        vm = self.video_manager
+        with vm._cache_guard:
+            vm._pacing_notification_pending = False
+        if (not getattr(self, '_is_closing', False) and self.shared_config.video_mode
+                and token == vm._window_token):
+            vm._refresh_playback_interval()
+
     def _request_video_display(self, batch, path):
         """Prepare a PNG in a worker; only the latest request may paint."""
         vm = self.video_manager
@@ -2965,6 +3292,8 @@ class MulimgViewer (MulimgViewerGui):
                 owner.show_bmp_in_panel = original
                 owner.img_size = original.size
                 owner.display_bitmap(True, prepared, prepared_rgba=rgba)
+                if owner.shared_config.is_playing:
+                    owner.resource_monitor.frame_presented(batch, owner.shared_config.play_direction)
                 owner._video_display_key = key
                 vm._display_delivery_pending = False
                 vm.perf_monitor.record_display(load_cost + time.perf_counter() - paint_started)
@@ -3026,7 +3355,7 @@ class MulimgViewer (MulimgViewerGui):
                 print(f"[VideoMode] rebuild cache and show failed: {ex}")
 
     # def on_interval_changed(self, event):
-    #     self.shared_config.interval = float(self.m_textCtrl28.GetValue() or 1.0)
+    #     self.shared_config.interval = float(self.interval.GetValue() or 1.0)
     #b1 修改
     def _show_thread_pipeline_status(self, event):
         self._show_resource_tooltip()
@@ -3043,6 +3372,7 @@ class MulimgViewer (MulimgViewerGui):
 
     def toggle_play(self, event):
         self._commit_video_settings()
+        self.resource_monitor.reset_playback()
         self.shared_config.is_playing = not self.shared_config.is_playing
 
         if self.shared_config.is_playing:
@@ -3055,7 +3385,7 @@ class MulimgViewer (MulimgViewerGui):
             if self.shared_config.video_mode:
                 self._schedule_next_video_tick()
             else:
-                interval = float(self.m_textCtrl28.GetValue() or 1.0)
+                interval = float(self.interval.GetValue() or 1.0)
                 self.play_timer.Start(max(1, math.ceil(interval * 1000)), oneShot=False)
             label = "⏸"
         else:
@@ -3075,6 +3405,12 @@ class MulimgViewer (MulimgViewerGui):
         if self.shared_config.is_playing:
             if self.shared_config.video_mode:
                 if getattr(self, '_play_timer_suspended', False):
+                    return
+                self.video_manager._refresh_playback_interval(reschedule=False)
+                previous_tick = getattr(self, '_video_tick_started_at', None)
+                if (previous_tick is not None and time.perf_counter() - previous_tick
+                        < self.shared_config.interval - .001):
+                    self._schedule_next_video_tick()
                     return
                 self._video_tick_started_at = time.perf_counter()
             self._from_timer = True
@@ -3218,6 +3554,7 @@ class MulimgViewer (MulimgViewerGui):
             if getattr(self, '_is_closing', False):
                 self.image_pipeline.close()
                 self.memory_reclaimer.close()
+                self.resource_monitor.close()
             else:
                 self.image_pipeline.invalidate()
         if self.image_stitch_executor is not None:
@@ -5774,6 +6111,8 @@ class MulimgViewer (MulimgViewerGui):
         self.current_page_img_paths = copy.deepcopy(state.get('flist', []))
         self.show_bmp_in_panel, self.img_size = image, image.size
         self.display_bitmap(False, image, prepared_rgba=rgba)
+        if self.shared_config.is_playing:
+            self.resource_monitor.frame_presented(batch, self.shared_config.play_direction)
         self.update_status_bar_for_current_page()
         self._show_resource_tooltip()
         self._resume_play_timer_after_wait()
@@ -6324,10 +6663,11 @@ class MulimgViewer (MulimgViewerGui):
         walk(self.scrolledWindow_set)
 
     def save_configuration(self, event):
+        self._commit_video_settings()
         data = {
             'power_mode': self.power_mode.GetSelection() + 1,
-            'cache_frames': self.cache_frames.GetValue(),
-            'cache_multiplier': self.cache_multiplier.GetValue(),
+            'cache_frames': str(self.shared_config.cache_num),
+            'cache_multiplier': str(self.shared_config.cache_multiplier),
             'row_col': self.row_col.GetLineText(0),
             'row_col_one_img': self.row_col_one_img.GetLineText(0),
             'show_scale': self.show_scale.GetLineText(0),

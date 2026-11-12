@@ -2,6 +2,8 @@
 from __future__ import annotations
 import math
 import os
+import sys
+from decimal import Decimal, InvalidOperation
 from typing import NamedTuple
 
 from .thread_optimizer import available_memory_bytes
@@ -11,6 +13,17 @@ class ResourceBudget(NamedTuple):
     mode: int
     workers: int
     memory: int | None
+
+
+def positive_cache_integer(raw):
+    """Validate before conversion: 0.5 must never silently become 0 or 1."""
+    try:
+        value = Decimal(str(raw).strip())
+        if not value.is_finite() or value < 1 or value > sys.maxsize or value != value.to_integral_value():
+            raise ValueError('Enter an integer greater than or equal to 1')
+        return int(value)
+    except (InvalidOperation, TypeError, ValueError, OverflowError) as ex:
+        raise ValueError('Enter an integer greater than or equal to 1') from ex
 
 
 def resource_budget(mode, video=False, cpus=None, available=None):

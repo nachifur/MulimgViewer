@@ -5,6 +5,7 @@ from pathlib import Path
 import numpy as np
 
 from .utils import solve_factor
+from .status_info import ImageSourceIndex
 
 class ImgData():
     """Multi-image database.
@@ -37,6 +38,7 @@ class ImgData():
                 self.img_num = max(self.img_num_list)
             else:
                 self.img_num = len(self.name_list)
+        self._status_source_index = ImageSourceIndex(self) if not video_mode else None
         # self.set_count_per_action(1)
         if img_count:
             self.img_count = img_count
@@ -128,6 +130,10 @@ class ImgData():
         else:
             dataset = []
 
+        # Lists use their own directory as the base, matching video lists.
+        base = Path(self.input_path).absolute().parent
+        dataset = [str((Path(item).expanduser() if Path(item).expanduser().is_absolute()
+                        else base / Path(item).expanduser())) for item in dataset if item.strip()]
         if len(dataset) == 0:
             validdataset = []
             self.dataset_mode = False

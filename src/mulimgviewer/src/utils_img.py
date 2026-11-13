@@ -894,6 +894,7 @@ class ImgManager(ImgData):
         #   "lines", layout.get("lines"))
 
     def get_img_list(self, show_custom_func=False, flist=None):
+        self._status_source_slots = None
         img_list = []
         # load img list
         name_list = []
@@ -1161,6 +1162,8 @@ class ImgManager(ImgData):
             if not hasattr(img, '_original_id'):
                 img._original_id = orig_img_id
             final_img_list_with_id.append(img)
+        self._status_source_slots = tuple(-1 if getattr(img, '_is_blank', False)
+                                          else int(img._original_id) for img in final_img_list_with_id)
         return final_img_list_with_id
 
     def load_exif_display_config(self, force_reload=False):
@@ -1790,6 +1793,7 @@ class ImgManager(ImgData):
         self.img_list = []
         self.flist = []
         self._flist_groups = None
+        self._status_source_slots = None
         self.full_exif_cache = {}
         self.pdf_title_layers = []
         self._last_title_layout = None

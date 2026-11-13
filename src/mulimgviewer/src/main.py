@@ -11,6 +11,7 @@ from ..gui.main_gui import MulimgViewerGui
 from .. import __version__ as VERSION
 from .about import About
 from .index_table import IndexTable
+from .index_catalog import IndexCatalog
 from .custom_func.main import get_available_algorithms
 from .utils import MyTestEvent, get_resource_path
 from .utils_img import ImgManager
@@ -28,6 +29,8 @@ from PIL import ImageFont
 from .viewer_state import SharedConfig
 from .video_manager import VideoManager, PerformanceMonitor
 from .video_playback import VideoPlaybackMixin
+from .status_bar import StatusBarMixin
+from .navigation import NavigationMixin
 from .configuration_controller import ConfigurationMixin
 
 
@@ -37,7 +40,7 @@ except ImportError:
     winreg = None
 
 
-class MulimgViewer(VideoPlaybackMixin, ConfigurationMixin, MulimgViewerGui):
+class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, ConfigurationMixin, MulimgViewerGui):
     """Compose generated widgets with playback/configuration event handlers.
 
     Mixins precede the generated GUI so Bind calls resolve concrete handlers,
@@ -110,7 +113,7 @@ class MulimgViewer(VideoPlaybackMixin, ConfigurationMixin, MulimgViewerGui):
         self.icon = wx.Icon(get_resource_path(
             'mulimgviewer.png'), wx.BITMAP_TYPE_PNG)
         self.SetIcon(self.icon)
-        self.m_statusBar1.SetStatusWidths([-2, -1, -4, -4])
+        self._init_status_bar()
         self.set_title_font()
         self.hidden_flag = 0
         self.button_open_all.SetToolTip("open")
@@ -274,6 +277,9 @@ class MulimgViewer(VideoPlaybackMixin, ConfigurationMixin, MulimgViewerGui):
     #   保证输入框显示的永远是当前真正生效的值, refresh() 开头也会主动提交一次。
     def _commit_video_settings(self):
         """把视频设置里的数值输入框提交到 shared_config, 并把框里的文本归一化。"""
+
+        self.shared_config.parallel_to_sequential = bool(self.parallel_to_sequential.GetValue())
+        self.shared_config.parallel_sequential = bool(self.parallel_sequential.GetValue())
 
         def _read_number(field, default, minimum, integer=True):
             try:
@@ -870,7 +876,9 @@ class MulimgViewer(VideoPlaybackMixin, ConfigurationMixin, MulimgViewerGui):
         elif input_mode == 2:
             self.one_dir_mul_dir_manual(event)
         elif input_mode == 3:
-            self.onefilelist()
+            if self.onefilelist() is False:
+                self.shared_config.batch_idx = previous_batch
+                self.shared_config.input_mode = previous_input_mode
 
     def one_dir_mul_dir_auto(self, event):
         self.SetStatusText_(["Input", "", "", "-1"])
@@ -1048,113 +1056,7 @@ class MulimgViewer(VideoPlaybackMixin, ConfigurationMixin, MulimgViewerGui):
         self.show_img()
         self.SetStatusText_(["Last", "-1", "-1", "-1"])
 
-    def skip_to_n_img(self, event):
-        if self.ImgManager.img_num == 0:
-            return
 
-        target = int(self.slider_img.GetValue())
-        current_val = self.slider_value.GetValue()
-        if current_val != str(target):
-            self.slider_value.SetValue(str(target))
-
-        if getattr(self.shared_config, "video_mode", False) and getattr(self.shared_config, "parallel_to_sequential", False):
-            nums = [int(x) for x in getattr(self.shared_config, "video_num_list", []) if x is not None]
-            total = sum(nums)
-            count = max(1, int(getattr(self.shared_config, "count_per_action", 1) or 1))
-            if total > 0:
-                self.ImgManager.max_action_num = max(1, (total + count - 1) // count)
-        elif getattr(self.shared_config, "video_mode", False):
-            # 纯视频模式：重新计算 max_action_num
-            nums = [int(x) for x in getattr(self.shared_config, "video_num_list", []) if x is not None and int(x) > 0]
-            if nums:
-                img_num = max(nums)
-                count = max(1, int(getattr(self.shared_config, "count_per_action", 1) or 1))
-                if img_num % count:
-                    max_action_num = int(img_num / count) + 1
-                else:
-                    max_action_num = int(img_num / count)
-                self.ImgManager.max_action_num = max(1, max_action_num)
-        else:
-            # 图片模式：重新计算 max_action_num
-            count = max(1, self.ImgManager.count_per_action)
-            img_num = int(getattr(self.ImgManager, "img_num", 0) or 0)
-            if img_num > 0:
-                max_batches = (img_num + count - 1) // count
-            else:
-                max_batches = 1
-            self.ImgManager.max_action_num = max(1, max_batches)
-
-        max_allowed = int((getattr(self.ImgManager, "max_action_num", 1) or 1) - 1)
-        max_idx = max(0, max_allowed)
-        clamped = min(target, max_idx)
-
-        # Update state only; image refresh is controlled by refresh()
-        self.shared_config.batch_idx = clamped
-        self.ImgManager.action_count = clamped
-        self.ImgManager.img_count = clamped * self.ImgManager.count_per_action
-
-        # ★ 修改：视频模式下，先异步更新缓存，让UI能立即显示已有的缓存
-        #   而不是阻塞等待新缓存生成
-        if getattr(self.shared_config, "video_mode", False):
-            wx.CallAfter(self.video_manager.update_cache)
-
-        # 刷新显示，保留文本框的值
-        self.show_img(preserve_text_value=True)
-
-    def slider_value_change(self, event, value=None):
-        if self.ImgManager.img_num == 0:
-            return
-
-        target_str = str(self.slider_value.GetValue()).strip()
-        self.slider_value.SetValue(target_str)
-
-        try:
-            target = int(target_str)
-        except Exception:
-            return
-
-        if getattr(self.shared_config, "video_mode", False) and getattr(self.shared_config, "parallel_to_sequential", False):
-            nums = [int(x) for x in getattr(self.shared_config, "video_num_list", []) if x is not None]
-            total = sum(nums)
-            count = max(1, int(getattr(self.shared_config, "count_per_action", 1) or 1))
-            if total > 0:
-                self.ImgManager.max_action_num = max(1, (total + count - 1) // count)
-        elif getattr(self.shared_config, "video_mode", False):
-            # 纯视频模式：重新计算 max_action_num
-            nums = [int(x) for x in getattr(self.shared_config, "video_num_list", []) if x is not None and int(x) > 0]
-            if nums:
-                img_num = max(nums)
-                count = max(1, int(getattr(self.shared_config, "count_per_action", 1) or 1))
-                if img_num % count:
-                    max_action_num = int(img_num / count) + 1
-                else:
-                    max_action_num = int(img_num / count)
-                self.ImgManager.max_action_num = max(1, max_action_num)
-        else:
-            # 图片模式：重新计算 max_action_num
-            count = max(1, self.ImgManager.count_per_action)
-            img_num = int(getattr(self.ImgManager, "img_num", 0) or 0)
-            if img_num > 0:
-                max_batches = (img_num + count - 1) // count
-            else:
-                max_batches = 1
-            self.ImgManager.max_action_num = max(1, max_batches)
-
-        max_allowed = int((getattr(self.ImgManager, "max_action_num", 1) or 1) - 1)
-        max_idx = max(0, max_allowed)
-        clamped = min(target, max_idx)
-        self.shared_config.batch_idx = clamped
-        self.ImgManager.action_count = clamped
-        self.ImgManager.img_count = clamped * self.ImgManager.count_per_action
-
-        # ★ 修改：视频模式下，先异步更新缓存，让UI能立即显示已有的缓存
-        #   而不是阻塞等待新缓存生成
-        if self.shared_config.video_mode:
-            # 异步更新缓存（不阻塞UI）
-            wx.CallAfter(self.video_manager.update_cache)
-
-        # 刷新显示，保留文本框的值
-        self.show_img(preserve_text_value=True)
 
     def save_img(self, event):
         type_ = self.choice_output.GetSelection()
@@ -1331,7 +1233,7 @@ class MulimgViewer(VideoPlaybackMixin, ConfigurationMixin, MulimgViewerGui):
 
             # 视频模式：读取文本框值并跳转到对应位置
             try:
-                target = int(self.slider_value.GetValue().strip())
+                target = int(self.slider_value.GetValue().strip()) - 1
             except (ValueError, AttributeError):
                 target = self.shared_config.batch_idx
 
@@ -1347,7 +1249,7 @@ class MulimgViewer(VideoPlaybackMixin, ConfigurationMixin, MulimgViewerGui):
             # 图片模式：读取文本框值并跳转到对应位置
             if not getattr(self.shared_config, "video_mode", False):
                 try:
-                    target = int(self.slider_value.GetValue().strip())
+                    target = int(self.slider_value.GetValue().strip()) - 1
                 except (ValueError, AttributeError):
                     target = self.ImgManager.action_count
 
@@ -1436,21 +1338,24 @@ class MulimgViewer(VideoPlaybackMixin, ConfigurationMixin, MulimgViewerGui):
 
     def onefilelist(self, event=None):
         self.SetStatusText_(["Choose the File List", "", "", "-1"])
-        # Initialize the image stitch pool
         self._init_image_stitch_executor()
-
-        wildcard = "List file (*.txt; *.csv)|*.txt; *.csv|" \
-            "All files (*.*)|*.*"
-        dlg = wx.FileDialog(None, "choose the Images List", "", "",
-                            wildcard, wx.FD_DEFAULT_STYLE | wx.FD_FILE_MUST_EXIST)
-
-        if dlg.ShowModal() == wx.ID_OK:
-            self.ImgManager.init(dlg.GetPath(), type=3)
-            self.show_img_init()
-            self.ImgManager.set_action_count(0)
-            self.show_img()
-            self.choice_input_mode.SetSelection(3)
-        self.SetStatusText_(["Choose the File List", "-1", "-1", "-1"])
+        wildcard = "List file (*.txt; *.csv)|*.txt; *.csv|All files (*.*)|*.*"
+        dlg = wx.FileDialog(None, "Choose the File List", "", "", wildcard,
+                            wx.FD_DEFAULT_STYLE | wx.FD_FILE_MUST_EXIST)
+        try:
+            if dlg.ShowModal() != wx.ID_OK:
+                return False
+            path = dlg.GetPath()
+        finally:
+            dlg.Destroy()
+        if self.shared_config.video_mode:
+            return self._open_video_file_list(path)
+        self.ImgManager.init(path, type=3)
+        self.show_img_init()
+        self.ImgManager.set_action_count(0)
+        self.show_img()
+        self.choice_input_mode.SetSelection(3)
+        return True
 
     def input_flist_parallel_manual(self, event):
         # Initialize the image stitch pool
@@ -1492,7 +1397,7 @@ class MulimgViewer(VideoPlaybackMixin, ConfigurationMixin, MulimgViewerGui):
 
         if dlg.ShowModal() == wx.ID_OK:
             self.out_path_str = dlg.GetPath()
-            self.m_statusBar1.SetStatusText(self.out_path_str, 3)
+            self.SetStatusText_(["-1", "-1", "-1", "Output: " + self.out_path_str])
 
         dlg.Destroy()
 
@@ -1636,140 +1541,11 @@ class MulimgViewer(VideoPlaybackMixin, ConfigurationMixin, MulimgViewerGui):
                     self.position[0]*self.Uint[0], self.position[1]*self.Uint[1])
         self.SetStatusText_(["Left",  "-1", "-1", "-1"])
 
-    def SetStatusText_(self, texts):
-        for i in range(self.Status_number):
-            if texts[i] != '-1':
-                self.m_statusBar1.SetStatusText(texts[i], i)
 
-    def update_status_bar_for_current_page(self, clicked_img_id=None):
-        try:
-            if getattr(self.shared_config, "video_mode", False):
-                page_num = int(getattr(self.shared_config, "batch_idx", 0))
-                total_pages = max(0, int(getattr(self.ImgManager, "max_action_num", 1)) - 1)
-                self.m_statusBar1.SetStatusText(f"{page_num}-th/{total_pages} frame batch", 1)
-                return
-
-            page_num = self.ImgManager.action_count if hasattr(self.ImgManager, 'action_count') else 0
-            if self.ImgManager.type == 2:
-                total_imgs = self.ImgManager.img_num
-                img_index = self.ImgManager.action_count * self.ImgManager.count_per_action
-                if clicked_img_id is not None:
-                    img_index = img_index + clicked_img_id
-                status_text = f"{img_index}-th/{total_imgs} img 0-th/1 dir"
-
-            elif self.ImgManager.type in [0, 1]:
-                total_dirs = self.ImgManager.get_dir_num() if hasattr(self.ImgManager, 'get_dir_num') else 0
-                target_img_id = clicked_img_id if clicked_img_id is not None else 0
-                current_paths = getattr(self, "current_page_img_paths", [])
-                img_extensions = {'.jpg', '.jpeg', '.png', '.bmp', '.tiff', '.tif', '.gif', '.webp'}
-                if self.parallel_sequential.Value:
-                    if current_paths and target_img_id < len(current_paths):
-                        current_file_path = current_paths[target_img_id]
-                        current_dir = os.path.dirname(current_file_path)
-                        try:
-                            files_in_folder = sorted([
-                                os.path.join(current_dir, f)
-                                for f in os.listdir(current_dir)
-                                if Path(f).suffix.lower() in img_extensions
-                            ])
-                            img_count_in_folder = len(files_in_folder)
-                            pos_in_folder = files_in_folder.index(current_file_path) if current_file_path in files_in_folder else 0
-                            all_dirs = sorted(set(os.path.dirname(p) for p in getattr(self.ImgManager, "flist", [])))
-                            dir_index = all_dirs.index(current_dir) if current_dir in all_dirs else page_num
-                        except Exception:
-                            pos_in_folder = 0
-                            dir_index = page_num
-                            img_count_in_folder = self.ImgManager.layout_params[1][0] * self.ImgManager.layout_params[1][1]
-                    else:
-                        pos_in_folder = 0
-                        dir_index = page_num
-                        img_count_in_folder = self.ImgManager.layout_params[1][0] * self.ImgManager.layout_params[1][1]
-                    status_text = f"{pos_in_folder}-th/{img_count_in_folder} img {dir_index}-th/{total_dirs} dir"
-
-                elif self.parallel_to_sequential.Value:
-                    if current_paths and target_img_id < len(current_paths):
-                        current_file_path = current_paths[target_img_id]
-                        current_dir = os.path.dirname(current_file_path)
-                        old_action_count = self.ImgManager.action_count
-                        old_flist = getattr(self.ImgManager, "flist", None)
-                        all_dirs_set = set()
-                        for i in range(self.ImgManager.max_action_num):
-                            try:
-                                self.ImgManager.set_action_count(i)
-                                self.ImgManager.get_flist()
-                                all_dirs_set.update(os.path.dirname(p) for p in self.ImgManager.flist)
-                            except Exception:
-                                pass
-                        self.ImgManager.set_action_count(old_action_count)
-                        if old_flist is not None:
-                            self.ImgManager.flist = old_flist
-                        all_dirs = sorted(all_dirs_set)
-                        total_dirs = len(all_dirs)
-                        dir_index = all_dirs.index(current_dir) if current_dir in all_dirs else 0
-                        try:
-                            files_in_folder = sorted([
-                                os.path.join(current_dir, f)
-                                for f in os.listdir(current_dir)
-                                if Path(f).suffix.lower() in img_extensions
-                            ])
-                            img_count_in_folder = len(files_in_folder)
-                            pos_in_folder = files_in_folder.index(current_file_path) if current_file_path in files_in_folder else 0
-                        except Exception:
-                            pos_in_folder = 0
-                            img_count_in_folder = 0
-                        status_text = f"{pos_in_folder}-th/{img_count_in_folder} img {dir_index}-th/{total_dirs} dir"
-                    else:
-                        try:
-                            self.ImgManager.get_flist()
-                            first_file_path = self.ImgManager.flist[0]
-                            first_dir = os.path.dirname(first_file_path)
-                            files_in_folder = sorted([
-                                os.path.join(first_dir, f)
-                                for f in os.listdir(first_dir)
-                                if Path(f).suffix.lower() in img_extensions
-                            ])
-                            pos_in_folder = files_in_folder.index(first_file_path) if first_file_path in files_in_folder else 0
-                            img_count_in_folder = len(files_in_folder)
-                        except Exception:
-                            pos_in_folder = 0
-                            img_count_in_folder = 0
-                        status_text = f"{pos_in_folder}-th/{img_count_in_folder} img {page_num}-th/{total_dirs} dir"
-
-                else:
-                    if clicked_img_id is not None and hasattr(self.ImgManager, 'flist') and clicked_img_id < len(self.ImgManager.flist):
-                        clicked_img_path = self.ImgManager.flist[clicked_img_id]
-                        clicked_dir = os.path.dirname(clicked_img_path)
-                        all_dirs = sorted(set(os.path.dirname(p) for p in self.ImgManager.flist))
-                        dir_index = all_dirs.index(clicked_dir) if clicked_dir in all_dirs else page_num
-                        try:
-                            folder_images = sorted([
-                                os.path.join(clicked_dir, f)
-                                for f in os.listdir(clicked_dir)
-                                if Path(f).suffix.lower() in img_extensions
-                            ])
-                            img_count_in_folder = len(folder_images)
-                            pos_in_folder = folder_images.index(clicked_img_path) if clicked_img_path in folder_images else 0
-                        except Exception:
-                            img_count_in_folder = 1
-                            pos_in_folder = 0
-                        status_text = f"{pos_in_folder}-th/{img_count_in_folder} img {dir_index}-th/{total_dirs} dir"
-                    else:
-                        total_pages = getattr(self.ImgManager, "max_action_num", 0)
-                        status_text = f"{page_num}-th/{total_pages} img 0-th/{total_dirs} dir"
-
-            elif self.ImgManager.type == 3:
-                target_img_id = clicked_img_id if clicked_img_id is not None else 0
-                img_index = self.ImgManager.action_count * self.ImgManager.count_per_action + target_img_id
-                total_imgs = len(self.ImgManager.path_list) if hasattr(self.ImgManager, 'path_list') else 0
-                status_text = f"{img_index}-th/{total_imgs} img 0-th/0 dir"
-            else:
-                status_text = "0-th/0 img 0-th/0 dir"
-
-            self.m_statusBar1.SetStatusText(status_text, 1)
-        except Exception:
-            self.m_statusBar1.SetStatusText("0-th/0 img 0-th/0 dir", 1)
 
     def img_left_click(self, event):
+        if not len(getattr(self.ImgManager, 'xy_grid', [])):
+            return
 
         if self.magnifier.Value:
             x_0, y_0 = event.GetPosition()
@@ -1889,7 +1665,7 @@ class MulimgViewer(VideoPlaybackMixin, ConfigurationMixin, MulimgViewerGui):
             RGBA = (-1, -1, -1, -1)
         x = x-xy_grid[0]
         y = y-xy_grid[1]
-        self.m_statusBar1.SetStatusText(str(x)+","+str(y)+"/"+str(RGBA), 0)
+        self.SetStatusText_([str(x)+","+str(y)+"/"+str(RGBA), "-1", "-1", "-1"])
 
     def img_left_release(self, event):
         if self.magnifier.Value != False:
@@ -2703,31 +2479,26 @@ class MulimgViewer(VideoPlaybackMixin, ConfigurationMixin, MulimgViewerGui):
                     self._request_video_display(b, cache_entry)
 
                     # 更新状态栏（保留 FPS 计算逻辑，但不显示）
-                    self.SetStatusText_([
-                        str(b),
-                        str(self.ImgManager.max_action_num - 1),
-                        "",
-                        "-1"
-                    ])
+                    self.SetStatusText_(["-1", "-1", "", "-1"])
 
                     # 更新滑块
                     if hasattr(self, "slider_img") and self.slider_img:
                         try:
                             max_val = max(0, self.ImgManager.max_action_num - 1)
-                            self.slider_img.SetMax(max_val)
-                            self.slider_img.SetValue(b)
+                            self.slider_img.SetRange(1, max_val + 1)
+                            self.slider_img.SetValue(b + 1)
                         except Exception:
                             pass
 
                     # 更新页数文本框
                     if hasattr(self, "slider_value") and self.slider_value:
                         try:
-                            self.slider_value.SetValue(str(b))
+                            self.slider_value.ChangeValue(str(b + 1))
                         except Exception:
                             pass
                     if hasattr(self, "slider_value_max") and self.slider_value_max:
                         try:
-                            self.slider_value_max.SetLabel(str(max(0, self.ImgManager.max_action_num - 1)))
+                            self.slider_value_max.SetLabel(str(max(1, self.ImgManager.max_action_num)))
                         except Exception:
                             pass
 
@@ -2741,26 +2512,26 @@ class MulimgViewer(VideoPlaybackMixin, ConfigurationMixin, MulimgViewerGui):
                 if not msg:
                     msg = f"Waiting for batch {b}..."
 
-                self.SetStatusText_([str(b), str(self.ImgManager.max_action_num - 1), msg, "-1"])
+                self.SetStatusText_(["Waiting", "-1", msg, "-1"])
 
                 # 更新滑块
                 if hasattr(self, "slider_img") and self.slider_img:
                     try:
                         max_val = max(0, self.ImgManager.max_action_num - 1)
-                        self.slider_img.SetMax(max_val)
-                        self.slider_img.SetValue(b)
+                        self.slider_img.SetRange(1, max_val + 1)
+                        self.slider_img.SetValue(b + 1)
                     except Exception:
                         pass
 
                 # 更新页数文本框
                 if hasattr(self, "slider_value") and self.slider_value:
                     try:
-                        self.slider_value.SetValue(str(b))
+                        self.slider_value.ChangeValue(str(b + 1))
                     except Exception:
                         pass
                 if hasattr(self, "slider_value_max") and self.slider_value_max:
                     try:
-                        self.slider_value_max.SetLabel(str(max(0, self.ImgManager.max_action_num - 1)))
+                        self.slider_value_max.SetLabel(str(max(1, self.ImgManager.max_action_num)))
                     except Exception:
                         pass
 
@@ -2782,20 +2553,20 @@ class MulimgViewer(VideoPlaybackMixin, ConfigurationMixin, MulimgViewerGui):
             if hasattr(self, "slider_img") and self.slider_img:
                 try:
                     max_val = max(0, self.ImgManager.max_action_num - 1)
-                    self.slider_img.SetMax(max_val)
-                    if self.slider_img.GetValue() != current_batch:
-                        self.slider_img.SetValue(current_batch)
+                    self.slider_img.SetRange(1, max_val + 1)
+                    if self.slider_img.GetValue() != current_batch + 1:
+                        self.slider_img.SetValue(current_batch + 1)
                 except Exception:
                     pass
             # 只在不需要保留文本框值时才更新
             if hasattr(self, "slider_value") and self.slider_value and not preserve_text_value:
                 try:
-                    self.slider_value.SetValue(str(current_batch))
+                    self.slider_value.ChangeValue(str(current_batch + 1))
                 except Exception:
                     pass
             if hasattr(self, "slider_value_max") and self.slider_value_max:
                 try:
-                    self.slider_value_max.SetLabel(str(max(0, self.ImgManager.max_action_num - 1)))
+                    self.slider_value_max.SetLabel(str(max(1, self.ImgManager.max_action_num)))
                 except Exception:
                     pass
 
@@ -2805,8 +2576,7 @@ class MulimgViewer(VideoPlaybackMixin, ConfigurationMixin, MulimgViewerGui):
             if self.shared_config.is_playing:
                 self._suspend_play_timer_for_wait()
             if not self.image_pipeline.prepare_display(current_batch, self._deliver_image_frame):
-                self.SetStatusText_([str(current_batch),
-                    str(self.ImgManager.max_action_num - 1),
+                self.SetStatusText_(["Waiting", "-1",
                     f"Waiting for batch {current_batch}...", "-1"])
             elif self.image_pipeline.displayed_key is not None:
                 if self.image_pipeline.displayed_key[1] == current_batch:
@@ -2882,6 +2652,7 @@ class MulimgViewer(VideoPlaybackMixin, ConfigurationMixin, MulimgViewerGui):
         self.display_bitmap(False, image, prepared_rgba=rgba)
         if self.shared_config.is_playing:
             self.resource_monitor.frame_presented(batch, self.shared_config.play_direction)
+        self._status_display_batch = batch
         self.update_status_bar_for_current_page()
         self._show_resource_tooltip()
         self._resume_play_timer_after_wait()
@@ -3302,26 +3073,16 @@ class MulimgViewer(VideoPlaybackMixin, ConfigurationMixin, MulimgViewerGui):
         self.aboutgui.Show(True)
 
     def index_table_gui(self, event):
-        if self.ImgManager.img_num != 0:
-            if self.ImgManager.dataset_mode and self.out_path_str == "":
-                self.SetStatusText_(
-                    ["-1", "-1", "***Error: First, need to select the output dir***", "-1"])
-            else:
-                if self.ImgManager.dataset_mode:
-                    self.SetStatusText_(
-                        ["-1", "-1", "index_table.txt saving...", "-1"])
-                if self.ImgManager.type == 3:
-                    self.indextablegui = IndexTable(
-                        None, self.ImgManager.path_list, self.ImgManager.layout_params, self.ImgManager.dataset_mode, self.out_path_str, self.ImgManager.type, self.parallel_sequential.Value)
-                else:
-                    self.indextablegui = IndexTable(
-                        None, self.ImgManager.name_list, self.ImgManager.layout_params, self.ImgManager.dataset_mode, self.out_path_str, self.ImgManager.type, self.parallel_sequential.Value)
-                if self.ImgManager.dataset_mode:
-                    self.SetStatusText_(
-                        ["-1", "-1", "index_table.txt save in "+self.out_path_str, "-1"])
-        else:
-            self.SetStatusText_(
-                ["-1", "", "***Error: First, need to select the input dir***", "-1"])
+        if not self.ImgManager.img_num:
+            self.SetStatusText_(["-1", "", "First select an input", "-1"])
+            return
+        if self.indextablegui:
+            self.indextablegui.Close()
+        def catalog():
+            return IndexCatalog(self.ImgManager, self.shared_config, self.parallel_sequential.Value)
+        self.indextablegui = IndexTable(self, catalog(), self.out_path_str,
+            on_jump=lambda batch: self._seek_display_page(batch+1), refresh=catalog,
+            auto_export=bool(self.ImgManager.dataset_mode and self.out_path_str))
 
     def _debug_image(self, message):
         if getattr(self.shared_config, "debug_image", False):

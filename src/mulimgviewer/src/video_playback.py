@@ -6,6 +6,9 @@ from .path_select import on_video_mode_change
 import copy
 
 
+from .video_tools import read_video_file_list
+
+
 class VideoPlaybackMixin:
     """GUI-thread playback, video mode transitions and asynchronous display callbacks.
 
@@ -162,6 +165,8 @@ class VideoPlaybackMixin:
                 owner.display_bitmap(True, prepared, prepared_rgba=rgba)
                 if owner.shared_config.is_playing:
                     owner.resource_monitor.frame_presented(batch, owner.shared_config.play_direction)
+                owner._status_display_batch = batch
+                owner.update_status_bar_for_current_page()
                 owner._video_display_key = key
                 vm._display_delivery_pending = False
                 vm.perf_monitor.record_display(load_cost + time.perf_counter() - paint_started)
@@ -498,7 +503,12 @@ class VideoPlaybackMixin:
             return None
 
         one_img_product = max(1, r * c)
-        if self.shared_config.input_mode in (2, 3) or (self.shared_config.input_mode in (0, 1) and self.parallel_to_sequential.Value):
+        # A video list is another parallel source collection. Its outer grid
+        # selects streams, rather than multiplying frames inside every stream.
+        parallel_sources = len(self.shared_config.video_path) > 1 and not self.parallel_to_sequential.Value
+        sequential_layout = (self.shared_config.input_mode in (2, 3)
+                             or self.parallel_to_sequential.Value)
+        if sequential_layout and not parallel_sources:
             count_per_action = row_col[0] * row_col[1] * one_img_product
         else:
             count_per_action = one_img_product
@@ -511,3 +521,19 @@ class VideoPlaybackMixin:
             pass
         return count_per_action
 
+
+    def _open_video_file_list(self, path):
+        try:
+            videos = read_video_file_list(path)
+        except (OSError, ValueError, UnicodeError) as error:
+            self.SetStatusText_(['Input', '-1', f'Unable to read video list: {error}', '-1'])
+            return False
+        if not videos:
+            self.SetStatusText_(['Input', '-1', 'No valid video files in this list', '-1'])
+            return False
+        self.shared_config.real_video_path = videos
+        self.shared_config.input_mode = 3
+        self.shared_config.batch_idx = 0
+        self.choice_input_mode.SetSelection(3)
+        self._commit_video_settings()
+        return bool(self.video_manager.select_video(type=-1))

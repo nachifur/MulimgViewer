@@ -17,6 +17,7 @@ RENDER_STATE = (
     'xy_grid', 'xy_grids_id_list', 'crop_points', 'img_resolution_origin',
     'img_resolution_show', 'img_resolution', 'gap_color', 'title_setting',
     'pdf_title_layers', '_last_title_layout', 'flist', '_flist_groups', 'full_exif_cache',
+    '_status_source_slots',
 )
 
 

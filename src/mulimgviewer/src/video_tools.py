@@ -54,3 +54,25 @@ def resolve_video_tools():
                                 + [str(directory) for directory in directories]))
     env['PATH'] = os.pathsep.join(search + [env.get('PATH', '')])
     return tools, env
+
+
+def read_video_file_list(filename):
+    """Read TXT/CSV inputs, resolving relative video paths beside the list."""
+    import csv
+    source = Path(filename)
+    with source.open('r', encoding='utf-8-sig', newline='') as stream:
+        if source.suffix.lower() == '.csv':
+            entries = [value for row in csv.reader(stream) for value in row]
+        else:
+            entries = stream.read().splitlines()
+    result = []
+    for value in entries:
+        value = value.strip().strip('"')
+        if not value:
+            continue
+        video = Path(value).expanduser()
+        if not video.is_absolute():
+            video = source.parent / video
+        if video.is_file() and video.suffix.lower() in ('.mp4', '.avi', '.mov'):
+            result.append(str(video.absolute()))
+    return result

@@ -13,6 +13,8 @@ from PIL import Image
 from concurrent.futures import wait
 from .utils_img import ImgManager
 from .video_tools import resolve_video_tools
+from .video_timeline import page_count, page_segments, raw_dependencies
+from .video_paths import frame_filename
 from .resource_monitor import run_video_process
 from .pipeline_executor import PipelineWorkers
 from .admission_optimizer import AdaptiveAdmissionBudget
@@ -758,16 +760,8 @@ class VideoManager:
 
     @staticmethod
     def _video_batch_sources(batch, cfg):
-        k = max(1, int(cfg.count_per_action))
-        counts = [(int(n) + k - 1) // k for n in cfg.video_num_list]
-        if cfg.parallel_to_sequential:
-            base = 0
-            for vid, count in enumerate(counts):
-                if base <= batch < base + count:
-                    return [(vid, batch - base)]
-                base += count
-            return []
-        return [(vid, min(batch, count - 1)) for vid, count in enumerate(counts) if count > 0]
+        return raw_dependencies(cfg.video_num_list, cfg.count_per_action, batch,
+                                cfg.parallel_to_sequential)
 
     def _raw_buffer_inventory(self, stitched_depth):
         """Unused raw pages AFTER the contiguous PNG frontier; state-only on GUI."""
@@ -861,17 +855,10 @@ class VideoManager:
 
     def _playback_video_indices(self):
         cfg = self.shared_config
-        k = max(1, int(cfg.count_per_action))
-        counts = [(int(n) + k - 1) // k for n in cfg.video_num_list]
-        batch = int(cfg.batch_idx)
-        if cfg.parallel_to_sequential:
-            base = 0
-            for vid, count in enumerate(counts):
-                if base <= batch < base + count:
-                    return [vid], sum(counts)
-                base += count
-            return [], sum(counts)
-        return [vid for vid, count in enumerate(counts) if batch < count], max(counts, default=0)
+        total = page_count(cfg.video_num_list, cfg.count_per_action, cfg.parallel_to_sequential)
+        segments = page_segments(cfg.video_num_list, cfg.count_per_action,
+                                 int(cfg.batch_idx), cfg.parallel_to_sequential)
+        return list(dict.fromkeys(video for video, first, stop in segments)), total
 
     def _decoder_working_set(self):
         dimensions = getattr(self, '_video_dimensions', {})
@@ -1349,22 +1336,14 @@ class VideoManager:
         outer = inner * multiplier
         counts = [(int(n) + k - 1) // k for n in cfg.video_num_list]
         sequential = bool(cfg.parallel_to_sequential)
-        total = sum(counts) if sequential else max(counts, default=0)
+        total = page_count(cfg.video_num_list, k, sequential)
         if total <= 0:
             return
         b = max(0, min(int(cfg.batch_idx), total - 1))
         lo, hi = max(0, b - outer), min(total - 1, b + outer)
 
         def sources(batch):
-            if sequential:
-                base = 0
-                for vid, count in enumerate(counts):
-                    if base <= batch < base + count:
-                        return [(vid, batch - base)]
-                    base += count
-                return []
-            # Ended streams keep their final frame, matching the existing viewer.
-            return [(vid, min(batch, count - 1)) for vid, count in enumerate(counts) if count > 0]
+            return self._video_batch_sources(batch, cfg)
 
         with self._cache_guard:
             if (serial != self._cache_request_serial or generation != getattr(self, '_window_generation', 0)
@@ -1705,7 +1684,15 @@ class VideoManager:
             self._mark_raw_batch_ready(vid, local, token, not missing)
             if missing:
                 return
-        groups = [self._collect_batch_frame_paths(vid, local, config) for vid, local in sources]
+        raw_groups = [self._collect_batch_frame_paths(vid, local, config) for vid, local in sources]
+        frames = {}
+        for (vid, local), group in zip(sources, raw_groups):
+            first, last = self._batch_range(int(config.video_num_list[vid]), k, local)
+            frames.update({(vid, first+offset): path for offset, path in enumerate(group)})
+        segments = page_segments(config.video_num_list, k, batch, config.parallel_to_sequential)
+        display_sources = [(vid, index) for vid, first, stop in segments for index in range(first, stop)]
+        groups = ([[frames[(vid, index)] for index in range(first, stop)] for vid, first, stop in segments]
+                  if snapshot is not None else raw_groups)
         # No cache guard spans pixel processing or PNG compression.
         started = time.perf_counter()
         if snapshot is None:
@@ -1727,7 +1714,7 @@ class VideoManager:
                     return
                 manager._video_memory_budget = max(1, per_page - inputs*9)
             manager.set_action_count(batch)
-            flist = groups[0] if single else groups
+            flist = [path for group in groups for path in group] if single else groups
             if custom:
                 manager.layout_params[32] = True
                 manager.stitch_images(0, copy.deepcopy(points), flist=flist)
@@ -1737,8 +1724,14 @@ class VideoManager:
             state = {name: getattr(manager, name) for name in (
                 'xy_grid', 'xy_grids_id_list', 'crop_points', 'img_resolution_origin',
                 'img_resolution_show', 'gap_color', 'title_setting', 'title_max_size', 'pdf_title_layers',
-                '_last_title_layout', 'flist', '_flist_groups',
+                '_last_title_layout', 'flist', '_flist_groups', '_status_source_slots',
             ) if hasattr(manager, name)}
+            state['_status_video_sources'] = tuple(display_sources)
+            state['_status_video_paths'] = tuple(config.real_video_path)
+            state['_status_video_counts'] = tuple(config.video_num_list)
+            state['_status_video_fps'] = tuple(config.video_fps_list)
+            state['_status_video_step'] = max(1, int(config.skip_frames)+1)
+            state['_status_input_mode'] = getattr(config, 'status_input_mode', 0)
         if pil_img is None or flag != 0:
             with self._cache_guard:
                 if token == self._window_token:
@@ -2030,22 +2023,7 @@ class VideoManager:
         '''Bidirectional conversion: logical index <-> timestamp/frame filename.'''
         config = config if config is not None else self.shared_config
         if isinstance(input_value, int):
-            step = config.skip_frames + 1
-            phys_idx = input_value * step
-            fps = float(config.video_fps_list[video_idx] or 0)
-            fps_int = max(1, int(round(fps))) if fps > 0 else 1
-            fps_safe = fps if fps > 0 else float(fps_int)
-
-            t = phys_idx / fps_safe
-            sec_str = f"{t:.2f}".rstrip("0").rstrip(".") or "0"
-
-            k = (phys_idx % fps_int) + 1
-
-            if k > fps_int:
-                k = fps_int
-            if k < 1:
-                k = 1
-            return f"{sec_str}s_frame_{k}.jpeg"
+            return frame_filename(input_value, config.video_fps_list[video_idx], config.skip_frames+1)
 
         else:
             if 's_frame_' in input_value:
@@ -2447,6 +2425,8 @@ class VideoManager:
             self._set_video_status(f"Error: {ex}")
             self.shared_config.video_path = []
             return []
+        self.shared_config.status_input_mode = (3 if self.shared_config.input_mode == 3
+                                                else {0: 0, 1: 1, -1: 2}.get(type, 2))
         self._reset_for_new_selection()
         self.init_video_frame_cache()
         if self.shared_config.video_path == []:

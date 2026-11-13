@@ -803,7 +803,7 @@
                   <property name="fg"></property>
                   <property name="floatable">1</property>
                   <property name="focus"></property>
-                  <property name="font">,90,90,16,70,0</property>
+                  <property name="font"></property>
                   <property name="gripper">0</property>
                   <property name="hidden">0</property>
                   <property name="id">wxID_ANY</property>
@@ -902,7 +902,7 @@
                   <property name="validator_style">wxFILTER_NONE</property>
                   <property name="validator_type">wxDefaultValidator</property>
                   <property name="validator_variable"></property>
-                  <property name="value">0</property>
+                  <property name="value">1</property>
                   <property name="window_extra_style"></property>
                   <property name="window_name"></property>
                   <property name="window_style"></property>
@@ -946,7 +946,7 @@
                   <property name="max_size"></property>
                   <property name="maximize_button">0</property>
                   <property name="maximum_size"></property>
-                  <property name="minValue">0</property>
+                  <property name="minValue">1</property>
                   <property name="min_size"></property>
                   <property name="minimize_button">0</property>
                   <property name="minimum_size">-1,-1</property>
@@ -969,7 +969,7 @@
                   <property name="validator_style">wxFILTER_NONE</property>
                   <property name="validator_type">wxDefaultValidator</property>
                   <property name="validator_variable"></property>
-                  <property name="value">0</property>
+                  <property name="value">1</property>
                   <property name="window_extra_style"></property>
                   <property name="window_name"></property>
                   <property name="window_style"></property>
@@ -1009,7 +1009,7 @@
                   <property name="gripper">0</property>
                   <property name="hidden">0</property>
                   <property name="id">wxID_ANY</property>
-                  <property name="label">0</property>
+                  <property name="label">1</property>
                   <property name="markup">0</property>
                   <property name="max_size"></property>
                   <property name="maximize_button">0</property>

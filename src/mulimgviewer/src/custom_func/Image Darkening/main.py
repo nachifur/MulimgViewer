@@ -12,7 +12,7 @@ def main(img_list, save_path, name_list=None, algorithm_name="Image Darkening"):
     out_img_list = []
     if save_path != "":
         flag_save = True
-        save_path = Path(save_path) / "processing_function" / algorithm_name / "processed_img"
+        save_path = Path(save_path) / "algorithms" / algorithm_name / "processed"
         if not save_path.exists():
             os.makedirs(str(save_path))
     else:
@@ -28,6 +28,7 @@ def main(img_list, save_path, name_list=None, algorithm_name="Image Darkening"):
             else:
                 img_path = save_path / (str(i) + ".png")
             # Save as a PNG and also save a PDF with the same filename to allow users to choose the PDF output
+            img_path.parent.mkdir(parents=True,exist_ok=True)
             img.save(str(img_path))
             # pdf_path = img_path.with_suffix(".pdf")
             # try:

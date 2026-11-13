@@ -14,7 +14,7 @@ def main(img_list, save_path, name_list=None, algorithm_name="Gaussian Blur"):
     out_img_list = []
     if save_path != "":
         flag_save = True
-        base_save_path = Path(save_path) / "processing_function" / algorithm_name / "processed_img"
+        base_save_path = Path(save_path) / "algorithms" / algorithm_name / "processed"
         if not base_save_path.exists():
             os.makedirs(str(base_save_path))
     else:
@@ -41,6 +41,7 @@ def main(img_list, save_path, name_list=None, algorithm_name="Gaussian Blur"):
                 img_path = final_save_path / file_name
             else:
                 img_path = base_save_path / (str(i) + ".png")
+            img_path.parent.mkdir(parents=True,exist_ok=True)
             img.save(str(img_path))
         i += 1
     return out_img_list

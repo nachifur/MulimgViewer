@@ -1,0 +1,7 @@
+{
+  "device": "cpu",
+  "max_concurrency": 1,
+  "cacheable": true,
+  "cache_version": "1",
+  "hierarchical_names": true
+}

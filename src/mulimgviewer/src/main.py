@@ -13,6 +13,7 @@ from .about import About
 from .index_table import IndexTable
 from .index_catalog import IndexCatalog
 from .display_modes import auto_title_fields
+from .display_modes import loaded_input_mode
 from .custom_func.main import get_available_algorithms
 from .custom_func.runtime import capture_algorithms, compiled_source, AlgorithmSession
 from .utils import MyTestEvent, get_resource_path
@@ -447,6 +448,10 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
         self.shared_config.power_mode = policy.mode
         self.shared_config.thread = policy.workers
         self.shared_config.memory_budget = policy.memory
+        processing=getattr(self.image_pipeline,'processing',None)
+        if processing is not None:
+            lanes=max(1,policy.workers-self.video_manager._extract_threads) if self.shared_config.video_mode else policy.workers
+            processing.configure(lanes,policy.memory)
         self.video_manager._configure_video_memory()
         self._resource_policy_key = key
         self.resource_monitor.reset()
@@ -550,6 +555,10 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
         else:
             pipeline = self.image_pipeline
             text = f"Stitch: {pipeline.workers or pipeline.desired_workers}; budget: {cfg.thread}"
+        if self.show_custom_func.GetValue() or self.show_all_func.GetValue():
+            processing=self.image_pipeline.processing.snapshot()
+            stages=processing['stages']
+            text+=f"\nProcess: {stages.get(0,0)}; algorithm stitch: {stages.get(1,0)}; final compose: {stages.get(2,0)}"
         monitor = getattr(self, 'resource_monitor', None)
         stats = monitor.read_snapshot() if monitor is not None else {}
         cpu, memory, fps = stats.get('cpu'), stats.get('memory'), stats.get('fps')
@@ -1063,6 +1072,7 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
 
 
     def save_img(self, event):
+        self.ImgManager.draw_points=copy.deepcopy(self.xy_magnifier)
         type_ = self.choice_output.GetSelection()
         save_format = self.save_format.GetSelection()
         if hasattr(self, 'ImgManager') and hasattr(self.ImgManager, 'layout_params'):
@@ -1153,13 +1163,6 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
         #   以前 refresh() 直接读 shared_config, 而数值框只在"失去焦点"时才写回,
         #   所以用菜单/快捷键(Ctrl+R)刷新时, 刚改的 Cached Frames 会被静默丢弃。
         self._commit_video_settings()
-        if (not getattr(self.shared_config, "video_mode", False)
-            and self.out_path_str == ""
-            and ((hasattr(self, "show_custom_func") and self.show_custom_func.GetValue())
-                 or (hasattr(self, "show_all_func") and self.show_all_func.GetValue()))):
-            self.out_path(None)
-            if self.out_path_str == "":
-                return
         self.show_img_init()
         if getattr(self.shared_config, "video_mode", False):
             self._last_refresh_batch = None
@@ -2252,15 +2255,22 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
         if not layout_params:
             return
         try:
-            registry = capture_algorithms(get_available_algorithms()) if layout_params[32] or layout_params[38] else None
-        except (OSError, UnicodeError) as error:
+            registry = capture_algorithms(get_available_algorithms())
+        except (OSError, UnicodeError, ValueError, TypeError) as error:
             self.SetStatusText_(['-1', '-1', f'Unable to load custom algorithms: {error}', '-1'])
             return
         self.ImgManager._custom_algorithm_registry = registry
+        self.ImgManager._cache_original_paths=tuple(self.shared_config.real_video_path) if self.shared_config.video_mode else ()
+        self.ImgManager._cache_input_mode=loaded_input_mode(self.ImgManager,self.shared_config)
         recipe = (registry, layout_params[32], layout_params[37], layout_params[38], layout_params[39])
         if recipe != getattr(self, '_custom_algorithm_recipe', None):
             self._custom_algorithm_recipe = recipe
             self.ImgManager._custom_algorithm_session = AlgorithmSession(registry) if registry is not None else None
+            monitor=self.video_manager.perf_monitor
+            with monitor._lock:
+                monitor.stitch_history.clear();monitor.stitch_by_plan.clear()
+            self.video_manager._playback_pacer.reset()
+            self.video_manager._pacing_model_period=None
         # ★ 修复：图片模式 + 视频模式 都要在 layout 变化时清空缓存与磁盘缓存文件
         vm = getattr(self, "video_manager", None)
         layout_token = repr((layout_params, hash(registry)))
@@ -2337,6 +2347,7 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
             self.ImgManager.set_count_per_action(count_per_action)
 
         self.shared_config.count_per_action = count_per_action
+        return True
 
 
     def set_img_layout(self):
@@ -3338,7 +3349,7 @@ def main(img_list, save_path, name_list=None, algorithm_name="{algorithm_name}")
     out_img_list = []
     if save_path != "":
         flag_save = True
-        save_path = Path(save_path) / "processing_function" / algorithm_name
+        save_path = Path(save_path) / "algorithms" / algorithm_name / "processed"
         if not save_path.exists():
             os.makedirs(str(save_path))
     else:
@@ -3392,8 +3403,8 @@ def main(img_list, save_path, name_list=None, algorithm_name="{algorithm_name}")
     def _custom_settings_changed(self, event=None):
         self._invalidate_render_cache()
         if getattr(self.ImgManager, 'type', None) is not None:
-            self.show_img_init()
-            self.show_img()
+            if self.show_img_init():
+                self.show_img()
 
     #b3 修改1：next_img 和 last_img —— timer 播放时跳过 show_img_init    b5
     def next_img(self, event):

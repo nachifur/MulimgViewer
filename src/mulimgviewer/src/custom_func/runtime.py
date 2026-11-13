@@ -1,5 +1,6 @@
 """Immutable algorithm sources and thread-local preview execution settings."""
 import threading
+import json
 from functools import wraps, lru_cache
 from pathlib import Path
 
@@ -12,9 +13,15 @@ class AlgorithmSession:
     def __init__(self, registry):
         self.registry = registry
         self.namespaces = {}
+        self.locks = {}
+        self.sequence = {}
 
 
 def check_processing_budget(manager, flist):
+    # Disk-stage results are already admitted and processed. Composition has
+    # its own shared permit and canvas check; do not charge full input copies again.
+    if getattr(manager,'_custom_results',None) is not None:
+        return
     budget = getattr(manager, '_custom_memory_budget', None)
     params = manager.layout_params
     if budget is None or len(params) <= 38 or not (params[32] or params[38]):
@@ -37,8 +44,35 @@ def check_processing_budget(manager, flist):
 
 def capture_algorithms(names):
     root = Path(__file__).parent
-    return tuple((name, str(root/name/'main.py'),
-                  (root/name/'main.py').read_text(encoding='utf-8-sig')) for name in names)
+    result = []
+    for name in names:
+        folder = root/name
+        manifest = folder/'plugin.json'
+        spec = json.loads(manifest.read_text(encoding='utf-8-sig')) if manifest.exists() else {}
+        dependencies = []
+        for item in spec.get('cache_dependencies', []):
+            path = folder/item
+            info = path.stat()
+            dependencies.append((str(path.resolve()),info.st_size,info.st_mtime_ns))
+        # Helper-code edits invalidate results without reading large model files.
+        helpers = [(str(p.relative_to(folder)),p.stat().st_size,p.stat().st_mtime_ns)
+                   for p in sorted(folder.glob('*.py'))]
+        spec['_dependencies'] = dependencies+helpers
+        result.append((name,str(folder/'main.py'),(folder/'main.py').read_text(encoding='utf-8-sig'),
+                       json.dumps(spec,sort_keys=True)))
+    from .contract import specification
+    from ..cache_layout import component
+    names=set();originals=0
+    for index,entry in enumerate(result):
+        spec=specification(result,index)
+        name=component(spec.get('cache_name',entry[0])).casefold()
+        if name in names:raise ValueError('Algorithm cache names must be unique; change cache_name in plugin.json')
+        names.add(name)
+        if spec.get('role')=='original':
+            originals+=1
+            if not spec['identity']:raise ValueError('The original role must declare identity=true')
+    if originals>1:raise ValueError('Only one algorithm can declare the original role')
+    return tuple(result)
 
 
 @lru_cache(maxsize=64)

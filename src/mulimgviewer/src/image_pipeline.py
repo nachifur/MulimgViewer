@@ -4,6 +4,7 @@ import os
 import threading
 import time
 import uuid
+import shutil
 from concurrent.futures import ThreadPoolExecutor, CancelledError
 from pathlib import Path
 
@@ -11,12 +12,16 @@ from PIL import Image
 
 from .resource_policy import cache_window, composition_workers
 from .thread_optimizer import available_memory_bytes
+from .custom_pipeline import CustomPipeline, current_only
+from .mosaic_pipeline import MosaicStage
+from .cache_layout import page_name, write_source_catalog
+from .custom_func.contract import active_cache_names
 
 
 RENDER_STATE = (
     'xy_grid', 'xy_grids_id_list', 'crop_points', 'img_resolution_origin',
     'img_resolution_show', 'img_resolution', 'gap_color', 'title_setting',
-    'pdf_title_layers', '_last_title_layout', 'flist', '_flist_groups', 'full_exif_cache',
+    'pdf_title_layers', '_last_title_layout', 'flist', '_flist_groups', 'full_exif_cache', 'title_max_size',
     '_status_source_slots',
     '_show_all_func_enabled', '_show_all_func_layout', '_original_row_col',
     '_show_all_func_expanded_row_col', '_func_layout_vertical', '_blank_img_ids',
@@ -49,6 +54,8 @@ class ImagePipeline:
         self._pump_queued = False
         self._legacy_cleaned = False
         self._published_files = {}
+        self.processing = CustomPipeline(self.directory.parent/'.work'/'processed',public_root=self.directory.parent/'algorithms')
+        self.processing.mosaic_stage=MosaicStage(self.processing)
 
     def _schedule(self):
         with self.lock:
@@ -79,6 +86,7 @@ class ImagePipeline:
                 self.invalidate()
                 self.context = context
                 self.output_pixels = self.input_pixels = 0
+                self._catalog_pending=True
             previous = self.window if settings == self.settings else None
             self.window = cache_window(batch, total, radius, multiplier, previous)
             self.settings = settings
@@ -92,11 +100,22 @@ class ImagePipeline:
             # composition. Otherwise a 10x10 native-resolution layout can OOM.
             if not self.output_pixels:
                 self.desired_workers = 1
+        self.processing.configure(budget,memory)
         self._schedule()
 
     def _pump(self):
         # This is the only thread that publishes/deletes PNGs and resizes pools.
         available = available_memory_bytes()
+        with self.lock:
+            template=getattr(self,'template',None)
+            current_window=self.window
+            current=getattr(self,'batch',0)
+        if template is not None and current_window is not None:
+            if getattr(self,'_catalog_pending',False):
+                self._catalog_pending=False
+                write_source_catalog(template,self.directory.parent,split_media=True)
+            self.processing.set_window('image',('image',repr(getattr(template,'input_path',''))),current_window,current,active_cache_names(template))
+            self.processing._prune()
         with self.lock:
             self._pump_queued = False
             if self.closed:
@@ -127,7 +146,7 @@ class ImagePipeline:
                 self.lock.release()
                 try:
                     if valid:
-                        path = self.directory / f'batch_{batch}.png'
+                        path = self.directory / page_name(batch)
                         os.replace(temporary, path)
                         self._published_files[path] = path.stat()
                     else:
@@ -163,16 +182,11 @@ class ImagePipeline:
                 self.directory.mkdir(parents=True, exist_ok=True)
                 if not self._legacy_cleaned:
                     self._legacy_cleaned = True
-                    legacy = self.directory.parent / 'image_stitch_cache'
-                    for path in legacy.glob('batch_*.png'):
-                        try:
-                            path.unlink()
-                        except OSError:
-                            pass
-                    try:
-                        legacy.rmdir()  # Only remove an empty legacy cache folder.
-                    except OSError:
-                        pass
+                    root=self.directory.parent.resolve()
+                    for name in ('image_stitch_cache','stitch_cache','custom_cache'):
+                        legacy=self.directory.parent/name
+                        if legacy!=self.directory and legacy.is_dir() and legacy.resolve().parent==root:
+                            shutil.rmtree(str(legacy.resolve()),ignore_errors=True)
                 # Retire legacy names once; new files share the video's naming
                 # format. Only delete PNGs published by this pipeline, and leave
                 # replacements by the video writer untouched after a mode switch.
@@ -216,6 +230,7 @@ class ImagePipeline:
                          for sign in ((self.direction, -self.direction) if distance else (1,))
                          if lo <= self.batch + sign * distance <= hi)
                 for batch in order:
+                    if current_only(self.template) and batch!=self.batch:continue
                     if len(self.running) >= self.workers:
                         break
                     key = self.generation, batch
@@ -242,12 +257,39 @@ class ImagePipeline:
             self._schedule()
 
     def _compose(self, template, points, custom, batch, generation):
+        params=template.layout_params
+        if len(params)>38 and getattr(template,'_custom_algorithm_registry',None) is not None:
+            manager=template.video_stitch_snapshot()
+            manager.set_action_count(batch)
+            with self.lock:
+                window=self.window;workers=self.budget;memory=self.memory
+                current=self.batch
+            if window is None:raise CancelledError()
+            epoch=('image',repr(manager.input_path))
+            def cancelled():return self.closed or generation!=self.generation
+            started=time.perf_counter()
+            with self.processing.mosaic_stage.plan(manager,manager.get_flist(),batch,'image',epoch,points,cancelled) as plan:
+                with self.processing.prepare(manager,manager.get_flist(),batch,'image',epoch,cancelled,on_ready=plan.ready) as results:
+                    image,state=plan.compose(results)
+                    self.directory.mkdir(parents=True,exist_ok=True)
+                    temporary=self.directory/f'__image_{generation}_{batch}_{time.time_ns()}.tmp'
+                    try:image.save(temporary,format='PNG',compress_level=1)
+                    except BaseException:
+                        temporary.unlink(missing_ok=True);raise
+                    inputs=state.get('img_resolution_origin',image.size)
+                    return temporary,state,image.width*image.height,int(inputs[0])*int(inputs[1])*len(state['flist']),time.perf_counter()-started
+        return self._compose_pixels(template,points,custom,batch,generation)
+
+    def _compose_pixels(self, template, points, custom, batch, generation):
         with self.lock:
             if (self.closed or generation != self.generation or self.window is None
                     or not self.window[0] <= batch <= self.window[1]):
                 raise CancelledError()
         started = time.perf_counter()
         manager = template.video_stitch_snapshot()
+        if getattr(manager,'_custom_results',None) is not None:
+            manager._video_lazy_frames=True
+            manager._video_memory_budget=manager._custom_composition_budget
         with self.lock:
             manager._custom_memory_budget = self.memory // max(1,self.workers) if self.memory is not None else None
         manager.set_action_count(batch)
@@ -321,6 +363,7 @@ class ImagePipeline:
         return True
 
     def close(self):
+        self.processing.close()
         with self.lock:
             self.closed = True
             self.request_serial += 1

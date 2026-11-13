@@ -23,7 +23,7 @@ def main(img_list, save_path, name_list=None, algorithm_name="Image Enhancement"
     out_img_list = []
     if save_path != "":
         flag_save = True
-        save_path = Path(save_path) / "processing_function" / algorithm_name / "processed_img"
+        save_path = Path(save_path) / "algorithms" / algorithm_name / "processed"
         if not save_path.exists():
             os.makedirs(str(save_path))
     else:
@@ -37,6 +37,7 @@ def main(img_list, save_path, name_list=None, algorithm_name="Image Enhancement"
                 img_path = save_path / name_list[i]
             else:
                 img_path = save_path / (str(i) + ".png")
+            img_path.parent.mkdir(parents=True,exist_ok=True)
             img.save(str(img_path))
         i += 1
     return out_img_list

@@ -93,9 +93,11 @@ class LazyVideoImage:
         cached = provider(self.path) if provider else None
         if cached is not None:
             self.size = cached.size
+            self.mode = cached.mode
         else:
             with Image.open(self.path) as source:
                 self.size = source.size
+                self.mode = source.mode
         self.width, self.height = self.size
 
     def __deepcopy__(self, memo):
@@ -108,8 +110,8 @@ class LazyVideoImage:
         with Image.open(self.path) as source:
             # JPEG sources are already RGB. Conversion before resize would
             # create an unnecessary full-resolution duplicate of each frame.
-            if source.mode != 'RGB':
-                source = source.convert('RGB')
+            if source.mode not in ('RGB','RGBA'):
+                source = source.convert('RGBA' if source.mode=='LA' or 'transparency' in source.info else 'RGB')
             return getattr(source, method)(*args, **kwargs)
 
     def resize(self, size, resample=Image.BICUBIC, **kwargs):

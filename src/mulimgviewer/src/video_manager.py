@@ -2,7 +2,7 @@
 import threading
 from pathlib import Path
 import ffmpeg, os, time, math, sys
-from concurrent.futures import ThreadPoolExecutor, Future
+from concurrent.futures import ThreadPoolExecutor, Future, CancelledError
 import weakref
 import subprocess
 from fractions import Fraction
@@ -20,6 +20,9 @@ from .pipeline_executor import PipelineWorkers
 from .admission_optimizer import AdaptiveAdmissionBudget
 from .video_decoder import DecoderBank
 from .video_memory import PixelCache
+from .custom_pipeline import current_only
+from .cache_layout import page_name, write_source_catalog
+from .custom_func.contract import active_cache_names
 from .playback_pacer import PlaybackPacer, ProductionJob, completion_estimates, refill_guard
 from .thread_optimizer import (AdaptiveThreadAllocator, optimize_thread_allocation,
                                available_memory_bytes, stitch_memory_limit,
@@ -214,10 +217,11 @@ class VideoManager:
         self.ImgManager = ImgManager
         self.cache_dir = Path("cache_frames")
         # 新增：磁盘缓存目录
-        self.disk_cache_dir = Path("cache_frames") / "stitch_cache"
+        self.disk_cache_dir = self.cache_dir / "composed"
         self.disk_cache_dir.mkdir(parents=True, exist_ok=True)
         # 新增：图像模式磁盘缓存目录
         self.image_disk_cache_dir = self.disk_cache_dir
+        self.custom_disk_cache_dir = self.cache_dir / 'algorithms'
         self.image_disk_cache_dir.mkdir(parents=True, exist_ok=True)
         self.perf_monitor = PerformanceMonitor()
         self._playback_pacer = PlaybackPacer()
@@ -284,7 +288,7 @@ class VideoManager:
 
     def _get_disk_cache_path(self, batch_idx):
         """生成磁盘缓存文件路径"""
-        return self.disk_cache_dir / f"batch_{batch_idx}.png"
+        return self.disk_cache_dir / page_name(batch_idx)
 
     def _save_image_to_disk(self, pil_img, batch_idx):
         """将PIL图像保存到磁盘，返回文件路径"""
@@ -303,9 +307,9 @@ class VideoManager:
         if not self.disk_cache_dir.exists():
             return
         try:
-            for cache_file in self.disk_cache_dir.glob("batch_*.png"):
+            for cache_file in self.disk_cache_dir.glob("page_*.png"):
                 try:
-                    idx = int(cache_file.stem.split('_')[1])
+                    idx = int(cache_file.stem.split('_')[1])-1
                     if idx < window_start or idx > window_end:
                         cache_file.unlink()
                         if 0 <= idx < len(self.shared_config.cache_img):
@@ -622,6 +626,12 @@ class VideoManager:
         total_budget = max(2, int(getattr(self.shared_config, "thread", 2) or 2))
         extract_threads = max(1, int(extract_threads))
         stitch_threads = max(1, int(stitch_threads))
+        snapshot=getattr(self,'_render_snapshot',None)
+        if snapshot is not None:
+            params=snapshot[0].layout_params
+            processing=len(params)>38 and (snapshot[2] or params[38])
+            if processing and total_budget>=3 and stitch_threads<2 and extract_threads>1:
+                extract_threads-=1;stitch_threads+=1
         memory = getattr(self.shared_config, 'memory_budget', None)
         if memory is not None:
             extract_threads = min(extract_threads, self._extract_memory_limit())
@@ -1228,14 +1238,17 @@ class VideoManager:
         return self._meta_cache[video_path]
 
     def init_video_frame_cache(self):
+        with self._cache_io_lock:
+            return self._init_video_frame_cache_locked()
+
+    def _init_video_frame_cache_locked(self):
         '''Initialize video cache directories (folders only).'''
         video_paths = self.shared_config.real_video_path
         output_list = []
 
-        for video_path in video_paths:
+        for source_index, video_path in enumerate(video_paths):
             video_path = Path(video_path)
-            cache_name = video_path.stem
-            out_dir = self.cache_dir / cache_name
+            out_dir = self.cache_dir / "sources" / "video" / f"source_{source_index+1:03d}" / "frames"
             out_dir.mkdir(parents=True, exist_ok=True)
             # Clean stale cache to avoid reading old frames when names/settings change
             try:
@@ -1328,7 +1341,10 @@ class VideoManager:
         geometry = (int(self.shared_config.thread),self.shared_config.memory_budget,output,inputs)
         if geometry != getattr(self,'_admission_geometry',None):
             self._admission_geometry = geometry
-            if self._extract_threads+self._stitch_threads < int(self.shared_config.thread):
+            snapshot=getattr(self,'_render_snapshot',None)
+            params=snapshot[0].layout_params if snapshot is not None else ()
+            processing=len(params)>38 and (snapshot[2] or params[38])
+            if processing or self._extract_threads+self._stitch_threads < int(self.shared_config.thread):
                 # The initial policy may have been seeded before the GUI's
                 # layout snapshot existed. Replan NOW, not after first paint.
                 self._enforce_thread_budget()
@@ -1412,6 +1428,17 @@ class VideoManager:
             if old_lo != lo or old_hi != hi:
                 self._schedule_video_cleanup()
 
+        ui=self._ui()
+        processing=getattr(getattr(ui,'image_pipeline',None),'processing',None)
+        if processing is not None:
+            processing.set_window('video',('video',tuple(cfg.real_video_path),cfg.skip_frames),(lo,hi),b,
+                active_cache_names(self._render_snapshot[0]) if self._render_snapshot is not None else None)
+            processing._prune()
+        snapshot=getattr(self,'_render_snapshot',None)
+        catalog_key=(tuple(cfg.real_video_path),cfg.parallel_to_sequential,bool(snapshot and snapshot[0].layout_params[22]))
+        if snapshot is not None and catalog_key!=getattr(self,'_source_catalog_key',None):
+            self._source_catalog_key=catalog_key
+            write_source_catalog(snapshot[0],self.cache_dir,split_media=True)
         allowed_pixels = {str(self._get_disk_cache_path(batch)) for batch in range(lo, hi+1)}
         for vid, (first, last) in self._raw_windows.items():
             allowed_pixels.update(os.path.join(cfg.video_path[vid], self._filename_converter(i, vid, cfg))
@@ -1480,9 +1507,9 @@ class VideoManager:
             return (token == self._window_token and generation == getattr(self, '_window_generation', 0)
                     and paths == tuple(self.shared_config.video_path))
         self._decoder_bank.trim(set(str(p) for p in config.real_video_path))
-        for path in self.disk_cache_dir.glob("batch_*.png"):
+        for path in self.disk_cache_dir.glob("page_*.png"):
             try:
-                idx = int(path.stem.split('_')[1])
+                idx = int(path.stem.split('_')[1])-1
                 with self._cache_io_lock:
                     with self._cache_guard:
                         if not current() or window != self._stitch_window:
@@ -1514,7 +1541,7 @@ class VideoManager:
         # Retire obsolete directories quickly, then delete them without holding
         # the state lock. Both resolved targets must remain inside cache_dir.
         reserved_paths = [Path(p) for p in config.video_path]
-        reserved_paths.extend((self.disk_cache_dir, self.image_disk_cache_dir))
+        reserved_paths.extend(self._shared_cache_directories())
         # Active directories need no filesystem canonicalization on every
         # refill. Unknown candidates still receive ALL resolved-path safety
         # checks before any rename/delete, including aliases/junctions.
@@ -1525,6 +1552,7 @@ class VideoManager:
         except OSError:
             return
         if not directories:
+            self._cleanup_source_folders(config.video_path,current)
             return
         root = self.cache_dir.resolve()
         reserved = {p.resolve() for p in reserved_paths}
@@ -1549,6 +1577,22 @@ class VideoManager:
                         retired.rename(directory)
                     return
             shutil.rmtree(str(retired), ignore_errors=True)
+        if current():self._cleanup_source_folders(config.video_path,current)
+
+    def _cleanup_source_folders(self, paths, valid=lambda:True):
+        source_root=self.cache_dir/'sources'/'video'
+        active={os.path.normcase(os.path.abspath(Path(p).parent)) for p in paths}
+        if not source_root.exists():return
+        for directory in source_root.iterdir():
+            if os.path.normcase(os.path.abspath(directory)) in active:continue
+            if (directory/'frames').is_dir() and directory.resolve().parent==source_root.resolve():
+                retired=self.cache_dir/f'__discard_source_{os.getpid()}_{time.time_ns()}'
+                if retired.resolve().parent!=self.cache_dir.resolve():continue
+                with self._cache_io_lock:
+                    if not valid() or tuple(paths)!=tuple(self.shared_config.video_path):return
+                    try:directory.rename(retired)
+                    except OSError:continue
+                shutil.rmtree(str(retired),ignore_errors=True)
 
     def _schedule_video_cleanup(self):
         with self._cache_guard:
@@ -1667,7 +1711,10 @@ class VideoManager:
             submit()
         return futures
 
-    def _run_window_stitch(self, batch, sources, token, plan=None):
+    def _run_window_stitch(self,batch,sources,token,plan=None):
+        return self._run_window_stitch_impl(batch,sources,token,plan)
+
+    def _run_window_stitch_impl(self, batch, sources, token, plan=None, _processed=None, _processing_seconds=0, _composition_budget=None, _mosaic_output=None):
         with self._cache_guard:
             lo, hi = self._stitch_window
             if token != self._window_token or not lo <= batch <= hi:
@@ -1696,6 +1743,26 @@ class VideoManager:
         display_sources = [(vid, index) for vid, first, stop in segments for index in range(first, stop)]
         groups = ([[frames[(vid, index)] for index in range(first, stop)] for vid, first, stop in segments]
                   if snapshot is not None else raw_groups)
+        ui = self._ui()
+        processing = getattr(getattr(ui, 'image_pipeline', None), 'processing', None)
+        if processing is not None:processing.pixel_cache=self._pixel_cache
+        if snapshot is not None and processing is not None and _processed is None:
+            template = snapshot[0]
+            params = template.layout_params
+            if len(params)>38 and getattr(template,'_custom_algorithm_registry',None) is not None:
+                epoch=('video',tuple(config.real_video_path),config.skip_frames)
+                processing.configure(min(self._stitch_threads,max(1,int(self.shared_config.thread)-self._extract_threads)),
+                                     self._planning_memory_budget())
+                processing.set_window('video',epoch,self._stitch_window,int(config.batch_idx),active_cache_names(template))
+                flist=[path for group in groups for path in group]
+                def cancelled():return getattr(self,'_closed',False) or token!=self._window_token
+                processing_started=time.perf_counter()
+                with processing.mosaic_stage.plan(template,flist,batch,'video',epoch,snapshot[1],cancelled) as mosaic_plan:
+                    with processing.prepare(template,flist,batch,'video',epoch,cancelled,on_ready=mosaic_plan.ready) as results:
+                        output=mosaic_plan.compose(results)
+                        delay=time.perf_counter()-processing_started
+                        return self._run_window_stitch_impl(batch,sources,token,plan=plan,_processed=results,
+                            _processing_seconds=delay,_mosaic_output=output)
         # No cache guard spans pixel processing or PNG compression.
         started = time.perf_counter()
         if snapshot is None:
@@ -1703,13 +1770,16 @@ class VideoManager:
             ui = self._ui()
             pil_img, flag = ui.compose_current_frame(batch, flist=groups[0] if single else groups)
             state = {}
-        else:
+        elif _mosaic_output is None:
             template, points, custom = snapshot
             manager = template.video_stitch_snapshot()
-            manager._video_lazy_frames = not custom and not (len(template.layout_params) > 38 and template.layout_params[38])
+            if _processed is not None:manager._custom_results=_processed
+            manager._video_lazy_frames = _processed is not None or (not custom and not (len(template.layout_params) > 38 and template.layout_params[38]))
             manager._video_pixel_provider = self._pixel_cache.get
             working = self._planning_memory_budget()
-            if working is not None:
+            if _processed is not None:
+                manager._video_memory_budget=_composition_budget
+            elif working is not None:
                 _, inputs = self._estimated_stitch_pixels()
                 per_page = min(working, self._pipeline_workers.costs[1])
                 manager._custom_memory_budget = per_page
@@ -1732,6 +1802,10 @@ class VideoManager:
                 '_show_all_func_enabled', '_show_all_func_layout', '_original_row_col',
                 '_show_all_func_expanded_row_col', '_func_layout_vertical', '_blank_img_ids',
             ) if hasattr(manager, name)}
+        else:
+            pil_img,state=_mosaic_output
+            flag=0
+        if snapshot is not None:
             state['_status_video_sources'] = tuple(display_sources)
             state['_status_video_paths'] = tuple(config.real_video_path)
             state['_status_video_counts'] = tuple(config.video_num_list)
@@ -1758,14 +1832,15 @@ class VideoManager:
                     lo, hi = self._stitch_window
                     valid = token == self._window_token and lo <= batch <= hi
                     if valid:
-                        self._pixel_cache.put(str(destination), pil_img, priority=True)
+                        pixels=pil_img if isinstance(pil_img,Image.Image) else self._pixel_cache.get(str(pil_img.path))
+                        if pixels is not None:self._pixel_cache.put(str(destination),pixels,priority=True)
                         self.shared_config.cache_img[batch] = str(destination)
                         self._batch_render_states[batch] = state
                         for old_batch in list(self._batch_render_states):
                             if not lo <= old_batch <= hi:
                                 self._batch_render_states.pop(old_batch, None)
                         self._produced_pages += 1
-                        self.perf_monitor.record_stitch(time.perf_counter() - started, plan=plan)
+                        self.perf_monitor.record_stitch(time.perf_counter() - started + _processing_seconds, plan=plan)
                         self._playback_pacer.publish(self._pacing_context(token, config), batch,
                                                      time.perf_counter(), max(1, int(config.cache_num)))
                 if not valid:
@@ -1789,6 +1864,8 @@ class VideoManager:
                 pass
 
     def _queue_window_stitch(self, batch, sources, token):
+        snapshot=getattr(self,'_render_snapshot',None)
+        if snapshot is not None and current_only(snapshot[0]) and batch!=int(self.shared_config.batch_idx):return
         # A completion handle tracks both dependency waiting and actual execution.
         # Waiting batches never occupy a stitch executor worker.
         with self._cache_guard:
@@ -1851,14 +1928,17 @@ class VideoManager:
                         # A user/cleanup tool may remove source JPEGs after
                         # readiness was published. Retry must revalidate them,
                         # not trust a stale ready bit forever.
-                        if not isinstance(ex, MemoryError):
+                        snapshot=getattr(self,'_render_snapshot',None)
+                        params=snapshot[0].layout_params if snapshot is not None else ()
+                        custom_active=len(params)>38 and (snapshot[2] or params[38])
+                        if not isinstance(ex, MemoryError) and (not custom_active or isinstance(ex,FileNotFoundError)):
                             with self._cache_guard:
                                 if token == self._window_token:
                                     self._raw_ready_batches.difference_update(sources)
                         completion.set_exception(ex)
                         self._debug_video(f"[WindowStitch] batch={batch}: {ex}")
-                        if isinstance(ex, MemoryError):
-                            self._set_video_status(str(ex))
+                        if not isinstance(ex, CancelledError):
+                            self._set_video_status(f'Video pipeline failed: {ex}')
                     else:
                         completion.set_result(None)
                 try:
@@ -2014,16 +2094,24 @@ class VideoManager:
                 kept += 1
         self._cleanup_dead_directories()
 
+    def _shared_cache_directories(self):
+        """Stage-owned roots; raw-frame cleanup must never retire these."""
+        return (self.disk_cache_dir,self.image_disk_cache_dir,self.custom_disk_cache_dir,
+                self.cache_dir/"sources",self.cache_dir/".work")
+
     def _cleanup_dead_directories(self):
         """Delete directories that are no longer in the current video_path list."""
-        current_video_dirs = {Path(p).resolve() for p in self.shared_config.video_path}
-
-        for item in self.cache_dir.iterdir():
-            if item.is_dir() and item.resolve() not in current_video_dirs:
-                # Never delete the stitch_cache directory itself
-                if item.resolve() in (self.disk_cache_dir.resolve(), self.image_disk_cache_dir.resolve()):
-                    continue
-                shutil.rmtree(str(item))
+        root=self.cache_dir.resolve()
+        reserved={Path(p).resolve() for p in list(self.shared_config.video_path)+list(self._shared_cache_directories())}
+        try:
+            directories=list(self.cache_dir.iterdir())
+        except FileNotFoundError:
+            return
+        for item in directories:
+            target=item.resolve()
+            if item.is_dir() and target.parent==root and target not in reserved:
+                shutil.rmtree(str(target),ignore_errors=True)
+        self._cleanup_source_folders(self.shared_config.video_path)
 
     def _filename_converter(self, input_value, video_idx, config=None):
         '''Bidirectional conversion: logical index <-> timestamp/frame filename.'''

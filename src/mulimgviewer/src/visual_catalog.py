@@ -35,6 +35,18 @@ class VisualCatalogMixin:
         self._visual_page = lru_cache(maxsize=2)(self._visual_page)
         self.cells=tuple(visual_cells(outer,inner,vertical))
         self.capacity=len(self.cells)
+        if len(layout)>40 and (layout[32] or layout[38]):
+            from .custom_func.contract import display_grid, display_indices
+            original=self.cells
+            registry=getattr(manager,'_custom_algorithm_registry',()) or ()
+            rows,cols=display_grid(registry,layout)
+            variants=len(display_indices(registry,layout));column_first=bool(layout[38] and layout[40])
+            cells=[]
+            for pane in range(variants):
+                if column_first:row=pane%rows;col=pane//rows
+                else:row,col=divmod(pane,cols)
+                cells.extend((y+row*outer[0]*inner[0],x+col*outer[1]*inner[1],slot) for y,x,slot in original)
+            self.cells=tuple(sorted(cells))
         self.cache_paths=tuple(str(Path(p).absolute()) for p in getattr(config,'video_path',manager.path_list))
         # Visible item counts are piecewise constant. Store only stream-end
         # breakpoints, never an entry per page or frame of a long video.

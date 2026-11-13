@@ -1,12 +1,31 @@
 from pathlib import Path
 import inspect
 from .runtime import state, compiled_source, execution_lock
+from .contract import specification
+import threading
+import weakref
+import gc
+from contextlib import contextmanager
+
+_device_locks = {}
+_resident_devices = {}
+
+
+@contextmanager
+def device_context(device):
+    if device == 'cpu':
+        yield
+        return
+    with execution_lock:
+        lock=_device_locks.setdefault(device,threading.RLock())
+    with lock:yield
 
 DEFAULT_ALGORITHMS = [
     "Image Enhancement",
     "Image Darkening",
     "Gaussian Blur",
-    "Histogram Equalization"
+    "Histogram Equalization",
+    "Original"
 ]
 
 def get_available_algorithms():
@@ -47,7 +66,7 @@ def load_algorithm_functions(algorithm_type):
         if registry is None:
             code = algorithm_path.read_text(encoding='utf-8-sig')
         else:
-            _, filename, code = registry[algorithm_type]
+            _, filename, code = registry[algorithm_type][:3]
             algorithm_path = Path(filename)
         namespace = {'__file__': str(algorithm_path), '__name__': '__custom_algorithm__'}
         exec(compiled_source(str(algorithm_path), code), namespace)
@@ -76,17 +95,49 @@ def custom_process_img(img, algorithm_type=0):
     return functions['custom_process_img'](img)
 
 def main(img_list, save_path, name_list=None, algorithm_type=0):
-    # User modules may own GPU models or mutable state. Initialization and
-    # execution are serialized unless the module explicitly opts into threads.
+    registry = getattr(state,'registry',None)
+    session = getattr(state,'session',None)
+    available = get_available_algorithms()
+    if not available:raise RuntimeError('No custom algorithms are installed')
+    algorithm_type = algorithm_type if 0 <= algorithm_type < len(available) else 0
+    spec = specification(registry,algorithm_type) if registry else {'device':'exclusive','max_concurrency':1}
     with execution_lock:
-        available = get_available_algorithms()
-        if not available:
-            raise RuntimeError('No custom algorithms are installed')
-        algorithm_type = algorithm_type if 0 <= algorithm_type < len(available) else 0
-        functions = load_algorithm_functions(algorithm_type)
-        if not functions.get('THREAD_SAFE', False):
-            return _invoke_main(functions, img_list, save_path, name_list, algorithm_type)
-    return _invoke_main(functions, img_list, save_path, name_list, algorithm_type)
+        if spec['device'] == 'cpu' and session is not None:
+            lock = session.locks.setdefault(algorithm_type,threading.RLock() if spec['max_concurrency']==1
+                                            else threading.BoundedSemaphore(spec['max_concurrency']))
+        else:
+            lock = _device_locks.setdefault(spec['device'],threading.RLock())
+    with lock:
+        # Non-CPU devices retain at most one algorithm model by default. Device
+        # locks span initialization, processing and eviction, not just inference.
+        if spec['device'] != 'cpu' and session is not None:
+            previous = _resident_devices.get(spec['device'])
+            if previous is not None:
+                previous_session, previous_index = previous[0](), previous[1]
+                if previous_session is None:gc.collect()
+                if previous_session is not None and (previous_session is not session or previous_index != algorithm_type):
+                    namespace = previous_session.namespaces.pop(previous_index,None)
+                    previous_session.sequence.pop(previous_index,None)
+                    if namespace is not None:
+                        release = namespace.get('release_resources')
+                        if callable(release):release()
+                        namespace.clear()
+                        gc.collect()
+            _resident_devices[spec['device']] = (weakref.ref(session),algorithm_type)
+        with execution_lock:
+            functions = load_algorithm_functions(algorithm_type)
+        if spec['device'] == 'cpu' and spec['max_concurrency'] > 1 and not functions.get('THREAD_SAFE',False):
+            raise ValueError('max_concurrency > 1 requires THREAD_SAFE = True')
+        context=getattr(state,'sequence_context',None)
+        if spec.get('ordered') and session is not None and context is not None:
+            owner,epoch,batch=context
+            reset=functions.get('reset')
+            if not callable(reset):raise ValueError('Ordered plugins must provide reset(context)')
+            if session.sequence.get(algorithm_type)!=(owner,epoch,batch-1):reset(dict(owner=owner,batch=batch))
+        result=_invoke_main(functions, img_list, save_path, name_list, algorithm_type)
+        if spec.get('ordered') and session is not None and context is not None:
+            session.sequence[algorithm_type]=context
+        return result
 
 
 def _invoke_main(functions, img_list, save_path, name_list=None, algorithm_type=0):

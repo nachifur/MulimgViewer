@@ -1,6 +1,7 @@
 """Four-field status bar: action, selection, input/source, output path."""
 import wx
 from .status_info import selection_info, status_widths
+from .display_modes import loaded_input_mode
 
 
 class StatusBarMixin:
@@ -62,12 +63,7 @@ class StatusBarMixin:
         pages = max(1, int(getattr(self.ImgManager, 'max_action_num', 1)))
         mode = 'Video' if self.shared_config.video_mode else 'Image'
         playback = 'Playing' if self.shared_config.is_playing else 'Paused'
-        inputs = ('Sequential', 'Parallel auto', 'Parallel manual', 'Image File List')
-        if self.shared_config.video_mode:
-            choice = getattr(self.ImgManager, '_status_input_mode', self.choice_input_mode.GetSelection())
-        else:
-            choice = {2: 0, 0: 1, 1: 2, 3: 3}.get(self.ImgManager.type, -1)
-        input_mode = inputs[choice] if 0 <= choice < len(inputs) else 'Input'
+        input_mode = loaded_input_mode(self.ImgManager, self.shared_config, painted=True)
         position = info['position'] if info else 'No source selected'
         self.SetStatusText_([f'{mode} | {playback}', f'Page {batch+1}/{pages} | {position}',
                              f'{input_mode} | {info["source"]}' if info else input_mode, '-1'])

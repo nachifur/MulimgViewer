@@ -113,14 +113,14 @@ class ImgData():
     def get_path_list_from_lf(self):
         format_group = [".png", ".jpg", ".jpeg", ".bmp", ".tif", ".tiff"]
         if Path(self.input_path).suffix.lower() == '.txt':
-            with open(self.input_path, "r",encoding='utf-8') as f:
+            with open(self.input_path, "r",encoding='utf-8-sig') as f:
                 dataset = f.read().split('\n')
         elif Path(self.input_path).suffix.lower() == '.csv':
-            with open(self.input_path, 'r', newline='',encoding='utf-8') as csvfile:
+            with open(self.input_path, 'r', newline='',encoding='utf-8-sig') as csvfile:
                 dataset = list(csv.reader(csvfile))
                 dataset_ = []
                 row = len(dataset)
-                col = len(dataset[0])
+                col = len(dataset[0]) if dataset else 0
                 for items in dataset:
                     for item in items:
                         dataset_.append(item)
@@ -131,6 +131,7 @@ class ImgData():
             dataset = []
 
         # Lists use their own directory as the base, matching video lists.
+        dataset = [item.strip().strip('"') for item in dataset]
         base = Path(self.input_path).absolute().parent
         dataset = [str((Path(item).expanduser() if Path(item).expanduser().is_absolute()
                         else base / Path(item).expanduser())) for item in dataset if item.strip()]

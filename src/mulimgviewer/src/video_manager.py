@@ -912,6 +912,9 @@ class VideoManager:
                     if isinstance(grid,(list,tuple)) and len(grid)==2:
                         grid_slots *= max(1,int(grid[0]))*max(1,int(grid[1]))
                 slots = max(slots,grid_slots)
+                if len(params) > 39 and params[38]:
+                    rows, cols = map(int, params[39].split(','))
+                    slots *= max(1,rows)*max(1,cols)
                 if len(resolution)==2 and min(resolution)>0:
                     output = int(resolution[0])*int(resolution[1])*slots*4
                 else:
@@ -1709,6 +1712,7 @@ class VideoManager:
             if working is not None:
                 _, inputs = self._estimated_stitch_pixels()
                 per_page = min(working, self._pipeline_workers.costs[1])
+                manager._custom_memory_budget = per_page
                 if not manager._video_lazy_frames and inputs*9 >= per_page:
                     self._set_video_status('Video layout/custom processing exceeds the memory budget; reduce layout or preview size')
                     return
@@ -1725,6 +1729,8 @@ class VideoManager:
                 'xy_grid', 'xy_grids_id_list', 'crop_points', 'img_resolution_origin',
                 'img_resolution_show', 'gap_color', 'title_setting', 'title_max_size', 'pdf_title_layers',
                 '_last_title_layout', 'flist', '_flist_groups', '_status_source_slots',
+                '_show_all_func_enabled', '_show_all_func_layout', '_original_row_col',
+                '_show_all_func_expanded_row_col', '_func_layout_vertical', '_blank_img_ids',
             ) if hasattr(manager, name)}
             state['_status_video_sources'] = tuple(display_sources)
             state['_status_video_paths'] = tuple(config.real_video_path)

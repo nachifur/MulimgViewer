@@ -12,7 +12,9 @@ from .. import __version__ as VERSION
 from .about import About
 from .index_table import IndexTable
 from .index_catalog import IndexCatalog
+from .display_modes import auto_title_fields
 from .custom_func.main import get_available_algorithms
+from .custom_func.runtime import capture_algorithms, compiled_source, AlgorithmSession
 from .utils import MyTestEvent, get_resource_path
 from .utils_img import ImgManager
 from .resource_policy import resource_budget, positive_cache_integer
@@ -158,6 +160,7 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
         self.check_version()
 
         self._bind_legacy_control_aliases()
+        self.refresh_algorithm_list()
         self._capture_configuration_defaults()
 
         # open default path
@@ -189,7 +192,7 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
         alias_map = {
             "title_show_rename": "m_checkBox31",
             "title_rename_text": "m_textCtrl16",
-            "custom_algorithm_input": "m_textCtrl15",
+            "custom_algorithm_input": "addfunc",
             "m_textCtrl28": "interval",
             "m_textCtrl30": "cache_frames",
             "m_textCtrl281": "row_col13",
@@ -221,8 +224,9 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
             self.custom_algorithm_input.Bind(wx.EVT_SET_FOCUS, self.disable_accel)
             self.custom_algorithm_input.Bind(wx.EVT_KILL_FOCUS, self.enable_accel)
             self.custom_algorithm_input.Bind(wx.EVT_CHAR_HOOK, self._handle_custom_algorithm_key)
-        if hasattr(self, "m_button10"):
-            self.m_button10.Bind(wx.EVT_BUTTON, self.remove_custom_algorithm)
+        if hasattr(self, "delfunc"):
+            self.delfunc.Bind(wx.EVT_BUTTON, self.remove_custom_algorithm)
+        self.customfunc_choice.Bind(wx.EVT_CHOICE, self._custom_settings_changed)
         if hasattr(self, "play"):
             try:
                 self.play.Unbind(wx.EVT_BUTTON)
@@ -1350,7 +1354,23 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
             dlg.Destroy()
         if self.shared_config.video_mode:
             return self._open_video_file_list(path)
-        self.ImgManager.init(path, type=3)
+        return self._open_image_file_list(path)
+
+    def _open_image_file_list(self, path):
+        # Validate on a shallow metadata copy so a bad list preserves the
+        # current manager (also referenced by the video/cache controllers).
+        candidate = copy.copy(self.ImgManager)
+        try:
+            candidate.init(path, type=3)
+        except (OSError, ValueError, UnicodeError) as error:
+            self.SetStatusText_(['Input', '-1', f'Unable to read image list: {error}', '-1'])
+            return False
+        if not len(candidate.path_list):
+            self.SetStatusText_(['Input', '-1', 'No valid image files in this list', '-1'])
+            return False
+        self.ImgManager.__dict__.update(candidate.__dict__)
+        self.shared_config.input_mode = 3
+        self.choice_input_mode.SetSelection(3)
         self.show_img_init()
         self.ImgManager.set_action_count(0)
         self.show_img()
@@ -1611,7 +1631,7 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
         # show dir_id
         x, y = event.GetPosition()
         id = self.get_img_id_from_point([x, y])
-        self.selected_img_id = id
+        self._remember_main_selection(id)
         self.update_status_bar_for_current_page(id)
 
     def img_left_dclick(self, event):
@@ -2196,12 +2216,13 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
             # 第一次拿到指纹(刚 init 完) 或者 文件内容没变 -> 不需要重读
             return signature
         try:
-            self.ImgManager.init(
-                self.ImgManager.input_path,
-                type=3,
-                parallel_to_sequential=bool(
-                    getattr(self.shared_config, "parallel_to_sequential", False)),
-            )
+            candidate = copy.copy(self.ImgManager)
+            # An image file list remains flat even if a parallel option was
+            # left enabled by a previous folder/video input.
+            candidate.init(self.ImgManager.input_path, type=3)
+            if not len(candidate.path_list):
+                return signature
+            self.ImgManager.__dict__.update(candidate.__dict__)
             self.ImgManager.set_action_count(0)
             self.shared_config.batch_idx = 0
             self._debug_image(
@@ -2228,9 +2249,21 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
         list_signature = self._reload_list_file_if_changed()
 
         layout_params = self.set_img_layout()
+        if not layout_params:
+            return
+        try:
+            registry = capture_algorithms(get_available_algorithms()) if layout_params[32] or layout_params[38] else None
+        except (OSError, UnicodeError) as error:
+            self.SetStatusText_(['-1', '-1', f'Unable to load custom algorithms: {error}', '-1'])
+            return
+        self.ImgManager._custom_algorithm_registry = registry
+        recipe = (registry, layout_params[32], layout_params[37], layout_params[38], layout_params[39])
+        if recipe != getattr(self, '_custom_algorithm_recipe', None):
+            self._custom_algorithm_recipe = recipe
+            self.ImgManager._custom_algorithm_session = AlgorithmSession(registry) if registry is not None else None
         # ★ 修复：图片模式 + 视频模式 都要在 layout 变化时清空缓存与磁盘缓存文件
         vm = getattr(self, "video_manager", None)
-        layout_token = repr(layout_params)
+        layout_token = repr((layout_params, hash(registry)))
         if not getattr(self.shared_config, "video_mode", False):
             # ★ 缓存 token 里带上列表文件的内容指纹:
             #   以前 token 只有 (布局, 类型, 输入路径), 同一个 1.txt 改内容再重新选择时
@@ -2390,22 +2423,10 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
                              self.title_show_rename.Value]              # 12
 
             if title_setting[0]:
-                if self.ImgManager.type == 0 or self.ImgManager.type == 1:
-                    # one_dir_mul_dir_auto / one_dir_mul_dir_manual
-                    if self.parallel_sequential.Value or self.parallel_to_sequential.Value:
-                        title_setting[2:7] = [False, True, True, True, False]
-                    else:
-                        if self.shared_config.video_mode:
-                            title_setting[2:7] = [False, False, True, True, False]
-                        else:
-                            title_setting[2:7] = [False, True, True, False, False]
-
-                elif self.ImgManager.type == 2:
-                    # one_dir_mul_img
-                    title_setting[2:7] = [False, False, True, True, False]
-                elif self.ImgManager.type == 3:
-                    # read file list from a list file
-                    title_setting[2:7] = [False, True, True, True, False]
+                title_setting[2:7] = auto_title_fields(
+                    self.ImgManager.type, self.shared_config.video_mode,
+                    len(self.shared_config.real_video_path),
+                    self.parallel_to_sequential.Value, self.parallel_sequential.Value)
         except:
             self.SetStatusText_(
                 ["-1", "-1", "***Error: setting***", "-1"])
@@ -2454,6 +2475,9 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
                     self.func_layout_vertical.Value ]       # 40
 
     def show_img(self, preserve_text_value=False):
+        pending = getattr(self, '_pending_index_selection', None)
+        if pending and pending['page'] != int(self.shared_config.batch_idx):
+            self._pending_index_selection = None
         self._setup_img_panel()
 
         # ========== 视频模式 ==========
@@ -2653,6 +2677,7 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
         if self.shared_config.is_playing:
             self.resource_monitor.frame_presented(batch, self.shared_config.play_direction)
         self._status_display_batch = batch
+        self._apply_pending_index_selection()
         self.update_status_bar_for_current_page()
         self._show_resource_tooltip()
         self._resume_play_timer_after_wait()
@@ -3079,9 +3104,12 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
         if self.indextablegui:
             self.indextablegui.Close()
         def catalog():
-            return IndexCatalog(self.ImgManager, self.shared_config, self.parallel_sequential.Value)
+            model = IndexCatalog(self.ImgManager, self.shared_config, self.parallel_sequential.Value)
+            model.context = self._index_context()
+            return model
         self.indextablegui = IndexTable(self, catalog(), self.out_path_str,
-            on_jump=lambda batch: self._seek_display_page(batch+1), refresh=catalog,
+            on_jump=lambda batch: self._jump_to_index_item(batch), refresh=catalog,
+            on_jump_item=self._jump_to_index_item, on_locate=self._index_location,
             auto_export=bool(self.ImgManager.dataset_mode and self.out_path_str))
 
     def _debug_image(self, message):
@@ -3224,6 +3252,7 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
             if algorithm_name in available_algorithms:
                 self.customfunc_choice.SetSelection(available_algorithms.index(algorithm_name))
             self.custom_algorithm_input.SetValue("")
+            self._custom_settings_changed()
             self.Layout()
             wx.MessageBox(f"Algorithm '{algorithm_name}' added successfully!", "Add Success", wx.OK | wx.ICON_INFORMATION)
         except Exception as exc:
@@ -3236,13 +3265,7 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
         shutil.copytree(str(source_path), str(target_folder))
 
     def _clear_custom_algorithm_modules(self):
-        for module_name in (
-            "mulimgviewer.src.custom_func.main",
-            "custom_func.main",
-            ".custom_func.main",
-        ):
-            if module_name in sys.modules:
-                del sys.modules[module_name]
+        compiled_source.cache_clear()
 
     def remove_custom_algorithm(self, event):
         selected_index = self.customfunc_choice.GetSelection()
@@ -3262,6 +3285,7 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
                 self.remove_custom_algorithm_folder(selected_algorithm)
                 self._clear_custom_algorithm_modules()
                 self.refresh_algorithm_list()
+                self._custom_settings_changed()
                 wx.MessageBox(f"Algorithm '{selected_algorithm}' removed successfully!", "Remove Success", wx.OK | wx.ICON_INFORMATION)
             except Exception as exc:
                 wx.MessageBox(f"Failed to remove algorithm: {exc}", "Remove Failed", wx.OK | wx.ICON_ERROR)
@@ -3358,12 +3382,18 @@ def main(img_list, save_path, name_list=None, algorithm_name="{algorithm_name}")
     def on_show_all_func_changed(self, event):
         if self.show_all_func.GetValue():
             self.show_custom_func.SetValue(False)
-        self._invalidate_render_cache()
+        self._custom_settings_changed()
 
     def on_show_custom_func_changed(self, event):
         if self.show_custom_func.GetValue():
             self.show_all_func.SetValue(False)
+        self._custom_settings_changed()
+
+    def _custom_settings_changed(self, event=None):
         self._invalidate_render_cache()
+        if getattr(self.ImgManager, 'type', None) is not None:
+            self.show_img_init()
+            self.show_img()
 
     #b3 修改1：next_img 和 last_img —— timer 播放时跳过 show_img_init    b5
     def next_img(self, event):

@@ -22,6 +22,7 @@ from .video_memory import LazyVideoImage
 from .data import ImgData
 from .utils import rgb2hex
 from .custom_func.main import get_available_algorithms
+from .custom_func.runtime import render_context
 
 class ImgUtils():
     """The set of functional programming modules"""
@@ -973,6 +974,13 @@ class ImgManager(ImgData):
             #                         pass
             # except Exception:
             #     pass
+        self._set_source_resolution(img_list)
+
+        self.img_list = img_list
+
+    def _set_source_resolution(self, img_list):
+        if not img_list:
+            raise ValueError("No images available for custom processing")
         # resolution
         width_ = []
         height_ = []
@@ -1012,9 +1020,11 @@ class ImgManager(ImgData):
                                           for i in self.layout_params[6]]
             self.custom_resolution = True
 
-        self.img_list = img_list
 
     def get_all_func_img_list(self, show_all_func_layout, original_row_col=None, func_layout_vertical=False, flist=None):
+        layout_row, layout_col = map(int, show_all_func_layout.split(','))
+        if min(layout_row, layout_col) < 1:
+            raise ValueError('Show all function layout requires positive rows and columns')
         if flist is None:
             self_flist = self.flist
         else:
@@ -1028,7 +1038,7 @@ class ImgManager(ImgData):
             self._flist_groups = groups
 
         if original_row_col:
-            max_images_needed = original_row_col[0] * original_row_col[1]
+            max_images_needed = original_row_col[0] * original_row_col[1] * self.layout_params[1][0] * self.layout_params[1][1]
         else:
             max_images_needed = len(self_flist)
         original_img_list = []
@@ -1057,114 +1067,40 @@ class ImgManager(ImgData):
         all_func_img_lists = []
         out_path_str = self.layout_params[33]
         all_func_img_lists.append(original_img_list)
-        for i, algorithm_name in enumerate(available_algorithms):
+        for i, algorithm_name in enumerate(available_algorithms[:max(0, layout_row*layout_col-1)]):
             pure_img_list = []
             for img in original_img_list:
                 pure_img_list.append(img.copy())
             algorithm_img_list = main_custom_func(pure_img_list, out_path_str, name_list=name_list, algorithm_type=i)
             all_func_img_lists.append(algorithm_img_list)
-        try:
-            layout_row, layout_col = map(int, show_all_func_layout.split(','))
-        except:
-            layout_row, layout_col = 2, 2
-        final_img_list = []
-        num_images_per_set = len(original_img_list)
-
-        if original_row_col:
-            original_rows, original_cols = original_row_col
-        else:
-            try:
-                import math
-                original_rows = int(math.sqrt(num_images_per_set))
-                original_cols = math.ceil(num_images_per_set / original_rows)
-            except:
-                original_rows = 1
-                original_cols = num_images_per_set
-
-        enable_group_arrangement = True
-        if enable_group_arrangement:
-            img_groups = []
-            for orig_img_idx in range(num_images_per_set):
-                group = []
-                for func_idx in range(len(all_func_img_lists)):
-                    if orig_img_idx < len(all_func_img_lists[func_idx]):
-                        group.append(all_func_img_lists[func_idx][orig_img_idx])
-                    elif len(original_img_list) > orig_img_idx:
-
-                        group.append(original_img_list[orig_img_idx])
-                img_groups.append(group)
-            final_img_list = []
-            total_rows = layout_row * original_rows
-            total_cols = layout_col * original_cols
-            for final_row in range(total_rows):
-                for final_col in range(total_cols):
-                    if func_layout_vertical:
-                        func_row = final_row // original_rows
-                        func_col = final_col // original_cols
-                        func_idx = func_col * layout_row + func_row
+        original_rows, original_cols = original_row_col or (1, max(1, len(original_img_list)))
+        inner_count = self.layout_params[1][0] * self.layout_params[1][1]
+        final_images = []
+        for row in range(original_rows*layout_row):
+            for col in range(original_cols*layout_col):
+                if func_layout_vertical:
+                    func_row, orig_row = divmod(row, original_rows)
+                    func_col, orig_col = divmod(col, original_cols)
+                    func_index = func_col*layout_row+func_row
+                else:
+                    orig_row, func_row = divmod(row, layout_row)
+                    orig_col, func_col = divmod(col, layout_col)
+                    func_index = func_row*layout_col+func_col
+                group = orig_row*original_cols+orig_col
+                for item in range(inner_count):
+                    original_id = group*inner_count+item
+                    if (func_index < len(all_func_img_lists)
+                            and original_id < len(all_func_img_lists[func_index])):
+                        image = all_func_img_lists[func_index][original_id]
                     else:
-                        func_row = final_row // original_rows
-                        func_col = final_col // original_cols
-                        func_idx = func_row * layout_col + func_col
-                    orig_row = final_row % original_rows
-                    orig_col = final_col % original_cols
-                    orig_img_idx = orig_row * original_cols + orig_col
-                    if orig_img_idx < len(img_groups) and func_idx < len(img_groups[orig_img_idx]):
-                        final_img_list.append(img_groups[orig_img_idx][func_idx])
-                    else:
-                        if len(original_img_list) > 0:
-                            blank_img = Image.new('RGB', original_img_list[0].size, (255, 255, 255))
-                            blank_img._is_blank = True
-                            final_img_list.append(blank_img)
-                        else:
-                            blank_img = Image.new('RGB', (512, 512), (255, 255, 255))
-                            blank_img._is_blank = True
-                            final_img_list.append(blank_img)
-        else:
-            total_rows = original_rows * layout_row
-            total_cols = layout_col * original_cols
-
-            for final_row in range(total_rows):
-                for final_col in range(total_cols):
-                    orig_img_row = final_row // layout_row
-                    orig_img_col = final_col // layout_col
-                    func_row = final_row % layout_row
-                    func_col = final_col % layout_col
-                    orig_img_idx = orig_img_row * original_cols + orig_img_col
-                    func_idx = func_row * layout_col + func_col
-                    if orig_img_idx < num_images_per_set and func_idx < len(all_func_img_lists):
-                        final_img_list.append(all_func_img_lists[func_idx][orig_img_idx])
-                    else:
-                        if len(original_img_list) > 0:
-
-                            blank_img = Image.new('RGB', original_img_list[0].size, (255, 255, 255))
-                            blank_img._is_blank = True
-                            final_img_list.append(blank_img)
-                        else:
-                            blank_img = Image.new('RGB', (512, 512), (255, 255, 255))
-                            blank_img._is_blank = True
-                            final_img_list.append(blank_img)
-
-        final_img_list_with_id = []
-        for idx, img in enumerate(final_img_list):
-            if enable_group_arrangement:
-                final_row = idx // total_cols
-                final_col = idx % total_cols
-                orig_row = final_row % original_rows
-                orig_col = final_col % original_cols
-                orig_img_id = orig_row * original_cols + orig_col
-            else:
-                final_row = idx // total_cols
-                final_col = idx % total_cols
-                orig_img_row = final_row // layout_row
-                orig_img_col = final_col // layout_col
-                orig_img_id = orig_img_row * original_cols + orig_img_col
-            if not hasattr(img, '_original_id'):
-                img._original_id = orig_img_id
-            final_img_list_with_id.append(img)
-        self._status_source_slots = tuple(-1 if getattr(img, '_is_blank', False)
-                                          else int(img._original_id) for img in final_img_list_with_id)
-        return final_img_list_with_id
+                        size = original_img_list[0].size if original_img_list else (512,512)
+                        image = Image.new('RGB',size,'white')
+                        image._is_blank = True
+                    image._original_id = original_id
+                    final_images.append(image)
+        self._status_source_slots = tuple(-1 if getattr(image, '_is_blank', False)
+                                          else image._original_id for image in final_images)
+        return final_images
 
     def load_exif_display_config(self, force_reload=False):
         config_path = Path(getattr(self, "exif_config_path",
@@ -1477,6 +1413,7 @@ class ImgManager(ImgData):
             self.img_list = self.get_all_func_img_list(
                 show_all_func_layout, current_row_col, func_layout_vertical, flist=flist)
 
+            self._set_source_resolution(self.img_list)
             self._blank_img_ids = set()
             for idx, img in enumerate(self.img_list):
                 if hasattr(img, '_is_blank') and img._is_blank:
@@ -1740,6 +1677,7 @@ class ImgManager(ImgData):
             img_preprocessing_sub = []
         return layout_list, img_preprocessing_sub, show_img
 
+    @render_context
     def stitch_images(self, img_mode, draw_points=[], flist=None):
         """img_mode, 0: show, 1: save"""
         # init

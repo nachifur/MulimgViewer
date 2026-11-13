@@ -33,7 +33,7 @@ class MulimgViewerGui ( wx.Frame ):
 
 		wSizer1.Add( self.button_open_all, 0, wx.ALL|wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
-		choice_input_modeChoices = [ u"Sequential", u"Parallel auto", u"Parallel manual", u"Image File List" ]
+		choice_input_modeChoices = [ u"Sequential", u"Parallel auto", u"Parallel manual", u"Image/Video File List" ]
 		self.choice_input_mode = wx.Choice( self.m_panel1, wx.ID_ANY, wx.DefaultPosition, wx.Size( -1,-1 ), choice_input_modeChoices, 0 )
 		self.choice_input_mode.SetSelection( 0 )
 		wSizer1.Add( self.choice_input_mode, 0, wx.ALL|wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL, 5 )
@@ -504,11 +504,11 @@ class MulimgViewerGui ( wx.Frame ):
 
 		wSizer11.Add( self.m_staticText391, 0, wx.ALL, 5 )
 
-		self.m_textCtrl15 = wx.TextCtrl( self.m_panel4, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
-		wSizer11.Add( self.m_textCtrl15, 0, wx.ALL, 5 )
+		self.addfunc = wx.TextCtrl( self.m_panel4, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
+		wSizer11.Add( self.addfunc, 0, wx.ALL, 5 )
 
-		self.m_button10 = wx.Button( self.m_panel4, wx.ID_ANY, u"DelFunc", wx.DefaultPosition, wx.DefaultSize, 0 )
-		wSizer11.Add( self.m_button10, 0, wx.ALL, 5 )
+		self.delfunc = wx.Button( self.m_panel4, wx.ID_ANY, u"DelFunc", wx.DefaultPosition, wx.DefaultSize, 0 )
+		wSizer11.Add( self.delfunc, 0, wx.ALL, 5 )
 
 
 		fgSizer3.Add( wSizer11, 1, wx.EXPAND, 5 )

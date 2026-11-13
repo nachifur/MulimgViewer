@@ -77,7 +77,7 @@ class VideoPlaybackMixin:
             self.show_img_init()
         custom = bool(self.show_custom_func.GetValue())
         key = (repr(self.ImgManager.layout_params), repr(self.xy_magnifier), custom,
-               vm._cache_context_token())
+               vm._cache_context_token(), hash(getattr(self.ImgManager, '_custom_algorithm_registry', None)))
         if vm._render_snapshot is None or key != getattr(vm, '_render_snapshot_key', None):
             vm._render_snapshot = (self.ImgManager.video_stitch_snapshot(),
                                    copy.deepcopy(self.xy_magnifier), custom)
@@ -166,6 +166,7 @@ class VideoPlaybackMixin:
                 if owner.shared_config.is_playing:
                     owner.resource_monitor.frame_presented(batch, owner.shared_config.play_direction)
                 owner._status_display_batch = batch
+                owner._apply_pending_index_selection()
                 owner.update_status_bar_for_current_page()
                 owner._video_display_key = key
                 vm._display_delivery_pending = False

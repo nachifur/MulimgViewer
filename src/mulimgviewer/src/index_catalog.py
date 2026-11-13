@@ -4,6 +4,7 @@ from .status_info import key
 from pathlib import Path
 from .video_timeline import page_count, page_segments
 from .visual_catalog import VisualCatalogMixin
+from .display_modes import loaded_input_mode
 
 
 class IndexCatalog(VisualCatalogMixin):
@@ -13,7 +14,8 @@ class IndexCatalog(VisualCatalogMixin):
         self.video = bool(config.video_mode)
         self.kind = manager.type
         self.serial = bool(config.parallel_to_sequential if self.video else manager.parallel_to_sequential)
-        self.parallel_sequential = bool(parallel_sequential)
+        layout = getattr(manager, 'layout_params', ())
+        self.parallel_sequential = bool(layout[22] if len(layout) > 22 else parallel_sequential)
         self.linear = self.serial or (not self.video and self.kind in (2,3))
         self.size = max(1, int(manager.count_per_action))
         self.paths = tuple(config.real_video_path if self.video else manager.path_list)
@@ -39,7 +41,10 @@ class IndexCatalog(VisualCatalogMixin):
         self.pages = page_count(self.counts, self.size, self.linear)
         self.sources = len(self.paths) if self.video else self.prefix[-1]
         self._init_visual(manager,config)
-        self.order = 'parallel_to_sequential' if self.serial else ('parallel_sequential' if self.parallel_sequential else 'parallel')
+        self.input_mode = loaded_input_mode(manager, config)
+        parallel = len(self.paths) > 1 if self.video else self.kind in (0, 1)
+        self.order = ('parallel_to_sequential' if self.serial else
+                      'parallel_sequential' if self.parallel_sequential else 'parallel') if parallel else 'sequential'
 
     def _image(self, offset):
         if self.kind == 3:

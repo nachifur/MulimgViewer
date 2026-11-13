@@ -21,7 +21,7 @@ def settings_controls(owner):
     result = {}
     seen = set()
     for name, control in vars(owner).items():
-        if name.startswith('_') or name in ('m_textCtrl15', 'custom_algorithm_input'):
+        if name.startswith('_') or name in ('m_textCtrl15', 'addfunc', 'custom_algorithm_input'):
             continue
         if not isinstance(control, (wx.TextCtrl, wx.CheckBox, wx.Choice, wx.ColourPickerCtrl,
                                     wx.SpinCtrl, wx.SpinCtrlDouble)) or id(control) in seen:

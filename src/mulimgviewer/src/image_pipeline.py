@@ -18,6 +18,8 @@ RENDER_STATE = (
     'img_resolution_show', 'img_resolution', 'gap_color', 'title_setting',
     'pdf_title_layers', '_last_title_layout', 'flist', '_flist_groups', 'full_exif_cache',
     '_status_source_slots',
+    '_show_all_func_enabled', '_show_all_func_layout', '_original_row_col',
+    '_show_all_func_expanded_row_col', '_func_layout_vertical', '_blank_img_ids',
 )
 
 
@@ -246,6 +248,8 @@ class ImagePipeline:
                 raise CancelledError()
         started = time.perf_counter()
         manager = template.video_stitch_snapshot()
+        with self.lock:
+            manager._custom_memory_budget = self.memory // max(1,self.workers) if self.memory is not None else None
         manager.set_action_count(batch)
         manager.img_count = batch * manager.count_per_action
         flist = manager.get_flist()

@@ -78,7 +78,7 @@ class VisualCatalogMixin:
             for offset in offsets:
                 if len(items)>=self.capacity:break
                 folder,local,path=self._image(offset)
-                items.append(dict(source=path,path=path,label=f'Folder {folder+1}',item=f'Image {local+1}'))
+                items.append(dict(source=path,path=path,label=f'Folder {folder+1}',item=f'Image {local+1}',offset=offset))
         return [(y,x,items[slot]) for y,x,slot in self.cells if slot<len(items)]
 
     def visual_entry(self, index):

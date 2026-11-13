@@ -8,4 +8,5 @@ class VirtualIndexList(wx.ListCtrl):
         self.get_row = lambda index: ('',)*8
 
     def OnGetItemText(self, item, column):
-        return self.get_row(item)[column]
+        row = self.get_row(item)
+        return row[column] if 0 <= column < len(row) else ''

@@ -228,7 +228,7 @@
                   <property name="caption"></property>
                   <property name="caption_visible">1</property>
                   <property name="center_pane">0</property>
-                  <property name="choices">&quot;Sequential&quot; &quot;Parallel auto&quot; &quot;Parallel manual&quot; &quot;Image File List&quot;</property>
+                  <property name="choices">&quot;Sequential&quot; &quot;Parallel auto&quot; &quot;Parallel manual&quot; &quot;Image/Video File List&quot;</property>
                   <property name="close_button">1</property>
                   <property name="context_help"></property>
                   <property name="context_menu">1</property>
@@ -6333,7 +6333,7 @@
                                       <property name="minimize_button">0</property>
                                       <property name="minimum_size"></property>
                                       <property name="moveable">1</property>
-                                      <property name="name">m_textCtrl15</property>
+                                      <property name="name">addfunc</property>
                                       <property name="pane_border">1</property>
                                       <property name="pane_position"></property>
                                       <property name="pane_size"></property>
@@ -6406,7 +6406,7 @@
                                       <property name="minimize_button">0</property>
                                       <property name="minimum_size"></property>
                                       <property name="moveable">1</property>
-                                      <property name="name">m_button10</property>
+                                      <property name="name">delfunc</property>
                                       <property name="pane_border">1</property>
                                       <property name="pane_position"></property>
                                       <property name="pane_size"></property>

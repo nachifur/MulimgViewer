@@ -49,7 +49,30 @@
   "customfunc_choice": 0,
   "show_all_func": false,
   "show_all_func_layout": "2,2",
-  "func_layout_vertical": false
+  "func_layout_vertical": false,
+  "power_mode": 2,
+  "cache_frames": "2",
+  "cache_multiplier": "1",
+  "show_unit": true,
+  "video_mode": true,
+  "interval": "1.0",
+  "skip_frames": "0",
+  "title_position": 1,
+  "title_rename_text": "",
+  "keep_magnifer_size": false,
+  "colourPicker_draw": [
+   239,
+   41,
+   41,
+   255
+  ],
+  "colourPicker_gap": [
+   255,
+   255,
+   255,
+   255
+  ],
+  "checkBox_auto_draw_color": true
  },
  "hotkeys": {
   "next_img": "CTRL+N",
@@ -269,5 +292,12 @@
    "30": "GPSDifferential",
    "31": "GPSHPositioningError"
   }
+ },
+ "window_state": {
+  "x": 404,
+  "y": 85,
+  "w": 1110,
+  "h": 950,
+  "maximized": false
  }
 }

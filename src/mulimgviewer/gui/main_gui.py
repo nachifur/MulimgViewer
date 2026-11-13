@@ -587,8 +587,8 @@ class MulimgViewerGui ( wx.Frame ):
 		self.m_staticline25 = wx.StaticLine( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_VERTICAL )
 		wSizer12.Add( self.m_staticline25, 0, wx.EXPAND |wx.ALL, 5 )
 
-		self.m_checkBox33 = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"Video Mode", wx.DefaultPosition, wx.DefaultSize, 0 )
-		wSizer12.Add( self.m_checkBox33, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+		self.video_mode = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"Video Mode", wx.DefaultPosition, wx.DefaultSize, 0 )
+		wSizer12.Add( self.video_mode, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
 		self.m_staticText24 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Interval (s)", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText24.Wrap( -1 )
@@ -985,7 +985,7 @@ class MulimgViewerGui ( wx.Frame ):
 		self.save_config_button.Bind( wx.EVT_BUTTON, self.save_configuration )
 		self.reset_config_button.Bind( wx.EVT_BUTTON, self.reset_configuration )
 		self.select_img_box.Bind( wx.EVT_CHECKBOX, self.select_img_box_func )
-		self.m_checkBox33.Bind( wx.EVT_CHECKBOX, self.on_enable_video_mode )
+		self.video_mode.Bind( wx.EVT_CHECKBOX, self.on_enable_video_mode )
 		self.title_auto.Bind( wx.EVT_CHECKBOX, self.title_auto_fc )
 		self.title_down_up.Bind( wx.EVT_CHECKBOX, self.title_down_up_fc )
 		self.colourPicker_gap.Bind( wx.EVT_COLOURPICKER_CHANGED, self.colour_change )

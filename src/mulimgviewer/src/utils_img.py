@@ -1164,7 +1164,8 @@ class ImgManager(ImgData):
         return final_img_list_with_id
 
     def load_exif_display_config(self, force_reload=False):
-        config_path = Path(__file__).parent.parent / "configs" / "default_config.json"
+        config_path = Path(getattr(self, "exif_config_path",
+                                  Path(__file__).parent.parent / "configs" / "session_config.json"))
         if force_reload or not hasattr(self, 'exif_display_config'):
             try:
                 with open(config_path, 'r', encoding='utf-8') as f:
@@ -1188,7 +1189,8 @@ class ImgManager(ImgData):
     def load_full_mappings(self):
         if self._full_mappings is not None:
             return self._full_mappings
-        config_path = Path(__file__).parent.parent / "configs" / "default_config.json"
+        config_path = Path(getattr(self, "exif_config_path",
+                                  Path(__file__).parent.parent / "configs" / "session_config.json"))
         if not config_path.exists():
             self._full_mappings = {"0th": {}, "Exif": {}, "GPS": {}, "1st": {}}
             return self._full_mappings

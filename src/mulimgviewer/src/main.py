@@ -27,6 +27,8 @@ from .utils import MyTestEvent, get_resource_path
 from .utils_img import ImgManager
 from .resource_policy import resource_budget, positive_cache_integer
 from .image_pipeline import ImagePipeline
+from .configuration import (settings_controls, control_value, apply_value,
+                            synchronize, read_config, write_config, merge_missing)
 from .memory_reclaim import MemoryReclaimer
 from .video_tools import resolve_video_tools
 from .resource_monitor import ResourceMonitor, run_video_process
@@ -2897,7 +2899,8 @@ class MulimgViewer (MulimgViewerGui):
         self.shift_pressed=False
         self.UpdateUI = UpdateUI
         self.get_type = get_type
-        self.output_config_path = Path(get_resource_path(str(Path("configs")))) / "default_config.json"
+        self.output_config_path = Path(get_resource_path(str(Path("configs")))) / "session_config.json"
+        self.ImgManager.exif_config_path = self.output_config_path
         pos = self.GetPosition()
         size = self.GetSize()
         self._normal_window_pos = (pos[0], pos[1])
@@ -2985,6 +2988,12 @@ class MulimgViewer (MulimgViewerGui):
         self.version = VERSION
         self.check_version()
 
+        self._bind_legacy_control_aliases()
+        self._config_controls = settings_controls(self)
+        # Capture pristine GUI defaults before applying any saved/user values.
+        self._gui_config_defaults = {name: control_value(name, control)
+                                     for name, control in self._config_controls.items()}
+
         # open default path
         if default_path:
             try:
@@ -2994,8 +3003,7 @@ class MulimgViewer (MulimgViewerGui):
                 self.show_img()
             except:
                 pass
-        self._bind_legacy_control_aliases()
-        self.load_configuration( None , config_name="default_config.json")
+        self.load_configuration(None, config_name="session_config.json")
         self.Bind(wx.EVT_CONTEXT_MENU, self.on_right_click)
         self.custom_algorithms = []
         self._bind_compat_events()
@@ -3387,8 +3395,8 @@ class MulimgViewer (MulimgViewerGui):
 
     def on_enable_video_mode(self, event):
         prev_video_mode = self.shared_config.video_mode
-        self.shared_config.video_mode = self.m_checkBox33.GetValue()
-        self._apply_resource_policy()
+        self.shared_config.video_mode = self.video_mode.GetValue()
+        self._commit_video_settings()
         on_video_mode_change(self.shared_config.video_mode)
 
         # Manage the image stitch pool based on mode
@@ -4100,6 +4108,10 @@ class MulimgViewer (MulimgViewerGui):
         if self._is_closing:
             return
         self._is_closing = True
+        try:
+            self._save_session_configuration()
+        except (OSError, ValueError) as exc:
+            print(f"[Config] Unable to save last session: {exc}")
         self._save_window_state()
 
         # ★ 修复：先停止所有后台任务，避免 rmtree 失败或线程残留
@@ -4189,8 +4201,7 @@ class MulimgViewer (MulimgViewerGui):
                 "h": int(h),
                 "maximized": maximized,
             }
-            with open(self.output_config_path, "w", encoding="utf-8") as file:
-                json.dump(data, file, indent=1)
+            write_config(self.output_config_path, data)
         except Exception:
             pass
 
@@ -6902,146 +6913,66 @@ class MulimgViewer (MulimgViewerGui):
 
         walk(self.scrolledWindow_set)
 
-    def save_configuration(self, event):
-        self._commit_video_settings()
-        data = {
-            'power_mode': self.power_mode.GetSelection() + 1,
-            'cache_frames': str(self.shared_config.cache_num),
-            'cache_multiplier': str(self.shared_config.cache_multiplier),
-            'row_col': self.row_col.GetLineText(0),
-            'row_col_one_img': self.row_col_one_img.GetLineText(0),
-            'show_scale': self.show_scale.GetLineText(0),
-            'row_col_img_unit': self.row_col_img_unit.GetLineText(0),
-            'gap': self.gap.GetLineText(0),
-            'magnifer_row_col': self.magnifer_row_col.GetLineText(0),
-            'output_scale': self.output_scale.GetLineText(0),
-            'img_resolution': self.img_resolution.GetLineText(0),
-            'magnifer_resolution': self.magnifer_resolution.GetLineText(0),
-            'magnifier_show_scale': self.magnifier_show_scale.GetLineText(0),
-            'line_width': self.line_width.GetLineText(0),
-            'magnifier_out_scale': self.magnifier_out_scale.GetLineText(0),
-            'title_font_size': self.title_font_size.GetLineText(0),
-            'box_position': self.box_position.GetSelection(),
-            'choice_normalized_size': self.choice_normalized_size.GetSelection(),
-            'choice_output': self.choice_output.GetSelection(),
-            'image_interp': self.image_interp.GetSelection(),
-            'Magnifier_format': self.Magnifier_format.GetSelection(),
-            'title_font': self.title_font.GetSelection(),
-            'parallel_sequential': self.parallel_sequential.GetValue(),
-            'parallel_to_sequential': self.parallel_to_sequential.GetValue(),
-            'auto_save_all': self.auto_save_all.GetValue(),
-            'move_file': self.move_file.GetValue(),
-            'img_vertical': self.img_vertical.GetValue(),
-            'one_img_vertical': self.one_img_vertical.GetValue(),
-            'img_unit_vertical': self.img_unit_vertical.GetValue(),
-            'magnifer_vertical': self.magnifer_vertical.GetValue(),
-            'show_original': self.show_original.GetValue(),
-            'show_magnifer': self.show_magnifer.GetValue(),
-            'title_show': self.title_show.GetValue(),
-            'auto_layout_check': self.auto_layout_check.GetValue(),
-            'one_img': self.one_img.GetValue(),
-            'onetitle': self.onetitle.GetValue(),
-            'show_custom_func': self.show_custom_func.GetValue(),
-            'show_box': self.show_box.GetValue(),
-            'show_box_in_crop': self.show_box_in_crop.GetValue(),
-            'select_img_box': self.select_img_box.GetValue(),
-            'title_auto': self.title_auto.GetValue(),
-            'title_exif': self.title_exif.GetValue(),
-            'title_show_parent': self.title_show_parent.GetValue(),
-            'title_show_prefix': self.title_show_prefix.GetValue(),
-            'title_show_name': self.title_show_name.GetValue(),
-            'title_show_suffix': self.title_show_suffix.GetValue(),
-            'title_down_up': self.title_down_up.GetValue(),
-            'save_format': self.save_format.GetSelection(),
-            'title_show_rename': self.title_show_rename.GetValue(),
-            'customfunc_choice': self.customfunc_choice.GetSelection(),
-            'show_all_func': self.show_all_func.GetValue(),
-            'show_all_func_layout': self.show_all_func_layout.GetValue(),
-            'func_layout_vertical': self.func_layout_vertical.GetValue(),
-        }
-        config_path = Path(get_resource_path(str(Path("configs"))))
-        config_file_path = str(config_path / "default_config.json")
-        with open(config_file_path, 'r', encoding='utf-8') as file:
-            full_config = json.load(file)
-        full_config['output'] = data
-        full_config['hotkeys'] = self.hotkeys
-        with open(config_file_path, 'w', encoding='utf-8') as file:
-            json.dump(full_config, file, indent=1)
+    def _configuration_files(self):
+        directory = Path(get_resource_path(str(Path("configs"))))
+        self.output_config_path = directory / "session_config.json"
+        self.ImgManager.exif_config_path = self.output_config_path
+        return synchronize(directory, self._gui_config_defaults, self.get_default_hotkeys())
 
-    def load_configuration(self, event, config_name="default_config.json"):
-        config_path = Path(get_resource_path(str(Path("configs"))))
-        config_file_path = str(config_path / config_name)
-        with open(config_file_path, 'r', encoding='utf-8') as file:
-            full_config = json.load(file)
-            data = full_config.get('output', full_config)
-            # Old configurations without the new global settings use defaults.
-            try:
-                mode = max(1, min(4, int(data.get('power_mode', 2))))
-            except (TypeError, ValueError):
-                mode = 2
-            self.power_mode.SetSelection(mode - 1)
-            self.cache_frames.ChangeValue(str(data.get('cache_frames', data.get('row_col12', 2))))
-            self.cache_multiplier.ChangeValue(str(data.get('cache_multiplier', 1)))
-            self._commit_video_settings()
-            self.row_col.SetValue(data['row_col'])
-            self.row_col_one_img.SetValue(data['row_col_one_img'])
-            self.show_scale.SetValue(data['show_scale'])
-            self.row_col_img_unit.SetValue(data['row_col_img_unit'])
-            self.gap.SetValue(data['gap'])
-            self.magnifer_row_col.SetValue(data['magnifer_row_col'])
-            self.output_scale.SetValue(data['output_scale'])
-            self.img_resolution.SetValue(data['img_resolution'])
-            self.magnifer_resolution.SetValue(data['magnifer_resolution'])
-            self.magnifier_show_scale.SetValue(data['magnifier_show_scale'])
-            self.line_width.SetValue(data['line_width'])
-            self.magnifier_out_scale.SetValue(data['magnifier_out_scale'])
-            self.title_font_size.SetValue(data['title_font_size'])
-            self.box_position.SetSelection(data['box_position'])
-            self.choice_normalized_size.SetSelection(data['choice_normalized_size'])
-            self.choice_output.SetSelection(data['choice_output'])
-            self.image_interp.SetSelection(data['image_interp'])
-            self.Magnifier_format.SetSelection(data['Magnifier_format'])
-            self.title_font.SetSelection(data['title_font'])
-            self.parallel_sequential.SetValue(data['parallel_sequential'])
-            self.parallel_to_sequential.SetValue(data['parallel_to_sequential'])
-            self.auto_save_all.SetValue(data['auto_save_all'])
-            self.move_file.SetValue(data['move_file'])
-            self.img_vertical.SetValue(data['img_vertical'])
-            self.one_img_vertical.SetValue(data['one_img_vertical'])
-            self.img_unit_vertical.SetValue(data['img_unit_vertical'])
-            self.magnifer_vertical.SetValue(data['magnifer_vertical'])
-            self.show_original.SetValue(data['show_original'])
-            self.show_magnifer.SetValue(data['show_magnifer'])
-            self.title_show.SetValue(data['title_show'])
-            self.auto_layout_check.SetValue(data['auto_layout_check'])
-            self.one_img.SetValue(data['one_img'])
-            self.onetitle.SetValue(data['onetitle'])
-            self.show_custom_func.SetValue(data['show_custom_func']) #customfunc?
-            self.show_box.SetValue(data['show_box'])
-            self.show_box_in_crop.SetValue(data['show_box_in_crop'])
-            self.select_img_box.SetValue(data['select_img_box'])
-            self.title_auto.SetValue(data['title_auto'])
-            self.title_exif.SetValue(data['title_exif'])
-            self.title_show_parent.SetValue(data['title_show_parent'])
-            self.title_show_prefix.SetValue(data['title_show_prefix'])
-            self.title_show_name.SetValue(data['title_show_name'])
-            self.title_show_suffix.SetValue(data['title_show_suffix'])
-            self.title_down_up.SetValue(data['title_down_up'])
-            self.save_format.SetSelection(data['save_format'])
-            self.title_show_rename.SetValue(data.get('title_show_rename', False))
-            self.ImgManager.load_exif_display_config(force_reload=True)
-            self.customfunc_choice.SetSelection(data.get('customfunc_choice', 0))
-            self.show_all_func.SetValue(data.get('show_all_func', False))
-            self.show_all_func_layout.SetValue(data.get('show_all_func_layout', "2,2"))
-            self.func_layout_vertical.SetValue(data.get('func_layout_vertical', False))
-        self.apply_hotkeys(full_config.get('hotkeys', data.get('hotkeys', {})))
+    def _capture_configuration(self):
+        self._commit_video_settings()
+        saved, baseline = self._configuration_files()
+        current = merge_missing(read_config(self.output_config_path), saved)
+        data = {name: control_value(name, control)
+                for name, control in self._config_controls.items()}
+        # Invalid edits never replace the effective validated cache settings.
+        data.update(cache_frames=str(self.shared_config.cache_num),
+                    cache_multiplier=str(self.shared_config.cache_multiplier))
+        # Automatic pacing must not overwrite the user's requested interval.
+        if self.shared_config.video_mode and self.shared_config.manual_interval is not None:
+            data['interval'] = str(self.shared_config.manual_interval)
+        current['output'].update(data)
+        current['hotkeys'] = self.hotkeys
+        return current
+
+    def _save_session_configuration(self):
+        current = self._capture_configuration()
+        write_config(self.output_config_path, current)
+
+    def save_configuration(self, event):
+        current = self._capture_configuration()
+        write_config(Path(get_resource_path(str(Path("configs")))) / "userdef_config.json", current)
+
+    def load_configuration(self, event, config_name="userdef_config.json"):
+        saved, baseline = self._configuration_files()
+        if config_name == "userdef_config.json":
+            full_config = saved
+        elif config_name == "default_config.json":
+            full_config = baseline
+        else:
+            full_config = merge_missing(read_config(
+                Path(get_resource_path(str(Path("configs")))) / config_name), baseline)
+        for name, control in self._config_controls.items():
+            # Reset first so invalid values cannot inherit a previous session's UI.
+            apply_value(name, control, self._gui_config_defaults[name])
+            apply_value(name, control, full_config['output'].get(name))
+        self._interval_user_edited = True
+        self.shared_config.interval_recommend = None
+        self.shared_config.manual_interval = None
+        if self.shared_config.video_mode != self.video_mode.GetValue():
+            self.on_enable_video_mode(None)
+        else:
+            on_video_mode_change(self.video_mode.GetValue())
+        self._commit_video_settings()
+        # The active session follows Load/Reset, while the manual snapshot stays
+        # unchanged until the user explicitly presses Save.
+        write_config(self.output_config_path, full_config)
+        self.ImgManager._full_mappings = None
+        self.ImgManager.load_exif_display_config(force_reload=True)
+        self.apply_hotkeys(full_config.get('hotkeys', {}))
 
     def reset_configuration(self, event):
-        json_path = Path(get_resource_path(str(Path("configs"))))
-        default_config_path = str(json_path / "default_config.json")
-        userdef_config_path = str(json_path / "userdef_config.json")
-        self.load_configuration(event, config_name="userdef_config.json")
-        shutil.copy(userdef_config_path, default_config_path)
+        self.load_configuration(event, config_name="default_config.json")
 
     def add_custom_algorithm(self, event):
         algorithm_path = self.custom_algorithm_input.GetValue().strip()

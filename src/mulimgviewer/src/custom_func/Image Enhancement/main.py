@@ -5,6 +5,9 @@ from PIL import ImageEnhance
 from pathlib import Path
 import os
 
+# Each call owns its input/output images and has no mutable model state.
+THREAD_SAFE = True
+
 def custom_process_img(img):
     """
     Image Enhancement Processing Function

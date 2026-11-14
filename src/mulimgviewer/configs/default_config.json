@@ -72,7 +72,8 @@
    255,
    255
   ],
-  "checkBox_auto_draw_color": true
+  "checkBox_auto_draw_color": true,
+  "choice_input_mode": 0
  },
  "hotkeys": {
   "next_img": "CTRL+N",

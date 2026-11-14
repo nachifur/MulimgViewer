@@ -94,13 +94,16 @@ def custom_process_img(img, algorithm_type=0):
     functions = load_algorithm_functions(algorithm_type)
     return functions['custom_process_img'](img)
 
-def main(img_list, save_path, name_list=None, algorithm_type=0):
-    registry = getattr(state,'registry',None)
-    session = getattr(state,'session',None)
-    available = get_available_algorithms()
-    if not available:raise RuntimeError('No custom algorithms are installed')
-    algorithm_type = algorithm_type if 0 <= algorithm_type < len(available) else 0
-    spec = specification(registry,algorithm_type) if registry else {'device':'exclusive','max_concurrency':1}
+@contextmanager
+def algorithm_context(algorithm_type):
+    registry=getattr(state,'registry',None)
+    session=getattr(state,'session',None)
+    spec=specification(registry,algorithm_type) if registry else {'device':'exclusive','max_concurrency':1}
+    token=(id(session),algorithm_type,spec['device'])
+    previous=getattr(state,'algorithm_admission',None)
+    if previous==token:
+        yield
+        return
     with execution_lock:
         if spec['device'] == 'cpu' and session is not None:
             lock = session.locks.setdefault(algorithm_type,threading.RLock() if spec['max_concurrency']==1
@@ -108,6 +111,19 @@ def main(img_list, save_path, name_list=None, algorithm_type=0):
         else:
             lock = _device_locks.setdefault(spec['device'],threading.RLock())
     with lock:
+        state.algorithm_admission=token
+        try:yield
+        finally:state.algorithm_admission=previous
+
+
+def main(img_list, save_path, name_list=None, algorithm_type=0):
+    registry = getattr(state,'registry',None)
+    session = getattr(state,'session',None)
+    available = get_available_algorithms()
+    if not available:raise RuntimeError('No custom algorithms are installed')
+    algorithm_type = algorithm_type if 0 <= algorithm_type < len(available) else 0
+    spec = specification(registry,algorithm_type) if registry else {'device':'exclusive','max_concurrency':1}
+    with algorithm_context(algorithm_type):
         # Non-CPU devices retain at most one algorithm model by default. Device
         # locks span initialization, processing and eviction, not just inference.
         if spec['device'] != 'cpu' and session is not None:

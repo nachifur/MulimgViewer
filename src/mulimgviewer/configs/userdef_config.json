@@ -1,8 +1,8 @@
 {
  "output": {
-  "row_col": "1,1",
+  "row_col": "1,24",
   "row_col_one_img": "1,1",
-  "show_scale": "1,1",
+  "show_scale": "0.1,0.1",
   "row_col_img_unit": "3,1",
   "gap": "10,10,5,5,3,3,2,2",
   "magnifer_row_col": "1,1",
@@ -47,12 +47,12 @@
   "save_format": 0,
   "title_show_rename": false,
   "customfunc_choice": 0,
-  "show_all_func": false,
-  "show_all_func_layout": "2,2",
+  "show_all_func": true,
+  "show_all_func_layout": "4,1",
   "func_layout_vertical": false,
   "power_mode": 2,
-  "cache_frames": "2",
-  "cache_multiplier": "1",
+  "cache_frames": "4",
+  "cache_multiplier": "2",
   "show_unit": true,
   "video_mode": true,
   "interval": "1.0",
@@ -72,7 +72,8 @@
    255,
    255
   ],
-  "checkBox_auto_draw_color": true
+  "checkBox_auto_draw_color": true,
+  "choice_input_mode": 1
  },
  "hotkeys": {
   "next_img": "CTRL+N",
@@ -294,10 +295,10 @@
   }
  },
  "window_state": {
-  "x": 404,
-  "y": 85,
-  "w": 1110,
-  "h": 950,
+  "x": 232,
+  "y": 130,
+  "w": 1145,
+  "h": 843,
   "maximized": false
  }
 }

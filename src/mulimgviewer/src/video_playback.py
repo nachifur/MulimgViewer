@@ -280,6 +280,8 @@ class VideoPlaybackMixin:
                 vm._initialize_thread_pools()
                 vm._maybe_evaluate_performance(force=True)
 
+        if vm and self.shared_config.video_mode and not self.shared_config.is_playing:
+            vm.update_cache()  # Fill any deferred reverse-side algorithm caches.
         self.right_arrow_button1.SetLabel(label)
 
 

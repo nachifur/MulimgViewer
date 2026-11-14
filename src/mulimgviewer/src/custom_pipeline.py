@@ -12,9 +12,10 @@ import threading
 import time
 import uuid
 import weakref
+import zlib
 from collections import deque
 from concurrent.futures import ThreadPoolExecutor, CancelledError
-from contextlib import contextmanager
+from contextlib import contextmanager, ExitStack
 from pathlib import Path
 
 from PIL import Image
@@ -39,12 +40,14 @@ class WorkBudget:
     def __init__(self):
         self.condition = threading.Condition()
         self.limit, self.memory = 1, None
+        self.capacity=None
         self.active = self.bytes = 0
         self.waiting=[];self.serial=0;self.active_by_stage={0:0,1:0,2:0};self.service={}
 
-    def configure(self, workers, memory):
+    def configure(self, workers, memory, capacity=None):
         with self.condition:
             self.limit, self.memory = max(1,int(workers)), memory
+            self.capacity=capacity
             self.condition.notify_all()
 
     @contextmanager
@@ -58,8 +61,10 @@ class WorkBudget:
                     if cancelled():raise CancelledError()
                     if self.memory is not None and size > self.memory:
                         raise MemoryError('Custom processing exceeds the memory budget; reduce layout or batch size')
-                    if (self.active < self.limit and ticket==min(self.waiting)
-                            and (self.memory is None or self.bytes+size <= self.memory)):break
+                    lanes,memory=self.capacity() if self.capacity is not None else (self.limit,self.memory)
+                    if self.memory is not None:memory=self.memory if memory is None else min(memory,self.memory)
+                    if (self.active < min(self.limit,lanes) and ticket==min(self.waiting)
+                            and (memory is None or self.bytes+size <= memory)):break
                     self.condition.wait(.05)
             finally:
                 self.waiting.remove(ticket);self.condition.notify_all()
@@ -102,8 +107,8 @@ class CustomPipeline:
             entry['bytes']=max(0,entry.get('bytes',0)-size)
             entry['_visible_copied']=max(0,entry.get('_visible_copied',0)-size)
 
-    def configure(self, workers, memory):
-        self.budget.configure(workers,memory)
+    def configure(self, workers, memory, capacity=None):
+        self.budget.configure(workers,memory,capacity)
 
     def set_window(self, owner, epoch, window, current, active=None):
         # Metadata only: callable from the GUI without disk access.
@@ -195,18 +200,26 @@ class CustomPipeline:
             self._remove(path)
         for path in retry:self._remove(path)
 
-    def _descriptor(self, manager, paths, index, owner, epoch, batch):
-        registry=manager._custom_algorithm_registry
-        spec=specification(registry,index)
+    def _input_signature(self,paths):
         signature=[];pixels=0
+        provider=getattr(getattr(self,'pixel_cache',None),'get',lambda path:None)
         for value in paths:
             path=Path(value).resolve();info=path.stat()
             signature.append((str(path),info.st_size,info.st_mtime_ns))
-            with Image.open(path) as image:pixels+=image.width*image.height
+            cached=provider(value)
+            if cached is not None:pixels+=cached.width*cached.height
+            else:
+                with open(path,'rb') as stream, Image.open(stream) as image:pixels+=image.width*image.height
+        return signature,pixels
+
+    def _descriptor(self, manager, paths, index, owner, epoch, batch, inputs=None):
+        registry=manager._custom_algorithm_registry
+        spec=specification(registry,index)
+        signature,pixels=self._input_signature(paths) if inputs is None else inputs
         version=(registry[index],signature,batch)
         if not spec['cacheable']:version+=(owner,repr(epoch),batch)
         digest=hashlib.sha256(repr(version).encode('utf-8')).hexdigest()
-        size=max(32*1024**2,pixels*16+spec['working_set_bytes'])
+        size=max(32*1024**2,pixels*spec['working_set_bytes_per_pixel']+spec['working_set_bytes'])
         return digest,spec,size
 
     def composition_bytes(self, flist, results, manager=None):
@@ -216,7 +229,7 @@ class CustomPipeline:
         paths=dict.fromkeys([p for group in results.values() for p in group]+list(flist))
         provider=getattr(getattr(self,'pixel_cache',None),'get',lambda path:None)
         for path in paths:
-            cached=provider(path)
+            cached=provider(path) or provider(('header',str(path)))
             if cached is not None:
                 source_width,source_height=cached.size
             else:
@@ -258,10 +271,11 @@ class CustomPipeline:
         selected=params[37] if 0<=params[37]<len(registry) else 0
         indices=processing_indices(registry,params)
         leases=[];lease_indices={};results={}
+        inputs=self._input_signature(paths) if indices else None
         try:
             for index in indices:
                 if cancelled():raise CancelledError()
-                key,spec,size=self._descriptor(manager,paths,index,owner,epoch,batch)
+                key,spec,size=self._descriptor(manager,paths,index,owner,epoch,batch,inputs)
                 algorithm=spec.get('cache_name',registry[index][0])
                 if spec['identity']:
                     results[index]=paths
@@ -319,7 +333,7 @@ class CustomPipeline:
             self._prune()
 
     def _process(self, manager, paths, index, spec, size, entry, owner, epoch, batch, cancelled):
-        from .custom_func.main import main, device_context
+        from .custom_func.main import main, algorithm_context
         def stale():
             return not self.node_valid(owner,epoch,batch,spec.get('cache_name',manager._custom_algorithm_registry[index][0]))
         previous=(getattr(state,'registry',None),getattr(state,'preview',False),getattr(state,'session',None),
@@ -330,21 +344,43 @@ class CustomPipeline:
         temporary=self.directory/f'tmp_{uuid.uuid4().hex}'
         images=[];outputs=[]
         try:
-            with device_context(spec['device']), self.budget.acquire(size,stale):
-                started=time.perf_counter()
-                with self.lock:self.peak_active=max(self.peak_active,self.budget.active)
-                for path in paths:
-                    with Image.open(path) as image:images.append(image.convert('RGB'))
-                outputs=list(main(images,'',name_list=[Path(p).name for p in paths],algorithm_type=index))
+            with ExitStack() as resources:
+                # Unknown/stateful algorithms keep their declared concurrency,
+                # but lock waiters consume neither pixel memory nor CPU permits.
+                with algorithm_context(index):
+                    resources.enter_context(self.budget.acquire(size,stale))
+                    started=time.perf_counter()
+                    with self.lock:self.peak_active=max(self.peak_active,self.budget.active)
+                    for path in paths:
+                        with Image.open(path) as image:images.append(image.convert('RGB'))
+                    outputs=list(main(images,'',name_list=[Path(p).name for p in paths],algorithm_type=index))
                 if len(outputs)!=len(paths) or not all(isinstance(image,Image.Image) for image in outputs):
                     raise ValueError('Custom main must return one Pillow image per input, in input order')
                 if stale():raise CancelledError()
                 self._prune()
                 temporary.mkdir(parents=True)
                 names=processed_names(manager,paths)
-                for name,image in zip(names,outputs):
+                pixel_cache=getattr(self,'pixel_cache',None)
+                preview_size=None
+                params=manager.layout_params
+                if pixel_cache is not None and len(params)>6 and params[4] and params[6] and images:
+                    from .video_memory import source_resolution
+                    resolution=source_resolution([image.size for image in images],params[6],getattr(manager,'img_stitch_mode',0))
+                    preview_size=tuple(max(1,int(value*scale)) for value,scale in zip(resolution,params[4]))
+                for name,image,source_path in zip(names,outputs,paths):
                     (temporary/name).parent.mkdir(parents=True,exist_ok=True)
-                    image.save(temporary/name,format='PNG',compress_level=1)
+                    with open(temporary/name,'wb') as stream:image.save(stream,format='PNG',compress_level=1,compress_type=zlib.Z_RLE)
+                    if pixel_cache is not None:pixel_cache.put_header(str(entry['directory']/name),image.size,image.mode,owner=source_path)
+                    if preview_size is not None:
+                        # Keep only a byte-bounded preview, not all full-size
+                        # processed images. The durable PNG remains lossless.
+                        source=image
+                        if image.mode not in ('RGB','RGBA'):
+                            source=image.convert('RGBA' if image.mode=='LA' or 'transparency' in image.info else 'RGB')
+                        preview=source.resize(preview_size,Image.BICUBIC)
+                        pixel_cache.put(('preview',str(entry['directory']/name),preview_size,int(Image.BICUBIC)),
+                            preview,owner=source_path,priority=True)
+                        if source is not image:source.close()
                 (temporary/'cache_info.json').write_text(json.dumps(dict(algorithm=manager._custom_algorithm_registry[index][0],
                     algorithm_path=manager._custom_algorithm_registry[index][1],
                     page=batch+1,cache_version=spec['cache_version'],inputs=list(paths),outputs=names),
@@ -353,7 +389,18 @@ class CustomPipeline:
                 if stale():raise CancelledError()
                 # Atomic directory publication: consumers see all results together.
                 if entry['directory'].exists():self._remove(entry['directory'])
-                os.replace(str(temporary),str(entry['directory']))
+                for attempt in range(7):
+                    if stale():raise CancelledError()
+                    try:
+                        os.replace(str(temporary),str(entry['directory']))
+                        break
+                    except OSError as error:
+                        # Windows indexers/antivirus can briefly retain a
+                        # handle after PNG close. Retry only transient sharing
+                        # failures, on this background worker, with a hard bound.
+                        transient=getattr(error,'winerror',None) in (5,32,33)
+                        if not transient or attempt==6:raise
+                        time.sleep(.01*2**attempt)
                 algorithm=component(manager._custom_algorithm_registry[index][0])
                 visible=self.visible.root/algorithm/'processed'
                 entry['_public_target']=visible

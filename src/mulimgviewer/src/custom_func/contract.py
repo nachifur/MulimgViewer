@@ -8,10 +8,14 @@ def specification(registry, index):
     if not isinstance(value, dict):
         raise ValueError('plugin.json must contain an object')
     result = dict(device='exclusive', max_concurrency=1, cacheable=True,
-                  ordered=False, identity=False, cache_version='1', working_set_bytes=0)
+                  ordered=False, identity=False, cache_version='1', working_set_bytes=0,working_set_bytes_per_pixel=16)
     result.update(value)
+    if result['max_concurrency']=='auto':
+        import os
+        result['max_concurrency']=max(1,os.cpu_count() or 1)
     result['max_concurrency'] = max(1,int(result['max_concurrency']))
     result['working_set_bytes'] = max(0,int(result['working_set_bytes']))
+    result['working_set_bytes_per_pixel']=max(8,int(result['working_set_bytes_per_pixel']))
     if not isinstance(result['device'],str):
         raise ValueError('Plugin device must be a string')
     if result['ordered']:

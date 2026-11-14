@@ -28,6 +28,17 @@ class PipelineWorkers:
             self.costs = [max(1, int(cost)) for cost in costs]
             self._dispatch()
 
+    def downstream_capacity(self):
+        """Child compute borrows only the lanes held by admitted parent pages.
+
+        Parent jobs orchestrate/wait; counting each child against these same
+        lanes avoids adding an independent second CPU or decode-memory budget.
+        """
+        with self.lock:
+            lanes=max(1,min(self.active[1],max(1,self.total_budget-self.active[0])))
+            memory=None if self.memory_budget is None else max(0,self.memory_budget-self.active[0]*self.costs[0])
+            return lanes,memory
+
     def submit(self, stage, fn, args, kwargs, resource_key=None, cpu_cost=1):
         future = Future()
         with self.lock:

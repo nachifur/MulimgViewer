@@ -5,6 +5,9 @@ from PIL import ImageFilter
 from pathlib import Path
 import os
 
+# Each call owns its input/output images and has no mutable model state.
+THREAD_SAFE = True
+
 def custom_process_img(img):
     img = img.filter(ImageFilter.GaussianBlur(radius=2))
     return img
@@ -43,5 +46,6 @@ def main(img_list, save_path, name_list=None, algorithm_name="Gaussian Blur"):
                 img_path = base_save_path / (str(i) + ".png")
             img_path.parent.mkdir(parents=True,exist_ok=True)
             img.save(str(img_path))
+            print(img_path)
         i += 1
     return out_img_list

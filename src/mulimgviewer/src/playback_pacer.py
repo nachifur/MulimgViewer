@@ -53,7 +53,7 @@ class PlaybackPacer:
     """Learn pages/active production time; exclude full-cache idle intervals.
 
     Throughput samples aggregate batches, rather than averaging interarrival
-    times of a burst. A weighted window and EWMA smooth the result.
+    times of a burst. One recency-weighted active-time/page window smooths the result.
     Deadline protection is applied after smoothing so warnings are not delayed.
     """
     def __init__(self):
@@ -103,9 +103,11 @@ class PlaybackPacer:
             elapsed = now - self.checkpoint if self.checkpoint is not None else 0.
             if elapsed > .001 and (self.produced >= max(2, group_size) or not self.pending):
                 self.samples.append((elapsed, self.produced))
-                observed = sum(t for t, n in self.samples) / sum(n for t, n in self.samples)
-                alpha = .35
-                self.period = observed if self.period is None else self.period + alpha * (observed-self.period)
+                # Average active time/pages with recency weights ONCE. The old
+                # full-window average followed by another EWMA let cold-start
+                # costs constrain playback for dozens of completed pages.
+                recent=list(reversed(self.samples))
+                self.period=sum(t*.5**i for i,(t,n) in enumerate(recent))/sum(n*.5**i for i,(t,n) in enumerate(recent))
                 self.checkpoint, self.produced = now, 0
             if not self.pending:
                 self.active_since = self.checkpoint = None
@@ -115,12 +117,19 @@ class PlaybackPacer:
             values = sorted(self.first_delays)
             return values[math.ceil(.9 * len(values))-1] if values else None
 
-    def supply_period(self):
+    def supply_period(self, now=None, production_active=True):
         with self.lock:
-            return self.period
+            period=self.period
+            if (period is not None and now is not None and production_active
+                    and self.pending and self.checkpoint is not None):
+                # If the next output completed NOW, this is the best possible
+                # active-time/page rate of the unfinished measurement group.
+                # React to a real stall before the ready buffer is exhausted.
+                period=max(period,max(0.,now-self.checkpoint)/(self.produced+1))
+            return period
 
     def recommend(self, context, now, buffered, target_buffer, remaining, manual,
-                  display_cost, fallback_period, next_eta=None):
+                  display_cost, fallback_period, next_eta=None, production_active=True):
         with self.lock:
             self._context(context)
             manual = max(.001, manual or .001)
@@ -128,7 +137,8 @@ class PlaybackPacer:
                 candidate = max(manual, display_cost)
                 reason = 'all-ready'
             else:
-                supply = self.period if self.period is not None else max(.001, fallback_period)
+                supply = self.supply_period(now,production_active)
+                supply = supply if supply is not None else max(.001,fallback_period)
                 # Finite-horizon inventory balance: H new pages take
                 # H*supply seconds; B ready pages already exist. Therefore
                 # (H+B)*interval >= H*supply. Recalculate every switch and
@@ -137,7 +147,7 @@ class PlaybackPacer:
                 balanced = supply * horizon / (horizon + max(0, buffered))
                 candidate = max(manual, display_cost, balanced)
                 reason = 'measured-supply' if self.period is not None else 'stage-fallback'
-                eta = next_eta if next_eta is not None else self.first_ready_delay()
+                eta = next_eta if next_eta is not None else (self.first_ready_delay() if self.period is None else None)
                 if eta is not None:
                     # The first hole is requested after B cached frames plus
                     # one switch. It should be ready before that deadline.
@@ -147,4 +157,4 @@ class PlaybackPacer:
             candidate = max(manual, display_cost, candidate)
             self.last_interval, self.last_update = candidate, now
             return candidate, dict(reason=reason, buffered=buffered,
-                production_period=self.period, next_eta=next_eta)
+                production_period=self.supply_period(now,production_active), measured_period=self.period, next_eta=next_eta)

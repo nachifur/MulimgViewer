@@ -914,7 +914,9 @@ class ImgManager(ImgData):
             cached_paths=processed.get(self.layout_params[37]) if show_custom_func and processed is not None else None
             if cached_paths is not None:path=Path(cached_paths[i])
             name_list.append(path.name)
-            if path.is_file() and path.suffix.lower() in self.format_group:
+            provider=getattr(self,'_video_pixel_provider',None)
+            header=provider(('header',str(path))) if provider and cached_paths is not None else None
+            if (header is not None or path.is_file()) and path.suffix.lower() in self.format_group:
                 if path.suffix.lower() in [".tiff", ".tif"]:
                     img = imageio.imread(path)
                     if img.dtype != np.uint8:

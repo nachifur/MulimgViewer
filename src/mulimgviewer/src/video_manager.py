@@ -836,6 +836,20 @@ class VideoManager:
                 timing.get('expected_seconds') or max(.001, default),
                 tuple(getattr(dep, 'video_parent', dep) for dep in getattr(future, 'video_dependencies', ())))
         inputs = completion_estimates([describe(f, raw_default) for f in raw], self._extract_threads, now)
+        snapshot=getattr(self,'_render_snapshot',None)
+        params=snapshot[0].layout_params if snapshot is not None else ()
+        pacer=getattr(self,'_playback_pacer',None)
+        supply=pacer.supply_period(now) if pacer is not None else None
+        if len(params)>38 and (params[32] or params[38]) and supply is not None:
+            # Parent wall time includes algorithm/device/permit waits. Treating
+            # it as a fresh CPU duration for every parent double-counted those
+            # waits. Forecast multi-stage output from measured completions.
+            cfg=self.shared_config;direction=1 if int(cfg.play_direction)>=0 else -1
+            with self._cache_guard:
+                rank=sum(0<direction*(getattr(f,'video_batch',batch)-int(cfg.batch_idx))<=direction*(batch-int(cfg.batch_idx))
+                         and self._cached_batch_path(getattr(f,'video_batch',batch),validate=False) is None for f in stitched)
+            raw_eta=max((inputs.get(getattr(dep,'video_parent',dep),0.) for dep in getattr(target,'video_dependencies',())),default=0.)
+            return max(raw_eta,supply*max(1,rank))
         outputs = completion_estimates([describe(f, stitch_default) for f in stitched], self._stitch_threads, now, inputs)
         return outputs.get(target)
 
@@ -857,8 +871,10 @@ class VideoManager:
         eta = self._next_stitch_eta(int(cfg.batch_idx) + direction * (depth+1), now) if remaining > depth else None
         fallback = self._pacing_model_period or max(display_cost,
             self.perf_monitor.service_estimates() / max(1, self._stitch_threads))
+        with self._cache_guard:
+            producing=bool(self._pending_extract) or bool(getattr(self,'_pending_stitch_async',0))
         interval, details = pacer.recommend(self._pacing_context(), now, depth,
-            max(1, int(cfg.cache_num)), remaining, cfg.manual_interval, display_cost, fallback, eta)
+            max(1, int(cfg.cache_num)), remaining, cfg.manual_interval, display_cost, fallback, eta,production_active=producing)
         cfg.interval_recommend = max(.001, math.ceil(interval * 1000 - 1e-9) / 1000.)
         cfg.interval_prediction = details
         self._apply_interval_recommendation(cfg.interval_recommend, reschedule=reschedule)
@@ -1467,7 +1483,7 @@ class VideoManager:
         # phantom pending page that makes full-cache idle look like production.
         with self._cache_guard:
             wanted = [batch for batch in range(lo, hi+1)
-                      if self._cached_batch_path(batch, validate=False) is None]
+                      if direction*(batch-b)>=0 and self._cached_batch_path(batch, validate=False) is None]
             self._playback_pacer.request(self._pacing_context(token, cfg), wanted, (lo, hi),
                                          b, direction, time.perf_counter())
         streaming = cfg.is_playing and self._decoder_bank.available
@@ -1773,9 +1789,9 @@ class VideoManager:
                 # Applying the stitch reservation again here serialized all
                 # borrowed pages when the reservation was only one.
                 custom=bool(params[32] or params[38])
-                downstream=(min(self._stitch_threads,max(1,int(self.shared_config.thread)-self._extract_threads))
-                            if custom else self._pipeline_workers.total_budget)
-                processing.configure(downstream,self._planning_memory_budget())
+                downstream=self._pipeline_workers.total_budget
+                processing.configure(downstream,self._planning_memory_budget(),
+                    capacity=self._pipeline_workers.downstream_capacity if custom else None)
                 processing.set_window('video',epoch,self._stitch_window,int(config.batch_idx),active_cache_names(template))
                 flist=[path for group in groups for path in group]
                 def cancelled():return getattr(self,'_closed',False) or token!=self._window_token
@@ -1865,7 +1881,7 @@ class VideoManager:
                         self._produced_pages += 1
                         self.perf_monitor.record_stitch(time.perf_counter() - started + _processing_seconds, plan=plan)
                         self._playback_pacer.publish(self._pacing_context(token, config), batch,
-                                                     time.perf_counter(), max(1, int(config.cache_num)))
+                                                     time.perf_counter(), max(2,min(4,(int(config.cache_num)+1)//2)))
                 if not valid:
                     destination.unlink()
                     return
@@ -1886,9 +1902,19 @@ class VideoManager:
             except OSError:
                 pass
 
+    def _defer_custom_past(self,batch):
+        snapshot=getattr(self,'_render_snapshot',None)
+        if snapshot is None or not self.shared_config.is_playing:return False
+        params=snapshot[0].layout_params
+        direction=1 if int(self.shared_config.play_direction)>=0 else -1
+        # Already displayed past pages stay cached. Unvisited past pages are
+        # filled when paused, or become priority work on a direction change.
+        return len(params)>38 and (params[32] or params[38]) and direction*(batch-int(self.shared_config.batch_idx))<0
+
     def _queue_window_stitch(self, batch, sources, token):
         snapshot=getattr(self,'_render_snapshot',None)
         if snapshot is not None and current_only(snapshot[0]) and batch!=int(self.shared_config.batch_idx):return
+        if self._defer_custom_past(batch):return
         # A completion handle tracks both dependency waiting and actual execution.
         # Waiting batches never occupy a stitch executor worker.
         with self._cache_guard:
@@ -1942,6 +1968,9 @@ class VideoManager:
                 timing['expected_seconds'] = self.perf_monitor.service_estimates()
                 def stitch():
                     if not completion.set_running_or_notify_cancel():
+                        return
+                    if self._defer_custom_past(batch):
+                        completion.set_result(None)
                         return
                     timing['started_at'] = time.perf_counter()
                     worker_plan = (self._extract_threads, self._stitch_threads)
@@ -2161,9 +2190,8 @@ class VideoManager:
         preview is retained, shared by all later layout reads of this frame.
         """
         snapshot=self._render_snapshot
-        if snapshot is None or snapshot[2]:return None
+        if snapshot is None:return None
         manager=snapshot[0];params=manager.layout_params
-        if len(params)>38 and params[38]:return None
         mode=getattr(manager,'img_stitch_mode',0)
         if mode==1:return None  # crop is not a resize operation
         if min(params[6])>0:resolution=params[6]

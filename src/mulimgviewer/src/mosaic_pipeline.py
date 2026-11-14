@@ -6,7 +6,7 @@ import os
 import threading
 import time
 import uuid
-from concurrent.futures import ThreadPoolExecutor, CancelledError
+from concurrent.futures import ThreadPoolExecutor, CancelledError, Future
 from contextlib import contextmanager
 from pathlib import Path
 
@@ -56,7 +56,13 @@ class MosaicPlan:
     def ready(self,index,paths):
         with self.lock:
             if not self.closed and index not in self.futures and not self.cancelled() and not self.cache.closed:
-                self.futures[index]=self._request(index,tuple(paths))
+                try:self.futures[index]=self._request(index,tuple(paths))
+                except CancelledError:
+                    # A window/close can invalidate the request after the
+                    # callback's initial check. Deliver cancellation to the
+                    # parent instead of logging an unhandled callback error.
+                    future=Future();future.set_exception(CancelledError())
+                    self.futures[index]=future
 
     def _request(self,index,inputs):
         params=copy.deepcopy(self.manager.layout_params)
@@ -113,7 +119,7 @@ class MosaicPlan:
                 self.cache._prune()
                 entry['directory'].mkdir(parents=True)
                 path=entry['directory']/page_name(self.batch)
-                manager.img.save(path,format='PNG',compress_level=1)
+                with open(path,'wb') as stream:manager.img.save(stream,format='PNG',compress_level=1)
                 info=path.with_suffix('.json')
                 info.write_text(json.dumps(dict(algorithm=algorithm,page=self.batch+1,
                     inputs=list(self.paths)),ensure_ascii=False,indent=2),encoding='utf-8')
@@ -127,7 +133,9 @@ class MosaicPlan:
                 self.cache.publish_entry(entry,lambda:not self.cancelled())
                 with self.cache.lock:
                     entry['bytes']=amount+entry.get('_visible_copied',0);entry['reserved']=0
-                if pixel_cache is not None:pixel_cache.put(str(path),manager.img,priority=True)
+                if pixel_cache is not None:
+                    pixel_cache.put(str(path),manager.img,priority=True)
+                    pixel_cache.put_header(str(path),manager.img.size,manager.img.mode)
                 with self.cache.lock:
                     self.stage.completed+=1;self.stage.seconds+=time.perf_counter()-started
                 return str(path),state
@@ -151,9 +159,13 @@ class MosaicPlan:
         if slots==1:
             path,state=artifacts[indices[0]]
             return CachedCanvas(path),copy.deepcopy(state)
+        pixel_cache=getattr(self.cache,'pixel_cache',None)
         width=height=0
         for path,state in artifacts.values():
-            with Image.open(path) as image:width=max(width,image.width);height=max(height,image.height)
+            cached=(pixel_cache.get(path) or pixel_cache.get(('header',path))) if pixel_cache is not None else None
+            if cached is not None:width=max(width,cached.width);height=max(height,cached.height)
+            else:
+                with Image.open(path) as image:width=max(width,image.width);height=max(height,image.height)
         charge=max(32*1024**2,width*height*slots*16+width*height*8)
         with self.cache.budget.acquire(charge,self.cancelled,priority=2):
             canvas=Image.new('RGBA',(width*cols,height*rows),tuple(artifacts[indices[0]][1]['gap_color']))
@@ -168,7 +180,11 @@ class MosaicPlan:
                 present=slot<len(indices)
                 current=artifacts[indices[slot]][1] if present else base_state
                 if present:
-                    with Image.open(artifacts[indices[slot]][0]) as image:canvas.paste(image,(x,y))
+                    path=artifacts[indices[slot]][0]
+                    cached=pixel_cache.get(path) if pixel_cache is not None else None
+                    if cached is not None:canvas.paste(cached,(x,y))
+                    else:
+                        with Image.open(path) as image:canvas.paste(image,(x,y))
                 for point,source_id in zip(current['xy_grid'],current['xy_grids_id_list']):
                     output_id=slot*base+int(source_id)
                     xy.append((float(point[0])+x,float(point[1])+y));ids.append(output_id)

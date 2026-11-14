@@ -2,6 +2,7 @@
 import threading
 from collections import OrderedDict
 from PIL import Image
+from typing import NamedTuple
 
 
 def source_resolution(sizes, requested, mode=0):
@@ -18,6 +19,15 @@ def source_resolution(sizes, requested, mode=0):
     if x==-1:return int(width*y/height),int(y)
     if y==-1:return int(x),int(height*x/width)
     return int(x),int(y)
+
+
+class CachedImageInfo(NamedTuple):
+    size: tuple
+    mode: str
+    @property
+    def width(self):return self.size[0]
+    @property
+    def height(self):return self.size[1]
 
 
 class PixelCache:
@@ -51,8 +61,8 @@ class PixelCache:
 
     def put(self, key, image, owner=None, priority=False):
         key = str(key)
-        weight = max(image.width * image.height * max(4, len(image.getbands())),
-                     int(getattr(image, '_video_buffer_bytes', 0)))
+        weight = (256+2*len(key)+2*len(str(owner or key)) if isinstance(image,CachedImageInfo) else
+                  max(image.width * image.height * max(4,len(image.getbands())),int(getattr(image,'_video_buffer_bytes',0))))
         with self.lock:
             if weight > self.limit:
                 return False
@@ -71,6 +81,9 @@ class PixelCache:
                 self._raw[key] = None
             self._trim()
             return True
+
+    def put_header(self,path,size,mode,owner=None):
+        return self.put(('header',str(path)),CachedImageInfo(tuple(size),mode),owner=owner or str(path),priority=True)
 
     def get(self, key):
         key = str(key)
@@ -106,7 +119,7 @@ class LazyVideoImage:
 
     def __init__(self, path, provider=None):
         self.path, self.provider = str(path), provider
-        cached = provider(self.path) if provider else None
+        cached = (provider(self.path) or provider(('header',self.path))) if provider else None
         if cached is not None:
             self.size = cached.size
             self.mode = cached.mode

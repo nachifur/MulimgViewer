@@ -1,7 +1,8 @@
 {
   "device": "cpu",
-  "max_concurrency": 1,
+  "max_concurrency": "auto",
   "cacheable": true,
   "cache_version": "1",
-  "hierarchical_names": true
+  "hierarchical_names": true,
+  "working_set_bytes_per_pixel": 12
 }

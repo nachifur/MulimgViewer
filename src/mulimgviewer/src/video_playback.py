@@ -75,8 +75,8 @@ class VideoPlaybackMixin:
         vm = self.video_manager
         if len(self.ImgManager.layout_params) <= 32:
             self.show_img_init()
-        custom = bool(self.show_custom_func.GetValue())
-        key = (repr(self.ImgManager.layout_params), repr(self.xy_magnifier), custom,
+        custom = bool(self.ImgManager.layout_params[32])
+        key = (repr(self.ImgManager.layout_params), tuple(self.ImgManager.gap_color), repr(self.xy_magnifier), custom,
                vm._cache_context_token(), hash(getattr(self.ImgManager, '_custom_algorithm_registry', None)))
         if vm._render_snapshot is None or key != getattr(vm, '_render_snapshot_key', None):
             vm._render_snapshot = (self.ImgManager.video_stitch_snapshot(),

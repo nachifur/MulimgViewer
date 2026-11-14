@@ -548,17 +548,16 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
         cfg = self.shared_config
         if cfg.video_mode:
             vm = self.video_manager
-            text = f"Extract: {vm._extract_threads}, stitch: {vm._stitch_threads}; budget: {cfg.thread}"
-            pending = vm._pending_thread_plan
-            if pending:
-                text += f"\nPending: extract {pending[0]}, stitch {pending[1]}"
+            decode=vm._extract_threads
+            downstream=vm._stitch_threads
         else:
             pipeline = self.image_pipeline
-            text = f"Stitch: {pipeline.workers or pipeline.desired_workers}; budget: {cfg.thread}"
-        if self.show_custom_func.GetValue() or self.show_all_func.GetValue():
-            processing=self.image_pipeline.processing.snapshot()
-            stages=processing['stages']
-            text+=f"\nProcess: {stages.get(0,0)}; algorithm stitch: {stages.get(1,0)}; final compose: {stages.get(2,0)}"
+            decode=0
+            downstream=pipeline.processing.budget.limit
+        text=f"Budget: {cfg.thread} workers\nPlan: Decode: {decode} | Process / Stitch / Compose: {downstream} shared"
+        stages=self.image_pipeline.processing.snapshot()['stages']
+        active_decode=self.video_manager._pipeline_workers.active[0] if cfg.video_mode and getattr(self.video_manager,'_pipeline_workers',None) else 0
+        text+=f"\nActive: decode {active_decode} | process {stages.get(0,0)} | stitch {stages.get(1,0)} | compose {stages.get(2,0)}"
         monitor = getattr(self, 'resource_monitor', None)
         stats = monitor.read_snapshot() if monitor is not None else {}
         cpu, memory, fps = stats.get('cpu'), stats.get('memory'), stats.get('fps')
@@ -968,16 +967,19 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
         gc.collect()
 
         # ★ 修复：用 try/except 包装 rmtree，避免目录被线程持有时抛出未捕获异常
-        cache_base = "cache_frames"
-        try:
-            if os.path.isdir(cache_base):
-                shutil.rmtree(cache_base, ignore_errors=False)
-        except Exception:
-            # 如果删除失败（线程持有文件句柄等），降级为 ignore_errors
-            try:
-                shutil.rmtree(cache_base, ignore_errors=True)
-            except Exception:
-                pass
+        # Wait off the GUI thread before recursively removing the cache tree.
+        # Both media pipelines must be stopped before scheduling deletion.
+        pipeline=self.image_pipeline
+        vm=self.video_manager
+        if pipeline.closed and getattr(vm,'_closed',False):
+            from .cache_shutdown import schedule_cache_removal
+            root=Path(vm.cache_dir).absolute()
+            if root!=pipeline.directory.parent.absolute():
+                raise ValueError('Image and video cache roots differ; refusing recursive cleanup')
+            pools=(pipeline.coordinator,pipeline.pool,pipeline.display,*pipeline.retired_pools,
+                   vm._cache_executor,vm.executor,vm.stitch_executor,vm._maintenance_executor,vm._display_executor)
+            self._cache_cleanup_future=schedule_cache_removal(root,pools,
+                (getattr(pipeline.processing,'cleanup_future',None),))
 
         if hasattr(self, "indextablegui") and self.indextablegui:
             self.indextablegui.Destroy()
@@ -1072,90 +1074,11 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
 
 
     def save_img(self, event):
-        self.ImgManager.draw_points=copy.deepcopy(self.xy_magnifier)
-        type_ = self.choice_output.GetSelection()
-        save_format = self.save_format.GetSelection()
-        if hasattr(self, 'ImgManager') and hasattr(self.ImgManager, 'layout_params'):
-            if len(self.ImgManager.layout_params) > 35:
-                self.ImgManager.layout_params[35] = save_format
-            if len(self.ImgManager.layout_params) > 33:
-                self.ImgManager.layout_params[33] = self.out_path_str
-        if self.auto_save_all.Value:
-            last_count_img = self.ImgManager.action_count
-            self.ImgManager.set_action_count(0)
-            if self.out_path_str != "" and Path(self.out_path_str).is_dir():
-                continue_ = True
-            else:
-                continue_ = False
-                self.SetStatusText_(
-                    ["-1", "-1", "***First, you need to select the output dir***", "-1"])
-                self.out_path(event)
-                self.SetStatusText_(
-                    ["-1", "-1", "", "-1"])
-            if continue_:
-                for i in range(self.ImgManager.max_action_num):
-                    self.SetStatusText_(
-                        ["-1", "-1", "***"+str(self.ImgManager.name_list[self.ImgManager.action_count])+", saving img***", "-1"])
-                    self.ImgManager.get_flist()
-                    if self.show_custom_func.Value:
-                        self.ImgManager.layout_params[32] = True  # customfunc
-                        self.ImgManager.save_img(self.out_path_str, type_)
-                        self.ImgManager.layout_params[32] = False  # customfunc
-                    self.ImgManager.save_img(self.out_path_str, type_)
-                    self.ImgManager.save_stitch_img_and_customfunc_img(self.out_path_str, self.show_custom_func.Value)
-
-                    self.ImgManager.add()
-                self.ImgManager.set_action_count(last_count_img)
-                self.SetStatusText_(
-                    ["-1", "-1", "***Finish***", "-1"])
-        else:
-            try:
-                self.SetStatusText_(
-                    ["-1", "-1", "***"+str(self.ImgManager.name_list[self.ImgManager.action_count])+", saving img...***", "-1"])
-            except:
-                pass
-            self.ImgManager.layout_params[33] = self.out_path_str
-            # ★ 修复：保存当前页的 flist，因为 save_img 内部会修改 flist
-            orig_flist = getattr(self.ImgManager, 'flist', None)
-            if self.show_custom_func.Value:
-                self.ImgManager.layout_params[32] = True  # customfunc
-                self.ImgManager.save_img(self.out_path_str, type_)
-                self.ImgManager.layout_params[32] = False  # customfunc
-            flag = self.ImgManager.save_img(self.out_path_str, type_)
-            # ★ 恢复原始 flist，使 save_stitch_img_and_customfunc_img 使用正确的文件名
-            if orig_flist is not None:
-                self.ImgManager.flist = orig_flist
-
-            self.ImgManager.save_stitch_img_and_customfunc_img(
-                self.out_path_str,
-                self.show_custom_func.Value,
-                self.show_bmp_in_panel.copy() if hasattr(self, "show_bmp_in_panel") and self.show_bmp_in_panel is not None else None
-            )
-
-            if flag == 0:
-                self.SetStatusText_(
-                    ["Save", str(self.ImgManager.action_count), "Save success!", "-1"])
-            elif flag == 1:
-                self.SetStatusText_(
-                    ["-1", "-1", "***First, you need to select the output dir***", "-1"])
-                self.out_path(event)
-                self.SetStatusText_(
-                    ["-1", "-1", "", "-1"])
-            elif flag == 2:
-                self.SetStatusText_(
-                    ["-1", str(self.ImgManager.action_count), "***Error: "+str(self.ImgManager.name_list[self.ImgManager.action_count]) + ", during stitching images***", "-1"])
-            elif flag == 3:
-                self.SetStatusText_(
-                    ["-1", str(self.ImgManager.action_count), "***Error: "+str(self.ImgManager.name_list[self.ImgManager.action_count]) + ", the number of img in sub folders is different***", "-1"])
-            elif flag == 4:
-                self.SetStatusText_(
-                    ["-1", str(self.ImgManager.action_count), "***Error: No magnification box, the magnified image can not be saved***", "-1"])
-            elif flag == 5:
-                self.SetStatusText_(
-                    ["-1", str(self.ImgManager.action_count), "***Error: First, need to select the input dir***", "-1"])
-        self.SetStatusText_(["Save", "-1", "-1", "-1"])
+        from .export_controller import save_viewer
+        save_viewer(self,event)
 
     def refresh(self, event):
+        self._custom_settings_dirty=False
         if getattr(self, "_parallel_switch_dirty", False):
             self._apply_parallel_switch()
             self._parallel_switch_dirty = False
@@ -2236,6 +2159,7 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
         return signature
 
     def show_img_init(self):
+        self.ImgManager._algorithm_cache_root=str(self.image_pipeline.processing.visible.root)
         if getattr(self.ImgManager, 'type', None) is None:
             return
         # ★ 图片模式下待应用的 parallel / parallel+sequential 切换在这里统一生效。
@@ -2273,7 +2197,7 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
             self.video_manager._pacing_model_period=None
         # ★ 修复：图片模式 + 视频模式 都要在 layout 变化时清空缓存与磁盘缓存文件
         vm = getattr(self, "video_manager", None)
-        layout_token = repr((layout_params, hash(registry)))
+        layout_token = repr((layout_params, hash(registry), tuple(self.ImgManager.gap_color)))
         if not getattr(self.shared_config, "video_mode", False):
             # ★ 缓存 token 里带上列表文件的内容指纹:
             #   以前 token 只有 (布局, 类型, 输入路径), 同一个 1.txt 改内容再重新选择时
@@ -2443,7 +2367,7 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
                 ["-1", "-1", "***Error: setting***", "-1"])
             return False
         else:
-            return [row_col,                                # 0
+            params=[row_col,                                # 0
                     row_col_one_img,                        # 1
                     row_col_img_unit,                       # 2
                     gap,                                    # 3
@@ -2484,6 +2408,9 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
                     self.show_all_func.Value,               # 38
                     self.show_all_func_layout.Value,        # 39
                     self.func_layout_vertical.Value ]       # 40
+            if getattr(self,'_custom_settings_dirty',False) and len(self.ImgManager.layout_params)>40:
+                for index in (32,36,37,38,39,40):params[index]=self.ImgManager.layout_params[index]
+            return params
 
     def show_img(self, preserve_text_value=False):
         pending = getattr(self, '_pending_index_selection', None)
@@ -2646,12 +2573,12 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
         context = (getattr(self, '_image_layout_token', None),
                    id(self.shared_config.image_cache_img),
                    id(self.ImgManager.name_list), id(self.ImgManager.path_list),
-                   repr(self.xy_magnifier), bool(self.show_custom_func.GetValue()))
+                   repr(self.xy_magnifier), bool(self.ImgManager.layout_params[32]))
         if context != getattr(self, '_image_snapshot_key', None):
             self._image_snapshot_key = context
             self._image_snapshot = self.ImgManager.video_stitch_snapshot()
         self.image_pipeline.request(self._image_snapshot, copy.deepcopy(self.xy_magnifier),
-            self.show_custom_func.GetValue(), context, batch_idx,
+            bool(self.ImgManager.layout_params[32]), context, batch_idx,
             self.ImgManager.max_action_num, self.shared_config.cache_num,
             self.shared_config.cache_multiplier, self.shared_config.thread,
             self.shared_config.memory_budget, self.shared_config.play_direction)
@@ -2929,36 +2856,8 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
                 return
             pil_img = cache[b]
 
-        try:
-            if video_mode and pil_img is not None and prepared_rgba is None:
-                arr = np.array(pil_img.convert("RGBA"), dtype=np.uint8)
-                bg_rgb = np.array(self.ImgManager.gap_color[:3], dtype=np.int16)
-                rgb = arr[:, :, :3].astype(np.int16)
-                alpha = arr[:, :, 3].astype(np.int16)
-                tol = 6
-                alpha_min = 8
-                diff = np.max(np.abs(rgb - bg_rgb), axis=2)
-                content = (diff > tol) & (alpha > alpha_min)
-                if np.any(content):
-                    h, w = content.shape
-                    row_hits = content.sum(axis=1)
-                    col_hits = content.sum(axis=0)
-                    row_thr = max(12, int(w * 0.01))
-                    col_thr = max(12, int(h * 0.01))
-                    ys_thr = np.where(row_hits > row_thr)[0]
-                    xs_thr = np.where(col_hits > col_thr)[0]
-                    ys_any = np.where(content.any(axis=1))[0]
-                    xs_any = np.where(content.any(axis=0))[0]
-                    if ys_any.size > 0 and xs_any.size > 0:
-                        y0 = int(ys_thr[0]) if ys_thr.size > 0 else int(ys_any[0])
-                        x0 = int(xs_thr[0]) if xs_thr.size > 0 else int(xs_any[0])
-                        y1 = int(ys_any[-1]) + 1
-                        x1 = int(xs_any[-1]) + 1
-                        arr = arr[y0:y1, x0:x1]
-                        pil_img = Image.fromarray(arr, mode="RGBA")
-        except Exception:
-            pass
-
+        # Display the full canvas, including configured blank layout slots.
+        # Source selection and index coordinates use this same canvas origin.
         logical_w, logical_h = pil_img.size
         logical_size = wx.Size(int(logical_w), int(logical_h))
 
@@ -3393,14 +3292,19 @@ def main(img_list, save_path, name_list=None, algorithm_name="{algorithm_name}")
     def on_show_all_func_changed(self, event):
         if self.show_all_func.GetValue():
             self.show_custom_func.SetValue(False)
-        self._custom_settings_changed()
+        self._custom_settings_changed(event,defer=True)
 
     def on_show_custom_func_changed(self, event):
         if self.show_custom_func.GetValue():
             self.show_all_func.SetValue(False)
-        self._custom_settings_changed()
+        self._custom_settings_changed(event,defer=True)
 
-    def _custom_settings_changed(self, event=None):
+    def _custom_settings_changed(self, event=None,defer=False):
+        if event is not None or defer:
+            self._custom_settings_dirty=True
+            self.SetStatusText_(['-1','-1','Algorithm settings changed; press Refresh to apply','-1'])
+            return
+        self._custom_settings_dirty=False
         self._invalidate_render_cache()
         if getattr(self.ImgManager, 'type', None) is not None:
             if self.show_img_init():

@@ -4,6 +4,7 @@ import os
 import shutil
 import threading
 import uuid
+import stat
 from pathlib import Path
 from PIL import Image
 
@@ -34,17 +35,41 @@ def component(name):
 def source_names(manager, paths):
     from .status_info import key
     index=getattr(manager,'_status_source_index',None)
-    folders=dict(index.folders) if index is not None else {
-        key(Path(p)):i for i,p in enumerate(getattr(manager,'path_list',()))}
+    folders={key(Path(p).absolute()):i for p,i in index.folders.items()} if index is not None else {
+        key(Path(p).absolute()):i for i,p in enumerate(getattr(manager,'path_list',()))}
     result=[];seen={}
     for path in paths:
-        source=key(Path(path).parent)
+        source=key(Path(path).parent.absolute())
         if source not in folders:folders[source]=len(folders)
         name=Path(f'source_{folders[source]+1:03d}')/(Path(path).stem+'.png')
         count=seen.get(str(name),0)+1;seen[str(name)]=count
         if count>1:name=name.parent/f'entry_{count:03d}'/name.name
         result.append(name.as_posix())
     return result
+
+
+def processed_names(manager, paths):
+    """Same source IDs and frame stems as the raw layer, without page folders."""
+    return [(Path(name).parent/'frames'/Path(name).name).as_posix()
+            for name in source_names(manager,paths)]
+
+
+def source_record(manager, number, path):
+    """Describe a source without enumerating its images or decoded frames."""
+    originals=getattr(manager,'_cache_original_paths',())
+    layout=getattr(manager,'layout_params',())
+    value=dict(source=number+1,media='video' if getattr(manager,'video_mode',False) else 'image',
+        path=str(Path(originals[number] if number<len(originals) else path).absolute()),
+        input_mode=getattr(manager,'_cache_input_mode',''),
+        parallel_to_sequential=bool(getattr(manager,'parallel_to_sequential',False)),
+        parallel_sequential=bool(layout[22]) if len(layout)>22 else False,
+        input=str(getattr(manager,'input_path','')))
+    if getattr(manager,'video_mode',False):
+        fps=getattr(manager,'video_fps_list',())
+        counts=getattr(manager,'video_num_list',())
+        value.update(fps=float(fps[number]) if number<len(fps) else None,
+            frames=int(counts[number]) if number<len(counts) else None,step=int(getattr(manager,'skip',0))+1)
+    return value
 
 
 def write_source_catalog(manager, root, split_media=False):
@@ -54,21 +79,10 @@ def write_source_catalog(manager, root, split_media=False):
     index=getattr(manager,'_status_source_index',None)
     folders=(index.folders if index is not None else
              {key(path):i for i,path in enumerate(getattr(manager,'path_list',()))})
-    originals=getattr(manager,'_cache_original_paths',())
     for path,number in folders.items():
         target=root/f'source_{number+1:03d}'/'source.json'
         target.parent.mkdir(parents=True,exist_ok=True)
-        value=dict(source=number+1,media='video' if getattr(manager,'video_mode',False) else 'image',
-            path=str(Path(originals[number] if number<len(originals) else path).absolute()),
-            input_mode=getattr(manager,'_cache_input_mode',''),
-            parallel_to_sequential=bool(manager.parallel_to_sequential),
-            parallel_sequential=bool(manager.layout_params[22]),
-            input=str(getattr(manager,'input_path','')))
-        if getattr(manager,'video_mode',False):
-            fps=getattr(manager,'video_fps_list',())
-            counts=getattr(manager,'video_num_list',())
-            value.update(fps=float(fps[number]) if number<len(fps) else None,
-                frames=int(counts[number]) if number<len(counts) else None,step=int(getattr(manager,'skip',0))+1)
+        value=source_record(manager,number,path)
         temporary=target.with_name('__tmp_'+uuid.uuid4().hex)
         temporary.write_text(json.dumps(value,ensure_ascii=False,indent=2),encoding='utf-8')
         os.replace(temporary,target)
@@ -83,10 +97,21 @@ class VisibleCache:
     def __init__(self, root, reserve=None, release=None):
         self.root=Path(root).resolve();self.lock=threading.RLock();self.owners={}
         self.reserve=reserve;self.release=release
+        self.file_users={};self.metadata={}
 
     def _inside(self, path):
-        value=Path(path).resolve()
-        if self.root not in value.parents:raise ValueError('Cache target escaped its root')
+        value=Path(os.path.abspath(path))
+        root=self.root.resolve()
+        # Validate directory containment, not the final hard-linked filename.
+        # On Windows a hard link may canonicalize to its private work alias;
+        # that does not mean the public pathname escaped its directory.
+        parent=value.parent.resolve()
+        if self.root not in value.parents or (parent!=root and root not in parent.parents):
+            raise ValueError(f'Cache target escaped its root: {value!r} (parent {parent!r}, root {root!r}, lexical root {self.root!r})')
+        try:info=value.lstat()
+        except FileNotFoundError:info=None
+        if info is not None and (stat.S_ISLNK(info.st_mode) or getattr(info,'st_file_attributes',0)&getattr(stat,'FILE_ATTRIBUTE_REPARSE_POINT',0x400)):
+            raise ValueError('Cache target must not be a symlink or junction')
         return value
 
     def clear_owned(self):
@@ -100,13 +125,15 @@ class VisibleCache:
                     if target.is_dir():shutil.rmtree(str(target))
                 try:algorithm.rmdir()
                 except OSError:pass
-            self.owners.clear()
+            self.owners.clear();self.file_users.clear();self.metadata.clear()
 
-    def publish(self, target, files, owner, valid=lambda:True):
-        target=self._inside(target)
-        owner_key=(target,owner.get('page'))
+    def publish(self, target, files, owner, valid=lambda:True, metadata=None):
         with self.lock:
             if not valid():return
+            # Canonicalization must share the publication/cleanup lock too:
+            # the parent directory may otherwise disappear while resolving it.
+            target=self._inside(target)
+            owner_key=(target,owner.get('page'))
             target.mkdir(parents=True,exist_ok=True)
             previous=self.owners.get(owner_key)
             old_names=set(previous.get('_visible_names',())) if previous is not None else set()
@@ -123,7 +150,28 @@ class VisibleCache:
                     os.replace(temporary,path)
                 finally:temporary.unlink(missing_ok=True)
                 names.append(name)
-            for name in old_names-set(names):self._inside(target/name).unlink(missing_ok=True)
+                self.file_users.setdefault(path,set()).add(owner_key)
+            for name,value in (metadata or {}).items():
+                path=self._inside(target/name)
+                # Source descriptors are shared by pages and are immutable until
+                # their source/algorithm configuration changes. No per-frame IO.
+                if self.metadata.get(path)!=value:
+                    path.parent.mkdir(parents=True,exist_ok=True)
+                    temporary=path.with_name('__tmp_'+uuid.uuid4().hex)
+                    encoded=json.dumps(value,ensure_ascii=False,indent=2).encode('utf-8')
+                    try:
+                        if self.reserve is not None:self.reserve(owner,len(encoded))
+                        temporary.write_bytes(encoded)
+                        os.replace(temporary,path)
+                    finally:temporary.unlink(missing_ok=True)
+                    self.metadata[path]=value;copied+=len(encoded)
+                names.append(name)
+                self.file_users.setdefault(path,set()).add(owner_key)
+            for name in old_names-set(names):
+                path=self._inside(target/name)
+                users=self.file_users.get(path,set());users.discard(owner_key)
+                if not users:
+                    path.unlink(missing_ok=True);self.file_users.pop(path,None);self.metadata.pop(path,None)
             owner['_visible_names']=tuple(names);owner['_visible_target']=target
             owner['_visible_key']=owner_key;self.owners[owner_key]=owner
             if previous is not None and self.release is not None:
@@ -139,15 +187,23 @@ class VisibleCache:
         with self.lock:
             key=owner['_visible_key']
             if self.owners.get(key) is not owner:return
-            for name in owner.get('_visible_names',()):self._inside(target/name).unlink(missing_ok=True)
+            for name in owner.get('_visible_names',()):
+                path=self._inside(target/name)
+                users=self.file_users.get(path,set());users.discard(key)
+                if not users:
+                    path.unlink(missing_ok=True);self.file_users.pop(path,None);self.metadata.pop(path,None)
             self.owners.pop(key,None)
             if self.release is not None:self.release(owner,owner.get('_visible_copied',0))
             owner['_visible_copied']=0
             # Empty containers are cosmetic; never recursively remove peers.
-            for directory in sorted(target.rglob('*'),reverse=True):
-                if directory.is_dir():
-                    try:directory.rmdir()
-                    except OSError:pass
+            directories=set()
+            for name in owner.get('_visible_names',()):
+                directory=(target/name).parent
+                while directory!=target and target in directory.parents:
+                    directories.add(directory);directory=directory.parent
+            for directory in sorted(directories,key=lambda path:len(path.parts),reverse=True):
+                try:directory.rmdir()
+                except OSError:pass
             try:target.rmdir()
             except OSError:pass
             parent=target.parent

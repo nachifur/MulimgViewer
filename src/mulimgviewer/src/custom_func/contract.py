@@ -42,7 +42,7 @@ def display_indices(registry,params):
 
 
 def display_grid(registry,params):
-    if not params[38]:return len(display_indices(registry,params)),1
+    if not (params[32] or params[38]):return 1,1
     import math
     rows,cols=map(int,params[39].split(','))
     if min(rows,cols)<1:raise ValueError('Algorithm layout requires positive rows and columns')

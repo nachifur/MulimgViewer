@@ -19,8 +19,8 @@ def view_columns(view, video):
         columns = [C(0,'Visual ID',75), C(1,'Page',65), C(2,'Video' if video else 'Folder',100),
                    C(3,'Frame / time' if video else 'Image',170),
                    C(4,'Original video' if video else 'Image path',330), C(5,'Position',115)]
-        if video:
-            columns.append(C(6,'Frame path',340))
+        columns.append(C(6,'Frame path' if video else 'Image / cache path',340))
+        columns.extend((C('algorithm','Algorithm',140),C('algorithm_path','Algorithm path',340)))
         columns.append(C(7,'Cache state' if video else 'File status',145))
         return tuple(columns)
     if view == 1:
@@ -51,6 +51,8 @@ def view_row(model, view, index, raw=None):
             value = raw[key]
             if key in (0,1) and str(value).isdigit():
                 value = int(value)
+        elif key in ('algorithm','algorithm_path'):
+            value=model.visual_entry(index).get(key,'Original' if key=='algorithm' else '')
         elif key == 'frames':
             value = model.counts[index]
         elif key == 'source_path':

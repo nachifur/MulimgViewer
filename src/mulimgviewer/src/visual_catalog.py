@@ -4,6 +4,7 @@ from functools import lru_cache
 import re
 import os
 from pathlib import Path
+from types import SimpleNamespace
 from .video_timeline import page_segments
 from .video_paths import frame_filename
 
@@ -34,18 +35,30 @@ class VisualCatalogMixin:
             inner=(1,self.size);vertical=(False,False)
         self._visual_page = lru_cache(maxsize=2)(self._visual_page)
         self.cells=tuple(visual_cells(outer,inner,vertical))
+        self.cell_algorithms={};self.cell_algorithm_indices={}
+        self.algorithm_registry=getattr(manager,'_custom_algorithm_registry',()) or ()
+        self.naming_manager=SimpleNamespace(path_list=tuple(manager.path_list),
+            _status_source_index=getattr(manager,'_status_source_index',None))
+        self.algorithm_root=Path(getattr(manager,'_algorithm_cache_root',Path('cache_frames')/'algorithms')).absolute()
+        self.algorithm_search=' '.join(str(v) for entry in self.algorithm_registry for v in entry[:2]).casefold()
         self.capacity=len(self.cells)
         if len(layout)>40 and (layout[32] or layout[38]):
             from .custom_func.contract import display_grid, display_indices
             original=self.cells
             registry=getattr(manager,'_custom_algorithm_registry',()) or ()
             rows,cols=display_grid(registry,layout)
-            variants=len(display_indices(registry,layout));column_first=bool(layout[38] and layout[40])
+            selected=display_indices(registry,layout)
+            variants=len(selected);column_first=bool(layout[40])
             cells=[]
             for pane in range(variants):
                 if column_first:row=pane%rows;col=pane//rows
                 else:row,col=divmod(pane,cols)
-                cells.extend((y+row*outer[0]*inner[0],x+col*outer[1]*inner[1],slot) for y,x,slot in original)
+                for y,x,slot in original:
+                    cell=(y+row*outer[0]*inner[0],x+col*outer[1]*inner[1],slot)
+                    cells.append(cell)
+                    index=selected[pane]
+                    self.cell_algorithms[cell]='Original' if index is None else registry[index][0]
+                    self.cell_algorithm_indices[cell]=index
             self.cells=tuple(sorted(cells))
         self.cache_paths=tuple(str(Path(p).absolute()) for p in getattr(config,'video_path',manager.path_list))
         # Visible item counts are piecewise constant. Store only stream-end
@@ -91,7 +104,22 @@ class VisualCatalogMixin:
                 if len(items)>=self.capacity:break
                 folder,local,path=self._image(offset)
                 items.append(dict(source=path,path=path,label=f'Folder {folder+1}',item=f'Image {local+1}',offset=offset))
-        return [(y,x,items[slot]) for y,x,slot in self.cells if slot<len(items)]
+        from .cache_layout import processed_names, component
+        from .custom_func.contract import specification
+        names=processed_names(self.naming_manager,[item['path'] for item in items]) if self.cell_algorithms else ()
+        visible=[]
+        for y,x,slot in self.cells:
+            if slot>=len(items):continue
+            item=items[slot]
+            algorithm=self.cell_algorithms.get((y,x,slot))
+            if algorithm:
+                index=self.cell_algorithm_indices[(y,x,slot)]
+                spec=specification(self.algorithm_registry,index) if index is not None else {'identity':True}
+                path=item['path'] if spec['identity'] else str(self.algorithm_root/component(algorithm)/'processed'/names[slot])
+                item=dict(item,algorithm=algorithm,algorithm_path=self.algorithm_registry[index][1] if index is not None else '',
+                    raw_path=item['path'],path=path,processed=not spec['identity'],item=item['item']+' | '+algorithm)
+            visible.append((y,x,item))
+        return visible
 
     def visual_entry(self, index):
         interval=bisect_right(self.visual_ends,index)
@@ -104,7 +132,7 @@ class VisualCatalogMixin:
     def visual_row(self, index):
         entry=self.visual_entry(index)
         return (str(index+1),str(entry['page']+1),entry['label'],entry['item'],entry['source'],
-                f'Row {entry["row"]}, Col {entry["column"]}',entry['path'], 'Checking...' if self.video else 'Original')
+                f'Row {entry["row"]}, Col {entry["column"]}',entry['path'], 'Checking...' if self.video or entry.get('processed') else 'Original')
 
     def visual_page_start(self, page):
         for first,last,count,base in self.visual_ranges:
@@ -127,18 +155,16 @@ class VisualCatalogMixin:
         if self.video:
             # Timestamp + frame-in-second narrows full-path queries to a few
             # candidate ordinals, including fractional-FPS rounding.
-            exact=re.search(r'(\d+(?:\.\d+)?)s_frame_\d+\.jpeg$',text)
+            exact=re.search(r'(\d+(?:\.\d+)?)s_frame_\d+\.(?:jpeg|png)$',text)
             matched=set()
             for video in range(len(self.paths)):
                 if stop():return [],False
                 if exact:
                     filename=exact.group(0)
-                    if '/' in text or '\\' in text:
-                        if os.path.normcase(os.path.normpath(str(Path(text).parent.absolute()))).casefold()!=os.path.normcase(os.path.normpath(self.cache_paths[video])).casefold():continue
                     guess=round(float(exact.group(1))*self.fps[video]/self.step)
                     radius=max(2,int(self.fps[video]*.006/self.step)+2)
                     frames=[i for i in range(max(0,guess-radius),min(self.counts[video],guess+radius+1))
-                            if frame_filename(i,self.fps[video],self.step).casefold()==filename]
+                            if (Path(frame_filename(i,self.fps[video],self.step)).stem+'.'+filename.rsplit('.',1)[-1]).casefold()==filename]
                     candidates=sorted(set((self.prefix[video]+i)//self.size if self.serial else i//self.size for i in frames))
                     if candidates and not self.serial and any(i//self.size==(self.counts[video]-1)//self.size for i in frames):
                         first=candidates[0]
@@ -150,7 +176,7 @@ class VisualCatalogMixin:
                         candidates=repeated_pages()
                 else:
                     haystack=(' '.join(self.source_row(video))+' '+self.cache_paths[video]).casefold()
-                    if text not in haystack:continue
+                    if text not in haystack and text not in self.algorithm_search:continue
                     first=self.prefix[video]//self.size if self.serial else 0
                     last=(self.prefix[video+1]-1)//self.size if self.serial else self.pages-1
                     def visible_pages():
@@ -164,7 +190,14 @@ class VisualCatalogMixin:
                     entries=self._visual_page(page)
                     base=self.visual_page_start(page)
                     for rank,(y,x,entry) in enumerate(entries):
-                        if entry['video']==video and (not exact or entry['frame'] in frames):matched.add(base+rank)
+                        if entry['video']!=video or (exact and entry['frame'] not in frames):continue
+                        if exact and '/' not in text and '\\' not in text and Path(entry['path']).name.casefold()!=filename:continue
+                        if exact and ('/' in text or '\\' in text):
+                            query=os.path.normcase(os.path.normpath(str(Path(text).absolute()))).casefold()
+                            paths=(entry['path'],entry.get('raw_path',''))
+                            if not any(os.path.normcase(os.path.normpath(p)).casefold()==query for p in paths if p):continue
+                        if not exact and text not in (' '.join(map(str,entry.values()))+' '+haystack).casefold():continue
+                        matched.add(base+rank)
                     if len(matched)>=limit:return sorted(matched)[:limit],True
             return sorted(matched),False
         for index in range(self.visual_total):

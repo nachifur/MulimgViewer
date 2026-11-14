@@ -18,13 +18,14 @@ from reportlab.pdfgen import canvas
 from reportlab.lib.utils import ImageReader
 from reportlab.pdfbase import pdfmetrics
 
-from .video_memory import LazyVideoImage
+from .video_memory import LazyVideoImage, source_resolution
 from .data import ImgData
 from .utils import rgb2hex
 from .custom_func.main import get_available_algorithms
 from .custom_func.runtime import render_context, state as processing_state
 from .custom_func.contract import specification, processing_indices, display_grid
 from .cache_layout import page_name, source_names, write_source_catalog
+from .render_metrics import MeasuredFont
 
 class ImgUtils():
     """The set of functional programming modules"""
@@ -37,18 +38,11 @@ class ImgUtils():
         return wx.Bitmap.FromBufferRGBA(width, height, image.tobytes())
 
     def add_alpha(self, img, alpha):
-        img_array = np.array(img)
-        temp = img_array[:, :, 0]
-        if img_array.shape[2] == 3:
-            img = np.concatenate((img_array, np.ones_like(
-                temp[:, :, np.newaxis])*alpha), axis=2)
-        elif img_array.shape[2] == 4:
-            img_array[:, :, 3] = np.ones_like(temp)*alpha
-            img = img_array
-        else:
-            pass
-        img = Image.fromarray(img.astype('uint8')).convert('RGBA')
-        return img
+        # Native Pillow copies preserve the cached input and avoid a NumPy
+        # array, concatenation, dtype copy and second Pillow conversion per tile.
+        result=img.convert('RGBA')
+        result.putalpha(int(alpha))
+        return result
 
     def sort_box_point(self, box_point, show_scale, img_resolution_origin, first_point=False):
         # box_point = [x_0,y_0,x_1,y_1]
@@ -990,44 +984,9 @@ class ImgManager(ImgData):
     def _set_source_resolution(self, img_list):
         if not img_list:
             raise ValueError("No images available for custom processing")
-        # resolution
-        width_ = []
-        height_ = []
-        for img in img_list:
-            width, height = img.size
-            width_.append(width)
-            height_.append(height)
-        width_ = np.sort(width_)
-        height_ = np.sort(height_)
-
-        if self.img_stitch_mode == 2:
-            width = max(width_)
-            height = max(height_)
-        elif self.img_stitch_mode == 1:
-            width = np.min(width_)
-            height = np.min(height_)
-        elif self.img_stitch_mode == 0:
-            if len(width_) > 3:
-                width = np.mean(width_[1:-1])
-                height = np.mean(height_[1:-1])
-            else:
-                width = np.mean(width_)
-                height = np.mean(height_)
-
-        if self.layout_params[6][0] == -1 or self.layout_params[6][1] == -1:
-            if self.layout_params[6][0] == -1 and self.layout_params[6][1] == -1:
-                self.img_resolution_origin = [int(width), int(height)]
-            elif self.layout_params[6][0] == -1 and self.layout_params[6][1] != -1:
-                self.img_resolution_origin = [
-                    int(width*self.layout_params[6][1]/height), int(self.layout_params[6][1])]
-            elif self.layout_params[6][0] != -1 and self.layout_params[6][1] == -1:
-                self.img_resolution_origin = [int(self.layout_params[6][0]), int(
-                    height*self.layout_params[6][0]/width)]
-            self.custom_resolution = False
-        else:
-            self.img_resolution_origin = [int(i)
-                                          for i in self.layout_params[6]]
-            self.custom_resolution = True
+        self.img_resolution_origin=list(source_resolution([image.size for image in img_list],
+                                                         self.layout_params[6],self.img_stitch_mode))
+        self.custom_resolution=min(self.layout_params[6])>0
 
 
     def get_all_func_img_list(self, show_all_func_layout, original_row_col=None, func_layout_vertical=False, flist=None):
@@ -1767,8 +1726,6 @@ class ImgManager(ImgData):
         if id >= len(self.title_list):
             id = 0
         title_max_size = copy.deepcopy(self.title_max_size)
-        img = Image.new('RGBA', tuple(title_max_size), self.gap_color)
-        draw = ImageDraw.Draw(img)
         original_id = id
         if hasattr(self, '_original_row_col') and len(self.layout_params) > 38 and self.layout_params[38]:
             show_all_func_layout = self.layout_params[39] if len(self.layout_params) > 39 else "2,2"
@@ -1793,7 +1750,8 @@ class ImgManager(ImgData):
 
         line_height = int(self.title_setting[8])
         text = self.title_list[id]
-        im_tmp = Image.new('RGBA', (title_max_size[0], 1000), self.gap_color)
+        # Bounding boxes do not depend on the backing image's dimensions.
+        im_tmp = Image.new('RGBA', (1, 1), self.gap_color)
         draw_tmp = ImageDraw.Draw(im_tmp)
 
         if "\n" not in text:
@@ -2021,8 +1979,8 @@ class ImgManager(ImgData):
         self.text_color = rgb2hex(("".join(text_color))[0:-1])
         # calculate title size
         font_size = int(self.title_setting[8])
-        self.font = ImageFont.truetype(
-            self.title_setting[9][self.title_setting[7]], font_size)
+        self.font = MeasuredFont.wrap(ImageFont.truetype(
+            self.title_setting[9][self.title_setting[7]], font_size))
         standard_size = width_2
         self.title_size, self.title_list, self.title_max_size = self.ImgF.cal_txt_size_adjust_title(
             title_list, standard_size, self.font, font_size)
@@ -2245,7 +2203,14 @@ class ImgManager(ImgData):
 
         return img
 
-    def save_img(self, out_path_str, out_type):
+    @render_context
+    def _export_img(self, img_mode, out_path_str, out_type):
+        return self._save_img(out_path_str,out_type)
+
+    def save_img(self,out_path_str,out_type):
+        return self._export_img(1,out_path_str,out_type)
+
+    def _save_img(self, out_path_str, out_type):
         self.show_box=bool(self.layout_params[14])
         self.check = []
         self.check_1 = []
@@ -2259,28 +2224,6 @@ class ImgManager(ImgData):
             out_path_str = self.out_path_str
         try:
             if out_path_str != "" and Path(out_path_str).exists():
-                # If a custom algorithm is enabled and saving as images, generate the processed_img directory first
-                try:
-                    save_format = self.layout_params[35] if len(self.layout_params) > 35 else 0
-                    if save_format != 1 and len(self.layout_params) > 32 and self.layout_params[32]:
-                        available_algorithms = get_available_algorithms()
-                        algorithm_type = self.layout_params[37] if len(self.layout_params) > 37 else 0
-                        algorithm_type = min(algorithm_type, len(available_algorithms) - 1) if available_algorithms else 0
-                        name_list_proc = []
-                        img_list_proc = []
-                        for path in self.flist:
-                            p = Path(path)
-                            name_list_proc.append(p.name)
-                            if p.is_file() and p.suffix.lower() in self.format_group:
-                                img = Image.open(p).convert('RGB')
-                                img_list_proc.append(img)
-                        if img_list_proc:
-                            if (getattr(self,'_custom_algorithm_registry',None) is not None
-                                    and specification(self._custom_algorithm_registry,algorithm_type).get('hierarchical_names',False)):
-                                name_list_proc=source_names(self,self.flist)
-                            main_custom_func(img_list_proc, out_path_str, name_list=name_list_proc, algorithm_type=algorithm_type)
-                except Exception:
-                    pass
                 self.set_scale_mode(img_mode=1)
                 dir_name = [Path(path).parent.name for path in self.flist]
                 out_type = out_type+1

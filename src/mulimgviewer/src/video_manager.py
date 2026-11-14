@@ -19,7 +19,7 @@ from .resource_monitor import run_video_process
 from .pipeline_executor import PipelineWorkers
 from .admission_optimizer import AdaptiveAdmissionBudget
 from .video_decoder import DecoderBank
-from .video_memory import PixelCache
+from .video_memory import PixelCache, source_resolution
 from .custom_pipeline import current_only
 from .cache_layout import page_name, write_source_catalog
 from .custom_func.contract import active_cache_names
@@ -494,7 +494,7 @@ class VideoManager:
         budget = getattr(self.shared_config, 'memory_budget', None)
         # Optional accelerators are SMALL byte caps, never the whole outer
         # window. Disk-backed originals/PNGs remain authoritative.
-        self._pixel_cache.configure(min(256 * 1024**2, int(budget * .08)) if budget else 0)
+        self._pixel_cache.configure(min(1024 * 1024**2, int(budget * .08)) if budget else 0)
         self._decoder_bank.configure(min(1024 * 1024**2, int(budget * .20)) if budget else 64 * 1024**2)
         maintenance = getattr(self, '_maintenance_executor', None)
         if maintenance is not None and not getattr(self, '_closed', False):
@@ -925,8 +925,24 @@ class VideoManager:
                 if len(params) > 39 and params[38]:
                     rows, cols = map(int, params[39].split(','))
                     slots *= max(1,rows)*max(1,cols)
-                if len(resolution)==2 and min(resolution)>0:
-                    output = int(resolution[0])*int(resolution[1])*slots*4
+                known=[dimensions[str(path)] for path in self.shared_config.real_video_path if str(path) in dimensions]
+                if known and len(resolution)==2:
+                    # Canvas memory depends on DISPLAY geometry. Treating
+                    # automatic resolution as full-size tiles ignored scale
+                    # and could reserve gigabytes for a small preview, forcing
+                    # every power mode down to a single stitch lane.
+                    width=max(value[0] for value in known)
+                    height=max(value[1] for value in known)
+                    if min(resolution)>0:width,height=resolution
+                    elif resolution[0]>0:height=height*resolution[0]/min(value[0] for value in known);width=resolution[0]
+                    elif resolution[1]>0:width=width*resolution[1]/min(value[1] for value in known);height=resolution[1]
+                    scale=params[4] if len(params)>4 and params[4] is not None else (1,1)
+                    gap=max([0]+[float(value) for value in params[3]]) if params[3] is not None else 0
+                    title=params[17] if len(params)>17 else None
+                    extra=2*float(title[8]) if title is not None and title[1] else 0
+                    width=max(1,width*scale[0])+2*gap
+                    height=max(1,height*scale[1])+2*gap+extra
+                    output=math.ceil(width*height*slots*4)
                 else:
                     output = max(areas,default=0)*slots*4
         return output, pixels or output
@@ -1751,8 +1767,15 @@ class VideoManager:
             params = template.layout_params
             if len(params)>38 and getattr(template,'_custom_algorithm_registry',None) is not None:
                 epoch=('video',tuple(config.real_video_path),config.skip_frames)
-                processing.configure(min(self._stitch_threads,max(1,int(self.shared_config.thread)-self._extract_threads)),
-                                     self._planning_memory_budget())
+                # Original-only pages have one compute task per admitted
+                # parent stitch. PipelineWorkers already charges that lane
+                # and its memory, including borrowed idle decoder lanes.
+                # Applying the stitch reservation again here serialized all
+                # borrowed pages when the reservation was only one.
+                custom=bool(params[32] or params[38])
+                downstream=(min(self._stitch_threads,max(1,int(self.shared_config.thread)-self._extract_threads))
+                            if custom else self._pipeline_workers.total_budget)
+                processing.configure(downstream,self._planning_memory_budget())
                 processing.set_window('video',epoch,self._stitch_window,int(config.batch_idx),active_cache_names(template))
                 flist=[path for group in groups for path in group]
                 def cancelled():return getattr(self,'_closed',False) or token!=self._window_token
@@ -1950,31 +1973,16 @@ class VideoManager:
         ready()
 
     def _prepare_video_image(self, path, gap_color):
-        """Decode, trim and create RGBA bytes in a worker, with no wx calls."""
+        """Decode the complete layout and create RGBA bytes off the GUI thread."""
         cached = self._pixel_cache.get(str(path))
         if cached is None:
             with Image.open(path) as opened:
                 original = opened.convert('RGBA')
         else:
             original = cached.convert('RGBA')
-        image = original
-        try:
-            arr = np.array(original, dtype=np.uint8)
-            bg_rgb = np.array(gap_color[:3], dtype=np.int16)
-            content = (np.max(np.abs(arr[:, :, :3].astype(np.int16) - bg_rgb), axis=2) > 6) & (arr[:, :, 3] > 8)
-            if np.any(content):
-                h, w = content.shape
-                ys_thr = np.where(content.sum(axis=1) > max(12, int(w * 0.01)))[0]
-                xs_thr = np.where(content.sum(axis=0) > max(12, int(h * 0.01)))[0]
-                ys_any = np.where(content.any(axis=1))[0]
-                xs_any = np.where(content.any(axis=0))[0]
-                if ys_any.size and xs_any.size:
-                    y0 = int(ys_thr[0]) if ys_thr.size else int(ys_any[0])
-                    x0 = int(xs_thr[0]) if xs_thr.size else int(xs_any[0])
-                    image = original.crop((x0, y0, int(xs_any[-1]) + 1, int(ys_any[-1]) + 1))
-        except Exception:
-            pass
-        return original, image, image.tobytes()
+        # Background-colored slots belong to the configured layout. Cropping
+        # them loses blank algorithm panes and invalidates hit-test coordinates.
+        return original, original, original.tobytes()
 
     def shutdown(self):
         """Invalidate callbacks and stop accepting work without waiting on the GUI."""
@@ -2146,6 +2154,33 @@ class VideoManager:
             if future is not None and not future.done():
                 future.set_result(True)
 
+    def _preview_resize_target(self,vid,index,config,image):
+        """Precompute the exact display resize while full pixels are available.
+
+        Disk originals remain full resolution. Only a byte-bounded optional
+        preview is retained, shared by all later layout reads of this frame.
+        """
+        snapshot=self._render_snapshot
+        if snapshot is None or snapshot[2]:return None
+        manager=snapshot[0];params=manager.layout_params
+        if len(params)>38 and params[38]:return None
+        mode=getattr(manager,'img_stitch_mode',0)
+        if mode==1:return None  # crop is not a resize operation
+        if min(params[6])>0:resolution=params[6]
+        elif mode==2:resolution=image.size
+        else:
+            k=max(1,int(config.count_per_action))
+            page=((sum(config.video_num_list[:vid])+index)//k if config.parallel_to_sequential else index//k)
+            segments=page_segments(config.video_num_list,k,page,config.parallel_to_sequential)
+            sizes=[]
+            for source,begin,end in segments:
+                dimensions=(image.size if source==vid else self._video_dimensions.get(str(config.real_video_path[source])))
+                if dimensions is None:return None
+                sizes.extend([dimensions]*(end-begin))
+            if not sizes:return None
+            resolution=source_resolution(sizes,params[6],mode)
+        return tuple(max(1,int(v*scale)) for v,scale in zip(resolution,params[4]))
+
     def _decode_incremental(self, path, first, last, vid, config):
         bank = self._decoder_bank
         if getattr(self,'_closed',False):
@@ -2184,10 +2219,9 @@ class VideoManager:
                     try:
                         image.save(temporary, format='JPEG', quality=90)
                         preview, preview_key = None, None
-                        snapshot = self._render_snapshot
-                        if snapshot is not None and not snapshot[2]:
-                            target = tuple(int(v) for v in snapshot[0].layout_params[6])
-                            if len(target)==2 and min(target)>0 and target[0]*target[1]*4 <= self._pixel_cache.limit:
+                        target=self._preview_resize_target(vid,index,config,image)
+                        if target is not None:
+                            if target[0]*target[1]*4 <= self._pixel_cache.limit:
                                 preview = image.resize(target, Image.BICUBIC) if target != image.size else image
                                 preview_key = ('preview', destination, target, int(Image.BICUBIC))
                         with self._raw_io_lock(vid, config):

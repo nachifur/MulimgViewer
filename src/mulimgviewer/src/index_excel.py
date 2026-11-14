@@ -66,11 +66,13 @@ def write_index_xlsx(path, model, view, cancelled=lambda:False, cache_states=Non
                 if not total:break
                 values = list(view_row(model,view,index))
                 if view == 2:
-                    frame_path = model.visual_entry(index)['path']
+                    entry = model.visual_entry(index)
+                    frame_path = entry['path']
+                    cached = model.video or entry.get('processed',False)
                     state = cache_states.get(frame_path)
                     values[-1] = ('Not checked' if state is None else
-                                  ('Cached' if model.video else 'Exists') if state else
-                                  ('Virtual / not cached' if model.video else 'Missing'))
+                                  ('Cached' if cached else 'Exists') if state else
+                                  ('Virtual / not cached' if cached else 'Missing'))
                 for col,value in enumerate(values):
                     if not isinstance(value,str) or len(value) < 16000:
                         continue

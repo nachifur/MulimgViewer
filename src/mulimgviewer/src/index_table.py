@@ -184,7 +184,8 @@ class IndexTable(IndexTableGui):
         values=self.catalog.row(self.view,index)
         if self.view==2:
             state=self._cache_states.get(values[6])
-            status=('Cached' if self.catalog.video else 'Exists') if state else ('Virtual / not cached' if self.catalog.video else 'Missing')
+            cached=self.catalog.video or self.catalog.visual_entry(index).get('processed',False)
+            status=('Cached' if cached else 'Exists') if state else ('Virtual / not cached' if cached else 'Missing')
             values=values[:-1]+(('Checking...' if state is None else status),)
         return tuple(str(value) for value in view_row(self.catalog,self.view,index,values))
 
@@ -209,20 +210,23 @@ class IndexTable(IndexTableGui):
                 owner.index_table.Refresh()
                 selected=owner.index_table.GetFirstSelected()
                 if selected<0:selected=getattr(owner,'_selected_index',None)
-                if selected is not None and selected>=0:owner._select_index(selected)
+                if selected is not None and selected>=0:owner._select_index(selected,preserve_details=True)
             wx.CallAfter(deliver)
         future.add_done_callback(done)
 
     def select_row(self, event):
         self._select_index(event.GetIndex())
 
-    def _select_index(self, index):
+    def _select_index(self, index, preserve_details=False):
         self._selected_index=index
         if self.view==2:
             entry=self.catalog.visual_entry(index)
             state=self._cache_states.get(entry['path'])
-            cache='Checking...' if state is None else ('Cached' if self.catalog.video else 'Exists') if state else ('Virtual / not cached' if self.catalog.video else 'Missing')
+            cached=self.catalog.video or entry.get('processed',False)
+            cache='Checking...' if state is None else ('Cached' if cached else 'Exists') if state else ('Virtual / not cached' if cached else 'Missing')
             text=f'ID {entry["id"]} | Page {entry["page"]+1} | Row {entry["row"]}, Col {entry["column"]} | {cache}\nOriginal source: {entry["source"]}\nImage / frame path: {entry["path"]}'
+            if entry.get('algorithm'):
+                text+=f'\nAlgorithm: {entry["algorithm"]}\nAlgorithm path: {entry.get("algorithm_path","")}\nRaw image / frame path: {entry.get("raw_path",entry["path"])}'
         elif self.view==0:
             source=str(Path(self.catalog.paths[index]).absolute()) if self.catalog.video else self.catalog._image(index)[2]
             entry=dict(source=source,path=source if not self.catalog.video else '',page=self.catalog.target(0,index))
@@ -231,7 +235,16 @@ class IndexTable(IndexTableGui):
             entry=dict(source='',path='',page=index)
             text='\n'.join(self.catalog.row(1,index))
         self._selected_entry=entry
-        self.path_details.ChangeValue(text)
+        details=self.path_details
+        selection=details.GetSelection()
+        reading=preserve_details and (details.HasFocus() or selection[0]!=selection[1])
+        if details.GetValue()!=text and not reading:
+            position=details.GetInsertionPoint()
+            scroll=details.GetScrollPos(wx.VERTICAL)
+            details.ChangeValue(text)
+            if preserve_details:
+                details.SetInsertionPoint(min(position,details.GetLastPosition()))
+                details.ScrollLines(scroll-details.GetScrollPos(wx.VERTICAL))
         self.copy_frame_button.Enable(bool(entry['path']))
         self.copy_source_button.Enable(bool(entry['source']))
         self.jump_button.Enable(True)

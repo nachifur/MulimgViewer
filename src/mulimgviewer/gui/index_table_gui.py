@@ -25,7 +25,7 @@ class IndexTableGui ( wx.Frame ):
 		bSizer2 = wx.BoxSizer( wx.VERTICAL )
 
 		self.m_panel1 = wx.Panel( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.TAB_TRAVERSAL )
-		wSizer4 = wx.FlexGridSizer( 6, 1, 0, 0 )
+		wSizer4 = wx.FlexGridSizer( 5, 1, 0, 0 )
 		wSizer4.AddGrowableCol( 0 )
 		wSizer4.AddGrowableRow( 3 )
 		wSizer4.SetFlexibleDirection( wx.BOTH )
@@ -86,13 +86,44 @@ class IndexTableGui ( wx.Frame ):
 
 		wSizer4.Add( self.match_label, 0, wx.ALL|wx.EXPAND, 5 )
 
-		self.index_table = VirtualIndexList( self.m_panel1, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LC_REPORT|wx.LC_VIRTUAL|wx.LC_SINGLE_SEL )
+		self.index_details_splitter = wx.SplitterWindow( self.m_panel1, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.SP_3D|wx.SP_LIVE_UPDATE )
+		self.index_details_splitter.SetSashGravity( 1.0 )
+		self.index_details_splitter.Bind( wx.EVT_IDLE, self.index_details_splitterOnIdle )
+		self.index_details_splitter.SetMinimumPaneSize( 80 )
+
+		self.index_details_splitter.SetToolTip( u"Drag the divider to resize the index and path details" )
+		self.index_details_splitter.SetMinSize( wx.Size( -1,220 ) )
+
+		self.index_list_panel = wx.Panel( self.index_details_splitter, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.TAB_TRAVERSAL )
+		self.index_list_panel.SetMinSize( wx.Size( -1,120 ) )
+
+		index_list_panel_layout = wx.BoxSizer( wx.VERTICAL )
+
+		self.index_table = VirtualIndexList( self.index_list_panel, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LC_REPORT|wx.LC_VIRTUAL|wx.LC_SINGLE_SEL )
 		self.index_table.SetMinSize( wx.Size( -1,120 ) )
 
-		wSizer4.Add( self.index_table, 1, wx.ALL|wx.EXPAND, 5 )
+		index_list_panel_layout.Add( self.index_table, 1, wx.EXPAND, 0 )
 
-		self.path_details = wx.TextCtrl( self.m_panel1, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size( -1,90 ), wx.TE_MULTILINE|wx.TE_READONLY )
-		wSizer4.Add( self.path_details, 0, wx.ALL|wx.EXPAND, 5 )
+
+		self.index_list_panel.SetSizer( index_list_panel_layout )
+		self.index_list_panel.Layout()
+		index_list_panel_layout.Fit( self.index_list_panel )
+		self.index_details_panel = wx.Panel( self.index_details_splitter, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.TAB_TRAVERSAL )
+		self.index_details_panel.SetMinSize( wx.Size( -1,80 ) )
+
+		index_details_panel_layout = wx.BoxSizer( wx.VERTICAL )
+
+		self.path_details = wx.TextCtrl( self.index_details_panel, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size( -1,-1 ), wx.TE_MULTILINE|wx.TE_READONLY )
+		self.path_details.SetMinSize( wx.Size( -1,80 ) )
+
+		index_details_panel_layout.Add( self.path_details, 1, wx.EXPAND, 0 )
+
+
+		self.index_details_panel.SetSizer( index_details_panel_layout )
+		self.index_details_panel.Layout()
+		index_details_panel_layout.Fit( self.index_details_panel )
+		self.index_details_splitter.SplitHorizontally( self.index_list_panel, self.index_details_panel, -110 )
+		wSizer4.Add( self.index_details_splitter, 1, wx.ALL|wx.EXPAND, 5 )
 
 		path_actions = wx.WrapSizer( wx.HORIZONTAL, wx.WRAPSIZER_DEFAULT_FLAGS )
 
@@ -181,5 +212,9 @@ class IndexTableGui ( wx.Frame ):
 
 	def copy_frame_path( self, event ):
 		event.Skip()
+
+	def index_details_splitterOnIdle( self, event ):
+		self.index_details_splitter.SetSashPosition( -110 )
+		self.index_details_splitter.Unbind( wx.EVT_IDLE )
 
 

@@ -4,6 +4,22 @@ from collections import OrderedDict
 from PIL import Image
 
 
+def source_resolution(sizes, requested, mode=0):
+    """Match layout normalization without materializing source pixels."""
+    widths,heights=map(sorted,zip(*sizes))
+    def normalized(values):
+        if mode==2:return max(values)
+        if mode==1:return min(values)
+        middle=values[1:-1] if len(values)>3 else values
+        return sum(middle)/len(middle)
+    width,height=normalized(widths),normalized(heights)
+    x,y=requested
+    if x==-1 and y==-1:return int(width),int(height)
+    if x==-1:return int(width*y/height),int(y)
+    if y==-1:return int(x),int(height*x/width)
+    return int(x),int(y)
+
+
 class PixelCache:
     def __init__(self, limit=0):
         self.lock = threading.RLock()
@@ -95,7 +111,9 @@ class LazyVideoImage:
             self.size = cached.size
             self.mode = cached.mode
         else:
-            with Image.open(self.path) as source:
+            # Pillow canonicalizes filename arguments on Windows. Internal
+            # cache reads need no repeated filesystem path resolution.
+            with open(self.path,'rb') as stream, Image.open(stream) as source:
                 self.size = source.size
                 self.mode = source.mode
         self.width, self.height = self.size
@@ -107,7 +125,7 @@ class LazyVideoImage:
         cached = self.provider(self.path) if self.provider else None
         if cached is not None:
             return getattr(cached, method)(*args, **kwargs)
-        with Image.open(self.path) as source:
+        with open(self.path,'rb') as stream, Image.open(stream) as source:
             # JPEG sources are already RGB. Conversion before resize would
             # create an unnecessary full-resolution duplicate of each frame.
             if source.mode not in ('RGB','RGBA'):

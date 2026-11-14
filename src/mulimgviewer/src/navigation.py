@@ -46,9 +46,10 @@ class NavigationMixin:
         layout = getattr(manager, 'layout_params', [])
         geometry = tuple(tuple(layout[i]) for i in (0, 1)) if len(layout) > 1 else ()
         directions = tuple(bool(layout[i]) for i in (24, 25)) if len(layout) > 25 else ()
+        algorithms=tuple(str(layout[i]) for i in (32,36,37,38,39,40)) if len(layout)>40 else ()
         return (bool(cfg.video_mode), getattr(manager, 'type', None),
                 id(getattr(manager, 'path_list', None)), id(getattr(manager, 'name_list', None)),
-                int(getattr(manager, 'count_per_action', 1)), geometry, directions,
+                int(getattr(manager, 'count_per_action', 1)), geometry, directions,algorithms,
                 bool(cfg.parallel_to_sequential), bool(cfg.parallel_sequential))
 
     def _display_grid_order(self):

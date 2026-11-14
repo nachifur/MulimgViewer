@@ -28,8 +28,14 @@ class MosaicStage:
         plan=MosaicPlan(self,manager,flist,batch,owner,epoch,points,cancelled)
         try:yield plan
         finally:
-            with self.cache.lock:
-                for entry in plan.entries:entry['pins']-=1
+            # A Future wakes its waiter before finishing its ready callbacks.
+            # Stop late callbacks before releasing readers; otherwise a
+            # callback could add a new pinned mosaic after this plan exited.
+            with plan.lock:
+                plan.closed=True
+                with self.cache.lock:
+                    for entry in plan.entries:entry['pins']-=1
+                    self.cache.readers.notify_all()
             self.cache._prune()
 
     def close(self):self.pool.shutdown(wait=False,cancel_futures=True)
@@ -41,7 +47,7 @@ class MosaicPlan:
         self.paths,self.groups=manager._normalize_flist_input(flist)
         self.paths=tuple(self.paths or ())
         self.batch=batch;self.owner=owner;self.epoch=epoch;self.points=points;self.cancelled=cancelled
-        self.entries=[];self.futures={};self.lock=threading.RLock()
+        self.entries=[];self.futures={};self.lock=threading.RLock();self.closed=False
         self.indices=display_indices(manager._custom_algorithm_registry,manager.layout_params)
         self.reference=original_index(manager._custom_algorithm_registry)
         if self.reference is None or specification(manager._custom_algorithm_registry,self.reference)['identity']:
@@ -49,14 +55,14 @@ class MosaicPlan:
 
     def ready(self,index,paths):
         with self.lock:
-            if index not in self.futures and not self.cancelled() and not self.cache.closed:
+            if not self.closed and index not in self.futures and not self.cancelled() and not self.cache.closed:
                 self.futures[index]=self._request(index,tuple(paths))
 
     def _request(self,index,inputs):
         params=copy.deepcopy(self.manager.layout_params)
         params[32]=False;params[37]=0;params[38]=False;params[39]='1,1';params[40]=False;params[33]='';params[36]=False
         signature=[(str(path),Path(path).stat().st_size,Path(path).stat().st_mtime_ns) for path in inputs]
-        key='mosaic:'+hashlib.sha256(repr((params,signature,self.points,self.batch,
+        key='mosaic:'+hashlib.sha256(repr((params,tuple(self.manager.gap_color),signature,self.points,self.batch,
             repr(getattr(self.manager,'exif_display_config',None)))).encode('utf-8')).hexdigest()
         algorithm='original' if index is None else specification(self.manager._custom_algorithm_registry,index).get(
             'cache_name',self.manager._custom_algorithm_registry[index][0])
@@ -64,6 +70,7 @@ class MosaicPlan:
         key+=':'+algorithm
         with self.cache.lock:
             if self.cache.closed or self.cancelled():raise CancelledError()
+            self.cache._retire_versions(key,algorithm,(self.owner,self.epoch,self.batch))
             entry=self.cache.entries.get(key)
             if entry is not None and entry['future'].done():
                 try:
@@ -103,12 +110,7 @@ class MosaicPlan:
             if flag!=0 or manager.img is None:raise RuntimeError(f'{algorithm}: mosaic failed')
             state={name:getattr(manager,name) for name in RENDER_STATE if hasattr(manager,name)}
             try:
-                required=manager.img.width*manager.img.height*5+65536
-                self.cache._prune(required)
-                with self.cache.lock:
-                    retained=sum(e.get('bytes',0)+e.get('reserved',0) for e in self.cache.entries.values())
-                    if retained+required>self.cache.disk_limit:raise OSError('Algorithm mosaic cache disk budget exceeded')
-                    entry['reserved']=required
+                self.cache._prune()
                 entry['directory'].mkdir(parents=True)
                 path=entry['directory']/page_name(self.batch)
                 manager.img.save(path,format='PNG',compress_level=1)
@@ -138,11 +140,10 @@ class MosaicPlan:
     def compose(self, processed):
         for index,paths in processed.items():self.ready(index,paths)
         params=self.manager.layout_params
-        if params[38]:
-            rows,cols=display_grid(self.manager._custom_algorithm_registry,params)
-            indices=self.indices
-            slots=rows*cols
-        else:indices=self.indices;rows=len(indices);cols=1;slots=rows
+        algorithm_grid=bool(params[32] or params[38])
+        rows,cols=display_grid(self.manager._custom_algorithm_registry,params)
+        indices=self.indices
+        slots=rows*cols
         artifacts={index:self.futures[index].result() for index in indices}
         self.futures[self.reference].result()
         if self.cancelled():raise CancelledError()
@@ -158,10 +159,10 @@ class MosaicPlan:
             canvas=Image.new('RGBA',(width*cols,height*rows),tuple(artifacts[indices[0]][1]['gap_color']))
             state=copy.deepcopy(artifacts[indices[0]][1])
             xy=[];ids=[];source_slots=[];blanks=set();titles=[]
-            base=len(self.paths)
             base_state=artifacts[indices[0]][1]
+            base=max(len(self.paths),max(base_state['xy_grids_id_list'],default=-1)+1)
             for slot in range(slots):
-                if params[38] and params[40]:row=slot%rows;col=slot//rows
+                if algorithm_grid and params[40]:row=slot%rows;col=slot//rows
                 else:row,col=divmod(slot,cols)
                 x,y=col*width,row*height
                 present=slot<len(indices)
@@ -171,15 +172,15 @@ class MosaicPlan:
                 for point,source_id in zip(current['xy_grid'],current['xy_grids_id_list']):
                     output_id=slot*base+int(source_id)
                     xy.append((float(point[0])+x,float(point[1])+y));ids.append(output_id)
-                    if not present:blanks.add(output_id)
-                source_slots.extend(range(base) if present else [-1]*base)
+                    if not present or int(source_id)>=len(self.paths) or source_id in current.get('_blank_img_ids',()):blanks.add(output_id)
+                source_slots.extend([i if present and i<len(self.paths) else -1 for i in range(base)])
                 if present:
                     for title in current.get('pdf_title_layers',[]):
                         title=copy.deepcopy(title);title['x']+=x;title['y']+=y;titles.append(title)
             state.update(xy_grid=np.array(xy),xy_grids_id_list=ids,_status_source_slots=tuple(source_slots),
                 _blank_img_ids=blanks,flist=list(self.paths),_flist_groups=self.groups,
-                _show_all_func_enabled=bool(params[38]),_show_all_func_layout=(rows,cols) if params[38] else None,
-                _original_row_col=list(params[0]) if params[38] else None,
-                _show_all_func_expanded_row_col=[params[0][0]*rows,params[0][1]*cols] if params[38] else None,
+                _show_all_func_enabled=algorithm_grid,_show_all_func_layout=(rows,cols) if algorithm_grid else None,
+                _original_row_col=list(params[0]) if algorithm_grid else None,
+                _show_all_func_expanded_row_col=[params[0][0]*rows,params[0][1]*cols] if algorithm_grid else None,
                 _func_layout_vertical=bool(params[40]),pdf_title_layers=titles)
             return canvas,state

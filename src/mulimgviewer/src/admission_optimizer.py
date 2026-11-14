@@ -106,6 +106,13 @@ class AdaptiveAdmissionBudget:
                 return self._change(self.best,'restore-best')
             candidates = [max(self.minimum,int(round(self.best*.75))),
                           min(self.ceiling,max(self.best+1,int(round(self.best*4/3))))]
+            # A single unsuccessful neighboring probe is not evidence that
+            # all lower concurrencies are slower. Contention can create a
+            # non-monotone curve; examine the bounded coarse ladder as well.
+            target=self.ceiling
+            while target>self.minimum:
+                target=max(self.minimum,int(round(target*.75)))
+                candidates.append(target)
             for candidate in candidates:
                 if candidate != self.best and candidate not in self.visited:
                     return self._change(candidate,'probe')

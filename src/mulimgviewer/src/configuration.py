@@ -29,7 +29,8 @@ def settings_controls(owner):
         parent = control.GetParent()
         while parent is not None and parent is not owner.m_panel4:
             parent = parent.GetParent()
-        if parent is None:
+        # Input mode lives in the toolbar but is still a persisted preference.
+        if parent is None and name != 'choice_input_mode':
             continue
         seen.add(id(control))
         result[CONTROL_NAMES.get(name, name)] = control

@@ -20,7 +20,7 @@ from pathlib import Path
 from PIL import Image
 from .custom_func.contract import specification, processing_indices
 from .custom_func.runtime import state, execution_lock
-from .cache_layout import VisibleCache, source_names, component
+from .cache_layout import VisibleCache, processed_names, component, source_record
 
 
 def readable_name(value, limit):
@@ -76,27 +76,26 @@ class WorkBudget:
 
 
 class CustomPipeline:
-    def __init__(self, directory, disk_limit=4*1024**3, free_reserve=256*1024**2, public_root=None):
+    def __init__(self, directory, public_root=None):
         self.directory=Path(directory).resolve()
-        self.disk_limit=max(1,int(disk_limit))
-        self.free_reserve=max(0,int(free_reserve))
         self.lock=threading.RLock()
+        self.readers=threading.Condition(self.lock)
         self.budget=WorkBudget()
         self.pool=ThreadPoolExecutor(max(1,os.cpu_count() or 1),thread_name_prefix='custom-process')
         self.entries={};self.windows={};self.closed=False
         self.history={};self.hits=self.misses=0
         self.peak_active=0
+        self._pending_deletions=set()
+        self._retired_entries=[]
         self._initialized=False
         self._init_lock=threading.Lock()
+        self._delete_lock=threading.RLock()
         self.visible=VisibleCache(public_root or self.directory/'catalog',self._reserve_visible,self._release_visible)
         self.mosaic_stage=None
 
     def _reserve_visible(self,entry,size):
         with self.lock:
-            total=sum(e.get('bytes',0)+e.get('reserved',0) for e in self.entries.values())
-            if total+size>self.disk_limit:raise OSError('Cache disk budget exceeded while copying an artifact')
             entry['reserved']=entry.get('reserved',0)+size
-        if shutil.disk_usage(self.directory).free<size+self.free_reserve:raise OSError('Insufficient cache disk space')
 
     def _release_visible(self,entry,size):
         with self.lock:
@@ -121,6 +120,7 @@ class CustomPipeline:
 
     def _initialize(self):
         with self._init_lock:
+            if self.closed:raise CancelledError()
             if self._initialized:return
             self.directory.mkdir(parents=True,exist_ok=True)
             # This directory belongs exclusively to this pipeline instance.
@@ -131,34 +131,69 @@ class CustomPipeline:
             self._initialized=True
 
     def _remove(self, path):
-        resolved=Path(path).resolve()
-        if resolved.parent != self.directory:
-            raise ValueError('Custom cache cleanup escaped its directory')
-        shutil.rmtree(str(resolved),ignore_errors=True)
+        with self._delete_lock:self._remove_locked(path)
+
+    def _remove_locked(self,path):
+        candidate=Path(path).absolute()
+        if candidate.parent!=self.directory:
+            raise ValueError(f'Custom cache cleanup escaped its directory: {candidate} (root {self.directory})')
+        if not candidate.exists():
+            with self.lock:self._pending_deletions.discard(candidate)
+            return
+        # Resolve both sides at the same time. Windows can canonicalize a
+        # partially-created/deleted ancestor differently from its startup path.
+        # Child links escaping the current owned parent are still rejected.
+        resolved=candidate.resolve();root=self.directory.resolve()
+        if resolved.parent!=root:
+            if not candidate.exists():
+                with self.lock:self._pending_deletions.discard(candidate)
+                return
+            raise ValueError(f'Custom cache cleanup escaped its directory: {resolved!r} (root {root!r})')
+        shutil.rmtree(str(candidate),ignore_errors=True)
+        # Windows may temporarily retain a handle (e.g. antivirus). Keep a
+        # retry record rather than orphaning the directory permanently.
+        remaining=candidate.exists()
+        with self.lock:
+            if remaining:self._pending_deletions.add(candidate)
+            else:self._pending_deletions.discard(candidate)
+
+    def _retire_versions(self,key,algorithm,user):
+        """One current version per page/algorithm/layer; active readers finish."""
+        mosaic=key.startswith('mosaic:')
+        for old_key,entry in self.entries.items():
+            if old_key!=key and old_key.startswith('mosaic:')==mosaic and entry.get('algorithm')==algorithm:
+                entry['users'].discard(user)
 
     def publish_entry(self,entry,valid=lambda:True):
         if '_public_target' in entry and not self.visible.current(entry):
             with self.lock:
                 base=max(0,entry.get('bytes',0)-entry.get('_visible_copied',0))
-            self.visible.publish(entry['_public_target'],entry['_public_files'],entry,valid)
+            self.visible.publish(entry['_public_target'],entry['_public_files'],entry,valid,
+                metadata=entry.get('_public_metadata'))
             if base:
                 with self.lock:
                     entry['bytes']=base+entry.get('_visible_copied',0);entry['reserved']=0
 
-    def _prune(self, reserve=0):
+    def _prune(self):
         # Workers/coordinators only; no GUI or cache-state lock spans I/O.
         remove=[]
         with self.lock:
-            total=sum(entry.get('bytes',0)+entry.get('reserved',0) for entry in self.entries.values())
+            remove,self._retired_entries=self._retired_entries,[]
             for key,entry in sorted(self.entries.items(),key=lambda pair:pair[1]['used']):
                 entry['users']={user for user in entry['users'] if self._valid(*user)}
                 if not entry['pins'] and entry['future'].done() and (
-                        not entry['users'] or not entry.get('cacheable',True) or total+reserve>self.disk_limit
+                        not entry['users'] or not entry.get('cacheable',True)
                         or entry['future'].cancelled() or entry['future'].exception() is not None
                         or (getattr(self,'active_names',None) is not None and entry.get('algorithm') not in self.active_names)):
-                    self.entries.pop(key,None);total-=entry.get('bytes',0);remove.append((entry['directory'],entry))
+                    self.entries.pop(key,None);remove.append((entry['directory'],entry))
+            retry=self._pending_deletions-{entry['directory'] for entry in self.entries.values()}
         for path,entry in remove:
-            self.visible.remove(entry);self._remove(path)
+            try:self.visible.remove(entry)
+            except OSError:
+                with self.lock:self._retired_entries.append((path,entry))
+                continue
+            self._remove(path)
+        for path in retry:self._remove(path)
 
     def _descriptor(self, manager, paths, index, owner, epoch, batch):
         registry=manager._custom_algorithm_registry
@@ -176,11 +211,20 @@ class CustomPipeline:
 
     def composition_bytes(self, flist, results, manager=None):
         pixels=0;largest=0;width=height=1
-        for path in [p for group in results.values() for p in group]+list(flist):
-            with Image.open(path) as image:
-                pixels+=image.width*image.height
-                largest=max(largest,image.width*image.height)
-                width=max(width,image.width);height=max(height,image.height)
+        # Identity results reference the same inputs. Open each header once,
+        # not once for the raw layer and again for every identity algorithm.
+        paths=dict.fromkeys([p for group in results.values() for p in group]+list(flist))
+        provider=getattr(getattr(self,'pixel_cache',None),'get',lambda path:None)
+        for path in paths:
+            cached=provider(path)
+            if cached is not None:
+                source_width,source_height=cached.size
+            else:
+                with open(path,'rb') as stream, Image.open(stream) as image:
+                    source_width,source_height=image.size
+            pixels+=source_width*source_height
+            largest=max(largest,source_width*source_height)
+            width=max(width,source_width);height=max(height,source_height)
         if manager is None:return max(32*1024**2,pixels*16)
         params=manager.layout_params
         resolution=params[6]
@@ -190,15 +234,16 @@ class CustomPipeline:
         width=max(1,width*params[4][0]);height=max(1,height*params[4][1])
         rows=cols=1
         for grid in params[:3]:rows*=grid[0];cols*=grid[1]
-        if params[38]:
-            extra_rows,extra_cols=map(int,params[39].split(','));rows*=extra_rows;cols*=extra_cols
+        if params[32] or params[38]:
+            from .custom_func.contract import display_grid
+            extra_rows,extra_cols=display_grid(manager._custom_algorithm_registry,params)
+            rows*=extra_rows;cols*=extra_cols
         gap=max([0]+[float(value) for value in params[3]])
         title=params[17]
         title_height=2*float(title[8]) if title[1] else 0
         canvas=(width+gap)*cols*(height+gap+title_height)*rows
-        variants=2 if params[32] else 1
         # One decoded source tile at a time, plus canvases and display copies.
-        return max(32*1024**2,int(largest*12+canvas*16*variants))
+        return max(32*1024**2,int(largest*12+canvas*16))
 
     @contextmanager
     def prepare(self, manager, flist, batch, owner, epoch, cancelled=lambda:False, on_ready=None):
@@ -224,6 +269,7 @@ class CustomPipeline:
                     continue
                 with self.lock:
                     if not self.node_valid(owner,epoch,batch,algorithm):raise CancelledError()
+                    self._retire_versions(key,algorithm,(owner,epoch,batch))
                     if spec['ordered'] and batch!=self.windows[owner][2]:raise CancelledError()
                     entry=self.entries.get(key)
                     if entry is not None and entry['future'].done():
@@ -234,7 +280,7 @@ class CustomPipeline:
                     if entry is None:
                         name=readable_name(registry[index][0],32)
                         entry=dict(directory=self.directory/f'result_{name}__page_{batch+1:06d}__{uuid.uuid4().hex[:12]}',users=set(),pins=0,
-                                   used=time.monotonic(),bytes=0,cacheable=spec['cacheable'],algorithm=algorithm)
+                                   used=time.monotonic(),bytes=0,page=batch,cacheable=spec['cacheable'],algorithm=algorithm)
                         self.entries[key]=entry;self.misses+=1
                         entry['future']=self.pool.submit(self._process,manager,paths,index,spec,size,
                             entry,owner,epoch,batch,cancelled)
@@ -269,6 +315,7 @@ class CustomPipeline:
         finally:
             with self.lock:
                 for entry in leases:entry['pins']-=1
+                self.readers.notify_all()
             self._prune()
 
     def _process(self, manager, paths, index, spec, size, entry, owner, epoch, batch, cancelled):
@@ -294,20 +341,12 @@ class CustomPipeline:
                 if stale():raise CancelledError()
                 self._prune()
                 temporary.mkdir(parents=True)
-                required=sum(image.width*image.height*4+65536 for image in outputs)
-                self._prune(required)
-                with self.lock:
-                    retained=sum(value.get('bytes',0)+value.get('reserved',0) for value in self.entries.values())
-                    if required+retained>self.disk_limit:
-                        raise OSError('Custom result cache disk budget exceeded; reduce cache window or output size')
-                    entry['reserved']=required
-                if shutil.disk_usage(self.directory).free<required+self.free_reserve:
-                    raise OSError('Custom result cache disk budget exceeded; reduce cache window or output size')
-                names=source_names(manager,paths)
+                names=processed_names(manager,paths)
                 for name,image in zip(names,outputs):
                     (temporary/name).parent.mkdir(parents=True,exist_ok=True)
                     image.save(temporary/name,format='PNG',compress_level=1)
                 (temporary/'cache_info.json').write_text(json.dumps(dict(algorithm=manager._custom_algorithm_registry[index][0],
+                    algorithm_path=manager._custom_algorithm_registry[index][1],
                     page=batch+1,cache_version=spec['cache_version'],inputs=list(paths),outputs=names),
                     ensure_ascii=False,indent=2),encoding='utf-8')
                 amount=sum(path.stat().st_size for path in temporary.rglob('*') if path.is_file())
@@ -316,9 +355,23 @@ class CustomPipeline:
                 if entry['directory'].exists():self._remove(entry['directory'])
                 os.replace(str(temporary),str(entry['directory']))
                 algorithm=component(manager._custom_algorithm_registry[index][0])
-                visible=self.visible.root/algorithm/'processed'/f'page_{batch+1:06d}'
+                visible=self.visible.root/algorithm/'processed'
                 entry['_public_target']=visible
-                entry['_public_files']={name:entry['directory']/name for name in names+['cache_info.json']}
+                entry['_public_files']={name:entry['directory']/name for name in names}
+                catalogs={}
+                for name,source in zip(names,paths):
+                    folder=Path(name).parts[0]
+                    manifest=(Path(folder)/'source.json').as_posix()
+                    if manifest in catalogs:continue
+                    value=source_record(manager,int(folder.removeprefix('source_'))-1,Path(source).parent)
+                    value.update(algorithm=manager._custom_algorithm_registry[index][0],
+                        algorithm_path=str(Path(manager._custom_algorithm_registry[index][1]).absolute()),
+                        cache_version=spec['cache_version'],
+                        raw_frames_path=str(Path(source).parent.absolute()),
+                        processed_frames_path=str(visible/folder/'frames'),
+                        source_catalog=str(self.visible.root.parent/'sources'/value['media']/folder/'source.json'))
+                    catalogs[manifest]=value
+                entry['_public_metadata']=catalogs
                 self.publish_entry(entry,lambda:not cancelled())
                 with self.lock:
                     entry['bytes']=amount+entry.get('_visible_copied',0)
@@ -339,7 +392,40 @@ class CustomPipeline:
                 service={str(k):sum(v)/len(v) for k,v in self.history.items() if v})
 
     def close(self):
-        with self.lock:self.closed=True;self.windows.clear()
+        with self.lock:
+            if self.closed:return
+            self.closed=True;self.windows.clear()
         with self.budget.condition:self.budget.condition.notify_all()
         if self.mosaic_stage is not None:self.mosaic_stage.close()
         self.pool.shutdown(wait=False,cancel_futures=True)
+        # Never wait for image processing or disk deletion on the GUI thread.
+        # This executor is joined by Python at normal process exit, so closing
+        # the window does not abandon the work tree while writers still run.
+        cleanup=ThreadPoolExecutor(1,thread_name_prefix='custom-cache-cleanup')
+        self.cleanup_future=cleanup.submit(self._finish_close)
+        cleanup.shutdown(wait=False)
+
+    def _finish_close(self):
+        self.pool.shutdown(wait=True,cancel_futures=True)
+        if self.mosaic_stage is not None:
+            self.mosaic_stage.pool.shutdown(wait=True,cancel_futures=True)
+        with self.readers:
+            while any(entry['pins'] for entry in self.entries.values()):
+                self.readers.wait()
+        self._prune()
+        # Retire prior-run artifacts too; all current writers/readers are gone.
+        with self._init_lock:
+            try:paths=list(self.directory.iterdir())
+            except FileNotFoundError:paths=[]
+            for path in paths:
+                if path.is_dir() and path.name.startswith(('result_','tmp_')):self._remove(path)
+        for attempt in range(4):
+            with self.lock:pending=bool(self._pending_deletions or self._retired_entries)
+            if not pending:break
+            time.sleep(.05*(attempt+1))
+            self._prune()
+        if self.directory.parent.name=='.work':
+            try:self.directory.rmdir()
+            except OSError:pass
+            try:self.directory.parent.rmdir()
+            except OSError:pass

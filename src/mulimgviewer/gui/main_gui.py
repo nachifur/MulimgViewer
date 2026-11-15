@@ -176,7 +176,7 @@ class MulimgViewerGui ( wx.Frame ):
 
 		bSizer162.Add( self.m_staticText211, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
-		save_formatChoices = [ u"png", u"pdf", u"jpg" ]
+		save_formatChoices = [ u"jpg", u"png", u"pdf" ]
 		self.save_format = wx.Choice( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.Size( 90,-1 ), save_formatChoices, 0 )
 		self.save_format.SetSelection( 0 )
 		bSizer162.Add( self.save_format, 0, wx.ALL|wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL, 5 )
@@ -310,6 +310,18 @@ class MulimgViewerGui ( wx.Frame ):
 
 		self.cache_multiplier = wx.TextCtrl( self.m_panel4, wx.ID_ANY, u"1", wx.DefaultPosition, wx.Size( 20,-1 ), 0 )
 		wSizer13.Add( self.cache_multiplier, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+
+		self.cache_format_label = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Cache format", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
+		self.cache_format_label.Wrap( -1 )
+
+		wSizer13.Add( self.cache_format_label, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+
+		cache_save_formatChoices = [ u"JPEG compressed", u"PNG lossless" ]
+		self.cache_save_format = wx.Choice( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.Size( -1,-1 ), cache_save_formatChoices, 0 )
+		self.cache_save_format.SetSelection( 0 )
+		self.cache_save_format.SetToolTip( u"Source frame cache format. Refresh applies changes; algorithm intermediates remain lossless." )
+
+		wSizer13.Add( self.cache_save_format, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
 
 		fgSizer3.Add( wSizer13, 1, wx.EXPAND, 5 )
@@ -789,7 +801,7 @@ class MulimgViewerGui ( wx.Frame ):
 		self.m_staticline7 = wx.StaticLine( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_HORIZONTAL )
 		fgSizer3.Add( self.m_staticline7, 0, wx.EXPAND |wx.ALL, 5 )
 
-		self.m_staticText13 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Color/transparency", wx.DefaultPosition, wx.Size( 150,-1 ), 0 )
+		self.m_staticText13 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Color/transparency", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
 		self.m_staticText13.Wrap( -1 )
 
 		self.m_staticText13.SetFont( wx.Font( 12, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD, False, wx.EmptyString ) )
@@ -807,7 +819,7 @@ class MulimgViewerGui ( wx.Frame ):
 		wSizer8.Add( self.m_staticText22, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
 		self.colourPicker_draw = wx.ColourPickerCtrl( self.m_panel4, wx.ID_ANY, wx.Colour( 239, 41, 41 ), wx.DefaultPosition, wx.Size( 40,-1 ), wx.CLRP_DEFAULT_STYLE )
-		wSizer8.Add( self.colourPicker_draw, 0, wx.ALL, 5 )
+		wSizer8.Add( self.colourPicker_draw, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
 		self.m_staticText17 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Gap", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
 		self.m_staticText17.Wrap( -1 )
@@ -815,15 +827,15 @@ class MulimgViewerGui ( wx.Frame ):
 		wSizer8.Add( self.m_staticText17, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
 		self.colourPicker_gap = wx.ColourPickerCtrl( self.m_panel4, wx.ID_ANY, wx.Colour( 255, 255, 255 ), wx.DefaultPosition, wx.Size( 40,-1 ), wx.CLRP_DEFAULT_STYLE )
-		wSizer8.Add( self.colourPicker_gap, 0, wx.ALL, 5 )
+		wSizer8.Add( self.colourPicker_gap, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
 		self.m_staticText471 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Font", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText471.Wrap( -1 )
 
-		wSizer8.Add( self.m_staticText471, 0, wx.ALL, 5 )
+		wSizer8.Add( self.m_staticText471, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
-		self.font_color = wx.ColourPickerCtrl( self.m_panel4, wx.ID_ANY, wx.Colour( 0, 0, 0 ), wx.DefaultPosition, wx.DefaultSize, wx.CLRP_DEFAULT_STYLE )
-		wSizer8.Add( self.font_color, 0, wx.ALL, 5 )
+		self.font_color = wx.ColourPickerCtrl( self.m_panel4, wx.ID_ANY, wx.Colour( 0, 0, 0 ), wx.DefaultPosition, wx.Size( 40,-1 ), wx.CLRP_DEFAULT_STYLE )
+		wSizer8.Add( self.font_color, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
 
 		fgSizer3.Add( wSizer8, 1, wx.EXPAND, 5 )

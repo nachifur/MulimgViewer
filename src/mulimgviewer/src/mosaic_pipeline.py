@@ -16,6 +16,19 @@ from .cache_layout import page_name, component, CachedCanvas
 from .custom_func.contract import specification, original_index, display_indices, display_grid, processing_indices
 
 
+def mosaic_request_key(manager,index,inputs,points,batch):
+    params=copy.deepcopy(manager.layout_params)
+    params[32]=False;params[37]=0;params[38]=False;params[39]='1,1';params[40]=False;params[33]='';params[36]=False;params[35]=1
+    signature=[(str(path),Path(path).stat().st_size,Path(path).stat().st_mtime_ns) for path in inputs]
+    key='mosaic:'+hashlib.sha256(repr((params,tuple(manager.gap_color),int(getattr(manager,'img_alpha',255)),signature,points,batch,
+        repr(getattr(manager,'exif_display_config',None)))).encode('utf-8')).hexdigest()
+    algorithm='original' if index is None else specification(manager._custom_algorithm_registry,index).get(
+        'cache_name',manager._custom_algorithm_registry[index][0])
+    # Distinguish an identity algorithm from original even when input paths match.
+    key+=':'+algorithm
+    return key,params,algorithm
+
+
 class MosaicStage:
     def __init__(self, cache):
         self.cache=cache
@@ -65,15 +78,7 @@ class MosaicPlan:
                     self.futures[index]=future
 
     def _request(self,index,inputs):
-        params=copy.deepcopy(self.manager.layout_params)
-        params[32]=False;params[37]=0;params[38]=False;params[39]='1,1';params[40]=False;params[33]='';params[36]=False
-        signature=[(str(path),Path(path).stat().st_size,Path(path).stat().st_mtime_ns) for path in inputs]
-        key='mosaic:'+hashlib.sha256(repr((params,tuple(self.manager.gap_color),signature,self.points,self.batch,
-            repr(getattr(self.manager,'exif_display_config',None)))).encode('utf-8')).hexdigest()
-        algorithm='original' if index is None else specification(self.manager._custom_algorithm_registry,index).get(
-            'cache_name',self.manager._custom_algorithm_registry[index][0])
-        # Distinguish an identity algorithm from original even when input paths match.
-        key+=':'+algorithm
+        key,params,algorithm=mosaic_request_key(self.manager,index,inputs,self.points,self.batch)
         with self.cache.lock:
             if self.cache.closed or self.cancelled():raise CancelledError()
             self.cache._retire_versions(key,algorithm,(self.owner,self.epoch,self.batch))

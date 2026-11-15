@@ -6,7 +6,7 @@ import os
 from pathlib import Path
 from types import SimpleNamespace
 from .video_timeline import page_segments
-from .video_paths import frame_filename
+from .video_paths import frame_filename, manager_cache_format
 
 
 def visual_cells(outer, inner, vertical=(False,False)):
@@ -60,6 +60,7 @@ class VisualCatalogMixin:
                     self.cell_algorithms[cell]='Original' if index is None else registry[index][0]
                     self.cell_algorithm_indices[cell]=index
             self.cells=tuple(sorted(cells))
+        self.cache_extension='png' if manager_cache_format(manager)==1 else 'jpeg'
         self.cache_paths=tuple(str(Path(p).absolute()) for p in getattr(config,'video_path',manager.path_list))
         # Visible item counts are piecewise constant. Store only stream-end
         # breakpoints, never an entry per page or frame of a long video.
@@ -88,7 +89,7 @@ class VisualCatalogMixin:
                 for frame in range(first,stop):
                     if len(items)>=self.capacity:break
                     original=str(Path(self.paths[video]).absolute())
-                    path=str(Path(self.cache_paths[video])/frame_filename(frame,self.fps[video],self.step))
+                    path=str(Path(self.cache_paths[video])/frame_filename(frame,self.fps[video],self.step,self.cache_extension))
                     seconds=frame*self.step/self.fps[video] if self.fps[video]>0 else 0
                     items.append(dict(source=original,path=path,label=f'Video {video+1}',
                                       item=f'Frame {frame+1}/{self.counts[video]} | {seconds:.3f}s',

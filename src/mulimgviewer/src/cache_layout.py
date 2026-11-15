@@ -71,6 +71,7 @@ def source_record(manager, number, path):
     value=dict(source=number+1,media='video' if getattr(manager,'video_mode',False) else 'image',
         path=str(Path(originals[number] if number<len(originals) else path).absolute()),
         input_mode=getattr(manager,'_cache_input_mode',''),
+        frame_encoding=('png' if (manager.layout_params[41] if len(getattr(manager,'layout_params',()))>41 else getattr(manager,'cache_save_format',0))==1 else 'jpeg') if getattr(manager,'video_mode',False) else 'original',
         parallel_to_sequential=bool(getattr(manager,'parallel_to_sequential',False)),
         parallel_sequential=bool(layout[22]) if len(layout)>22 else False,
         input=str(getattr(manager,'input_path','')))

@@ -15,6 +15,7 @@ import traceback
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfgen import canvas
+from .export_formats import JPG, PNG, PDF
 from reportlab.lib.utils import ImageReader
 from reportlab.pdfbase import pdfmetrics
 
@@ -41,7 +42,14 @@ class ImgUtils():
         # Native Pillow copies preserve the cached input and avoid a NumPy
         # array, concatenation, dtype copy and second Pillow conversion per tile.
         result=img.convert('RGBA')
-        result.putalpha(int(alpha))
+        opacity=max(0,min(255,int(alpha)))
+        if opacity==0:result.putalpha(0)
+        elif opacity!=255:
+            # Multiply existing coverage, preserving transparent PNG pixels.
+            # Pillow applies the lookup in native code; the input stays intact.
+            with result.getchannel('A') as channel:
+                with channel.point([(value*opacity+127)//255 for value in range(256)]) as scaled:
+                    result.putalpha(scaled)
         return result
 
     def sort_box_point(self, box_point, show_scale, img_resolution_origin, first_point=False):
@@ -631,25 +639,39 @@ class ImgUtils():
         return img
 
     def save_img_diff_format(self, png_path,img,save_format=0,use_vector_titles=True):
-        if save_format == 0:
+        if save_format == PNG:
             img.save(png_path, 'PNG')
-        elif save_format == 2:
-            rgb_img = img.convert('RGB')
+        elif save_format == JPG:
+            # Gap colour is already painted into gap/blank pixels. It must
+            # never become a full-image matte and tint translucent image tiles.
+            # JPEG cannot retain Alpha; flatten remaining coverage onto white,
+            # independently of the selected gap colour.
+            if img.mode in ('RGBA','LA') or 'transparency' in img.info:
+                foreground=img if img.mode=='RGBA' else img.convert('RGBA')
+                try:
+                    rgb_img=Image.new('RGB',img.size,(255,255,255))
+                    with foreground.getchannel('A') as coverage:
+                        rgb_img.paste(foreground,(0,0),coverage)
+                finally:
+                    if foreground is not img:foreground.close()
+            else:rgb_img=img.convert('RGB')
             new_path = os.path.splitext(png_path)[0] + '.jpg'
-            rgb_img.save(new_path, 'JPEG')
+            try:rgb_img.save(new_path, 'JPEG')
+            finally:rgb_img.close()
         else:
             new_path = os.path.splitext(png_path)[0] + '.pdf'
             manager = getattr(self, "manager", None) if use_vector_titles else None
+            base_img = img.copy()
             try:
-                base_img = img.copy()
-                if manager is None and hasattr(self, "img"):
-                    manager = getattr(self, "manager_ref", None)
                 if manager and getattr(manager, "pdf_title_layers", []):
                     manager.save_pdf_with_vector_text(new_path, base_img)
                 else:
-                    base_img.save(new_path, 'PDF')
-            except ImportError:
-                base_img.save(new_path, 'PDF')
+                    # PIL's RGB PDF writer uses JPEG. Use the same lossless
+                    # raster embedding path for selected images and crops too.
+                    pdf=canvas.Canvas(str(new_path),pagesize=base_img.size)
+                    pdf.drawImage(ImageReader(base_img),0,0,width=base_img.width,height=base_img.height,mask='auto')
+                    pdf.save()
+            finally:base_img.close()
 
 class ImgManager(ImgData):
     """Multi-image manager.
@@ -756,7 +778,7 @@ class ImgManager(ImgData):
         return base_name
 
     def save_pdf_with_vector_text(self, pdf_path, base_img):
-        if base_img.mode not in ('RGB', 'L', 'CMYK'):
+        if base_img.mode not in ('RGB', 'RGBA', 'L', 'LA', 'CMYK'):
             base_img = base_img.convert('RGB')
         else:
             base_img = base_img.copy()
@@ -922,13 +944,14 @@ class ImgManager(ImgData):
                     if img.dtype != np.uint8:
                         img = (255 * img).astype(np.uint8)
                     pil_img = Image.fromarray(img)
-                    img_list.append(pil_img.convert('RGB'))
+                    img_list.append(pil_img.convert('RGBA' if pil_img.mode=='RGBA' else 'RGB'))
                     self.full_exif_cache[i] = {"raw_exif": {}, "formatted_exif": {}, "has_exif": False}
                 elif cached_paths is not None or (getattr(self, '_video_lazy_frames', False) and not show_custom_func):
                     img_list.append(LazyVideoImage(path, getattr(self, '_video_pixel_provider', None)))
                     self.full_exif_cache[i] = {'raw_exif': {}, 'formatted_exif': {}, 'has_exif': False}
                 else:
-                    img = Image.open(path).convert('RGB')
+                    with Image.open(path) as source:
+                        img=source.convert('RGBA' if source.mode in ('RGBA','LA') or 'transparency' in source.info else 'RGB')
                     img_list.append(img)
                     self.full_exif_cache[i] = self.extract_complete_exif(path)
             else:
@@ -963,7 +986,7 @@ class ImgManager(ImgData):
             # If saving as PDF, convert images in processed_img to PDF and remove originals
             # try:
             #     save_format = self.layout_params[35] if len(self.layout_params) > 35 else 0
-            #     if save_format == 1 and out_path_str:
+            #     if save_format == PDF and out_path_str:
             #         available_algorithms = get_available_algorithms()
             #         algorithm_name = self.algorithm_output_name(algorithm_type) if algorithm_type < len(available_algorithms) else "Unknown"
             #         processed_dir = Path(out_path_str) / "algorithms" / algorithm_name / "processed_img"
@@ -2317,13 +2340,18 @@ class ImgManager(ImgData):
                     target.parent.mkdir(parents=True,exist_ok=True)
                     if images is not None:
                         self.ImgF.save_img_diff_format(target,images[index],save_format=self.layout_params[35],use_vector_titles=False)
-                    elif self.layout_params[35]==1:
-                        with Image.open(source) as image:
-                            self.ImgF.save_img_diff_format(target,image.convert('RGB'),save_format=1,use_vector_titles=False)
                     else:
-                        target=target.with_suffix(Path(source).suffix)
-                        if self.layout_params[11] and not getattr(self,'video_mode',False):move(source,target)
-                        else:copyfile(source,target)
+                        fmt=self.layout_params[35]
+                        suffix=Path(source).suffix.lower()
+                        if (fmt==PNG and suffix=='.png') or (fmt==JPG and suffix in ('.jpg','.jpeg')):
+                            target=target.with_suffix('.png' if fmt==PNG else '.jpg')
+                            copyfile(source,target)
+                        else:
+                            with Image.open(source) as image:
+                                self.ImgF.save_img_diff_format(target,image,save_format=fmt,use_vector_titles=False)
+                            target=target.with_suffix('.pdf' if fmt==PDF else '.jpg' if fmt==JPG else '.png')
+                        if self.layout_params[11] and not getattr(self,'video_mode',False) and Path(source).resolve()!=target.resolve():
+                            Path(source).unlink()
                 except Exception:self.check.append(1)
                 else:self.check.append(0)
 

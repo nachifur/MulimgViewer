@@ -79,7 +79,10 @@
    0,
    0,
    255
-  ]
+  ],
+  "cache_save_format": 0,
+  "background_slider": 255,
+  "foreground_slider": 255
  },
  "hotkeys": {
   "next_img": "CTRL+N",
@@ -299,5 +302,6 @@
    "30": "GPSDifferential",
    "31": "GPSHPositioningError"
   }
- }
+ },
+ "save_format_order": "jpg,png,pdf"
 }

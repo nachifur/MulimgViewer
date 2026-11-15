@@ -5,9 +5,11 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from PIL import Image
 from concurrent.futures import CancelledError
+from contextlib import nullcontext
 from .cache_layout import source_names, page_name, write_source_catalog
 from .custom_func.contract import original_index, processing_indices, display_indices, display_grid
 from .custom_pipeline import CustomPipeline
+from .export_formats import PNG
 from .video_timeline import page_segments
 
 
@@ -49,8 +51,7 @@ def _save_selected(work,processed,paths,names,slots,base,raw,formats,moves):
         source=processed[index]
         target=base/'select_images'/names[index]
         target.parent.mkdir(parents=True,exist_ok=True)
-        if raw and formats==0:
-            target=target.with_suffix(Path(source).suffix)
+        if raw and formats==PNG and Path(source).suffix.lower()=='.png':
             shutil.copyfile(source,target)
         else:
             with Image.open(source) as image:
@@ -118,7 +119,12 @@ def export_page(manager,root,output,memory=None,workers=1,defer_moves=False,sele
                         work.clear_cache()
                         continue
                     # Stitch initialization also supplies output-scale crop geometry.
-                    if bits&1:
+                    cached_mosaic=getattr(manager,'_export_reused_mosaics',{}).get(index)
+                    if bits&1 and cached_mosaic is not None:
+                        work.stitch_img_init(1,copy.deepcopy(work.draw_points),flist=paths)
+                        with Image.open(cached_mosaic[0]) as image:work.img=image.convert('RGBA')
+                        work.pdf_title_layers=copy.deepcopy(cached_mosaic[1].get('pdf_title_layers',[]))
+                    elif bits&1:
                         work.stitch_images(1,copy.deepcopy(work.draw_points),flist=paths)
                         if work.img is None:raise RuntimeError(f'{algorithm}: export stitch failed')
                     else:
@@ -127,7 +133,8 @@ def export_page(manager,root,output,memory=None,workers=1,defer_moves=False,sele
                     if bits&1:
                         target=base/'stitch_images'/page_name(manager.action_count)
                         target.parent.mkdir(parents=True,exist_ok=True)
-                        work.ImgF.save_img_diff_format(target,work.img,formats)
+                        if cached_mosaic is not None and formats==PNG:shutil.copyfile(cached_mosaic[0],target)
+                        else:work.ImgF.save_img_diff_format(target,work.img,formats)
                         private=Path(directory)/f'mosaic_{len(mosaics)}.png'
                         work.img.save(private,format='PNG',compress_level=1)
                         mosaics[index]=(private,work.img.size)
@@ -241,26 +248,30 @@ def save_viewer(viewer,event=None,*,selection_only=False,selected_grid=None):
             work.get_flist()
         slots=list(range(len(work.flist))) if bulk else selection_slots(work,clicked)
         try:
-            if viewer.shared_config.video_mode and (getattr(viewer,'_export_isolate_video',False) or not all(Path(path).is_file() for path in work.flist)):
-                # Save-all can address virtual frames outside the playback
-                # window. Decode those into an isolated temporary tree so
-                # playback cleanup cannot delete export inputs mid-read.
-                with TemporaryDirectory(prefix='mulimg-export-frames-') as raw:
-                    config=copy.copy(viewer.shared_config)
-                    config.video_path=[str(Path(raw)/f'source_{i+1:03d}') for i in range(len(config.real_video_path))]
-                    for path in config.video_path:Path(path).mkdir()
-                    for vid,first,stop in spans:
-                        viewer.video_manager._save_frame(config.real_video_path[vid],first,stop-1,vid,config=config)
-                    work.flist=[str(Path(config.video_path[vid])/viewer.video_manager._filename_converter(index,vid,config))
-                                for vid,first,stop in spans for index in range(first,stop)]
-                    work.path_list=list(config.video_path)
-                    work._status_source_index=None
-                    work._cache_original_paths=list(config.real_video_path)
-                    moves.extend(export_page(work,root,output,config.memory_budget,config.thread,defer_moves=True,selected_slots=slots,
-                        progress=lambda fraction:progress((number+fraction)/max(1,len(pages))),cancelled=cancelled))
-            else:
-                moves.extend(export_page(work,root,output,viewer.shared_config.memory_budget,viewer.shared_config.thread,defer_moves=True,selected_slots=slots,
-                        progress=lambda fraction:progress((number+fraction)/max(1,len(pages))),cancelled=cancelled))
+            reuse=getattr(viewer,'_export_reuse',None)
+            with (reuse(work,list(work.flist),page) if reuse else nullcontext({})) as cached_results:
+                work._export_reused_results={i:value for i,value in cached_results.items() if i!='_mosaics'}
+                work._export_reused_mosaics=cached_results.get('_mosaics',{})
+                if viewer.shared_config.video_mode and (getattr(viewer,'_export_isolate_video',False) or not all(Path(path).is_file() for path in work.flist)):
+                    # Save-all can address virtual frames outside the playback
+                    # window. Decode those into an isolated temporary tree so
+                    # playback cleanup cannot delete export inputs mid-read.
+                    with TemporaryDirectory(prefix='mulimg-export-frames-') as raw:
+                        config=copy.copy(viewer.shared_config)
+                        config.video_path=[str(Path(raw)/f'source_{i+1:03d}') for i in range(len(config.real_video_path))]
+                        for path in config.video_path:Path(path).mkdir()
+                        for vid,first,stop in spans:
+                            viewer.video_manager._save_frame(config.real_video_path[vid],first,stop-1,vid,config=config)
+                        work.flist=[str(Path(config.video_path[vid])/viewer.video_manager._filename_converter(index,vid,config))
+                                    for vid,first,stop in spans for index in range(first,stop)]
+                        work.path_list=list(config.video_path)
+                        work._status_source_index=None
+                        work._cache_original_paths=list(config.real_video_path)
+                        moves.extend(export_page(work,root,output,config.memory_budget,config.thread,defer_moves=True,selected_slots=slots,
+                            progress=lambda fraction:progress((number+fraction)/max(1,len(pages))),cancelled=cancelled))
+                else:
+                    moves.extend(export_page(work,root,output,viewer.shared_config.memory_budget,viewer.shared_config.thread,defer_moves=True,selected_slots=slots,
+                            progress=lambda fraction:progress((number+fraction)/max(1,len(pages))),cancelled=cancelled))
         except CancelledError:raise
         except Exception as error:
             viewer.SetStatusText_(['-1','-1',f'Export failed, page {page+1}: {error}','-1'])

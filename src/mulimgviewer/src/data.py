@@ -6,6 +6,7 @@ import numpy as np
 
 from .utils import solve_factor
 from .status_info import ImageSourceIndex
+from .video_paths import frame_filename, manager_cache_format
 
 class ImgData():
     """Multi-image database.
@@ -102,7 +103,7 @@ class ImgData():
                 sec_str = f"{time_sec:.2f}".rstrip("0").rstrip(".") or "0"
                 frame_in_sec = (physical_idx % fps_int) + 1
 
-                filename = f"{sec_str}s_frame_{frame_in_sec}.jpeg"
+                filename = frame_filename(logical_idx,fps,step,'png' if manager_cache_format(self)==1 else 'jpeg')
                 one_video_names.append(filename)
 
             name_list.append(one_video_names)

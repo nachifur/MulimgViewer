@@ -8,6 +8,7 @@ import time
 from pathlib import Path
 
 import wx
+from .export_formats import ORDER, LEGACY_TO_CURRENT
 
 ALIASES = {'m_checkBox33': 'video_mode', 'row_col12': 'cache_frames',
            'row_col1': 'interval', 'row_col13': 'skip_frames',
@@ -24,7 +25,7 @@ def settings_controls(owner):
         if name.startswith('_') or name in ('m_textCtrl15', 'addfunc', 'custom_algorithm_input'):
             continue
         if not isinstance(control, (wx.TextCtrl, wx.CheckBox, wx.Choice, wx.ColourPickerCtrl,
-                                    wx.SpinCtrl, wx.SpinCtrlDouble)) or id(control) in seen:
+                                    wx.SpinCtrl, wx.SpinCtrlDouble, wx.Slider)) or id(control) in seen:
             continue
         parent = control.GetParent()
         while parent is not None and parent is not owner.m_panel4:
@@ -55,6 +56,9 @@ def apply_value(name, control, value):
         if isinstance(value, list) and len(value) in (3, 4) and all(
                 isinstance(v, int) and 0 <= v <= 255 for v in value):
             control.SetColour(wx.Colour(*value))
+    elif isinstance(control, wx.Slider):
+        if isinstance(value,int) and not isinstance(value,bool) and control.GetMin()<=value<=control.GetMax():
+            control.SetValue(value)
     elif isinstance(control, wx.TextCtrl):
         if isinstance(value, (str, int, float)) and not isinstance(value, bool):
             control.ChangeValue(str(value))
@@ -89,7 +93,7 @@ def read_config(path):
         return {}
     if 'output' not in data:
         sections = {key: data.pop(key) for key in
-                    ('hotkeys', 'exif_display', 'exif_tag_mappings', 'window_state') if key in data}
+                    ('hotkeys', 'exif_display', 'exif_tag_mappings', 'window_state', 'save_format_order') if key in data}
         data = dict(sections, output=data)
     output = data.get('output')
     if not isinstance(output, dict):
@@ -97,10 +101,18 @@ def read_config(path):
     for old, new in ALIASES.items():
         if old in output and new not in output:
             output[new] = output[old]
+    if 'save_format' in output and data.get('save_format_order')!=ORDER:
+        value=output['save_format']
+        if isinstance(value,int) and not isinstance(value,bool):
+            output['save_format']=LEGACY_TO_CURRENT.get(value,0)
+        data['save_format_order']=ORDER
     return data
 
 
 def write_config(path, data):
+    if isinstance(data.get('output'),dict) and 'save_format' in data['output']:
+        data=copy.deepcopy(data)
+        data['save_format_order']=ORDER
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     descriptor, temporary = tempfile.mkstemp(prefix='.' + path.name, suffix='.tmp', dir=str(path.parent))
@@ -141,8 +153,12 @@ def synchronize(directory, gui_defaults, hotkeys):
     migrate_config_roles(directory)
     baseline_path, saved_path = directory / 'default_config.json', directory / 'userdef_config.json'
     fallback = {'output': gui_defaults, 'hotkeys': hotkeys}
+    if 'save_format' in gui_defaults:fallback['save_format_order']=ORDER
     baseline = read_config(baseline_path)
     baseline = merge_missing(baseline, fallback)
+    if 'save_format' in gui_defaults:
+        baseline['output']['save_format']=gui_defaults['save_format']
+        baseline['save_format_order']=ORDER
     saved = read_config(saved_path)
     saved = merge_missing(saved, baseline)
     for path, after in ((baseline_path, baseline), (saved_path, saved)):

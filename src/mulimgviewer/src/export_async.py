@@ -10,7 +10,7 @@ from tempfile import TemporaryFile
 from types import SimpleNamespace
 import wx
 from .export_controller import save_viewer
-from .video_paths import frame_filename
+from .video_paths import frame_filename, cache_extension, manager_cache_format, lossless_export
 from .video_tools import resolve_video_tools
 
 
@@ -18,7 +18,7 @@ class ExportDecoder:
     def __init__(self,cancelled,cache=None):self.cancelled=cancelled;self.cache=cache
 
     def _filename_converter(self,index,video,config):
-        return frame_filename(index,config.video_fps_list[video],config.skip_frames+1)
+        return frame_filename(index,config.video_fps_list[video],config.skip_frames+1,cache_extension(config))
 
     def _save_frame(self,path,first,last,video,config=None):
         # Exact ordinal selection for VFR too. Output stops once this page is
@@ -30,11 +30,13 @@ class ExportDecoder:
             if all(copied):return
         tools,env=resolve_video_tools()
         step=config.skip_frames+1
-        pattern=folder/'export_%09d.jpeg'
+        extension=cache_extension(config)
+        pattern=folder/f'export_%09d.{extension}'
         expression=f'between(n,{first*step},{last*step})*not(mod(n,{step}))'
         command=[tools['ffmpeg'],'-nostdin','-hide_banner','-loglevel','error','-threads','1',
             '-i',str(path),'-vf',f'select={expression.replace(chr(44),chr(92)+chr(44))}',
-            '-vsync','0','-threads','1','-frames:v',str(last-first+1),'-start_number',str(first),'-q:v','2',str(pattern)]
+            '-vsync','0','-threads','1','-frames:v',str(last-first+1),'-start_number',str(first),
+            *(['-c:v','png','-pix_fmt','rgb24','-compression_level','1'] if extension=='png' else ['-q:v','2']),str(pattern)]
         flags=getattr(subprocess,'CREATE_NO_WINDOW',0)
         with TemporaryFile() as errors:
             process=subprocess.Popen(command,stdout=subprocess.DEVNULL,stderr=errors,env=env,creationflags=flags)
@@ -48,7 +50,7 @@ class ExportDecoder:
             finally:
                 if process.poll() is None:process.kill();process.wait()
         for index in range(first,last+1):
-            (folder/f'export_{index:09d}.jpeg').replace(folder/self._filename_converter(index,video,config))
+            (folder/f'export_{index:09d}.{extension}').replace(folder/self._filename_converter(index,video,config))
 
 
 def cancel_save(viewer):
@@ -99,7 +101,9 @@ def start_save(viewer,event=None,*,selection_only=False,selected_grid=None):
     manager._flist_groups=copy.deepcopy(getattr(viewer.ImgManager,'_flist_groups',None))
     manager._status_source_slots=copy.deepcopy(getattr(viewer.ImgManager,'_status_source_slots',None))
     config=copy.copy(viewer.shared_config)
+    config.cache_save_format=manager_cache_format(manager)
     config.thread=1  # Save serially alongside the latency-sensitive playback.
+    viewer_format=viewer.save_format.GetSelection()
     vm=viewer.video_manager
     token=vm._window_token
     def cached(index,video,target):
@@ -108,12 +112,17 @@ def start_save(viewer,event=None,*,selection_only=False,selected_grid=None):
         try:
             with vm._raw_io_lock(video,config):
                 if token!=vm._window_token:return False
-                source=Path(config.video_path[video])/frame_filename(index,config.video_fps_list[video],config.skip_frames+1)
+                source=Path(config.video_path[video])/frame_filename(index,config.video_fps_list[video],config.skip_frames+1,cache_extension(config))
+                if lossless_export(manager,viewer_format) :
+                    from PIL import Image
+                    with Image.open(source) as image:
+                        if image.format!='PNG':return False
                 shutil.copyfile(source,target)
                 if token==vm._window_token:return True
                 target.unlink(missing_ok=True)
         except OSError:pass
         return False
+    processing=viewer.image_pipeline.processing
     job=SimpleNamespace(ImgManager=manager,out_path_str=str(viewer.out_path_str),
         shared_config=config,xy_magnifier=copy.deepcopy(viewer.xy_magnifier),
         choice_output=SimpleNamespace(GetSelection=lambda value=viewer.choice_output.GetSelection():value),
@@ -123,6 +132,7 @@ def start_save(viewer,event=None,*,selection_only=False,selected_grid=None):
         _status_display_batch=getattr(viewer,'_status_display_batch',viewer.ImgManager.action_count),
         _index_selection_record=copy.deepcopy(getattr(viewer,'_index_selection_record',None)),
         _index_context=lambda:context,SetStatusText_=status,
+        _export_reuse=processing.lease_export_results,
         _export_cancelled=cancel.is_set,_export_progress=progress,_export_isolate_video=True,
         video_manager=ExportDecoder(cancel.is_set,cached))
     def run():

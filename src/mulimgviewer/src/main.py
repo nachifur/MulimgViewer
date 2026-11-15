@@ -1372,13 +1372,11 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
             c.red, c.green, c.blue, self.ImgManager.gap_alpha)
 
     def background_alpha(self, event):
-        c = self.colourPicker_gap.GetColour()
-        self.ImgManager.gap_alpha = self.background_slider.GetValue()
-        self.ImgManager.gap_color = (
-            c.red, c.green, c.blue, self.ImgManager.gap_alpha)
+        # Stage slider values; apply both alphas together on Refresh.
+        if event is not None:event.Skip()
 
     def foreground_alpha(self, event):
-        self.ImgManager.img_alpha = self.foreground_slider.GetValue()
+        if event is not None:event.Skip()
 
     def delete_box(self, event):
         if self.select_img_box.Value:
@@ -2146,6 +2144,12 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
         layout_params = self.set_img_layout()
         if not layout_params:
             return
+        self.ImgManager.gap_alpha=int(self.background_slider.GetValue())
+        self.ImgManager.img_alpha=int(self.foreground_slider.GetValue())
+        color=self.colourPicker_gap.GetColour()
+        self.ImgManager.gap_color=(color.red,color.green,color.blue,self.ImgManager.gap_alpha)
+        self.shared_config.cache_save_format=layout_params[41]
+        self.ImgManager.cache_save_format=layout_params[41]
         try:
             registry = capture_algorithms(get_available_algorithms())
         except (OSError, UnicodeError, ValueError, TypeError) as error:
@@ -2165,7 +2169,7 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
             self.video_manager._pacing_model_period=None
         # ★ 修复：图片模式 + 视频模式 都要在 layout 变化时清空缓存与磁盘缓存文件
         vm = getattr(self, "video_manager", None)
-        layout_token = repr((layout_params, hash(registry), tuple(self.ImgManager.gap_color)))
+        layout_token = repr((layout_params, hash(registry), tuple(self.ImgManager.gap_color), int(self.ImgManager.img_alpha)))
         if not getattr(self.shared_config, "video_mode", False):
             # ★ 缓存 token 里带上列表文件的内容指纹:
             #   以前 token 只有 (布局, 类型, 输入路径), 同一个 1.txt 改内容再重新选择时
@@ -2376,7 +2380,8 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
                     self.customfunc_choice.GetSelection(),  # 37
                     self.show_all_func.Value,               # 38
                     self.show_all_func_layout.Value,        # 39
-                    self.func_layout_vertical.Value ]       # 40
+                    self.func_layout_vertical.Value,        # 40
+                    self.cache_save_format.GetSelection()] # 41
             if getattr(self,'_custom_settings_dirty',False) and len(self.ImgManager.layout_params)>40:
                 for index in (32,36,37,38,39,40):params[index]=self.ImgManager.layout_params[index]
             return params

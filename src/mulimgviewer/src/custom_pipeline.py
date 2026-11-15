@@ -321,6 +321,57 @@ class CustomPipeline:
         size=max(32*1024**2,pixels*spec['working_set_bytes_per_pixel']+spec['working_set_bytes'])
         return digest,spec,size
 
+    @contextmanager
+    def lease_export_results(self,manager,paths,batch):
+        """Lease immutable full-resolution results, never public cache aliases.
+
+        Source identity/stat, algorithm implementation and page must match.
+        Only successful, explicitly cacheable, unordered nodes are eligible.
+        Missing/retired nodes are an optimization miss, not an export failure.
+        """
+        entries=[];results={}
+        try:
+            inputs=self._input_signature(paths)
+            for index in processing_indices(manager._custom_algorithm_registry,manager.layout_params):
+                key,spec,_=self._descriptor(manager,paths,index,'export','page',batch,inputs)
+                if spec['identity'] or not spec['cacheable'] or spec['ordered']:continue
+                with self.lock:
+                    entry=self.entries.get(key)
+                    if self.closed or entry is None:continue
+                    future=entry['future']
+                    if not future.done() or future.cancelled() or future.exception() is not None:continue
+                    entry['pins']+=1;entries.append(entry)
+                    results[index]=future.result()
+            # A preview mosaic is an export mosaic only when BOTH scales
+            # match. Use the production render key, not its public filename.
+            if list(manager.layout_params[4])==list(manager.layout_params[5]):
+                from .mosaic_pipeline import mosaic_request_key
+                from .custom_func.contract import original_index,display_indices
+                original=original_index(manager._custom_algorithm_registry)
+                mosaics={}
+                for index in dict.fromkeys([original]+display_indices(manager._custom_algorithm_registry,manager.layout_params)):
+                    inputs_for=paths if index is None or index==original else results.get(index)
+                    if inputs_for is None:continue
+                    key,_,_=mosaic_request_key(manager,index,inputs_for,manager.draw_points,batch)
+                    with self.lock:
+                        entry=self.entries.get(key)
+                        if self.closed or entry is None or not entry.get('cacheable',True):continue
+                        future=entry['future']
+                        if not future.done() or future.cancelled() or future.exception() is not None:continue
+                        entry['pins']+=1;entries.append(entry)
+                        mosaics[index]=future.result()
+                results['_mosaics']=mosaics
+        except (FileNotFoundError,OSError):pass
+        try:
+            valid={i:paths for i,paths in results.items() if i!='_mosaics' and all(Path(p).is_file() for p in paths)}
+            valid['_mosaics']={i:value for i,value in results.get('_mosaics',{}).items() if Path(value[0]).is_file()}
+            yield valid
+        finally:
+            with self.lock:
+                for entry in entries:entry['pins']-=1
+                self.readers.notify_all()
+            self.request_prune()
+
     def composition_bytes(self, flist, results, manager=None):
         pixels=0;largest=0;width=height=1
         # Identity results reference the same inputs. Open each header once,
@@ -384,6 +435,11 @@ class CustomPipeline:
                 if cancelled():raise CancelledError()
                 key,spec,size=self._descriptor(manager,paths,index,owner,epoch,batch,inputs)
                 algorithm=spec.get('cache_name',registry[index][0])
+                reused=getattr(manager,'_export_reused_results',{}).get(index)
+                if reused is not None and spec['cacheable'] and not spec['ordered']:
+                    results[index]=reused
+                    if on_ready is not None:on_ready(index,reused)
+                    continue
                 if spec['identity']:
                     results[index]=paths
                     if on_ready is not None:on_ready(index,paths)

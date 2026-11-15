@@ -44,7 +44,7 @@
   "title_show_name": true,
   "title_show_suffix": false,
   "title_down_up": false,
-  "save_format": 0,
+  "save_format": 1,
   "title_show_rename": false,
   "customfunc_choice": 0,
   "show_all_func": true,
@@ -79,7 +79,10 @@
    0,
    0,
    255
-  ]
+  ],
+  "cache_save_format": 0,
+  "background_slider": 255,
+  "foreground_slider": 255
  },
  "hotkeys": {
   "next_img": "CTRL+N",
@@ -306,5 +309,6 @@
   "w": 1145,
   "h": 843,
   "maximized": false
- }
+ },
+ "save_format_order": "jpg,png,pdf"
 }

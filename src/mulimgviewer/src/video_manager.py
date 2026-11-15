@@ -14,7 +14,7 @@ from concurrent.futures import wait
 from .utils_img import ImgManager
 from .video_tools import resolve_video_tools
 from .video_timeline import page_count, page_segments, raw_dependencies
-from .video_paths import frame_filename
+from .video_paths import frame_filename, cache_extension
 from .resource_monitor import run_video_process
 from .pipeline_executor import PipelineWorkers
 from .stage_allocator import allocate_stages
@@ -343,6 +343,7 @@ class VideoManager:
         return (
             video_path,
             video_num,
+            cache_extension(config),
             int(getattr(config, "count_per_action", 1) or 1),
             bool(getattr(config, "parallel_to_sequential", False)),
             int(getattr(config, "skip_frames", 0) or 0),
@@ -1319,7 +1320,7 @@ class VideoManager:
             # Clean stale cache to avoid reading old frames when names/settings change
             try:
                 for name in os.listdir(out_dir):
-                    if name.endswith(".jpeg") or name.startswith("__tmp_"):
+                    if name.endswith((".jpeg",".png")) or name.startswith("__tmp_"):
                         p = out_dir / name
                         if p.is_file():
                             p.unlink()
@@ -1592,7 +1593,8 @@ class VideoManager:
         for vid, directory in enumerate(config.video_path):
             start, end = raw_windows.get(vid, (0, 0))
             names = {self._filename_converter(i, vid, config) for i in range(start, end)}
-            for path in Path(directory).glob("*.jpeg"):
+            for path in Path(directory).iterdir():
+                if path.suffix.lower() not in (".jpeg",".png"):continue
                 if path.name.startswith("__tmp_") or path.name in names:
                     continue
                 with self._raw_io_lock(vid, config):
@@ -2248,7 +2250,7 @@ class VideoManager:
         '''Bidirectional conversion: logical index <-> timestamp/frame filename.'''
         config = config if config is not None else self.shared_config
         if isinstance(input_value, int):
-            return frame_filename(input_value, config.video_fps_list[video_idx], config.skip_frames+1)
+            return frame_filename(input_value, config.video_fps_list[video_idx], config.skip_frames+1,cache_extension(config))
 
         else:
             if 's_frame_' in input_value:
@@ -2336,10 +2338,10 @@ class VideoManager:
                         if token is not None and (token != self._window_token or not lo <= index < hi):
                             continue
                     destination = os.path.join(config.video_path[vid], self._filename_converter(index, vid, config))
-                    temporary = os.path.join(config.video_path[vid], '__tmp_native_%s_%s.jpeg' %
+                    temporary = os.path.join(config.video_path[vid], ('__tmp_native_%s_%s.'+cache_extension(config)) %
                                              (threading.get_ident(), time.time_ns()))
                     try:
-                        image.save(temporary, format='JPEG', quality=90)
+                        image.save(temporary, format='PNG', compress_level=1) if cache_extension(config)=='png' else image.save(temporary, format='JPEG', quality=90)
                         preview, preview_key = None, None
                         target=self._preview_resize_target(vid,index,config,image)
                         if target is not None:
@@ -2440,7 +2442,7 @@ class VideoManager:
                     suffix = f"{os.getpid()}_{threading.get_ident()}_{time.time_ns()}"
                     tmp_prefix = f"__tmp_{video_idx}_{suffix}_"
                     owned_tmp_prefixes.append(tmp_prefix)
-                    tmp_tpl = os.path.join(cache_dir, f"{tmp_prefix}%d.jpeg")
+                    tmp_tpl = os.path.join(cache_dir, f"{tmp_prefix}%d.{cache_extension(config)}")
                     cmd = [
                         self._video_command('ffmpeg'), "-hide_banner", "-loglevel", "error",
                         "-threads", "1", "-ss", f"{s * step / fps:.9f}",
@@ -2451,7 +2453,7 @@ class VideoManager:
                     cmd.extend([
                         "-vsync", "0", "-frames:v", str(e - s + 1),
                         "-threads:v", "1",
-                        "-q:v", "6", "-start_number", str(s), "-y", tmp_tpl,
+                        *(["-c:v","png","-pix_fmt","rgb24","-compression_level","1"] if cache_extension(config)=="png" else ["-q:v","6"]), "-start_number", str(s), "-y", tmp_tpl,
                     ])
                     try:
                         cp = run_video_process(
@@ -2480,7 +2482,7 @@ class VideoManager:
                     suffix = f"{os.getpid()}_{threading.get_ident()}_{time.time_ns()}"
                     tmp_prefix = f'__tmp_{video_idx}_{suffix}_'
                     owned_tmp_prefixes.append(tmp_prefix)
-                    tmp_tpl = os.path.join(cache_dir, f'__tmp_{video_idx}_{suffix}_%d.jpeg')
+                    tmp_tpl = os.path.join(cache_dir, f'__tmp_{video_idx}_{suffix}_%d.{cache_extension(config)}')
 
                     try:
                         # stream = (
@@ -2500,7 +2502,7 @@ class VideoManager:
                         if has_ffmpeg_input:
                             cmd = (
                                 stream
-                                .output(tmp_tpl, vsync='vfr', vframes=e - s + 1, threads=1, **{'q:v': 6}, start_number=s)
+                                .output(tmp_tpl, vsync='vfr', vframes=e - s + 1, threads=1, **({'vcodec':'png','pix_fmt':'rgb24','compression_level':1} if cache_extension(config)=='png' else {'q:v':6}), start_number=s)
                                 .global_args('-threads', '1', '-hide_banner', '-loglevel', 'error')
                                 .overwrite_output()
                                 .compile(cmd=self._video_command('ffmpeg'))
@@ -2518,7 +2520,7 @@ class VideoManager:
                                 '-vf', 'select=' + sel.replace(',', r'\,'),
                                 '-vsync', '0', '-frames:v', str(e - s + 1),
                                 '-threads:v', '1',
-                                '-q:v', '6', '-start_number', str(s), '-y', tmp_tpl,
+                                *(['-c:v','png','-pix_fmt','rgb24','-compression_level','1'] if cache_extension(config)=='png' else ['-q:v','6']), '-start_number', str(s), '-y', tmp_tpl,
                             ]
                             cp = run_video_process(cmd, capture_output=True, encoding='utf-8', errors='replace', check=False,
                                                 **self._video_process_options())
@@ -2531,9 +2533,9 @@ class VideoManager:
                 tmp_map = {}
                 try:
                     for name in os.listdir(cache_dir):
-                        if not (name.startswith(tmp_prefix) and name.endswith('.jpeg')):
+                        if not (name.startswith(tmp_prefix) and name.endswith('.'+cache_extension(config))):
                             continue
-                        num_txt = name[len(tmp_prefix):-5]
+                        num_txt = name[len(tmp_prefix):-(len(cache_extension(config))+1)]
                         try:
                             num = int(num_txt)
                         except Exception:
@@ -2610,7 +2612,7 @@ class VideoManager:
 
         try:
             for name in os.listdir(cache_dir):
-                if name.endswith('.jpeg') and any(name.startswith(prefix) for prefix in owned_tmp_prefixes):
+                if name.endswith('.'+cache_extension(config)) and any(name.startswith(prefix) for prefix in owned_tmp_prefixes):
                     try: os.remove(os.path.join(cache_dir, name))
                     except: pass
         except Exception:

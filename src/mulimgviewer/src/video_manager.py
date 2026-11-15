@@ -17,6 +17,7 @@ from .video_timeline import page_count, page_segments, raw_dependencies
 from .video_paths import frame_filename
 from .resource_monitor import run_video_process
 from .pipeline_executor import PipelineWorkers
+from .stage_allocator import allocate_stages
 from .admission_optimizer import AdaptiveAdmissionBudget
 from .video_decoder import DecoderBank
 from .video_memory import PixelCache, source_resolution
@@ -26,10 +27,12 @@ from .custom_func.contract import active_cache_names
 from .playback_pacer import PlaybackPacer, ProductionJob, completion_estimates, refill_guard
 from .thread_optimizer import (AdaptiveThreadAllocator, optimize_thread_allocation,
                                available_memory_bytes, stitch_memory_limit,
-                               buffer_levels, buffer_priority)
+                               buffer_levels, buffer_priority, ThreadAllocation)
 import json
 import shutil
 import copy
+from contextlib import ExitStack
+from .dependency_scheduler import prepared, gather, run_inline
 
 
 class PerformanceMonitor:
@@ -972,6 +975,31 @@ class VideoManager:
             available = memory * 2
         return stitch_memory_limit(output, pixels or output, available, maximum)
 
+    def _four_stage_proposal(self,extract_work,budget,extract_cap,priority):
+        snapshot=getattr(self,'_render_snapshot',None)
+        if snapshot is None or not (snapshot[0].layout_params[32] or snapshot[0].layout_params[38]):return None
+        owner=self._ui()
+        processing=getattr(getattr(owner,'image_pipeline',None),'processing',None)
+        if processing is None:return None
+        model=processing.budget.model_snapshot()
+        caps=model['caps']
+        if caps is None:return None
+        required=[stage for stage in range(3) if caps[stage]>0]
+        if not all(stage in model['work'] for stage in required):return None
+        # Buffer feedback changes urgency, never the user playback interval.
+        raw_weight=2. if priority=='raw' else 1.
+        downstream_weight=2. if priority=='stitch' else 1.
+        cfg=self.shared_config
+        streams=1 if cfg.parallel_to_sequential else max(1,len(cfg.real_video_path))
+        native_slots=max(1,self._extract_threads//streams) if self._decoder_bank.available else 1
+        work=[max(1e-9,extract_work)*native_slots*raw_weight]+[model['work'].get(stage,0.)*downstream_weight for stage in range(3)]
+        memory=[self._decoder_working_set()]+[model['memory'].get(stage,0) for stage in range(3)]
+        plan=allocate_stages(budget,work,[extract_cap]+list(caps),memory,self._planning_memory_budget())
+        if plan.reason!='minimax' or not plan.targets[0] or not sum(plan.targets[1:]):return None
+        processing.budget.set_target_capacity(sum(plan.targets[1:]))
+        self.shared_config.stage_allocation_target=dict(zip(('decode','process','stitch','compose'),plan.targets))
+        return ThreadAllocation(plan.targets[0],sum(plan.targets[1:]),plan.period,'four-stage')
+
     def _maybe_evaluate_performance(self, force=False):
         """Seek the fastest measured pipeline rate, excluding pacing/wait time."""
         cfg = self.shared_config
@@ -1073,6 +1101,7 @@ class VideoManager:
                                              raw_buffer_depth=inventory[0] if inventory is not None else None,
                                              stitched_levels=stitched_thresholds, raw_levels=raw_thresholds,
                                              cpu_headroom=cpu_headroom, power_mode=getattr(cfg, 'power_mode', 2))
+            proposal=self._four_stage_proposal(extract_work,budget,extract_cap,priority) or proposal
             self.shared_config.thread_allocation_recommend = {
                 'extract': proposal.extract, 'stitch': proposal.stitch,
                 'estimated_period': proposal.period, 'reason': proposal.reason,
@@ -1086,9 +1115,9 @@ class VideoManager:
             busy = bool(self._pending_extract or self._window_stitches or self.cache_update_pending())
             now = time.perf_counter()
             urgent = proposal.reason in ('downstream-starved', 'ready-backlog', 'upstream-starved', 'capacity',
-                                         'stitch-buffer-low', 'raw-buffer-low')
+                                         'stitch-buffer-low', 'raw-buffer-low') or (proposal.reason=='four-stage' and priority in ('raw','stitch'))
             may_apply = usable or proposal.reason in ('downstream-starved', 'ready-backlog',
-                                                     'stitch-buffer-low', 'raw-buffer-low', 'ready-capacity')
+                                                     'stitch-buffer-low', 'raw-buffer-low', 'ready-capacity', 'four-stage')
             critical = (stitched_thresholds is not None and priority == 'stitch' and depth <= stitched_thresholds.critical
                         or raw_thresholds is not None and priority == 'raw' and inventory[0] <= raw_thresholds.critical)
             stable = (now - getattr(self, '_last_thread_resize', 0.0) >= (.1 if critical else .25) if urgent
@@ -1270,6 +1299,11 @@ class VideoManager:
         return self._meta_cache[video_path]
 
     def init_video_frame_cache(self):
+        # Publish invalidation before deleting names used by the old recipe.
+        # Old readers report cancellation rather than a new-layout failure.
+        with self._cache_guard:
+            self._window_token=None
+            self._window_generation=getattr(self,'_window_generation',0)+1
         with self._cache_io_lock:
             return self._init_video_frame_cache_locked()
 
@@ -1465,7 +1499,7 @@ class VideoManager:
         if processing is not None:
             processing.set_window('video',('video',tuple(cfg.real_video_path),cfg.skip_frames),(lo,hi),b,
                 active_cache_names(self._render_snapshot[0]) if self._render_snapshot is not None else None)
-            processing._prune()
+            processing.request_prune()
         snapshot=getattr(self,'_render_snapshot',None)
         catalog_key=(tuple(cfg.real_video_path),cfg.parallel_to_sequential,bool(snapshot and snapshot[0].layout_params[22]))
         if snapshot is not None and catalog_key!=getattr(self,'_source_catalog_key',None):
@@ -1565,6 +1599,7 @@ class VideoManager:
                     with self._cache_guard:
                         if not current() or raw_windows != self._raw_windows:
                             return
+                        if getattr(self,'_raw_readers',{}).get(str(path),0):continue
                     try:
                         path.unlink()
                     except OSError:
@@ -1746,7 +1781,53 @@ class VideoManager:
     def _run_window_stitch(self,batch,sources,token,plan=None):
         return self._run_window_stitch_impl(batch,sources,token,plan)
 
-    def _run_window_stitch_impl(self, batch, sources, token, plan=None, _processed=None, _processing_seconds=0, _composition_budget=None, _mosaic_output=None):
+    def _run_window_stitch_async(self,batch,sources,token,plan):
+        processing=self._ui().image_pipeline.processing
+        return processing.scheduler.start(self._run_window_stitch_steps,batch,sources,token,plan,
+            priority=lambda:processing._image_priority('video',batch))
+
+    def _run_window_stitch_impl(self,*args,**kwargs):
+        return run_inline(self._run_window_stitch_steps(*args,**kwargs))
+
+    def _run_window_stitch_steps(self,batch,sources,token,*args,**kwargs):
+        # Pin metadata only, never keep full-size pixels or hold an IO lock
+        # while algorithms run. Window cleanup skips these active readers.
+        config=copy.copy(self.shared_config)
+        leased=[];ranges=[]
+        try:
+            for vid,local in sources:
+                first,last=self._batch_range(int(config.video_num_list[vid]),max(1,int(config.count_per_action)),local)
+                if first is None:continue
+                ranges.append((vid,first,last))
+                with self._raw_io_lock(vid,config):
+                    with self._cache_guard:
+                        if token!=self._window_token:raise CancelledError()
+                        readers=getattr(self,'_raw_readers',None)
+                        if readers is None:readers=self._raw_readers={}
+                        for index in range(first,last+1):
+                            path=str(Path(config.video_path[vid])/self._filename_converter(index,vid,config))
+                            readers[path]=readers.get(path,0)+1;leased.append(path)
+            return (yield from self._run_window_stitch_leased_steps(batch,sources,token,*args,**kwargs))
+        except FileNotFoundError:
+            with self._cache_guard:
+                if token!=self._window_token or not self._stitch_window[0]<=batch<=self._stitch_window[1]:
+                    raise CancelledError()
+            raise
+        finally:
+            with self._cache_guard:
+                readers=getattr(self,'_raw_readers',{})
+                for path in leased:
+                    count=readers.get(path,1)-1
+                    if count:readers[path]=count
+                    else:readers.pop(path,None)
+            retired=token!=self._window_token or any(
+                first<self._raw_windows.get(vid,(0,0))[0] or last>=self._raw_windows.get(vid,(0,0))[1]
+                for vid,first,last in ranges)
+            if leased and retired and not getattr(self,'_closed',False):
+                try:self._schedule_video_cleanup()
+                except RuntimeError:pass
+
+    def _run_window_stitch_leased_steps(self, batch, sources, token, plan=None, _processed=None, _processing_seconds=0, _composition_budget=None, _mosaic_output=None):
         with self._cache_guard:
             lo, hi = self._stitch_window
             if token != self._window_token or not lo <= batch <= hi:
@@ -1783,25 +1864,29 @@ class VideoManager:
             params = template.layout_params
             if len(params)>38 and getattr(template,'_custom_algorithm_registry',None) is not None:
                 epoch=('video',tuple(config.real_video_path),config.skip_frames)
-                # Original-only pages have one compute task per admitted
-                # parent stitch. PipelineWorkers already charges that lane
-                # and its memory, including borrowed idle decoder lanes.
-                # Applying the stitch reservation again here serialized all
-                # borrowed pages when the reservation was only one.
-                custom=bool(params[32] or params[38])
+                # Ready stages own their shared permits; the metadata parent
+                # does not reserve an additional CPU lane or pixel working set.
                 downstream=self._pipeline_workers.total_budget
                 processing.configure(downstream,self._planning_memory_budget(),
-                    capacity=self._pipeline_workers.downstream_capacity if custom else None)
+                    capacity=self._pipeline_workers.downstream_capacity,
+                    reservation=self._pipeline_workers.reserve_downstream)
                 processing.set_window('video',epoch,self._stitch_window,int(config.batch_idx),active_cache_names(template))
                 flist=[path for group in groups for path in group]
-                def cancelled():return getattr(self,'_closed',False) or token!=self._window_token
+                def cancelled():return (getattr(self,'_closed',False) or token!=self._window_token
+                    or not self._stitch_window[0]<=batch<=self._stitch_window[1])
                 processing_started=time.perf_counter()
-                with processing.mosaic_stage.plan(template,flist,batch,'video',epoch,snapshot[1],cancelled) as mosaic_plan:
-                    with processing.prepare(template,flist,batch,'video',epoch,cancelled,on_ready=mosaic_plan.ready) as results:
-                        output=mosaic_plan.compose(results)
-                        delay=time.perf_counter()-processing_started
-                        return self._run_window_stitch_impl(batch,sources,token,plan=plan,_processed=results,
-                            _processing_seconds=delay,_mosaic_output=output)
+                with ExitStack() as stack:
+                    mosaic_plan=stack.enter_context(processing.mosaic_stage.plan(template,flist,batch,'video',epoch,snapshot[1],cancelled,defer_prune=True))
+                    results=yield from prepared(processing.prepare_steps(template,flist,batch,'video',epoch,cancelled,on_ready=mosaic_plan.ready,defer_prune=True),stack)
+                    yield gather(mosaic_plan.dependencies(results))
+                    if cancelled():raise CancelledError()
+                    def compose():
+                        if cancelled():raise CancelledError()
+                        with mosaic_plan.composed(results) as output:
+                            delay=time.perf_counter()-processing_started
+                            return self._run_window_stitch_impl(batch,sources,token,plan=(self._extract_threads,self._stitch_threads),_processed=results,
+                                _processing_seconds=delay,_mosaic_output=output)
+                    return (yield self.stitch_executor.submit(compose,coordinator='ready'))
         # No cache guard spans pixel processing or PNG compression.
         started = time.perf_counter()
         if snapshot is None:
@@ -1966,37 +2051,46 @@ class VideoManager:
                 worker_plan = (self._extract_threads, self._stitch_threads)
                 timing['queued_at'] = time.perf_counter()
                 timing['expected_seconds'] = self.perf_monitor.service_estimates()
-                def stitch():
-                    if not completion.set_running_or_notify_cancel():
-                        return
-                    if self._defer_custom_past(batch):
-                        completion.set_result(None)
-                        return
-                    timing['started_at'] = time.perf_counter()
-                    worker_plan = (self._extract_threads, self._stitch_threads)
-                    try:
-                        self._run_window_stitch(batch, sources, token, worker_plan)
-                    except Exception as ex:
-                        # A user/cleanup tool may remove source JPEGs after
-                        # readiness was published. Retry must revalidate them,
-                        # not trust a stale ready bit forever.
+                def finished(future):
+                    try:future.result()  # Completion callback, never waits.
+                    except BaseException as ex:
+                        if token!=self._window_token or getattr(self,'_closed',False):ex=CancelledError()
                         snapshot=getattr(self,'_render_snapshot',None)
                         params=snapshot[0].layout_params if snapshot is not None else ()
                         custom_active=len(params)>38 and (snapshot[2] or params[38])
-                        if not isinstance(ex, MemoryError) and (not custom_active or isinstance(ex,FileNotFoundError)):
+                        if not isinstance(ex,MemoryError) and (not custom_active or isinstance(ex,FileNotFoundError)):
                             with self._cache_guard:
-                                if token == self._window_token:
-                                    self._raw_ready_batches.difference_update(sources)
+                                if token==self._window_token:self._raw_ready_batches.difference_update(sources)
                         completion.set_exception(ex)
-                        self._debug_video(f"[WindowStitch] batch={batch}: {ex}")
-                        if not isinstance(ex, CancelledError):
-                            self._set_video_status(f'Video pipeline failed: {ex}')
-                    else:
-                        completion.set_result(None)
+                        self._debug_video(f'[WindowStitch] batch={batch}: {ex}')
+                        if not isinstance(ex,CancelledError):self._set_video_status(f'Video pipeline failed: {ex}')
+                    else:completion.set_result(None)
+                def stitch():
+                    if not completion.set_running_or_notify_cancel():return
+                    if self._defer_custom_past(batch):
+                        completion.set_result(None);return
+                    timing['started_at']=time.perf_counter()
+                    worker_plan=(self._extract_threads,self._stitch_threads)
+                    try:
+                        snapshot=getattr(self,'_render_snapshot',None)
+                        params=snapshot[0].layout_params if snapshot is not None else ()
+                        async_page=(len(params)>38 and getattr(snapshot[0],'_custom_algorithm_registry',None) is not None and
+                            getattr(getattr(self._ui(),'image_pipeline',None),'processing',None) is not None)
+                        if async_page:
+                            self._run_window_stitch_async(batch,sources,token,worker_plan).add_done_callback(finished)
+                            return
+                        self._run_window_stitch(batch,sources,token,worker_plan)
+                        result=Future();result.set_result(None)
+                    except BaseException as ex:
+                        result=Future();result.set_exception(ex)
+                    finished(result)
                 try:
-                    self.stitch_executor.submit(stitch)
-                except RuntimeError as ex:
-                    completion.set_exception(ex)
+                    snapshot=getattr(self,'_render_snapshot',None)
+                    params=snapshot[0].layout_params if snapshot is not None else ()
+                    if (len(params)>38 and getattr(snapshot[0],'_custom_algorithm_registry',None) is not None
+                            and getattr(getattr(self._ui(),'image_pipeline',None),'processing',None) is not None):stitch()
+                    else:self.stitch_executor.submit(stitch)
+                except RuntimeError as ex:completion.set_exception(ex)
         for dependency in dependencies:
             dependency.add_done_callback(ready)
         ready()

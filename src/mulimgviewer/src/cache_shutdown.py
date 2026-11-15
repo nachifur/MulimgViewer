@@ -1,8 +1,43 @@
-"""Authorized close-time removal of the application's cache_frames tree."""
+"""Startup and close-time removal of the application-owned cache_frames tree."""
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 import shutil
 import time
+
+
+def clear_cache_on_startup(root):
+    """Remove stale layers synchronously BEFORE creating any cache producers.
+
+    Failure aborts startup rather than letting the new session reuse a partly
+    cleaned tree. Only the literal, non-linked cache_frames root is eligible.
+    """
+    import stat
+    root=Path(root).absolute()
+    if root.name!='cache_frames' or root.is_symlink() or root.resolve()!=root:
+        raise ValueError('Startup cleanup target must be the actual cache_frames directory')
+    try:
+        info=root.lstat()
+    except FileNotFoundError:
+        return False
+    if not stat.S_ISDIR(info.st_mode):
+        raise ValueError('Startup cache_frames target is not a directory')
+    identity=(info.st_dev,info.st_ino)
+    print('[Cache] Clearing previous session cache...')
+    for attempt in range(4):
+        try:
+            info=root.lstat()
+            if root.resolve()!=root or (info.st_dev,info.st_ino)!=identity:
+                raise ValueError('Startup cache directory was replaced; refusing to delete its replacement')
+            shutil.rmtree(root)
+            print('[Cache] Previous session cache cleared')
+            return True
+        except OSError as error:
+            # rmtree can also report a missing child while the root survives.
+            # Only a missing root means startup cleanup is actually complete.
+            if isinstance(error,FileNotFoundError) and not root.exists():return True
+            if attempt==3:
+                raise RuntimeError(f'Cannot clear previous cache before startup: {root}: {error}') from error
+            time.sleep(.05*(attempt+1))
 
 
 def schedule_cache_removal(root,pools=(),futures=()):

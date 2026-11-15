@@ -19,9 +19,12 @@ from contextlib import contextmanager, ExitStack
 from pathlib import Path
 
 from PIL import Image
-from .custom_func.contract import specification, processing_indices
+from .custom_func.contract import specification, processing_indices, display_grid, display_indices
 from .custom_func.runtime import state, execution_lock
 from .cache_layout import VisibleCache, processed_names, component, source_record
+from .custom_workers import ImageWorkers
+from .stage_allocator import allocate_stages
+from .dependency_scheduler import DependencyScheduler, gather, prepared, run_inline
 
 
 def readable_name(value, limit):
@@ -41,21 +44,67 @@ class WorkBudget:
         self.condition = threading.Condition()
         self.limit, self.memory = 1, None
         self.capacity=None
+        self.reservation=None
         self.active = self.bytes = 0
         self.waiting=[];self.serial=0;self.active_by_stage={0:0,1:0,2:0};self.service={}
+        self.page_work={};self.stage_memory={};self.stage_caps=None;self.targets=(1,1,1)
+        self._model_profile=None;self._last_model_update=0.;self.planned_capacity=None
 
-    def configure(self, workers, memory, capacity=None):
+    def configure(self, workers, memory, capacity=None, reservation=None):
         with self.condition:
             self.limit, self.memory = max(1,int(workers)), memory
             self.capacity=capacity
+            self.reservation=reservation
+            if capacity is None:self.planned_capacity=None
+            self._update_targets(force=True)
             self.condition.notify_all()
 
+    def set_target_capacity(self,capacity):
+        with self.condition:
+            self.planned_capacity=max(1,int(capacity))
+            self._update_targets(force=True)
+            self.condition.notify_all()
+
+    def configure_model(self, profile, caps):
+        with self.condition:
+            if profile!=self._model_profile:
+                self.page_work.clear();self.stage_memory.clear();self._last_model_update=0.
+                self._model_profile=profile
+            self.stage_caps=tuple(caps)
+            self._update_targets(force=True)
+            self.condition.notify_all()
+
+    def _update_targets(self, force=False):
+        now=time.perf_counter()
+        if not force and now-self._last_model_update<.25:return
+        # Warm-up defaults give every stage a chance; actual service samples
+        # then replace them without holding any permit while waiting on input.
+        work=[self.page_work.get(stage,1.) for stage in range(3)]
+        plan=allocate_stages(min(self.limit,self.planned_capacity or self.limit),work,self.stage_caps,
+            [self.stage_memory.get(stage,0) for stage in range(3)],self.memory)
+        self.targets=plan.targets;self._last_model_update=now
+
+    def model_snapshot(self):
+        with self.condition:
+            return dict(work=dict(self.page_work),memory=dict(self.stage_memory),targets=self.targets,caps=self.stage_caps)
+
+    def _ticket_key(self, ticket):
+        stage=-ticket[0];target=self.targets[stage] if stage<len(self.targets) else 1
+        active=self.active_by_stage.get(stage,0)
+        return (ticket[1](),0 if active<target else 1,active/max(1,target),-stage,ticket[2])
+
+    def _wake(self):
+        with self.condition:self.condition.notify_all()
+
     @contextmanager
-    def acquire(self, size=0, cancelled=lambda:False, priority=0):
+    def acquire(self, size=0, cancelled=lambda:False, priority=0, order=lambda:0, units=1.):
         size=max(0,int(size))
         with self.condition:
-            self.serial+=1;ticket=(-priority,self.serial)
+            self.serial+=1;ticket=(-priority,order,self.serial,size)
             self.waiting.append(ticket)
+            owner=getattr(self.reservation,'__self__',None)
+            demand=(id(self),ticket[2])
+            if owner is not None:owner.adjust_downstream_waiting(demand,size,self._wake)
             try:
                 while True:
                     if cancelled():raise CancelledError()
@@ -63,11 +112,16 @@ class WorkBudget:
                         raise MemoryError('Custom processing exceeds the memory budget; reduce layout or batch size')
                     lanes,memory=self.capacity() if self.capacity is not None else (self.limit,self.memory)
                     if self.memory is not None:memory=self.memory if memory is None else min(memory,self.memory)
-                    if (self.active < min(self.limit,lanes) and ticket==min(self.waiting)
-                            and (memory is None or self.bytes+size <= memory)):break
+                    fitting=[item for item in self.waiting if memory is None or self.bytes+item[3]<=memory]
+                    if (self.active < min(self.limit,lanes) and fitting
+                            and ticket==min(fitting,key=self._ticket_key)):
+                        reservation=self.reservation
+                        if reservation is None or reservation(1,size):break
                     self.condition.wait(.05)
             finally:
                 self.waiting.remove(ticket);self.condition.notify_all()
+                if owner is not None:owner.adjust_downstream_waiting(demand)
+            profile=self._model_profile
             self.active+=1;self.bytes+=size
             self.active_by_stage[priority]=self.active_by_stage.get(priority,0)+1
         started=time.perf_counter()
@@ -75,9 +129,15 @@ class WorkBudget:
         finally:
             with self.condition:
                 self.active-=1;self.bytes-=size;self.condition.notify_all()
+                if reservation is not None:reservation(-1,-size)
                 self.active_by_stage[priority]-=1
                 elapsed=time.perf_counter()-started
                 self.service[priority]=.8*self.service.get(priority,elapsed)+.2*elapsed
+                if profile==self._model_profile:
+                    per_page=elapsed/max(1e-9,units)
+                    self.page_work[priority]=.9*self.page_work.get(priority,per_page)+.1*per_page
+                    self.stage_memory[priority]=max(size,self.stage_memory.get(priority,0))
+                self._update_targets()
 
 
 class CustomPipeline:
@@ -86,7 +146,13 @@ class CustomPipeline:
         self.lock=threading.RLock()
         self.readers=threading.Condition(self.lock)
         self.budget=WorkBudget()
-        self.pool=ThreadPoolExecutor(max(1,os.cpu_count() or 1),thread_name_prefix='custom-process')
+        self.scheduler=DependencyScheduler()
+        self.cleanup_pool=ThreadPoolExecutor(1,thread_name_prefix='algorithm-cleanup')
+        self._prune_future=None;self._prune_revision=0
+        self.pool=ImageWorkers(max(1,os.cpu_count() or 1),thread_name_prefix='algorithm-work')
+        # Only ready algorithm computation runs here; parent continuations
+        # live in the metadata scheduler and never wait inside this pool.
+        self.image_pool=self.pool  # One ready-work pool; parents now await via the scheduler.
         self.entries={};self.windows={};self.closed=False
         self.history={};self.hits=self.misses=0
         self.peak_active=0
@@ -107,14 +173,30 @@ class CustomPipeline:
             entry['bytes']=max(0,entry.get('bytes',0)-size)
             entry['_visible_copied']=max(0,entry.get('_visible_copied',0)-size)
 
-    def configure(self, workers, memory, capacity=None):
-        self.budget.configure(workers,memory,capacity)
+    def configure(self, workers, memory, capacity=None, reservation=None):
+        self.budget.configure(workers,memory,capacity,reservation)
 
     def set_window(self, owner, epoch, window, current, active=None):
         # Metadata only: callable from the GUI without disk access.
         with self.lock:
             self.windows={owner:(epoch,tuple(window),current)}
             self.active_names=active
+
+    def configure_stages(self,manager):
+        registry=manager._custom_algorithm_registry
+        indices=processing_indices(registry,manager.layout_params)
+        caps=0;devices=set()
+        for index in indices:
+            spec=specification(registry,index)
+            if spec['device']=='cpu':caps+=spec['max_concurrency']
+            else:devices.add(spec['device'])
+        caps+=len(devices)
+        window=next(iter(self.windows.values()),None)
+        pages=window[1][1]-window[1][0]+1 if window is not None else self.budget.limit
+        profile=(tuple((owner,value[0]) for owner,value in self.windows.items()),repr(manager.layout_params),registry)
+        self.budget.configure_model(profile,(caps,max(1,pages)*(len(indices)+1),
+            max(1,pages) if (display_grid(registry,manager.layout_params)[0]*display_grid(registry,manager.layout_params)[1]>1
+                or not display_indices(registry,manager.layout_params)) else 0))
 
     def node_valid(self,owner,epoch,batch,algorithm):
         return self._valid(owner,epoch,batch) and (getattr(self,'active_names',None) is None or algorithm in self.active_names)
@@ -178,6 +260,23 @@ class CustomPipeline:
             if base:
                 with self.lock:
                     entry['bytes']=base+entry.get('_visible_copied',0);entry['reserved']=0
+
+    def request_prune(self):
+        # Coalesced IO cleanup must not hold up dependency continuations or
+        # publication of a ready frame. Logical window validity changes first.
+        with self.lock:
+            if self.closed:return
+            self._prune_revision+=1
+            if self._prune_future is not None and not self._prune_future.done():return
+            def drain():
+                while True:
+                    with self.lock:revision=self._prune_revision
+                    self._prune()
+                    with self.lock:
+                        if revision==self._prune_revision:
+                            self._prune_future=None
+                            return
+            self._prune_future=self.cleanup_pool.submit(drain)
 
     def _prune(self):
         # Workers/coordinators only; no GUI or cache-state lock spans I/O.
@@ -260,6 +359,13 @@ class CustomPipeline:
 
     @contextmanager
     def prepare(self, manager, flist, batch, owner, epoch, cancelled=lambda:False, on_ready=None):
+        # Explicit Save/headless API stays synchronous. Live playback uses the
+        # same lease generator through the nonblocking dependency scheduler.
+        with ExitStack() as stack:
+            result=run_inline(prepared(self.prepare_steps(manager,flist,batch,owner,epoch,cancelled,on_ready),stack))
+            yield result
+
+    def prepare_steps(self, manager, flist, batch, owner, epoch, cancelled=lambda:False, on_ready=None,defer_prune=False):
         params=manager.layout_params
         if len(params)<=38 or not (params[32] or params[38]):
             yield {};return
@@ -267,6 +373,7 @@ class CustomPipeline:
         paths,_=manager._normalize_flist_input(flist)
         paths=tuple(paths or ())
         registry=manager._custom_algorithm_registry
+        self.configure_stages(manager)
         if not registry and params[32]:raise ValueError('No custom algorithms are installed')
         selected=params[37] if 0<=params[37]<len(registry) else 0
         indices=processing_indices(registry,params)
@@ -294,10 +401,11 @@ class CustomPipeline:
                     if entry is None:
                         name=readable_name(registry[index][0],32)
                         entry=dict(directory=self.directory/f'result_{name}__page_{batch+1:06d}__{uuid.uuid4().hex[:12]}',users=set(),pins=0,
-                                   used=time.monotonic(),bytes=0,page=batch,cacheable=spec['cacheable'],algorithm=algorithm)
+                                   used=time.monotonic(),bytes=0,input_paths=paths,page=batch,cacheable=spec['cacheable'],algorithm=algorithm)
                         self.entries[key]=entry;self.misses+=1
-                        entry['future']=self.pool.submit(self._process,manager,paths,index,spec,size,
-                            entry,owner,epoch,batch,cancelled)
+                        try:entry['future']=self._submit_process(manager,paths,index,spec,size,entry,owner,epoch,batch,cancelled)
+                        except BaseException:
+                            self.entries.pop(key,None);raise
                     else:self.hits+=1
                     entry['pins']+=1;entry['used']=time.monotonic()
                     entry['users'].add((owner,epoch,batch));leases.append(entry)
@@ -311,17 +419,16 @@ class CustomPipeline:
                     entry['future'].add_done_callback(ready)
             for index,future in list(results.items()):
                 if hasattr(future,'result'):
-                    paths_ready=future.result()
+                    paths_ready=yield future
                     if not all(Path(path).is_file() for path in paths_ready):
                         entry=lease_indices[index]
                         _,spec,size=self._descriptor(manager,paths,index,owner,epoch,batch)
                         with self.lock:
                             if entry['future'] is future:
                                 entry['bytes']=0
-                                entry['future']=self.pool.submit(self._process,manager,paths,index,spec,size,
-                                    entry,owner,epoch,batch,cancelled)
+                                entry['future']=self._submit_process(manager,paths,index,spec,size,entry,owner,epoch,batch,cancelled)
                             future=entry['future']
-                        paths_ready=future.result()
+                        paths_ready=yield future
                     results[index]=paths_ready
             if cancelled():raise CancelledError()
             for entry in leases:self.publish_entry(entry,lambda:not cancelled())
@@ -330,121 +437,207 @@ class CustomPipeline:
             with self.lock:
                 for entry in leases:entry['pins']-=1
                 self.readers.notify_all()
-            self._prune()
+            self.request_prune() if defer_prune else self._prune()
 
-    def _process(self, manager, paths, index, spec, size, entry, owner, epoch, batch, cancelled):
+    def _submit_process(self,manager,paths,index,spec,size,entry,owner,epoch,batch,cancelled):
+        args=(manager,paths,index,spec,size,entry,owner,epoch,batch,cancelled)
+        if spec.get('api_version')==2 and spec['processing_mode']=='image':
+            return self.scheduler.start(self._process_steps,*args,priority=lambda:self._image_priority(owner,batch))
+        key=('cpu',id(manager._custom_algorithm_session),index) if spec['device']=='cpu' else ('device',spec['device'])
+        return self.pool.submit(self._process,*args,resource_key=key,
+            max_concurrency=spec['max_concurrency'] if spec['device']=='cpu' else 1,
+            priority=lambda:self._image_priority(owner,batch))
+
+    def _process(self,*args):
+        return run_inline(self._process_steps(*args))
+
+    def _process_steps(self, manager, paths, index, spec, size, entry, owner, epoch, batch, cancelled):
         from .custom_func.main import main, algorithm_context
         def stale():
             return not self.node_valid(owner,epoch,batch,spec.get('cache_name',manager._custom_algorithm_registry[index][0]))
         previous=(getattr(state,'registry',None),getattr(state,'preview',False),getattr(state,'session',None),
                   getattr(state,'sequence_context',None))
-        state.registry=manager._custom_algorithm_registry
-        state.session=manager._custom_algorithm_session;state.preview=True
-        state.sequence_context=(owner,epoch,batch)
+        image_mode=spec.get('api_version')==2 and spec['processing_mode']=='image'
+        if not image_mode:
+            state.registry=manager._custom_algorithm_registry
+            state.session=manager._custom_algorithm_session;state.preview=True
+            state.sequence_context=(owner,epoch,batch)
         temporary=self.directory/f'tmp_{uuid.uuid4().hex}'
         images=[];outputs=[]
         try:
             with ExitStack() as resources:
-                # Unknown/stateful algorithms keep their declared concurrency,
-                # but lock waiters consume neither pixel memory nor CPU permits.
-                with algorithm_context(index):
-                    resources.enter_context(self.budget.acquire(size,stale))
-                    started=time.perf_counter()
-                    with self.lock:self.peak_active=max(self.peak_active,self.budget.active)
+                started=time.perf_counter()
+                if spec.get('api_version') == 2 and spec['processing_mode'] == 'image':
+                    # No parent compute permit: each full-resolution image owns
+                    # its admission, decode, kernel, PNG write and pixel lifetime.
+                    temporary.mkdir(parents=True)
+                    names=processed_names(manager,paths)
+                    sizes=[]
                     for path in paths:
-                        with Image.open(path) as image:images.append(image.convert('RGB'))
-                    outputs=list(main(images,'',name_list=[Path(p).name for p in paths],algorithm_type=index))
-                if len(outputs)!=len(paths) or not all(isinstance(image,Image.Image) for image in outputs):
-                    raise ValueError('Custom main must return one Pillow image per input, in input order')
-                if stale():raise CancelledError()
-                self._prune()
-                temporary.mkdir(parents=True)
-                names=processed_names(manager,paths)
-                pixel_cache=getattr(self,'pixel_cache',None)
-                preview_size=None
-                params=manager.layout_params
-                if pixel_cache is not None and len(params)>6 and params[4] and params[6] and images:
-                    from .video_memory import source_resolution
-                    resolution=source_resolution([image.size for image in images],params[6],getattr(manager,'img_stitch_mode',0))
-                    preview_size=tuple(max(1,int(value*scale)) for value,scale in zip(resolution,params[4]))
-                for name,image,source_path in zip(names,outputs,paths):
-                    (temporary/name).parent.mkdir(parents=True,exist_ok=True)
-                    with open(temporary/name,'wb') as stream:image.save(stream,format='PNG',compress_level=1,compress_type=zlib.Z_RLE)
-                    if pixel_cache is not None:pixel_cache.put_header(str(entry['directory']/name),image.size,image.mode,owner=source_path)
-                    if preview_size is not None:
-                        # Keep only a byte-bounded preview, not all full-size
-                        # processed images. The durable PNG remains lossless.
-                        source=image
-                        if image.mode not in ('RGB','RGBA'):
-                            source=image.convert('RGBA' if image.mode=='LA' or 'transparency' in image.info else 'RGB')
-                        preview=source.resize(preview_size,Image.BICUBIC)
-                        pixel_cache.put(('preview',str(entry['directory']/name),preview_size,int(Image.BICUBIC)),
-                            preview,owner=source_path,priority=True)
-                        if source is not image:source.close()
-                (temporary/'cache_info.json').write_text(json.dumps(dict(algorithm=manager._custom_algorithm_registry[index][0],
-                    algorithm_path=manager._custom_algorithm_registry[index][1],
-                    page=batch+1,cache_version=spec['cache_version'],inputs=list(paths),outputs=names),
-                    ensure_ascii=False,indent=2),encoding='utf-8')
-                amount=sum(path.stat().st_size for path in temporary.rglob('*') if path.is_file())
-                if stale():raise CancelledError()
-                # Atomic directory publication: consumers see all results together.
-                if entry['directory'].exists():self._remove(entry['directory'])
-                for attempt in range(7):
-                    if stale():raise CancelledError()
+                        with Image.open(path) as image:sizes.append(image.size)
+                    preview_size=self._preview_size(manager,sizes)
+                    jobs=[]
                     try:
-                        os.replace(str(temporary),str(entry['directory']))
-                        break
-                    except OSError as error:
-                        # Windows indexers/antivirus can briefly retain a
-                        # handle after PNG close. Retry only transient sharing
-                        # failures, on this background worker, with a hard bound.
-                        transient=getattr(error,'winerror',None) in (5,32,33)
-                        if not transient or attempt==6:raise
-                        time.sleep(.01*2**attempt)
-                algorithm=component(manager._custom_algorithm_registry[index][0])
-                visible=self.visible.root/algorithm/'processed'
-                entry['_public_target']=visible
-                entry['_public_files']={name:entry['directory']/name for name in names}
-                catalogs={}
-                for name,source in zip(names,paths):
-                    folder=Path(name).parts[0]
-                    manifest=(Path(folder)/'source.json').as_posix()
-                    if manifest in catalogs:continue
-                    value=source_record(manager,int(folder.removeprefix('source_'))-1,Path(source).parent)
-                    value.update(algorithm=manager._custom_algorithm_registry[index][0],
-                        algorithm_path=str(Path(manager._custom_algorithm_registry[index][1]).absolute()),
-                        cache_version=spec['cache_version'],
-                        raw_frames_path=str(Path(source).parent.absolute()),
-                        processed_frames_path=str(visible/folder/'frames'),
-                        source_catalog=str(self.visible.root.parent/'sources'/value['media']/folder/'source.json'))
-                    catalogs[manifest]=value
-                entry['_public_metadata']=catalogs
-                self.publish_entry(entry,lambda:not cancelled())
-                with self.lock:
-                    entry['bytes']=amount+entry.get('_visible_copied',0)
-                    entry['reserved']=0
-                    self.history.setdefault(index,deque(maxlen=32)).append(time.perf_counter()-started)
-                return tuple(str(entry['directory']/name) for name in names)
+                        for path,name,pixels in zip(paths,names,sizes):
+                            if stale():raise CancelledError()
+                            image_bytes=max(32*1024**2,pixels[0]*pixels[1]*spec['working_set_bytes_per_pixel']+spec['working_set_bytes'])
+                            jobs.append(self.image_pool.submit(self._process_one,manager,path,name,index,
+                                image_bytes,entry,temporary,preview_size,owner,epoch,batch,stale,
+                                priority=lambda:self._image_priority(owner,batch),
+                                resource_key=(id(manager._custom_algorithm_session),index),max_concurrency=spec['max_concurrency']))
+                        yield gather(jobs)
+                    except BaseException:
+                        for job in jobs:
+                            if not job.done():job.cancel()
+                        # Drain writers through a Future; never occupy a worker
+                        # waiting on sibling image tasks.
+                        if any(not job.done() for job in jobs):yield gather(jobs,return_exceptions=True)
+                        raise
+                else:
+                    # Legacy/GPU batches retain one call, one shared model, and
+                    # their declared full-batch working-memory admission.
+                    with algorithm_context(index):
+                        resources.enter_context(self.budget.acquire(size,stale,units=1/max(1,len(processing_indices(manager._custom_algorithm_registry,manager.layout_params)))))
+                        with self.lock:self.peak_active=max(self.peak_active,self.budget.active)
+                        for path in paths:
+                            with Image.open(path) as image:images.append(image.convert('RGB'))
+                        outputs=list(main(images,'',name_list=[Path(p).name for p in paths],algorithm_type=index))
+                    if len(outputs)!=len(paths) or not all(isinstance(image,Image.Image) for image in outputs):
+                        raise ValueError('Custom main must return one Pillow image per input, in input order')
+                    if stale():raise CancelledError()
+                    self.request_prune()
+                    temporary.mkdir(parents=True)
+                    names=processed_names(manager,paths)
+                    preview_size=self._preview_size(manager,[image.size for image in images])
+                    for name,image,source_path in zip(names,outputs,paths):
+                        self._write_output(entry,temporary,name,image,source_path,preview_size)
+                args=(manager,paths,index,spec,entry,temporary,names,batch,started,cancelled,stale)
+                if spec.get('api_version')==2 and spec['processing_mode']=='image':
+                    return (yield self.pool.submit(self._finalize_processed,*args))
+                return self._finalize_processed(*args)
         finally:
             with self.lock:entry['reserved']=0
-            state.registry,state.preview,state.session,state.sequence_context=previous
+            if not image_mode:state.registry,state.preview,state.session,state.sequence_context=previous
             for image in {id(image):image for image in images+outputs if isinstance(image,Image.Image)}.values():image.close()
-            self._remove(temporary)
+            if temporary.exists():
+                with self.lock:self._pending_deletions.add(temporary)
+                self.request_prune()
+
+    def _finalize_processed(self,manager,paths,index,spec,entry,temporary,names,batch,started,cancelled,stale):
+        (temporary/'cache_info.json').write_text(json.dumps(dict(algorithm=manager._custom_algorithm_registry[index][0],
+            algorithm_path=manager._custom_algorithm_registry[index][1],
+            page=batch+1,cache_version=spec['cache_version'],inputs=list(paths),outputs=names),
+            ensure_ascii=False,indent=2),encoding='utf-8')
+        amount=sum(path.stat().st_size for path in temporary.rglob('*') if path.is_file())
+        if stale():raise CancelledError()
+        # Atomic directory publication: consumers see all results together.
+        if entry['directory'].exists():self._remove(entry['directory'])
+        for attempt in range(7):
+            if stale():raise CancelledError()
+            try:
+                os.replace(str(temporary),str(entry['directory']))
+                break
+            except OSError as error:
+                # Windows indexers/antivirus can briefly retain a
+                # handle after PNG close. Retry only transient sharing
+                # failures, on this background worker, with a hard bound.
+                transient=getattr(error,'winerror',None) in (5,32,33)
+                if not transient or attempt==6:raise
+                time.sleep(.01*2**attempt)
+        algorithm=component(manager._custom_algorithm_registry[index][0])
+        visible=self.visible.root/algorithm/'processed'
+        entry['_public_target']=visible
+        entry['_public_files']={name:entry['directory']/name for name in names}
+        catalogs={}
+        for name,source in zip(names,paths):
+            folder=Path(name).parts[0]
+            manifest=(Path(folder)/'source.json').as_posix()
+            if manifest in catalogs:continue
+            value=source_record(manager,int(folder.removeprefix('source_'))-1,Path(source).parent)
+            value.update(algorithm=manager._custom_algorithm_registry[index][0],
+                algorithm_path=str(Path(manager._custom_algorithm_registry[index][1]).absolute()),
+                cache_version=spec['cache_version'],
+                raw_frames_path=str(Path(source).parent.absolute()),
+                processed_frames_path=str(visible/folder/'frames'),
+                source_catalog=str(self.visible.root.parent/'sources'/value['media']/folder/'source.json'))
+            catalogs[manifest]=value
+        entry['_public_metadata']=catalogs
+        self.publish_entry(entry,lambda:not cancelled())
+        with self.lock:
+            entry['bytes']=amount+entry.get('_visible_copied',0)
+            entry['reserved']=0
+            self.history.setdefault(index,deque(maxlen=32)).append(time.perf_counter()-started)
+        return tuple(str(entry['directory']/name) for name in names)
+
+    def _preview_size(self,manager,sizes):
+        params=manager.layout_params
+        if getattr(self,'pixel_cache',None) is None or not sizes or len(params)<=6 or not params[4] or not params[6]:
+            return None
+        from .video_memory import source_resolution
+        resolution=source_resolution(sizes,params[6],getattr(manager,'img_stitch_mode',0))
+        return tuple(max(1,int(value*scale)) for value,scale in zip(resolution,params[4]))
+
+    def _write_output(self,entry,temporary,name,image,source_path,preview_size):
+        (temporary/name).parent.mkdir(parents=True,exist_ok=True)
+        with open(temporary/name,'wb') as stream:
+            image.save(stream,format='PNG',compress_level=1,compress_type=zlib.Z_RLE)
+        pixel_cache=getattr(self,'pixel_cache',None)
+        if pixel_cache is not None:
+            pixel_cache.put_header(str(entry['directory']/name),image.size,image.mode,owner=source_path)
+        if preview_size is not None:
+            source=image
+            if image.mode not in ('RGB','RGBA'):
+                source=image.convert('RGBA' if image.mode=='LA' or 'transparency' in image.info else 'RGB')
+            try:
+                preview=source.resize(preview_size,Image.BICUBIC)
+                pixel_cache.put(('preview',str(entry['directory']/name),preview_size,int(Image.BICUBIC)),
+                    preview,owner=source_path,priority=True)
+            finally:
+                if source is not image:source.close()
+
+    def _image_priority(self,owner,batch):
+        # Do not take the cache lock under the scheduler/budget locks.
+        window=self.windows.get(owner)
+        return abs(batch-window[2]) if window is not None else float('inf')
+
+    def _process_one(self,manager,path,name,index,size,entry,temporary,preview_size,owner,epoch,batch,stale):
+        from .custom_func.main import main,algorithm_context
+        previous=tuple(getattr(state,key,None) for key in ('registry','preview','session','sequence_context'))
+        state.registry=manager._custom_algorithm_registry;state.session=manager._custom_algorithm_session
+        state.preview=True;state.sequence_context=(owner,epoch,batch)
+        images=[];outputs=[]
+        try:
+            with ExitStack() as resources:
+                with algorithm_context(index):
+                    resources.enter_context(self.budget.acquire(size,stale,order=lambda:self._image_priority(owner,batch),
+                        units=1/max(1,len(processing_indices(manager._custom_algorithm_registry,manager.layout_params))*len(entry.get('input_paths',(path,))))))
+                    with self.lock:self.peak_active=max(self.peak_active,self.budget.active)
+                    with Image.open(path) as image:images.append(image.convert('RGB'))
+                    outputs=main(images,'',algorithm_type=index)
+                if stale():raise CancelledError()
+                self._write_output(entry,temporary,name,outputs[0],path,preview_size)
+        finally:
+            for image in {id(image):image for image in images+outputs if isinstance(image,Image.Image)}.values():image.close()
+            state.registry,state.preview,state.session,state.sequence_context=previous
 
     def snapshot(self):
+        model=self.budget.model_snapshot()
         with self.lock:
             return dict(hits=self.hits,misses=self.misses,active=self.budget.active,
                 limit=self.budget.limit,bytes=sum(e.get('bytes',0) for e in self.entries.values()),
-                stages=dict(self.budget.active_by_stage),stage_seconds=dict(self.budget.service),
-                service={str(k):sum(v)/len(v) for k,v in self.history.items() if v})
+                stages=dict(self.budget.active_by_stage),stage_seconds=dict(self.budget.service),stage_model=model,
+                service={str(k):sum(v)/len(v) for k,v in self.history.items() if v},dependencies=self.scheduler.snapshot())
 
     def close(self):
         with self.lock:
             if self.closed:return
             self.closed=True;self.windows.clear()
         with self.budget.condition:self.budget.condition.notify_all()
+        self.scheduler.shutdown()
+        self.cleanup_pool.shutdown(wait=False,cancel_futures=True)
         if self.mosaic_stage is not None:self.mosaic_stage.close()
         self.pool.shutdown(wait=False,cancel_futures=True)
+        self.image_pool.shutdown(wait=False,cancel_futures=True)
         # Never wait for image processing or disk deletion on the GUI thread.
         # This executor is joined by Python at normal process exit, so closing
         # the window does not abandon the work tree while writers still run.
@@ -453,7 +646,10 @@ class CustomPipeline:
         cleanup.shutdown(wait=False)
 
     def _finish_close(self):
+        self.scheduler.shutdown(wait_for_tasks=True)
+        self.cleanup_pool.shutdown(wait=True,cancel_futures=True)
         self.pool.shutdown(wait=True,cancel_futures=True)
+        self.image_pool.shutdown(wait=True,cancel_futures=True)
         if self.mosaic_stage is not None:
             self.mosaic_stage.pool.shutdown(wait=True,cancel_futures=True)
         with self.readers:

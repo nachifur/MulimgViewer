@@ -7,6 +7,8 @@ import uuid
 import shutil
 from concurrent.futures import ThreadPoolExecutor, CancelledError
 from pathlib import Path
+from contextlib import ExitStack
+from .dependency_scheduler import prepared, gather
 
 from PIL import Image
 
@@ -115,7 +117,7 @@ class ImagePipeline:
                 self._catalog_pending=False
                 write_source_catalog(template,self.directory.parent,split_media=True)
             self.processing.set_window('image',('image',repr(getattr(template,'input_path',''))),current_window,current,active_cache_names(template))
-            self.processing._prune()
+            self.processing.request_prune()
         with self.lock:
             self._pump_queued = False
             if self.closed:
@@ -236,8 +238,9 @@ class ImagePipeline:
                     key = self.generation, batch
                     if batch in self.cache or batch in self.failed or key in self.running:
                         continue
-                    future = self.pool.submit(self._compose, self.template, self.points,
-                                              self.custom, batch, self.generation)
+                    future = self.processing.scheduler.submit(self.pool,self._compose, self.template, self.points,
+                                              self.custom, batch, self.generation,
+                                              priority=lambda batch=batch:self.processing._image_priority('image',batch))
                     self.running[key] = future
                     future.add_done_callback(self._task_done)
             current = self.batch if self.window is not None else None
@@ -259,18 +262,25 @@ class ImagePipeline:
     def _compose(self, template, points, custom, batch, generation):
         params=template.layout_params
         if len(params)>38 and getattr(template,'_custom_algorithm_registry',None) is not None:
-            manager=template.video_stitch_snapshot()
-            manager.set_action_count(batch)
-            with self.lock:
-                window=self.window;workers=self.budget;memory=self.memory
-                current=self.batch
-            if window is None:raise CancelledError()
-            epoch=('image',repr(manager.input_path))
-            def cancelled():return self.closed or generation!=self.generation
-            started=time.perf_counter()
-            with self.processing.mosaic_stage.plan(manager,manager.get_flist(),batch,'image',epoch,points,cancelled) as plan:
-                with self.processing.prepare(manager,manager.get_flist(),batch,'image',epoch,cancelled,on_ready=plan.ready) as results:
-                    image,state=plan.compose(results)
+            return self.processing.scheduler.start(self._compose_steps,template,points,batch,generation,
+                priority=lambda:self.processing._image_priority('image',batch))
+        return self._compose_pixels(template,points,custom,batch,generation)
+
+    def _compose_steps(self,template,points,batch,generation):
+        manager=template.video_stitch_snapshot();manager.set_action_count(batch)
+        with self.lock:window=self.window
+        if window is None:raise CancelledError()
+        epoch=('image',repr(manager.input_path))
+        def cancelled():return self.closed or generation!=self.generation
+        started=time.perf_counter();paths=manager.get_flist()
+        with ExitStack() as stack:
+            plan=stack.enter_context(self.processing.mosaic_stage.plan(manager,paths,batch,'image',epoch,points,cancelled,defer_prune=True))
+            results=yield from prepared(self.processing.prepare_steps(manager,paths,batch,'image',epoch,cancelled,on_ready=plan.ready,defer_prune=True),stack)
+            yield gather(plan.dependencies(results))
+            if cancelled():raise CancelledError()
+            def render():
+                if cancelled():raise CancelledError()
+                with plan.composed(results) as (image,state):
                     self.directory.mkdir(parents=True,exist_ok=True)
                     temporary=self.directory/f'__image_{generation}_{batch}_{time.time_ns()}.tmp'
                     try:image.save(temporary,format='PNG',compress_level=1)
@@ -278,7 +288,7 @@ class ImagePipeline:
                         temporary.unlink(missing_ok=True);raise
                     inputs=state.get('img_resolution_origin',image.size)
                     return temporary,state,image.width*image.height,int(inputs[0])*int(inputs[1])*len(state['flist']),time.perf_counter()-started
-        return self._compose_pixels(template,points,custom,batch,generation)
+            return (yield self.pool.submit(render))
 
     def _compose_pixels(self, template, points, custom, batch, generation):
         with self.lock:
@@ -363,11 +373,11 @@ class ImagePipeline:
         return True
 
     def close(self):
-        self.processing.close()
         with self.lock:
             self.closed = True
             self.request_serial += 1
             completed = [f for f in self.running.values() if f.done()]
+        self.processing.close()
         for future in completed:
             self._task_done(future)
         for executor in (self.coordinator, self.pool, self.display):

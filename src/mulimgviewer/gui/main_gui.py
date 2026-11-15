@@ -817,6 +817,14 @@ class MulimgViewerGui ( wx.Frame ):
 		self.colourPicker_gap = wx.ColourPickerCtrl( self.m_panel4, wx.ID_ANY, wx.Colour( 255, 255, 255 ), wx.DefaultPosition, wx.Size( 40,-1 ), wx.CLRP_DEFAULT_STYLE )
 		wSizer8.Add( self.colourPicker_gap, 0, wx.ALL, 5 )
 
+		self.m_staticText471 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Font", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText471.Wrap( -1 )
+
+		wSizer8.Add( self.m_staticText471, 0, wx.ALL, 5 )
+
+		self.font_color = wx.ColourPickerCtrl( self.m_panel4, wx.ID_ANY, wx.Colour( 0, 0, 0 ), wx.DefaultPosition, wx.DefaultSize, wx.CLRP_DEFAULT_STYLE )
+		wSizer8.Add( self.font_color, 0, wx.ALL, 5 )
+
 
 		fgSizer3.Add( wSizer8, 1, wx.EXPAND, 5 )
 

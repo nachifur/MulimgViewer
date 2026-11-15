@@ -22,6 +22,7 @@ from .resource_policy import resource_budget, positive_cache_integer
 from .image_pipeline import ImagePipeline
 from .memory_reclaim import MemoryReclaimer
 from .resource_monitor import ResourceMonitor
+from .cache_shutdown import clear_cache_on_startup
 from .thread_optimizer import AdaptiveThreadAllocator, available_memory_bytes
 import shutil
 import copy
@@ -52,6 +53,8 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
     """
 
     def __init__(self, parent, UpdateUI, get_type, default_path=None):
+        # No decoder, image pipeline or cache writer exists yet.
+        clear_cache_on_startup(Path.cwd() / 'cache_frames')
         self.shared_config = SharedConfig()
         super().__init__(parent)
         try:
@@ -451,10 +454,18 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
         processing=getattr(self.image_pipeline,'processing',None)
         if processing is not None:
             lanes=max(1,policy.workers-self.video_manager._extract_threads) if self.shared_config.video_mode else policy.workers
-            processing.configure(lanes,policy.memory)
+            group=getattr(self.video_manager,'_pipeline_workers',None)
+            snapshot=getattr(self.video_manager,'_render_snapshot',None)
+            managed=bool(self.shared_config.video_mode and group is not None and snapshot is not None
+                and getattr(snapshot[0],'_custom_algorithm_registry',None) is not None)
+            processing.configure(policy.workers if managed else lanes,policy.memory,
+                capacity=group.downstream_capacity if managed else None,
+                reservation=group.reserve_downstream if managed else None)
         self.video_manager._configure_video_memory()
         self._resource_policy_key = key
         self.resource_monitor.reset()
+        group=getattr(self.video_manager,'_pipeline_workers',None)
+        if group is not None:group.reset_activity()
         self.video_manager._playback_pacer.reset()
         self.video_manager._pacing_model_period = None
         if self.shared_config.video_mode:
@@ -546,28 +557,33 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
         if getattr(self, '_is_closing', False):
             return
         cfg = self.shared_config
-        if cfg.video_mode:
-            vm = self.video_manager
-            decode=vm._extract_threads
-            downstream=vm._stitch_threads
-        else:
-            pipeline = self.image_pipeline
-            decode=0
-            downstream=pipeline.processing.budget.limit
-        text=f"Budget: {cfg.thread} workers\nPlan: Decode: {decode} | Process / Stitch / Compose: {downstream} shared"
-        stages=self.image_pipeline.processing.snapshot()['stages']
-        active_decode=self.video_manager._pipeline_workers.active[0] if cfg.video_mode and getattr(self.video_manager,'_pipeline_workers',None) else 0
-        text+=f"\nActive: decode {active_decode} | process {stages.get(0,0)} | stitch {stages.get(1,0)} | compose {stages.get(2,0)}"
+        vm=self.video_manager
+        group=getattr(vm,'_pipeline_workers',None) if cfg.video_mode else None
+        budget=self.image_pipeline.processing.budget
+        # Same lock order as admission: budget then shared worker accounting.
+        with budget.condition:
+            stages=dict(budget.active_by_stage)
+            if group is not None:
+                with group.lock:admitted=group.total_budget;decode=group.active[0]
+            else:admitted=cfg.thread;decode=0
+        text=f"Budget: {cfg.thread} CPU slots"
+        if admitted!=cfg.thread:text+=f" (limit: {admitted})"
+        memory_budget=getattr(cfg,'memory_budget',None)
+        if memory_budget is not None:text+=f" | RAM: {memory_budget/1024**3:.2f} GiB"
+        text+=f"\nActive: Decode: {decode} | Process: {stages.get(0,0)} | Stitch: {stages.get(1,0)} | Compose: {stages.get(2,0)}"
         monitor = getattr(self, 'resource_monitor', None)
         stats = monitor.read_snapshot() if monitor is not None else {}
         cpu, memory, fps = stats.get('cpu'), stats.get('memory'), stats.get('fps')
         if cpu is None or memory is None:
-            text += '\nCPU / RAM avg (10s): sampling...' if stats.get('available', True) else '\nCPU / RAM: unavailable (psutil)'
+            text += '\nAverage (10s): sampling...' if stats.get('available', True) else '\nCPU / RAM: unavailable'
         else:
             usage = f'{memory / 1024**3:.2f} GiB' if memory >= 1024**3 else f'{memory / 1024**2:.0f} MiB'
-            text += f'\nCPU avg (10s): {cpu:.1f}%; RAM avg: {usage}'
+            text += f'\nAverage (10s): CPU {cpu:.1f}% | RAM {usage}'
         text += ('\nPlayback: paused' if not cfg.is_playing else
                  f'\nPlayback: {fps:.1f} FPS' if fps is not None else '\nPlayback: sampling...')
+        if cfg.video_mode and cfg.is_playing:
+            period=vm._playback_pacer.supply_period()
+            if period is not None and period>0:text+=f" | Supply: {1/period:.2f} FPS"
         tooltip = self.power_mode.GetToolTip()
         if tooltip is None:
             self.power_mode.SetToolTip(text)
@@ -926,6 +942,8 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
         if self._is_closing:
             return
         self._is_closing = True
+        from .export_async import cancel_save
+        cancel_save(self)
         try:
             self._save_session_configuration()
         except (OSError, ValueError) as exc:
@@ -977,7 +995,8 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
             if root!=pipeline.directory.parent.absolute():
                 raise ValueError('Image and video cache roots differ; refusing recursive cleanup')
             pools=(pipeline.coordinator,pipeline.pool,pipeline.display,*pipeline.retired_pools,
-                   vm._cache_executor,vm.executor,vm.stitch_executor,vm._maintenance_executor,vm._display_executor)
+                   vm._cache_executor,vm.executor,vm.stitch_executor,vm._maintenance_executor,vm._display_executor,
+                   getattr(self,'_export_pool',None))
             self._cache_cleanup_future=schedule_cache_removal(root,pools,
                 (getattr(pipeline.processing,'cleanup_future',None),))
 
@@ -1074,8 +1093,8 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
 
 
     def save_img(self, event):
-        from .export_controller import save_viewer
-        save_viewer(self,event)
+        from .export_async import start_save
+        start_save(self,event)
 
     def refresh(self, event):
         self._custom_settings_dirty=False
@@ -1716,67 +1735,16 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
             self.save_img(evt)
         menu.Bind(wx.EVT_MENU, save_current_page, id=save_single_id)
 
-        if (self.ImgManager.type == 0 or self.ImgManager.type == 1) and (self.parallel_sequential.Value):
-            save_column_id = wx.Window.NewControlId()
-            menu.Append(save_column_id, "📄 save(only select current location)")
-            def save_selected_column(evt):
-                # save current location images in all folders
-                if not self.out_path_str:
-                    self.out_path(evt)
-                    if not self.out_path_str:
-                        return
-                x, y = event.GetPosition()
-                clicked_grid_id = self.get_img_id_from_point([x, y])
-                # Retrieve ID information
-                if hasattr(self, 'current_page_img_paths') and clicked_grid_id < len(self.current_page_img_paths):
-                    target_path = self.current_page_img_paths[clicked_grid_id]
-                else:
-                    actual_img_index = self.ImgManager.xy_grids_id_list[clicked_grid_id] \
-                        if hasattr(self.ImgManager, 'xy_grids_id_list') and clicked_grid_id < len(self.ImgManager.xy_grids_id_list) \
-                        else clicked_grid_id
-
-                    if not hasattr(self.ImgManager, 'flist') or actual_img_index >= len(self.ImgManager.flist):
-                        self.SetStatusText_(["Cannot get clicked image", "-1", "-1", "-1"])
-                        return
-                    target_path = self.ImgManager.flist[actual_img_index]
-                if not target_path or not os.path.exists(target_path):
-                    self.SetStatusText_(["Invalid image path", "-1", "-1", "-1"])
-                    return
-                target_name = os.path.basename(target_path)
-                type_ = self.choice_output.GetSelection()
-                if self.show_custom_func.Value:
-                    self.ImgManager.layout_params[32] = True
-                    self.ImgManager.save_img(self.out_path_str, type_)
-                    self.ImgManager.layout_params[32] = False
-                self.ImgManager.save_img(self.out_path_str, type_)
-                self.ImgManager.save_stitch_img_and_customfunc_img(self.out_path_str, self.show_custom_func.Value)
-
-                # Call the default save function
-                select_folder = os.path.join(self.out_path_str, "select_images")
-                # override it with the new folder selection logic
-                if os.path.exists(select_folder):
-                    shutil.rmtree(select_folder)
-                os.makedirs(select_folder, exist_ok=True)
-                all_dirs = sorted(set(os.path.dirname(p) for p in self.ImgManager.flist))
-                success_count = 0
-                for folder_path in all_dirs:
-                    if not os.path.exists(folder_path):
-                        continue
-                    try:
-                        target_file = os.path.join(folder_path, target_name)
-                        if os.path.exists(target_file) and os.path.isfile(target_file):
-                            folder_name = os.path.basename(folder_path)
-                            sub_dir = os.path.join(select_folder, folder_name)
-                            os.makedirs(sub_dir, exist_ok=True)
-                            shutil.copy2(target_file, os.path.join(sub_dir, target_name))
-                            success_count += 1
-                    except:
-                        pass
-                status_msg = f"Save completed! select_images updated with {success_count} images (clicked: {target_name})" \
-                    if success_count > 0 \
-                    else f"Save completed, but no matching images found for {target_name}"
-                self.SetStatusText_([status_msg, "-1", "-1", "-1"])
-            menu.Bind(wx.EVT_MENU, save_selected_column, id=save_column_id)
+        save_column_id = wx.Window.NewControlId()
+        menu.Append(save_column_id, "Select images at this position")
+        def save_selected_column(evt):
+            x, y = event.GetPosition()
+            grid = self.get_img_id_from_point([x, y])
+            self._remember_main_selection(grid)
+            self.update_status_bar_for_current_page(grid)
+            from .export_async import start_save
+            start_save(self, evt, selection_only=True, selected_grid=grid)
+        menu.Bind(wx.EVT_MENU, save_selected_column, id=save_column_id)
 
         if self.magnifier.Value:
             new_box_id = wx.Window.NewControlId()
@@ -2355,7 +2323,8 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
                              self.font_paths,                           # 9
                              self.title_position.GetSelection(),        # 10
                              self.title_exif.Value,                     # 11
-                             self.title_show_rename.Value]              # 12
+                             self.title_show_rename.Value,              # 12
+                             list(self.font_color.GetColour().Get())] # 13
 
             if title_setting[0]:
                 title_setting[2:7] = auto_title_fields(
@@ -3219,54 +3188,22 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
                 pass
         if not algorithm_folder.exists():
             os.makedirs(str(algorithm_folder))
-        template_content = f"""'''
-{algorithm_name} Algorithm
-Custom algorithm - Implement your image processing logic here
-'''
-from PIL import Image
-from pathlib import Path
-import os
+        template_content = """\"\"\"CPU image kernel. The framework owns scheduling, caches and export.\"\"\"
+THREAD_SAFE = True
 
-def custom_process_img(img):
-    \"\"\"
-    Custom image processing function
-    input: image(pillow)
-    output: image(pillow)
+def setup():
+    # Optional: load immutable/shared CPU resources once per render session.
+    return None
 
-    Implement your image processing algorithm here
-    Examples:
-    - img = img.convert('L')  # Convert to grayscale
-    - img = img.transpose(Image.FLIP_LEFT_RIGHT)  # Horizontal flip
-    \"\"\"
-    return img
-
-def main(img_list, save_path, name_list=None, algorithm_name="{algorithm_name}"):
-    \"\"\"
-    Batch process image list
-    \"\"\"
-    i = 0
-    out_img_list = []
-    if save_path != "":
-        flag_save = True
-        save_path = Path(save_path) / "algorithms" / algorithm_name / "processed"
-        if not save_path.exists():
-            os.makedirs(str(save_path))
-    else:
-        flag_save = False
-
-    for img in img_list:
-        img = custom_process_img(img)
-
-        out_img_list.append(img)
-        if flag_save:
-            if isinstance(name_list, list) and i < len(name_list):
-                img_path = save_path / name_list[i]
-            else:
-                img_path = save_path / (str(i) + ".png")
-            img.save(str(img_path))
-        i += 1
-    return out_img_list
+def process_image(image, *, context):
+    # Return one Pillow image. Do not manipulate GUI controls or save files.
+    # THREAD_SAFE must be False if calls share mutable, unprotected state.
+    return image.copy()
 """
+        manifest = dict(api_version=2, processing_mode='image', device='cpu',
+                        max_concurrency='auto', cacheable=True, cache_version='1')
+        (algorithm_folder / 'plugin.json').write_text(
+            json.dumps(manifest, indent=2) + '\n', encoding='utf-8')
         template_path = algorithm_folder / "main.py"
         with open(template_path, "w", encoding="utf-8") as f:
             f.write(template_content)

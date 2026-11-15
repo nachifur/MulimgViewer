@@ -1,0 +1,13 @@
+{
+  "api_version": 2,
+  "processing_mode": "batch",
+  "device": "cuda:0",
+  "max_concurrency": 1,
+  "cacheable": true,
+  "cache_version": "1",
+  "working_set_bytes": 33554432,
+  "working_set_bytes_per_pixel": 48,
+  "cache_dependencies": [
+    "../gpu_support.py"
+  ]
+}

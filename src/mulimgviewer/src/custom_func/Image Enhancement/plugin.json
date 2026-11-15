@@ -4,5 +4,7 @@
   "cacheable": true,
   "cache_version": "1",
   "hierarchical_names": true,
-  "working_set_bytes_per_pixel": 12
+  "working_set_bytes_per_pixel": 12,
+  "api_version": 2,
+  "processing_mode": "image"
 }

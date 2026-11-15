@@ -46,6 +46,7 @@ class StatusBarMixin:
     def SetStatusText_(self, texts):
         for field, text in enumerate(texts[:self.Status_number]):
             if text != '-1':
+                if field==3 and getattr(self,'_export_active',False):text=self._export_status
                 self.m_statusBar1.SetStatusText(str(text), field)
                 if hasattr(self, '_status_field_tooltips'):
                     self._status_field_tooltips[field] = str(text)

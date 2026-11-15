@@ -13,7 +13,7 @@ from pathlib import Path
 import numpy as np
 from PIL import Image
 from .cache_layout import page_name, component, CachedCanvas
-from .custom_func.contract import specification, original_index, display_indices, display_grid
+from .custom_func.contract import specification, original_index, display_indices, display_grid, processing_indices
 
 
 class MosaicStage:
@@ -23,7 +23,7 @@ class MosaicStage:
         self.completed=0;self.seconds=0.
 
     @contextmanager
-    def plan(self, manager, flist, batch, owner, epoch, points, cancelled):
+    def plan(self, manager, flist, batch, owner, epoch, points, cancelled,defer_prune=False):
         self.cache._initialize()
         plan=MosaicPlan(self,manager,flist,batch,owner,epoch,points,cancelled)
         try:yield plan
@@ -36,7 +36,7 @@ class MosaicStage:
                 with self.cache.lock:
                     for entry in plan.entries:entry['pins']-=1
                     self.cache.readers.notify_all()
-            self.cache._prune()
+            self.cache.request_prune() if defer_prune else self.cache._prune()
 
     def close(self):self.pool.shutdown(wait=False,cancel_futures=True)
 
@@ -87,7 +87,10 @@ class MosaicPlan:
                     users=set(),pins=0,used=time.monotonic(),bytes=0,page=self.batch,
                     cacheable=index is None or specification(self.manager._custom_algorithm_registry,index)['cacheable'],algorithm=algorithm)
                 self.cache.entries[key]=entry
-                try:entry['future']=self.stage.pool.submit(self._build,index,inputs,params,entry,algorithm)
+                try:
+                    dependencies=() if index==self.reference else (self.futures[self.reference],)
+                    entry['future']=self.cache.scheduler.submit(self.stage.pool,self._build,index,inputs,params,entry,algorithm,
+                        dependencies=dependencies,priority=lambda:self.cache._image_priority(self.owner,self.batch))
                 except BaseException:
                     self.cache.entries.pop(key,None);raise
             entry['pins']+=1;entry['users'].add((self.owner,self.epoch,self.batch))
@@ -107,7 +110,9 @@ class MosaicPlan:
         manager._custom_results={} if index is None else {0:inputs}
         size=self.cache.composition_bytes(self.paths,{} if index is None else {0:inputs},manager)
         def stale():return not self.cache.node_valid(self.owner,self.epoch,self.batch,algorithm)
-        with self.cache.budget.acquire(size,stale,priority=1):
+        with self.cache.budget.acquire(size,stale,priority=1,
+                order=lambda:self.cache._image_priority(self.owner,self.batch),
+                units=1/(1+len(processing_indices(self.manager._custom_algorithm_registry,self.manager.layout_params)))):
             started=time.perf_counter()
             manager._video_memory_budget=size
             manager.set_action_count(self.batch)
@@ -116,7 +121,7 @@ class MosaicPlan:
             if flag!=0 or manager.img is None:raise RuntimeError(f'{algorithm}: mosaic failed')
             state={name:getattr(manager,name) for name in RENDER_STATE if hasattr(manager,name)}
             try:
-                self.cache._prune()
+                self.cache.request_prune()
                 entry['directory'].mkdir(parents=True)
                 path=entry['directory']/page_name(self.batch)
                 with open(path,'wb') as stream:manager.img.save(stream,format='PNG',compress_level=1)
@@ -145,7 +150,19 @@ class MosaicPlan:
                 with self.cache.lock:entry['reserved']=0
                 manager.clear_cache()
 
+    def dependencies(self,processed):
+        # Do not rely on the ordering of Future callbacks: a processing Future
+        # can wake its consumers before its ready callback has finished.
+        for index,paths in processed.items():self.ready(index,paths)
+        return tuple(self.futures[index] for index in dict.fromkeys([self.reference]+self.indices))
+
     def compose(self, processed):
+        # Compatibility for direct callers. Production keeps the context open
+        # through final PNG publication so CPU and canvas RAM remain admitted.
+        with self.composed(processed) as output:return output
+
+    @contextmanager
+    def composed(self, processed):
         for index,paths in processed.items():self.ready(index,paths)
         params=self.manager.layout_params
         algorithm_grid=bool(params[32] or params[38])
@@ -153,25 +170,28 @@ class MosaicPlan:
         indices=self.indices
         slots=rows*cols
         artifacts={index:self.futures[index].result() for index in indices}
-        self.futures[self.reference].result()
+        reference=self.futures[self.reference].result()
         if self.cancelled():raise CancelledError()
         for entry in self.entries:self.cache.publish_entry(entry,lambda:not self.cancelled())
-        if slots==1:
+        if slots==1 and indices:
             path,state=artifacts[indices[0]]
-            return CachedCanvas(path),copy.deepcopy(state)
+            yield CachedCanvas(path),copy.deepcopy(state)
+            return
         pixel_cache=getattr(self.cache,'pixel_cache',None)
         width=height=0
-        for path,state in artifacts.values():
+        for path,state in (artifacts.values() if artifacts else [reference]):
             cached=(pixel_cache.get(path) or pixel_cache.get(('header',path))) if pixel_cache is not None else None
             if cached is not None:width=max(width,cached.width);height=max(height,cached.height)
             else:
                 with Image.open(path) as image:width=max(width,image.width);height=max(height,image.height)
         charge=max(32*1024**2,width*height*slots*16+width*height*8)
-        with self.cache.budget.acquire(charge,self.cancelled,priority=2):
-            canvas=Image.new('RGBA',(width*cols,height*rows),tuple(artifacts[indices[0]][1]['gap_color']))
-            state=copy.deepcopy(artifacts[indices[0]][1])
+        with self.cache.budget.acquire(charge,self.cancelled,priority=2,
+                order=lambda:self.cache._image_priority(self.owner,self.batch)):
+            base_artifact=artifacts[indices[0]] if indices else reference
+            canvas=Image.new('RGBA',(width*cols,height*rows),tuple(base_artifact[1]['gap_color']))
+            state=copy.deepcopy(base_artifact[1])
             xy=[];ids=[];source_slots=[];blanks=set();titles=[]
-            base_state=artifacts[indices[0]][1]
+            base_state=base_artifact[1]
             base=max(len(self.paths),max(base_state['xy_grids_id_list'],default=-1)+1)
             for slot in range(slots):
                 if algorithm_grid and params[40]:row=slot%rows;col=slot//rows
@@ -199,4 +219,4 @@ class MosaicPlan:
                 _original_row_col=list(params[0]) if algorithm_grid else None,
                 _show_all_func_expanded_row_col=[params[0][0]*rows,params[0][1]*cols] if algorithm_grid else None,
                 _func_layout_vertical=bool(params[40]),pdf_title_layers=titles)
-            return canvas,state
+            yield canvas,state

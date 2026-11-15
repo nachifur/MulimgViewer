@@ -1,6 +1,6 @@
 {
  "output": {
-  "row_col": "1,24",
+  "row_col": "1,6",
   "row_col_one_img": "1,1",
   "show_scale": "0.1,0.1",
   "row_col_img_unit": "3,1",
@@ -48,12 +48,12 @@
   "title_show_rename": false,
   "customfunc_choice": 0,
   "show_all_func": true,
-  "show_all_func_layout": "4,1",
+  "show_all_func_layout": "2,1",
   "func_layout_vertical": false,
   "power_mode": 2,
   "cache_frames": "4",
   "cache_multiplier": "2",
-  "show_unit": true,
+  "show_unit": false,
   "video_mode": true,
   "interval": "1.0",
   "skip_frames": "0",
@@ -73,7 +73,13 @@
    255
   ],
   "checkBox_auto_draw_color": true,
-  "choice_input_mode": 1
+  "choice_input_mode": 2,
+  "font_color": [
+   0,
+   0,
+   0,
+   255
+  ]
  },
  "hotkeys": {
   "next_img": "CTRL+N",

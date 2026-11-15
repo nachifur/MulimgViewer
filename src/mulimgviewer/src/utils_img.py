@@ -23,7 +23,7 @@ from .data import ImgData
 from .utils import rgb2hex
 from .custom_func.main import get_available_algorithms
 from .custom_func.runtime import render_context, state as processing_state
-from .custom_func.contract import specification, processing_indices, display_grid
+from .custom_func.contract import specification, processing_indices, display_indices, display_grid, original_index
 from .cache_layout import page_name, source_names, write_source_catalog
 from .render_metrics import MeasuredFont
 
@@ -1037,20 +1037,20 @@ class ImgManager(ImgData):
             else:
                 pass
 
-        available_algorithms = get_available_algorithms()
         all_func_img_lists = []
         out_path_str = self.layout_params[33]
-        all_func_img_lists.append(original_img_list)
-        for i in processing_indices(self._custom_algorithm_registry,self.layout_params):
-            algorithm_name=available_algorithms[i]
+        registry=self._custom_algorithm_registry
+        original=original_index(registry)
+        for index in display_indices(registry,self.layout_params):
+            if index==original:
+                all_func_img_lists.append(original_img_list)
+                continue
             processed=getattr(self,'_custom_results',None)
             if processed is not None:
-                all_func_img_lists.append([LazyVideoImage(path) for path in processed[i]])
+                all_func_img_lists.append([LazyVideoImage(path) for path in processed[index]])
                 continue
-            pure_img_list = []
-            for img in original_img_list:
-                pure_img_list.append(img.copy())
-            algorithm_img_list = main_custom_func(pure_img_list, out_path_str, name_list=name_list, algorithm_type=i)
+            pure_img_list = [img.copy() for img in original_img_list]
+            algorithm_img_list = main_custom_func(pure_img_list, out_path_str, name_list=name_list, algorithm_type=index)
             all_func_img_lists.append(algorithm_img_list)
         original_rows, original_cols = original_row_col or (1, max(1, len(original_img_list)))
         inner_count = self.layout_params[1][0] * self.layout_params[1][1]
@@ -1979,6 +1979,9 @@ class ImgManager(ImgData):
                       self.gap_color[1], 255-self.gap_color[2]]
         text_color = ['%d' % i + "," for i in text_color]
         self.text_color = rgb2hex(("".join(text_color))[0:-1])
+        configured=self.title_setting[13] if len(self.title_setting)>13 else None
+        if isinstance(configured,(tuple,list)) and len(configured)>=3:
+            self.text_color=rgb2hex(','.join(str(int(v)) for v in configured[:3]))
         # calculate title size
         font_size = int(self.title_setting[8])
         self.font = MeasuredFont.wrap(ImageFont.truetype(

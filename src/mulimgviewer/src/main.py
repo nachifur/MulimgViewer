@@ -1097,6 +1097,8 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
         start_save(self,event)
 
     def refresh(self, event):
+        self._auto_fit_serial=getattr(self,'_auto_fit_serial',0)+1
+        self._auto_fit_pending=None
         self._custom_settings_dirty=False
         if getattr(self, "_parallel_switch_dirty", False):
             self._apply_parallel_switch()
@@ -1220,7 +1222,18 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
                 self.ImgManager.action_count = clamped
                 self.ImgManager.img_count = clamped * self.ImgManager.count_per_action
 
+            if self.auto_layout_check.Value:
+                self._auto_fit_pending=(self._auto_fit_serial,self._auto_fit_context())
             self.show_img(preserve_text_value=True)
+            # Same-page Refresh may reuse an already painted bitmap and omit
+            # delivery callbacks; fit it only if it belongs to this context.
+            if self.shared_config.video_mode:
+                key=getattr(self,'_video_display_key',None)
+                displayed=bool(key and key[0]==self.shared_config.batch_idx and key[-1]==self.video_manager._window_token)
+            else:
+                key=self.image_pipeline.displayed_key
+                displayed=bool(key and key[0]==self.image_pipeline.generation and key[1]==self.shared_config.batch_idx)
+            if displayed:self._consume_auto_window_fit(self.img_size)
         else:
             self.SetStatusText_(["-1", "", "***Error: First, need to select the input dir***", "-1"])
         # ★ 刷新完把设置区输入框的光标收掉, 否则框里一直闪着 "|",
@@ -2894,69 +2907,63 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
             pass
         # ★ 删除 Refresh()：Thaw() 本身触发延迟重绘，再调 Refresh() 造成第二次绘制
         # ★ 删除 CallAfter(Scroll, 0,0)：show_img 里已有此调用，不需要在这里重复
+        self._consume_auto_window_fit(logical_size)
 
-    def auto_layout(self, frame_resize=False):
-        displays = (wx.Display(i) for i in range(wx.Display.GetCount()))
-        displays_list = [display for display in displays]
-        sizes = [display.GetGeometry().GetSize() for display in displays_list]
-        screen_id = wx.Display.GetFromWindow(self)
-        self.displaySize = sizes[screen_id]
+    def _auto_fit_context(self):
+        video=bool(self.shared_config.video_mode)
+        return (video,getattr(self,'_video_layout_token' if video else '_image_layout_token',None),self._index_context())
 
-        if self.hidden_flag == 1:
-            offset_hight_img_show = 50
-        else:
-            offset_hight_img_show = 0
+    def _consume_auto_window_fit(self,size):
+        pending=getattr(self,'_auto_fit_pending',None)
+        if pending is None:return
+        self._auto_fit_pending=None
+        serial,context=pending
+        if context!=self._auto_fit_context():return
+        width,height=map(int,size)
+        if width<=0 or height<=0:return
+        def apply():
+            if (getattr(self,'_is_closing',False) or serial!=getattr(self,'_auto_fit_serial',None)
+                    or context!=self._auto_fit_context()):return
+            self.auto_layout(fit_image=(width,height))
+        wx.CallAfter(apply)
 
-        if self.auto_layout_check.Value and (not frame_resize):
-            if self.img_size[0] < self.width:
-                if self.img_size[0]+self.width_setting+40 < self.width:
-                    w = self.width
-                else:
-                    w = self.img_size[0]+self.width_setting+40
-            elif self.img_size[0]+self.width_setting+40 > self.displaySize[0]:
-                w = self.displaySize[0]
-            else:
-                w = self.img_size[0]+self.width_setting+40
-
-            if self.img_size[1] < self.height:
-                if self.img_size[1]+200 < self.height:
-                    h = self.height
-                else:
-                    h = self.img_size[1]+200
-                    if self.hidden_flag == 1:
-                        h = h-50
-            elif self.img_size[1]+200 > self.displaySize[1]:
-                h = self.displaySize[1]
-            else:
-                h = self.img_size[1]+200
-                if self.hidden_flag == 1:
-                    h = h-50
-
-            self.Size = wx.Size((w, h))
-
-        if self.hidden_flag == 1:
-            self.m_splitter1.SashPosition = self.Size[0]
-
-        self.init_min_size()
-
-        self.scrolledWindow_set.SetMinSize(
-            wx.Size((self.width_setting, -1)))
-        self.scrolledWindow_img.SetMinSize(
-            wx.Size((self.Size[0]-self.width_setting, self.Size[1]-150+offset_hight_img_show)))
-
-        # issue: You need to change the window size, then the scrollbar starts to display.
-        if not getattr(self.shared_config, "video_mode", False):
+    def auto_layout(self, frame_resize=False, fit_image=None):
+        # Keep the original FBP geometry and explicit viewport sizing. Only a
+        # Refresh delivery (or an explicit call) fits; resize events lay out.
+        if not hasattr(self,'width_setting') or getattr(self,'_auto_layout_busy',False):return
+        self._auto_layout_busy=True
+        try:
+            hidden=self.hidden_flag==1
+            if self.auto_layout_check.Value and not frame_resize:
+                image=fit_image if fit_image is not None else self.img_size
+                if min(image)>0 and not self.IsIconized() and wx.Display.GetCount():
+                    display=wx.Display.GetFromWindow(self)
+                    area=wx.Display(0 if display==wx.NOT_FOUND else display).GetClientArea()
+                    self.displaySize=area.GetSize()
+                    # Original policy: image + settings width / UI allowances,
+                    # with the default lower bound and monitor upper bound.
+                    width=min(area.width,max(self.width,int(image[0])+int(self.width_setting)+40))
+                    height=min(area.height,max(self.height,int(image[1])+200-(50 if hidden else 0)))
+                    position=self.GetPosition()
+                    x=max(area.x,min(position.x,area.GetRight()-width+1))
+                    y=max(area.y,min(position.y,area.GetBottom()-height+1))
+                    if self.IsMaximized():self.Maximize(False)
+                    target=wx.Rect(x,y,width,height)
+                    if self.GetRect()!=target:self.SetSize(target)
+            self.init_min_size()
+            self.scrolledWindow_set.SetMinSize(wx.Size(int(self.width_setting),-1))
+            self.scrolledWindow_img.SetMinSize(wx.Size(
+                max(50,self.Size.width-int(self.width_setting)),
+                max(50,self.Size.height-150+(50 if hidden else 0))))
+            if hidden:self.m_splitter1.SetSashPosition(self.Size.width)
             self.scrolledWindow_img.FitInside()
-        self.scrolledWindow_set.FitInside()
-
-        self.Layout()
-        self.Refresh()
+            self.scrolledWindow_set.FitInside()
+            self.Layout()
+        finally:self._auto_layout_busy=False
 
     def init_min_size(self):
-        self.scrolledWindow_set.SetMinSize(
-            wx.Size((50, -1)))
-        self.scrolledWindow_img.SetMinSize(
-            wx.Size((50, self.Size[1]-150)))
+        self.scrolledWindow_set.SetMinSize(wx.Size(50,-1))
+        self.scrolledWindow_img.SetMinSize(wx.Size(50,max(50,self.Size.height-150)))
 
     def split_sash_pos_changing(self, event):
 
@@ -2972,7 +2979,7 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
         self.scrolledWindow_set.SetMinSize(
             wx.Size((self.width_setting, -1)))
         self.scrolledWindow_img.SetMinSize(
-            wx.Size((self.Size[0] - self.width_setting, self.Size[1]-150)))
+            wx.Size((self.Size[0]-self.width_setting,self.Size[1]-150)))
 
         self.split_changing = False
 
@@ -3081,7 +3088,7 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
 
         # issue: You need to change the window size, then the scrollbar starts to display.
         self.scrolledWindow_set.FitInside()
-        self.auto_layout()
+        self.auto_layout(frame_resize=True)
 
     def _bind_settings_wheel_guard(self):
         # Controls that should handle the wheel event.

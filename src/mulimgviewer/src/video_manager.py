@@ -485,6 +485,12 @@ class VideoManager:
     def _clear_video_status(self):
         self._set_video_message("")
 
+    def _raw_format_current(self,config):
+        # Legacy extraction calls may have no window token. They still must
+        # not publish an old encoding after the GUI changes cache format.
+        return (tuple(config.video_path)!=tuple(self.shared_config.video_path)
+            or cache_extension(config)==cache_extension(self.shared_config))
+
     def _raw_io_lock(self, video_idx, config=None):
         config = self.shared_config if config is None else config
         directory = os.path.normcase(os.path.abspath(config.video_path[video_idx]))
@@ -2351,14 +2357,14 @@ class VideoManager:
                         with self._raw_io_lock(vid, config):
                             with self._cache_guard:
                                 lo, hi = self._raw_windows.get(vid, (first, last+1))
-                                valid = token is None or (token == self._window_token and lo <= index < hi)
+                                valid = self._raw_format_current(config) and (token is None or (token == self._window_token and lo <= index < hi))
                             if valid:
                                 # Filesystem/antivirus latency must never hold
                                 # the state lock used by the GUI or other videos.
                                 os.replace(temporary, destination)
                                 with self._cache_guard:
                                     lo, hi = self._raw_windows.get(vid, (first,last+1))
-                                    valid = token is None or (token == self._window_token and lo <= index < hi)
+                                    valid = self._raw_format_current(config) and (token is None or (token == self._window_token and lo <= index < hi))
                                     if valid:
                                         self._pixel_cache.put(destination, image)
                                         if preview is not None:
@@ -2388,6 +2394,7 @@ class VideoManager:
     def _save_frame(self, video_path, frame_start, frame_end, video_idx, max_retries=1, config=None):
         '''Decode incrementally when available, otherwise use the exact FFmpeg fallback.'''
         config = config if config is not None else copy.copy(self.shared_config)
+        if not self._raw_format_current(config):return
         if self._decode_incremental(video_path, frame_start, frame_end, video_idx, config):
             return
         config = config if config is not None else copy.copy(self.shared_config)
@@ -2568,12 +2575,12 @@ class VideoManager:
                         with self._raw_io_lock(video_idx, config):
                             with self._cache_guard:
                                 keep_start, keep_end = self._raw_windows.get(video_idx, (0, 0))
-                                valid = token is None or (token == self._window_token and keep_start <= idx < keep_end)
+                                valid = self._raw_format_current(config) and (token is None or (token == self._window_token and keep_start <= idx < keep_end))
                             if valid:
                                 os.replace(src, dst)
                                 with self._cache_guard:
                                     keep_start, keep_end = self._raw_windows.get(video_idx, (0, 0))
-                                    valid = token is None or (token == self._window_token and keep_start <= idx < keep_end)
+                                    valid = self._raw_format_current(config) and (token is None or (token == self._window_token and keep_start <= idx < keep_end))
                                 if not valid:
                                     os.remove(dst)
                             else:
@@ -2603,7 +2610,7 @@ class VideoManager:
             attempt += 1
 
         missing = list_missing(frame_start, frame_end)
-        if missing and (token is None or token == self._window_token):
+        if missing and self._raw_format_current(config) and (token is None or token == self._window_token):
             detail = f"video={video_idx}, miss={missing[:5]}"
             if last_error:
                 detail = f"{detail}, err={last_error}"

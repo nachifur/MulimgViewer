@@ -3811,7 +3811,7 @@
                                       <property name="caption"></property>
                                       <property name="caption_visible">1</property>
                                       <property name="center_pane">0</property>
-                                      <property name="choices">&quot;JPEG compressed&quot; &quot;PNG lossless&quot;</property>
+                                      <property name="choices">&quot;jpg&quot; &quot;png&quot; &quot;auto&quot;</property>
                                       <property name="close_button">1</property>
                                       <property name="context_help"></property>
                                       <property name="context_menu">1</property>
@@ -3842,13 +3842,13 @@
                                       <property name="pin_button">1</property>
                                       <property name="pos"></property>
                                       <property name="resize">Resizable</property>
-                                      <property name="selection">0</property>
+                                      <property name="selection">2</property>
                                       <property name="show">1</property>
                                       <property name="size">-1,-1</property>
                                       <property name="style"></property>
                                       <property name="subclass">; ; forward_declare</property>
                                       <property name="toolbar_pane">0</property>
-                                      <property name="tooltip">Source frame cache format. Refresh applies changes; algorithm intermediates remain lossless.</property>
+                                      <property name="tooltip">Cache format for all stages. auto: png for png/pdf export with both output scales &gt;= 1; jpg otherwise. Refresh applies changes.</property>
                                       <property name="validator_data_type"></property>
                                       <property name="validator_style">wxFILTER_NONE</property>
                                       <property name="validator_type">wxDefaultValidator</property>
@@ -11357,6 +11357,34 @@
             <property name="shortcut">Ctrl+S</property>
             <property name="unchecked_bitmap"></property>
             <event name="OnMenuSelection">save_img</event>
+          </object>
+          <object class="wxMenuItem" expanded="false">
+            <property name="bitmap"></property>
+            <property name="checked">0</property>
+            <property name="enabled">1</property>
+            <property name="help"></property>
+            <property name="id">wxID_ANY</property>
+            <property name="kind">wxITEM_NORMAL</property>
+            <property name="label">Pause saving / playback</property>
+            <property name="name">menu_pause_tasks</property>
+            <property name="permission">none</property>
+            <property name="shortcut">Esc</property>
+            <property name="unchecked_bitmap"></property>
+            <event name="OnMenuSelection">pause_tasks</event>
+          </object>
+          <object class="wxMenuItem" expanded="false">
+            <property name="bitmap"></property>
+            <property name="checked">0</property>
+            <property name="enabled">1</property>
+            <property name="help"></property>
+            <property name="id">wxID_ANY</property>
+            <property name="kind">wxITEM_NORMAL</property>
+            <property name="label">Cancel saving</property>
+            <property name="name">menu_cancel_save</property>
+            <property name="permission">none</property>
+            <property name="shortcut"></property>
+            <property name="unchecked_bitmap"></property>
+            <event name="OnMenuSelection">cancel_save_task</event>
           </object>
           <object class="wxMenuItem" expanded="false">
             <property name="bitmap"></property>

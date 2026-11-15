@@ -12,12 +12,14 @@ from pathlib import Path
 
 import numpy as np
 from PIL import Image
-from .cache_layout import page_name, component, CachedCanvas
+from .video_paths import manager_cache_format
+from .cache_layout import page_name, component, CachedCanvas, cache_image_extension, save_cache_image
 from .custom_func.contract import specification, original_index, display_indices, display_grid, processing_indices
 
 
 def mosaic_request_key(manager,index,inputs,points,batch):
     params=copy.deepcopy(manager.layout_params)
+    if len(params)>41:params[41]=manager_cache_format(manager)
     params[32]=False;params[37]=0;params[38]=False;params[39]='1,1';params[40]=False;params[33]='';params[36]=False;params[35]=1
     signature=[(str(path),Path(path).stat().st_size,Path(path).stat().st_mtime_ns) for path in inputs]
     key='mosaic:'+hashlib.sha256(repr((params,tuple(manager.gap_color),int(getattr(manager,'img_alpha',255)),signature,points,batch,
@@ -128,8 +130,8 @@ class MosaicPlan:
             try:
                 self.cache.request_prune()
                 entry['directory'].mkdir(parents=True)
-                path=entry['directory']/page_name(self.batch)
-                with open(path,'wb') as stream:manager.img.save(stream,format='PNG',compress_level=1)
+                path=entry['directory']/page_name(self.batch,cache_image_extension(self.manager))
+                with open(path,'wb') as stream:save_cache_image(manager.img,stream,cache_image_extension(self.manager))
                 info=path.with_suffix('.json')
                 info.write_text(json.dumps(dict(algorithm=algorithm,page=self.batch+1,
                     inputs=list(self.paths)),ensure_ascii=False,indent=2),encoding='utf-8')

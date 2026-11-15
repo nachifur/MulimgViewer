@@ -22,7 +22,7 @@ from .admission_optimizer import AdaptiveAdmissionBudget
 from .video_decoder import DecoderBank
 from .video_memory import PixelCache, source_resolution
 from .custom_pipeline import current_only
-from .cache_layout import page_name, write_source_catalog
+from .cache_layout import page_name, write_source_catalog, save_cache_image
 from .custom_func.contract import active_cache_names
 from .playback_pacer import PlaybackPacer, ProductionJob, completion_estimates, refill_guard
 from .thread_optimizer import (AdaptiveThreadAllocator, optimize_thread_allocation,
@@ -289,9 +289,9 @@ class VideoManager:
         self._last_thread_resize = time.perf_counter()
 
 
-    def _get_disk_cache_path(self, batch_idx):
+    def _get_disk_cache_path(self, batch_idx, config=None):
         """生成磁盘缓存文件路径"""
-        return self.disk_cache_dir / page_name(batch_idx)
+        return self.disk_cache_dir / page_name(batch_idx,cache_extension(self.shared_config if config is None else config))
 
     def _save_image_to_disk(self, pil_img, batch_idx):
         """将PIL图像保存到磁盘，返回文件路径"""
@@ -299,7 +299,7 @@ class VideoManager:
             return None
         try:
             cache_path = self._get_disk_cache_path(batch_idx)
-            pil_img.save(str(cache_path), format='PNG', compress_level=1)  # 快速压缩
+            save_cache_image(pil_img,str(cache_path),cache_extension(self.shared_config))  # 快速压缩
             return str(cache_path)
         except Exception as ex:
             self._debug_video(f"[DiskCache] save failed batch={batch_idx} error={ex}")
@@ -310,7 +310,7 @@ class VideoManager:
         if not self.disk_cache_dir.exists():
             return
         try:
-            for cache_file in self.disk_cache_dir.glob("page_*.png"):
+            for cache_file in self.disk_cache_dir.glob("page_*.*"):
                 try:
                     idx = int(cache_file.stem.split('_')[1])-1
                     if idx < window_start or idx > window_end:
@@ -1474,7 +1474,8 @@ class VideoManager:
                     and min(total - 1, b + inner) <= old_hi):
                 lo, hi = old_lo, old_hi
             self._outer_radius = outer
-            if token != self._window_token:
+            context_changed = token != self._window_token
+            if context_changed:
                 for future in set(self._pending_extract.values()):
                     future.cancel()
                 self._pending_extract.clear()
@@ -1498,7 +1499,9 @@ class VideoManager:
                 and min((local + 1) * k, int(cfg.video_num_list[vid])) <= self._raw_windows[vid][1]}
             if len(cfg.cache_img) <= hi:
                 cfg.cache_img.extend([None] * (hi + 1 - len(cfg.cache_img)))
-            if old_lo != lo or old_hi != hi:
+            # Invalidation cleanup can exit when the replacement token arrives.
+            # Requeue after installing that token even if the window is identical.
+            if context_changed or old_lo != lo or old_hi != hi:
                 self._schedule_video_cleanup()
 
         ui=self._ui()
@@ -1580,7 +1583,7 @@ class VideoManager:
             return (token == self._window_token and generation == getattr(self, '_window_generation', 0)
                     and paths == tuple(self.shared_config.video_path))
         self._decoder_bank.trim(set(str(p) for p in config.real_video_path))
-        for path in self.disk_cache_dir.glob("page_*.png"):
+        for path in self.disk_cache_dir.glob("page_*.*"):
             try:
                 idx = int(path.stem.split('_')[1])-1
                 with self._cache_io_lock:
@@ -1950,15 +1953,15 @@ class VideoManager:
                     self._raw_ready_batches.difference_update(sources)
             self._set_video_status(f"Video stitch failed: batch={batch}, flag={flag}")
             return
-        temporary = self.disk_cache_dir / f"__tmp_batch_{batch}_{threading.get_ident()}_{time.time_ns()}.png"
+        temporary = self.disk_cache_dir / f"__tmp_batch_{batch}_{threading.get_ident()}_{time.time_ns()}.{cache_extension(config)}"
         try:
-            pil_img.save(str(temporary), format='PNG', compress_level=1)
+            save_cache_image(pil_img,str(temporary),cache_extension(config))
             with self._cache_io_lock:
                 with self._cache_guard:
                     lo, hi = self._stitch_window
                     if token != self._window_token or not lo <= batch <= hi:
                         return
-                destination = self._get_disk_cache_path(batch)
+                destination = self._get_disk_cache_path(batch,config)
                 os.replace(str(temporary), str(destination))
                 with self._cache_guard:
                     lo, hi = self._stitch_window

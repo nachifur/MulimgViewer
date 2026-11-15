@@ -20,6 +20,7 @@ from .utils import MyTestEvent, get_resource_path
 from .utils_img import ImgManager
 from .resource_policy import resource_budget, positive_cache_integer
 from .image_pipeline import ImagePipeline
+from .video_paths import resolve_cache_format
 from .memory_reclaim import MemoryReclaimer
 from .resource_monitor import ResourceMonitor
 from .cache_shutdown import clear_cache_on_startup
@@ -90,6 +91,7 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
         self._parallel_switch_dirty = False
 
         self._initialize_hotkeys()
+        self.Bind(wx.EVT_CHAR_HOOK,self._save_pause_key)
         # self.img_Sizer = self.scrolledWindow_img.GetSizer()
         self.Bind(wx.EVT_CLOSE, self.close)
         # self.Bind(wx.EVT_PAINT, self.OnPaint)
@@ -570,7 +572,9 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
         if admitted!=cfg.thread:text+=f" (limit: {admitted})"
         memory_budget=getattr(cfg,'memory_budget',None)
         if memory_budget is not None:text+=f" | RAM: {memory_budget/1024**3:.2f} GiB"
-        text+=f"\nActive: Decode: {decode} | Process: {stages.get(0,0)} | Stitch: {stages.get(1,0)} | Compose: {stages.get(2,0)}"
+        control=getattr(self,'_export_control',None)
+        save=control.active_count() if control is not None and getattr(self,'_export_active',False) else 0
+        text+=f"\nActive: Decode: {decode} | Process: {stages.get(0,0)} | Stitch: {stages.get(1,0)} | Compose: {stages.get(2,0)} | Save: {save}"
         monitor = getattr(self, 'resource_monitor', None)
         stats = monitor.read_snapshot() if monitor is not None else {}
         cpu, memory, fps = stats.get('cpu'), stats.get('memory'), stats.get('fps')
@@ -1091,6 +1095,30 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
         self.SetStatusText_(["Last", "-1", "-1", "-1"])
 
 
+
+    def _save_pause_key(self,event):
+        if getattr(self,'_export_active',False) or self.shared_config.is_playing:
+            modifiers=wx.ACCEL_NORMAL
+            if event.ControlDown():modifiers|=wx.ACCEL_CTRL
+            if event.AltDown():modifiers|=wx.ACCEL_ALT
+            if event.ShiftDown():modifiers|=wx.ACCEL_SHIFT
+            if (modifiers,event.GetKeyCode())==self.parse_hotkey(self.hotkeys['pause_tasks']):
+                self.pause_tasks(None)
+                return  # Consume once, including when text controls disable accelerators.
+        event.Skip()
+
+    def pause_tasks(self,event):
+        from .export_async import toggle_save_pause
+        control=getattr(self,'_export_control',None)
+        if (getattr(self,'_export_active',False) and control is not None
+                and not control.paused and not control.cancel.is_set()):
+            toggle_save_pause(self)
+        if self.shared_config.is_playing:
+            self.toggle_play(None)
+
+    def cancel_save_task(self,event):
+        from .export_async import cancel_current_save
+        cancel_current_save(self,event)
 
     def save_img(self, event):
         from .export_async import start_save
@@ -2161,7 +2189,7 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
         self.ImgManager.img_alpha=int(self.foreground_slider.GetValue())
         color=self.colourPicker_gap.GetColour()
         self.ImgManager.gap_color=(color.red,color.green,color.blue,self.ImgManager.gap_alpha)
-        self.shared_config.cache_save_format=layout_params[41]
+        self.shared_config.cache_save_format=resolve_cache_format(layout_params[41],layout_params[35],layout_params[5])
         self.ImgManager.cache_save_format=layout_params[41]
         try:
             registry = capture_algorithms(get_available_algorithms())
@@ -2364,7 +2392,7 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
                     magnifier_show_scale,                   # 8
                     color,                                  # 9
                     line_width,                             # 10
-                    self.move_file.Value,                   # 11
+                    self.move_file.Value and not self.shared_config.video_mode, # 11: video export always copies
                     self.keep_magnifer_size.Value,          # 12
                     self.image_interp.GetSelection(),       # 13
                     self.show_box.Value,                    # 14

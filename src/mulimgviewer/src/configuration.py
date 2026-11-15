@@ -101,6 +101,11 @@ def read_config(path):
     for old, new in ALIASES.items():
         if old in output and new not in output:
             output[new] = output[old]
+    hotkeys=data.get('hotkeys')
+    if isinstance(hotkeys,dict) and ('pause_save' in hotkeys or 'cancel_save' in hotkeys):
+        hotkeys.pop('pause_save',None)
+        hotkeys.pop('cancel_save',None)
+        hotkeys.setdefault('pause_tasks','ESC')
     if 'save_format' in output and data.get('save_format_order')!=ORDER:
         value=output['save_format']
         if isinstance(value,int) and not isinstance(value,bool):

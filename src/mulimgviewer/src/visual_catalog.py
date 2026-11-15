@@ -38,7 +38,8 @@ class VisualCatalogMixin:
         self.cell_algorithms={};self.cell_algorithm_indices={}
         self.algorithm_registry=getattr(manager,'_custom_algorithm_registry',()) or ()
         self.naming_manager=SimpleNamespace(path_list=tuple(manager.path_list),
-            _status_source_index=getattr(manager,'_status_source_index',None))
+            _status_source_index=getattr(manager,'_status_source_index',None),
+            cache_save_format=manager_cache_format(manager))
         self.algorithm_root=Path(getattr(manager,'_algorithm_cache_root',Path('cache_frames')/'algorithms')).absolute()
         self.algorithm_search=' '.join(str(v) for entry in self.algorithm_registry for v in entry[:2]).casefold()
         self.capacity=len(self.cells)

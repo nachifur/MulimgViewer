@@ -69,6 +69,7 @@ class ConfigurationMixin:
             "next_img": "CTRL+N",
             "last_img": "CTRL+L",
             "save_img": "CTRL+S",
+            "pause_tasks": "ESC",
             "refresh": "CTRL+R",
             "hidden": "CTRL+H",
             "move_up": "UP",
@@ -110,7 +111,10 @@ class ConfigurationMixin:
             "RIGHT": wx.WXK_RIGHT,
             "ARROWRIGHT": wx.WXK_RIGHT,
             "DELETE": wx.WXK_DELETE,
+            "ESC": wx.WXK_ESCAPE,
+            "ESCAPE": wx.WXK_ESCAPE,
         }
+        special_keys.update({f'F{i}':getattr(wx,f'WXK_F{i}') for i in range(1,25)})
         if key_token in special_keys:
             keycode = special_keys[key_token]
         elif len(key_token) == 1 and "A" <= key_token <= "Z":
@@ -145,6 +149,7 @@ class ConfigurationMixin:
             "next_img": (self.menu_next, "Next"),
             "last_img": (self.menu_last, "Last"),
             "save_img": (self.menu_save, "Save"),
+            "pause_tasks": (self.menu_pause_tasks, "Pause saving / playback"),
             "refresh": (self.menu_refresh, "Refresh"),
             "hidden": (self.menu_hidden, "Hidden"),
             "move_up": (self.menu_up, "Up"),

@@ -94,7 +94,8 @@
   "move_down": "DOWN",
   "move_left": "LEFT",
   "move_right": "RIGHT",
-  "delete_box": "DELETE"
+  "delete_box": "DELETE",
+  "pause_tasks": "ESC"
  },
  "exif_display": {
   "Make": true,

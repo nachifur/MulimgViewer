@@ -30,8 +30,36 @@ class CachedCanvas:
         except OSError:shutil.copyfile(self.path,path)
 
 
-def page_name(batch):
-    return f'page_{batch+1:06d}.png'
+def cache_image_extension(manager):
+    from .video_paths import manager_cache_format
+    return 'png' if manager_cache_format(manager)==1 else 'jpeg'
+
+
+def save_cache_image(image,path,extension,**png_options):
+    """Encode with the captured cache policy; JPEG has no alpha channel."""
+    if not isinstance(image,Image.Image):
+        # CachedCanvas already has this policy's encoding; keep the link fast path.
+        image.save(path)
+        return
+    if extension=='png':
+        image.save(path,format='PNG',compress_level=1,**png_options)
+        return
+    converted=None;rgba=None
+    try:
+        if image.mode!='RGB':
+            if image.mode in ('RGBA','LA') or 'transparency' in image.info:
+                rgba=image.convert('RGBA')
+                converted=Image.new('RGB',image.size,'white')
+                converted.paste(rgba,mask=rgba.getchannel('A'))
+            else:converted=image.convert('RGB')
+        (converted if converted is not None else image).save(path,format='JPEG',quality=90)
+    finally:
+        if converted is not None:converted.close()
+        if rgba is not None:rgba.close()
+
+
+def page_name(batch,extension='png'):
+    return f'page_{batch+1:06d}.{extension}'
 
 
 def component(name):
@@ -60,7 +88,7 @@ def source_names(manager, paths):
 
 def processed_names(manager, paths):
     """Same source IDs and frame stems as the raw layer, without page folders."""
-    return [(Path(name).parent/'frames'/Path(name).name).as_posix()
+    return [(Path(name).parent/'frames'/Path(name).with_suffix('.'+cache_image_extension(manager)).name).as_posix()
             for name in source_names(manager,paths)]
 
 
@@ -71,7 +99,7 @@ def source_record(manager, number, path):
     value=dict(source=number+1,media='video' if getattr(manager,'video_mode',False) else 'image',
         path=str(Path(originals[number] if number<len(originals) else path).absolute()),
         input_mode=getattr(manager,'_cache_input_mode',''),
-        frame_encoding=('png' if (manager.layout_params[41] if len(getattr(manager,'layout_params',()))>41 else getattr(manager,'cache_save_format',0))==1 else 'jpeg') if getattr(manager,'video_mode',False) else 'original',
+        frame_encoding=cache_image_extension(manager) if getattr(manager,'video_mode',False) else 'original',
         parallel_to_sequential=bool(getattr(manager,'parallel_to_sequential',False)),
         parallel_sequential=bool(layout[22]) if len(layout)>22 else False,
         input=str(getattr(manager,'input_path','')))

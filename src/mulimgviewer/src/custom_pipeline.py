@@ -1,7 +1,7 @@
 """Bounded disk-backed algorithm stage, shared by image and video playback.
 
 Only metadata is queued. User pixels exist while a task holds a resource permit;
-completed results are PNG paths. Waiters never hold a pixel/CPU permit.
+completed results are disk-backed JPG/PNG paths. Waiters never hold a pixel/CPU permit.
 """
 import hashlib
 import json
@@ -14,14 +14,14 @@ import uuid
 import weakref
 import zlib
 from collections import deque
-from concurrent.futures import ThreadPoolExecutor, CancelledError
+from concurrent.futures import ThreadPoolExecutor, CancelledError, wait
 from contextlib import contextmanager, ExitStack
 from pathlib import Path
 
 from PIL import Image
 from .custom_func.contract import specification, processing_indices, display_grid, display_indices
 from .custom_func.runtime import state, execution_lock
-from .cache_layout import VisibleCache, processed_names, component, source_record
+from .cache_layout import VisibleCache, processed_names, component, source_record, cache_image_extension, save_cache_image
 from .custom_workers import ImageWorkers
 from .stage_allocator import allocate_stages
 from .dependency_scheduler import DependencyScheduler, gather, prepared, run_inline
@@ -46,6 +46,7 @@ class WorkBudget:
         self.capacity=None
         self.reservation=None
         self.active = self.bytes = 0
+        self.active_threads=set()
         self.waiting=[];self.serial=0;self.active_by_stage={0:0,1:0,2:0};self.service={}
         self.page_work={};self.stage_memory={};self.stage_caps=None;self.targets=(1,1,1)
         self._model_profile=None;self._last_model_update=0.;self.planned_capacity=None
@@ -123,11 +124,13 @@ class WorkBudget:
                 if owner is not None:owner.adjust_downstream_waiting(demand)
             profile=self._model_profile
             self.active+=1;self.bytes+=size
+            self.active_threads.add(threading.get_ident())
             self.active_by_stage[priority]=self.active_by_stage.get(priority,0)+1
         started=time.perf_counter()
         try:yield
         finally:
             with self.condition:
+                self.active_threads.discard(threading.get_ident())
                 self.active-=1;self.bytes-=size;self.condition.notify_all()
                 if reservation is not None:reservation(-1,-size)
                 self.active_by_stage[priority]-=1
@@ -141,7 +144,7 @@ class WorkBudget:
 
 
 class CustomPipeline:
-    def __init__(self, directory, public_root=None):
+    def __init__(self, directory, public_root=None, *, workers=None, pool=None):
         self.directory=Path(directory).resolve()
         self.lock=threading.RLock()
         self.readers=threading.Condition(self.lock)
@@ -149,7 +152,8 @@ class CustomPipeline:
         self.scheduler=DependencyScheduler()
         self.cleanup_pool=ThreadPoolExecutor(1,thread_name_prefix='algorithm-cleanup')
         self._prune_future=None;self._prune_revision=0
-        self.pool=ImageWorkers(max(1,os.cpu_count() or 1),thread_name_prefix='algorithm-work')
+        self._owns_pool=pool is None
+        self.pool=pool if pool is not None else ImageWorkers(max(1,int(workers) if workers is not None else (os.cpu_count() or 1)),thread_name_prefix='algorithm-work')
         # Only ready algorithm computation runs here; parent continuations
         # live in the metadata scheduler and never wait inside this pool.
         self.image_pool=self.pool  # One ready-work pool; parents now await via the scheduler.
@@ -315,7 +319,7 @@ class CustomPipeline:
         registry=manager._custom_algorithm_registry
         spec=specification(registry,index)
         signature,pixels=self._input_signature(paths) if inputs is None else inputs
-        version=(registry[index],signature,batch)
+        version=(registry[index],signature,batch,cache_image_extension(manager))
         if not spec['cacheable']:version+=(owner,repr(epoch),batch)
         digest=hashlib.sha256(repr(version).encode('utf-8')).hexdigest()
         size=max(32*1024**2,pixels*spec['working_set_bytes_per_pixel']+spec['working_set_bytes'])
@@ -505,6 +509,7 @@ class CustomPipeline:
             priority=lambda:self._image_priority(owner,batch))
 
     def _process(self,*args):
+        getattr(args[0],'_export_checkpoint',lambda:None)()
         return run_inline(self._process_steps(*args))
 
     def _process_steps(self, manager, paths, index, spec, size, entry, owner, epoch, batch, cancelled):
@@ -525,7 +530,7 @@ class CustomPipeline:
                 started=time.perf_counter()
                 if spec.get('api_version') == 2 and spec['processing_mode'] == 'image':
                     # No parent compute permit: each full-resolution image owns
-                    # its admission, decode, kernel, PNG write and pixel lifetime.
+                    # its admission, decode, kernel, cache write and pixel lifetime.
                     temporary.mkdir(parents=True)
                     names=processed_names(manager,paths)
                     sizes=[]
@@ -613,6 +618,7 @@ class CustomPipeline:
             value.update(algorithm=manager._custom_algorithm_registry[index][0],
                 algorithm_path=str(Path(manager._custom_algorithm_registry[index][1]).absolute()),
                 cache_version=spec['cache_version'],
+                processed_encoding=cache_image_extension(manager),
                 raw_frames_path=str(Path(source).parent.absolute()),
                 processed_frames_path=str(visible/folder/'frames'),
                 source_catalog=str(self.visible.root.parent/'sources'/value['media']/folder/'source.json'))
@@ -636,7 +642,7 @@ class CustomPipeline:
     def _write_output(self,entry,temporary,name,image,source_path,preview_size):
         (temporary/name).parent.mkdir(parents=True,exist_ok=True)
         with open(temporary/name,'wb') as stream:
-            image.save(stream,format='PNG',compress_level=1,compress_type=zlib.Z_RLE)
+            save_cache_image(image,stream,Path(name).suffix.lstrip('.'),compress_type=zlib.Z_RLE)
         pixel_cache=getattr(self,'pixel_cache',None)
         if pixel_cache is not None:
             pixel_cache.put_header(str(entry['directory']/name),image.size,image.mode,owner=source_path)
@@ -657,6 +663,7 @@ class CustomPipeline:
         return abs(batch-window[2]) if window is not None else float('inf')
 
     def _process_one(self,manager,path,name,index,size,entry,temporary,preview_size,owner,epoch,batch,stale):
+        getattr(manager,'_export_checkpoint',lambda:None)()
         from .custom_func.main import main,algorithm_context
         previous=tuple(getattr(state,key,None) for key in ('registry','preview','session','sequence_context'))
         state.registry=manager._custom_algorithm_registry;state.session=manager._custom_algorithm_session
@@ -692,8 +699,9 @@ class CustomPipeline:
         self.scheduler.shutdown()
         self.cleanup_pool.shutdown(wait=False,cancel_futures=True)
         if self.mosaic_stage is not None:self.mosaic_stage.close()
-        self.pool.shutdown(wait=False,cancel_futures=True)
-        self.image_pool.shutdown(wait=False,cancel_futures=True)
+        if self._owns_pool:
+            self.pool.shutdown(wait=False,cancel_futures=True)
+            self.image_pool.shutdown(wait=False,cancel_futures=True)
         # Never wait for image processing or disk deletion on the GUI thread.
         # This executor is joined by Python at normal process exit, so closing
         # the window does not abandon the work tree while writers still run.
@@ -703,9 +711,15 @@ class CustomPipeline:
 
     def _finish_close(self):
         self.scheduler.shutdown(wait_for_tasks=True)
+        if not self._owns_pool:
+            # A shared executor stays alive for other pages. Drain this page's
+            # kernels before deleting its private files, including failed batches.
+            with self.lock:pending=[entry['future'] for entry in self.entries.values()]
+            wait(pending)
         self.cleanup_pool.shutdown(wait=True,cancel_futures=True)
-        self.pool.shutdown(wait=True,cancel_futures=True)
-        self.image_pool.shutdown(wait=True,cancel_futures=True)
+        if self._owns_pool:
+            self.pool.shutdown(wait=True,cancel_futures=True)
+            self.image_pool.shutdown(wait=True,cancel_futures=True)
         if self.mosaic_stage is not None:
             self.mosaic_stage.pool.shutdown(wait=True,cancel_futures=True)
         with self.readers:

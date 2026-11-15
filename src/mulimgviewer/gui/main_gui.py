@@ -316,10 +316,10 @@ class MulimgViewerGui ( wx.Frame ):
 
 		wSizer13.Add( self.cache_format_label, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
-		cache_save_formatChoices = [ u"JPEG compressed", u"PNG lossless" ]
+		cache_save_formatChoices = [ u"jpg", u"png", u"auto" ]
 		self.cache_save_format = wx.Choice( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.Size( -1,-1 ), cache_save_formatChoices, 0 )
-		self.cache_save_format.SetSelection( 0 )
-		self.cache_save_format.SetToolTip( u"Source frame cache format. Refresh applies changes; algorithm intermediates remain lossless." )
+		self.cache_save_format.SetSelection( 2 )
+		self.cache_save_format.SetToolTip( u"Cache format for all stages. auto: png for png/pdf export with both output scales >= 1; jpg otherwise. Refresh applies changes." )
 
 		wSizer13.Add( self.cache_save_format, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
@@ -942,6 +942,12 @@ class MulimgViewerGui ( wx.Frame ):
 		self.menu_save = wx.MenuItem( self.m_menu2, wx.ID_ANY, u"Save"+ u"\t" + u"Ctrl+S", wx.EmptyString, wx.ITEM_NORMAL )
 		self.m_menu2.Append( self.menu_save )
 
+		self.menu_pause_tasks = wx.MenuItem( self.m_menu2, wx.ID_ANY, u"Pause saving / playback"+ u"\t" + u"Esc", wx.EmptyString, wx.ITEM_NORMAL )
+		self.m_menu2.Append( self.menu_pause_tasks )
+
+		self.menu_cancel_save = wx.MenuItem( self.m_menu2, wx.ID_ANY, u"Cancel saving", wx.EmptyString, wx.ITEM_NORMAL )
+		self.m_menu2.Append( self.menu_cancel_save )
+
 		self.menu_refresh = wx.MenuItem( self.m_menu2, wx.ID_ANY, u"Refresh"+ u"\t" + u"Ctrl+R", wx.EmptyString, wx.ITEM_NORMAL )
 		self.m_menu2.Append( self.menu_refresh )
 
@@ -1019,6 +1025,8 @@ class MulimgViewerGui ( wx.Frame ):
 		self.Bind( wx.EVT_MENU, self.next_img, id = self.menu_next.GetId() )
 		self.Bind( wx.EVT_MENU, self.last_img, id = self.menu_last.GetId() )
 		self.Bind( wx.EVT_MENU, self.save_img, id = self.menu_save.GetId() )
+		self.Bind( wx.EVT_MENU, self.pause_tasks, id = self.menu_pause_tasks.GetId() )
+		self.Bind( wx.EVT_MENU, self.cancel_save_task, id = self.menu_cancel_save.GetId() )
 		self.Bind( wx.EVT_MENU, self.refresh, id = self.menu_refresh.GetId() )
 		self.Bind( wx.EVT_MENU, self.hidden, id = self.menu_hidden.GetId() )
 		self.Bind( wx.EVT_MENU, self.up_img, id = self.menu_up.GetId() )
@@ -1138,6 +1146,12 @@ class MulimgViewerGui ( wx.Frame ):
 
 
 
+
+	def pause_tasks( self, event ):
+		event.Skip()
+
+	def cancel_save_task( self, event ):
+		event.Skip()
 
 
 	def hidden( self, event ):

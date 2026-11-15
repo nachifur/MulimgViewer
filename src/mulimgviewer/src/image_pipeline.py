@@ -16,7 +16,7 @@ from .resource_policy import cache_window, composition_workers
 from .thread_optimizer import available_memory_bytes
 from .custom_pipeline import CustomPipeline, current_only
 from .mosaic_pipeline import MosaicStage
-from .cache_layout import page_name, write_source_catalog
+from .cache_layout import page_name, write_source_catalog, cache_image_extension, save_cache_image
 from .custom_func.contract import active_cache_names
 
 
@@ -148,7 +148,7 @@ class ImagePipeline:
                 self.lock.release()
                 try:
                     if valid:
-                        path = self.directory / page_name(batch)
+                        path = self.directory / page_name(batch,cache_image_extension(template))
                         os.replace(temporary, path)
                         self._published_files[path] = path.stat()
                     else:
@@ -283,7 +283,7 @@ class ImagePipeline:
                 with plan.composed(results) as (image,state):
                     self.directory.mkdir(parents=True,exist_ok=True)
                     temporary=self.directory/f'__image_{generation}_{batch}_{time.time_ns()}.tmp'
-                    try:image.save(temporary,format='PNG',compress_level=1)
+                    try:save_cache_image(image,temporary,cache_image_extension(manager))
                     except BaseException:
                         temporary.unlink(missing_ok=True);raise
                     inputs=state.get('img_resolution_origin',image.size)
@@ -320,7 +320,7 @@ class ImagePipeline:
         self.directory.mkdir(parents=True, exist_ok=True)
         temporary = self.directory / f'__image_{generation}_{batch}_{time.time_ns()}.tmp'
         try:
-            image.save(temporary, format='PNG', compress_level=1)
+            save_cache_image(image,temporary,cache_image_extension(manager))
         except BaseException:
             temporary.unlink(missing_ok=True)
             raise

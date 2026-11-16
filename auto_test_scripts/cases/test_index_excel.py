@@ -9,7 +9,7 @@ from types import SimpleNamespace
 from concurrent.futures import CancelledError
 sys.path.insert(0,str(Path(__file__).resolve().parents[2]/'src'))
 from mulimgviewer.src.index_excel import write_index_xlsx
-from mulimgviewer.src.index_columns import view_columns, export_filename, view_row
+from mulimgviewer.src.index_columns import view_columns, export_filename
 import test_browsing_index as index_fixtures
 
 NS={'m':'http://schemas.openxmlformats.org/spreadsheetml/2006/main'}
@@ -70,7 +70,7 @@ class ExcelIndexTests(unittest.TestCase):
             video_fps_list=[],video_num_list=[],real_video_path=[])
         model=IndexCatalog(manager,cfg)
         output=self.root/'algorithms.xlsx';write_index_xlsx(output,model,2)
-        records,xml=sheets(output)['Visual items 1']
+        records,_=sheets(output)['Visual items 1']
         for index in range(model.visual_total):
             entry=model.visual_entry(index);record=records[index+1]
             for label,value in (('Algorithm',entry['algorithm']),('Algorithm path',entry['algorithm_path']),
@@ -118,7 +118,7 @@ class ExcelIndexTests(unittest.TestCase):
         model=index_fixtures.TimelineTests().model();path=self.root/'states.xlsx'
         first=model.visual_entry(0)['path'];second=model.visual_entry(1)['path']
         write_index_xlsx(path,model,2,cache_states={first:True,second:False})
-        rows,root=sheets(path)['Visual items 1']
+        rows,_=sheets(path)['Visual items 1']
         self.assertEqual(rows[1][-1],'Cached')
         self.assertEqual(rows[2][-1],'Virtual / not cached')
         self.assertEqual(rows[3][-1],'Not checked')

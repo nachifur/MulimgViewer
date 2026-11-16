@@ -23,15 +23,18 @@ from mulimgviewer.src.video_tools import resolve_video_tools
 
 
 class HiddenViewer(MulimgViewer):
-    def check_version(self):
+    @staticmethod
+    def check_version():
         """Keep network update checks out of the isolated GUI fixture."""
         return None
 
-    def load_configuration(self, *args, **kwargs):
+    @staticmethod
+    def load_configuration(*_args, **_kwargs):
         """Use test settings instead of restoring the developer's session."""
         return None
 
-    def _restore_window_state(self):
+    @staticmethod
+    def _restore_window_state():
         """Keep each test independent of saved desktop geometry."""
         return None
 
@@ -1601,7 +1604,7 @@ class VideoGuiAsyncTests(unittest.TestCase):
         finally:release.set()
 
     def test_cancelling_paused_export_wakes_waiters(self):
-        from mulimgviewer.src.export_async import cancel_save,toggle_save_pause
+        from mulimgviewer.src.export_async import toggle_save_pause
         output=Path('paused_cancel').absolute();output.mkdir();self.frame.out_path_str=str(output)
         entered=threading.Event();release=threading.Event()
         def save(job,**kwargs):

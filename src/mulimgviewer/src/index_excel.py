@@ -3,6 +3,7 @@ import os
 import tempfile
 from concurrent.futures import CancelledError
 from datetime import datetime, timezone
+from itertools import chain
 from pathlib import Path
 from .index_columns import VIEW_NAMES, view_columns, view_row
 
@@ -81,11 +82,7 @@ def write_index_xlsx(path, model, view, cancelled=lambda:False, cache_states=Non
                     rest = next(parts,None)
                     if rest is None:continue
                     values[col] = first+'\n[Full text continues in Long text sheets]'
-                    def all_parts():
-                        yield first
-                        yield rest
-                        yield from parts
-                    for part,chunk in enumerate(all_parts(),1):
+                    for part,chunk in enumerate(chain((first,rest),parts),1):
                         if long_sheet is None or long_row >= sheet_rows:
                             long_number += 1
                             long_sheet = workbook.add_worksheet(f'Long text {long_number}')

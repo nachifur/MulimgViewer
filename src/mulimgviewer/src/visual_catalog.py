@@ -33,7 +33,7 @@ class VisualCatalogMixin:
         else:
             outer=(1,len(self.paths) if not self.linear else 1)
             inner=(1,self.size);vertical=(False,False)
-        self._visual_page = lru_cache(maxsize=2)(self._visual_page)
+        self._visual_page = lru_cache(maxsize=2)(self._build_visual_page)
         self.cells=tuple(visual_cells(outer,inner,vertical))
         self.cell_algorithms={};self.cell_algorithm_indices={}
         self.algorithm_registry=getattr(manager,'_custom_algorithm_registry',()) or ()
@@ -82,7 +82,7 @@ class VisualCatalogMixin:
                 self.visual_ends.append(total)
         self.visual_total=total
 
-    def _visual_page(self, page):
+    def _build_visual_page(self, page):
         """Compute one page of file references; no stat, image load or decoding."""
         items=[]
         if self.video:
@@ -125,7 +125,7 @@ class VisualCatalogMixin:
 
     def visual_entry(self, index):
         interval=bisect_right(self.visual_ends,index)
-        first,last,count,base=self.visual_ranges[interval]
+        first,_,count,base=self.visual_ranges[interval]
         page=first+(index-base)//count
         rank=(index-base)%count
         y,x,item=self._visual_page(page)[rank]
@@ -140,6 +140,13 @@ class VisualCatalogMixin:
         for first,last,count,base in self.visual_ranges:
             if first<=page<last:return base+(page-first)*count
         return self.visual_total
+
+    def _visible_video_pages(self, video, first, last):
+        """Keep lazy page iteration bound to one video and its page limits."""
+        for a,b,_,_ in self.visual_ranges:
+            start,end=max(a,first),min(b,last+1)
+            if start<end and any(entry['video']==video for _,_,entry in self._visual_page(start)):
+                yield from range(start,end)
 
     def visual_search(self, text, stop, limit=10000):
         text=text.strip().casefold();matches=[]
@@ -167,31 +174,21 @@ class VisualCatalogMixin:
                     radius=max(2,int(self.fps[video]*.006/self.step)+2)
                     frames=[i for i in range(max(0,guess-radius),min(self.counts[video],guess+radius+1))
                             if (Path(frame_filename(i,self.fps[video],self.step)).stem+'.'+filename.rsplit('.',1)[-1]).casefold()==filename]
-                    candidates=sorted(set((self.prefix[video]+i)//self.size if self.serial else i//self.size for i in frames))
+                    candidates=sorted({(self.prefix[video]+i)//self.size if self.serial else i//self.size for i in frames})
                     if candidates and not self.serial and any(i//self.size==(self.counts[video]-1)//self.size for i in frames):
                         first=candidates[0]
-                        def repeated_pages():
-                            for a,b,count,base in self.visual_ranges:
-                                start=max(a,first)
-                                if start<b and any(e['video']==video for y,x,e in self._visual_page(start)):
-                                    yield from range(start,b)
-                        candidates=repeated_pages()
+                        candidates=self._visible_video_pages(video,first,self.pages-1)
                 else:
                     haystack=(' '.join(self.source_row(video))+' '+self.cache_paths[video]).casefold()
                     if text not in haystack and text not in self.algorithm_search:continue
                     first=self.prefix[video]//self.size if self.serial else 0
                     last=(self.prefix[video+1]-1)//self.size if self.serial else self.pages-1
-                    def visible_pages():
-                        for a,b,count,base in self.visual_ranges:
-                            start,end=max(a,first),min(b,last+1)
-                            if start<end and any(e['video']==video for y,x,e in self._visual_page(start)):
-                                yield from range(start,end)
-                    candidates=visible_pages()
+                    candidates=self._visible_video_pages(video,first,last)
                 for page in candidates:
                     if stop():return [],False
                     entries=self._visual_page(page)
                     base=self.visual_page_start(page)
-                    for rank,(y,x,entry) in enumerate(entries):
+                    for rank,(_,_,entry) in enumerate(entries):
                         if entry['video']!=video or (exact and entry['frame'] not in frames):continue
                         if exact and '/' not in text and '\\' not in text and Path(entry['path']).name.casefold()!=filename:continue
                         if exact and ('/' in text or '\\' in text):

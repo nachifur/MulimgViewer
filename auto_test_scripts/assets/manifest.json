@@ -1,0 +1,47 @@
+{
+  "version": 1,
+  "size": [
+    64,
+    48
+  ],
+  "fps": 4,
+  "images": {
+    "images/source_001/frame_000001.png": "6146443d7c90b5a309e64ee234e7b112828b1181cfdfb861e7f714b16d99ea68",
+    "images/source_001/frame_000002.png": "1bdeb0eea355f812320aefb74f62fd55fad77fedd8610a8fbe7c2ac98113be65",
+    "images/source_001/frame_000003.png": "8111afc8803db67813802c4974b16c76cab52cb388ac630ccd199ee6dcedc6b8",
+    "images/source_002/frame_000001.png": "9066e31dba746d45eaff68c82e4a69e7e232767e7697f1b38ddc42e45d48ae77",
+    "images/source_002/frame_000002.png": "01bc99d2da446483fd2c1249eb29036a50334b18118604b21eb46765895d9ed0",
+    "images/source_002/frame_000003.png": "943f9ad322fad605b75195aeae5e3dcd99d0698d3f8bafb3da0cfe762b6c548c"
+  },
+  "videos": {
+    "videos/source_001.mp4": {
+      "source": 1,
+      "frames": 8,
+      "rgb_sha256": [
+        "6146443d7c90b5a309e64ee234e7b112828b1181cfdfb861e7f714b16d99ea68",
+        "1bdeb0eea355f812320aefb74f62fd55fad77fedd8610a8fbe7c2ac98113be65",
+        "8111afc8803db67813802c4974b16c76cab52cb388ac630ccd199ee6dcedc6b8",
+        "dd8e0a4ef527b7475c6827882b1681301389a09c3f2742c4cfe3f8f81c3a6ccb",
+        "86f494a63385c75102e11dd8080b99a76319de40830cf7a26f627cae928b91dd",
+        "81c2a08dd4c328b623e28ca9c892552f8963fe98cef4acda65dce9761a355b04",
+        "67693d2fc4e5ed840aca94478fb813d69670172a29c0dfd49eceb8a303c6e4e1",
+        "33f8290663bba72b7d35625bc13a828153d9b2d186cdbc6a960e4e7632374e52"
+      ]
+    },
+    "videos/source_002.mp4": {
+      "source": 2,
+      "frames": 5,
+      "rgb_sha256": [
+        "9066e31dba746d45eaff68c82e4a69e7e232767e7697f1b38ddc42e45d48ae77",
+        "01bc99d2da446483fd2c1249eb29036a50334b18118604b21eb46765895d9ed0",
+        "943f9ad322fad605b75195aeae5e3dcd99d0698d3f8bafb3da0cfe762b6c548c",
+        "c3ca9ce35ed2cc74d4534e5c8d8b4ae7102eccb3d7192ea0f07b82c5e6ae9647",
+        "01001214e211b58a8013cc30b0870221d6b35ed2fd56d9d84c6d107edf3ef0ee"
+      ]
+    }
+  },
+  "goldens": {
+    "expected/parallel.png": "7edf565537c8d8412f7d4c7222d1857edf5918ba67342c3886a4d63cd1bdae2b",
+    "expected/sequential.png": "fc53440bc2ab677f29466c6c3424907ffdfa18e12ea8c9ad1c949fe522980432"
+  }
+}

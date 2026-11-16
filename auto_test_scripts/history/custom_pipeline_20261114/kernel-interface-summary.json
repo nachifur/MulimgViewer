@@ -1,0 +1,12 @@
+{
+  "fps": 0.46650079971562286,
+  "cpu_percent": 30.634625365524382,
+  "rss_peak_mib": 1710.08203125,
+  "first_frame_seconds": 9.0,
+  "p50_gap_ms": 1046.9999999913853,
+  "p95_gap_ms": 8812.000000005355,
+  "max_gap_ms": 9641.00000000326,
+  "continuous": true,
+  "latest_status": "",
+  "production_fps": 0.4887690807256679
+}

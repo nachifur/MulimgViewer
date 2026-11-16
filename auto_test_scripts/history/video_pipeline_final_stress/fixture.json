@@ -1,0 +1,7 @@
+{
+  "streams": 100,
+  "distinct_decoder_contexts": true,
+  "fixture_sha256": "5b8a8796a2c6683b2b507731cc65f4eb728f6ecdd2ff46f86651964b364d5c12",
+  "fixture_size": 1160393,
+  "regeneration": "python tools/benchmark_video_stress.py --output benchmarks/recheck_4k --reference benchmarks/video_pipeline_final_verified/manifest.json --streams 100 --mode 4"
+}

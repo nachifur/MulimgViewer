@@ -1,0 +1,110 @@
+[
+  {
+    "mode": "Eco",
+    "budget": 5,
+    "memory_budget_gib": 1.259450912475586,
+    "fps": 1.1479105416860274,
+    "fps_runs": [
+      1.1315605551303463,
+      1.1642605282417084
+    ],
+    "previous_fps": 0.6663224000932958,
+    "speedup": 1.7227554431988201,
+    "cpu_mean_percent": 21.196061691153457,
+    "previous_cpu_percent": 30.304555715407677,
+    "rss_mean_gib": 0.6002757689532112,
+    "rss_peak_entire_run_gib": 0.7264175415039062,
+    "interval_median_s": 0.8287500000000001,
+    "gui_max_gap_ms": 110.00000000058208,
+    "p95_switch_gap_ms": 1529.5999999984813,
+    "measured_best_concurrency": [
+      5,
+      5
+    ],
+    "decoder_opens": [
+      508,
+      507
+    ]
+  },
+  {
+    "mode": "Balanced",
+    "budget": 11,
+    "memory_budget_gib": 2.518901824951172,
+    "fps": 2.2637948951340805,
+    "fps_runs": [
+      2.130067230247064,
+      2.3975225600210974
+    ],
+    "previous_fps": 0.8497733937616689,
+    "speedup": 2.66399832208561,
+    "cpu_mean_percent": 30.509463323535353,
+    "previous_cpu_percent": 46.364634568634386,
+    "rss_mean_gib": 1.1341849545305551,
+    "rss_peak_entire_run_gib": 1.4462471008300781,
+    "interval_median_s": 0.41000000000000003,
+    "gui_max_gap_ms": 312.0000000017171,
+    "p95_switch_gap_ms": 952.024999999594,
+    "measured_best_concurrency": [
+      11,
+      11
+    ],
+    "decoder_opens": [
+      319,
+      286
+    ]
+  },
+  {
+    "mode": "Performance",
+    "budget": 16,
+    "memory_budget_gib": 4.198169708251953,
+    "fps": 4.114340259278782,
+    "fps_runs": [
+      3.8666666666666667,
+      4.3620138518908975
+    ],
+    "previous_fps": 0.9326027944776799,
+    "speedup": 4.411674813373349,
+    "cpu_mean_percent": 24.33961413381166,
+    "previous_cpu_percent": 52.21777580743757,
+    "rss_mean_gib": 1.5720792105703643,
+    "rss_peak_entire_run_gib": 1.9107589721679688,
+    "interval_median_s": 0.202,
+    "gui_max_gap_ms": 250.0,
+    "p95_switch_gap_ms": 320.4999999998108,
+    "measured_best_concurrency": [
+      12,
+      16
+    ],
+    "decoder_opens": [
+      24,
+      24
+    ]
+  },
+  {
+    "mode": "Maximum",
+    "budget": 22,
+    "memory_budget_gib": 6.29725456237793,
+    "fps": 4.1084009238714145,
+    "fps_runs": [
+      4.297707889125854,
+      3.9190939586169757
+    ],
+    "previous_fps": 0.9994669509595009,
+    "speedup": 4.11059207103076,
+    "cpu_mean_percent": 23.843739116102995,
+    "previous_cpu_percent": 53.107329500024896,
+    "rss_mean_gib": 1.611204467875904,
+    "rss_peak_entire_run_gib": 1.9112205505371094,
+    "interval_median_s": 0.207,
+    "gui_max_gap_ms": 219.00000000096043,
+    "p95_switch_gap_ms": 325.0000000014552,
+    "measured_best_concurrency": [
+      16,
+      22
+    ],
+    "decoder_opens": [
+      24,
+      24
+    ]
+  }
+]

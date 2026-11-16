@@ -1,0 +1,3316 @@
+{
+  "policy": "current",
+  "mode": 4,
+  "budget": 22,
+  "memory_budget": 6761625600,
+  "completed": true,
+  "measured_frames": 30,
+  "elapsed_seconds": 8.68800000000192,
+  "fps": 3.4530386740323857,
+  "cpu_percent": 24.377275866393404,
+  "rss_avg_mib": 1892.780048076923,
+  "rss_peak_mib": 2051.265625,
+  "p50_gap_ms": 257.49999999970896,
+  "p95_gap_ms": 547.1500000010557,
+  "max_gap_ms": 688.0000000019209,
+  "gaps_over_100ms": 30,
+  "gaps_over_250ms": 15,
+  "gui_p95_gap_ms": 141.44999999953117,
+  "gui_max_gap_ms": 516.0000000032596,
+  "continuous": true,
+  "frame_range": [
+    61,
+    90
+  ],
+  "first_frame_seconds": 38.5309999999954,
+  "timeout": false,
+  "requested_measure_seconds": 0.0,
+  "metadata_seconds": 2.75,
+  "fast_seek_streams": 12,
+  "decode_dimensions_known": 24,
+  "extract_run_p90_seconds": 0.1674673399999996,
+  "stitch_average_seconds": 1.2801916533333328,
+  "warmup_frames": 30,
+  "rss_peak_entire_run_mib": 2051.265625,
+  "pacing_stats": {
+    "period": 0.22528024522663784,
+    "pending": [
+      100,
+      105,
+      106,
+      107,
+      108,
+      109,
+      110
+    ],
+    "samples": [
+      [
+        3.0056286999999955,
+        10
+      ],
+      [
+        2.0597091000000063,
+        10
+      ],
+      [
+        2.0641020999999995,
+        10
+      ],
+      [
+        1.9807138999999978,
+        10
+      ],
+      [
+        2.821505799999997,
+        10
+      ],
+      [
+        2.4821051000000054,
+        10
+      ],
+      [
+        2.6672908999999976,
+        10
+      ],
+      [
+        1.8933228,
+        10
+      ]
+    ],
+    "prediction": {
+      "reason": "measured-supply",
+      "buffered": 9,
+      "production_period": 0.22528024522663784,
+      "next_eta": 0.3968012799999997
+    }
+  },
+  "pipeline_stats": {
+    "native_decoder_opens": 24,
+    "native_decoded_frames": 10854,
+    "native_seeks": 141,
+    "native_fallback_paths": 0,
+    "pixel_cache_bytes": 268370640,
+    "pixel_cache_limit": 268435456,
+    "decoder_state_limit": 1073741824,
+    "active_stage_counts": [
+      10,
+      6
+    ],
+    "admission": {
+      "limit": 21,
+      "ceiling": 22,
+      "best": 16,
+      "period": 0.23542535384615404,
+      "reason": "probe",
+      "history": [
+        [
+          22,
+          0.22697629166666675,
+          "measured"
+        ],
+        [
+          22,
+          0.13953278148148154,
+          "measured"
+        ],
+        [
+          16,
+          0.12439229473684191,
+          "measured"
+        ],
+        [
+          12,
+          0.20218452499999984,
+          "measured"
+        ],
+        [
+          16,
+          0.2086325428571429,
+          "measured"
+        ],
+        [
+          12,
+          0.24295934545454595,
+          "measured"
+        ],
+        [
+          16,
+          0.23542535384615404,
+          "measured"
+        ]
+      ]
+    },
+    "effective_cpu_budget": 21
+  },
+  "source_hashes": {
+    "src/mulimgviewer/src/main.py": "9148d44af0d0ab0132dad1193597c848b7dd4d9ff997404f5e72cb5210043454",
+    "src/mulimgviewer/src/thread_optimizer.py": "9a302e3ec4b81b15b90ba9c3c1e583f13b7a0d9a52626be71a44d6d65cc89791",
+    "src/mulimgviewer/src/playback_pacer.py": "ae2731563bed80aa1bae08a25c27a612159dee820c4911cfe6dc45a1477afca3",
+    "src/mulimgviewer/src/utils_img.py": "fafa11a9e1d00faae64a5acb7f02bb40d16ff5297bb10fca730548a28b3a4beb",
+    "src/mulimgviewer/src/pipeline_executor.py": "e0ec56d69b64e80ef366fd177e7560c0d61f0359879b7888f0b13aeafc391ae0",
+    "src/mulimgviewer/src/video_decoder.py": "cae0310fee4811d47067f139c09709fa210212ff277f18bfc0b88fa170f57914",
+    "src/mulimgviewer/src/video_memory.py": "9ce3a3a09e85b253657a5e5789ff8352851227aceb11fa94c3bdc5403d4cf2c0",
+    "src/mulimgviewer/src/admission_optimizer.py": "a0dd27bd68c8062a916298f8879a24cccf713df834e13ce40b887330194c00ac"
+  },
+  "final_pending_wait_ms": 16.00000000325963,
+  "output_size": [
+    1930,
+    726
+  ],
+  "final_allocation": [
+    18,
+    4
+  ],
+  "allocation_samples": [
+    [
+      33701.75,
+      21,
+      1,
+      0.206,
+      15,
+      {
+        "extract": 21,
+        "stitch": 1,
+        "estimated_period": 1.0992974857142856,
+        "reason": "raw-buffer-low",
+        "stitch_task_limit": 41,
+        "raw_buffer": 3,
+        "stitched_buffer": 15,
+        "stitched_levels": [
+          10,
+          5,
+          15,
+          20
+        ],
+        "raw_levels": [
+          5,
+          5,
+          5,
+          5
+        ],
+        "cpu_headroom": true
+      }
+    ],
+    [
+      33701.968,
+      21,
+      1,
+      0.206,
+      15,
+      {
+        "extract": 21,
+        "stitch": 1,
+        "estimated_period": 1.0992974857142856,
+        "reason": "raw-buffer-low",
+        "stitch_task_limit": 41,
+        "raw_buffer": 3,
+        "stitched_buffer": 15,
+        "stitched_levels": [
+          10,
+          5,
+          15,
+          20
+        ],
+        "raw_levels": [
+          5,
+          5,
+          5,
+          5
+        ],
+        "cpu_headroom": true
+      }
+    ],
+    [
+      33702.187,
+      21,
+      1,
+      0.206,
+      15,
+      {
+        "extract": 21,
+        "stitch": 1,
+        "estimated_period": 1.0992974857142856,
+        "reason": "raw-buffer-low",
+        "stitch_task_limit": 41,
+        "raw_buffer": 3,
+        "stitched_buffer": 15,
+        "stitched_levels": [
+          10,
+          5,
+          15,
+          20
+        ],
+        "raw_levels": [
+          5,
+          5,
+          5,
+          5
+        ],
+        "cpu_headroom": true
+      }
+    ],
+    [
+      33702.421,
+      21,
+      1,
+      0.175,
+      15,
+      {
+        "extract": 21,
+        "stitch": 1,
+        "estimated_period": 0.9034355416666662,
+        "reason": "hold-buffer-priority",
+        "stitch_task_limit": 41,
+        "raw_buffer": 4,
+        "stitched_buffer": 15,
+        "stitched_levels": [
+          10,
+          5,
+          15,
+          20
+        ],
+        "raw_levels": [
+          5,
+          5,
+          5,
+          5
+        ],
+        "cpu_headroom": true
+      }
+    ],
+    [
+      33702.64,
+      21,
+      1,
+      0.175,
+      14,
+      {
+        "extract": 21,
+        "stitch": 1,
+        "estimated_period": 0.9034355416666662,
+        "reason": "hold-buffer-priority",
+        "stitch_task_limit": 41,
+        "raw_buffer": 4,
+        "stitched_buffer": 15,
+        "stitched_levels": [
+          10,
+          5,
+          15,
+          20
+        ],
+        "raw_levels": [
+          5,
+          5,
+          5,
+          5
+        ],
+        "cpu_headroom": true
+      }
+    ],
+    [
+      33702.859,
+      21,
+      1,
+      0.175,
+      14,
+      {
+        "extract": 21,
+        "stitch": 1,
+        "estimated_period": 0.9034355416666662,
+        "reason": "hold-buffer-priority",
+        "stitch_task_limit": 41,
+        "raw_buffer": 4,
+        "stitched_buffer": 15,
+        "stitched_levels": [
+          10,
+          5,
+          15,
+          20
+        ],
+        "raw_levels": [
+          5,
+          5,
+          5,
+          5
+        ],
+        "cpu_headroom": true
+      }
+    ],
+    [
+      33703.062,
+      21,
+      1,
+      0.187,
+      13,
+      {
+        "extract": 20,
+        "stitch": 2,
+        "estimated_period": 0.44790447083333307,
+        "reason": "ready-capacity",
+        "stitch_task_limit": 41,
+        "raw_buffer": 5,
+        "stitched_buffer": 14,
+        "stitched_levels": [
+          10,
+          5,
+          15,
+          20
+        ],
+        "raw_levels": [
+          6,
+          5,
+          6,
+          6
+        ],
+        "cpu_headroom": true
+      }
+    ],
+    [
+      33703.296,
+      21,
+      1,
+      0.175,
+      13,
+      {
+        "extract": 21,
+        "stitch": 1,
+        "estimated_period": 0.8958089416666661,
+        "reason": "hold-buffer-priority",
+        "stitch_task_limit": 41,
+        "raw_buffer": 6,
+        "stitched_buffer": 13,
+        "stitched_levels": [
+          10,
+          5,
+          15,
+          20
+        ],
+        "raw_levels": [
+          7,
+          5,
+          7,
+          7
+        ],
+        "cpu_headroom": true
+      }
+    ],
+    [
+      33703.5,
+      21,
+      1,
+      0.175,
+      13,
+      {
+        "extract": 21,
+        "stitch": 1,
+        "estimated_period": 0.8958089416666661,
+        "reason": "hold-buffer-priority",
+        "stitch_task_limit": 41,
+        "raw_buffer": 6,
+        "stitched_buffer": 13,
+        "stitched_levels": [
+          10,
+          5,
+          15,
+          20
+        ],
+        "raw_levels": [
+          7,
+          5,
+          7,
+          7
+        ],
+        "cpu_headroom": true
+      }
+    ],
+    [
+      33703.734,
+      21,
+      1,
+      0.175,
+      14,
+      {
+        "extract": 21,
+        "stitch": 1,
+        "estimated_period": 0.8958089416666661,
+        "reason": "hold-buffer-priority",
+        "stitch_task_limit": 41,
+        "raw_buffer": 6,
+        "stitched_buffer": 13,
+        "stitched_levels": [
+          10,
+          5,
+          15,
+          20
+        ],
+        "raw_levels": [
+          7,
+          5,
+          7,
+          7
+        ],
+        "cpu_headroom": true
+      }
+    ],
+    [
+      33703.953,
+      20,
+      2,
+      0.175,
+      14,
+      {
+        "extract": 20,
+        "stitch": 2,
+        "estimated_period": 0.43066262083333323,
+        "reason": "ready-capacity",
+        "stitch_task_limit": 41,
+        "raw_buffer": 5,
+        "stitched_buffer": 14,
+        "stitched_levels": [
+          10,
+          5,
+          15,
+          20
+        ],
+        "raw_levels": [
+          6,
+          5,
+          6,
+          6
+        ],
+        "cpu_headroom": true
+      }
+    ],
+    [
+      33704.171,
+      20,
+      2,
+      0.182,
+      14,
+      {
+        "extract": 20,
+        "stitch": 2,
+        "estimated_period": 0.43066262083333323,
+        "reason": "ready-capacity",
+        "stitch_task_limit": 41,
+        "raw_buffer": 5,
+        "stitched_buffer": 14,
+        "stitched_levels": [
+          10,
+          5,
+          15,
+          20
+        ],
+        "raw_levels": [
+          6,
+          5,
+          6,
+          6
+        ],
+        "cpu_headroom": true
+      }
+    ],
+    [
+      33704.39,
+      20,
+      2,
+      0.187,
+      14,
+      {
+        "extract": 20,
+        "stitch": 2,
+        "estimated_period": 0.43066262083333323,
+        "reason": "ready-capacity",
+        "stitch_task_limit": 41,
+        "raw_buffer": 5,
+        "stitched_buffer": 14,
+        "stitched_levels": [
+          10,
+          5,
+          15,
+          20
+        ],
+        "raw_levels": [
+          6,
+          5,
+          6,
+          6
+        ],
+        "cpu_headroom": true
+      }
+    ],
+    [
+      33704.609,
+      20,
+      2,
+      0.189,
+      14,
+      {
+        "extract": 20,
+        "stitch": 2,
+        "estimated_period": 0.43066262083333323,
+        "reason": "ready-capacity",
+        "stitch_task_limit": 41,
+        "raw_buffer": 5,
+        "stitched_buffer": 14,
+        "stitched_levels": [
+          10,
+          5,
+          15,
+          20
+        ],
+        "raw_levels": [
+          6,
+          5,
+          6,
+          6
+        ],
+        "cpu_headroom": true
+      }
+    ],
+    [
+      33704.828,
+      20,
+      2,
+      0.189,
+      14,
+      {
+        "extract": 18,
+        "stitch": 4,
+        "estimated_period": 0.24895168888888897,
+        "reason": "ready-capacity",
+        "stitch_task_limit": 41,
+        "raw_buffer": 5,
+        "stitched_buffer": 14,
+        "stitched_levels": [
+          10,
+          5,
+          15,
+          20
+        ],
+        "raw_levels": [
+          6,
+          5,
+          6,
+          6
+        ],
+        "cpu_headroom": true
+      }
+    ],
+    [
+      33705.046,
+      20,
+      2,
+      0.189,
+      13,
+      {
+        "extract": 18,
+        "stitch": 4,
+        "estimated_period": 0.24895168888888897,
+        "reason": "ready-capacity",
+        "stitch_task_limit": 41,
+        "raw_buffer": 5,
+        "stitched_buffer": 14,
+        "stitched_levels": [
+          10,
+          5,
+          15,
+          20
+        ],
+        "raw_levels": [
+          6,
+          5,
+          6,
+          6
+        ],
+        "cpu_headroom": true
+      }
+    ],
+    [
+      33705.265,
+      20,
+      2,
+      0.189,
+      14,
+      {
+        "extract": 18,
+        "stitch": 4,
+        "estimated_period": 0.25313084,
+        "reason": "ready-capacity",
+        "stitch_task_limit": 41,
+        "raw_buffer": 5,
+        "stitched_buffer": 14,
+        "stitched_levels": [
+          10,
+          5,
+          15,
+          20
+        ],
+        "raw_levels": [
+          6,
+          5,
+          6,
+          6
+        ],
+        "cpu_headroom": true
+      }
+    ],
+    [
+      33705.468,
+      20,
+      2,
+      0.189,
+      14,
+      {
+        "extract": 18,
+        "stitch": 4,
+        "estimated_period": 0.25313084,
+        "reason": "ready-capacity",
+        "stitch_task_limit": 41,
+        "raw_buffer": 5,
+        "stitched_buffer": 14,
+        "stitched_levels": [
+          10,
+          5,
+          15,
+          20
+        ],
+        "raw_levels": [
+          6,
+          5,
+          6,
+          6
+        ],
+        "cpu_headroom": true
+      }
+    ],
+    [
+      33705.703,
+      20,
+      2,
+      0.189,
+      14,
+      {
+        "extract": 18,
+        "stitch": 4,
+        "estimated_period": 0.25313084,
+        "reason": "ready-capacity",
+        "stitch_task_limit": 41,
+        "raw_buffer": 5,
+        "stitched_buffer": 14,
+        "stitched_levels": [
+          10,
+          5,
+          15,
+          20
+        ],
+        "raw_levels": [
+          6,
+          5,
+          6,
+          6
+        ],
+        "cpu_headroom": true
+      }
+    ],
+    [
+      33705.968,
+      20,
+      2,
+      0.189,
+      13,
+      {
+        "extract": 18,
+        "stitch": 4,
+        "estimated_period": 0.25313084,
+        "reason": "ready-capacity",
+        "stitch_task_limit": 41,
+        "raw_buffer": 5,
+        "stitched_buffer": 14,
+        "stitched_levels": [
+          10,
+          5,
+          15,
+          20
+        ],
+        "raw_levels": [
+          6,
+          5,
+          6,
+          6
+        ],
+        "cpu_headroom": true
+      }
+    ],
+    [
+      33706.187,
+      21,
+      1,
+      0.192,
+      14,
+      {
+        "extract": 21,
+        "stitch": 1,
+        "estimated_period": 1.0352946083333334,
+        "reason": "raw-buffer-low",
+        "stitch_task_limit": 41,
+        "raw_buffer": 6,
+        "stitched_buffer": 13,
+        "stitched_levels": [
+          10,
+          5,
+          15,
+          20
+        ],
+        "raw_levels": [
+          7,
+          5,
+          7,
+          7
+        ],
+        "cpu_headroom": true
+      }
+    ],
+    [
+      33706.406,
+      21,
+      1,
+      0.194,
+      13,
+      {
+        "extract": 21,
+        "stitch": 1,
+        "estimated_period": 1.0352946083333334,
+        "reason": "raw-buffer-low",
+        "stitch_task_limit": 41,
+        "raw_buffer": 6,
+        "stitched_buffer": 13,
+        "stitched_levels": [
+          10,
+          5,
+          15,
+          20
+        ],
+        "raw_levels": [
+          7,
+          5,
+          7,
+          7
+        ],
+        "cpu_headroom": true
+      }
+    ],
+    [
+      33706.64,
+      21,
+      1,
+      0.196,
+      14,
+      {
+        "extract": 20,
+        "stitch": 2,
+        "estimated_period": 0.5038391666666667,
+        "reason": "ready-capacity",
+        "stitch_task_limit": 41,
+        "raw_buffer": 4,
+        "stitched_buffer": 15,
+        "stitched_levels": [
+          10,
+          5,
+          15,
+          20
+        ],
+        "raw_levels": [
+          5,
+          5,
+          5,
+          5
+        ],
+        "cpu_headroom": true
+      }
+    ],
+    [
+      33706.859,
+      21,
+      1,
+      0.196,
+      14,
+      {
+        "extract": 20,
+        "stitch": 2,
+        "estimated_period": 0.5038391666666667,
+        "reason": "ready-capacity",
+        "stitch_task_limit": 41,
+        "raw_buffer": 4,
+        "stitched_buffer": 15,
+        "stitched_levels": [
+          10,
+          5,
+          15,
+          20
+        ],
+        "raw_levels": [
+          5,
+          5,
+          5,
+          5
+        ],
+        "cpu_headroom": true
+      }
+    ],
+    [
+      33707.078,
+      21,
+      1,
+      0.196,
+      14,
+      {
+        "extract": 20,
+        "stitch": 2,
+        "estimated_period": 0.5038391666666667,
+        "reason": "ready-capacity",
+        "stitch_task_limit": 41,
+        "raw_buffer": 4,
+        "stitched_buffer": 15,
+        "stitched_levels": [
+          10,
+          5,
+          15,
+          20
+        ],
+        "raw_levels": [
+          5,
+          5,
+          5,
+          5
+        ],
+        "cpu_headroom": true
+      }
+    ],
+    [
+      33707.296,
+      21,
+      1,
+      0.195,
+      13,
+      {
+        "extract": 20,
+        "stitch": 2,
+        "estimated_period": 0.5038391666666667,
+        "reason": "ready-capacity",
+        "stitch_task_limit": 41,
+        "raw_buffer": 5,
+        "stitched_buffer": 14,
+        "stitched_levels": [
+          10,
+          5,
+          15,
+          20
+        ],
+        "raw_levels": [
+          6,
+          5,
+          6,
+          6
+        ],
+        "cpu_headroom": true
+      }
+    ],
+    [
+      33707.515,
+      21,
+      1,
+      0.195,
+      13,
+      {
+        "extract": 20,
+        "stitch": 2,
+        "estimated_period": 0.5038391666666667,
+        "reason": "ready-capacity",
+        "stitch_task_limit": 41,
+        "raw_buffer": 5,
+        "stitched_buffer": 14,
+        "stitched_levels": [
+          10,
+          5,
+          15,
+          20
+        ],
+        "raw_levels": [
+          6,
+          5,
+          6,
+          6
+        ],
+        "cpu_headroom": true
+      }
+    ],
+    [
+      33707.75,
+      21,
+      1,
+      0.195,
+      14,
+      {
+        "extract": 20,
+        "stitch": 2,
+        "estimated_period": 0.5038391666666667,
+        "reason": "ready-capacity",
+        "stitch_task_limit": 41,
+        "raw_buffer": 5,
+        "stitched_buffer": 14,
+        "stitched_levels": [
+          10,
+          5,
+          15,
+          20
+        ],
+        "raw_levels": [
+          6,
+          5,
+          6,
+          6
+        ],
+        "cpu_headroom": true
+      }
+    ],
+    [
+      33707.953,
+      21,
+      1,
+      0.195,
+      14,
+      {
+        "extract": 20,
+        "stitch": 2,
+        "estimated_period": 0.5415169750000001,
+        "reason": "ready-capacity",
+        "stitch_task_limit": 41,
+        "raw_buffer": 5,
+        "stitched_buffer": 14,
+        "stitched_levels": [
+          10,
+          5,
+          15,
+          20
+        ],
+        "raw_levels": [
+          6,
+          5,
+          6,
+          6
+        ],
+        "cpu_headroom": true
+      }
+    ],
+    [
+      33708.171,
+      21,
+      1,
+      0.194,
+      14,
+      {
+        "extract": 20,
+        "stitch": 2,
+        "estimated_period": 0.5415169750000001,
+        "reason": "ready-capacity",
+        "stitch_task_limit": 41,
+        "raw_buffer": 5,
+        "stitched_buffer": 14,
+        "stitched_levels": [
+          10,
+          5,
+          15,
+          20
+        ],
+        "raw_levels": [
+          6,
+          5,
+          6,
+          6
+        ],
+        "cpu_headroom": true
+      }
+    ],
+    [
+      33718.14,
+      10,
+      12,
+      0.171,
+      14,
+      {
+        "extract": 10,
+        "stitch": 12,
+        "estimated_period": 0.23818914416666653,
+        "reason": "hold-buffer-priority",
+        "stitch_task_limit": 41,
+        "raw_buffer": 3,
+        "stitched_buffer": 16,
+        "stitched_levels": [
+          10,
+          5,
+          15,
+          20
+        ],
+        "raw_levels": [
+          4,
+          4,
+          4,
+          4
+        ],
+        "cpu_headroom": true
+      }
+    ],
+    [
+      33718.359,
+      10,
+      12,
+      0.171,
+      15,
+      {
+        "extract": 10,
+        "stitch": 12,
+        "estimated_period": 0.23818914416666653,
+        "reason": "hold-buffer-priority",
+        "stitch_task_limit": 41,
+        "raw_buffer": 3,
+        "stitched_buffer": 16,
+        "stitched_levels": [
+          10,
+          5,
+          15,
+          20
+        ],
+        "raw_levels": [
+          4,
+          4,
+          4,
+          4
+        ],
+        "cpu_headroom": true
+      }
+    ],
+    [
+      33718.562,
+      10,
+      12,
+      0.176,
+      15,
+      {
+        "extract": 16,
+        "stitch": 6,
+        "estimated_period": 0.1497463613095239,
+        "reason": "model",
+        "stitch_task_limit": 41,
+        "raw_buffer": 4,
+        "stitched_buffer": 16,
+        "stitched_levels": [
+          10,
+          5,
+          15,
+          20
+        ],
+        "raw_levels": [
+          4,
+          4,
+          4,
+          4
+        ],
+        "cpu_headroom": true
+      }
+    ],
+    [
+      33718.781,
+      10,
+      12,
+      0.176,
+      14,
+      {
+        "extract": 16,
+        "stitch": 6,
+        "estimated_period": 0.1497463613095239,
+        "reason": "model",
+        "stitch_task_limit": 41,
+        "raw_buffer": 4,
+        "stitched_buffer": 16,
+        "stitched_levels": [
+          10,
+          5,
+          15,
+          20
+        ],
+        "raw_levels": [
+          4,
+          4,
+          4,
+          4
+        ],
+        "cpu_headroom": true
+      }
+    ],
+    [
+      33719.015,
+      10,
+      12,
+      0.181,
+      14,
+      {
+        "extract": 16,
+        "stitch": 6,
+        "estimated_period": 0.1497463613095239,
+        "reason": "model",
+        "stitch_task_limit": 41,
+        "raw_buffer": 4,
+        "stitched_buffer": 16,
+        "stitched_levels": [
+          10,
+          5,
+          15,
+          20
+        ],
+        "raw_levels": [
+          4,
+          4,
+          4,
+          4
+        ],
+        "cpu_headroom": true
+      }
+    ],
+    [
+      33719.25,
+      10,
+      12,
+      0.192,
+      16,
+      {
+        "extract": 16,
+        "stitch": 6,
+        "estimated_period": 0.14796311614583346,
+        "reason": "model",
+        "stitch_task_limit": 41,
+        "raw_buffer": 4,
+        "stitched_buffer": 16,
+        "stitched_levels": [
+          10,
+          5,
+          15,
+          20
+        ],
+        "raw_levels": [
+          4,
+          4,
+          4,
+          4
+        ],
+        "cpu_headroom": true
+      }
+    ],
+    [
+      33719.468,
+      10,
+      12,
+      0.192,
+      16,
+      {
+        "extract": 16,
+        "stitch": 6,
+        "estimated_period": 0.14796311614583346,
+        "reason": "model",
+        "stitch_task_limit": 41,
+        "raw_buffer": 4,
+        "stitched_buffer": 16,
+        "stitched_levels": [
+          10,
+          5,
+          15,
+          20
+        ],
+        "raw_levels": [
+          4,
+          4,
+          4,
+          4
+        ],
+        "cpu_headroom": true
+      }
+    ],
+    [
+      33719.687,
+      10,
+      12,
+      0.192,
+      16,
+      {
+        "extract": 16,
+        "stitch": 6,
+        "estimated_period": 0.14796311614583346,
+        "reason": "model",
+        "stitch_task_limit": 41,
+        "raw_buffer": 4,
+        "stitched_buffer": 16,
+        "stitched_levels": [
+          10,
+          5,
+          15,
+          20
+        ],
+        "raw_levels": [
+          4,
+          4,
+          4,
+          4
+        ],
+        "cpu_headroom": true
+      }
+    ],
+    [
+      33719.89,
+      10,
+      12,
+      0.192,
+      16,
+      {
+        "extract": 10,
+        "stitch": 12,
+        "estimated_period": 0.22780032357142926,
+        "reason": "hold-buffer-priority",
+        "stitch_task_limit": 41,
+        "raw_buffer": 3,
+        "stitched_buffer": 16,
+        "stitched_levels": [
+          10,
+          5,
+          15,
+          20
+        ],
+        "raw_levels": [
+          4,
+          4,
+          4,
+          4
+        ],
+        "cpu_headroom": true
+      }
+    ],
+    [
+      33720.109,
+      10,
+      12,
+      0.192,
+      15,
+      {
+        "extract": 10,
+        "stitch": 12,
+        "estimated_period": 0.22780032357142926,
+        "reason": "hold-buffer-priority",
+        "stitch_task_limit": 41,
+        "raw_buffer": 3,
+        "stitched_buffer": 16,
+        "stitched_levels": [
+          10,
+          5,
+          15,
+          20
+        ],
+        "raw_levels": [
+          4,
+          4,
+          4,
+          4
+        ],
+        "cpu_headroom": true
+      }
+    ],
+    [
+      33720.328,
+      10,
+      12,
+      0.192,
+      15,
+      {
+        "extract": 10,
+        "stitch": 12,
+        "estimated_period": 0.2173522691666677,
+        "reason": "hold-buffer-priority",
+        "stitch_task_limit": 41,
+        "raw_buffer": 3,
+        "stitched_buffer": 16,
+        "stitched_levels": [
+          10,
+          5,
+          15,
+          20
+        ],
+        "raw_levels": [
+          4,
+          4,
+          4,
+          4
+        ],
+        "cpu_headroom": true
+      }
+    ],
+    [
+      33720.546,
+      11,
+      11,
+      0.192,
+      14,
+      {
+        "extract": 11,
+        "stitch": 11,
+        "estimated_period": 0.1952310219696977,
+        "reason": "ready-capacity",
+        "stitch_task_limit": 41,
+        "raw_buffer": 3,
+        "stitched_buffer": 15,
+        "stitched_levels": [
+          10,
+          5,
+          15,
+          20
+        ],
+        "raw_levels": [
+          5,
+          5,
+          5,
+          5
+        ],
+        "cpu_headroom": true
+      }
+    ],
+    [
+      33720.765,
+      11,
+      11,
+      0.192,
+      14,
+      {
+        "extract": 12,
+        "stitch": 10,
+        "estimated_period": 0.17738906666666723,
+        "reason": "ready-capacity",
+        "stitch_task_limit": 41,
+        "raw_buffer": 3,
+        "stitched_buffer": 14,
+        "stitched_levels": [
+          10,
+          5,
+          15,
+          20
+        ],
+        "raw_levels": [
+          6,
+          5,
+          6,
+          6
+        ],
+        "cpu_headroom": true
+      }
+    ],
+    [
+      33721.0,
+      11,
+      11,
+      0.186,
+      15,
+      {
+        "extract": 12,
+        "stitch": 10,
+        "estimated_period": 0.17738906666666723,
+        "reason": "ready-capacity",
+        "stitch_task_limit": 41,
+        "raw_buffer": 3,
+        "stitched_buffer": 14,
+        "stitched_levels": [
+          10,
+          5,
+          15,
+          20
+        ],
+        "raw_levels": [
+          6,
+          5,
+          6,
+          6
+        ],
+        "cpu_headroom": true
+      }
+    ],
+    [
+      33721.218,
+      11,
+      11,
+      0.184,
+      14,
+      {
+        "extract": 12,
+        "stitch": 10,
+        "estimated_period": 0.17738906666666723,
+        "reason": "ready-capacity",
+        "stitch_task_limit": 41,
+        "raw_buffer": 3,
+        "stitched_buffer": 14,
+        "stitched_levels": [
+          10,
+          5,
+          15,
+          20
+        ],
+        "raw_levels": [
+          6,
+          5,
+          6,
+          6
+        ],
+        "cpu_headroom": true
+      }
+    ],
+    [
+      33721.437,
+      11,
+      11,
+      0.18,
+      13,
+      {
+        "extract": 11,
+        "stitch": 11,
+        "estimated_period": 0.19607819166666723,
+        "reason": "hold-buffer-priority",
+        "stitch_task_limit": 41,
+        "raw_buffer": 5,
+        "stitched_buffer": 14,
+        "stitched_levels": [
+          10,
+          5,
+          15,
+          20
+        ],
+        "raw_levels": [
+          6,
+          5,
+          6,
+          6
+        ],
+        "cpu_headroom": true
+      }
+    ],
+    [
+      33721.687,
+      11,
+      11,
+      0.18,
+      13,
+      {
+        "extract": 11,
+        "stitch": 11,
+        "estimated_period": 0.19607819166666723,
+        "reason": "hold-buffer-priority",
+        "stitch_task_limit": 41,
+        "raw_buffer": 5,
+        "stitched_buffer": 14,
+        "stitched_levels": [
+          10,
+          5,
+          15,
+          20
+        ],
+        "raw_levels": [
+          6,
+          5,
+          6,
+          6
+        ],
+        "cpu_headroom": true
+      }
+    ],
+    [
+      33721.906,
+      11,
+      11,
+      0.18,
+      13,
+      {
+        "extract": 11,
+        "stitch": 11,
+        "estimated_period": 0.19607819166666723,
+        "reason": "hold-buffer-priority",
+        "stitch_task_limit": 41,
+        "raw_buffer": 5,
+        "stitched_buffer": 14,
+        "stitched_levels": [
+          10,
+          5,
+          15,
+          20
+        ],
+        "raw_levels": [
+          6,
+          5,
+          6,
+          6
+        ],
+        "cpu_headroom": true
+      }
+    ],
+    [
+      33722.109,
+      11,
+      11,
+      0.179,
+      16,
+      {
+        "extract": 11,
+        "stitch": 11,
+        "estimated_period": 0.197556081818182,
+        "reason": "hold-buffer-priority",
+        "stitch_task_limit": 41,
+        "raw_buffer": 6,
+        "stitched_buffer": 13,
+        "stitched_levels": [
+          10,
+          5,
+          15,
+          20
+        ],
+        "raw_levels": [
+          7,
+          5,
+          7,
+          7
+        ],
+        "cpu_headroom": true
+      }
+    ],
+    [
+      33722.343,
+      11,
+      11,
+      0.179,
+      16,
+      {
+        "extract": 11,
+        "stitch": 11,
+        "estimated_period": 0.197556081818182,
+        "reason": "hold-buffer-priority",
+        "stitch_task_limit": 41,
+        "raw_buffer": 6,
+        "stitched_buffer": 13,
+        "stitched_levels": [
+          10,
+          5,
+          15,
+          20
+        ],
+        "raw_levels": [
+          7,
+          5,
+          7,
+          7
+        ],
+        "cpu_headroom": true
+      }
+    ],
+    [
+      33722.578,
+      11,
+      11,
+      0.187,
+      16,
+      {
+        "extract": 11,
+        "stitch": 11,
+        "estimated_period": 0.197556081818182,
+        "reason": "hold-buffer-priority",
+        "stitch_task_limit": 41,
+        "raw_buffer": 6,
+        "stitched_buffer": 13,
+        "stitched_levels": [
+          10,
+          5,
+          15,
+          20
+        ],
+        "raw_levels": [
+          7,
+          5,
+          7,
+          7
+        ],
+        "cpu_headroom": true
+      }
+    ],
+    [
+      33722.796,
+      11,
+      11,
+      0.187,
+      17,
+      {
+        "extract": 16,
+        "stitch": 6,
+        "estimated_period": 0.13796610729166667,
+        "reason": "model",
+        "stitch_task_limit": 41,
+        "raw_buffer": 4,
+        "stitched_buffer": 16,
+        "stitched_levels": [
+          10,
+          5,
+          15,
+          20
+        ],
+        "raw_levels": [
+          4,
+          4,
+          4,
+          4
+        ],
+        "cpu_headroom": true
+      }
+    ],
+    [
+      33723.031,
+      11,
+      11,
+      0.203,
+      17,
+      {
+        "extract": 16,
+        "stitch": 6,
+        "estimated_period": 0.13796610729166667,
+        "reason": "model",
+        "stitch_task_limit": 41,
+        "raw_buffer": 4,
+        "stitched_buffer": 16,
+        "stitched_levels": [
+          10,
+          5,
+          15,
+          20
+        ],
+        "raw_levels": [
+          4,
+          4,
+          4,
+          4
+        ],
+        "cpu_headroom": true
+      }
+    ],
+    [
+      33723.25,
+      11,
+      11,
+      0.203,
+      17,
+      {
+        "extract": 16,
+        "stitch": 6,
+        "estimated_period": 0.13796610729166667,
+        "reason": "model",
+        "stitch_task_limit": 41,
+        "raw_buffer": 4,
+        "stitched_buffer": 16,
+        "stitched_levels": [
+          10,
+          5,
+          15,
+          20
+        ],
+        "raw_levels": [
+          4,
+          4,
+          4,
+          4
+        ],
+        "cpu_headroom": true
+      }
+    ],
+    [
+      33723.468,
+      11,
+      11,
+      0.203,
+      17,
+      {
+        "extract": 16,
+        "stitch": 6,
+        "estimated_period": 0.14137329427083345,
+        "reason": "model",
+        "stitch_task_limit": 41,
+        "raw_buffer": 3,
+        "stitched_buffer": 17,
+        "stitched_levels": [
+          10,
+          5,
+          15,
+          20
+        ],
+        "raw_levels": [
+          3,
+          3,
+          3,
+          3
+        ],
+        "cpu_headroom": true
+      }
+    ],
+    [
+      33723.687,
+      11,
+      11,
+      0.203,
+      17,
+      {
+        "extract": 16,
+        "stitch": 6,
+        "estimated_period": 0.14137329427083345,
+        "reason": "model",
+        "stitch_task_limit": 41,
+        "raw_buffer": 3,
+        "stitched_buffer": 17,
+        "stitched_levels": [
+          10,
+          5,
+          15,
+          20
+        ],
+        "raw_levels": [
+          3,
+          3,
+          3,
+          3
+        ],
+        "cpu_headroom": true
+      }
+    ],
+    [
+      33723.906,
+      11,
+      11,
+      0.203,
+      17,
+      {
+        "extract": 16,
+        "stitch": 6,
+        "estimated_period": 0.14137329427083345,
+        "reason": "model",
+        "stitch_task_limit": 41,
+        "raw_buffer": 3,
+        "stitched_buffer": 17,
+        "stitched_levels": [
+          10,
+          5,
+          15,
+          20
+        ],
+        "raw_levels": [
+          3,
+          3,
+          3,
+          3
+        ],
+        "cpu_headroom": true
+      }
+    ],
+    [
+      33724.109,
+      11,
+      11,
+      0.203,
+      16,
+      {
+        "extract": 11,
+        "stitch": 11,
+        "estimated_period": 0.21208662727272728,
+        "reason": "hold-buffer-priority",
+        "stitch_task_limit": 41,
+        "raw_buffer": 0,
+        "stitched_buffer": 17,
+        "stitched_levels": [
+          10,
+          5,
+          15,
+          20
+        ],
+        "raw_levels": [
+          3,
+          3,
+          3,
+          3
+        ],
+        "cpu_headroom": true
+      }
+    ],
+    [
+      33724.343,
+      11,
+      11,
+      0.2,
+      15,
+      {
+        "extract": 11,
+        "stitch": 11,
+        "estimated_period": 0.21208662727272728,
+        "reason": "hold-buffer-priority",
+        "stitch_task_limit": 41,
+        "raw_buffer": 0,
+        "stitched_buffer": 17,
+        "stitched_levels": [
+          10,
+          5,
+          15,
+          20
+        ],
+        "raw_levels": [
+          3,
+          3,
+          3,
+          3
+        ],
+        "cpu_headroom": true
+      }
+    ],
+    [
+      33735.515,
+      11,
+      11,
+      0.193,
+      6,
+      {
+        "extract": 18,
+        "stitch": 4,
+        "estimated_period": 0.21658000416666645,
+        "reason": "ready-capacity",
+        "stitch_task_limit": 41,
+        "raw_buffer": 4,
+        "stitched_buffer": 6,
+        "stitched_levels": [
+          10,
+          5,
+          15,
+          20
+        ],
+        "raw_levels": [
+          10,
+          5,
+          14,
+          14
+        ],
+        "cpu_headroom": true
+      }
+    ],
+    [
+      33735.75,
+      11,
+      11,
+      0.193,
+      6,
+      {
+        "extract": 18,
+        "stitch": 4,
+        "estimated_period": 0.21658000416666645,
+        "reason": "ready-capacity",
+        "stitch_task_limit": 41,
+        "raw_buffer": 4,
+        "stitched_buffer": 6,
+        "stitched_levels": [
+          10,
+          5,
+          15,
+          20
+        ],
+        "raw_levels": [
+          10,
+          5,
+          14,
+          14
+        ],
+        "cpu_headroom": true
+      }
+    ],
+    [
+      33735.968,
+      11,
+      11,
+      0.193,
+      5,
+      {
+        "extract": 17,
+        "stitch": 5,
+        "estimated_period": 0.1775802683333331,
+        "reason": "ready-capacity",
+        "stitch_task_limit": 41,
+        "raw_buffer": 5,
+        "stitched_buffer": 6,
+        "stitched_levels": [
+          10,
+          5,
+          15,
+          20
+        ],
+        "raw_levels": [
+          10,
+          5,
+          14,
+          14
+        ],
+        "cpu_headroom": true
+      }
+    ],
+    [
+      33736.187,
+      11,
+      11,
+      0.193,
+      5,
+      {
+        "extract": 17,
+        "stitch": 5,
+        "estimated_period": 0.1817111383333331,
+        "reason": "ready-capacity",
+        "stitch_task_limit": 41,
+        "raw_buffer": 5,
+        "stitched_buffer": 6,
+        "stitched_levels": [
+          10,
+          5,
+          15,
+          20
+        ],
+        "raw_levels": [
+          10,
+          5,
+          14,
+          14
+        ],
+        "cpu_headroom": true
+      }
+    ],
+    [
+      33736.437,
+      11,
+      11,
+      0.194,
+      5,
+      {
+        "extract": 17,
+        "stitch": 5,
+        "estimated_period": 0.1817111383333331,
+        "reason": "ready-capacity",
+        "stitch_task_limit": 41,
+        "raw_buffer": 5,
+        "stitched_buffer": 6,
+        "stitched_levels": [
+          10,
+          5,
+          15,
+          20
+        ],
+        "raw_levels": [
+          10,
+          5,
+          14,
+          14
+        ],
+        "cpu_headroom": true
+      }
+    ],
+    [
+      33736.656,
+      11,
+      11,
+      0.196,
+      5,
+      {
+        "extract": 17,
+        "stitch": 5,
+        "estimated_period": 0.1817111383333331,
+        "reason": "ready-capacity",
+        "stitch_task_limit": 41,
+        "raw_buffer": 5,
+        "stitched_buffer": 6,
+        "stitched_levels": [
+          10,
+          5,
+          15,
+          20
+        ],
+        "raw_levels": [
+          10,
+          5,
+          14,
+          14
+        ],
+        "cpu_headroom": true
+      }
+    ],
+    [
+      33736.875,
+      11,
+      11,
+      0.2,
+      4,
+      {
+        "extract": 16,
+        "stitch": 6,
+        "estimated_period": 0.16342165277777773,
+        "reason": "ready-capacity",
+        "stitch_task_limit": 41,
+        "raw_buffer": 6,
+        "stitched_buffer": 5,
+        "stitched_levels": [
+          10,
+          5,
+          15,
+          20
+        ],
+        "raw_levels": [
+          10,
+          5,
+          15,
+          15
+        ],
+        "cpu_headroom": true
+      }
+    ],
+    [
+      33737.109,
+      11,
+      11,
+      0.196,
+      5,
+      {
+        "extract": 16,
+        "stitch": 6,
+        "estimated_period": 0.16342165277777773,
+        "reason": "ready-capacity",
+        "stitch_task_limit": 41,
+        "raw_buffer": 6,
+        "stitched_buffer": 5,
+        "stitched_levels": [
+          10,
+          5,
+          15,
+          20
+        ],
+        "raw_levels": [
+          10,
+          5,
+          15,
+          15
+        ],
+        "cpu_headroom": true
+      }
+    ],
+    [
+      33737.343,
+      11,
+      11,
+      0.196,
+      5,
+      {
+        "extract": 16,
+        "stitch": 6,
+        "estimated_period": 0.16342165277777773,
+        "reason": "ready-capacity",
+        "stitch_task_limit": 41,
+        "raw_buffer": 6,
+        "stitched_buffer": 5,
+        "stitched_levels": [
+          10,
+          5,
+          15,
+          20
+        ],
+        "raw_levels": [
+          10,
+          5,
+          15,
+          15
+        ],
+        "cpu_headroom": true
+      }
+    ],
+    [
+      33737.562,
+      11,
+      11,
+      0.196,
+      4,
+      {
+        "extract": 16,
+        "stitch": 6,
+        "estimated_period": 0.18470061111111094,
+        "reason": "ready-capacity",
+        "stitch_task_limit": 41,
+        "raw_buffer": 6,
+        "stitched_buffer": 5,
+        "stitched_levels": [
+          10,
+          5,
+          15,
+          20
+        ],
+        "raw_levels": [
+          10,
+          5,
+          15,
+          15
+        ],
+        "cpu_headroom": true
+      }
+    ],
+    [
+      33737.781,
+      11,
+      11,
+      0.196,
+      4,
+      {
+        "extract": 16,
+        "stitch": 6,
+        "estimated_period": 0.18470061111111094,
+        "reason": "ready-capacity",
+        "stitch_task_limit": 41,
+        "raw_buffer": 6,
+        "stitched_buffer": 5,
+        "stitched_levels": [
+          10,
+          5,
+          15,
+          20
+        ],
+        "raw_levels": [
+          10,
+          5,
+          15,
+          15
+        ],
+        "cpu_headroom": true
+      }
+    ],
+    [
+      33738.015,
+      11,
+      11,
+      0.196,
+      4,
+      {
+        "extract": 16,
+        "stitch": 6,
+        "estimated_period": 0.18470061111111094,
+        "reason": "ready-capacity",
+        "stitch_task_limit": 41,
+        "raw_buffer": 6,
+        "stitched_buffer": 5,
+        "stitched_levels": [
+          10,
+          5,
+          15,
+          20
+        ],
+        "raw_levels": [
+          10,
+          5,
+          15,
+          15
+        ],
+        "cpu_headroom": true
+      }
+    ],
+    [
+      33738.25,
+      11,
+      11,
+      0.196,
+      5,
+      {
+        "extract": 16,
+        "stitch": 6,
+        "estimated_period": 0.18470061111111094,
+        "reason": "ready-capacity",
+        "stitch_task_limit": 41,
+        "raw_buffer": 6,
+        "stitched_buffer": 5,
+        "stitched_levels": [
+          10,
+          5,
+          15,
+          20
+        ],
+        "raw_levels": [
+          10,
+          5,
+          15,
+          15
+        ],
+        "cpu_headroom": true
+      }
+    ],
+    [
+      33738.468,
+      11,
+      11,
+      0.197,
+      5,
+      {
+        "extract": 16,
+        "stitch": 6,
+        "estimated_period": 0.20690574583333335,
+        "reason": "ready-capacity",
+        "stitch_task_limit": 41,
+        "raw_buffer": 6,
+        "stitched_buffer": 5,
+        "stitched_levels": [
+          10,
+          5,
+          15,
+          20
+        ],
+        "raw_levels": [
+          10,
+          5,
+          15,
+          15
+        ],
+        "cpu_headroom": true
+      }
+    ],
+    [
+      33738.687,
+      11,
+      11,
+      0.204,
+      6,
+      {
+        "extract": 16,
+        "stitch": 6,
+        "estimated_period": 0.22014811805555576,
+        "reason": "ready-capacity",
+        "stitch_task_limit": 41,
+        "raw_buffer": 6,
+        "stitched_buffer": 6,
+        "stitched_levels": [
+          10,
+          5,
+          15,
+          20
+        ],
+        "raw_levels": [
+          10,
+          5,
+          14,
+          14
+        ],
+        "cpu_headroom": true
+      }
+    ],
+    [
+      33738.921,
+      11,
+      11,
+      0.204,
+      6,
+      {
+        "extract": 16,
+        "stitch": 6,
+        "estimated_period": 0.22014811805555576,
+        "reason": "ready-capacity",
+        "stitch_task_limit": 41,
+        "raw_buffer": 6,
+        "stitched_buffer": 6,
+        "stitched_levels": [
+          10,
+          5,
+          15,
+          20
+        ],
+        "raw_levels": [
+          10,
+          5,
+          14,
+          14
+        ],
+        "cpu_headroom": true
+      }
+    ],
+    [
+      33739.14,
+      11,
+      11,
+      0.205,
+      6,
+      {
+        "extract": 16,
+        "stitch": 6,
+        "estimated_period": 0.22692762083333365,
+        "reason": "ready-capacity",
+        "stitch_task_limit": 41,
+        "raw_buffer": 6,
+        "stitched_buffer": 6,
+        "stitched_levels": [
+          10,
+          5,
+          15,
+          20
+        ],
+        "raw_levels": [
+          10,
+          5,
+          14,
+          14
+        ],
+        "cpu_headroom": true
+      }
+    ],
+    [
+      33739.359,
+      11,
+      11,
+      0.205,
+      6,
+      {
+        "extract": 16,
+        "stitch": 6,
+        "estimated_period": 0.22692762083333365,
+        "reason": "ready-capacity",
+        "stitch_task_limit": 41,
+        "raw_buffer": 6,
+        "stitched_buffer": 6,
+        "stitched_levels": [
+          10,
+          5,
+          15,
+          20
+        ],
+        "raw_levels": [
+          10,
+          5,
+          14,
+          14
+        ],
+        "cpu_headroom": true
+      }
+    ],
+    [
+      33739.593,
+      11,
+      11,
+      0.205,
+      5,
+      {
+        "extract": 16,
+        "stitch": 6,
+        "estimated_period": 0.22809704027777802,
+        "reason": "ready-capacity",
+        "stitch_task_limit": 41,
+        "raw_buffer": 6,
+        "stitched_buffer": 6,
+        "stitched_levels": [
+          10,
+          5,
+          15,
+          20
+        ],
+        "raw_levels": [
+          10,
+          5,
+          14,
+          14
+        ],
+        "cpu_headroom": true
+      }
+    ],
+    [
+      33739.812,
+      11,
+      11,
+      0.205,
+      5,
+      {
+        "extract": 16,
+        "stitch": 6,
+        "estimated_period": 0.23036220000000027,
+        "reason": "ready-capacity",
+        "stitch_task_limit": 41,
+        "raw_buffer": 6,
+        "stitched_buffer": 6,
+        "stitched_levels": [
+          10,
+          5,
+          15,
+          20
+        ],
+        "raw_levels": [
+          10,
+          5,
+          14,
+          14
+        ],
+        "cpu_headroom": true
+      }
+    ],
+    [
+      33740.031,
+      11,
+      11,
+      0.205,
+      6,
+      {
+        "extract": 16,
+        "stitch": 6,
+        "estimated_period": 0.23036220000000027,
+        "reason": "ready-capacity",
+        "stitch_task_limit": 41,
+        "raw_buffer": 6,
+        "stitched_buffer": 6,
+        "stitched_levels": [
+          10,
+          5,
+          15,
+          20
+        ],
+        "raw_levels": [
+          10,
+          5,
+          14,
+          14
+        ],
+        "cpu_headroom": true
+      }
+    ],
+    [
+      33740.25,
+      11,
+      11,
+      0.205,
+      7,
+      {
+        "extract": 16,
+        "stitch": 6,
+        "estimated_period": 0.23036220000000027,
+        "reason": "ready-capacity",
+        "stitch_task_limit": 41,
+        "raw_buffer": 6,
+        "stitched_buffer": 6,
+        "stitched_levels": [
+          10,
+          5,
+          15,
+          20
+        ],
+        "raw_levels": [
+          10,
+          5,
+          14,
+          14
+        ],
+        "cpu_headroom": true
+      }
+    ],
+    [
+      33740.468,
+      11,
+      11,
+      0.212,
+      7,
+      {
+        "extract": 15,
+        "stitch": 7,
+        "estimated_period": 0.20159211190476214,
+        "reason": "ready-capacity",
+        "stitch_task_limit": 41,
+        "raw_buffer": 7,
+        "stitched_buffer": 7,
+        "stitched_levels": [
+          10,
+          5,
+          15,
+          20
+        ],
+        "raw_levels": [
+          10,
+          5,
+          13,
+          13
+        ],
+        "cpu_headroom": true
+      }
+    ],
+    [
+      33740.687,
+      11,
+      11,
+      0.212,
+      6,
+      {
+        "extract": 15,
+        "stitch": 7,
+        "estimated_period": 0.2047866023809526,
+        "reason": "ready-capacity",
+        "stitch_task_limit": 41,
+        "raw_buffer": 7,
+        "stitched_buffer": 7,
+        "stitched_levels": [
+          10,
+          5,
+          15,
+          20
+        ],
+        "raw_levels": [
+          10,
+          5,
+          13,
+          13
+        ],
+        "cpu_headroom": true
+      }
+    ],
+    [
+      33740.906,
+      11,
+      11,
+      0.212,
+      6,
+      {
+        "extract": 14,
+        "stitch": 8,
+        "estimated_period": 0.21283613095238071,
+        "reason": "ready-capacity",
+        "stitch_task_limit": 41,
+        "raw_buffer": 8,
+        "stitched_buffer": 7,
+        "stitched_levels": [
+          10,
+          5,
+          15,
+          20
+        ],
+        "raw_levels": [
+          10,
+          5,
+          13,
+          13
+        ],
+        "cpu_headroom": true
+      }
+    ],
+    [
+      33741.125,
+      11,
+      11,
+      0.212,
+      7,
+      {
+        "extract": 14,
+        "stitch": 8,
+        "estimated_period": 0.20971238452380941,
+        "reason": "ready-capacity",
+        "stitch_task_limit": 41,
+        "raw_buffer": 8,
+        "stitched_buffer": 7,
+        "stitched_levels": [
+          10,
+          5,
+          15,
+          20
+        ],
+        "raw_levels": [
+          10,
+          5,
+          13,
+          13
+        ],
+        "cpu_headroom": true
+      }
+    ],
+    [
+      33741.343,
+      11,
+      11,
+      0.212,
+      7,
+      {
+        "extract": 14,
+        "stitch": 8,
+        "estimated_period": 0.20971238452380941,
+        "reason": "ready-capacity",
+        "stitch_task_limit": 41,
+        "raw_buffer": 8,
+        "stitched_buffer": 7,
+        "stitched_levels": [
+          10,
+          5,
+          15,
+          20
+        ],
+        "raw_levels": [
+          10,
+          5,
+          13,
+          13
+        ],
+        "cpu_headroom": true
+      }
+    ],
+    [
+      33741.562,
+      11,
+      11,
+      0.212,
+      7,
+      {
+        "extract": 13,
+        "stitch": 9,
+        "estimated_period": 0.22886695512820496,
+        "reason": "ready-capacity",
+        "stitch_task_limit": 41,
+        "raw_buffer": 9,
+        "stitched_buffer": 7,
+        "stitched_levels": [
+          10,
+          5,
+          15,
+          20
+        ],
+        "raw_levels": [
+          10,
+          5,
+          13,
+          13
+        ],
+        "cpu_headroom": true
+      }
+    ],
+    [
+      33741.781,
+      11,
+      11,
+      0.212,
+      9,
+      {
+        "extract": 13,
+        "stitch": 9,
+        "estimated_period": 0.23048372115384597,
+        "reason": "ready-capacity",
+        "stitch_task_limit": 41,
+        "raw_buffer": 9,
+        "stitched_buffer": 7,
+        "stitched_levels": [
+          10,
+          5,
+          15,
+          20
+        ],
+        "raw_levels": [
+          10,
+          5,
+          13,
+          13
+        ],
+        "cpu_headroom": true
+      }
+    ],
+    [
+      33742.0,
+      11,
+      11,
+      0.212,
+      9,
+      {
+        "extract": 13,
+        "stitch": 9,
+        "estimated_period": 0.23048372115384597,
+        "reason": "ready-capacity",
+        "stitch_task_limit": 41,
+        "raw_buffer": 9,
+        "stitched_buffer": 7,
+        "stitched_levels": [
+          10,
+          5,
+          15,
+          20
+        ],
+        "raw_levels": [
+          10,
+          5,
+          13,
+          13
+        ],
+        "cpu_headroom": true
+      }
+    ],
+    [
+      33742.218,
+      11,
+      11,
+      0.212,
+      10,
+      {
+        "extract": 13,
+        "stitch": 9,
+        "estimated_period": 0.23048372115384597,
+        "reason": "ready-capacity",
+        "stitch_task_limit": 41,
+        "raw_buffer": 9,
+        "stitched_buffer": 7,
+        "stitched_levels": [
+          10,
+          5,
+          15,
+          20
+        ],
+        "raw_levels": [
+          10,
+          5,
+          13,
+          13
+        ],
+        "cpu_headroom": true
+      }
+    ],
+    [
+      33742.437,
+      14,
+      8,
+      0.212,
+      10,
+      {
+        "extract": 14,
+        "stitch": 8,
+        "estimated_period": 0.2140669398809522,
+        "reason": "ready-capacity",
+        "stitch_task_limit": 41,
+        "raw_buffer": 8,
+        "stitched_buffer": 10,
+        "stitched_levels": [
+          10,
+          5,
+          15,
+          20
+        ],
+        "raw_levels": [
+          10,
+          5,
+          10,
+          10
+        ],
+        "cpu_headroom": true
+      }
+    ],
+    [
+      33742.656,
+      14,
+      8,
+      0.212,
+      10,
+      {
+        "extract": 15,
+        "stitch": 7,
+        "estimated_period": 0.23080290238095214,
+        "reason": "ready-capacity",
+        "stitch_task_limit": 41,
+        "raw_buffer": 7,
+        "stitched_buffer": 11,
+        "stitched_levels": [
+          10,
+          5,
+          15,
+          20
+        ],
+        "raw_levels": [
+          9,
+          5,
+          9,
+          9
+        ],
+        "cpu_headroom": true
+      }
+    ],
+    [
+      33742.875,
+      18,
+      4,
+      0.212,
+      11,
+      {
+        "extract": 18,
+        "stitch": 4,
+        "estimated_period": 0.4050316166666663,
+        "reason": "raw-buffer-low",
+        "stitch_task_limit": 41,
+        "raw_buffer": 8,
+        "stitched_buffer": 11,
+        "stitched_levels": [
+          10,
+          5,
+          15,
+          20
+        ],
+        "raw_levels": [
+          9,
+          5,
+          9,
+          9
+        ],
+        "cpu_headroom": true
+      }
+    ],
+    [
+      33743.093,
+      18,
+      4,
+      0.212,
+      11,
+      {
+        "extract": 18,
+        "stitch": 4,
+        "estimated_period": 0.4050316166666663,
+        "reason": "raw-buffer-low",
+        "stitch_task_limit": 41,
+        "raw_buffer": 8,
+        "stitched_buffer": 11,
+        "stitched_levels": [
+          10,
+          5,
+          15,
+          20
+        ],
+        "raw_levels": [
+          9,
+          5,
+          9,
+          9
+        ],
+        "cpu_headroom": true
+      }
+    ],
+    [
+      33743.312,
+      18,
+      4,
+      0.212,
+      10,
+      {
+        "extract": 18,
+        "stitch": 4,
+        "estimated_period": 0.4050316166666663,
+        "reason": "raw-buffer-low",
+        "stitch_task_limit": 41,
+        "raw_buffer": 8,
+        "stitched_buffer": 11,
+        "stitched_levels": [
+          10,
+          5,
+          15,
+          20
+        ],
+        "raw_levels": [
+          9,
+          5,
+          9,
+          9
+        ],
+        "cpu_headroom": true
+      }
+    ],
+    [
+      33743.531,
+      18,
+      4,
+      0.217,
+      11,
+      {
+        "extract": 14,
+        "stitch": 8,
+        "estimated_period": 0.20745560416666642,
+        "reason": "ready-capacity",
+        "stitch_task_limit": 41,
+        "raw_buffer": 8,
+        "stitched_buffer": 11,
+        "stitched_levels": [
+          10,
+          5,
+          15,
+          20
+        ],
+        "raw_levels": [
+          9,
+          5,
+          9,
+          9
+        ],
+        "cpu_headroom": true
+      }
+    ],
+    [
+      33743.75,
+      18,
+      4,
+      0.212,
+      10,
+      {
+        "extract": 14,
+        "stitch": 8,
+        "estimated_period": 0.20745560416666642,
+        "reason": "ready-capacity",
+        "stitch_task_limit": 41,
+        "raw_buffer": 8,
+        "stitched_buffer": 11,
+        "stitched_levels": [
+          10,
+          5,
+          15,
+          20
+        ],
+        "raw_levels": [
+          9,
+          5,
+          9,
+          9
+        ],
+        "cpu_headroom": true
+      }
+    ],
+    [
+      33743.968,
+      18,
+      4,
+      0.203,
+      9,
+      {
+        "extract": 14,
+        "stitch": 8,
+        "estimated_period": 0.20745560416666642,
+        "reason": "ready-capacity",
+        "stitch_task_limit": 41,
+        "raw_buffer": 8,
+        "stitched_buffer": 11,
+        "stitched_levels": [
+          10,
+          5,
+          15,
+          20
+        ],
+        "raw_levels": [
+          9,
+          5,
+          9,
+          9
+        ],
+        "cpu_headroom": true
+      }
+    ]
+  ],
+  "paints": [
+    [
+      61,
+      33735.843
+    ],
+    [
+      62,
+      33736.046
+    ],
+    [
+      63,
+      33736.312
+    ],
+    [
+      64,
+      33736.546
+    ],
+    [
+      65,
+      33736.781
+    ],
+    [
+      66,
+      33737.0
+    ],
+    [
+      67,
+      33737.218
+    ],
+    [
+      68,
+      33737.515
+    ],
+    [
+      69,
+      33737.734
+    ],
+    [
+      70,
+      33737.968
+    ],
+    [
+      71,
+      33738.296
+    ],
+    [
+      72,
+      33738.671
+    ],
+    [
+      73,
+      33738.921
+    ],
+    [
+      74,
+      33739.109
+    ],
+    [
+      75,
+      33739.359
+    ],
+    [
+      76,
+      33739.64
+    ],
+    [
+      77,
+      33740.328
+    ],
+    [
+      78,
+      33740.562
+    ],
+    [
+      79,
+      33740.828
+    ],
+    [
+      80,
+      33741.093
+    ],
+    [
+      81,
+      33741.375
+    ],
+    [
+      82,
+      33741.64
+    ],
+    [
+      83,
+      33742.328
+    ],
+    [
+      84,
+      33742.578
+    ],
+    [
+      85,
+      33742.859
+    ],
+    [
+      86,
+      33743.109
+    ],
+    [
+      87,
+      33743.375
+    ],
+    [
+      88,
+      33743.578
+    ],
+    [
+      89,
+      33743.812
+    ],
+    [
+      90,
+      33744.14
+    ]
+  ],
+  "latest_status": "",
+  "sequence_results": [
+    {
+      "index": 0,
+      "mode": 4,
+      "fps": 4.5072115384597256,
+      "cpu_percent": 25.03295044797944,
+      "rss_mib": 1562.40625,
+      "private_mib": 2222.30859375,
+      "os_threads": 52,
+      "python_threads": 28,
+      "pending_maps": [
+        23,
+        5,
+        23
+      ],
+      "queue_counts": [
+        11,
+        1
+      ],
+      "handles": [
+        23,
+        5
+      ],
+      "pixel_cache_bytes": 268290480,
+      "resident_decoders": 24,
+      "decoder_objects": 24,
+      "admission": {
+        "limit": 16,
+        "ceiling": 22,
+        "best": 22,
+        "period": 0.22697629166666675,
+        "reason": "probe",
+        "history": [
+          [
+            22,
+            0.22697629166666675,
+            "measured"
+          ]
+        ]
+      },
+      "effective_cpu_budget": 16,
+      "frames": [
+        61,
+        90
+      ],
+      "elapsed_seconds": 6.6560000000026776
+    },
+    {
+      "index": 1,
+      "mode": 4,
+      "fps": 4.728877679699348,
+      "cpu_percent": 26.398422274458007,
+      "rss_mib": 1809.7578125,
+      "private_mib": 2472.4765625,
+      "os_threads": 54,
+      "python_threads": 28,
+      "pending_maps": [
+        7,
+        5,
+        7
+      ],
+      "queue_counts": [
+        0,
+        0
+      ],
+      "handles": [
+        7,
+        4
+      ],
+      "pixel_cache_bytes": 267133440,
+      "resident_decoders": 24,
+      "decoder_objects": 24,
+      "admission": {
+        "limit": 16,
+        "ceiling": 22,
+        "best": 16,
+        "period": 0.12439229473684191,
+        "reason": "restore-best",
+        "history": [
+          [
+            22,
+            0.22697629166666675,
+            "measured"
+          ],
+          [
+            22,
+            0.13953278148148154,
+            "measured"
+          ],
+          [
+            16,
+            0.12439229473684191,
+            "measured"
+          ],
+          [
+            12,
+            0.20218452499999984,
+            "measured"
+          ]
+        ]
+      },
+      "effective_cpu_budget": 16,
+      "frames": [
+        61,
+        90
+      ],
+      "elapsed_seconds": 6.3439999999973224
+    },
+    {
+      "index": 2,
+      "mode": 4,
+      "fps": 3.459409594096475,
+      "cpu_percent": 24.40587260986623,
+      "rss_mib": 1776.12109375,
+      "private_mib": 2436.01953125,
+      "os_threads": 51,
+      "python_threads": 28,
+      "pending_maps": [
+        10,
+        8,
+        10
+      ],
+      "queue_counts": [
+        0,
+        0
+      ],
+      "handles": [
+        10,
+        7
+      ],
+      "pixel_cache_bytes": 265069920,
+      "resident_decoders": 24,
+      "decoder_objects": 24,
+      "admission": {
+        "limit": 21,
+        "ceiling": 22,
+        "best": 16,
+        "period": 0.23542535384615404,
+        "reason": "probe",
+        "history": [
+          [
+            22,
+            0.22697629166666675,
+            "measured"
+          ],
+          [
+            22,
+            0.13953278148148154,
+            "measured"
+          ],
+          [
+            16,
+            0.12439229473684191,
+            "measured"
+          ],
+          [
+            12,
+            0.20218452499999984,
+            "measured"
+          ],
+          [
+            16,
+            0.2086325428571429,
+            "measured"
+          ],
+          [
+            12,
+            0.24295934545454595,
+            "measured"
+          ],
+          [
+            16,
+            0.23542535384615404,
+            "measured"
+          ]
+        ]
+      },
+      "effective_cpu_budget": 21,
+      "frames": [
+        61,
+        90
+      ],
+      "elapsed_seconds": 8.671999999998661
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "previous_fps": 4.450028265619688,
+  "optimized_fps": 4.583085052045439,
+  "previous_runs": [
+    4.405674508767466,
+    4.49438202247191
+  ],
+  "optimized_runs": [
+    5.0103547331147835,
+    4.155815370976094
+  ],
+  "note": "One pair improved, the other regressed; no statistically supported stable FPS gain."
+}

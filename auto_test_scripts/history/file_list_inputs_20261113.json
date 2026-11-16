@@ -1,0 +1,134 @@
+[
+  {
+    "file": "D:\\ncfey\\Desktop\\test_img\\1.txt",
+    "video": false,
+    "source_count": 6,
+    "input_mode": "Image File List",
+    "order": "sequential",
+    "pages": 2,
+    "auto_title_fields": [
+      false,
+      true,
+      true,
+      true,
+      false
+    ],
+    "titles": [
+      [
+        "04/00",
+        "05/00",
+        "06/00"
+      ],
+      [
+        "01/00",
+        "02/01",
+        "03/00"
+      ]
+    ],
+    "first_page_paths": [
+      "D:\\ncfey\\Desktop\\test_img\\test_input\\04\\00.jpg",
+      "D:\\ncfey\\Desktop\\test_img\\test_input\\05\\00.jpg",
+      "D:\\ncfey\\Desktop\\test_img\\test_input\\06\\00.jpg"
+    ],
+    "status": "Image File List | D:\\ncfey\\Desktop\\test_img\\test_input\\04\\00.jpg"
+  },
+  {
+    "file": "D:\\ncfey\\Desktop\\test_img\\2.txt",
+    "video": false,
+    "source_count": 6,
+    "input_mode": "Image File List",
+    "order": "sequential",
+    "pages": 2,
+    "auto_title_fields": [
+      false,
+      true,
+      true,
+      true,
+      false
+    ],
+    "titles": [
+      [
+        "04/01",
+        "05/01",
+        "01/06"
+      ],
+      [
+        "01/02",
+        "02/01",
+        "03/01"
+      ]
+    ],
+    "first_page_paths": [
+      "D:\\ncfey\\Desktop\\test_img\\test_input\\04\\01.jpg",
+      "D:\\ncfey\\Desktop\\test_img\\test_input\\05\\01.jpg",
+      "D:\\ncfey\\Desktop\\test_img\\test_input\\01\\06.jpg"
+    ],
+    "status": "Image File List | D:\\ncfey\\Desktop\\test_img\\test_input\\04\\01.jpg"
+  },
+  {
+    "file": "D:\\ncfey\\Desktop\\test_img\\3-video.txt",
+    "video": true,
+    "source_count": 1,
+    "input_mode": "Image File List",
+    "order": "sequential",
+    "pages": 101,
+    "auto_title_fields": [
+      false,
+      false,
+      true,
+      true,
+      false
+    ],
+    "titles": [
+      [
+        "0s_frame_1",
+        "0.03s_frame_2",
+        "0.07s_frame_3"
+      ],
+      [
+        "0.1s_frame_4",
+        "0.13s_frame_5",
+        "0.17s_frame_6"
+      ]
+    ],
+    "first_page_paths": [
+      "cache_frames\\1\\0s_frame_1.jpeg",
+      "cache_frames\\1\\0.03s_frame_2.jpeg",
+      "cache_frames\\1\\0.07s_frame_3.jpeg"
+    ],
+    "status": "Image File List | D:\\ncfey\\Desktop\\test_img\\test_video\\1.mp4 | 00:00:00.000"
+  },
+  {
+    "file": "D:\\ncfey\\Desktop\\test_img\\4-video.txt",
+    "video": true,
+    "source_count": 3,
+    "input_mode": "Image File List",
+    "order": "parallel",
+    "pages": 303,
+    "auto_title_fields": [
+      false,
+      false,
+      true,
+      true,
+      false
+    ],
+    "titles": [
+      [
+        "0s_frame_1",
+        "0s_frame_1",
+        "0s_frame_1"
+      ],
+      [
+        "0.03s_frame_2",
+        "0.03s_frame_2",
+        "0.03s_frame_2"
+      ]
+    ],
+    "first_page_paths": [
+      "cache_frames\\1\\0s_frame_1.jpeg",
+      "cache_frames\\2\\0s_frame_1.jpeg",
+      "cache_frames\\6\\0s_frame_1.jpeg"
+    ],
+    "status": "Image File List | D:\\ncfey\\Desktop\\test_img\\test_video\\1.mp4 | 00:00:00.000"
+  }
+]

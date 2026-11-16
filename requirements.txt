@@ -1,9 +1,12 @@
 ffmpeg-python
+av>=12; python_version >= "3.9"
 imageio
 # runtime
 numpy
 piexif
 Pillow
+psutil>=5.9
+XlsxWriter>=3.1,<4
 
 # tests (optional)
 pytest-shutil

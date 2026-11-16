@@ -1,0 +1,110 @@
+[
+  {
+    "mode": "Eco",
+    "workers": 5,
+    "memory_budget_gib": 1.259450912475586,
+    "cpu_mean_percent": 30.304555715407677,
+    "cpu_range_percent": [
+      29.122369006572928,
+      31.486742424242426
+    ],
+    "fps": 0.6663224000932958,
+    "fps_runs": [
+      0.66597848889483,
+      0.6666666666666666
+    ],
+    "gui_interval_median_s": 1.484,
+    "future_buffer_empty_percent": 53.90334572490706,
+    "p95_switch_gap_mean_s": 2.37347500000119,
+    "rss_mean_gib": 0.8678348965115017,
+    "rss_peak_gib": 1.4959983825683594,
+    "extract_p90_mean_s": 0.7143039400000011,
+    "stitch_service_mean_s": 0.8102414345019341,
+    "allocation_changes": [
+      10,
+      8
+    ],
+    "gui_heartbeat_max_s": 0.125
+  },
+  {
+    "mode": "Balanced",
+    "workers": 11,
+    "memory_budget_gib": 2.518901824951172,
+    "cpu_mean_percent": 46.364634568634386,
+    "cpu_range_percent": [
+      45.0848562584809,
+      47.64441287878788
+    ],
+    "fps": 0.8497733937616689,
+    "fps_runs": [
+      0.8333333333333334,
+      0.8662046908315674
+    ],
+    "gui_interval_median_s": 1.064,
+    "future_buffer_empty_percent": 61.06870229007634,
+    "p95_switch_gap_mean_s": 1.9679500000006551,
+    "rss_mean_gib": 1.2071327471551094,
+    "rss_peak_gib": 2.0238876342773438,
+    "extract_p90_mean_s": 1.4627478650000025,
+    "stitch_service_mean_s": 0.8757379346862748,
+    "allocation_changes": [
+      9,
+      10
+    ],
+    "gui_heartbeat_max_s": 0.13999999999941792
+  },
+  {
+    "mode": "Performance",
+    "workers": 16,
+    "memory_budget_gib": 4.198169708251953,
+    "cpu_mean_percent": 52.21777580743757,
+    "cpu_range_percent": [
+      51.66364211507856,
+      52.77190949979658
+    ],
+    "fps": 0.9326027944776799,
+    "fps_runs": [
+      0.9323388385722131,
+      0.9328668998834098
+    ],
+    "gui_interval_median_s": 1.0459999999999998,
+    "future_buffer_empty_percent": 62.01550387596899,
+    "p95_switch_gap_mean_s": 1.6637750000003957,
+    "rss_mean_gib": 1.1211035824561304,
+    "rss_peak_gib": 1.8922958374023438,
+    "extract_p90_mean_s": 1.9571316200000002,
+    "stitch_service_mean_s": 1.0003356740384617,
+    "allocation_changes": [
+      8,
+      6
+    ],
+    "gui_heartbeat_max_s": 0.15599999999903957
+  },
+  {
+    "mode": "Maximum",
+    "workers": 22,
+    "memory_budget_gib": 6.29725456237793,
+    "cpu_mean_percent": 53.107329500024896,
+    "cpu_range_percent": [
+      53.07538630912065,
+      53.13927269092914
+    ],
+    "fps": 0.9994669509595009,
+    "fps_runs": [
+      0.9994669509595009,
+      0.9994669509595009
+    ],
+    "gui_interval_median_s": 0.9455,
+    "future_buffer_empty_percent": 52.0,
+    "p95_switch_gap_mean_s": 1.6795749999999767,
+    "rss_mean_gib": 1.6245653032340943,
+    "rss_peak_gib": 2.578197479248047,
+    "extract_p90_mean_s": 2.2789282800000024,
+    "stitch_service_mean_s": 1.05210144,
+    "allocation_changes": [
+      2,
+      2
+    ],
+    "gui_heartbeat_max_s": 0.17199999999866122
+  }
+]

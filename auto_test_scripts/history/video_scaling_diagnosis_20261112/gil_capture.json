@@ -1,0 +1,9 @@
+{
+  "tool": "py-spy 0.4.3",
+  "duration_seconds": 25,
+  "rate_hz": 100,
+  "gil_only": true,
+  "samples": 2038,
+  "errors": 0,
+  "output": "py-spy> Sampling process 100 times a second for 25 seconds. Press Control-C to exit.\n\npy-spy> Wrote raw flamegraph data to 'D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_scaling_diagnosis_20261112\\gil_stacks.txt'. Samples: 2038 Errors: 0\npy-spy> You can use the flamegraph.pl script from https://github.com/brendangregg/flamegraph to generate a SVG\n\n"
+}

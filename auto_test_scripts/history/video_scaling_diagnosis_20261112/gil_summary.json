@@ -1,0 +1,109 @@
+{
+  "samples": 2038,
+  "nominal_opportunities": 2500,
+  "conversion_leaf_samples": 841,
+  "conversion_percent_of_gil": 41.26594700686948,
+  "benchmark_sampler_samples": 132,
+  "top_leaf": [
+    {
+      "frame": "frames (video_decoder.py:116)",
+      "count": 841,
+      "percent": 41.26594700686948
+    },
+    {
+      "frame": "children (psutil\\__init__.py:978)",
+      "count": 165,
+      "percent": 8.096172718351324
+    },
+    {
+      "frame": "_trim (video_memory.py:21)",
+      "count": 79,
+      "percent": 3.876349362119725
+    },
+    {
+      "frame": "resize (PIL\\Image.py:2222)",
+      "count": 66,
+      "percent": 3.2384690873405297
+    },
+    {
+      "frame": "tobytes (PIL\\Image.py:768)",
+      "count": 50,
+      "percent": 2.4533856722276743
+    },
+    {
+      "frame": "<genexpr> (video_memory.py:31)",
+      "count": 36,
+      "percent": 1.7664376840039253
+    },
+    {
+      "frame": "_prepare_video_image (main.py:1926)",
+      "count": 24,
+      "percent": 1.1776251226692835
+    },
+    {
+      "frame": "_prepend (video_decoder.py:83)",
+      "count": 20,
+      "percent": 0.9813542688910697
+    },
+    {
+      "frame": "_filename_converter (main.py:2081)",
+      "count": 19,
+      "percent": 0.9322865554465162
+    },
+    {
+      "frame": "realpath (ntpath.py:659)",
+      "count": 16,
+      "percent": 0.7850834151128557
+    },
+    {
+      "frame": "prune (video_memory.py:53)",
+      "count": 15,
+      "percent": 0.7360157016683022
+    },
+    {
+      "frame": "realpath (ntpath.py:677)",
+      "count": 14,
+      "percent": 0.6869479882237488
+    },
+    {
+      "frame": "abspath (ntpath.py:528)",
+      "count": 11,
+      "percent": 0.5397448478900884
+    },
+    {
+      "frame": "add_alpha (utils_img.py:40)",
+      "count": 11,
+      "percent": 0.5397448478900884
+    },
+    {
+      "frame": "getsize (genericpath.py:50)",
+      "count": 10,
+      "percent": 0.49067713444553485
+    },
+    {
+      "frame": "MainLoop (wx\\core.py:2262)",
+      "count": 10,
+      "percent": 0.49067713444553485
+    },
+    {
+      "frame": "_getfinalpathname_nonstrict (ntpath.py:603)",
+      "count": 10,
+      "percent": 0.49067713444553485
+    },
+    {
+      "frame": "splitdrive (ntpath.py:155)",
+      "count": 9,
+      "percent": 0.44160942100098133
+    },
+    {
+      "frame": "<genexpr> (video_memory.py:20)",
+      "count": 8,
+      "percent": 0.39254170755642787
+    },
+    {
+      "frame": "exists (genericpath.py:19)",
+      "count": 8,
+      "percent": 0.39254170755642787
+    }
+  ]
+}

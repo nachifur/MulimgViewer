@@ -1,0 +1,52 @@
+name: Functional regression report
+
+on:
+  pull_request:
+  push:
+    branches: [master, main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows-regression:
+    runs-on: windows-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: |
+            requirements.txt
+            auto_test_scripts/requirements.txt
+      - name: Install dependencies and FFmpeg
+        shell: pwsh
+        run: |
+          python -m pip install -r auto_test_scripts/requirements.txt
+          choco install ffmpeg -y --no-progress
+      - name: Run all functional regressions
+        run: python auto_test_scripts/run_tests.py --strict-skips
+      - name: Add test summary to this run
+        if: always()
+        shell: pwsh
+        run: |
+          if (Test-Path auto_test_scripts/reports/latest.json) {
+            $latest = Get-Content auto_test_scripts/reports/latest.json -Raw | ConvertFrom-Json
+            Get-Content "auto_test_scripts/reports/$($latest.directory)/summary.md" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+          }
+      - name: Upload test reports and logs
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: regression-report-windows-${{ github.sha }}
+          path: |
+            auto_test_scripts/reports/**/*.html
+            auto_test_scripts/reports/**/*.json
+            auto_test_scripts/reports/**/*.xml
+            auto_test_scripts/reports/**/*.md
+            auto_test_scripts/reports/**/*.log
+          if-no-files-found: warn
+          retention-days: 14

@@ -1,0 +1,38 @@
+[
+  {
+    "fps": 0.39968025579529864,
+    "cpu_percent": 23.535858812945808,
+    "rss_peak_mib": 1756.27734375,
+    "continuous": true,
+    "latest_status": "",
+    "case": "verified_1s",
+    "manual_interval": 1.0,
+    "production_fps": 0.7496841205957869,
+    "decoder": {
+      "decode_now": 0,
+      "decode_average": 1.1128999999928055,
+      "decode_peak": 22,
+      "decode_completed": 72,
+      "decode_queued": 0,
+      "admitted": 22
+    }
+  },
+  {
+    "fps": 0.55,
+    "cpu_percent": 24.169034090909093,
+    "rss_peak_mib": 1898.64453125,
+    "continuous": true,
+    "latest_status": "",
+    "case": "verified_1ms",
+    "manual_interval": 0.001,
+    "production_fps": 0.5500535477128697,
+    "decoder": {
+      "decode_now": 0,
+      "decode_average": 1.1919999999983701,
+      "decode_peak": 22,
+      "decode_completed": 24,
+      "decode_queued": 0,
+      "admitted": 22
+    }
+  }
+]

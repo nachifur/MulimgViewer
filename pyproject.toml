@@ -63,7 +63,7 @@ Source = "https://github.com/nachifur/mulimgviewer"
 mulimgviewer = "mulimgviewer.__main__:main"
 
 [tool.setuptools.package-data]
-mulimgviewer = ["*.png", "font/using/*"]
+mulimgviewer = ["*.png", "font/using/*", "src/custom_func/*/main.py", "src/custom_func/*/plugin.json"]
 
 [tool.setuptools.data-files]
 "share/applications" = ["assets/desktop/mulimgviewer.desktop"]

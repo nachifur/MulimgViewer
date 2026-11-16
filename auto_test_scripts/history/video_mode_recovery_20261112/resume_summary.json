@@ -1,0 +1,185 @@
+[
+  {
+    "index": 0,
+    "mode": 4,
+    "fps": 4.5072115384597256,
+    "cpu_percent": 25.03295044797944,
+    "rss_mib": 1562.40625,
+    "private_mib": 2222.30859375,
+    "os_threads": 52,
+    "python_threads": 28,
+    "pending_maps": [
+      23,
+      5,
+      23
+    ],
+    "queue_counts": [
+      11,
+      1
+    ],
+    "handles": [
+      23,
+      5
+    ],
+    "pixel_cache_bytes": 268290480,
+    "resident_decoders": 24,
+    "decoder_objects": 24,
+    "admission": {
+      "limit": 16,
+      "ceiling": 22,
+      "best": 22,
+      "period": 0.22697629166666675,
+      "reason": "probe",
+      "history": [
+        [
+          22,
+          0.22697629166666675,
+          "measured"
+        ]
+      ]
+    },
+    "effective_cpu_budget": 16,
+    "frames": [
+      61,
+      90
+    ],
+    "elapsed_seconds": 6.6560000000026776
+  },
+  {
+    "index": 1,
+    "mode": 4,
+    "fps": 4.728877679699348,
+    "cpu_percent": 26.398422274458007,
+    "rss_mib": 1809.7578125,
+    "private_mib": 2472.4765625,
+    "os_threads": 54,
+    "python_threads": 28,
+    "pending_maps": [
+      7,
+      5,
+      7
+    ],
+    "queue_counts": [
+      0,
+      0
+    ],
+    "handles": [
+      7,
+      4
+    ],
+    "pixel_cache_bytes": 267133440,
+    "resident_decoders": 24,
+    "decoder_objects": 24,
+    "admission": {
+      "limit": 16,
+      "ceiling": 22,
+      "best": 16,
+      "period": 0.12439229473684191,
+      "reason": "restore-best",
+      "history": [
+        [
+          22,
+          0.22697629166666675,
+          "measured"
+        ],
+        [
+          22,
+          0.13953278148148154,
+          "measured"
+        ],
+        [
+          16,
+          0.12439229473684191,
+          "measured"
+        ],
+        [
+          12,
+          0.20218452499999984,
+          "measured"
+        ]
+      ]
+    },
+    "effective_cpu_budget": 16,
+    "frames": [
+      61,
+      90
+    ],
+    "elapsed_seconds": 6.3439999999973224
+  },
+  {
+    "index": 2,
+    "mode": 4,
+    "fps": 3.459409594096475,
+    "cpu_percent": 24.40587260986623,
+    "rss_mib": 1776.12109375,
+    "private_mib": 2436.01953125,
+    "os_threads": 51,
+    "python_threads": 28,
+    "pending_maps": [
+      10,
+      8,
+      10
+    ],
+    "queue_counts": [
+      0,
+      0
+    ],
+    "handles": [
+      10,
+      7
+    ],
+    "pixel_cache_bytes": 265069920,
+    "resident_decoders": 24,
+    "decoder_objects": 24,
+    "admission": {
+      "limit": 21,
+      "ceiling": 22,
+      "best": 16,
+      "period": 0.23542535384615404,
+      "reason": "probe",
+      "history": [
+        [
+          22,
+          0.22697629166666675,
+          "measured"
+        ],
+        [
+          22,
+          0.13953278148148154,
+          "measured"
+        ],
+        [
+          16,
+          0.12439229473684191,
+          "measured"
+        ],
+        [
+          12,
+          0.20218452499999984,
+          "measured"
+        ],
+        [
+          16,
+          0.2086325428571429,
+          "measured"
+        ],
+        [
+          12,
+          0.24295934545454595,
+          "measured"
+        ],
+        [
+          16,
+          0.23542535384615404,
+          "measured"
+        ]
+      ]
+    },
+    "effective_cpu_budget": 21,
+    "frames": [
+      61,
+      90
+    ],
+    "elapsed_seconds": 8.671999999998661
+  }
+]

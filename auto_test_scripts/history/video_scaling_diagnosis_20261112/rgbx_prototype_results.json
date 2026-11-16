@@ -1,0 +1,67 @@
+{
+  "pixel_equal": true,
+  "jpeg_bytes_equal": true,
+  "note": "Only an isolated prototype on one frame; RGBX mode/lifetime/crop/export/custom compatibility is NOT validated for application integration.",
+  "runs": [
+    {
+      "kind": "to_image",
+      "workers": 1,
+      "tasks_per_second": 215.53245890767028,
+      "cpu_cores": 1.0173244316931052
+    },
+    {
+      "kind": "to_image",
+      "workers": 4,
+      "tasks_per_second": 334.7917116034447,
+      "cpu_cores": 2.016161023653557
+    },
+    {
+      "kind": "to_image",
+      "workers": 8,
+      "tasks_per_second": 341.70474360932036,
+      "cpu_cores": 2.0856002417561057
+    },
+    {
+      "kind": "to_image",
+      "workers": 16,
+      "tasks_per_second": 336.5234706717167,
+      "cpu_cores": 2.0265899112717314
+    },
+    {
+      "kind": "to_image",
+      "workers": 22,
+      "tasks_per_second": 325.15792598694316,
+      "cpu_cores": 1.772915123789485
+    },
+    {
+      "kind": "rgbx_buffer",
+      "workers": 1,
+      "tasks_per_second": 869.0684943659916,
+      "cpu_cores": 0.9901496517841701
+    },
+    {
+      "kind": "rgbx_buffer",
+      "workers": 4,
+      "tasks_per_second": 2375.54671599225,
+      "cpu_cores": 3.6731272464072875
+    },
+    {
+      "kind": "rgbx_buffer",
+      "workers": 8,
+      "tasks_per_second": 2676.3759639135187,
+      "cpu_cores": 5.009492770996983
+    },
+    {
+      "kind": "rgbx_buffer",
+      "workers": 16,
+      "tasks_per_second": 2725.8517221845946,
+      "cpu_cores": 10.426027908746416
+    },
+    {
+      "kind": "rgbx_buffer",
+      "workers": 22,
+      "tasks_per_second": 2695.9476536830575,
+      "cpu_cores": 10.750442303911932
+    }
+  ]
+}

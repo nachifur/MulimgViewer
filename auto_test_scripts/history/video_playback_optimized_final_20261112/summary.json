@@ -1,0 +1,20 @@
+[
+  {
+    "mode": 3,
+    "baseline_fps": 4.710220408944948,
+    "optimized_fps": 5.68171060623424,
+    "gain_percent": 20.625153664664687,
+    "baseline_cpu": 26.035025018680823,
+    "optimized_cpu": 30.856211880104222,
+    "optimized_peak_gib": 1.8218002319335938
+  },
+  {
+    "mode": 4,
+    "baseline_fps": 5.0318908648106815,
+    "optimized_fps": 5.79077037752694,
+    "gain_percent": 15.081398486268839,
+    "baseline_cpu": 24.708715599730994,
+    "optimized_cpu": 29.503240626880984,
+    "optimized_peak_gib": 1.7915115356445312
+  }
+]

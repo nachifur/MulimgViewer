@@ -1,0 +1,275 @@
+{
+  "videos": [
+    {
+      "path": "D:\\ncfey\\Desktop\\test_img\\test_video\\1.mp4",
+      "size": 12228539,
+      "fps": 30.0,
+      "frames": 303,
+      "duration": 10.1,
+      "width": 1080,
+      "height": 1080,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\test_img\\test_video\\2.mp4",
+      "size": 12228539,
+      "fps": 30.0,
+      "frames": 303,
+      "duration": 10.1,
+      "width": 1080,
+      "height": 1080,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\test_img\\test_video\\3.mp4",
+      "size": 12228539,
+      "fps": 30.0,
+      "frames": 303,
+      "duration": 10.1,
+      "width": 1080,
+      "height": 1080,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\test_img\\test_video\\4.mp4",
+      "size": 12228539,
+      "fps": 30.0,
+      "frames": 303,
+      "duration": 10.1,
+      "width": 1080,
+      "height": 1080,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\test_img\\test_video\\5.mp4",
+      "size": 12228539,
+      "fps": 30.0,
+      "frames": 303,
+      "duration": 10.1,
+      "width": 1080,
+      "height": 1080,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\test_img\\test_video\\6.mp4",
+      "size": 12228539,
+      "fps": 30.0,
+      "frames": 303,
+      "duration": 10.1,
+      "width": 1080,
+      "height": 1080,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\test_img\\test_video\\7.mp4",
+      "size": 12228539,
+      "fps": 30.0,
+      "frames": 303,
+      "duration": 10.1,
+      "width": 1080,
+      "height": 1080,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\test_img\\test_video\\8.mp4",
+      "size": 12228539,
+      "fps": 30.0,
+      "frames": 303,
+      "duration": 10.1,
+      "width": 1080,
+      "height": 1080,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\test_img\\test_video\\9.mp4",
+      "size": 12228539,
+      "fps": 30.0,
+      "frames": 303,
+      "duration": 10.1,
+      "width": 1080,
+      "height": 1080,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\test_img\\test_video\\10.mp4",
+      "size": 12228539,
+      "fps": 30.0,
+      "frames": 303,
+      "duration": 10.1,
+      "width": 1080,
+      "height": 1080,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\test_img\\test_video\\11.mp4",
+      "size": 12228539,
+      "fps": 30.0,
+      "frames": 303,
+      "duration": 10.1,
+      "width": 1080,
+      "height": 1080,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\test_img\\test_video\\12.mp4",
+      "size": 12228539,
+      "fps": 30.0,
+      "frames": 303,
+      "duration": 10.1,
+      "width": 1080,
+      "height": 1080,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\test_img\\test_video\\13.mp4",
+      "size": 3580913,
+      "fps": 30.000310241057303,
+      "frames": 967,
+      "duration": 32.233,
+      "width": 1280,
+      "height": 720,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\test_img\\test_video\\14.mp4",
+      "size": 3580913,
+      "fps": 30.000310241057303,
+      "frames": 967,
+      "duration": 32.233,
+      "width": 1280,
+      "height": 720,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\test_img\\test_video\\15.mp4",
+      "size": 3580913,
+      "fps": 30.000310241057303,
+      "frames": 967,
+      "duration": 32.233,
+      "width": 1280,
+      "height": 720,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\test_img\\test_video\\16.mp4",
+      "size": 3580913,
+      "fps": 30.000310241057303,
+      "frames": 967,
+      "duration": 32.233,
+      "width": 1280,
+      "height": 720,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\test_img\\test_video\\17.mp4",
+      "size": 3580913,
+      "fps": 30.000310241057303,
+      "frames": 967,
+      "duration": 32.233,
+      "width": 1280,
+      "height": 720,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\test_img\\test_video\\18.mp4",
+      "size": 3580913,
+      "fps": 30.000310241057303,
+      "frames": 967,
+      "duration": 32.233,
+      "width": 1280,
+      "height": 720,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\test_img\\test_video\\19.mp4",
+      "size": 3580913,
+      "fps": 30.000310241057303,
+      "frames": 967,
+      "duration": 32.233,
+      "width": 1280,
+      "height": 720,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\test_img\\test_video\\20.mp4",
+      "size": 3580913,
+      "fps": 30.000310241057303,
+      "frames": 967,
+      "duration": 32.233,
+      "width": 1280,
+      "height": 720,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\test_img\\test_video\\21.mp4",
+      "size": 3580913,
+      "fps": 30.000310241057303,
+      "frames": 967,
+      "duration": 32.233,
+      "width": 1280,
+      "height": 720,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\test_img\\test_video\\22.mp4",
+      "size": 3580913,
+      "fps": 30.000310241057303,
+      "frames": 967,
+      "duration": 32.233,
+      "width": 1280,
+      "height": 720,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\test_img\\test_video\\23.mp4",
+      "size": 3580913,
+      "fps": 30.000310241057303,
+      "frames": 967,
+      "duration": 32.233,
+      "width": 1280,
+      "height": 720,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\test_img\\test_video\\24.mp4",
+      "size": 3580913,
+      "fps": 30.000310241057303,
+      "frames": 967,
+      "duration": 32.233,
+      "width": 1280,
+      "height": 720,
+      "codec": "h264"
+    }
+  ],
+  "logical_cpus": 22,
+  "ram_bytes": 33745596416,
+  "memory_reference": 9015500800,
+  "python": "D:\\ncfey\\anaconda3\\envs\\mulimgviewer\\python.exe",
+  "layout": "4,6",
+  "preview": "320,180",
+  "cache_frames": 10,
+  "cache_multiplier": 2,
+  "manual_interval": 0.001,
+  "warmup_frames": 10,
+  "measure_frames": 30,
+  "start_frame": 30,
+  "delivery": "hidden wx window; actual display_bitmap completion, not physical monitor refresh",
+  "baseline": "current code with raw-inventory/dual-threshold pressure control disabled",
+  "purpose": "Active magnifier crop + titles + 3x1 units; disk-only fallback for deterministic output comparison; not FPS measurement",
+  "title_show": true,
+  "show_magnifer": true,
+  "unit_layout": "3,1",
+  "magnifier_points": [
+    [
+      10,
+      10,
+      50,
+      40,
+      0.1,
+      0.1,
+      false
+    ]
+  ],
+  "pixel_cache_limit": 0,
+  "debug_stitch_errors": true
+}

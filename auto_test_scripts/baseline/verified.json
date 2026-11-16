@@ -1,0 +1,201 @@
+{
+  "status": "PASSED",
+  "run": "20261115T150646.057001Z",
+  "seconds": 273.031,
+  "python": "3.9.23 | packaged by conda-forge | (main, Jun  4 2025, 17:49:16) [MSC v.1929 64 bit (AMD64)]",
+  "platform": "Windows-10-10.0.26300-SP0",
+  "revision": {
+    "commit": "01b30469be3bd12e773e0bfad05a9555c9367932",
+    "dirty": true,
+    "changes": "M .gitignore\n M README.md\n M pyproject.toml\n M requirements.txt\n D tools/benchmark_video_playback.py\n?? .github/PULL_REQUEST_TEMPLATE.md\n?? .github/workflows/regression-tests.yml\n?? auto_test_scripts/\n?? docs/auto-window-layout.md\n?? docs/cache-quality-and-export.md\n?? docs/code-structure.md\n?? docs/configuration.md\n?? docs/custom-functions.md\n?? docs/custom-pipeline-design.md\n?? docs/dependency-scheduling.md\n?? docs/export-selection.md\n?? docs/four-stage-scheduling.md\n?? docs/navigation-and-index.md\n?? docs/performance-and-cache.md\n?? docs/refresh-index-export.md\n?? docs/status-bar.md\n?? docs/thread-allocation-optimization.md\n?? docs/video-cache-optimization.md\n?? tools/generate_gui.py",
+    "source_sha256": "88a69b73aa7bb2491db05764a7ca3244fcb53da63ff49342c0e39cc8c7d907f9",
+    "test_assets_sha256": "3ab029e4c6c50afbec1e4f8e72110dab79c26509801eb17d7bfbc4dce22fa22a"
+  },
+  "modules": 31,
+  "test_methods": 521,
+  "subcases": 863,
+  "skipped": 0,
+  "failed": 0,
+  "features": {
+    "input_modes_and_lists": {
+      "label": "图像/视频输入、相对路径文本/CSV列表、无效输入保护",
+      "modules": [
+        "test_reference_workflows",
+        "test_status_bar",
+        "test_video_gui_async",
+        "test_display_modes"
+      ],
+      "status": "PASSED"
+    },
+    "display_and_navigation": {
+      "label": "显示、正反向播放、跳转、1起始索引、并行/顺序组合",
+      "modules": [
+        "test_browsing_index",
+        "test_video_gui_async",
+        "test_video_interval",
+        "test_reference_assets"
+      ],
+      "status": "PASSED"
+    },
+    "layouts_and_titles": {
+      "label": "多层布局、标题、字体颜色、透明度、缩放、自动窗口适配",
+      "modules": [
+        "test_cache_quality",
+        "test_display_modes",
+        "test_export_modes",
+        "test_video_gui_async"
+      ],
+      "status": "PASSED"
+    },
+    "index_and_status": {
+      "label": "状态栏、索引定位/跳转、算法/虚拟帧路径、Excel导出",
+      "modules": [
+        "test_browsing_index",
+        "test_index_excel",
+        "test_status_bar",
+        "test_video_gui_async"
+      ],
+      "status": "PASSED"
+    },
+    "custom_algorithms": {
+      "label": "单选/全部算法、可见容量、CPU并行接口、GPU批接口/一次setup、状态隔离",
+      "modules": [
+        "test_custom_functions",
+        "test_custom_kernel",
+        "test_custom_pipeline",
+        "test_reference_assets",
+        "test_video_gui_async"
+      ],
+      "status": "PASSED"
+    },
+    "cache_and_quality": {
+      "label": "两层缓存、动态清理、跨格式失效、租约保护、PNG无损/JPG策略",
+      "modules": [
+        "test_cache_layout",
+        "test_cache_quality",
+        "test_performance_cache",
+        "test_video_cache",
+        "test_cache_shutdown"
+      ],
+      "status": "PASSED"
+    },
+    "decode_and_memory": {
+      "label": "真实视频解码、精确帧号、跳帧/VFR/倒放/旋转、内存准入",
+      "modules": [
+        "test_video_pipeline",
+        "test_video_conversion",
+        "test_reference_assets",
+        "test_memory_reclaim"
+      ],
+      "status": "PASSED"
+    },
+    "power_and_scheduling": {
+      "label": "四档性能预算、共享线程、依赖调度、资源监测、供给间隔",
+      "modules": [
+        "test_admission_optimizer",
+        "test_thread_optimizer",
+        "test_stage_allocator",
+        "test_dependency_scheduler",
+        "test_buffer_policy",
+        "test_resource_monitor",
+        "test_playback_pacer",
+        "test_video_interval"
+      ],
+      "status": "PASSED"
+    },
+    "save_formats_and_outputs": {
+      "label": "七种输出组合、JPG/PNG/PDF、选图/带框原图/放大图、独立输出比例",
+      "modules": [
+        "test_export_modes",
+        "test_reference_workflows",
+        "test_reference_assets",
+        "test_cache_quality"
+      ],
+      "status": "PASSED"
+    },
+    "background_and_bulk_export": {
+      "label": "后台保存快照、批量多线程、Esc暂停/继续、取消续存、移动保护",
+      "modules": [
+        "test_export_modes",
+        "test_video_gui_async",
+        "test_reference_workflows"
+      ],
+      "status": "PASSED"
+    },
+    "configuration_and_close": {
+      "label": "首次启动、自动补参、Load/Save/Reset、退出恢复、关闭清理",
+      "modules": [
+        "test_configuration",
+        "test_cache_shutdown",
+        "test_video_gui_async"
+      ],
+      "status": "PASSED"
+    },
+    "image_editing": {
+      "label": "旋转、翻转、Unicode EXIF标题写入、独立像素基准",
+      "modules": [
+        "test_reference_assets",
+        "test_cache_quality"
+      ],
+      "status": "PASSED"
+    },
+    "dependencies_and_reports": {
+      "label": "FBP/GUI控件事件和格式索引、跨平台FFmpeg定位、失败/子案例/环境错误报告",
+      "modules": [
+        "test_gui_contract",
+        "test_video_tools",
+        "test_reporting"
+      ],
+      "status": "PASSED"
+    }
+  },
+  "dependencies": {
+    "wxPython": "4.2.0",
+    "Pillow": "10.3.0",
+    "av": "15.1.0",
+    "numpy": "2.0.2",
+    "psutil": "7.2.2",
+    "reportlab": "4.4.5",
+    "imageio": "2.34.1",
+    "piexif": "1.1.3",
+    "ffmpeg-python": "0.2.0",
+    "XlsxWriter": "3.3.1",
+    "requests": "2.31.0"
+  },
+  "module_counts": {
+    "test_admission_optimizer": 8,
+    "test_browsing_index": 25,
+    "test_buffer_policy": 13,
+    "test_cache_layout": 16,
+    "test_cache_quality": 11,
+    "test_cache_shutdown": 10,
+    "test_configuration": 22,
+    "test_custom_functions": 8,
+    "test_custom_kernel": 11,
+    "test_custom_pipeline": 36,
+    "test_dependency_scheduler": 8,
+    "test_display_modes": 7,
+    "test_export_modes": 26,
+    "test_gui_contract": 3,
+    "test_index_excel": 7,
+    "test_memory_reclaim": 8,
+    "test_performance_cache": 10,
+    "test_playback_pacer": 13,
+    "test_reference_assets": 5,
+    "test_reference_workflows": 8,
+    "test_reporting": 5,
+    "test_resource_monitor": 8,
+    "test_stage_allocator": 7,
+    "test_status_bar": 9,
+    "test_thread_optimizer": 31,
+    "test_video_cache": 30,
+    "test_video_conversion": 10,
+    "test_video_gui_async": 113,
+    "test_video_interval": 24,
+    "test_video_pipeline": 25,
+    "test_video_tools": 4
+  },
+  "fixture_bytes": 38051,
+  "verification_scope": "Local Windows full run with --strict-skips. CI workflow has been prepared, not executed remotely.",
+  "native_link_scope": "Windows denied native symlink creation; the labelled cache-root protection subcase used simulated link metadata and asserted that deletion was never called."
+}

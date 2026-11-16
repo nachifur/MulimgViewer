@@ -144,3 +144,18 @@ dmypy.json
 exifread_debug.txt
 debug.txt
 Video_frames/
+cache_frames/
+
+# Generated per-run playback benchmark outputs (keep summaries and inputs)
+/auto_test_scripts/history/**/mode_*/
+/auto_test_scripts/history/**/current_*/
+/auto_test_scripts/history/**/previous_*/
+
+# Generated video stress-test fixtures
+/auto_test_scripts/history/**/inputs/
+
+# Local state restored on startup, independent of the Save/Load snapshot
+/src/mulimgviewer/configs/session_config.json
+
+# Generated regression logs, reports and isolated workspaces
+/auto_test_scripts/reports/

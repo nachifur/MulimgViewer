@@ -1,0 +1,362 @@
+[
+  {
+    "operation": "to_image",
+    "workers": 1,
+    "count": 192,
+    "seconds": 0.8624496,
+    "tasks_per_second": 222.6217045030805,
+    "cpu_cores": 0.9964350380590355,
+    "dimensions": [
+      1080,
+      1080
+    ]
+  },
+  {
+    "operation": "to_image",
+    "workers": 4,
+    "count": 192,
+    "seconds": 0.5705554000000002,
+    "tasks_per_second": 336.51421053941465,
+    "cpu_cores": 1.6431357936494857,
+    "dimensions": [
+      1080,
+      1080
+    ]
+  },
+  {
+    "operation": "to_image",
+    "workers": 8,
+    "count": 192,
+    "seconds": 0.5773956,
+    "tasks_per_second": 332.52764655636446,
+    "cpu_cores": 1.7860371641210981,
+    "dimensions": [
+      1080,
+      1080
+    ]
+  },
+  {
+    "operation": "to_image",
+    "workers": 16,
+    "count": 192,
+    "seconds": 0.5893343,
+    "tasks_per_second": 325.79132081740363,
+    "cpu_cores": 2.147550210466284,
+    "dimensions": [
+      1080,
+      1080
+    ]
+  },
+  {
+    "operation": "to_image",
+    "workers": 22,
+    "count": 192,
+    "seconds": 0.5925235999999998,
+    "tasks_per_second": 324.0377260922604,
+    "cpu_cores": 1.714066747721104,
+    "dimensions": [
+      1080,
+      1080
+    ]
+  },
+  {
+    "operation": "jpeg_memory",
+    "workers": 1,
+    "count": 192,
+    "seconds": 0.7664469999999994,
+    "tasks_per_second": 250.50655818341014,
+    "cpu_cores": 0.998927518797778,
+    "dimensions": [
+      1080,
+      1080
+    ]
+  },
+  {
+    "operation": "jpeg_memory",
+    "workers": 4,
+    "count": 192,
+    "seconds": 0.7678786999999998,
+    "tasks_per_second": 250.03949191454333,
+    "cpu_cores": 0.9970650312347513,
+    "dimensions": [
+      1080,
+      1080
+    ]
+  },
+  {
+    "operation": "jpeg_memory",
+    "workers": 8,
+    "count": 192,
+    "seconds": 0.7133053,
+    "tasks_per_second": 269.16945661275753,
+    "cpu_cores": 1.0076330569813514,
+    "dimensions": [
+      1080,
+      1080
+    ]
+  },
+  {
+    "operation": "jpeg_memory",
+    "workers": 16,
+    "count": 192,
+    "seconds": 0.7223514,
+    "tasks_per_second": 265.79861269736585,
+    "cpu_cores": 0.9950143378970402,
+    "dimensions": [
+      1080,
+      1080
+    ]
+  },
+  {
+    "operation": "jpeg_memory",
+    "workers": 22,
+    "count": 192,
+    "seconds": 0.6950109999999992,
+    "tasks_per_second": 276.2546204304683,
+    "cpu_cores": 1.0116746353654846,
+    "dimensions": [
+      1080,
+      1080
+    ]
+  },
+  {
+    "operation": "jpeg_file",
+    "workers": 1,
+    "count": 192,
+    "seconds": 1.0312679000000013,
+    "tasks_per_second": 186.17858657289707,
+    "cpu_cores": 0.9999826427255213,
+    "dimensions": [
+      1080,
+      1080
+    ]
+  },
+  {
+    "operation": "jpeg_file",
+    "workers": 4,
+    "count": 192,
+    "seconds": 0.30225719999999967,
+    "tasks_per_second": 635.2206002040654,
+    "cpu_cores": 3.773690089102927,
+    "dimensions": [
+      1080,
+      1080
+    ]
+  },
+  {
+    "operation": "jpeg_file",
+    "workers": 8,
+    "count": 192,
+    "seconds": 0.20617100000000121,
+    "tasks_per_second": 931.2657939283356,
+    "cpu_cores": 6.517647971829171,
+    "dimensions": [
+      1080,
+      1080
+    ]
+  },
+  {
+    "operation": "jpeg_file",
+    "workers": 16,
+    "count": 192,
+    "seconds": 0.1992882999999992,
+    "tasks_per_second": 963.4283598184177,
+    "cpu_cores": 7.997208064898975,
+    "dimensions": [
+      1080,
+      1080
+    ]
+  },
+  {
+    "operation": "jpeg_file",
+    "workers": 22,
+    "count": 192,
+    "seconds": 0.2064199000000002,
+    "tasks_per_second": 930.1428786662517,
+    "cpu_cores": 7.947998230790724,
+    "dimensions": [
+      1080,
+      1080
+    ]
+  },
+  {
+    "operation": "resize",
+    "workers": 1,
+    "count": 192,
+    "seconds": 1.6214554999999997,
+    "tasks_per_second": 118.4121303359852,
+    "cpu_cores": 1.011822402773311,
+    "dimensions": [
+      1080,
+      1080
+    ]
+  },
+  {
+    "operation": "resize",
+    "workers": 4,
+    "count": 192,
+    "seconds": 0.43423240000000085,
+    "tasks_per_second": 442.15954405981597,
+    "cpu_cores": 3.8501848319010668,
+    "dimensions": [
+      1080,
+      1080
+    ]
+  },
+  {
+    "operation": "resize",
+    "workers": 8,
+    "count": 192,
+    "seconds": 0.22616559999999986,
+    "tasks_per_second": 848.9354702925649,
+    "cpu_cores": 7.668606543170142,
+    "dimensions": [
+      1080,
+      1080
+    ]
+  },
+  {
+    "operation": "resize",
+    "workers": 16,
+    "count": 192,
+    "seconds": 0.16666910000000001,
+    "tasks_per_second": 1151.9831810455566,
+    "cpu_cores": 14.343540584307467,
+    "dimensions": [
+      1080,
+      1080
+    ]
+  },
+  {
+    "operation": "resize",
+    "workers": 22,
+    "count": 192,
+    "seconds": 0.1522167999999997,
+    "tasks_per_second": 1261.358798765973,
+    "cpu_cores": 16.937190901398566,
+    "dimensions": [
+      1080,
+      1080
+    ]
+  },
+  {
+    "operation": "png_memory",
+    "workers": 1,
+    "count": 192,
+    "seconds": 8.4116625,
+    "tasks_per_second": 22.825452162399525,
+    "cpu_cores": 0.9937839279690548,
+    "dimensions": [
+      1930,
+      726
+    ]
+  },
+  {
+    "operation": "png_memory",
+    "workers": 4,
+    "count": 192,
+    "seconds": 2.339902000000002,
+    "tasks_per_second": 82.05471853094694,
+    "cpu_cores": 3.9064136019371714,
+    "dimensions": [
+      1930,
+      726
+    ]
+  },
+  {
+    "operation": "png_memory",
+    "workers": 8,
+    "count": 192,
+    "seconds": 1.3558734000000001,
+    "tasks_per_second": 141.60614110432434,
+    "cpu_cores": 7.870849151550579,
+    "dimensions": [
+      1930,
+      726
+    ]
+  },
+  {
+    "operation": "png_memory",
+    "workers": 16,
+    "count": 192,
+    "seconds": 0.9452181999999993,
+    "tasks_per_second": 203.12770109589525,
+    "cpu_cores": 15.406495558380076,
+    "dimensions": [
+      1930,
+      726
+    ]
+  },
+  {
+    "operation": "png_memory",
+    "workers": 22,
+    "count": 192,
+    "seconds": 0.9642789,
+    "tasks_per_second": 199.1125181729062,
+    "cpu_cores": 17.06262057585207,
+    "dimensions": [
+      1930,
+      726
+    ]
+  },
+  {
+    "operation": "png_file",
+    "workers": 1,
+    "count": 192,
+    "seconds": 9.7822618,
+    "tasks_per_second": 19.62736266166992,
+    "cpu_cores": 0.9791319426760792,
+    "dimensions": [
+      1930,
+      726
+    ]
+  },
+  {
+    "operation": "png_file",
+    "workers": 4,
+    "count": 192,
+    "seconds": 2.757612900000005,
+    "tasks_per_second": 69.62543582531096,
+    "cpu_cores": 3.8756346113698483,
+    "dimensions": [
+      1930,
+      726
+    ]
+  },
+  {
+    "operation": "png_file",
+    "workers": 8,
+    "count": 192,
+    "seconds": 1.530667699999995,
+    "tasks_per_second": 125.435455389828,
+    "cpu_cores": 7.71722039996012,
+    "dimensions": [
+      1930,
+      726
+    ]
+  },
+  {
+    "operation": "png_file",
+    "workers": 16,
+    "count": 192,
+    "seconds": 1.1697039000000018,
+    "tasks_per_second": 164.14410518764595,
+    "cpu_cores": 14.640457298637692,
+    "dimensions": [
+      1930,
+      726
+    ]
+  },
+  {
+    "operation": "png_file",
+    "workers": 22,
+    "count": 192,
+    "seconds": 1.084822899999999,
+    "tasks_per_second": 176.98741425904652,
+    "cpu_cores": 17.154297719932,
+    "dimensions": [
+      1930,
+      726
+    ]
+  }
+]

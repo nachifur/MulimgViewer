@@ -1,0 +1,3 @@
+-r ../requirements.txt
+# The app's PDF export and PDF regression checks use ReportLab.
+reportlab

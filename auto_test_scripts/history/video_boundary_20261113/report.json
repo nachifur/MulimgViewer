@@ -1,0 +1,302 @@
+{
+  "config": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\src\\mulimgviewer\\configs\\userdef_config.json",
+  "videos": [
+    "D:\\ncfey\\Desktop\\test_img\\test_video\\1.mp4",
+    "D:\\ncfey\\Desktop\\test_img\\test_video\\10.mp4",
+    "D:\\ncfey\\Desktop\\test_img\\test_video\\11.mp4",
+    "D:\\ncfey\\Desktop\\test_img\\test_video\\12.mp4",
+    "D:\\ncfey\\Desktop\\test_img\\test_video\\13.mp4",
+    "D:\\ncfey\\Desktop\\test_img\\test_video\\14.mp4",
+    "D:\\ncfey\\Desktop\\test_img\\test_video\\15.mp4",
+    "D:\\ncfey\\Desktop\\test_img\\test_video\\16.mp4",
+    "D:\\ncfey\\Desktop\\test_img\\test_video\\17.mp4",
+    "D:\\ncfey\\Desktop\\test_img\\test_video\\18.mp4",
+    "D:\\ncfey\\Desktop\\test_img\\test_video\\19.mp4",
+    "D:\\ncfey\\Desktop\\test_img\\test_video\\2.mp4",
+    "D:\\ncfey\\Desktop\\test_img\\test_video\\20.mp4",
+    "D:\\ncfey\\Desktop\\test_img\\test_video\\21.mp4",
+    "D:\\ncfey\\Desktop\\test_img\\test_video\\22.mp4",
+    "D:\\ncfey\\Desktop\\test_img\\test_video\\23.mp4",
+    "D:\\ncfey\\Desktop\\test_img\\test_video\\24.mp4",
+    "D:\\ncfey\\Desktop\\test_img\\test_video\\3.mp4",
+    "D:\\ncfey\\Desktop\\test_img\\test_video\\4.mp4",
+    "D:\\ncfey\\Desktop\\test_img\\test_video\\5.mp4",
+    "D:\\ncfey\\Desktop\\test_img\\test_video\\6.mp4",
+    "D:\\ncfey\\Desktop\\test_img\\test_video\\7.mp4",
+    "D:\\ncfey\\Desktop\\test_img\\test_video\\8.mp4",
+    "D:\\ncfey\\Desktop\\test_img\\test_video\\9.mp4"
+  ],
+  "results": [
+    {
+      "mode": "Parallel auto",
+      "page": 7,
+      "total_pages": 318,
+      "frames": 48,
+      "first": [
+        0,
+        288
+      ],
+      "last": [
+        1,
+        32
+      ],
+      "sources": [
+        0,
+        1
+      ],
+      "output_size": [
+        2024,
+        878
+      ],
+      "sha256": "8846f6f085003daaa7c8e388f739606fbd61d29076692ff63896d8bb8fb38caf"
+    },
+    {
+      "mode": "Parallel auto",
+      "page": 8,
+      "total_pages": 318,
+      "frames": 48,
+      "first": [
+        1,
+        33
+      ],
+      "last": [
+        1,
+        80
+      ],
+      "sources": [
+        1
+      ],
+      "output_size": [
+        2024,
+        878
+      ],
+      "sha256": "b4e13733d5695b56b31fe7ff21b95bb1381869535a7c003c98748a68aa6d2c16"
+    },
+    {
+      "mode": "Parallel auto",
+      "page": 7,
+      "total_pages": 318,
+      "frames": 48,
+      "first": [
+        0,
+        288
+      ],
+      "last": [
+        1,
+        32
+      ],
+      "sources": [
+        0,
+        1
+      ],
+      "output_size": [
+        2024,
+        878
+      ],
+      "sha256": "8846f6f085003daaa7c8e388f739606fbd61d29076692ff63896d8bb8fb38caf"
+    },
+    {
+      "mode": "Parallel auto",
+      "page": 152,
+      "total_pages": 318,
+      "frames": 48,
+      "first": [
+        10,
+        234
+      ],
+      "last": [
+        10,
+        281
+      ],
+      "sources": [
+        10
+      ],
+      "output_size": [
+        2384,
+        662
+      ],
+      "sha256": "bcfc70d106650974a110db5f8285e6a3927260b938791deb3dc301fe33bcc33a"
+    },
+    {
+      "mode": "Parallel manual",
+      "page": 7,
+      "total_pages": 318,
+      "frames": 48,
+      "first": [
+        0,
+        288
+      ],
+      "last": [
+        1,
+        32
+      ],
+      "sources": [
+        0,
+        1
+      ],
+      "output_size": [
+        2024,
+        878
+      ],
+      "sha256": "8846f6f085003daaa7c8e388f739606fbd61d29076692ff63896d8bb8fb38caf"
+    },
+    {
+      "mode": "Parallel manual",
+      "page": 8,
+      "total_pages": 318,
+      "frames": 48,
+      "first": [
+        1,
+        33
+      ],
+      "last": [
+        1,
+        80
+      ],
+      "sources": [
+        1
+      ],
+      "output_size": [
+        2024,
+        878
+      ],
+      "sha256": "b4e13733d5695b56b31fe7ff21b95bb1381869535a7c003c98748a68aa6d2c16"
+    },
+    {
+      "mode": "Parallel manual",
+      "page": 7,
+      "total_pages": 318,
+      "frames": 48,
+      "first": [
+        0,
+        288
+      ],
+      "last": [
+        1,
+        32
+      ],
+      "sources": [
+        0,
+        1
+      ],
+      "output_size": [
+        2024,
+        878
+      ],
+      "sha256": "8846f6f085003daaa7c8e388f739606fbd61d29076692ff63896d8bb8fb38caf"
+    },
+    {
+      "mode": "Parallel manual",
+      "page": 152,
+      "total_pages": 318,
+      "frames": 48,
+      "first": [
+        10,
+        234
+      ],
+      "last": [
+        10,
+        281
+      ],
+      "sources": [
+        10
+      ],
+      "output_size": [
+        2384,
+        662
+      ],
+      "sha256": "40faf3203c20ba8257d2581942282acd71ca1d0c8d53f3c31de837eac07c2395"
+    },
+    {
+      "mode": "Parallel auto",
+      "page": 318,
+      "total_pages": 318,
+      "last_page": true,
+      "frames": 24,
+      "first": [
+        23,
+        279
+      ],
+      "last": [
+        23,
+        302
+      ],
+      "counts": [
+        303,
+        303,
+        303,
+        303,
+        967,
+        967,
+        967,
+        967,
+        967,
+        967,
+        967,
+        303,
+        967,
+        967,
+        967,
+        967,
+        967,
+        303,
+        303,
+        303,
+        303,
+        303,
+        303,
+        303
+      ],
+      "png": "parallel_auto_last_page_318.png",
+      "sha256": "edc1b18950bec649f15434a3b0f94ed658e05e590075a0425437e773c6abcf4a"
+    },
+    {
+      "mode": "Parallel manual",
+      "page": 318,
+      "total_pages": 318,
+      "last_page": true,
+      "frames": 24,
+      "first": [
+        23,
+        279
+      ],
+      "last": [
+        23,
+        302
+      ],
+      "counts": [
+        303,
+        303,
+        303,
+        303,
+        967,
+        967,
+        967,
+        967,
+        967,
+        967,
+        967,
+        303,
+        967,
+        967,
+        967,
+        967,
+        967,
+        303,
+        303,
+        303,
+        303,
+        303,
+        303,
+        303
+      ],
+      "png": "parallel_manual_last_page_318.png",
+      "sha256": "edc1b18950bec649f15434a3b0f94ed658e05e590075a0425437e773c6abcf4a"
+    }
+  ],
+  "config_sha256": "072e6083dc9ae9637a3f8a2da76db0fc56454b3a2ad28f194a645767ed9cadf7",
+  "note": "Pages 7/8 test the first boundary; page 152 was an additional seek, not the last page. Actual last page is 318.",
+  "source_blackdetect": [
+    "[Parsed_blackdetect_0 @ 000001C9AE8E5880] black_start:10.033333 black_end:10.066667 black_duration:0.0333333"
+  ]
+}

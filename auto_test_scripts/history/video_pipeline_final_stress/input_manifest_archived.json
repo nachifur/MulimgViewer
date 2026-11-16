@@ -1,0 +1,1019 @@
+{
+  "videos": [
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_000.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_001.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_002.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_003.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_004.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_005.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_006.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_007.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_008.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_009.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_010.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_011.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_012.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_013.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_014.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_015.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_016.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_017.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_018.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_019.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_020.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_021.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_022.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_023.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_024.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_025.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_026.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_027.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_028.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_029.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_030.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_031.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_032.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_033.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_034.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_035.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_036.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_037.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_038.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_039.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_040.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_041.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_042.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_043.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_044.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_045.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_046.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_047.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_048.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_049.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_050.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_051.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_052.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_053.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_054.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_055.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_056.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_057.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_058.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_059.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_060.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_061.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_062.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_063.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_064.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_065.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_066.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_067.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_068.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_069.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_070.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_071.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_072.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_073.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_074.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_075.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_076.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_077.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_078.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_079.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_080.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_081.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_082.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_083.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_084.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_085.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_086.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_087.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_088.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_089.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_090.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_091.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_092.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_093.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_094.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_095.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_096.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_097.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_098.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    },
+    {
+      "path": "D:\\ncfey\\Desktop\\github\\MulimgViewer\\benchmarks\\video_pipeline_100x4k\\inputs\\stream_099.mp4",
+      "size": 1160393,
+      "fps": 5.0,
+      "frames": 6,
+      "duration": 1.2,
+      "width": 3840,
+      "height": 2160,
+      "codec": "h264"
+    }
+  ],
+  "logical_cpus": 22,
+  "ram_bytes": 33745596416,
+  "memory_reference": 9015500800,
+  "python": "D:\\ncfey\\anaconda3\\envs\\mulimgviewer\\python.exe",
+  "layout": "10,10",
+  "preview": "192,108",
+  "cache_frames": 1,
+  "cache_multiplier": 3,
+  "manual_interval": 0.001,
+  "warmup_frames": 1,
+  "measure_frames": 2,
+  "start_frame": 0,
+  "delivery": "hidden wx window; actual display_bitmap completion, not physical monitor refresh",
+  "baseline": "current code with raw-inventory/dual-threshold pressure control disabled",
+  "purpose": "100 distinct 4K decoder contexts; dual temporal windows; memory/first-frame smoke test, not sustained FPS"
+}

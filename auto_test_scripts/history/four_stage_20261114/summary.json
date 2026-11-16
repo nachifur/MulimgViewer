@@ -1,0 +1,104 @@
+[
+  {
+    "fps": 0.5487379028234486,
+    "cpu_percent": 25.839007782098466,
+    "rss_peak_mib": 1875.01953125,
+    "p95_gap_ms": 6539.000000004307,
+    "max_gap_ms": 10483.99999999674,
+    "first_frame_seconds": 7.89100000000326,
+    "continuous": true,
+    "latest_status": "",
+    "case": "before",
+    "production_fps": 0.5488295249927861,
+    "target": null,
+    "stage_counts": {
+      "0": 22,
+      "1": 0,
+      "2": 0
+    }
+  },
+  {
+    "fps": 0.6484760812084956,
+    "cpu_percent": 26.553366633837822,
+    "rss_peak_mib": 1729.71875,
+    "p95_gap_ms": 2512.800000002604,
+    "max_gap_ms": 4032.0000000065193,
+    "first_frame_seconds": 2.7660000000032596,
+    "continuous": true,
+    "latest_status": "",
+    "case": "after",
+    "production_fps": 0.6480425033730364,
+    "target": null,
+    "stage_counts": {
+      "0": 22,
+      "1": 0,
+      "2": 0
+    }
+  },
+  {
+    "fps": 0.6484760812094371,
+    "cpu_percent": 16.502412512421103,
+    "rss_peak_mib": 1706.07421875,
+    "p95_gap_ms": 4300.200000003672,
+    "max_gap_ms": 7421.999999991385,
+    "first_frame_seconds": 4.98399999999674,
+    "continuous": true,
+    "latest_status": "",
+    "case": "final",
+    "production_fps": 0.6486898476016973,
+    "target": {
+      "decode": 4,
+      "process": 16,
+      "stitch": 1,
+      "compose": 1
+    },
+    "stage_counts": {
+      "0": 0,
+      "1": 0,
+      "2": 0
+    }
+  },
+  {
+    "fps": 0.648994059208612,
+    "cpu_percent": 17.348819556969726,
+    "rss_peak_mib": 1698.9921875,
+    "p95_gap_ms": 3143.5999999986893,
+    "max_gap_ms": 5983.99999999674,
+    "first_frame_seconds": 5.437999999994645,
+    "continuous": true,
+    "latest_status": "",
+    "case": "release",
+    "production_fps": 0.34964565336082976,
+    "target": {
+      "decode": 4,
+      "process": 16,
+      "stitch": 1,
+      "compose": 1
+    },
+    "stage_counts": {
+      "0": 22,
+      "1": 0,
+      "2": 0
+    }
+  },
+  {
+    "case": "sustained",
+    "fps": 0.5828767465483381,
+    "cpu_percent": 16.888995665510794,
+    "rss_peak_mib": 1806.53515625,
+    "p95_gap_ms": 10639.500000007682,
+    "max_gap_ms": 15858.99999999674,
+    "continuous": true,
+    "latest_status": "",
+    "duration": 60.04700000002049,
+    "production_fps": 0.5829364284357436,
+    "generated_pages": 35,
+    "displayed_pages": 35,
+    "target": {
+      "decode": 3,
+      "process": 17,
+      "stitch": 1,
+      "compose": 1
+    }
+  }
+]

@@ -1,0 +1,5126 @@
+{
+  "stress_1": {
+    "policy": "current",
+    "mode": 1,
+    "budget": 5,
+    "memory_budget": 1352325120,
+    "completed": true,
+    "measured_frames": 2,
+    "elapsed_seconds": 13.375,
+    "fps": 0.14953271028037382,
+    "cpu_percent": 13.875318606627019,
+    "rss_avg_mib": 789.8824923155738,
+    "rss_peak_mib": 1086.95703125,
+    "p50_gap_ms": 6687.5,
+    "p95_gap_ms": 8825.450000001729,
+    "max_gap_ms": 9063.00000000192,
+    "gaps_over_100ms": 2,
+    "gaps_over_250ms": 2,
+    "gui_p95_gap_ms": 63.00000000192085,
+    "gui_max_gap_ms": 93.99999999732245,
+    "continuous": true,
+    "frame_range": [
+      2,
+      3
+    ],
+    "first_frame_seconds": 8.546999999998661,
+    "timeout": false,
+    "requested_measure_seconds": 30.0,
+    "metadata_seconds": 14.781000000002678,
+    "fast_seek_streams": 100,
+    "decode_dimensions_known": 100,
+    "extract_run_p90_seconds": 0.3289733800000022,
+    "stitch_average_seconds": 0.24157415000000082,
+    "warmup_frames": 1,
+    "rss_peak_entire_run_mib": 1086.95703125,
+    "pacing_stats": {
+      "period": 8.23387591625,
+      "pending": [
+        4,
+        5
+      ],
+      "samples": [
+        [
+          17.0249732,
+          2
+        ],
+        [
+          13.840851099999995,
+          2
+        ]
+      ],
+      "prediction": {
+        "reason": "measured-supply",
+        "buffered": 1,
+        "production_period": 8.23387591625,
+        "next_eta": 4.942908549999993
+      }
+    },
+    "pipeline_stats": {
+      "native_decoder_opens": 344,
+      "native_decoded_frames": 919,
+      "native_seeks": 243,
+      "native_fallback_paths": 0,
+      "pixel_cache_bytes": 104134464,
+      "pixel_cache_limit": 108186009,
+      "decoder_state_limit": 270465024,
+      "active_stage_counts": [
+        3,
+        0
+      ],
+      "admission": {
+        "limit": 5,
+        "ceiling": 5,
+        "best": 5,
+        "period": null,
+        "reason": "budget",
+        "history": []
+      },
+      "effective_cpu_budget": 5
+    },
+    "source_hashes": {
+      "src/mulimgviewer/src/main.py": "0ab3a1fd6fdb1ec403be4d2ee2d35eb235a783b6a54c9697fc3e4a47fb9f6907",
+      "src/mulimgviewer/src/thread_optimizer.py": "9a302e3ec4b81b15b90ba9c3c1e583f13b7a0d9a52626be71a44d6d65cc89791",
+      "src/mulimgviewer/src/playback_pacer.py": "ae2731563bed80aa1bae08a25c27a612159dee820c4911cfe6dc45a1477afca3",
+      "src/mulimgviewer/src/utils_img.py": "fafa11a9e1d00faae64a5acb7f02bb40d16ff5297bb10fca730548a28b3a4beb",
+      "src/mulimgviewer/src/pipeline_executor.py": "e0ec56d69b64e80ef366fd177e7560c0d61f0359879b7888f0b13aeafc391ae0",
+      "src/mulimgviewer/src/video_decoder.py": "4446fca4a5d25e3937c3e487f0724f0fb9fff4cf6c14ae28d8435cb038c0cba6",
+      "src/mulimgviewer/src/video_memory.py": "582c8212be01b8100791b7979964a3d07b0a275affb048f56a312cc16deef940",
+      "src/mulimgviewer/src/admission_optimizer.py": "a0dd27bd68c8062a916298f8879a24cccf713df834e13ce40b887330194c00ac"
+    },
+    "final_pending_wait_ms": 0.0,
+    "output_size": [
+      1938,
+      1098
+    ],
+    "final_allocation": [
+      3,
+      1
+    ],
+    "allocation_samples": [
+      [
+        37806.625,
+        3,
+        1,
+        9.603,
+        0,
+        {
+          "extract": 3,
+          "stitch": 1,
+          "estimated_period": 8.149839516666669,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 5,
+          "raw_buffer": 0,
+          "stitched_buffer": 0,
+          "stitched_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "raw_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37806.843,
+        3,
+        1,
+        9.603,
+        0,
+        {
+          "extract": 3,
+          "stitch": 1,
+          "estimated_period": 8.149839516666669,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 5,
+          "raw_buffer": 0,
+          "stitched_buffer": 0,
+          "stitched_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "raw_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37807.062,
+        3,
+        1,
+        9.603,
+        0,
+        {
+          "extract": 3,
+          "stitch": 1,
+          "estimated_period": 8.149839516666669,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 5,
+          "raw_buffer": 0,
+          "stitched_buffer": 0,
+          "stitched_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "raw_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37807.281,
+        3,
+        1,
+        9.603,
+        0,
+        {
+          "extract": 3,
+          "stitch": 1,
+          "estimated_period": 8.149839516666669,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 5,
+          "raw_buffer": 0,
+          "stitched_buffer": 0,
+          "stitched_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "raw_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37807.5,
+        3,
+        1,
+        9.603,
+        0,
+        {
+          "extract": 3,
+          "stitch": 1,
+          "estimated_period": 8.149839516666669,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 5,
+          "raw_buffer": 0,
+          "stitched_buffer": 0,
+          "stitched_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "raw_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37807.718,
+        3,
+        1,
+        9.603,
+        0,
+        {
+          "extract": 3,
+          "stitch": 1,
+          "estimated_period": 8.149839516666669,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 5,
+          "raw_buffer": 0,
+          "stitched_buffer": 0,
+          "stitched_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "raw_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37807.937,
+        3,
+        1,
+        9.603,
+        0,
+        {
+          "extract": 3,
+          "stitch": 1,
+          "estimated_period": 8.149839516666669,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 5,
+          "raw_buffer": 0,
+          "stitched_buffer": 0,
+          "stitched_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "raw_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37808.156,
+        3,
+        1,
+        9.603,
+        0,
+        {
+          "extract": 3,
+          "stitch": 1,
+          "estimated_period": 8.149839516666669,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 5,
+          "raw_buffer": 0,
+          "stitched_buffer": 0,
+          "stitched_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "raw_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37808.375,
+        3,
+        1,
+        9.603,
+        0,
+        {
+          "extract": 3,
+          "stitch": 1,
+          "estimated_period": 8.149839516666669,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 5,
+          "raw_buffer": 0,
+          "stitched_buffer": 0,
+          "stitched_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "raw_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37808.625,
+        3,
+        1,
+        9.603,
+        0,
+        {
+          "extract": 3,
+          "stitch": 1,
+          "estimated_period": 8.149839516666669,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 5,
+          "raw_buffer": 0,
+          "stitched_buffer": 0,
+          "stitched_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "raw_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37808.843,
+        3,
+        1,
+        9.603,
+        0,
+        {
+          "extract": 3,
+          "stitch": 1,
+          "estimated_period": 8.149839516666669,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 5,
+          "raw_buffer": 0,
+          "stitched_buffer": 0,
+          "stitched_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "raw_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37809.062,
+        3,
+        1,
+        9.603,
+        0,
+        {
+          "extract": 3,
+          "stitch": 1,
+          "estimated_period": 8.149839516666669,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 5,
+          "raw_buffer": 0,
+          "stitched_buffer": 0,
+          "stitched_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "raw_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37809.281,
+        3,
+        1,
+        9.603,
+        0,
+        {
+          "extract": 3,
+          "stitch": 1,
+          "estimated_period": 8.149839516666669,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 5,
+          "raw_buffer": 0,
+          "stitched_buffer": 0,
+          "stitched_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "raw_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37809.5,
+        3,
+        1,
+        9.603,
+        0,
+        {
+          "extract": 3,
+          "stitch": 1,
+          "estimated_period": 8.149839516666669,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 5,
+          "raw_buffer": 0,
+          "stitched_buffer": 0,
+          "stitched_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "raw_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37809.718,
+        3,
+        1,
+        9.603,
+        0,
+        {
+          "extract": 3,
+          "stitch": 1,
+          "estimated_period": 8.149839516666669,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 5,
+          "raw_buffer": 0,
+          "stitched_buffer": 0,
+          "stitched_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "raw_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37809.937,
+        3,
+        1,
+        9.603,
+        0,
+        {
+          "extract": 3,
+          "stitch": 1,
+          "estimated_period": 8.149839516666669,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 5,
+          "raw_buffer": 0,
+          "stitched_buffer": 0,
+          "stitched_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "raw_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37810.156,
+        3,
+        1,
+        9.603,
+        0,
+        {
+          "extract": 3,
+          "stitch": 1,
+          "estimated_period": 8.149839516666669,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 5,
+          "raw_buffer": 0,
+          "stitched_buffer": 0,
+          "stitched_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "raw_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37810.375,
+        3,
+        1,
+        9.603,
+        0,
+        {
+          "extract": 3,
+          "stitch": 1,
+          "estimated_period": 8.149839516666669,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 5,
+          "raw_buffer": 0,
+          "stitched_buffer": 0,
+          "stitched_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "raw_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37810.593,
+        3,
+        1,
+        9.603,
+        0,
+        {
+          "extract": 3,
+          "stitch": 1,
+          "estimated_period": 8.149839516666669,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 5,
+          "raw_buffer": 0,
+          "stitched_buffer": 0,
+          "stitched_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "raw_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37810.828,
+        3,
+        1,
+        9.603,
+        0,
+        {
+          "extract": 3,
+          "stitch": 1,
+          "estimated_period": 8.149839516666669,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 5,
+          "raw_buffer": 0,
+          "stitched_buffer": 0,
+          "stitched_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "raw_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37811.031,
+        3,
+        1,
+        9.603,
+        0,
+        {
+          "extract": 3,
+          "stitch": 1,
+          "estimated_period": 8.149839516666669,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 5,
+          "raw_buffer": 0,
+          "stitched_buffer": 0,
+          "stitched_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "raw_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37811.265,
+        3,
+        1,
+        9.603,
+        0,
+        {
+          "extract": 3,
+          "stitch": 1,
+          "estimated_period": 8.149839516666669,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 5,
+          "raw_buffer": 0,
+          "stitched_buffer": 0,
+          "stitched_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "raw_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37811.468,
+        3,
+        1,
+        9.603,
+        0,
+        {
+          "extract": 3,
+          "stitch": 1,
+          "estimated_period": 8.149839516666669,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 5,
+          "raw_buffer": 0,
+          "stitched_buffer": 0,
+          "stitched_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "raw_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37811.687,
+        3,
+        1,
+        9.603,
+        0,
+        {
+          "extract": 3,
+          "stitch": 1,
+          "estimated_period": 8.149839516666669,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 5,
+          "raw_buffer": 0,
+          "stitched_buffer": 0,
+          "stitched_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "raw_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37811.906,
+        3,
+        1,
+        9.603,
+        0,
+        {
+          "extract": 3,
+          "stitch": 1,
+          "estimated_period": 8.149839516666669,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 5,
+          "raw_buffer": 0,
+          "stitched_buffer": 0,
+          "stitched_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "raw_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37812.14,
+        3,
+        1,
+        9.603,
+        0,
+        {
+          "extract": 3,
+          "stitch": 1,
+          "estimated_period": 8.149839516666669,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 5,
+          "raw_buffer": 0,
+          "stitched_buffer": 0,
+          "stitched_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "raw_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37812.359,
+        3,
+        1,
+        9.603,
+        0,
+        {
+          "extract": 3,
+          "stitch": 1,
+          "estimated_period": 8.149839516666669,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 5,
+          "raw_buffer": 0,
+          "stitched_buffer": 0,
+          "stitched_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "raw_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37812.578,
+        3,
+        1,
+        9.603,
+        0,
+        {
+          "extract": 3,
+          "stitch": 1,
+          "estimated_period": 8.149839516666669,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 5,
+          "raw_buffer": 0,
+          "stitched_buffer": 0,
+          "stitched_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "raw_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37812.796,
+        3,
+        1,
+        9.603,
+        0,
+        {
+          "extract": 3,
+          "stitch": 1,
+          "estimated_period": 8.149839516666669,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 5,
+          "raw_buffer": 0,
+          "stitched_buffer": 0,
+          "stitched_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "raw_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37813.015,
+        3,
+        1,
+        9.603,
+        0,
+        {
+          "extract": 3,
+          "stitch": 1,
+          "estimated_period": 8.149839516666669,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 5,
+          "raw_buffer": 0,
+          "stitched_buffer": 0,
+          "stitched_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "raw_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37813.234,
+        3,
+        1,
+        9.603,
+        0,
+        {
+          "extract": 3,
+          "stitch": 1,
+          "estimated_period": 8.149839516666669,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 5,
+          "raw_buffer": 0,
+          "stitched_buffer": 0,
+          "stitched_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "raw_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37813.453,
+        3,
+        1,
+        9.603,
+        0,
+        {
+          "extract": 3,
+          "stitch": 1,
+          "estimated_period": 8.149839516666669,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 5,
+          "raw_buffer": 0,
+          "stitched_buffer": 0,
+          "stitched_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "raw_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37813.671,
+        3,
+        1,
+        9.603,
+        0,
+        {
+          "extract": 3,
+          "stitch": 1,
+          "estimated_period": 8.149839516666669,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 5,
+          "raw_buffer": 0,
+          "stitched_buffer": 0,
+          "stitched_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "raw_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37813.89,
+        3,
+        1,
+        9.603,
+        0,
+        {
+          "extract": 3,
+          "stitch": 1,
+          "estimated_period": 8.149839516666669,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 5,
+          "raw_buffer": 0,
+          "stitched_buffer": 0,
+          "stitched_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "raw_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37814.109,
+        3,
+        1,
+        9.603,
+        0,
+        {
+          "extract": 3,
+          "stitch": 1,
+          "estimated_period": 8.149839516666669,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 5,
+          "raw_buffer": 0,
+          "stitched_buffer": 0,
+          "stitched_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "raw_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37814.328,
+        3,
+        1,
+        9.603,
+        0,
+        {
+          "extract": 3,
+          "stitch": 1,
+          "estimated_period": 8.149839516666669,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 5,
+          "raw_buffer": 0,
+          "stitched_buffer": 0,
+          "stitched_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "raw_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37814.546,
+        3,
+        1,
+        9.603,
+        0,
+        {
+          "extract": 3,
+          "stitch": 1,
+          "estimated_period": 8.149839516666669,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 5,
+          "raw_buffer": 0,
+          "stitched_buffer": 0,
+          "stitched_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "raw_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37814.765,
+        3,
+        1,
+        9.603,
+        0,
+        {
+          "extract": 3,
+          "stitch": 1,
+          "estimated_period": 8.149839516666669,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 5,
+          "raw_buffer": 0,
+          "stitched_buffer": 0,
+          "stitched_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "raw_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37814.968,
+        3,
+        1,
+        9.603,
+        0,
+        {
+          "extract": 3,
+          "stitch": 1,
+          "estimated_period": 8.149839516666669,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 5,
+          "raw_buffer": 0,
+          "stitched_buffer": 0,
+          "stitched_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "raw_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37815.187,
+        3,
+        1,
+        9.603,
+        0,
+        {
+          "extract": 3,
+          "stitch": 1,
+          "estimated_period": 8.149839516666669,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 5,
+          "raw_buffer": 0,
+          "stitched_buffer": 0,
+          "stitched_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "raw_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37815.406,
+        3,
+        1,
+        9.603,
+        0,
+        {
+          "extract": 3,
+          "stitch": 1,
+          "estimated_period": 8.149839516666669,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 5,
+          "raw_buffer": 0,
+          "stitched_buffer": 0,
+          "stitched_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "raw_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37815.625,
+        3,
+        1,
+        4.257,
+        0,
+        {
+          "extract": 3,
+          "stitch": 1,
+          "estimated_period": 8.149839516666669,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 5,
+          "raw_buffer": 0,
+          "stitched_buffer": 0,
+          "stitched_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "raw_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37815.843,
+        3,
+        1,
+        4.309,
+        1,
+        {
+          "extract": 3,
+          "stitch": 1,
+          "estimated_period": 7.370472516666666,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 6,
+          "raw_buffer": 1,
+          "stitched_buffer": 0,
+          "stitched_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "raw_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37816.062,
+        3,
+        1,
+        4.309,
+        1,
+        {
+          "extract": 3,
+          "stitch": 1,
+          "estimated_period": 7.370472516666666,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 6,
+          "raw_buffer": 1,
+          "stitched_buffer": 0,
+          "stitched_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "raw_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37816.281,
+        3,
+        1,
+        4.309,
+        1,
+        {
+          "extract": 3,
+          "stitch": 1,
+          "estimated_period": 7.370472516666666,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 6,
+          "raw_buffer": 1,
+          "stitched_buffer": 0,
+          "stitched_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "raw_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37816.5,
+        3,
+        1,
+        4.309,
+        1,
+        {
+          "extract": 3,
+          "stitch": 1,
+          "estimated_period": 7.370472516666666,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 6,
+          "raw_buffer": 1,
+          "stitched_buffer": 0,
+          "stitched_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "raw_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37816.718,
+        3,
+        1,
+        4.309,
+        1,
+        {
+          "extract": 3,
+          "stitch": 1,
+          "estimated_period": 7.370472516666666,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 6,
+          "raw_buffer": 1,
+          "stitched_buffer": 0,
+          "stitched_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "raw_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37816.937,
+        3,
+        1,
+        4.309,
+        1,
+        {
+          "extract": 3,
+          "stitch": 1,
+          "estimated_period": 7.370472516666666,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 6,
+          "raw_buffer": 1,
+          "stitched_buffer": 0,
+          "stitched_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "raw_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37817.156,
+        3,
+        1,
+        4.309,
+        1,
+        {
+          "extract": 3,
+          "stitch": 1,
+          "estimated_period": 7.370472516666666,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 6,
+          "raw_buffer": 1,
+          "stitched_buffer": 0,
+          "stitched_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "raw_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37817.375,
+        3,
+        1,
+        4.309,
+        1,
+        {
+          "extract": 3,
+          "stitch": 1,
+          "estimated_period": 7.370472516666666,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 6,
+          "raw_buffer": 1,
+          "stitched_buffer": 0,
+          "stitched_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "raw_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37817.593,
+        3,
+        1,
+        4.309,
+        1,
+        {
+          "extract": 3,
+          "stitch": 1,
+          "estimated_period": 7.370472516666666,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 6,
+          "raw_buffer": 1,
+          "stitched_buffer": 0,
+          "stitched_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "raw_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37817.812,
+        3,
+        1,
+        4.309,
+        1,
+        {
+          "extract": 3,
+          "stitch": 1,
+          "estimated_period": 7.370472516666666,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 6,
+          "raw_buffer": 1,
+          "stitched_buffer": 0,
+          "stitched_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "raw_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37818.031,
+        3,
+        1,
+        4.309,
+        1,
+        {
+          "extract": 3,
+          "stitch": 1,
+          "estimated_period": 7.370472516666666,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 6,
+          "raw_buffer": 1,
+          "stitched_buffer": 0,
+          "stitched_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "raw_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37818.25,
+        3,
+        1,
+        4.309,
+        1,
+        {
+          "extract": 3,
+          "stitch": 1,
+          "estimated_period": 7.370472516666666,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 6,
+          "raw_buffer": 1,
+          "stitched_buffer": 0,
+          "stitched_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "raw_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37818.468,
+        3,
+        1,
+        4.309,
+        1,
+        {
+          "extract": 3,
+          "stitch": 1,
+          "estimated_period": 7.370472516666666,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 6,
+          "raw_buffer": 1,
+          "stitched_buffer": 0,
+          "stitched_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "raw_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37818.687,
+        3,
+        1,
+        4.309,
+        1,
+        {
+          "extract": 3,
+          "stitch": 1,
+          "estimated_period": 7.370472516666666,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 6,
+          "raw_buffer": 1,
+          "stitched_buffer": 0,
+          "stitched_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "raw_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37818.906,
+        3,
+        1,
+        4.309,
+        1,
+        {
+          "extract": 3,
+          "stitch": 1,
+          "estimated_period": 7.370472516666666,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 6,
+          "raw_buffer": 1,
+          "stitched_buffer": 0,
+          "stitched_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "raw_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37819.14,
+        3,
+        1,
+        4.309,
+        1,
+        {
+          "extract": 3,
+          "stitch": 1,
+          "estimated_period": 7.370472516666666,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 6,
+          "raw_buffer": 1,
+          "stitched_buffer": 0,
+          "stitched_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "raw_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37819.359,
+        3,
+        1,
+        4.309,
+        1,
+        {
+          "extract": 3,
+          "stitch": 1,
+          "estimated_period": 7.370472516666666,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 6,
+          "raw_buffer": 1,
+          "stitched_buffer": 0,
+          "stitched_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "raw_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37819.578,
+        3,
+        1,
+        4.309,
+        1,
+        {
+          "extract": 3,
+          "stitch": 1,
+          "estimated_period": 7.370472516666666,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 6,
+          "raw_buffer": 1,
+          "stitched_buffer": 0,
+          "stitched_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "raw_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37819.781,
+        3,
+        1,
+        4.309,
+        1,
+        {
+          "extract": 3,
+          "stitch": 1,
+          "estimated_period": 7.370472516666666,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 6,
+          "raw_buffer": 1,
+          "stitched_buffer": 0,
+          "stitched_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "raw_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "cpu_headroom": true
+        }
+      ]
+    ],
+    "paints": [
+      [
+        2,
+        37815.656
+      ],
+      [
+        3,
+        37819.968
+      ]
+    ],
+    "latest_status": "",
+    "sequence_results": [],
+    "experiment": {
+      "baseline_hotpath": false,
+      "fixed_admission": false,
+      "fixed_plan": null
+    },
+    "probe": null
+  },
+  "stress_4": {
+    "policy": "current",
+    "mode": 4,
+    "budget": 22,
+    "memory_budget": 6761625600,
+    "completed": true,
+    "measured_frames": 2,
+    "elapsed_seconds": 3.9219999999986612,
+    "fps": 0.5099439061704953,
+    "cpu_percent": 65.59008622690106,
+    "rss_avg_mib": 3279.2939453125,
+    "rss_peak_mib": 4048.00390625,
+    "p50_gap_ms": 1960.9999999993306,
+    "p95_gap_ms": 2095.100000000457,
+    "max_gap_ms": 2110.000000000582,
+    "gaps_over_100ms": 2,
+    "gaps_over_250ms": 2,
+    "gui_p95_gap_ms": 78.20000000065191,
+    "gui_max_gap_ms": 140.99999999598367,
+    "continuous": true,
+    "frame_range": [
+      2,
+      3
+    ],
+    "first_frame_seconds": 4.546999999998661,
+    "timeout": false,
+    "requested_measure_seconds": 30.0,
+    "metadata_seconds": 14.64100000000326,
+    "fast_seek_streams": 100,
+    "decode_dimensions_known": 100,
+    "extract_run_p90_seconds": 0.8334782699999989,
+    "stitch_average_seconds": 1.1043906999999997,
+    "warmup_frames": 1,
+    "rss_peak_entire_run_mib": 4639.296875,
+    "pacing_stats": {
+      "period": 3.6748258674999996,
+      "pending": [
+        4,
+        5
+      ],
+      "samples": [
+        [
+          7.662042799999998,
+          2
+        ],
+        [
+          5.876951000000002,
+          2
+        ]
+      ],
+      "prediction": {
+        "reason": "measured-supply",
+        "buffered": 1,
+        "production_period": 3.6748258674999996,
+        "next_eta": 2.0060389
+      }
+    },
+    "pipeline_stats": {
+      "native_decoder_opens": 387,
+      "native_decoded_frames": 1114,
+      "native_seeks": 280,
+      "native_fallback_paths": 0,
+      "pixel_cache_bytes": 239913792,
+      "pixel_cache_limit": 268435456,
+      "decoder_state_limit": 1073741824,
+      "active_stage_counts": [
+        20,
+        0
+      ],
+      "admission": {
+        "limit": 22,
+        "ceiling": 22,
+        "best": 22,
+        "period": null,
+        "reason": "warmup",
+        "history": []
+      },
+      "effective_cpu_budget": 22
+    },
+    "source_hashes": {
+      "src/mulimgviewer/src/main.py": "0ab3a1fd6fdb1ec403be4d2ee2d35eb235a783b6a54c9697fc3e4a47fb9f6907",
+      "src/mulimgviewer/src/thread_optimizer.py": "9a302e3ec4b81b15b90ba9c3c1e583f13b7a0d9a52626be71a44d6d65cc89791",
+      "src/mulimgviewer/src/playback_pacer.py": "ae2731563bed80aa1bae08a25c27a612159dee820c4911cfe6dc45a1477afca3",
+      "src/mulimgviewer/src/utils_img.py": "fafa11a9e1d00faae64a5acb7f02bb40d16ff5297bb10fca730548a28b3a4beb",
+      "src/mulimgviewer/src/pipeline_executor.py": "e0ec56d69b64e80ef366fd177e7560c0d61f0359879b7888f0b13aeafc391ae0",
+      "src/mulimgviewer/src/video_decoder.py": "4446fca4a5d25e3937c3e487f0724f0fb9fff4cf6c14ae28d8435cb038c0cba6",
+      "src/mulimgviewer/src/video_memory.py": "582c8212be01b8100791b7979964a3d07b0a275affb048f56a312cc16deef940",
+      "src/mulimgviewer/src/admission_optimizer.py": "a0dd27bd68c8062a916298f8879a24cccf713df834e13ce40b887330194c00ac"
+    },
+    "final_pending_wait_ms": 0.0,
+    "output_size": [
+      1938,
+      1098
+    ],
+    "final_allocation": [
+      20,
+      1
+    ],
+    "allocation_samples": [
+      [
+        37848.937,
+        20,
+        1,
+        3.832,
+        0,
+        {
+          "extract": 20,
+          "stitch": 1,
+          "estimated_period": 2.8138914175000007,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 5,
+          "raw_buffer": 0,
+          "stitched_buffer": 0,
+          "stitched_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "raw_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37849.187,
+        20,
+        1,
+        3.832,
+        0,
+        {
+          "extract": 20,
+          "stitch": 1,
+          "estimated_period": 2.8138914175000007,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 5,
+          "raw_buffer": 0,
+          "stitched_buffer": 0,
+          "stitched_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "raw_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37849.421,
+        20,
+        1,
+        3.832,
+        0,
+        {
+          "extract": 20,
+          "stitch": 1,
+          "estimated_period": 2.8138914175000007,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 5,
+          "raw_buffer": 0,
+          "stitched_buffer": 0,
+          "stitched_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "raw_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37849.671,
+        20,
+        1,
+        3.832,
+        0,
+        {
+          "extract": 20,
+          "stitch": 1,
+          "estimated_period": 2.8138914175000007,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 5,
+          "raw_buffer": 0,
+          "stitched_buffer": 0,
+          "stitched_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "raw_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37849.906,
+        20,
+        1,
+        3.832,
+        0,
+        {
+          "extract": 20,
+          "stitch": 1,
+          "estimated_period": 2.8138914175000007,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 5,
+          "raw_buffer": 0,
+          "stitched_buffer": 0,
+          "stitched_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "raw_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37850.14,
+        20,
+        1,
+        3.832,
+        0,
+        {
+          "extract": 20,
+          "stitch": 1,
+          "estimated_period": 2.8138914175000007,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 5,
+          "raw_buffer": 0,
+          "stitched_buffer": 0,
+          "stitched_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "raw_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37850.39,
+        20,
+        1,
+        3.832,
+        0,
+        {
+          "extract": 20,
+          "stitch": 1,
+          "estimated_period": 2.8138914175000007,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 5,
+          "raw_buffer": 0,
+          "stitched_buffer": 0,
+          "stitched_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "raw_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37850.625,
+        20,
+        1,
+        1.916,
+        1,
+        {
+          "extract": 20,
+          "stitch": 1,
+          "estimated_period": 2.8138914175000007,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 5,
+          "raw_buffer": 0,
+          "stitched_buffer": 0,
+          "stitched_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "raw_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37850.875,
+        20,
+        1,
+        1.916,
+        0,
+        {
+          "extract": 20,
+          "stitch": 1,
+          "estimated_period": 2.8138914175000007,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 5,
+          "raw_buffer": 0,
+          "stitched_buffer": 0,
+          "stitched_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "raw_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37851.125,
+        20,
+        1,
+        3.832,
+        0,
+        {
+          "extract": 20,
+          "stitch": 1,
+          "estimated_period": 2.8448417135,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 6,
+          "raw_buffer": 1,
+          "stitched_buffer": 0,
+          "stitched_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "raw_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37851.359,
+        20,
+        1,
+        3.832,
+        0,
+        {
+          "extract": 20,
+          "stitch": 1,
+          "estimated_period": 2.8448417135,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 6,
+          "raw_buffer": 1,
+          "stitched_buffer": 0,
+          "stitched_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "raw_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37851.593,
+        20,
+        1,
+        3.832,
+        0,
+        {
+          "extract": 20,
+          "stitch": 1,
+          "estimated_period": 2.8448417135,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 6,
+          "raw_buffer": 1,
+          "stitched_buffer": 0,
+          "stitched_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "raw_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37851.859,
+        20,
+        1,
+        1.838,
+        1,
+        {
+          "extract": 20,
+          "stitch": 1,
+          "estimated_period": 2.8448417135,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 6,
+          "raw_buffer": 1,
+          "stitched_buffer": 0,
+          "stitched_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "raw_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37852.109,
+        20,
+        1,
+        1.838,
+        1,
+        {
+          "extract": 20,
+          "stitch": 1,
+          "estimated_period": 2.8448417135,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 6,
+          "raw_buffer": 1,
+          "stitched_buffer": 0,
+          "stitched_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "raw_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37852.375,
+        20,
+        1,
+        1.838,
+        1,
+        {
+          "extract": 20,
+          "stitch": 1,
+          "estimated_period": 2.8448417135,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 6,
+          "raw_buffer": 1,
+          "stitched_buffer": 0,
+          "stitched_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "raw_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37852.64,
+        20,
+        1,
+        1.838,
+        0,
+        {
+          "extract": 20,
+          "stitch": 1,
+          "estimated_period": 2.8448417135,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 6,
+          "raw_buffer": 1,
+          "stitched_buffer": 0,
+          "stitched_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "raw_levels": [
+            1,
+            1,
+            2,
+            3
+          ],
+          "cpu_headroom": true
+        }
+      ]
+    ],
+    "paints": [
+      [
+        2,
+        37851.031
+      ],
+      [
+        3,
+        37852.843
+      ]
+    ],
+    "latest_status": "",
+    "sequence_results": [],
+    "experiment": {
+      "baseline_hotpath": false,
+      "fixed_admission": false,
+      "fixed_plan": null
+    },
+    "probe": null
+  },
+  "compat_baseline": {
+    "policy": "current",
+    "mode": 4,
+    "budget": 22,
+    "memory_budget": 6761625600,
+    "completed": true,
+    "measured_frames": 30,
+    "elapsed_seconds": 8.875,
+    "fps": 3.380281690140845,
+    "cpu_percent": 20.782650448143407,
+    "rss_avg_mib": 1518.66005859375,
+    "rss_peak_mib": 1623.1015625,
+    "p50_gap_ms": 297.0000000022992,
+    "p95_gap_ms": 375.0,
+    "max_gap_ms": 406.9999999992433,
+    "gaps_over_100ms": 30,
+    "gaps_over_250ms": 21,
+    "gui_p95_gap_ms": 155.9999999957654,
+    "gui_max_gap_ms": 264.9999999994179,
+    "continuous": true,
+    "frame_range": [
+      41,
+      70
+    ],
+    "first_frame_seconds": 2.8280000000013388,
+    "timeout": false,
+    "requested_measure_seconds": 0.0,
+    "metadata_seconds": 3.125,
+    "fast_seek_streams": 12,
+    "decode_dimensions_known": 24,
+    "extract_run_p90_seconds": 0.1931790400000004,
+    "stitch_average_seconds": 1.8654671583333335,
+    "warmup_frames": 10,
+    "rss_peak_entire_run_mib": 1623.1015625,
+    "pacing_stats": {
+      "period": 0.4147330014566453,
+      "pending": [
+        80,
+        81,
+        82,
+        83,
+        84,
+        85,
+        86,
+        87,
+        88,
+        89,
+        90
+      ],
+      "samples": [
+        [
+          8.630114599999999,
+          10
+        ],
+        [
+          1.315896500000001,
+          10
+        ],
+        [
+          1.8016019000000014,
+          10
+        ],
+        [
+          2.182958399999997,
+          10
+        ],
+        [
+          2.6451395000000026,
+          10
+        ],
+        [
+          3.8192701000000007,
+          10
+        ]
+      ],
+      "prediction": {
+        "reason": "measured-supply",
+        "buffered": 10,
+        "production_period": 0.4147330014566453,
+        "next_eta": 0.35051836000000025
+      }
+    },
+    "pipeline_stats": {
+      "native_decoder_opens": 24,
+      "native_decoded_frames": 4385,
+      "native_seeks": 60,
+      "native_fallback_paths": 0,
+      "pixel_cache_bytes": 265656960,
+      "pixel_cache_limit": 268435456,
+      "decoder_state_limit": 1073741824,
+      "active_stage_counts": [
+        6,
+        10
+      ],
+      "admission": {
+        "limit": 22,
+        "ceiling": 22,
+        "best": 22,
+        "period": null,
+        "reason": "warmup",
+        "history": []
+      },
+      "effective_cpu_budget": 22
+    },
+    "source_hashes": {
+      "src/mulimgviewer/src/main.py": "0ab3a1fd6fdb1ec403be4d2ee2d35eb235a783b6a54c9697fc3e4a47fb9f6907",
+      "src/mulimgviewer/src/thread_optimizer.py": "9a302e3ec4b81b15b90ba9c3c1e583f13b7a0d9a52626be71a44d6d65cc89791",
+      "src/mulimgviewer/src/playback_pacer.py": "ae2731563bed80aa1bae08a25c27a612159dee820c4911cfe6dc45a1477afca3",
+      "src/mulimgviewer/src/utils_img.py": "fafa11a9e1d00faae64a5acb7f02bb40d16ff5297bb10fca730548a28b3a4beb",
+      "src/mulimgviewer/src/pipeline_executor.py": "e0ec56d69b64e80ef366fd177e7560c0d61f0359879b7888f0b13aeafc391ae0",
+      "src/mulimgviewer/src/video_decoder.py": "4446fca4a5d25e3937c3e487f0724f0fb9fff4cf6c14ae28d8435cb038c0cba6",
+      "src/mulimgviewer/src/video_memory.py": "582c8212be01b8100791b7979964a3d07b0a275affb048f56a312cc16deef940",
+      "src/mulimgviewer/src/admission_optimizer.py": "a0dd27bd68c8062a916298f8879a24cccf713df834e13ce40b887330194c00ac"
+    },
+    "final_pending_wait_ms": 0.0,
+    "output_size": [
+      1930,
+      818
+    ],
+    "final_allocation": [
+      20,
+      2
+    ],
+    "allocation_samples": [
+      [
+        37870.343,
+        8,
+        14,
+        0.308,
+        9,
+        {
+          "extract": 16,
+          "stitch": 6,
+          "estimated_period": 0.42803834259259266,
+          "reason": "ready-capacity",
+          "stitch_task_limit": 41,
+          "raw_buffer": 10,
+          "stitched_buffer": 6,
+          "stitched_levels": [
+            10,
+            5,
+            15,
+            20
+          ],
+          "raw_levels": [
+            10,
+            5,
+            14,
+            14
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37870.562,
+        8,
+        14,
+        0.308,
+        9,
+        {
+          "extract": 16,
+          "stitch": 6,
+          "estimated_period": 0.42803834259259266,
+          "reason": "ready-capacity",
+          "stitch_task_limit": 41,
+          "raw_buffer": 10,
+          "stitched_buffer": 6,
+          "stitched_levels": [
+            10,
+            5,
+            15,
+            20
+          ],
+          "raw_levels": [
+            10,
+            5,
+            14,
+            14
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37870.796,
+        8,
+        14,
+        0.308,
+        10,
+        {
+          "extract": 14,
+          "stitch": 8,
+          "estimated_period": 0.32652677875,
+          "reason": "ready-capacity",
+          "stitch_task_limit": 41,
+          "raw_buffer": 8,
+          "stitched_buffer": 9,
+          "stitched_levels": [
+            11,
+            5,
+            16,
+            20
+          ],
+          "raw_levels": [
+            10,
+            5,
+            11,
+            11
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37871.015,
+        8,
+        14,
+        0.308,
+        9,
+        {
+          "extract": 14,
+          "stitch": 8,
+          "estimated_period": 0.32652677875,
+          "reason": "ready-capacity",
+          "stitch_task_limit": 41,
+          "raw_buffer": 8,
+          "stitched_buffer": 9,
+          "stitched_levels": [
+            11,
+            5,
+            16,
+            20
+          ],
+          "raw_levels": [
+            10,
+            5,
+            11,
+            11
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37871.234,
+        8,
+        14,
+        0.308,
+        10,
+        {
+          "extract": 14,
+          "stitch": 8,
+          "estimated_period": 0.32652677875,
+          "reason": "ready-capacity",
+          "stitch_task_limit": 41,
+          "raw_buffer": 8,
+          "stitched_buffer": 9,
+          "stitched_levels": [
+            11,
+            5,
+            16,
+            20
+          ],
+          "raw_levels": [
+            10,
+            5,
+            11,
+            11
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37871.453,
+        15,
+        7,
+        0.308,
+        10,
+        {
+          "extract": 15,
+          "stitch": 7,
+          "estimated_period": 0.3659605107142857,
+          "reason": "ready-capacity",
+          "stitch_task_limit": 41,
+          "raw_buffer": 7,
+          "stitched_buffer": 10,
+          "stitched_levels": [
+            11,
+            5,
+            16,
+            20
+          ],
+          "raw_levels": [
+            10,
+            5,
+            10,
+            10
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37871.671,
+        15,
+        7,
+        0.308,
+        11,
+        {
+          "extract": 15,
+          "stitch": 7,
+          "estimated_period": 0.3659605107142857,
+          "reason": "ready-capacity",
+          "stitch_task_limit": 41,
+          "raw_buffer": 7,
+          "stitched_buffer": 10,
+          "stitched_levels": [
+            11,
+            5,
+            16,
+            20
+          ],
+          "raw_levels": [
+            10,
+            5,
+            10,
+            10
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37871.906,
+        15,
+        7,
+        0.28,
+        13,
+        {
+          "extract": 15,
+          "stitch": 7,
+          "estimated_period": 0.3659605107142857,
+          "reason": "ready-capacity",
+          "stitch_task_limit": 41,
+          "raw_buffer": 7,
+          "stitched_buffer": 10,
+          "stitched_levels": [
+            11,
+            5,
+            16,
+            20
+          ],
+          "raw_levels": [
+            10,
+            5,
+            10,
+            10
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37872.125,
+        15,
+        7,
+        0.225,
+        13,
+        {
+          "extract": 18,
+          "stitch": 4,
+          "estimated_period": 0.5671992145833333,
+          "reason": "ready-capacity",
+          "stitch_task_limit": 41,
+          "raw_buffer": 4,
+          "stitched_buffer": 13,
+          "stitched_levels": [
+            11,
+            5,
+            16,
+            19
+          ],
+          "raw_levels": [
+            6,
+            5,
+            6,
+            6
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37872.343,
+        15,
+        7,
+        0.225,
+        13,
+        {
+          "extract": 18,
+          "stitch": 4,
+          "estimated_period": 0.5671992145833333,
+          "reason": "ready-capacity",
+          "stitch_task_limit": 41,
+          "raw_buffer": 4,
+          "stitched_buffer": 13,
+          "stitched_levels": [
+            11,
+            5,
+            16,
+            19
+          ],
+          "raw_levels": [
+            6,
+            5,
+            6,
+            6
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37872.562,
+        15,
+        7,
+        0.227,
+        12,
+        {
+          "extract": 18,
+          "stitch": 4,
+          "estimated_period": 0.4929745020833334,
+          "reason": "ready-capacity",
+          "stitch_task_limit": 41,
+          "raw_buffer": 4,
+          "stitched_buffer": 13,
+          "stitched_levels": [
+            14,
+            5,
+            19,
+            20
+          ],
+          "raw_levels": [
+            7,
+            5,
+            7,
+            7
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37872.781,
+        15,
+        7,
+        0.238,
+        11,
+        {
+          "extract": 18,
+          "stitch": 4,
+          "estimated_period": 0.4929745020833334,
+          "reason": "ready-capacity",
+          "stitch_task_limit": 41,
+          "raw_buffer": 4,
+          "stitched_buffer": 13,
+          "stitched_levels": [
+            14,
+            5,
+            19,
+            20
+          ],
+          "raw_levels": [
+            7,
+            5,
+            7,
+            7
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37872.984,
+        15,
+        7,
+        0.238,
+        11,
+        {
+          "extract": 18,
+          "stitch": 4,
+          "estimated_period": 0.4929745020833334,
+          "reason": "ready-capacity",
+          "stitch_task_limit": 41,
+          "raw_buffer": 4,
+          "stitched_buffer": 13,
+          "stitched_levels": [
+            14,
+            5,
+            19,
+            20
+          ],
+          "raw_levels": [
+            7,
+            5,
+            7,
+            7
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37873.203,
+        15,
+        7,
+        0.238,
+        11,
+        {
+          "extract": 15,
+          "stitch": 7,
+          "estimated_period": 0.2816997154761905,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 41,
+          "raw_buffer": 7,
+          "stitched_buffer": 11,
+          "stitched_levels": [
+            13,
+            5,
+            18,
+            20
+          ],
+          "raw_levels": [
+            9,
+            5,
+            9,
+            9
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37873.421,
+        15,
+        7,
+        0.238,
+        12,
+        {
+          "extract": 15,
+          "stitch": 7,
+          "estimated_period": 0.2816997154761905,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 41,
+          "raw_buffer": 7,
+          "stitched_buffer": 11,
+          "stitched_levels": [
+            13,
+            5,
+            18,
+            20
+          ],
+          "raw_levels": [
+            9,
+            5,
+            9,
+            9
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37873.64,
+        15,
+        7,
+        0.232,
+        13,
+        {
+          "extract": 15,
+          "stitch": 7,
+          "estimated_period": 0.2263624823809524,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 41,
+          "raw_buffer": 4,
+          "stitched_buffer": 13,
+          "stitched_levels": [
+            10,
+            5,
+            15,
+            20
+          ],
+          "raw_levels": [
+            7,
+            5,
+            7,
+            7
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37873.859,
+        15,
+        7,
+        0.232,
+        14,
+        {
+          "extract": 15,
+          "stitch": 7,
+          "estimated_period": 0.2263624823809524,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 41,
+          "raw_buffer": 4,
+          "stitched_buffer": 13,
+          "stitched_levels": [
+            10,
+            5,
+            15,
+            20
+          ],
+          "raw_levels": [
+            7,
+            5,
+            7,
+            7
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37874.078,
+        19,
+        3,
+        0.232,
+        13,
+        {
+          "extract": 19,
+          "stitch": 3,
+          "estimated_period": 0.41723800555555557,
+          "reason": "ready-capacity",
+          "stitch_task_limit": 41,
+          "raw_buffer": 3,
+          "stitched_buffer": 14,
+          "stitched_levels": [
+            10,
+            5,
+            15,
+            20
+          ],
+          "raw_levels": [
+            6,
+            5,
+            6,
+            6
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37874.296,
+        19,
+        3,
+        0.231,
+        13,
+        {
+          "extract": 19,
+          "stitch": 3,
+          "estimated_period": 0.41723800555555557,
+          "reason": "ready-capacity",
+          "stitch_task_limit": 41,
+          "raw_buffer": 3,
+          "stitched_buffer": 14,
+          "stitched_levels": [
+            10,
+            5,
+            15,
+            20
+          ],
+          "raw_levels": [
+            6,
+            5,
+            6,
+            6
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37874.515,
+        19,
+        3,
+        0.227,
+        13,
+        {
+          "extract": 19,
+          "stitch": 3,
+          "estimated_period": 0.41723800555555557,
+          "reason": "ready-capacity",
+          "stitch_task_limit": 41,
+          "raw_buffer": 3,
+          "stitched_buffer": 14,
+          "stitched_levels": [
+            10,
+            5,
+            15,
+            20
+          ],
+          "raw_levels": [
+            6,
+            5,
+            6,
+            6
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37874.734,
+        19,
+        3,
+        0.226,
+        14,
+        {
+          "extract": 19,
+          "stitch": 3,
+          "estimated_period": 0.41723800555555557,
+          "reason": "ready-capacity",
+          "stitch_task_limit": 41,
+          "raw_buffer": 3,
+          "stitched_buffer": 14,
+          "stitched_levels": [
+            10,
+            5,
+            15,
+            20
+          ],
+          "raw_levels": [
+            6,
+            5,
+            6,
+            6
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37874.968,
+        21,
+        1,
+        0.204,
+        13,
+        {
+          "extract": 21,
+          "stitch": 1,
+          "estimated_period": 1.2058154000000003,
+          "reason": "raw-buffer-low",
+          "stitch_task_limit": 41,
+          "raw_buffer": 4,
+          "stitched_buffer": 14,
+          "stitched_levels": [
+            10,
+            5,
+            15,
+            20
+          ],
+          "raw_levels": [
+            6,
+            5,
+            6,
+            6
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37875.187,
+        21,
+        1,
+        0.226,
+        12,
+        {
+          "extract": 21,
+          "stitch": 1,
+          "estimated_period": 1.5311507500000006,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 41,
+          "raw_buffer": 5,
+          "stitched_buffer": 13,
+          "stitched_levels": [
+            10,
+            5,
+            15,
+            20
+          ],
+          "raw_levels": [
+            7,
+            5,
+            7,
+            7
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37875.421,
+        21,
+        1,
+        0.226,
+        12,
+        {
+          "extract": 21,
+          "stitch": 1,
+          "estimated_period": 1.5311507500000006,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 41,
+          "raw_buffer": 5,
+          "stitched_buffer": 13,
+          "stitched_levels": [
+            10,
+            5,
+            15,
+            20
+          ],
+          "raw_levels": [
+            7,
+            5,
+            7,
+            7
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37875.64,
+        21,
+        1,
+        0.226,
+        11,
+        {
+          "extract": 21,
+          "stitch": 1,
+          "estimated_period": 1.5311507500000006,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 41,
+          "raw_buffer": 5,
+          "stitched_buffer": 13,
+          "stitched_levels": [
+            10,
+            5,
+            15,
+            20
+          ],
+          "raw_levels": [
+            7,
+            5,
+            7,
+            7
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37875.875,
+        21,
+        1,
+        0.228,
+        10,
+        {
+          "extract": 20,
+          "stitch": 2,
+          "estimated_period": 0.7655753750000003,
+          "reason": "ready-capacity",
+          "stitch_task_limit": 41,
+          "raw_buffer": 9,
+          "stitched_buffer": 10,
+          "stitched_levels": [
+            10,
+            5,
+            15,
+            20
+          ],
+          "raw_levels": [
+            10,
+            5,
+            10,
+            10
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37876.093,
+        21,
+        1,
+        0.228,
+        9,
+        {
+          "extract": 20,
+          "stitch": 2,
+          "estimated_period": 0.7655753750000003,
+          "reason": "ready-capacity",
+          "stitch_task_limit": 41,
+          "raw_buffer": 9,
+          "stitched_buffer": 10,
+          "stitched_levels": [
+            10,
+            5,
+            15,
+            20
+          ],
+          "raw_levels": [
+            10,
+            5,
+            10,
+            10
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37876.312,
+        21,
+        1,
+        0.226,
+        11,
+        {
+          "extract": 20,
+          "stitch": 2,
+          "estimated_period": 0.7655753750000003,
+          "reason": "ready-capacity",
+          "stitch_task_limit": 41,
+          "raw_buffer": 9,
+          "stitched_buffer": 10,
+          "stitched_levels": [
+            10,
+            5,
+            15,
+            20
+          ],
+          "raw_levels": [
+            10,
+            5,
+            10,
+            10
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37876.531,
+        21,
+        1,
+        0.207,
+        11,
+        {
+          "extract": 20,
+          "stitch": 2,
+          "estimated_period": 0.7655753750000003,
+          "reason": "ready-capacity",
+          "stitch_task_limit": 41,
+          "raw_buffer": 6,
+          "stitched_buffer": 12,
+          "stitched_levels": [
+            10,
+            5,
+            15,
+            19
+          ],
+          "raw_levels": [
+            7,
+            5,
+            7,
+            7
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37876.75,
+        21,
+        1,
+        0.204,
+        14,
+        {
+          "extract": 20,
+          "stitch": 2,
+          "estimated_period": 0.7655753750000003,
+          "reason": "ready-capacity",
+          "stitch_task_limit": 41,
+          "raw_buffer": 6,
+          "stitched_buffer": 12,
+          "stitched_levels": [
+            10,
+            5,
+            15,
+            19
+          ],
+          "raw_levels": [
+            7,
+            5,
+            7,
+            7
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37876.968,
+        21,
+        1,
+        0.204,
+        14,
+        {
+          "extract": 21,
+          "stitch": 1,
+          "estimated_period": 1.4398364999999993,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 41,
+          "raw_buffer": 4,
+          "stitched_buffer": 14,
+          "stitched_levels": [
+            10,
+            5,
+            15,
+            20
+          ],
+          "raw_levels": [
+            6,
+            5,
+            6,
+            6
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37877.203,
+        21,
+        1,
+        0.205,
+        13,
+        {
+          "extract": 21,
+          "stitch": 1,
+          "estimated_period": 1.4273561833333328,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 41,
+          "raw_buffer": 5,
+          "stitched_buffer": 14,
+          "stitched_levels": [
+            10,
+            5,
+            15,
+            20
+          ],
+          "raw_levels": [
+            6,
+            5,
+            6,
+            6
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37877.421,
+        21,
+        1,
+        0.205,
+        14,
+        {
+          "extract": 21,
+          "stitch": 1,
+          "estimated_period": 1.4273561833333328,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 41,
+          "raw_buffer": 5,
+          "stitched_buffer": 14,
+          "stitched_levels": [
+            10,
+            5,
+            15,
+            20
+          ],
+          "raw_levels": [
+            6,
+            5,
+            6,
+            6
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37877.64,
+        21,
+        1,
+        0.205,
+        13,
+        {
+          "extract": 21,
+          "stitch": 1,
+          "estimated_period": 1.4273561833333328,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 41,
+          "raw_buffer": 5,
+          "stitched_buffer": 14,
+          "stitched_levels": [
+            10,
+            5,
+            15,
+            20
+          ],
+          "raw_levels": [
+            6,
+            5,
+            6,
+            6
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37877.859,
+        20,
+        2,
+        0.205,
+        12,
+        {
+          "extract": 20,
+          "stitch": 2,
+          "estimated_period": 0.7210520785714282,
+          "reason": "ready-capacity",
+          "stitch_task_limit": 41,
+          "raw_buffer": 6,
+          "stitched_buffer": 13,
+          "stitched_levels": [
+            10,
+            5,
+            15,
+            20
+          ],
+          "raw_levels": [
+            7,
+            5,
+            7,
+            7
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37878.093,
+        20,
+        2,
+        0.217,
+        11,
+        {
+          "extract": 20,
+          "stitch": 2,
+          "estimated_period": 0.7210520785714282,
+          "reason": "ready-capacity",
+          "stitch_task_limit": 41,
+          "raw_buffer": 6,
+          "stitched_buffer": 13,
+          "stitched_levels": [
+            10,
+            5,
+            15,
+            20
+          ],
+          "raw_levels": [
+            7,
+            5,
+            7,
+            7
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37878.328,
+        20,
+        2,
+        0.238,
+        10,
+        {
+          "extract": 18,
+          "stitch": 4,
+          "estimated_period": 0.5489828520833333,
+          "reason": "ready-capacity",
+          "stitch_task_limit": 41,
+          "raw_buffer": 8,
+          "stitched_buffer": 11,
+          "stitched_levels": [
+            10,
+            5,
+            15,
+            20
+          ],
+          "raw_levels": [
+            9,
+            5,
+            9,
+            9
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37878.531,
+        20,
+        2,
+        0.238,
+        11,
+        {
+          "extract": 18,
+          "stitch": 4,
+          "estimated_period": 0.5489828520833333,
+          "reason": "ready-capacity",
+          "stitch_task_limit": 41,
+          "raw_buffer": 8,
+          "stitched_buffer": 11,
+          "stitched_levels": [
+            10,
+            5,
+            15,
+            20
+          ],
+          "raw_levels": [
+            9,
+            5,
+            9,
+            9
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37878.765,
+        20,
+        2,
+        0.238,
+        10,
+        {
+          "extract": 18,
+          "stitch": 4,
+          "estimated_period": 0.5489828520833333,
+          "reason": "ready-capacity",
+          "stitch_task_limit": 41,
+          "raw_buffer": 8,
+          "stitched_buffer": 11,
+          "stitched_levels": [
+            10,
+            5,
+            15,
+            20
+          ],
+          "raw_levels": [
+            9,
+            5,
+            9,
+            9
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37879.0,
+        20,
+        2,
+        0.25,
+        9,
+        {
+          "extract": 18,
+          "stitch": 4,
+          "estimated_period": 0.5489828520833333,
+          "reason": "ready-capacity",
+          "stitch_task_limit": 41,
+          "raw_buffer": 9,
+          "stitched_buffer": 10,
+          "stitched_levels": [
+            10,
+            5,
+            15,
+            20
+          ],
+          "raw_levels": [
+            10,
+            5,
+            10,
+            10
+          ],
+          "cpu_headroom": true
+        }
+      ]
+    ],
+    "paints": [
+      [
+        41,
+        37870.578
+      ],
+      [
+        42,
+        37870.921
+      ],
+      [
+        43,
+        37871.234
+      ],
+      [
+        44,
+        37871.531
+      ],
+      [
+        45,
+        37871.89
+      ],
+      [
+        46,
+        37872.171
+      ],
+      [
+        47,
+        37872.421
+      ],
+      [
+        48,
+        37872.703
+      ],
+      [
+        49,
+        37873.0
+      ],
+      [
+        50,
+        37873.375
+      ],
+      [
+        51,
+        37873.593
+      ],
+      [
+        52,
+        37874.0
+      ],
+      [
+        53,
+        37874.25
+      ],
+      [
+        54,
+        37874.437
+      ],
+      [
+        55,
+        37874.75
+      ],
+      [
+        56,
+        37875.125
+      ],
+      [
+        57,
+        37875.359
+      ],
+      [
+        58,
+        37875.609
+      ],
+      [
+        59,
+        37875.859
+      ],
+      [
+        60,
+        37876.218
+      ],
+      [
+        61,
+        37876.437
+      ],
+      [
+        62,
+        37876.75
+      ],
+      [
+        63,
+        37877.062
+      ],
+      [
+        64,
+        37877.406
+      ],
+      [
+        65,
+        37877.64
+      ],
+      [
+        66,
+        37877.906
+      ],
+      [
+        67,
+        37878.218
+      ],
+      [
+        68,
+        37878.531
+      ],
+      [
+        69,
+        37878.828
+      ],
+      [
+        70,
+        37879.125
+      ]
+    ],
+    "latest_status": "",
+    "sequence_results": [],
+    "experiment": {
+      "baseline_hotpath": true,
+      "fixed_admission": false,
+      "fixed_plan": null
+    },
+    "probe": null,
+    "png_sha256": "7abe60cc8b0570654a61c8d808e6db69437d820df33e4c55432e1c041ccfbfb7"
+  },
+  "compat_optimized": {
+    "policy": "current",
+    "mode": 4,
+    "budget": 22,
+    "memory_budget": 6761625600,
+    "completed": true,
+    "measured_frames": 30,
+    "elapsed_seconds": 7.4689999999973224,
+    "fps": 4.016601954747725,
+    "cpu_percent": 27.262305407816584,
+    "rss_avg_mib": 1474.1034007352941,
+    "rss_peak_mib": 1561.0,
+    "p50_gap_ms": 250.0,
+    "p95_gap_ms": 327.9999999980646,
+    "max_gap_ms": 344.0000000045984,
+    "gaps_over_100ms": 30,
+    "gaps_over_250ms": 11,
+    "gui_p95_gap_ms": 125.0,
+    "gui_max_gap_ms": 172.00000000593718,
+    "continuous": true,
+    "frame_range": [
+      41,
+      70
+    ],
+    "first_frame_seconds": 2.0310000000026776,
+    "timeout": false,
+    "requested_measure_seconds": 0.0,
+    "metadata_seconds": 3.2180000000007567,
+    "fast_seek_streams": 12,
+    "decode_dimensions_known": 24,
+    "extract_run_p90_seconds": 0.09823499999999896,
+    "stitch_average_seconds": 1.29356114,
+    "warmup_frames": 10,
+    "rss_peak_entire_run_mib": 1561.0,
+    "pacing_stats": {
+      "period": 0.31008866213902814,
+      "pending": [
+        87,
+        88,
+        89,
+        90
+      ],
+      "samples": [
+        [
+          5.732715,
+          10
+        ],
+        [
+          1.2506924000000001,
+          10
+        ],
+        [
+          1.4462694999999997,
+          10
+        ],
+        [
+          4.097174600000001,
+          10
+        ],
+        [
+          0.3600789000000013,
+          10
+        ],
+        [
+          2.5079130999999997,
+          10
+        ]
+      ],
+      "prediction": {
+        "reason": "measured-supply",
+        "buffered": 15,
+        "production_period": 0.31008866213902814,
+        "next_eta": 0.15115305000000046
+      }
+    },
+    "pipeline_stats": {
+      "native_decoder_opens": 24,
+      "native_decoded_frames": 4392,
+      "native_seeks": 60,
+      "native_fallback_paths": 0,
+      "pixel_cache_bytes": 268336080,
+      "pixel_cache_limit": 268435456,
+      "decoder_state_limit": 1073741824,
+      "active_stage_counts": [
+        1,
+        4
+      ],
+      "admission": {
+        "limit": 22,
+        "ceiling": 22,
+        "best": 22,
+        "period": null,
+        "reason": "warmup",
+        "history": []
+      },
+      "effective_cpu_budget": 22
+    },
+    "source_hashes": {
+      "src/mulimgviewer/src/main.py": "0ab3a1fd6fdb1ec403be4d2ee2d35eb235a783b6a54c9697fc3e4a47fb9f6907",
+      "src/mulimgviewer/src/thread_optimizer.py": "9a302e3ec4b81b15b90ba9c3c1e583f13b7a0d9a52626be71a44d6d65cc89791",
+      "src/mulimgviewer/src/playback_pacer.py": "ae2731563bed80aa1bae08a25c27a612159dee820c4911cfe6dc45a1477afca3",
+      "src/mulimgviewer/src/utils_img.py": "fafa11a9e1d00faae64a5acb7f02bb40d16ff5297bb10fca730548a28b3a4beb",
+      "src/mulimgviewer/src/pipeline_executor.py": "e0ec56d69b64e80ef366fd177e7560c0d61f0359879b7888f0b13aeafc391ae0",
+      "src/mulimgviewer/src/video_decoder.py": "4446fca4a5d25e3937c3e487f0724f0fb9fff4cf6c14ae28d8435cb038c0cba6",
+      "src/mulimgviewer/src/video_memory.py": "582c8212be01b8100791b7979964a3d07b0a275affb048f56a312cc16deef940",
+      "src/mulimgviewer/src/admission_optimizer.py": "a0dd27bd68c8062a916298f8879a24cccf713df834e13ce40b887330194c00ac"
+    },
+    "final_pending_wait_ms": 0.0,
+    "output_size": [
+      1930,
+      818
+    ],
+    "final_allocation": [
+      20,
+      2
+    ],
+    "allocation_samples": [
+      [
+        37893.656,
+        21,
+        1,
+        0.21,
+        10,
+        {
+          "extract": 21,
+          "stitch": 1,
+          "estimated_period": 1.978792725,
+          "reason": "raw-buffer-low",
+          "stitch_task_limit": 41,
+          "raw_buffer": 5,
+          "stitched_buffer": 10,
+          "stitched_levels": [
+            12,
+            5,
+            17,
+            18
+          ],
+          "raw_levels": [
+            8,
+            5,
+            8,
+            8
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37893.875,
+        21,
+        1,
+        0.21,
+        9,
+        {
+          "extract": 21,
+          "stitch": 1,
+          "estimated_period": 1.978792725,
+          "reason": "raw-buffer-low",
+          "stitch_task_limit": 41,
+          "raw_buffer": 5,
+          "stitched_buffer": 10,
+          "stitched_levels": [
+            12,
+            5,
+            17,
+            18
+          ],
+          "raw_levels": [
+            8,
+            5,
+            8,
+            8
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37894.125,
+        21,
+        1,
+        0.222,
+        9,
+        {
+          "extract": 21,
+          "stitch": 1,
+          "estimated_period": 1.1027252,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 41,
+          "raw_buffer": 6,
+          "stitched_buffer": 9,
+          "stitched_levels": [
+            11,
+            5,
+            16,
+            19
+          ],
+          "raw_levels": [
+            10,
+            5,
+            10,
+            10
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37894.343,
+        21,
+        1,
+        0.21,
+        10,
+        {
+          "extract": 21,
+          "stitch": 1,
+          "estimated_period": 1.1027252,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 41,
+          "raw_buffer": 5,
+          "stitched_buffer": 9,
+          "stitched_levels": [
+            11,
+            5,
+            16,
+            18
+          ],
+          "raw_levels": [
+            9,
+            5,
+            9,
+            9
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37894.562,
+        21,
+        1,
+        0.21,
+        9,
+        {
+          "extract": 21,
+          "stitch": 1,
+          "estimated_period": 1.1027252,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 41,
+          "raw_buffer": 5,
+          "stitched_buffer": 9,
+          "stitched_levels": [
+            11,
+            5,
+            16,
+            18
+          ],
+          "raw_levels": [
+            9,
+            5,
+            9,
+            9
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37894.781,
+        21,
+        1,
+        0.21,
+        9,
+        {
+          "extract": 21,
+          "stitch": 1,
+          "estimated_period": 1.1027252,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 41,
+          "raw_buffer": 4,
+          "stitched_buffer": 10,
+          "stitched_levels": [
+            11,
+            5,
+            16,
+            20
+          ],
+          "raw_levels": [
+            10,
+            5,
+            10,
+            10
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37895.0,
+        21,
+        1,
+        0.222,
+        8,
+        {
+          "extract": 21,
+          "stitch": 1,
+          "estimated_period": 1.1027252,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 41,
+          "raw_buffer": 6,
+          "stitched_buffer": 9,
+          "stitched_levels": [
+            11,
+            5,
+            16,
+            20
+          ],
+          "raw_levels": [
+            10,
+            5,
+            11,
+            11
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37895.218,
+        21,
+        1,
+        0.234,
+        7,
+        {
+          "extract": 21,
+          "stitch": 1,
+          "estimated_period": 1.1027252,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 41,
+          "raw_buffer": 7,
+          "stitched_buffer": 8,
+          "stitched_levels": [
+            11,
+            5,
+            16,
+            20
+          ],
+          "raw_levels": [
+            10,
+            5,
+            12,
+            12
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37895.437,
+        21,
+        1,
+        0.248,
+        7,
+        {
+          "extract": 21,
+          "stitch": 1,
+          "estimated_period": 1.1027252,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 41,
+          "raw_buffer": 10,
+          "stitched_buffer": 7,
+          "stitched_levels": [
+            10,
+            5,
+            15,
+            20
+          ],
+          "raw_levels": [
+            10,
+            5,
+            13,
+            13
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37895.656,
+        21,
+        1,
+        0.248,
+        6,
+        {
+          "extract": 21,
+          "stitch": 1,
+          "estimated_period": 1.1027252,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 41,
+          "raw_buffer": 11,
+          "stitched_buffer": 6,
+          "stitched_levels": [
+            10,
+            5,
+            15,
+            20
+          ],
+          "raw_levels": [
+            10,
+            5,
+            14,
+            14
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37895.875,
+        21,
+        1,
+        0.222,
+        9,
+        {
+          "extract": 21,
+          "stitch": 1,
+          "estimated_period": 1.1027252,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 41,
+          "raw_buffer": 11,
+          "stitched_buffer": 6,
+          "stitched_levels": [
+            10,
+            5,
+            15,
+            20
+          ],
+          "raw_levels": [
+            10,
+            5,
+            14,
+            14
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37896.109,
+        21,
+        1,
+        0.222,
+        8,
+        {
+          "extract": 21,
+          "stitch": 1,
+          "estimated_period": 1.1027252,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 41,
+          "raw_buffer": 11,
+          "stitched_buffer": 6,
+          "stitched_levels": [
+            10,
+            5,
+            15,
+            20
+          ],
+          "raw_levels": [
+            10,
+            5,
+            14,
+            14
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37896.328,
+        21,
+        1,
+        0.234,
+        8,
+        {
+          "extract": 20,
+          "stitch": 2,
+          "estimated_period": 0.6194682583333334,
+          "reason": "ready-capacity",
+          "stitch_task_limit": 41,
+          "raw_buffer": 10,
+          "stitched_buffer": 8,
+          "stitched_levels": [
+            11,
+            5,
+            16,
+            19
+          ],
+          "raw_levels": [
+            10,
+            5,
+            11,
+            11
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37896.546,
+        21,
+        1,
+        0.248,
+        7,
+        {
+          "extract": 20,
+          "stitch": 2,
+          "estimated_period": 0.6194682583333334,
+          "reason": "ready-capacity",
+          "stitch_task_limit": 41,
+          "raw_buffer": 10,
+          "stitched_buffer": 8,
+          "stitched_levels": [
+            11,
+            5,
+            16,
+            19
+          ],
+          "raw_levels": [
+            10,
+            5,
+            11,
+            11
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37896.781,
+        21,
+        1,
+        0.248,
+        6,
+        {
+          "extract": 20,
+          "stitch": 2,
+          "estimated_period": 0.6194682583333334,
+          "reason": "ready-capacity",
+          "stitch_task_limit": 41,
+          "raw_buffer": 10,
+          "stitched_buffer": 8,
+          "stitched_levels": [
+            11,
+            5,
+            16,
+            19
+          ],
+          "raw_levels": [
+            10,
+            5,
+            11,
+            11
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37897.0,
+        21,
+        1,
+        0.263,
+        5,
+        {
+          "extract": 21,
+          "stitch": 1,
+          "estimated_period": 1.2389365166666668,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 41,
+          "raw_buffer": 11,
+          "stitched_buffer": 6,
+          "stitched_levels": [
+            10,
+            5,
+            15,
+            20
+          ],
+          "raw_levels": [
+            10,
+            5,
+            14,
+            14
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37897.218,
+        20,
+        2,
+        0.207,
+        11,
+        {
+          "extract": 20,
+          "stitch": 2,
+          "estimated_period": 0.6194682583333334,
+          "reason": "stitch-buffer-low",
+          "stitch_task_limit": 41,
+          "raw_buffer": 13,
+          "stitched_buffer": 5,
+          "stitched_levels": [
+            10,
+            5,
+            15,
+            20
+          ],
+          "raw_levels": [
+            10,
+            5,
+            15,
+            15
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37897.437,
+        20,
+        2,
+        0.207,
+        13,
+        {
+          "extract": 20,
+          "stitch": 2,
+          "estimated_period": 0.6194682583333334,
+          "reason": "stitch-buffer-low",
+          "stitch_task_limit": 41,
+          "raw_buffer": 13,
+          "stitched_buffer": 5,
+          "stitched_levels": [
+            10,
+            5,
+            15,
+            20
+          ],
+          "raw_levels": [
+            10,
+            5,
+            15,
+            15
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37897.656,
+        20,
+        2,
+        0.207,
+        13,
+        {
+          "extract": 20,
+          "stitch": 2,
+          "estimated_period": 0.6194682583333334,
+          "reason": "stitch-buffer-low",
+          "stitch_task_limit": 41,
+          "raw_buffer": 13,
+          "stitched_buffer": 5,
+          "stitched_levels": [
+            10,
+            5,
+            15,
+            20
+          ],
+          "raw_levels": [
+            10,
+            5,
+            15,
+            15
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37897.89,
+        20,
+        2,
+        0.207,
+        13,
+        {
+          "extract": 20,
+          "stitch": 2,
+          "estimated_period": 0.6194682583333334,
+          "reason": "stitch-buffer-low",
+          "stitch_task_limit": 41,
+          "raw_buffer": 13,
+          "stitched_buffer": 5,
+          "stitched_levels": [
+            10,
+            5,
+            15,
+            20
+          ],
+          "raw_levels": [
+            10,
+            5,
+            15,
+            15
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37898.109,
+        20,
+        2,
+        0.207,
+        12,
+        {
+          "extract": 18,
+          "stitch": 4,
+          "estimated_period": 0.49469818125,
+          "reason": "ready-capacity",
+          "stitch_task_limit": 41,
+          "raw_buffer": 7,
+          "stitched_buffer": 12,
+          "stitched_levels": [
+            10,
+            5,
+            15,
+            20
+          ],
+          "raw_levels": [
+            8,
+            5,
+            8,
+            8
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37898.343,
+        20,
+        2,
+        0.202,
+        11,
+        {
+          "extract": 18,
+          "stitch": 4,
+          "estimated_period": 0.49469818125,
+          "reason": "ready-capacity",
+          "stitch_task_limit": 41,
+          "raw_buffer": 7,
+          "stitched_buffer": 11,
+          "stitched_levels": [
+            10,
+            5,
+            15,
+            19
+          ],
+          "raw_levels": [
+            8,
+            5,
+            8,
+            8
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37898.562,
+        20,
+        2,
+        0.202,
+        14,
+        {
+          "extract": 18,
+          "stitch": 4,
+          "estimated_period": 0.49469818125,
+          "reason": "ready-capacity",
+          "stitch_task_limit": 41,
+          "raw_buffer": 7,
+          "stitched_buffer": 11,
+          "stitched_levels": [
+            10,
+            5,
+            15,
+            19
+          ],
+          "raw_levels": [
+            8,
+            5,
+            8,
+            8
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37898.765,
+        21,
+        1,
+        0.197,
+        14,
+        {
+          "extract": 21,
+          "stitch": 1,
+          "estimated_period": 1.6837725833333332,
+          "reason": "raw-buffer-low",
+          "stitch_task_limit": 41,
+          "raw_buffer": 4,
+          "stitched_buffer": 14,
+          "stitched_levels": [
+            10,
+            5,
+            15,
+            20
+          ],
+          "raw_levels": [
+            6,
+            5,
+            6,
+            6
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37898.984,
+        21,
+        1,
+        0.197,
+        15,
+        {
+          "extract": 21,
+          "stitch": 1,
+          "estimated_period": 1.2567102416666664,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 41,
+          "raw_buffer": 4,
+          "stitched_buffer": 15,
+          "stitched_levels": [
+            10,
+            5,
+            15,
+            20
+          ],
+          "raw_levels": [
+            5,
+            5,
+            5,
+            5
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37899.218,
+        21,
+        1,
+        0.197,
+        15,
+        {
+          "extract": 21,
+          "stitch": 1,
+          "estimated_period": 1.2567102416666664,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 41,
+          "raw_buffer": 4,
+          "stitched_buffer": 15,
+          "stitched_levels": [
+            10,
+            5,
+            15,
+            20
+          ],
+          "raw_levels": [
+            5,
+            5,
+            5,
+            5
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37899.437,
+        21,
+        1,
+        0.197,
+        14,
+        {
+          "extract": 21,
+          "stitch": 1,
+          "estimated_period": 1.2567102416666664,
+          "reason": "hold-buffer-priority",
+          "stitch_task_limit": 41,
+          "raw_buffer": 4,
+          "stitched_buffer": 15,
+          "stitched_levels": [
+            10,
+            5,
+            15,
+            20
+          ],
+          "raw_levels": [
+            5,
+            5,
+            5,
+            5
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37899.656,
+        21,
+        1,
+        0.188,
+        13,
+        {
+          "extract": 20,
+          "stitch": 2,
+          "estimated_period": 0.6283551208333332,
+          "reason": "ready-capacity",
+          "stitch_task_limit": 41,
+          "raw_buffer": 6,
+          "stitched_buffer": 13,
+          "stitched_levels": [
+            10,
+            5,
+            15,
+            20
+          ],
+          "raw_levels": [
+            7,
+            5,
+            7,
+            7
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37899.875,
+        21,
+        1,
+        0.188,
+        12,
+        {
+          "extract": 20,
+          "stitch": 2,
+          "estimated_period": 0.6283551208333332,
+          "reason": "ready-capacity",
+          "stitch_task_limit": 41,
+          "raw_buffer": 6,
+          "stitched_buffer": 13,
+          "stitched_levels": [
+            10,
+            5,
+            15,
+            20
+          ],
+          "raw_levels": [
+            7,
+            5,
+            7,
+            7
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37900.093,
+        21,
+        1,
+        0.177,
+        14,
+        {
+          "extract": 20,
+          "stitch": 2,
+          "estimated_period": 0.6283551208333332,
+          "reason": "ready-capacity",
+          "stitch_task_limit": 41,
+          "raw_buffer": 6,
+          "stitched_buffer": 13,
+          "stitched_levels": [
+            10,
+            5,
+            15,
+            20
+          ],
+          "raw_levels": [
+            7,
+            5,
+            7,
+            7
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37900.328,
+        21,
+        1,
+        0.188,
+        14,
+        {
+          "extract": 20,
+          "stitch": 2,
+          "estimated_period": 0.5981989749999999,
+          "reason": "ready-capacity",
+          "stitch_task_limit": 41,
+          "raw_buffer": 6,
+          "stitched_buffer": 14,
+          "stitched_levels": [
+            10,
+            5,
+            15,
+            20
+          ],
+          "raw_levels": [
+            6,
+            5,
+            6,
+            6
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37900.546,
+        21,
+        1,
+        0.188,
+        14,
+        {
+          "extract": 20,
+          "stitch": 2,
+          "estimated_period": 0.5981989749999999,
+          "reason": "ready-capacity",
+          "stitch_task_limit": 41,
+          "raw_buffer": 6,
+          "stitched_buffer": 14,
+          "stitched_levels": [
+            10,
+            5,
+            15,
+            20
+          ],
+          "raw_levels": [
+            6,
+            5,
+            6,
+            6
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37900.765,
+        21,
+        1,
+        0.188,
+        14,
+        {
+          "extract": 20,
+          "stitch": 2,
+          "estimated_period": 0.5981989749999999,
+          "reason": "ready-capacity",
+          "stitch_task_limit": 41,
+          "raw_buffer": 6,
+          "stitched_buffer": 14,
+          "stitched_levels": [
+            10,
+            5,
+            15,
+            20
+          ],
+          "raw_levels": [
+            6,
+            5,
+            6,
+            6
+          ],
+          "cpu_headroom": true
+        }
+      ],
+      [
+        37900.984,
+        20,
+        2,
+        0.189,
+        15,
+        {
+          "extract": 20,
+          "stitch": 2,
+          "estimated_period": 0.5816076291666666,
+          "reason": "ready-capacity",
+          "stitch_task_limit": 41,
+          "raw_buffer": 5,
+          "stitched_buffer": 15,
+          "stitched_levels": [
+            10,
+            5,
+            15,
+            20
+          ],
+          "raw_levels": [
+            5,
+            5,
+            5,
+            5
+          ],
+          "cpu_headroom": true
+        }
+      ]
+    ],
+    "paints": [
+      [
+        41,
+        37893.875
+      ],
+      [
+        42,
+        37894.125
+      ],
+      [
+        43,
+        37894.343
+      ],
+      [
+        44,
+        37894.593
+      ],
+      [
+        45,
+        37894.875
+      ],
+      [
+        46,
+        37895.125
+      ],
+      [
+        47,
+        37895.406
+      ],
+      [
+        48,
+        37895.64
+      ],
+      [
+        49,
+        37895.906
+      ],
+      [
+        50,
+        37896.234
+      ],
+      [
+        51,
+        37896.515
+      ],
+      [
+        52,
+        37896.843
+      ],
+      [
+        53,
+        37897.078
+      ],
+      [
+        54,
+        37897.312
+      ],
+      [
+        55,
+        37897.562
+      ],
+      [
+        56,
+        37897.906
+      ],
+      [
+        57,
+        37898.093
+      ],
+      [
+        58,
+        37898.312
+      ],
+      [
+        59,
+        37898.562
+      ],
+      [
+        60,
+        37898.75
+      ],
+      [
+        61,
+        37898.968
+      ],
+      [
+        62,
+        37899.218
+      ],
+      [
+        63,
+        37899.359
+      ],
+      [
+        64,
+        37899.64
+      ],
+      [
+        65,
+        37899.875
+      ],
+      [
+        66,
+        37900.093
+      ],
+      [
+        67,
+        37900.296
+      ],
+      [
+        68,
+        37900.593
+      ],
+      [
+        69,
+        37900.875
+      ],
+      [
+        70,
+        37901.062
+      ]
+    ],
+    "latest_status": "",
+    "sequence_results": [],
+    "experiment": {
+      "baseline_hotpath": false,
+      "fixed_admission": false,
+      "fixed_plan": null
+    },
+    "probe": null,
+    "png_sha256": "7abe60cc8b0570654a61c8d808e6db69437d820df33e4c55432e1c041ccfbfb7"
+  }
+}

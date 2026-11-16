@@ -464,7 +464,11 @@ class VideoGuiAsyncTests(unittest.TestCase):
 
     def test_resolved_video_tools_decode_without_inherited_path(self):
         vm = self.frame.video_manager
-        with patch.dict(os.environ, PATH=''):
+        # Discover this installation first. CI may use Chocolatey or a system
+        # package rather than Conda; explicit absolute overrides model an IDE
+        # with no inherited PATH on every supported installation layout.
+        tools,_=resolve_video_tools()
+        with patch.dict(os.environ, PATH='',FFMPEG_BINARY=tools['ffmpeg'],FFPROBE_BINARY=tools['ffprobe']):
             vm._video_tools, vm._video_tools_env = resolve_video_tools()
             self.assertTrue(Path(vm._video_command('ffmpeg')).is_absolute())
             fps, total = vm._get_meta(self.frame.shared_config.real_video_path[0])

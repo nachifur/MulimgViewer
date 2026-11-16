@@ -37,6 +37,8 @@ xvfb-run -a python auto_test_scripts/run_tests.py
 
 结果分为 `PASSED`、`PASSED_WITH_SKIPS`、`FAILED`。失败、环境错误、超时、进程崩溃、后台未捕获异常和空案例选择均不能得到通过报告。`--strict-skips` 要求零跳过，CI 默认启用。报告区分 unittest 方法数与方法内的参数子案例数；不能把它们相加宣称为独立端到端工作流数。
 
+控制台也会直接输出失败案例名称及异常摘要，完整堆栈仍保存在报告中。`report.json` 的 `environment` 记录 Python 依赖版本、FFmpeg/FFprobe 版本、逻辑 CPU 数和临时目录，便于比较本地与 CI 环境。GitHub Windows runner 常使用 `RUNNER~1` 这样的短路径；缓存清理允许父目录的等价路径写法，但仍拒绝链接形式的缓存根目录和被替换的缓存目录。拆帧使用 `fps_mode=passthrough`，兼容已移除 `vsync` 的现代 FFmpeg。
+
 提交 PR 时，在最新代码上运行全量测试，附上 CI 的 **Functional regression report** 工作流/产物链接，或将 HTML、JSON、JUnit 和日志打包附上。`.github/PULL_REQUEST_TEMPLATE.md` 提供检查项。工作流会在 PR 自动运行，并在成功和失败时均上传报告；不会自动评论或向他人发送消息。需要管理员在仓库分支保护中将 `windows-regression` 设为必需检查，才能强制阻止失败 PR 合并；本次没有修改远程仓库设置。
 
 审查时核对报告的提交 SHA/源码指纹、完整功能分组、失败/跳过和未执行项，不接受仅运行部分案例作为全量通过的证据。不要只看截图或一行“通过”。`baseline/verified.json` 是本次整理时的本地验证记录，不替代未来 PR 自己的报告。CI 工作流目前覆盖 Windows；Linux/macOS 可运行同一入口，但这里不宣称已在未实测的平台通过。

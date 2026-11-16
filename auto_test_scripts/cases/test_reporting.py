@@ -17,6 +17,14 @@ import run_tests
 
 
 class ReportingTests(unittest.TestCase):
+    def test_console_summary_includes_case_id_and_exception_reason(self):
+        module=dict(name='probe',status='failed',cases=[dict(id='probe.test_case',status='error',
+            details='Traceback (most recent call last):\nValueError: short-path probe')])
+        output=io.StringIO()
+        with patch('sys.stdout',output):run_tests.print_module_result(module)
+        self.assertIn('probe.test_case',output.getvalue())
+        self.assertIn('ValueError: short-path probe',output.getvalue())
+
     def test_failed_subcase_is_visible_in_json_html_and_junit(self):
         class Probe(unittest.TestCase):
             def runTest(self):

@@ -327,17 +327,21 @@ class IndexTable(IndexTableGui):
         if getattr(self, '_closed', False) or not self:
             return
         panel = self.m_search_txt.GetParent()
-        if isinstance(panel, wx.ScrolledWindow) and panel.GetSizer() is not None:
+        if panel.GetSizer() is not None:
             if not hasattr(panel, '_fbp_min_height'):
                 panel._fbp_min_height = panel.GetMinSize().height
             row = panel.GetSizer().GetMinSize()
-            needs_scroll = row.width > panel.GetClientSize().width
+            needs_scroll = isinstance(panel,wx.ScrolledWindow) and row.width > panel.GetClientSize().width
             scrollbar = max(0, wx.SystemSettings.GetMetric(wx.SYS_HSCROLL_Y, panel)) if needs_scroll else 0
-            required = max(panel._fbp_min_height, row.height + scrollbar)
+            # Native control metrics can change after the first layout (font,
+            # DPI, wx version). WrapSizer's cached minimum can then be too low.
+            content=max([row.height]+[item.GetWindow().GetRect().GetBottom()+item.GetBorder()+1
+                for item in panel.GetSizer().GetChildren() if item.GetWindow() and item.IsShown()])
+            required = max(panel._fbp_min_height, content + scrollbar)
             if panel.GetMinSize().height != required:
                 panel.SetMinSize((panel.GetMinSize().width, required))
                 self.Layout()
-            panel.FitInside()
+            if isinstance(panel,wx.ScrolledWindow):panel.FitInside()
         root = self.GetSizer()
         if root is not None:
             if not hasattr(self, '_fbp_index_min_height'):

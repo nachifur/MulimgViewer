@@ -95,7 +95,8 @@ class DependencyTests(unittest.TestCase):
         self.assertNotIn('Traceback',result.stderr)
 
     def test_ready_composition_can_borrow_above_legacy_coordinator_quota(self):
-        group=PipelineWorkers(3,1)
+        with patch('mulimgviewer.src.pipeline_executor.os.cpu_count',return_value=2):
+            group=PipelineWorkers(3,1)
         group.configure(3,1,total_budget=4)
         gate=threading.Event();all_started=threading.Event();lock=threading.Lock();started=[]
         def compose():

@@ -55,6 +55,26 @@ class ShutdownTests(unittest.TestCase):
 
 
 class StartupTests(unittest.TestCase):
+    def test_parent_alias_is_normalized_for_startup_and_shutdown(self):
+        with tempfile.TemporaryDirectory() as directory:
+            parent=Path(directory);(parent/'alias').mkdir()
+            aliases=[('dot segments',parent/'alias'/'..'/'cache_frames')]
+            if sys.platform=='win32':
+                import ctypes
+                buffer=ctypes.create_unicode_buffer(32768)
+                if ctypes.windll.kernel32.GetShortPathNameW(str(parent),buffer,len(buffer)):
+                    requested=Path(buffer.value)/'cache_frames'
+                    if requested.absolute()!=requested.resolve():aliases.append(('native Windows 8.3',requested))
+            for kind,requested in aliases:
+                with self.subTest(alias=kind):
+                    root=parent/'cache_frames';root.mkdir()
+                    (root/'old.png').write_bytes(b'old')
+                    self.assertNotEqual(requested.absolute(),requested.resolve())
+                    self.assertTrue(clear_cache_on_startup(requested));self.assertFalse(root.exists())
+                    root.mkdir();(root/'new.png').write_bytes(b'new')
+                    schedule_cache_removal(requested).result(timeout=5)
+                    self.assertFalse(root.exists());self.assertTrue((parent/'alias').is_dir())
+
     def test_startup_removes_all_stale_layers_and_preserves_neighbors(self):
         with tempfile.TemporaryDirectory() as directory:
             root=Path(directory)/'cache_frames'

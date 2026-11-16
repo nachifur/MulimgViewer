@@ -169,7 +169,7 @@ class ExportDecoder:
         expression=f'between(n,{first*step},{last*step})*not(mod(n,{step}))'
         command=[tools['ffmpeg'],'-nostdin','-hide_banner','-loglevel','error','-threads','1',
             '-i',str(path),'-vf',f'select={expression.replace(chr(44),chr(92)+chr(44))}',
-            '-vsync','0','-threads','1','-frames:v',str(last-first+1),'-start_number',str(first),
+            '-fps_mode','passthrough','-threads','1','-frames:v',str(last-first+1),'-start_number',str(first),
             *(['-c:v','png','-pix_fmt','rgb24','-compression_level','1'] if extension=='png' else ['-q:v','2']),str(pattern)]
         flags=getattr(subprocess,'CREATE_NO_WINDOW',0)
         with TemporaryFile() as errors:

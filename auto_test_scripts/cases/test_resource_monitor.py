@@ -70,7 +70,10 @@ class ResourceMonitorTests(unittest.TestCase):
 
     def test_short_lived_child_cpu_is_counted_after_exit(self):
         before = CHILD_CPU.total([])
-        result = run_video_process([sys.executable, '-c',
+        # Windows venv python.exe can be a redirector whose own CPU is zero;
+        # measure the actual interpreter, as we measure a direct FFmpeg binary.
+        interpreter=getattr(sys,'_base_executable',None) or sys.executable
+        result = run_video_process([interpreter, '-c',
             'print(sum(i*i for i in range(2000000)))'], capture_output=True,
             encoding='utf-8', check=True)
         self.assertEqual(result.returncode, 0)

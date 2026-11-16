@@ -5,6 +5,19 @@ import shutil
 import time
 
 
+def _cache_root(root):
+    """Expand parent aliases (including Windows 8.3 names), reject a linked root."""
+    requested=Path(root).absolute()
+    if requested.name!='cache_frames' or requested.is_symlink():
+        raise ValueError('Cache cleanup target must be the actual cache_frames directory')
+    # TEMP can be C:\Users\RUNNER~1 while resolve() spells runneradmin. Resolve
+    # only the parent first: resolving the root itself would hide a root link.
+    canonical=requested.parent.resolve()/requested.name
+    if canonical.is_symlink() or canonical.resolve()!=canonical:
+        raise ValueError('Cache cleanup target must be the actual cache_frames directory')
+    return canonical
+
+
 def clear_cache_on_startup(root):
     """Remove stale layers synchronously BEFORE creating any cache producers.
 
@@ -12,9 +25,7 @@ def clear_cache_on_startup(root):
     cleaned tree. Only the literal, non-linked cache_frames root is eligible.
     """
     import stat
-    root=Path(root).absolute()
-    if root.name!='cache_frames' or root.is_symlink() or root.resolve()!=root:
-        raise ValueError('Startup cleanup target must be the actual cache_frames directory')
+    root=_cache_root(root)
     try:
         info=root.lstat()
     except FileNotFoundError:
@@ -41,9 +52,7 @@ def clear_cache_on_startup(root):
 
 
 def schedule_cache_removal(root,pools=(),futures=()):
-    root=Path(root).absolute()
-    if root.name!='cache_frames' or root.resolve()!=root:
-        raise ValueError('Cache cleanup target must be the actual cache_frames directory')
+    root=_cache_root(root)
     try:
         info=root.stat();identity=(info.st_dev,info.st_ino)
     except FileNotFoundError:identity=None

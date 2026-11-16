@@ -50,7 +50,7 @@ class VideoToolTests(unittest.TestCase):
             tools, env = resolve_video_tools()
             self.assertEqual(os.environ['PATH'], '')
         self.assertEqual(tools, expected)
-        self.assertIn(str(directory), env['PATH'])
+        self.assertIn(directory.resolve(), [Path(p).resolve() for p in env['PATH'].split(os.pathsep) if p])
 
     def test_conda_cache_restores_lookup_for_missing_environment_executable(self):
         expected = dict(ffprobe=self.command(self.prefix / 'Library' / 'bin', 'ffprobe'))
@@ -62,7 +62,7 @@ class VideoToolTests(unittest.TestCase):
         with patch('sys.prefix', str(self.prefix)), self.environment():
             tools, env = resolve_video_tools()
         self.assertEqual(tools, expected)
-        self.assertIn(str(directory), env['PATH'])
+        self.assertIn(directory.resolve(), [Path(p).resolve() for p in env['PATH'].split(os.pathsep) if p])
 
     def test_path_has_priority_over_package_cache(self):
         directory = self.root / 'preferred'

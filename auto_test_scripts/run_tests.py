@@ -4,12 +4,14 @@ from datetime import datetime, timezone
 import fnmatch
 import hashlib
 import importlib
+import importlib.metadata
 import json
 import os
 from pathlib import Path
 import platform
 import subprocess
 import sys
+import tempfile
 import time
 
 HOME = Path(__file__).resolve().parent
@@ -66,6 +68,17 @@ def terminate_tree(process):
     process.wait()
 
 
+def print_module_result(module):
+    """Expose actionable failures in CI without requiring an artifact download."""
+    print('  '+module['status'].upper()+f" ({len(module['cases'])} cases)", flush=True)
+    failures=[(case['id'],case['details']) for case in module['cases'] if case['status'] in ('failed','error')]
+    if module.get('infrastructure_error'):failures.insert(0,('infrastructure',module['infrastructure_error']))
+    for name,detail in failures[:3]:
+        reason=' | '.join(line.strip() for line in detail.strip().splitlines()[-3:] if line.strip())[:1200]
+        print(f'    {name}: {reason}',flush=True)
+    if len(failures)>3:print(f'    ... {len(failures)-3} additional failures; see {module["name"]}.log',flush=True)
+
+
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--module', action='append', default=[], help='Module name/glob; repeat to select several')
@@ -101,6 +114,11 @@ def main():
         report['modules'].append(dict(name='environment',status='failed',cases=[],infrastructure_error=str(error)))
         print('ENVIRONMENT ERROR:',error)
     else:
+        report['environment']=dict(logical_cpus=os.cpu_count(),temporary_directory=tempfile.gettempdir(),
+            packages={name:importlib.metadata.version(name) for name in
+                ('Pillow','wxPython','av','numpy','psutil','reportlab','ffmpeg-python','XlsxWriter')},
+            tool_versions={name:subprocess.check_output([path,'-version'],env=env).decode('utf-8',errors='replace').splitlines()[0]
+                for name,path in report['tools'].items()})
         for index,name in enumerate(modules,1):
             print(f'[{index}/{len(modules)}] {name}', flush=True)
             target=output/(name+'.json')
@@ -125,7 +143,7 @@ def main():
                 elif not module.get('infrastructure_error') and not any(r['status'] in ('failed','error') for r in module['cases']):
                     module['infrastructure_error']=f'Worker exit code {code}; inspect {name}.log'
             report['modules'].append(module)
-            print('  '+module['status'].upper()+f" ({len(module['cases'])} cases)", flush=True)
+            print_module_result(module)
             report['seconds']=round(time.monotonic()-started,3)
             write_reports(output,report)  # Retain partial results if the next module crashes.
     final_revision=revision()
@@ -153,4 +171,6 @@ def main():
     return 1 if failed else 0
 
 
-if __name__=='__main__':sys.exit(main())
+if __name__=='__main__':
+    if hasattr(sys.stdout,'reconfigure'):sys.stdout.reconfigure(encoding='utf-8',errors='backslashreplace')
+    sys.exit(main())

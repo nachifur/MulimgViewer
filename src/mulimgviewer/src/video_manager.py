@@ -2461,7 +2461,7 @@ class VideoManager:
                     if step > 1:
                         cmd.extend(["-vf", f"select=not(mod(n\\,{step}))"])
                     cmd.extend([
-                        "-vsync", "0", "-frames:v", str(e - s + 1),
+                        "-fps_mode", "passthrough", "-frames:v", str(e - s + 1),
                         "-threads:v", "1",
                         *(["-c:v","png","-pix_fmt","rgb24","-compression_level","1"] if cache_extension(config)=="png" else ["-q:v","6"]), "-start_number", str(s), "-y", tmp_tpl,
                     ])
@@ -2512,7 +2512,7 @@ class VideoManager:
                         if has_ffmpeg_input:
                             cmd = (
                                 stream
-                                .output(tmp_tpl, vsync='vfr', vframes=e - s + 1, threads=1, **({'vcodec':'png','pix_fmt':'rgb24','compression_level':1} if cache_extension(config)=='png' else {'q:v':6}), start_number=s)
+                                .output(tmp_tpl, fps_mode='passthrough', vframes=e - s + 1, threads=1, **({'vcodec':'png','pix_fmt':'rgb24','compression_level':1} if cache_extension(config)=='png' else {'q:v':6}), start_number=s)
                                 .global_args('-threads', '1', '-hide_banner', '-loglevel', 'error')
                                 .overwrite_output()
                                 .compile(cmd=self._video_command('ffmpeg'))
@@ -2528,7 +2528,7 @@ class VideoManager:
                                 self._video_command('ffmpeg'), '-hide_banner', '-loglevel', 'error',
                                 '-threads', '1', '-i', str(video_path), '-map', '0:v:0',
                                 '-vf', 'select=' + sel.replace(',', r'\,'),
-                                '-vsync', '0', '-frames:v', str(e - s + 1),
+                                '-fps_mode', 'passthrough', '-frames:v', str(e - s + 1),
                                 '-threads:v', '1',
                                 *(['-c:v','png','-pix_fmt','rgb24','-compression_level','1'] if cache_extension(config)=='png' else ['-q:v','6']), '-start_number', str(s), '-y', tmp_tpl,
                             ]

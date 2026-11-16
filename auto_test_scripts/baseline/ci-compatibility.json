@@ -1,0 +1,47 @@
+{
+  "status": "PASSED",
+  "python": "3.11.18 (main, Nov 11 2026, 00:17:57) [MSC v.1944 64 bit (AMD64)]",
+  "platform": "Windows-10-10.0.26300-SP0",
+  "action_run_diagnosed": "https://github.com/nachifur/MulimgViewer/actions/runs/43787466735",
+  "validation": "Local CI-like reproduction: Python 3.11, current dependencies, FFmpeg 9.0.2, real Windows 8.3 TEMP/TMP; no remote Action rerun yet.",
+  "seconds": 262.297,
+  "modules": 31,
+  "test_methods": 523,
+  "subcases": 865,
+  "failed": 0,
+  "skipped": 0,
+  "revision": {
+    "commit": "497bf52a568951f59d736ae2a90dda25b16630da",
+    "dirty": true,
+    "changes": "M .github/workflows/regression-tests.yml\n M auto_test_scripts/README.md\n M auto_test_scripts/cases/test_cache_shutdown.py\n M auto_test_scripts/cases/test_dependency_scheduler.py\n M auto_test_scripts/cases/test_reporting.py\n M auto_test_scripts/cases/test_resource_monitor.py\n M auto_test_scripts/cases/test_video_cache.py\n M auto_test_scripts/cases/test_video_gui_async.py\n M auto_test_scripts/cases/test_video_tools.py\n M auto_test_scripts/run_tests.py\n M src/mulimgviewer/src/cache_shutdown.py\n M src/mulimgviewer/src/export_async.py\n M src/mulimgviewer/src/index_table.py\n M src/mulimgviewer/src/pipeline_executor.py\n M src/mulimgviewer/src/video_manager.py\n?? docs/auto-window-layout.md\n?? docs/cache-quality-and-export.md\n?? docs/code-structure.md\n?? docs/configuration.md\n?? docs/custom-functions.md\n?? docs/custom-pipeline-design.md\n?? docs/dependency-scheduling.md\n?? docs/export-selection.md\n?? docs/four-stage-scheduling.md\n?? docs/navigation-and-index.md\n?? docs/performance-and-cache.md\n?? docs/refresh-index-export.md\n?? docs/status-bar.md\n?? docs/thread-allocation-optimization.md\n?? docs/video-cache-optimization.md",
+    "source_sha256": "c26195466b109152aa46847cdedfe578599c496ef414f5f527277c3767fd6b6c",
+    "test_assets_sha256": "4e2f4a6ee0a996a83206f638dc4783a49485cbdeecab8183dbb6cb389376751f"
+  },
+  "environment": {
+    "logical_cpus": 22,
+    "temporary_directory": "C:\\Users\\ncfey\\AppData\\Local\\Temp\\MULIMG~2",
+    "packages": {
+      "Pillow": "13.0.0",
+      "wxPython": "4.3.2",
+      "av": "18.1.0",
+      "numpy": "2.4.6",
+      "psutil": "7.2.2",
+      "reportlab": "5.1.0",
+      "ffmpeg-python": "0.2.0",
+      "XlsxWriter": "3.3.1"
+    },
+    "tool_versions": {
+      "ffmpeg": "ffmpeg version 9.0.2-essentials_build-www.gyan.dev Copyright (c) 2000-2026 the FFmpeg developers",
+      "ffprobe": "ffprobe version 9.0.2-essentials_build-www.gyan.dev Copyright (c) 2007-2026 the FFmpeg developers"
+    }
+  },
+  "report_directory": "auto_test_scripts/reports/20261116T025816.275126Z",
+  "causes": [
+    "Windows short parent path rejected by cache-root guard",
+    "Removed FFmpeg vsync option",
+    "Too few coordinator threads on low-core runners",
+    "Native toolbar metrics exceeded cached sizer minimum",
+    "Tests assumed Conda installation and direct venv interpreter CPU accounting"
+  ],
+  "original_environment_regression": "20261116T030057.406516Z: browsing/cache/shutdown/scheduling/reporting/resource/tool tests passed."
+}

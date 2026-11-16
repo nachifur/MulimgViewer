@@ -436,6 +436,8 @@ class VideoCacheTests(unittest.TestCase):
         self.assertEqual(launch.call_count, 1)
         cmd = launch.call_args[0][0]
         self.assertEqual(cmd[cmd.index('-vframes') + 1], '4')
+        self.assertNotIn('-vsync',cmd)
+        self.assertEqual(cmd[cmd.index('-fps_mode')+1],'passthrough')
 
     def test_blocked_jpeg_publication_does_not_block_state_or_another_video(self):
         if not self.vm._decoder_bank.available:

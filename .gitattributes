@@ -1,0 +1,2 @@
+# Keep text files consistent with the repository's pre-commit line-ending rules.
+* text=auto eol=lf

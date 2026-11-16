@@ -10,6 +10,7 @@ import time
 import unittest
 from pathlib import Path
 from concurrent.futures import Future
+from functools import partial
 from unittest.mock import Mock, patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'src'))
@@ -23,13 +24,16 @@ from mulimgviewer.src.video_tools import resolve_video_tools
 
 class HiddenViewer(MulimgViewer):
     def check_version(self):
-        pass
+        """Keep network update checks out of the isolated GUI fixture."""
+        return None
 
     def load_configuration(self, *args, **kwargs):
-        pass
+        """Use test settings instead of restoring the developer's session."""
+        return None
 
     def _restore_window_state(self):
-        pass
+        """Keep each test independent of saved desktop geometry."""
+        return None
 
 
 @unittest.skipUnless(shutil.which('ffmpeg'), 'FFmpeg executable required')
@@ -186,7 +190,7 @@ class VideoGuiAsyncTests(unittest.TestCase):
             expected=vm._stitch_window[1]-vm._stitch_window[0]+1
             cache.request_prune()
             # Retiring entries is immediate; physical deletion is asynchronous.
-            self.pump_until(lambda:len(list(cache.directory.glob('result_mosaic_*')))<=expected)
+            self.pump_until(lambda cache=cache,expected=expected:len(list(cache.directory.glob('result_mosaic_*')))<=expected)
             with cache.lock:self.assertLessEqual(len(cache.entries),expected)
             self.assertLessEqual(len(list(cache.directory.glob('result_mosaic_*'))),expected)
 
@@ -406,7 +410,7 @@ class VideoGuiAsyncTests(unittest.TestCase):
             with patch('mulimgviewer.src.main.resource_budget',
                        return_value=ResourceBudget(mode, budget, 2 * 1024 ** 3)):
                 self.frame.on_power_mode_changed(None)
-            self.pump_until(lambda: vm._pending_thread_plan is None and
+            self.pump_until(lambda budget=budget: vm._pending_thread_plan is None and
                 vm.executor._max_workers + vm.stitch_executor._max_workers == budget)
             self.assertIsNot(vm._thread_allocator, old)
             self.assertTrue(vm._thread_allocator.throughput_first)
@@ -819,21 +823,22 @@ class VideoGuiAsyncTests(unittest.TestCase):
         self.assertNotIn('manual minimum',text)
 
     def test_final_png_write_remains_charged_to_compose_in_images_and_video(self):
-        from PIL import Image
         save=Image.Image.save
-        for video in (True,False):
-            if not video:self._use_image_input()
-            self.frame.show_all_func.SetValue(True)
-            self.frame.show_unit.SetValue(False)
-            self.frame.show_all_func_layout.ChangeValue('2,1')
-            samples=[]
+        def make_sampler(samples):
             def saving(image,path,*args,**kwargs):
                 name=Path(path).name if isinstance(path,(str,Path)) else ''
                 if name.startswith(('__image_','__tmp_batch_')):
                     budget=self.frame.image_pipeline.processing.budget
                     with budget.condition:samples.append(budget.active_by_stage[2])
                 return save(image,path,*args,**kwargs)
-            with patch.object(Image.Image,'save',saving):
+            return saving
+        for video in (True,False):
+            if not video:self._use_image_input()
+            self.frame.show_all_func.SetValue(True)
+            self.frame.show_unit.SetValue(False)
+            self.frame.show_all_func_layout.ChangeValue('2,1')
+            samples=[]
+            with patch.object(Image.Image,'save',make_sampler(samples)):
                 self.frame.refresh(None)
                 if video:
                     self.pump_until(lambda:getattr(self.frame,'_video_display_key',(None,))[-1]==self.frame.video_manager._window_token)
@@ -969,7 +974,7 @@ class VideoGuiAsyncTests(unittest.TestCase):
                 cfg.batch_idx = target
                 self.frame.ImgManager.set_action_count(target)
                 vm.update_cache()
-                self.pump_until(lambda: (getattr(self.frame, '_video_display_key', None) or (None,))[0] == target
+                self.pump_until(lambda target=target: (getattr(self.frame, '_video_display_key', None) or (None,))[0] == target
                                 and (getattr(self.frame, '_video_display_key', None) or (None, None, None))[2] == vm._window_token
                                 and not vm.cache_update_pending() and not vm._pending_extract
                                 and not vm._window_stitches, timeout=30)
@@ -1088,7 +1093,7 @@ class VideoGuiAsyncTests(unittest.TestCase):
                 self.frame.shared_config.batch_idx=batch
                 self.frame.ImgManager.set_action_count(batch)
                 self.frame.show_img_init();self.frame.show_img()
-                self.pump_until(lambda:pipeline.displayed_key is not None and pipeline.displayed_key[1]==batch)
+                self.pump_until(lambda batch=batch:pipeline.displayed_key is not None and pipeline.displayed_key[1]==batch)
             self.assertEqual(len(threads),count)
             self.assertEqual(pipeline.generation,generation)
             self.assertTrue(Path(pipeline.cache[20][0]).is_file())
@@ -1161,7 +1166,7 @@ class VideoGuiAsyncTests(unittest.TestCase):
             self.frame.show_all_func_layout.ChangeValue('6,1')
             self.frame.refresh(None)
             vm=self.frame.video_manager;pipeline=self.frame.image_pipeline
-            def quiet():
+            def quiet(pipeline=pipeline,video=video,vm=vm):
                 if video:
                     return (getattr(self.frame,'_video_display_key',(None,))[-1]==vm._window_token
                         and not vm.cache_update_pending() and not vm._pending_extract and not vm._window_stitches)
@@ -1174,15 +1179,15 @@ class VideoGuiAsyncTests(unittest.TestCase):
                 self.assertTrue(list((root/name/'processed').rglob('*.png')),name)
                 self.assertTrue(list((root/name/'stitched').glob('*.png')),name)
             calls=[];original=functions.main
-            def process(*args,**kwargs):
+            def process(calls,original,*args,**kwargs):
                 calls.append(kwargs.get('algorithm_type'))
                 return original(*args,**kwargs)
-            with patch.object(functions,'main',process):
+            with patch.object(functions,'main',partial(process,calls,original)):
                 self.frame.show_unit.SetValue(False)
                 self.frame.show_all_func_layout.ChangeValue('2,1')
                 self.frame.refresh(None)
                 self.pump_until(quiet)
-                self.pump_until(lambda:all(not (root/name).exists() for name in names[2:]))
+                self.pump_until(lambda names=tuple(names),root=root:all(not (root/name).exists() for name in names[2:]))
             active={'original',*names[:2]}
             self.assertEqual({path.name for path in root.iterdir() if path.is_dir()},active)
             self.assertTrue(all(registry[index][0] in names[:2] for index in calls))
@@ -1289,16 +1294,19 @@ class VideoGuiAsyncTests(unittest.TestCase):
                 self.frame.refresh(None)
                 if video:
                     token=self.frame.video_manager._window_token
-                    self.pump_until(lambda:getattr(self.frame,'_video_display_key',(None,))[-1]==token)
+                    self.pump_until(lambda token=token:getattr(self.frame,'_video_display_key',(None,))[-1]==token)
                     composed=Path(self.frame.shared_config.cache_img[self.frame.shared_config.batch_idx])
                 else:
                     pipeline=self.frame.image_pipeline
-                    self.pump_until(lambda:pipeline.displayed_key is not None
+                    self.pump_until(lambda pipeline=pipeline:pipeline.displayed_key is not None
                         and pipeline.displayed_key[:2]==(pipeline.generation,self.frame.shared_config.batch_idx))
                     composed=Path(pipeline.cache[self.frame.shared_config.batch_idx][0])
                 stage=self.frame.image_pipeline.processing
                 manager=self.frame.ImgManager;batch=self.frame.shared_config.batch_idx
-                index=next(i for i,entry in enumerate(manager._custom_algorithm_registry) if entry[0]=='Image Enhancement')
+                try:
+                    index=next(i for i,entry in enumerate(manager._custom_algorithm_registry) if entry[0]=='Image Enhancement')
+                except StopIteration as error:
+                    raise AssertionError('Image Enhancement must be installed for this fixture') from error
                 # Inspect the current page through its read lease. Public aliases
                 # belonging to retired pages may legitimately disappear mid-rglob.
                 with stage.lease_export_results(manager,list(manager.flist),batch) as leased:
@@ -1391,10 +1399,10 @@ class VideoGuiAsyncTests(unittest.TestCase):
         for value,old_extension,new_extension in ((1,'.jpeg','.png'),(0,'.png','.jpeg')):
             self.frame.cache_save_format.SetSelection(value)
             self.frame.refresh(None)
-            self.pump_until(lambda:getattr(self.frame,'_video_display_key',(None,))[-1]==vm._window_token
+            self.pump_until(lambda new_extension=new_extension:getattr(self.frame,'_video_display_key',(None,))[-1]==vm._window_token
                 and self.frame.ImgManager.flist and all(Path(p).suffix==new_extension for p in self.frame.ImgManager.flist))
             self.pump_until(lambda:not vm.cache_update_pending() and not vm._pending_extract and not vm._window_stitches)
-            self.pump_until(lambda:all(not list(Path(folder).glob('*'+old_extension)) for folder in self.frame.shared_config.video_path))
+            self.pump_until(lambda old_extension=old_extension:all(not list(Path(folder).glob('*'+old_extension)) for folder in self.frame.shared_config.video_path))
             self.assertTrue(all(list(Path(folder).glob('*'+new_extension)) for folder in self.frame.shared_config.video_path))
 
     def test_save_format_new_gui_order_and_actual_extensions(self):
@@ -1460,7 +1468,7 @@ class VideoGuiAsyncTests(unittest.TestCase):
         native_set_size=self.frame.SetSize
         for constrained in (False,True):
             with self.subTest(constrained_desktop=constrained):
-                def set_size(size):
+                def set_size(size,constrained=constrained):
                     # Model the native limit observed on Actions as well as
                     # testing the actual desktop. Do not change OS resolution.
                     rectangle=isinstance(size,wx.Rect)
@@ -1603,9 +1611,6 @@ class VideoGuiAsyncTests(unittest.TestCase):
                 self.frame.save_img(None);self.assertTrue(entered.wait(1))
                 toggle_save_pause(self.frame);release.set()
                 self.pump_until(lambda:self.frame._export_status=='Save: paused')
-                from types import SimpleNamespace
-                key=SimpleNamespace(ControlDown=lambda:False,AltDown=lambda:False,ShiftDown=lambda:False,
-                    GetKeyCode=lambda:wx.WXK_ESCAPE,Skip=lambda:self.fail('Cancel key was not consumed'))
                 self.frame.cancel_save_task(None)  # Explicit cancellation remains available from its menu.
                 self.pump_until(lambda:not self.frame._export_active)
                 self.assertEqual(self.frame._export_status,'Save: cancelled')
@@ -1982,7 +1987,6 @@ class VideoGuiAsyncTests(unittest.TestCase):
             self.assertTrue(self.frame.video_manager._raw_ready_batches)
 
     def test_ten_custom_algorithms_render_through_gui_with_one_blank_slot(self):
-        import json
         from mulimgviewer.src.custom_func.runtime import AlgorithmSession
         self._use_image_input()
         self.frame.show_all_func.SetValue(True)
@@ -2087,7 +2091,7 @@ class VideoGuiAsyncTests(unittest.TestCase):
             self.frame.ImgManager.set_action_count(0)
             self.frame.show_img()
             pipeline=self.frame.image_pipeline
-            self.pump_until(lambda:pipeline.displayed_key is not None
+            self.pump_until(lambda pipeline=pipeline:pipeline.displayed_key is not None
                 and pipeline.displayed_key[:2]==(pipeline.generation,0))
             model=self.frame.ImgManager
             expected=[str(Path(model.flist[slot]).absolute()) for xy,slot in
@@ -2114,7 +2118,8 @@ class VideoGuiAsyncTests(unittest.TestCase):
             cfg.batch_idx=batch;self.frame.ImgManager.set_action_count(batch)
             self.frame.video_manager.update_cache();self.frame.show_img()
             token=self.frame.video_manager._window_token
-            self.pump_until(lambda:getattr(self.frame,'_video_display_key',(None,))[0]==batch)
+            self.pump_until(lambda batch=batch,token=token:getattr(self.frame,'_video_display_key',(None,))[0]==batch
+                and getattr(self.frame,'_video_display_key',(None,))[-1]==token)
             model=self.frame.ImgManager
             expected=[str(Path(model.flist[slot]).absolute()) for xy,slot in
                       sorted(zip(model.xy_grid,model.xy_grids_id_list),key=lambda item:(item[0][1],item[0][0]))]
@@ -2195,7 +2200,7 @@ class VideoGuiAsyncTests(unittest.TestCase):
                     entry=index.catalog.visual_entry(candidate)
                     # Returning from the previous jump retires the remote page
                     # immediately; physical window cleanup runs in the background.
-                    self.pump_until(lambda:not Path(entry['path']).exists())
+                    self.pump_until(lambda entry=entry:not Path(entry['path']).exists())
                     self.assertFalse(Path(entry['path']).exists())
                     if video:
                         found,limited=index.catalog.search(entry['path'],2,lambda:False)
@@ -2582,7 +2587,6 @@ class VideoGuiAsyncTests(unittest.TestCase):
         self.frame.ImgManager = ImgManager()
         directory = Path('images').resolve()
         directory.mkdir()
-        from PIL import Image
         Image.new('RGB', (32, 32), 'red').save(directory / 'frame.png')
         try:
             with patch.object(wx, 'DirDialog') as dialog:

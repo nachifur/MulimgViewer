@@ -341,7 +341,7 @@ def start_save(viewer,event=None,*,selection_only=False,selected_grid=None):
         except Exception as error:outcome=f'Save failed: {error}'
         try:job.video_manager.close()
         except Exception as error:outcome=f'Save failed during cleanup: {error}'
-        deliver(outcome,True)  # Reenable Save only after file/codec handles are released.
+        deliver(outcome,True)  # Re-enable Save only after file/codec handles are released.
     if getattr(viewer,'_export_pool',None) is None:
         viewer._export_pool=ThreadPoolExecutor(1,thread_name_prefix='viewer-export')
     viewer._export_active=True;viewer._export_status='Saving: 0%'

@@ -1,4 +1,4 @@
-﻿# GPU Sharpen
+# GPU Sharpen
 
 演示 API v2 的 GPU 批处理接口，不需要模型权重，也不保存文件。
 

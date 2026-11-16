@@ -1,4 +1,4 @@
-﻿"""GPU 自定义函数模板：通常只需修改 build_model 和 process_gpu_batch。
+"""GPU 自定义函数模板：通常只需修改 build_model 和 process_gpu_batch。
 
 框架自动调用 setup（同一会话初始化一次）、process_batch（每批调用）、
 teardown（设备模型卸载时调用）。不要在这里保存文件或操作 GUI。

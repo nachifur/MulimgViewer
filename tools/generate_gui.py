@@ -1,4 +1,4 @@
-﻿"""Regenerate GUI modules from FBP; --check validates without changing outputs."""
+"""Regenerate GUI modules from FBP; --check validates without changing outputs."""
 import argparse
 import shutil
 import subprocess

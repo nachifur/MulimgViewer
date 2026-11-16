@@ -1,4 +1,4 @@
-﻿"""View-specific columns shared by the virtual list and Excel export."""
+"""View-specific columns shared by the virtual list and Excel export."""
 from dataclasses import dataclass
 from pathlib import Path
 from .video_timeline import page_segments

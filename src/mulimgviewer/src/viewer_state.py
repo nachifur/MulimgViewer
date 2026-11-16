@@ -40,4 +40,3 @@ class SharedConfig:
         #self.debug_video = True
         self.interval_recommend = None #Playback interval recommendation
         self.video_last_message = "" # Most recent video error/diagnostic information
-

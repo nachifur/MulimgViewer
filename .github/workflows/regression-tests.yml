@@ -1,6 +1,7 @@
+---
 name: Functional regression report
 
-on:
+'on':
   pull_request:
   push:
     branches: [master, main]
@@ -37,9 +38,14 @@ jobs:
         if: always()
         shell: pwsh
         run: |
-          if (Test-Path auto_test_scripts/reports/latest.json) {
-            $latest = Get-Content auto_test_scripts/reports/latest.json -Raw | ConvertFrom-Json
-            Get-Content "auto_test_scripts/reports/$($latest.directory)/summary.md" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+          $reportRoot = 'auto_test_scripts/reports'
+          $latestPath = Join-Path $reportRoot 'latest.json'
+          if (Test-Path $latestPath) {
+            $latest = Get-Content $latestPath -Raw | ConvertFrom-Json
+            $reportPath = Join-Path $reportRoot $latest.directory
+            $summary = Join-Path $reportPath 'summary.md'
+            Get-Content $summary |
+              Out-File $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
           }
       - name: Upload test reports and logs
         if: always()

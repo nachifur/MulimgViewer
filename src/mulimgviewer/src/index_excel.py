@@ -1,4 +1,4 @@
-﻿"""Bounded-memory, atomic Excel exports for all index views."""
+"""Bounded-memory, atomic Excel exports for all index views."""
 import os
 import tempfile
 from concurrent.futures import CancelledError

@@ -1,4 +1,4 @@
-﻿"""Shared global-page to local-video mapping used by playback and the index."""
+"""Shared global-page to local-video mapping used by playback and the index."""
 
 
 def page_count(counts, size, sequential=False):

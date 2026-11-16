@@ -1,4 +1,4 @@
-﻿"""Validate XLSX content, view schemas, splitting and atomic cancellation."""
+"""Validate XLSX content, view schemas, splitting and atomic cancellation."""
 import sys
 import zipfile
 import tempfile

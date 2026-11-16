@@ -75,4 +75,3 @@ class VideoToolTests(unittest.TestCase):
         with self.environment(), patch.dict(os.environ, FFMPEG_BINARY=str(self.root / 'missing.exe')):
             with self.assertRaisesRegex(FileNotFoundError, 'FFMPEG_BINARY'):
                 resolve_video_tools()
-

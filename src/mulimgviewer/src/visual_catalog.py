@@ -1,4 +1,4 @@
-﻿"""Lazy global visual IDs, ordered by page, screen row and screen column."""
+"""Lazy global visual IDs, ordered by page, screen row and screen column."""
 from bisect import bisect_right
 from functools import lru_cache
 import re

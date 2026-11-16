@@ -1457,17 +1457,36 @@ class VideoGuiAsyncTests(unittest.TestCase):
             self.assertEqual(len([c for c in layout.call_args_list if c.kwargs.get('fit_image')]),1)
 
     def test_explicit_auto_layout_call_retains_original_checkbox_behavior(self):
-        self.frame.img_size=(300,200)
-        self.frame.SetSize((1400,900))
-        self.frame.auto_layout_check.SetValue(True)
-        self.frame.auto_layout()
-        self.assertEqual(self.frame.GetSize(),wx.Size(1000,600))
-        self.frame.SetSize((1400,900))
-        self.frame.auto_layout(frame_resize=True)
-        self.assertEqual(self.frame.GetSize(),wx.Size(1400,900))
-        self.frame.auto_layout_check.SetValue(False)
-        self.frame.auto_layout()
-        self.assertEqual(self.frame.GetSize(),wx.Size(1400,900))
+        native_set_size=self.frame.SetSize
+        for constrained in (False,True):
+            with self.subTest(constrained_desktop=constrained):
+                def set_size(size):
+                    # Model the native limit observed on Actions as well as
+                    # testing the actual desktop. Do not change OS resolution.
+                    rectangle=isinstance(size,wx.Rect)
+                    width,height=size.GetSize() if rectangle else size
+                    if constrained:width,height=min(width,1044),min(height,788)
+                    native_set_size(wx.Rect(size.x,size.y,width,height) if rectangle else (width,height))
+                with patch.object(self.frame,'SetSize',side_effect=set_size):
+                    self.frame.img_size=(300,200)
+                    self.frame.SetSize((1400,900))
+                    self.frame.auto_layout_check.SetValue(True)
+                    self.frame.auto_layout()
+                    screen=wx.Display.GetFromWindow(self.frame)
+                    area=wx.Display(0 if screen==wx.NOT_FOUND else screen).GetClientArea()
+                    self.assertEqual(self.frame.GetSize(),wx.Size(min(1000,area.width),min(600,area.height)))
+                    self.frame.SetSize((1400,900))
+                    # Preserve the accepted size even if the native window
+                    # manager capped the original 1400x900 request.
+                    accepted_size=wx.Size(self.frame.GetSize())
+                    if constrained:
+                        self.assertLessEqual(accepted_size.width,1044)
+                        self.assertLessEqual(accepted_size.height,788)
+                    self.frame.auto_layout(frame_resize=True)
+                    self.assertEqual(self.frame.GetSize(),accepted_size)
+                    self.frame.auto_layout_check.SetValue(False)
+                    self.frame.auto_layout()
+                    self.assertEqual(self.frame.GetSize(),accepted_size)
 
     def test_auto_window_fit_clamps_to_monitor_work_area(self):
         self.frame.auto_layout_check.SetValue(True)

@@ -9,7 +9,9 @@ from concurrent.futures import Future, ThreadPoolExecutor, wait
 class PipelineWorkers:
     def __init__(self, extract, stitch):
         self.lock = threading.RLock()
-        self.pool = ThreadPoolExecutor(max_workers=max(2, os.cpu_count() or 2), thread_name_prefix='video-work')
+        # Coordinators wait for child futures without consuming CPU permits.
+        # Keep a lane beyond the admitted budget, including on 2-core runners.
+        self.pool = ThreadPoolExecutor(max_workers=max(2, (os.cpu_count() or 2)+1, extract+stitch+1), thread_name_prefix='video-work')
         self.limits = [extract, stitch]
         self.total_budget = extract + stitch
         self.active = [0, 0]

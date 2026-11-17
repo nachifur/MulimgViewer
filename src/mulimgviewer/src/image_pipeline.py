@@ -9,6 +9,7 @@ from concurrent.futures import ThreadPoolExecutor, CancelledError
 from pathlib import Path
 from contextlib import ExitStack
 from .dependency_scheduler import prepared, gather
+from .playback_pacer import PlaybackPacer
 
 from PIL import Image
 
@@ -42,6 +43,7 @@ class ImagePipeline:
         self.workers = 0
         self.desired_workers = 1
         self.generation = uuid.uuid4().hex
+        self.supply_pacer = PlaybackPacer()
         self.context = None
         self.window = None
         self.settings = None
@@ -69,6 +71,7 @@ class ImagePipeline:
     def invalidate(self):
         with self.lock:
             self.generation = uuid.uuid4().hex
+            self.supply_pacer.reset()
             self.cache.clear()
             self.failed.clear()
             self.window = self.context = None
@@ -166,6 +169,7 @@ class ImagePipeline:
                 if (valid and not self.closed and generation == self.generation
                         and self.window is not None and self.window[0] <= batch <= self.window[1]):
                     self.cache[batch] = (str(path), state, duration)
+                    self.supply_pacer.publish(generation, batch, time.perf_counter())
             if self.window is not None:
                 lo, hi = self.window
                 self.failed = {batch for batch in self.failed if lo <= batch <= hi}
@@ -227,6 +231,13 @@ class ImagePipeline:
                 self.pool = ThreadPoolExecutor(self.workers, thread_name_prefix='image-stitch')
             if self.window is not None and self.pool and self.workers == self.desired_workers:
                 lo, hi = self.window
+                # Measure complete, usable pages across all processing stages.
+                # Cache hits and full-window idle time are not new production.
+                wanted = [batch for batch in range(lo, hi + 1)
+                          if batch not in self.cache and batch not in self.failed
+                          and (not current_only(self.template) or batch == self.batch)]
+                self.supply_pacer.request(self.generation, wanted, self.window,
+                                          self.batch, self.direction, time.perf_counter())
                 order = (self.batch + sign * distance
                          for distance in range(max(self.batch - lo, hi - self.batch) + 1)
                          for sign in ((self.direction, -self.direction) if distance else (1,))

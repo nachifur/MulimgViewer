@@ -261,7 +261,15 @@ class VideoPlaybackMixin:
             self._play_timer_suspended = False
             self._video_tick_started_at = None
             if self.shared_config.video_mode:
-                self._schedule_next_video_tick()
+                key = getattr(self, '_video_display_key', None)
+                if (key is not None and key[0] == self.shared_config.batch_idx
+                        and key[-1] == self.video_manager._window_token):
+                    self._schedule_next_video_tick()
+                else:
+                    # A seek followed immediately by Play must first display
+                    # the requested page, rather than advancing past it.
+                    self._suspend_play_timer_for_wait()
+                    self.show_img(preserve_text_value=True)
             else:
                 interval = float(self.interval.GetValue() or 1.0)
                 self.play_timer.Start(max(1, math.ceil(interval * 1000)), oneShot=False)

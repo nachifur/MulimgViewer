@@ -147,6 +147,23 @@ class ImageCacheTests(unittest.TestCase):
         finally:
             release.set()
 
+    def test_supply_measures_published_pages_excludes_cache_hits_and_resets_on_refresh(self):
+        self.request()
+        self.settle(14, 26)
+        pacer = self.pipeline.supply_pacer
+        period = pacer.supply_period()
+        self.assertIsNotNone(period)
+        self.assertGreater(period, 0)
+        with pacer.lock:
+            samples = list(pacer.samples)
+            self.assertFalse(pacer.pending)
+        self.request()
+        self.settle(14, 26)
+        self.assertEqual(pacer.supply_period(), period)
+        with pacer.lock:self.assertEqual(list(pacer.samples), samples)
+        self.pipeline.invalidate()
+        self.assertIsNone(pacer.supply_period())
+
     def test_cached_pixels_load_off_request_thread_and_corrupt_cache_recovers(self):
         self.request()
         self.settle(14, 26)

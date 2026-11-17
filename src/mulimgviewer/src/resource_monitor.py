@@ -6,6 +6,7 @@ import sys
 import threading
 import time
 from collections import deque
+from contextlib import contextmanager
 from functools import lru_cache
 
 try:
@@ -59,6 +60,23 @@ class ChildCpuTracker:
 
 
 CHILD_CPU = ChildCpuTracker()
+
+
+@contextmanager
+def tracked_video_process(command, **kwargs):
+    """Stream a bounded child output, accounting CPU and reaping on cancellation."""
+    with subprocess.Popen(command, **kwargs) as process:
+        if sys.platform == 'win32':
+            with CHILD_CPU.lock:CHILD_CPU.active.add(process)
+        try:
+            yield process
+        finally:
+            if process.poll() is None:process.kill()
+            process.wait()
+            if sys.platform == 'win32':
+                with CHILD_CPU.lock:
+                    CHILD_CPU.completed += _windows_cpu_time(process)
+                    CHILD_CPU.active.discard(process)
 
 
 def run_video_process(command, **kwargs):

@@ -10,6 +10,23 @@ from test_video_cache import PerformanceMonitor, SharedConfig, VideoManager
 
 
 class VideoIntervalTests(unittest.TestCase):
+    def test_incremental_raw_page_eta_does_not_wait_for_outer_window_job(self):
+        self.vm._window_token = 'page-eta'
+        parent = Future()
+        parent.video_timing = dict(queued_at=0.,started_at=0.,expected_seconds=100.,
+                                  page_period=2.,page_ready_local=50,page_ready_at=10.)
+        dependency = Future()
+        dependency.video_parent = parent
+        dependency.video_local_batch = 51
+        target = Future()
+        target.video_dependencies = (dependency,)
+        target.video_timing = dict(queued_at=0.,started_at=None,expected_seconds=.1)
+        self.vm._pending_extract = {(0,51):parent}
+        self.vm._window_stitches = {('page-eta',51):target}
+        self.assertAlmostEqual(self.vm._next_stitch_eta(51,11.),1.1)
+        dependency.set_result(True)
+        self.assertAlmostEqual(self.vm._next_stitch_eta(51,11.),.1)
+
     def test_custom_eta_uses_output_supply_instead_of_parent_wait_latency(self):
         from playback_pacer import PlaybackPacer
         self.vm._window_token='c'

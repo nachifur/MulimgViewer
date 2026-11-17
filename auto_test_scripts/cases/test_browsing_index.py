@@ -10,6 +10,39 @@ from mulimgviewer.src.index_catalog import IndexCatalog
 
 
 class TimelineTests(unittest.TestCase):
+    def test_long_video_frame_names_and_cross_video_pages_are_lazy(self):
+        from unittest.mock import patch
+        from mulimgviewer.src.utils_img import ImgManager
+        from mulimgviewer.src.video_paths import FrameNames, frame_filename
+        counts = [10**9+1, 10**9+2]
+        with tempfile.TemporaryDirectory() as directory:
+            paths = [Path(directory)/str(index) for index in (0,1)]
+            for path in paths:path.mkdir()
+            manager = ImgManager()
+            manager.init([str(path) for path in paths], type=1, video_mode=True,
+                         parallel_to_sequential=True, video_fps_list=[24.,30.], video_num_list=counts)
+            manager.set_count_per_action(3)
+            manager.set_action_count(counts[0]//3)
+            with patch('mulimgviewer.src.video_paths.frame_filename', wraps=frame_filename) as names:
+                files = manager.get_flist()
+                self.assertEqual(names.call_count, 3)
+            expected = [str(paths[0]/frame_filename(counts[0]-2,24.)),
+                        str(paths[0]/frame_filename(counts[0]-1,24.)),
+                        str(paths[1]/frame_filename(0,30.))]
+            self.assertEqual(files, expected)
+            self.assertIsInstance(manager.name_list[0], FrameNames)
+            self.assertEqual(len(manager.name_list[0]), counts[0])
+            manager.parallel_to_sequential = False
+            manager.set_action_count(1)
+            files = manager.get_flist()
+            self.assertEqual(files, [str(path/frame_filename(index,fps))
+                                    for path,fps in zip(paths,(24.,30.)) for index in (3,4,5)])
+            manager.init(str(paths[0]), type=2, video_mode=True,
+                         video_fps_list=[0.], video_num_list=[10**9], skip=2)
+            manager.set_count_per_action(1)
+            manager.set_action_count(10**9-1)
+            self.assertEqual(manager.get_flist(), [str(paths[0]/frame_filename(10**9-1,0.,3))])
+
     def test_all_serial_frames_appear_once_including_empty_and_short_videos(self):
         for counts in ([303,303,303],[1,0,2,1],[80,80],[0,0]):
             for size in (1,3,48,1000):

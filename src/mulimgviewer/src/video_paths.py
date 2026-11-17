@@ -1,4 +1,27 @@
 """Frame path naming shared by extraction and future/virtual index entries."""
+from collections.abc import Sequence
+from operator import index as integer_index
+
+
+class FrameNames(Sequence):
+    """Read-only virtual frame names; memory use is independent of duration."""
+    def __init__(self, count, fps, step=1, extension='jpeg'):
+        self.count, self.fps = max(0, int(count)), fps
+        self.step, self.extension = step, extension
+
+    def __len__(self):
+        return self.count
+
+    def __getitem__(self, index):
+        if isinstance(index, slice):
+            return [self[i] for i in range(*index.indices(self.count))]
+        index = integer_index(index)
+        if index < 0:index += self.count
+        if not 0 <= index < self.count:raise IndexError(index)
+        return frame_filename(index, self.fps, self.step, self.extension)
+
+    def __deepcopy__(self, _memo):
+        return self
 
 def frame_filename(index, fps, step=1, extension="jpeg"):
     physical = int(index)*max(1,int(step))

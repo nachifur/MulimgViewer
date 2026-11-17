@@ -8,15 +8,19 @@ import sys
 import tempfile
 import threading
 import unittest
-from concurrent.futures import wait
+from concurrent.futures import CancelledError, wait
 from pathlib import Path
 from unittest.mock import patch
+from contextlib import contextmanager
+from fractions import Fraction
 
 from PIL import Image
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]/'src/mulimgviewer/src'))
 from pipeline_executor import PipelineWorkers
 from video_memory import PixelCache, LazyVideoImage
 from video_decoder import DecoderBank, DecoderSession, av
+from video_seek_index import PacketKeyframeIndex
+from video_index_store import VideoIndexStore, index_cache_directory
 
 
 class WorkerBudgetTests(unittest.TestCase):
@@ -205,6 +209,172 @@ class WorkerBudgetTests(unittest.TestCase):
                 stage.shutdown()
 
 
+class PacketSeekIndexTests(unittest.TestCase):
+    @staticmethod
+    def make_index(count, all_keys=False):
+        from types import SimpleNamespace
+        read = []
+        def packets():
+            for start in range(0,count,4):
+                for offset in (0,3,1,2):
+                    index = start+offset
+                    if index>=count:continue
+                    read.append(index)
+                    yield SimpleNamespace(size=10,pts=index*10+index//17,
+                                          is_keyframe=all_keys or index%12==0)
+        container = SimpleNamespace(streams=SimpleNamespace(video=[object()]),
+                                    demux=lambda _stream:packets(),close=lambda:None)
+        return PacketKeyframeIndex('virtual.rm',lambda *args,**kwargs:container),read
+
+    def test_vfr_reordering_and_incremental_scans_preserve_absolute_ordinals(self):
+        index,read = self.make_index(2000)
+        try:
+            anchors = index.ensure(300,lambda:False)
+            self.assertEqual(anchors,[(i,i*10+i//17) for i in range(0,301,12)])
+            self.assertLess(len(read),400)
+            index.ensure(400,lambda:False)
+            self.assertLess(len(read),500)
+            self.assertEqual(len(read),len(set(read)))
+        finally:index.close()
+
+    def test_index_memory_is_bounded_and_packet_scans_are_cancellable(self):
+        index,_ = self.make_index(10000,all_keys=True)
+        try:
+            index.ensure(6000,lambda:False)
+            self.assertLessEqual(len(index.anchors),4096)
+            self.assertLessEqual(len(index.heap),64)
+            with self.assertRaises(CancelledError):index.ensure(9000,lambda:True)
+        finally:index.close()
+        self.assertIsNone(index.container)
+        self.assertFalse(index.heap)
+
+    def test_native_scan_reuses_exact_checkpoints_for_forward_and_reverse(self):
+        index,_=self.make_index(2000)
+        index.probe_time_base=Fraction(1,1000)
+        starts=[]
+        def packets(start,cancelled):
+            starts.append(start)
+            first=start[0] if start else 0
+            for base in range(first,2000,4):
+                for offset in (0,3,1,2):
+                    i=base+offset
+                    if i<2000:yield i*10+i//17,i%12==0
+        with patch.object(index,'_probe_packets',packets):
+            for target in (300,400,50):
+                result=index.ensure(target,lambda:False)
+                self.assertEqual(result,[(i,i*10+i//17) for i in range(0,target+1,12)])
+                self.assertLessEqual(len(index.heap),64)
+            self.assertEqual(starts[1],(300,3000+300//17))
+        index.close()
+
+    def test_probe_failure_falls_back_to_exact_pyav_index(self):
+        index,_=self.make_index(2000)
+        index.probe_time_base=Fraction(1,1000)
+        with patch.object(index,'_probe_packets',side_effect=OSError('Unavailable probe')):
+            result=index.ensure(300,lambda:False)
+        self.assertIsNone(index.probe_time_base)
+        self.assertEqual(result,[(i,i*10+i//17) for i in range(0,301,12)])
+        index.close()
+
+    def test_cancelling_a_silent_native_probe_reaps_child_and_pipe_reader(self):
+        from video_seek_index import tracked_video_process
+        index,_=self.make_index(2000)
+        index.probe_time_base=Fraction(1,1000)
+        entered,stop=threading.Event(),threading.Event()
+        children=[]
+        @contextmanager
+        def silent(_args,**kwargs):
+            with tracked_video_process([sys.executable,'-c','import time;time.sleep(10)'],**kwargs) as child:
+                children.append(child);entered.set()
+                yield child
+        from concurrent.futures import ThreadPoolExecutor
+        with patch('video_seek_index.tracked_video_process',silent):
+            with ThreadPoolExecutor(1) as pool:
+                job=pool.submit(index.ensure,300,stop.is_set)
+                try:
+                    self.assertTrue(entered.wait(3))
+                    stop.set()
+                    with self.assertRaises(CancelledError):job.result(timeout=2)
+                finally:stop.set()
+        self.assertIsNotNone(children[0].poll())
+        self.assertFalse(any(t.name=='video-index-pipe' and t.is_alive() for t in threading.enumerate()))
+        index.close()
+
+    def test_waiting_index_scan_cancels_without_waiting_for_other_file_readers(self):
+        from concurrent.futures import ThreadPoolExecutor
+        ready,release,stop = threading.Event(),threading.Event(),threading.Event()
+        lock = threading.Lock();active = []
+        indexes = [self.make_index(200)[0] for _ in range(3)]
+        def blocked(opener):
+            def opening(*args,**kwargs):
+                with lock:
+                    active.append(1)
+                    if len(active)==2:ready.set()
+                if not release.wait(3):raise TimeoutError('Reader test did not release')
+                return opener(*args,**kwargs)
+            return opening
+        for index in indexes[:2]:index.opener=blocked(index.opener)
+        try:
+            with ThreadPoolExecutor(3) as pool:
+                first = [pool.submit(index.ensure,100,lambda:False) for index in indexes[:2]]
+                try:
+                    self.assertTrue(ready.wait(2))
+                    waiting = pool.submit(indexes[2].ensure,100,stop.is_set)
+                    stop.set()
+                    with self.assertRaises(CancelledError):waiting.result(timeout=1)
+                    self.assertIsNone(indexes[2].container)
+                finally:release.set()
+                for job in first:job.result(timeout=2)
+        finally:
+            release.set()
+            for index in indexes:index.close()
+
+
+class PersistentSeekIndexTests(unittest.TestCase):
+    def test_platform_cache_paths_respect_standard_locations_and_override(self):
+        home=Path(tempfile.gettempdir())/'index-home'
+        with patch.dict(os.environ,{},clear=True),patch('video_index_store.Path.home',return_value=home):
+            for platform,expected in (('win32',home/'AppData'/'Local'),
+                                      ('darwin',home/'Library'/'Caches'),('linux',home/'.cache')):
+                with patch('video_index_store.sys.platform',platform):
+                    self.assertEqual(index_cache_directory(),expected/'MulimgViewer'/'video_indexes')
+            os.environ['MULIMGVIEWER_INDEX_CACHE']=str(home/'override')
+            self.assertEqual(index_cache_directory(),home/'override')
+
+    def test_source_change_and_corrupt_metadata_invalidate_saved_index(self):
+        with tempfile.TemporaryDirectory() as directory:
+            source=Path(directory)/'video.rm';source.write_bytes(b'original')
+            cache=Path(directory)/'metadata'
+            store=VideoIndexStore(source,Fraction(1,1000),cache)
+            store.save(100,[(0,0),(90,9000)])
+            self.assertEqual(store.load(),(100,[[0,0],[90,9000]]))
+            contents=store.path.read_text(encoding='ascii')
+            store.path.write_text(contents.replace('"through":100','"through":101'),encoding='ascii')
+            self.assertIsNone(store.load(),'A valid JSON edit must fail its checksum')
+            store.path.write_bytes(b'{invalid json')
+            self.assertIsNone(store.load())
+            store.save(100,[(0,0),(90,9000)])
+            source.write_bytes(b'changed video content')
+            self.assertIsNone(store.load())
+            self.assertIsNone(VideoIndexStore(source,Fraction(1,1000),cache).load())
+
+    def test_saved_index_validation_and_file_count_are_bounded(self):
+        with tempfile.TemporaryDirectory() as directory:
+            cache=Path(directory)/'metadata';cache.mkdir()
+            keep=cache/'keep.txt';keep.write_text('unrelated')
+            for i in range(4):
+                source=Path(directory)/f'{i}.rm';source.write_bytes(b'video')
+                store=VideoIndexStore(source,Fraction(1,1000),cache)
+                store.MAX_FILES=2
+                store.save(100,[(0,0),(90,9000)])
+            self.assertEqual(len(list(cache.glob('*.json'))),2)
+            self.assertTrue(keep.exists())
+            store.save(100,[(0,0),(90,9000),(90,10000)])
+            self.assertIsNone(store.load())
+            store.path.write_bytes(b' '* (store.MAX_BYTES+1))
+            self.assertIsNone(store.load())
+
+
 class PixelMemoryTests(unittest.TestCase):
     def test_byte_limit_eviction_downgrade_and_oversized_bypass(self):
         cache = PixelCache(800)
@@ -301,6 +471,23 @@ class DecoderAccuracyTests(unittest.TestCase):
     def tearDownClass(cls):
         cls.temp.cleanup()
 
+    def test_legacy_metadata_bytes_do_not_disable_incremental_decoding(self):
+        path = Path(self.temp.name)/'legacy_metadata.mp4'
+        marker = b'legacy_title_marker'
+        subprocess.run(['ffmpeg','-v','error','-i',self.path,'-c','copy',
+                        '-metadata','title='+marker.decode('ascii'),'-y',str(path)],
+                       check=True,capture_output=True)
+        contents = path.read_bytes()
+        self.assertIn(marker, contents)
+        path.write_bytes(contents.replace(marker, b'\xff'*len(marker)))
+        session = DecoderSession(str(path),10.,False,96*64)
+        try:
+            frames = list(session.frames(0,2,1,lambda:False))
+            self.assertEqual([image.tobytes() for _,image in frames],self.expected[:3])
+            self.assertEqual(session.opens,1)
+        finally:
+            session.close()
+
     def test_forward_resume_does_not_redecode_prefix_and_reverse_is_exact(self):
         session = DecoderSession(self.path,10.,False,96*64)
         try:
@@ -355,6 +542,23 @@ class DecoderAccuracyTests(unittest.TestCase):
         finally:
             session.close()
 
+        packet_index = PacketKeyframeIndex(path,av.open)
+        indexed = DecoderSession(path,10.,False,96*64)
+        try:
+            indexed.anchors.update(packet_index.ensure(45,lambda:False))
+            frames = list(indexed.frames(45,49,1,lambda:False))
+            self.assertEqual([image.tobytes() for _,image in frames],reference[45:50])
+            self.assertEqual(indexed.seeks,1)
+            self.assertLess(indexed.decoded,25)
+            old_task = [False]
+            frames = list(indexed.frames(12,15,1,lambda:old_task[0]))
+            self.assertEqual([image.tobytes() for _,image in frames],reference[12:16])
+            old_task[0] = True
+            resumed = list(indexed.frames(16,18,1,lambda:False))
+            self.assertEqual([image.tobytes() for _,image in resumed],reference[16:19])
+        finally:
+            indexed.close();packet_index.close()
+
     def test_rotation_matches_ffmpeg_autorotation(self):
         import io
         import numpy as np
@@ -379,6 +583,36 @@ class DecoderAccuracyTests(unittest.TestCase):
             self.assertEqual([im.tobytes() for _,im in frames],self.expected[25:40])
         finally:
             session.close()
+
+    def test_native_packet_probe_preserves_vfr_b_frames_and_absolute_pixels(self):
+        path=str(Path(self.temp.name)/'native_probe_vfr.mp4')
+        subprocess.run(['ffmpeg','-v','error','-f','lavfi','-i',
+            'testsrc2=size=96x64:rate=10:duration=20','-vf',
+            'setpts=if(lt(N\\,100)\\,N\\,100+(N-100)*2)/(10*TB)',
+            '-fps_mode','vfr','-c:v','libx264','-g','12','-bf','2','-y',path],
+            check=True,capture_output=True)
+        with av.open(path) as container:
+            time_base=container.streams.video[0].time_base
+            expected=[frame.to_image().tobytes() for frame in container.decode(video=0)]
+        native=PacketKeyframeIndex(path,av.open,probe_time_base=time_base,
+                                  index_cache_dir=Path(self.temp.name)/'indexes')
+        baseline=PacketKeyframeIndex(path,av.open)
+        decoder=DecoderSession(path,10.,False,96*64)
+        try:
+            for target in (45,170,12):
+                self.assertEqual(native.ensure(target,lambda:False),baseline.ensure(target,lambda:False))
+                self.assertIsNotNone(native.probe_time_base,'Unexpected fallback from native indexing')
+            reopened=PacketKeyframeIndex(path,av.open,probe_time_base=time_base,
+                                        index_cache_dir=Path(self.temp.name)/'indexes')
+            with patch.object(reopened,'_probe_packets',side_effect=AssertionError('Repeated full scan')):
+                self.assertEqual(reopened.ensure(170,lambda:False),native.ensure(170,lambda:False))
+            reopened.close()
+            decoder.anchors.update(native.ensure(170,lambda:False))
+            frames=list(decoder.frames(170,173,1,lambda:False))
+            self.assertEqual([image.tobytes() for _,image in frames],expected[170:174])
+            self.assertEqual(decoder.seeks,1)
+        finally:
+            native.close();baseline.close();decoder.close()
 
     def test_cyclic_scan_larger_than_idle_cache_keeps_resident_decoders(self):
         bank=DecoderBank(16*1024**2)
@@ -435,6 +669,35 @@ class DecoderAccuracyTests(unittest.TestCase):
             self.assertEqual([img.tobytes() for _,img in frames],self.expected[46:50])
             self.assertLess(session.decoded-before,25)
         bank.close()
+
+    def test_idle_codecs_borrow_unused_memory_and_release_on_downgrade(self):
+        bank=DecoderBank(8*1024**2)
+        allowance=[24*1024**2,set()]
+        bank.idle_policy=lambda:allowance
+        paths=[]
+        try:
+            for index in range(3):
+                path=str(Path(self.temp.name)/('borrow_%d.mp4'%index))
+                os.link(self.path,path)
+                paths.append(path)
+                with bank.lease(path,10.,False,96*64) as session:
+                    list(session.frames(0,0,1,lambda:False))
+            self.assertEqual(sum(s.container is not None for s in bank.sessions.values()),3)
+            for path in paths:
+                with bank.lease(path,10.,False,96*64) as session:
+                    list(session.frames(1,1,1,lambda:False))
+                    self.assertEqual(session.opens,1)
+            # A scheduled decoder is already charged to the executor, even
+            # before its worker enters the lease. Do not double count it.
+            allowance[:]=[8*1024**2,{paths[0]}]
+            bank.trim()
+            self.assertIsNotNone(bank.sessions[paths[0]].container)
+            self.assertLessEqual(sum(s.bytes_hint for p,s in bank.sessions.items()
+                                     if s.container is not None and p not in allowance[1]),allowance[0])
+            allowance[:]=[0,set()]
+            bank.trim()
+            self.assertTrue(all(s.container is None for s in bank.sessions.values()))
+        finally:bank.close()
 
 
 if __name__=='__main__':

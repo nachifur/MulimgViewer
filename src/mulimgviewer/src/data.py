@@ -6,7 +6,8 @@ import numpy as np
 
 from .utils import solve_factor
 from .status_info import ImageSourceIndex
-from .video_paths import frame_filename, manager_cache_format
+from .video_paths import FrameNames, manager_cache_format
+from .video_timeline import page_segments
 
 class ImgData():
     """Multi-image database.
@@ -86,28 +87,9 @@ class ImgData():
     def video_name_list(self):
         if not self.img_num_list:
             return []
-
-        step = self.skip + 1
-        name_list = []
-
-        for vidx, physical_frame_count in enumerate(self.img_num_list):
-            fps = self.video_fps_list[vidx]
-            fps_int = int(round(fps))
-            logical_frame_count = int(physical_frame_count)
-
-            one_video_names = []
-            for logical_idx in range(logical_frame_count):  # Using logical frame count
-                physical_idx = logical_idx * step
-                time_sec = physical_idx / fps
-
-                sec_str = f"{time_sec:.2f}".rstrip("0").rstrip(".") or "0"
-                frame_in_sec = (physical_idx % fps_int) + 1
-
-                filename = frame_filename(logical_idx,fps,step,'png' if manager_cache_format(self)==1 else 'jpeg')
-                one_video_names.append(filename)
-
-            name_list.append(one_video_names)
-
+        extension = 'png' if manager_cache_format(self)==1 else 'jpeg'
+        name_list = [FrameNames(count, self.video_fps_list[index], self.skip+1, extension)
+                     for index, count in enumerate(self.img_num_list)]
         result = name_list[0] if len(self.img_num_list) == 1 else name_list
         return result
 
@@ -259,62 +241,17 @@ class ImgData():
 
     def get_flist(self):
         if self.video_mode:
+            # Virtual frame names stay lazy, including cross-video pages. Work
+            # is proportional to the visible page, never the full film length.
             self.name_list = self.video_name_list()
-            if self.type == 0 or self.type == 1:
-            # one_dir_mul_dir_auto, one_dir_mul_dir_manual
-                if self.parallel_to_sequential:
-                    flist_all = []
-                    for i in range(len(self.path_list)):
-                        actual_frame_count = self.video_num_list[i]  # The actual frame rate of this video
-
-                        for k in range(actual_frame_count):
-                            # Key modification: use local index k within the video, not global index
-                            # k is the frame number within this video (considering skipped frames)
-                            if hasattr(self, 'video_manager') and self.video_manager:
-                                filename = self.video_manager._filename_converter(k, i)  # k is the local index
-                            else:
-                                filename = self.name_list[i][k] if k < len(self.name_list[i]) else self.name_list[i][-1]
-
-                            flist_all.append(str(Path(self.path_list[i]) / filename))
-
-                    if self.img_count >= len(flist_all):
-                        flist = [flist_all[-1]]
-                    elif self.img_count + self.count_per_action > len(flist_all):
-                        flist = flist_all[self.img_count:]
-                        if not flist:
-                            flist = [flist_all[-1]]
-                    else:
-                        flist = flist_all[self.img_count:self.img_count + self.count_per_action]
-                else:
-                    flist = []
-                    for i in range(len(self.path_list)):
-                        for k in range(self.count_per_action):
-                            idx = self.img_count + k
-                            try:
-                                flist.append(str(Path(self.path_list[i]) / self.name_list[i][idx]))
-                            except IndexError:
-                                flist.append(str(Path(self.path_list[i]) / self.name_list[i][-1]))
-
-            elif self.type == 2:
-                # one_dir_mul_img
-                try:
-                    flist = [str(Path(self.path_list[0])/self.name_list[i])
-                            for i in range(self.img_count, self.img_count+self.count_per_action)]
-
-                except:
-                    flist = [str(Path(self.path_list[0])/self.name_list[i])
-                            for i in range(self.img_count, self.img_num)]
-            elif self.type == 3:
-                # one file list
-                # flist = self.path_list
-                try:
-                    flist = [str(Path(self.path_list[i]))
-                            for i in range(self.img_count, self.img_count+self.count_per_action)]
-                except:
-                    flist = [str(Path(self.path_list[i]))
-                            for i in range(self.img_count, self.img_num)]
-            else:
-                flist = []
+            size = max(1, int(self.count_per_action))
+            segments = page_segments(self.video_num_list, size, self.img_count//size,
+                                     self.parallel_to_sequential)
+            flist = []
+            for video, first, stop in segments:
+                names = self.name_list if len(self.video_num_list)==1 else self.name_list[video]
+                for index in range(first, stop):
+                    flist.append(str(Path(self.path_list[video])/names[index]))
             self.flist = flist
             return flist
         else:

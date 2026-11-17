@@ -738,6 +738,24 @@ class VideoGuiAsyncTests(unittest.TestCase):
         finally:
             release.set()
 
+    def test_play_after_uncached_seek_waits_for_requested_page_before_advancing(self):
+        self.warm_current_window()
+        cfg = self.frame.shared_config
+        try:
+            with patch.object(self.frame.video_manager,'update_cache'), patch.object(
+                    self.frame,'_schedule_next_video_tick') as schedule:
+                self.frame.slider_value_change(None,value=51)
+                self.assertEqual(cfg.batch_idx,50)
+                self.frame.toggle_play(None)
+                self.assertTrue(self.frame._play_timer_suspended)
+                schedule.assert_not_called()
+                self.frame.on_play_timer(None)
+                self.assertEqual(cfg.batch_idx,50)
+        finally:
+            cfg.is_playing = False
+            self.frame.play_timer.Stop()
+            self.frame._cancel_pending_frame_wait()
+
     def test_power_tooltip_shows_cached_measurements_and_real_playback_fps(self):
         self.frame.resource_monitor.read_snapshot = Mock(return_value=dict(
             cpu=32.5, memory=1.5 * 1024 ** 3, fps=24., available=True))
@@ -751,6 +769,27 @@ class VideoGuiAsyncTests(unittest.TestCase):
             self.assertIn('Decode:', text)
         finally:
             self.frame.shared_config.is_playing = False
+
+    def test_image_power_tooltip_shows_final_cache_supply_on_fourth_line(self):
+        cfg = self.frame.shared_config
+        old_mode, old_playing = cfg.video_mode, cfg.is_playing
+        pacer = self.frame.image_pipeline.supply_pacer
+        try:
+            cfg.video_mode = False
+            cfg.is_playing = True
+            with patch.object(pacer, 'supply_period', return_value=.125):
+                self.frame._refresh_power_tooltip()
+                lines = self.frame.power_mode.GetToolTip().GetTip().splitlines()
+                self.assertEqual(len(lines), 4)
+                self.assertIn('Supply: 8.00 FPS', lines[3])
+            with patch.object(pacer, 'supply_period', return_value=None):
+                self.frame._refresh_power_tooltip()
+                self.assertIn('Supply: sampling...', self.frame.power_mode.GetToolTip().GetTip())
+            cfg.is_playing = False
+            self.frame._refresh_power_tooltip()
+            self.assertNotIn('Supply:', self.frame.power_mode.GetToolTip().GetTip())
+        finally:
+            cfg.video_mode, cfg.is_playing = old_mode, old_playing
 
     def test_power_tooltip_second_line_counts_actual_save_work_and_hides_finished_work(self):
         from mulimgviewer.src.export_async import ExportControl

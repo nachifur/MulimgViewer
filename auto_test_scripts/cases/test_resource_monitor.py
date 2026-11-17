@@ -6,7 +6,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'src'))
-from mulimgviewer.src.resource_monitor import ResourceMonitor, ChildCpuTracker, CHILD_CPU, run_video_process
+from mulimgviewer.src.resource_monitor import ResourceMonitor, ChildCpuTracker, CHILD_CPU, run_video_process, tracked_video_process
 
 
 class ResourceMonitorTests(unittest.TestCase):
@@ -85,6 +85,14 @@ class ResourceMonitorTests(unittest.TestCase):
             run_video_process([sys.executable, '-c', 'import sys; sys.exit(3)'],
                               capture_output=True, check=True)
         self.assertEqual(error.exception.returncode, 3)
+
+
+    def test_streaming_child_is_reaped_when_consumer_stops_early(self):
+        with tracked_video_process([sys.executable,'-c','import time;time.sleep(10)'],
+                                   stdout=subprocess.PIPE) as process:
+            self.assertIsNone(process.poll())
+        self.assertIsNotNone(process.poll())
+        self.assertFalse(CHILD_CPU.active)
 
 
 if __name__ == '__main__':

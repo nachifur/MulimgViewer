@@ -133,6 +133,92 @@ class VideoCacheTests(unittest.TestCase):
         self.vm._save_frame(self.cfg.real_video_path[0],20,21,0,config=old)
         self.assertFalse(list(Path(self.cfg.video_path[0]).glob('*.jpeg')))
 
+    def test_long_container_without_frame_count_never_decodes_to_count_metadata(self):
+        metadata = {'streams': [{'codec_type': 'video', 'width': 1280, 'height': 720,
+                    'avg_frame_rate': '785649/32768', 'r_frame_rate': '785649/32768',
+                    'duration': '10703.951000'}]}
+        with patch.object(self.vm, '_probe_json', return_value=metadata) as probe, patch.dict(
+                self.vm._get_meta.__globals__,
+                run_video_process=lambda *args, **kwargs:self.fail('Scanned the video to count frames')):
+            fps, total = self.vm._get_meta('three_hour_film.mp4')
+        self.assertAlmostEqual(fps, 785649/32768)
+        self.assertEqual(total, round(fps*10703.951))
+        self.assertFalse(self.vm._fast_seek_paths['three_hour_film.mp4'])
+        probe.assert_called_once()
+        self.assertNotIn('-count_frames', probe.call_args[0][0])
+
+    def test_raw_window_rebuild_never_exposes_a_partial_map_to_cancellation(self):
+        self.vm._raw_windows = {0:(0,80),1:(0,80)}
+        original = self.vm._batch_range
+        observed = []
+        def probe(*args):
+            observed.append(len(self.vm._raw_windows))
+            return original(*args)
+        with patch.object(self.vm,'_batch_range',side_effect=probe):
+            self.vm.update_cache()
+            self.assert_window(14,26)
+        self.assertTrue(observed)
+        self.assertTrue(all(count==2 for count in observed))
+
+    def test_transient_seek_cancellation_does_not_disable_native_decoder(self):
+        if not self.vm._decoder_bank.available:self.skipTest('PyAV required')
+        self.vm._window_token = 'cancel'
+        self.vm._worker_context.token = 'cancel'
+        self.vm._raw_windows = {0:(0,80),1:(0,80)}
+        def interrupted(_decoder,*args,**_kwargs):
+            cancelled = args[3]
+            self.vm._raw_windows = {0:(50,60),1:(0,80)}
+            self.assertTrue(cancelled())
+            self.vm._raw_windows = {0:(0,80),1:(0,80)}
+            return iter(())
+        try:
+            with patch('video_decoder.DecoderSession.frames',interrupted):
+                self.assertTrue(self.vm._decode_incremental(self.cfg.real_video_path[0],0,0,0,self.cfg))
+            self.assertNotIn(self.cfg.real_video_path[0],self.vm._decoder_bank.disabled)
+        finally:del self.vm._worker_context.token
+
+    def test_parallel_frame_preparation_preserves_pixels_and_publishes_complete_pages(self):
+        self.cfg.cache_save_format = 1
+        self.cfg.count_per_action = 3
+        if not self.vm._decoder_bank.available:self.skipTest('PyAV required')
+        original_store = self.vm._store_decoded_frame
+        entered,release = threading.Event(),threading.Event()
+        active = set()
+        seen = []
+        lock = threading.Lock()
+        def store(*args):
+            with lock:
+                active.add(threading.get_ident())
+                if len(active)==2:entered.set()
+            if not release.wait(3):raise TimeoutError('Parallel frame writers did not start')
+            return original_store(*args)
+        def publish(video,local,token,config):
+            first,last = self.vm._batch_range(config.video_num_list[video],3,local)
+            self.assertFalse(self.vm._list_missing_range(video,first,last,config))
+            seen.append(local)
+        self.vm._worker_context.native_threads = 5
+        # A tiny fixture models a 4K stream's allocation without a large asset.
+        self.vm._video_dimensions[self.cfg.real_video_path[0]] = (4096,2304)
+        def allow():
+            entered.wait(3);release.set()
+        waiter = threading.Thread(target=allow);waiter.start()
+        try:
+            with patch.object(self.vm,'_store_decoded_frame',side_effect=store), patch.object(
+                    self.vm,'_publish_raw_ready',side_effect=publish):
+                self.assertTrue(self.vm._decode_incremental(self.cfg.real_video_path[0],0,5,0,self.cfg))
+            self.assertTrue(entered.is_set())
+            self.assertLessEqual(len(active),2)
+            self.assertTrue({0,1}.issubset(seen))
+            with DecoderBank(0).lease(self.cfg.real_video_path[0],10.,False,80*48) as decoder:
+                for index,image in decoder.frames(0,5,1,lambda:False,buffer_images=True):
+                    try:
+                        with Image.open(Path(self.cfg.video_path[0])/self.vm._filename_converter(index,0)) as cached:
+                            self.assertEqual(cached.tobytes(),image.tobytes())
+                    finally:image.close()
+        finally:
+            release.set();waiter.join(4)
+            del self.vm._worker_context.native_threads
+
     def test_png_native_and_ffmpeg_paths_write_real_lossless_png(self):
         self.cfg.cache_save_format=1
         for native in (True,False):
@@ -513,7 +599,7 @@ class VideoCacheTests(unittest.TestCase):
             self.vm._pending_extract.pop((0,20),None)
             pending.cancel()
 
-    def test_first_batch_stitches_before_its_decode_run_finishes(self):
+    def test_current_and_following_batches_stitch_before_decode_run_finishes(self):
         if not self.vm._decoder_bank.available:
             self.skipTest('PyAV required for incremental readiness')
         from video_decoder import DecoderSession
@@ -524,23 +610,26 @@ class VideoCacheTests(unittest.TestCase):
         self.cfg.batch_idx = 0
         self.cfg.cache_img = [None]*11
         entered, release, stitched = threading.Event(), threading.Event(), threading.Event()
+        completed=set()
         original = DecoderSession.frames
         compose = self.vm._run_window_stitch
         def delayed(session, *args, **kwargs):
             for index, image in original(session, *args, **kwargs):
                 yield index, image
-                if index == 0:
+                if index == 1:
                     entered.set()
                     if not release.wait(3):
-                        raise TimeoutError('First batch was held behind its whole decode run')
+                        raise TimeoutError('Ready batches were held behind their whole decode run')
         def record(*args, **kwargs):
             result = compose(*args, **kwargs)
-            stitched.set()
+            completed.add(args[0])
+            if completed=={0,1}:stitched.set()
             return result
         try:
             with patch.object(DecoderSession, 'frames', delayed), patch.object(self.vm, '_run_window_stitch', record):
                 run = self.vm._queue_extract_run(0, 0, 5, token)[0]
                 self.vm._queue_window_stitch(0, [(0,0)], token)
+                self.vm._queue_window_stitch(1, [(0,1)], token)
                 self.assertTrue(entered.wait(2))
                 self.assertTrue(stitched.wait(2))
                 self.assertFalse(run.done())
@@ -548,6 +637,83 @@ class VideoCacheTests(unittest.TestCase):
                 run.result(timeout=3)
         finally:
             release.set()
+
+    def test_playing_seek_submits_current_page_before_prefetch_ranges(self):
+        self.cfg.is_playing=True
+        calls=[]
+        with patch.object(self.vm,'_queue_extract_run',side_effect=lambda *args:calls.append(args[:3])), \
+                patch.object(self.vm,'_queue_window_stitch'):
+            self.vm.update_cache();self.settle()
+        self.assertEqual(calls[:2],[(0,20,20),(1,20,20)])
+        self.assertTrue(any(last>first for _,first,last in calls[2:]),'Prefetch must retain batched extraction')
+
+    def test_raw_cache_encoding_avoids_pillow_path_canonicalization(self):
+        image=Image.new('RGB',(80,48),(20,40,60))
+        for fmt in (0,1):
+            self.cfg.cache_save_format=fmt
+            with patch.object(os.path,'realpath',side_effect=AssertionError('Per-frame canonicalization')):
+                self.vm._store_decoded_frame(20,image,0,self.cfg,None,20,20)
+            path=Path(self.cfg.video_path[0])/self.vm._filename_converter(20,0)
+            with Image.open(path) as cached:
+                self.assertEqual(cached.format,'JPEG' if fmt==0 else 'PNG')
+                self.assertEqual(cached.size,image.size)
+
+    def test_codec_idle_allowance_excludes_active_work_and_pixel_reservation(self):
+        mib=1024**2
+        self.cfg.memory_budget=512*mib
+        path=self.cfg.real_video_path[0]
+        group=SimpleNamespace(lock=threading.RLock(),keys={(0,path),(1,'page')},
+                              _memory_used=lambda:224*mib)
+        with patch.object(self.vm,'_pipeline_workers',group):
+            limit,covered=self.vm._decoder_idle_allowance()
+            self.assertEqual(limit,max(0,512*mib-self.vm._pixel_cache.limit-64*mib-224*mib))
+            self.assertEqual(covered,{path})
+            self.cfg.memory_budget=64*mib
+            self.assertEqual(self.vm._decoder_idle_allowance()[0],0)
+
+    def test_warm_memory_planning_counts_existing_work_and_reclaimable_codecs(self):
+        mib=1024**2
+        self.cfg.memory_budget=512*mib
+        self.vm._decoder_bank.configure(64*mib)
+        self.vm._decoder_bank.idle_bytes=128*mib
+        group=SimpleNamespace(lock=threading.RLock(),_memory_used=lambda:64*mib)
+        with patch.object(self.vm,'_pipeline_workers',group), \
+                patch('test_video_cache.available_memory_bytes',return_value=64*mib):
+            self.assertEqual(self.vm._planning_memory_budget(),int(256*mib*.9))
+
+    def test_large_preview_reduction_preserves_full_resolution_lossless_cache(self):
+        self.cfg.cache_save_format=1
+        self.vm._pixel_cache.configure(8*1024**2)
+        image=Image.new('RGB',(1920,1080),(20,40,60))
+        resize=Image.Image.resize
+        reductions=[]
+        def record(value,*args,**kwargs):
+            reductions.append(kwargs.get('reducing_gap'))
+            return resize(value,*args,**kwargs)
+        with patch.object(self.vm,'_preview_resize_target',return_value=(192,108)), \
+                patch.object(Image.Image,'resize',record):
+            self.vm._store_decoded_frame(20,image,0,self.cfg,None,20,20)
+        self.assertIn(3.0,reductions)
+        path=Path(self.cfg.video_path[0])/self.vm._filename_converter(20,0)
+        with Image.open(path) as cached:
+            self.assertEqual(cached.size,image.size)
+            self.assertEqual(cached.tobytes(),image.tobytes())
+
+    def test_foreground_frame_then_prefetch_keeps_same_native_decoder(self):
+        if not self.vm._decoder_bank.available:self.skipTest('PyAV required')
+        self.cfg.memory_budget=512*1024**2
+        self.vm._configure_video_memory()
+        path=self.cfg.real_video_path[0]
+        self.vm._video_dimensions[path]=(1280,720)
+        self.vm._worker_context.native_threads=5
+        try:
+            self.assertTrue(self.vm._decode_incremental(path,0,0,0,self.cfg))
+            session=self.vm._decoder_bank.sessions[path]
+            self.assertEqual(session.threads,2)
+            self.assertTrue(self.vm._decode_incremental(path,1,5,0,self.cfg))
+            self.assertEqual(session.opens,1)
+            self.assertEqual(session.seeks,0)
+        finally:del self.vm._worker_context.native_threads
 
     def test_ready_batch_bypasses_batch_waiting_for_extraction(self):
         token = ('dependency-test', 0)

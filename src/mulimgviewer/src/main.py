@@ -585,9 +585,11 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
             text += f'\nAverage (10s): CPU {cpu:.1f}% | RAM {usage}'
         text += ('\nPlayback: paused' if not cfg.is_playing else
                  f'\nPlayback: {fps:.1f} FPS' if fps is not None else '\nPlayback: sampling...')
-        if cfg.video_mode and cfg.is_playing:
-            period=vm._playback_pacer.supply_period()
-            if period is not None and period>0:text+=f" | Supply: {1/period:.2f} FPS"
+        if cfg.is_playing:
+            pacer=vm._playback_pacer if cfg.video_mode else self.image_pipeline.supply_pacer
+            period=pacer.supply_period()
+            text+=(f" | Supply: {1/period:.2f} FPS" if period is not None and period>0
+                   else " | Supply: sampling...")
         tooltip = self.power_mode.GetToolTip()
         if tooltip is None:
             self.power_mode.SetToolTip(text)

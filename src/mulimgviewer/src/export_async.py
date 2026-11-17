@@ -103,7 +103,7 @@ class ExportDecoder:
         key=str(path)
         if key not in self.dimensions and av is not None:
             try:
-                with av.open(key) as container:
+                with av.open(key, metadata_errors='replace') as container:
                     codec=container.streams.video[0].codec_context
                     self.dimensions[key]=int(codec.width)*int(codec.height)
             except (OSError,ValueError,IndexError):pass
@@ -117,7 +117,7 @@ class ExportDecoder:
         if not self.bank.available or str(path) in self.bank.disabled:return False
         try:
             if str(path) not in self.dimensions:
-                with av.open(str(path)) as container:
+                with av.open(str(path), metadata_errors='replace') as container:
                     codec=container.streams.video[0].codec_context
                     pixels=int(codec.width)*int(codec.height)
                 if pixels<=0:return False

@@ -3,12 +3,29 @@ import sys
 import unittest
 from pathlib import Path
 from types import SimpleNamespace
+from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'src'))
-from mulimgviewer.src.status_info import ImageSourceIndex, selection_info, status_widths
+from mulimgviewer.src.status_info import ImageSourceIndex, selection_info, status_widths, image_memory_tooltip, pixel_memory
 
 
 class StatusInfoTests(unittest.TestCase):
+    def test_memory_tooltip_uses_actual_selected_source_not_normalized_resolution(self):
+        model=SimpleNamespace(flist=['a.png','b.png'],xy_grids_id_list=[1,0,2],
+            _status_source_slots=(0,1,-1),_status_source_images=(((7680,4320),'RGB'),((1920,1080),'L')),
+            img_resolution_origin=[80,48])
+        with patch('PIL.Image.open',side_effect=AssertionError('Hover must not read files')):
+            tip=image_memory_tooltip(model,((15360,8640),'RGBA'),0)
+        self.assertIn('Original (selected): 1920 x 1080 L | pixels ~ 1.98 MiB',tip)
+        self.assertIn('Page mosaic: 15360 x 8640 RGBA | pixels ~ 506.25 MiB',tip)
+        self.assertIn('7680 x 4320 RGB',image_memory_tooltip(model,None,1))
+        self.assertIn('Original (selected): unavailable',image_memory_tooltip(model,None,2))
+
+    def test_pixel_memory_counts_decoded_storage_instead_of_compressed_file_size(self):
+        for mode,expected in (('RGB',4),('RGBA',4),('L',1),('P',1),('1',1),('I;16',2),('F',4)):
+            self.assertEqual(pixel_memory((8192,8192),mode),8192**2*expected)
+        self.assertIn('unavailable',image_memory_tooltip(SimpleNamespace(),None))
+
     def image(self, kind, paths, names, displayed, sequential=False):
         model = SimpleNamespace(type=kind, path_list=paths, name_list=names,
             parallel_to_sequential=sequential, flist=displayed,

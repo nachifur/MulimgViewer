@@ -38,8 +38,12 @@ def check_processing_budget(manager, flist):
     for path in paths or ():
         with Image.open(path) as image:
             pixels += image.width*image.height
-        if pixels*(16+4*copies) > budget:
-            raise MemoryError('Custom processing exceeds the memory budget; reduce the layout or source resolution')
+    estimate=pixels*(16+4*copies)
+    if estimate>budget or estimate>=32*1024**2:
+        from ..thread_optimizer import available_memory_bytes
+        available=available_memory_bytes()
+        if (available is None and estimate>budget) or (available is not None and estimate>available*.85):
+            raise MemoryError('Not enough available system memory for custom processing')
 
 
 def capture_algorithms(names):

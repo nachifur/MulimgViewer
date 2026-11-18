@@ -19,13 +19,14 @@ from .custom_pipeline import CustomPipeline, current_only
 from .mosaic_pipeline import MosaicStage
 from .cache_layout import page_name, write_source_catalog, cache_image_extension, save_cache_image
 from .custom_func.contract import active_cache_names
+from .video_memory import rgba_display
 
 
 RENDER_STATE = (
     'xy_grid', 'xy_grids_id_list', 'crop_points', 'img_resolution_origin',
     'img_resolution_show', 'img_resolution', 'gap_color', 'title_setting',
     'pdf_title_layers', '_last_title_layout', 'flist', '_flist_groups', 'full_exif_cache', 'title_max_size',
-    '_status_source_slots',
+    '_status_source_slots', '_status_source_images',
     '_show_all_func_enabled', '_show_all_func_layout', '_original_row_col',
     '_show_all_func_expanded_row_col', '_func_layout_vertical', '_blank_img_ids',
 )
@@ -352,8 +353,7 @@ class ImagePipeline:
                 self.display_future.cancel()
         def prepare():
             with Image.open(entry[0]) as source:
-                image = source.convert('RGBA')
-            return image, image.tobytes()
+                return rgba_display(source)
         future = self.display.submit(prepare)
         self.display_future = future
         def done(f):

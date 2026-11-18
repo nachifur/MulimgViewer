@@ -79,6 +79,11 @@ class PipelineWorkers:
     def _memory_used(self):
         return sum(self.stage_bytes) + self.downstream_bytes
 
+    def memory_snapshot(self):
+        """Atomically expose charged RAM and decoder paths covered by it."""
+        with self.lock:
+            return self._memory_used(), frozenset(key for stage,key in self.keys if stage==0)
+
     def downstream_capacity(self):
         """All idle decode lanes can serve bounded downstream computation."""
         with self.lock:
@@ -119,6 +124,14 @@ class PipelineWorkers:
             self.queues[stage].append((future, fn, args, kwargs, resource_key, max(1,int(cpu_cost)), coordinator))
             self._dispatch()
         return future
+
+    def reserve_exclusive_downstream(self, size):
+        """Let one physically-safe task exceed the soft working RAM target."""
+        with self.lock:
+            if self._memory_used() or self._cpu_used()>=self.total_budget:return False
+            self.downstream_active+=1
+            self.downstream_bytes+=size
+            return True
 
     def _dispatch(self):
         # All calls hold the lock. Never invoke user Future callbacks here.

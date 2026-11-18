@@ -114,6 +114,16 @@ class VideoGuiAsyncTests(unittest.TestCase):
             time.sleep(0.005)
         self.fail('GUI operation did not complete')
 
+    def video_page_ready(self):
+        """Wait for the current page after asynchronous cache invalidation."""
+        return self.frame.video_manager.is_display_current(getattr(self.frame,'_video_display_key',None))
+
+    def test_video_readiness_requires_a_painted_page(self):
+        vm=self.frame.video_manager
+        with patch.object(self.frame,'_video_display_key',None,create=True), \
+                patch.object(vm,'_window_token',None):
+            self.assertFalse(self.video_page_ready())
+
     def run_timer_until(self, predicate, timeout=10):
         # wx.Timer needs a running native GUI event loop, not just Yield calls.
         deadline = time.monotonic() + timeout
@@ -249,6 +259,67 @@ class VideoGuiAsyncTests(unittest.TestCase):
         offset=snapshot.title_max_size[1]+snapshot.layout_params[3][5]
         snapshot.crop_points_process([[4,4+offset,24,20+offset,1,1,True]])
         self.assertEqual(snapshot.crop_points[0][:4],expected)
+
+    def test_middle_bottom_magnifier_is_centered_for_video_image_and_custom_panes(self):
+        frame=self.frame
+        for video in (True,False):
+            if not video:self._use_image_input()
+            for custom in (False,True):
+                with self.subTest(video=video,custom=custom):
+                    frame.img_resolution.ChangeValue('80,48')
+                    frame.show_scale.ChangeValue('1,1')
+                    frame.row_col_img_unit.ChangeValue('2,1')
+                    frame.gap.ChangeValue('0,0,0,0,0,0,0,0')
+                    frame.magnifier_show_scale.ChangeValue('1,1')
+                    frame.magnifer_row_col.ChangeValue('1,1')
+                    frame.box_position.SetSelection(0)
+                    frame.title_show.SetValue(False)
+                    frame.show_original.SetValue(True)
+                    frame.show_magnifer.SetValue(True)
+                    frame.show_box.SetValue(False)
+                    frame.show_box_in_crop.SetValue(False)
+                    frame.show_custom_func.SetValue(custom)
+                    frame.show_all_func.SetValue(False)
+                    frame.colourPicker_gap.SetColour(wx.Colour(255,255,255))
+                    frame.xy_magnifier=[[4,4,24,14,1,1,False]]
+                    frame.color_list=[wx.Colour(255,0,0)]
+                    frame.refresh(None)
+                    if video:self.pump_until(self.video_page_ready)
+                    else:self.pump_until(lambda:frame.image_pipeline.displayed_key is not None and
+                        frame.image_pipeline.displayed_key[:2]==(frame.image_pipeline.generation,frame.shared_config.batch_idx))
+                    image=frame.show_bmp_in_panel
+                    # A 20-wide crop below an 80-wide original starts at x=30.
+                    self.assertEqual(image.getpixel((0,53))[:3],(255,255,255))
+                    self.assertNotEqual(image.getpixel((40,53))[:3],(255,255,255))
+                    self.assertEqual(image.getpixel((79,53))[:3],(255,255,255))
+
+    def test_all_box_positions_use_identical_image_and_video_render_geometry(self):
+        import copy
+        frame=self.frame
+        for name,value in dict(row_col='1,1',row_col_one_img='1,1',row_col_img_unit='2,1',
+                img_resolution='80,48',show_scale='1,1',output_scale='1,1',
+                magnifier_show_scale='1,1',magnifier_out_scale='1,1',magnifer_row_col='1,1').items():
+            getattr(frame,name).ChangeValue(value)
+        frame.title_show.SetValue(False)
+        frame.show_original.SetValue(True);frame.show_magnifer.SetValue(True)
+        frame.show_box.SetValue(False);frame.show_box_in_crop.SetValue(False)
+        frame.show_custom_func.SetValue(False);frame.show_all_func.SetValue(False)
+        frame.xy_magnifier=[[4,4,24,14,1,1,False]]
+        frame.color_list=[wx.Colour(255,0,0)]
+        source=Path('geometry.png')
+        Image.new('RGB',(80,48),(20,80,160)).save(source)
+        params=frame.set_img_layout()
+        for position in range(5):
+            for mode in (0,1):
+                results=[]
+                for video in (False,True):
+                    manager=frame.ImgManager.video_stitch_snapshot()
+                    manager.layout_params=copy.deepcopy(params)
+                    manager.layout_params[21]=position;manager.video_mode=video
+                    manager._video_lazy_frames=True
+                    self.assertEqual(manager.stitch_images(mode,[[4,4,24,14,1,1,False]],flist=[str(source)]),0)
+                    results.append((manager.img.size,manager.img.tobytes()))
+                with self.subTest(position=position,render_mode=mode):self.assertEqual(*results)
 
     def test_gui_processes_events_while_real_compositor_waits(self):
         entered, release = threading.Event(), threading.Event()
@@ -883,7 +954,7 @@ class VideoGuiAsyncTests(unittest.TestCase):
             with patch.object(Image.Image,'save',make_sampler(samples)):
                 self.frame.refresh(None)
                 if video:
-                    self.pump_until(lambda:getattr(self.frame,'_video_display_key',(None,))[-1]==self.frame.video_manager._window_token)
+                    self.pump_until(self.video_page_ready)
                 else:self.pump_until(lambda:self.frame.image_pipeline.displayed_key is not None)
             self.assertTrue(samples)
             self.assertTrue(all(count>0 for count in samples))
@@ -892,7 +963,7 @@ class VideoGuiAsyncTests(unittest.TestCase):
         self.frame.show_all_func.SetValue(True)
         self.frame.show_all_func_layout.ChangeValue('2,1')
         self.frame.refresh(None)
-        self.pump_until(lambda:getattr(self.frame,'_video_display_key',(None,))[-1]==self.frame.video_manager._window_token)
+        self.pump_until(self.video_page_ready)
         for mode in (0,3):
             self.frame.power_mode.SetSelection(mode)
             self.frame.on_power_mode_changed(None)
@@ -1168,6 +1239,103 @@ class VideoGuiAsyncTests(unittest.TestCase):
             self.assertTrue(all(installed[index]!='Original' for index in algorithms))
             self.assertFalse(self.frame.show_custom_func.GetValue())
 
+    def test_full_scale_video_canvas_can_exceed_soft_budget_without_rescaling(self):
+        self.frame.row_col.ChangeValue('4,6')
+        self.frame.row_col_one_img.ChangeValue('1,1')
+        self.frame.row_col_img_unit.ChangeValue('3,1')
+        self.frame.img_resolution.ChangeValue('1280,720')
+        self.frame.show_scale.ChangeValue('1,1')
+        self.frame.show_custom_func.SetValue(False)
+        self.frame.show_all_func.SetValue(False)
+        self.frame.title_show.SetValue(True)
+        self.frame.title_font_size.ChangeValue('20')
+        self._set_test_power(4,4,96*1024**2)
+        self.frame.refresh(None)
+        self.pump_until(self.video_page_ready,timeout=25)
+        width,height=self.frame.img_size
+        self.assertGreaterEqual(width,6*1280)
+        self.assertGreaterEqual(height,4*720)
+        self.assertLess(height,4*1000,'Unused image-unit cells must not become full-height images')
+        self.assertEqual(list(self.frame.ImgManager.layout_params[4]),[1,1])
+        self.assertGreater(width*height*16,self.frame.shared_config.memory_budget)
+        self.assertTrue(Path(self.frame.shared_config.cache_img[self.frame.shared_config.batch_idx]).is_file())
+
+    def test_native_bitmap_access_failure_falls_back_to_tiles_without_losing_geometry(self):
+        from mulimgviewer.src.display_canvas import TiledImageCanvas
+        image=Image.new('RGBA',(160,96),(20,40,60,128))
+        with patch.object(wx.Bitmap,'FromBufferRGBA',side_effect=RuntimeError('Failed to gain raw access to bitmap data.')):
+            self.frame.display_bitmap(False,image,prepared_rgba=image.tobytes())
+        canvas=self.frame.img_last
+        self.assertIsInstance(canvas,TiledImageCanvas)
+        self.assertEqual(canvas.image.size,image.size)
+        self.assertIs(self.frame._img_bindings_target,canvas)
+        bitmap=canvas._tile(0,0)
+        pixels=bitmap.ConvertToImage()
+        self.assertEqual((pixels.GetWidth(),pixels.GetHeight()),image.size)
+        self.assertEqual(pixels.GetAlpha(0,0),128)
+        self.frame.display_bitmap(False,image)
+        self.assertIsInstance(self.frame.img_last,wx.StaticBitmap)
+        self.assertIs(self.frame._img_bindings_target,self.frame.img_last)
+
+    def test_large_display_skips_full_native_bitmap_and_bounds_native_tile_cache(self):
+        from mulimgviewer.src.display_canvas import TiledImageCanvas
+        from mulimgviewer.src.video_memory import rgba_display
+        source=Image.new('RGBA',(9000,80),(20,40,60,255))
+        image,data=rgba_display(source)
+        source.close()
+        self.assertIsNone(data,'Wide canvases must not retain a full RGBA byte copy')
+        with patch.object(self.frame.ImgManager.ImgF,'PIL2wx',side_effect=AssertionError('No full native bitmap')):
+            self.frame.display_bitmap(False,image,prepared_rgba=data)
+        canvas=self.frame.img_last
+        self.assertIsInstance(canvas,TiledImageCanvas)
+        self.assertEqual(canvas.image.size,(9000,80))
+        canvas.cache_limit=512*80*4*2
+        for x in range(0,image.width,512):canvas._tile(x,0)
+        self.assertLessEqual(canvas.tile_bytes,canvas.cache_limit)
+        self.assertLessEqual(len(canvas.tiles),2)
+
+    def test_tiled_canvas_scroll_paints_only_visible_full_resolution_tiles(self):
+        from mulimgviewer.src.display_canvas import TiledImageCanvas
+        window=wx.Frame(None,size=(320,180))
+        viewport=wx.ScrolledWindow(window)
+        viewport.SetScrollRate(1,1)
+        source=Image.new('RGBA',(9000,80),(20,40,60,255))
+        canvas=TiledImageCanvas(viewport,viewport,source)
+        canvas.SetSize(source.size);viewport.SetVirtualSize(source.size)
+        try:
+            window.Show();window.Raise();self.app.Yield(True)
+            canvas.tiles.clear();canvas.tile_bytes=0
+            viewport.Scroll(8192,0);canvas.Refresh(False);canvas.Update()
+            self.pump_until(lambda:(8192,0) in canvas.tiles)
+            self.assertGreaterEqual(canvas.visible_rect().x,8192)
+            self.assertLessEqual(len(canvas.tiles),2,'Scrolling must not render every intervening tile')
+            self.assertLessEqual(canvas.tile_bytes,canvas.cache_limit)
+        finally:window.Destroy();self.app.Yield(True)
+
+
+    def test_status_first_field_hover_shows_raw_and_display_sizes_in_image_and_video_modes(self):
+        for video in (True,False):
+            if not video:self._use_image_input()
+            self.frame.show_custom_func.SetValue(True)
+            self.frame.show_all_func.SetValue(False)
+            self.frame.refresh(None)
+            if video:self.pump_until(self.video_page_ready)
+            else:self.pump_until(lambda:self.frame.image_pipeline.displayed_key is not None)
+            frame=self.frame;manager=frame.ImgManager
+            self.assertEqual(len(manager._status_source_images),len(manager.flist))
+            size,mode=manager._status_source_images[0]
+            self.assertGreater(min(size),0)
+            event=Mock()
+            bar=frame.m_statusBar1
+            event.GetPosition.return_value=bar.GetFieldRect(0).GetPosition()+wx.Point(1,1)
+            with patch('PIL.Image.open',side_effect=AssertionError('Hover must not decode')):
+                frame._on_status_bar_hover(event)
+            tip=bar.GetToolTip().GetTip()
+            self.assertIn(f'{size[0]} x {size[1]} {mode}',tip)
+            width,height=frame.img_size
+            self.assertIn(f'Page mosaic: {width} x {height} RGBA',tip)
+            event.Skip.assert_called_once()
+
     def test_two_row_canvas_hides_original_and_keeps_hidden_algorithms_idle(self):
         from mulimgviewer.src.index_catalog import IndexCatalog
         from mulimgviewer.src.custom_func.contract import processing_indices
@@ -1180,7 +1348,7 @@ class VideoGuiAsyncTests(unittest.TestCase):
                 self.frame.show_unit.SetValue(show_original)
                 self.frame.refresh(None)
                 if video:
-                    self.pump_until(lambda:getattr(self.frame,'_video_display_key',(None,))[-1]==self.frame.video_manager._window_token)
+                    self.pump_until(self.video_page_ready)
                 else:
                     self.pump_until(lambda:self.frame.image_pipeline.displayed_key is not None
                         and self.frame.image_pipeline.displayed_key[:2]==(self.frame.image_pipeline.generation,self.frame.shared_config.batch_idx))
@@ -1210,7 +1378,7 @@ class VideoGuiAsyncTests(unittest.TestCase):
             vm=self.frame.video_manager;pipeline=self.frame.image_pipeline
             def quiet(pipeline=pipeline,video=video,vm=vm):
                 if video:
-                    return (getattr(self.frame,'_video_display_key',(None,))[-1]==vm._window_token
+                    return (self.video_page_ready()
                         and not vm.cache_update_pending() and not vm._pending_extract and not vm._window_stitches)
                 return pipeline.displayed_key is not None and not pipeline.running
             self.pump_until(quiet)
@@ -1261,7 +1429,7 @@ class VideoGuiAsyncTests(unittest.TestCase):
             self.assertFalse(self.frame._custom_settings_dirty)
             self.assertTrue(self.frame.ImgManager.layout_params[38])
             if video:
-                self.pump_until(lambda:getattr(self.frame,'_video_display_key',(None,))[-1]==self.frame.video_manager._window_token
+                self.pump_until(lambda:self.video_page_ready()
                     and self.frame.ImgManager._show_all_func_enabled)
             else:
                 self.pump_until(lambda:self.frame.image_pipeline.displayed_key is not None)
@@ -1289,7 +1457,7 @@ class VideoGuiAsyncTests(unittest.TestCase):
         self.frame.save_format.SetSelection(0)
         self.frame.output_scale.ChangeValue('1,1')
         self.frame.refresh(None)
-        self.pump_until(lambda:getattr(self.frame,'_video_display_key',(None,))[-1]==self.frame.video_manager._window_token)
+        self.pump_until(self.video_page_ready)
         self.assertEqual(self.frame.shared_config.cache_save_format,0)
         old_token=self.frame.video_manager._window_token
         self.frame.save_format.SetSelection(2)  # Export must resolve this clicked snapshot, even before Refresh.
@@ -1316,13 +1484,13 @@ class VideoGuiAsyncTests(unittest.TestCase):
         self.assertEqual(self.frame.video_manager._window_token,old_token)
         self.assertEqual(self.frame.shared_config.cache_save_format,0)
         self.frame.refresh(None)
-        self.pump_until(lambda:getattr(self.frame,'_video_display_key',(None,))[-1]==self.frame.video_manager._window_token)
+        self.pump_until(self.video_page_ready)
         self.assertNotEqual(self.frame.video_manager._window_token,old_token)
         self.assertEqual(self.frame.shared_config.cache_save_format,1)
         with Image.open(self.frame.shared_config.cache_img[self.frame.shared_config.batch_idx]) as image:
             self.assertEqual(image.format,'PNG')
         self.frame.output_scale.ChangeValue('1,0.5');self.frame.refresh(None)
-        self.pump_until(lambda:getattr(self.frame,'_video_display_key',(None,))[-1]==self.frame.video_manager._window_token)
+        self.pump_until(self.video_page_ready)
         self.assertEqual(self.frame.shared_config.cache_save_format,0)
 
     def test_jpg_policy_encodes_image_and_video_algorithm_and_composed_caches(self):
@@ -1335,8 +1503,7 @@ class VideoGuiAsyncTests(unittest.TestCase):
                 if not video:self._use_image_input()
                 self.frame.refresh(None)
                 if video:
-                    token=self.frame.video_manager._window_token
-                    self.pump_until(lambda token=token:getattr(self.frame,'_video_display_key',(None,))[-1]==token)
+                    self.pump_until(self.video_page_ready)
                     composed=Path(self.frame.shared_config.cache_img[self.frame.shared_config.batch_idx])
                 else:
                     pipeline=self.frame.image_pipeline
@@ -1363,7 +1530,7 @@ class VideoGuiAsyncTests(unittest.TestCase):
         self.warm_current_window()
         self.frame.cache_save_format.SetSelection(1)
         self.frame.refresh(None)
-        self.pump_until(lambda:getattr(self.frame,'_video_display_key',(None,))[-1]==self.frame.video_manager._window_token
+        self.pump_until(lambda:self.video_page_ready()
             and self.frame.ImgManager.flist and all(Path(p).suffix=='.png' for p in self.frame.ImgManager.flist))
         self.assertEqual(self.frame.shared_config.cache_save_format,1)
         with Image.open(self.frame.shared_config.cache_img[self.frame.shared_config.batch_idx]) as image:
@@ -1374,14 +1541,14 @@ class VideoGuiAsyncTests(unittest.TestCase):
         self.frame.choice_output.SetSelection(6);self.frame.save_format.SetSelection(2)
         self.frame.xy_magnifier=[[2,2,12,10,1,1,False]]
         self.frame.refresh(None)
-        self.pump_until(lambda:getattr(self.frame,'_video_display_key',(None,))[-1]==self.frame.video_manager._window_token)
+        self.pump_until(self.video_page_ready)
         self.frame.save_img(None)
         self.pump_until(lambda:not self.frame._export_active)
         self.assertIn('success',self.frame.m_statusBar1.GetStatusText(3))
         pdfs=list(output.rglob('*.pdf'));self.assertTrue(pdfs)
         for p in pdfs:self.assertNotIn(b'/DCTDecode',p.read_bytes(),str(p))
         self.frame.cache_save_format.SetSelection(0);self.frame.refresh(None)
-        self.pump_until(lambda:getattr(self.frame,'_video_display_key',(None,))[-1]==self.frame.video_manager._window_token
+        self.pump_until(lambda:self.video_page_ready()
             and self.frame.ImgManager.flist and all(Path(p).suffix=='.jpeg' for p in self.frame.ImgManager.flist))
         composed=Path(self.frame.shared_config.cache_img[self.frame.shared_config.batch_idx])
         self.assertEqual(composed.suffix,'.jpeg')
@@ -1429,7 +1596,7 @@ class VideoGuiAsyncTests(unittest.TestCase):
         self.frame.foreground_slider.SetValue(96);self.frame.background_slider.SetValue(48)
         self.frame.refresh(None)
         self.pump_until(lambda:vm._window_token is not None and vm._window_token!=old
-            and getattr(self.frame,'_video_display_key',(None,))[-1]==vm._window_token)
+            and self.video_page_ready())
         path=vm._cached_batch_path(20,validate=False)
         with Image.open(path) as image:
             alphas=set(image.convert('RGBA').getchannel('A').getdata())
@@ -1441,7 +1608,7 @@ class VideoGuiAsyncTests(unittest.TestCase):
         for value,old_extension,new_extension in ((1,'.jpeg','.png'),(0,'.png','.jpeg')):
             self.frame.cache_save_format.SetSelection(value)
             self.frame.refresh(None)
-            self.pump_until(lambda new_extension=new_extension:getattr(self.frame,'_video_display_key',(None,))[-1]==vm._window_token
+            self.pump_until(lambda new_extension=new_extension:self.video_page_ready()
                 and self.frame.ImgManager.flist and all(Path(p).suffix==new_extension for p in self.frame.ImgManager.flist))
             self.pump_until(lambda:not vm.cache_update_pending() and not vm._pending_extract and not vm._window_stitches)
             self.pump_until(lambda old_extension=old_extension:all(not list(Path(folder).glob('*'+old_extension)) for folder in self.frame.shared_config.video_path))
@@ -1837,7 +2004,7 @@ class VideoGuiAsyncTests(unittest.TestCase):
                 self.frame.show_all_func.SetValue(mode=='all')
                 self.frame.refresh(None)
                 if video:
-                    self.pump_until(lambda:getattr(self.frame,'_video_display_key',(None,))[-1]==self.frame.video_manager._window_token)
+                    self.pump_until(self.video_page_ready)
                 else:
                     self.pump_until(lambda:self.frame.image_pipeline.displayed_key is not None)
                 manager=self.frame.ImgManager
@@ -1869,7 +2036,7 @@ class VideoGuiAsyncTests(unittest.TestCase):
                 self.frame.func_layout_vertical.SetValue(vertical)
                 self.frame.refresh(None)
                 if video:
-                    self.pump_until(lambda:getattr(self.frame,'_video_display_key',(None,))[-1]==self.frame.video_manager._window_token
+                    self.pump_until(lambda:self.video_page_ready()
                         and getattr(self.frame.ImgManager,'_show_all_func_layout',None)==(2,2))
                 else:
                     self.pump_until(lambda:self.frame.image_pipeline.displayed_key is not None)
@@ -1979,7 +2146,7 @@ class VideoGuiAsyncTests(unittest.TestCase):
         self.frame.show_all_func.SetValue(True)
         self.frame.show_all_func_layout.ChangeValue('3,1')
         self.frame.refresh(None)
-        self.pump_until(lambda:getattr(self.frame,'_video_display_key',(None,))[-1]==self.frame.video_manager._window_token)
+        self.pump_until(self.video_page_ready)
         self.assertTrue(self.frame.move_file.Value)
         self.assertFalse(self.frame.ImgManager.layout_params[11])
         cached=list(self.frame.ImgManager.flist)
@@ -2158,8 +2325,24 @@ class VideoGuiAsyncTests(unittest.TestCase):
                 video_mode=True,video_fps_list=cfg.video_fps_list,video_num_list=cfg.video_num_list)
             self.frame.show_img_init()
             cfg.batch_idx=batch;self.frame.ImgManager.set_action_count(batch)
-            self.frame.video_manager.update_cache();self.frame.show_img()
-            token=self.frame.video_manager._window_token
+            vm=self.frame.video_manager
+            # Deliberately queue the scheduling worker. This used to make
+            # the test capture None as its expected display token on CI.
+            scheduler=getattr(vm,'_cache_executor')
+            scheduler.submit(lambda:None).result(timeout=5)
+            entered,release=threading.Event(),threading.Event()
+            def hold_scheduler():
+                entered.set()
+                release.wait(5)
+            blocked=scheduler.submit(hold_scheduler)
+            try:
+                self.assertTrue(entered.wait(2))
+                vm.update_cache();self.frame.show_img()
+                self.assertIsNone(getattr(vm,'_window_token'))
+                token=(getattr(vm,'_cache_context_token')(),getattr(vm,'_window_generation'))
+            finally:
+                release.set()
+                blocked.result(timeout=2)
             self.pump_until(lambda batch=batch,token=token:getattr(self.frame,'_video_display_key',(None,))[0]==batch
                 and getattr(self.frame,'_video_display_key',(None,))[-1]==token)
             model=self.frame.ImgManager
@@ -2205,7 +2388,7 @@ class VideoGuiAsyncTests(unittest.TestCase):
                 self.frame.refresh(None)
                 self.frame._seek_display_page(21)
                 if video:
-                    self.pump_until(lambda:getattr(self.frame,'_status_display_batch',None)==20 and getattr(self.frame,'_video_display_key',(None,))[-1]==self.frame.video_manager._window_token)
+                    self.pump_until(lambda:getattr(self.frame,'_status_display_batch',None)==20 and self.video_page_ready())
                 else:
                     self.pump_until(lambda:self.frame.image_pipeline.displayed_key is not None)
                 index=self._open_hidden_index()

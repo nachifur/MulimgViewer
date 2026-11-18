@@ -5,6 +5,31 @@ from PIL import Image
 from typing import NamedTuple
 
 
+def tiled_display(size):
+    """Choose bounded native tiles without changing resolution or RAM budgets."""
+    width,height=size
+    return width*height*4>32*1024**2 or max(size)>8192
+
+
+def rgba_display(source):
+    """Share immutable RGBA bytes with Pillow instead of retaining two canvases.
+
+    wx still needs its native bitmap. The returned Pillow view owns its byte
+    buffer after the input file closes; writes use Pillow's copy-on-write.
+    """
+    # Large frames use viewport tiles; retain only one Pillow canvas and skip
+    # a full-size RGBA byte copy. The source file may close after this call.
+    if tiled_display(source.size):
+        return (source.copy() if source.mode=='RGBA' else source.convert('RGBA')),None
+    rgba=source if source.mode=='RGBA' else source.convert('RGBA')
+    try:
+        size=rgba.size
+        data=rgba.tobytes()
+    finally:
+        if rgba is not source:rgba.close()
+    return Image.frombuffer('RGBA',size,data,'raw','RGBA',0,1),data
+
+
 def source_resolution(sizes, requested, mode=0):
     """Match layout normalization without materializing source pixels."""
     widths,heights=map(sorted,zip(*sizes))

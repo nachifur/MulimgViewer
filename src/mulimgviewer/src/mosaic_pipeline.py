@@ -115,16 +115,26 @@ class MosaicPlan:
         pixel_cache=getattr(self.cache,'pixel_cache',None)
         if pixel_cache is not None:manager._video_pixel_provider=pixel_cache.get
         manager._custom_results={} if index is None else {0:inputs}
-        size=self.cache.composition_bytes(self.paths,{} if index is None else {0:inputs},manager)
+        manager.set_action_count(self.batch)
+        params[32]=index is not None
+        prepared_layout=None;canvas_size=None
+        # TIFF normalization can materialize pixels. Keep that legacy path
+        # inside admission; JPEG/PNG use closed-file lazy descriptors here.
+        if not any(Path(path).suffix.lower() in ('.tif','.tiff') for path in inputs):
+            prepared_layout=manager.stitch_img_init(0,copy.deepcopy(self.points),flist=self.paths)
+            layout,subprocessing,show=prepared_layout
+            if not show:raise RuntimeError(f'{algorithm}: empty mosaic layout')
+            canvas_size,_,_=manager.ImgF.layout_2d(layout,manager.gap_color,[],manager.img_preprocessing,subprocessing,
+                [manager.img_vertical,manager.one_img_vertical,manager.img_unit_vertical],manager.onetitle,
+                [manager.title_init,manager.title_preprocessing],measure_only=True)
+        size=self.cache.composition_bytes(self.paths,{} if index is None else {0:inputs},manager,canvas_size=canvas_size)
         def stale():return not self.cache.node_valid(self.owner,self.epoch,self.batch,algorithm)
         with self.cache.budget.acquire(size,stale,priority=1,
                 order=lambda:self.cache._image_priority(self.owner,self.batch),
                 units=1/(1+len(processing_indices(self.manager._custom_algorithm_registry,self.manager.layout_params)))):
             started=time.perf_counter()
             manager._video_memory_budget=size
-            manager.set_action_count(self.batch)
-            params[32]=index is not None
-            flag=manager.stitch_images(0,copy.deepcopy(self.points),flist=self.paths)
+            flag=manager.stitch_images(0,copy.deepcopy(self.points),flist=self.paths,prepared_layout=prepared_layout)
             if flag!=0 or manager.img is None:raise RuntimeError(f'{algorithm}: mosaic failed')
             state={name:getattr(manager,name) for name in RENDER_STATE if hasattr(manager,name)}
             try:
@@ -182,7 +192,9 @@ class MosaicPlan:
         for entry in self.entries:self.cache.publish_entry(entry,lambda:not self.cancelled())
         if slots==1 and indices:
             path,state=artifacts[indices[0]]
-            yield CachedCanvas(path),copy.deepcopy(state)
+            state=copy.deepcopy(state)
+            state['_status_source_images']=reference[1].get('_status_source_images',())
+            yield CachedCanvas(path),state
             return
         pixel_cache=getattr(self.cache,'pixel_cache',None)
         width=height=0
@@ -221,6 +233,7 @@ class MosaicPlan:
                     for title in current.get('pdf_title_layers',[]):
                         title=copy.deepcopy(title);title['x']+=x;title['y']+=y;titles.append(title)
             state.update(xy_grid=np.array(xy),xy_grids_id_list=ids,_status_source_slots=tuple(source_slots),
+                _status_source_images=reference[1].get('_status_source_images',()),
                 _blank_img_ids=blanks,flist=list(self.paths),_flist_groups=self.groups,
                 _show_all_func_enabled=algorithm_grid,_show_all_func_layout=(rows,cols) if algorithm_grid else None,
                 _original_row_col=list(params[0]) if algorithm_grid else None,

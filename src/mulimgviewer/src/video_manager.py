@@ -20,7 +20,7 @@ from .pipeline_executor import PipelineWorkers
 from .stage_allocator import allocate_stages
 from .admission_optimizer import AdaptiveAdmissionBudget
 from .video_decoder import DecoderBank
-from .video_memory import PixelCache, source_resolution
+from .video_memory import PixelCache, source_resolution, rgba_display
 from .custom_pipeline import current_only
 from .cache_layout import page_name, write_source_catalog, save_cache_image
 from .custom_func.contract import active_cache_names
@@ -324,6 +324,15 @@ class VideoManager:
 
     # ========== 拼接缓存上下文 / 复用 ==========
 
+    def is_display_current(self, key):
+        """Whether a completed GUI display still matches this page and recipe."""
+        return (key is not None and key[0] == self.shared_config.batch_idx
+                and key[-1] == self._window_token)
+
+    def supply_period(self):
+        """Measured seconds per supplied page, or None before enough samples."""
+        return self._playback_pacer.supply_period()
+
     def _cache_context_token(self, config=None):
         """拼接缓存上下文指纹。
 
@@ -521,9 +530,7 @@ class VideoManager:
         group = getattr(self, '_pipeline_workers', None)
         used, covered = 0, set()
         if group is not None:
-            with group.lock:
-                used = group._memory_used()
-                covered = {key for stage, key in group.keys if stage == 0}
+            used, covered = group.memory_snapshot()
         budget = int(self.shared_config.memory_budget or 0)
         reserve = self._pixel_cache.limit + 64 * 1024**2
         return max(0, budget-reserve-used), covered
@@ -961,8 +968,7 @@ class VideoManager:
         group = getattr(self, '_pipeline_workers', None)
         active = 0
         if group is not None:
-            with group.lock:
-                active = group._memory_used()
+            active, _ = group.memory_snapshot()
         idle = getattr(getattr(self, '_decoder_bank', None), 'idle_bytes', 0)
         return min(memory, int((available+active+idle) * .9))
 
@@ -1957,7 +1963,7 @@ class VideoManager:
                 'img_resolution_show', 'gap_color', 'title_setting', 'title_max_size', 'pdf_title_layers',
                 '_last_title_layout', 'flist', '_flist_groups', '_status_source_slots',
                 '_show_all_func_enabled', '_show_all_func_layout', '_original_row_col',
-                '_show_all_func_expanded_row_col', '_func_layout_vertical', '_blank_img_ids',
+                '_show_all_func_expanded_row_col', '_func_layout_vertical', '_blank_img_ids', '_status_source_images',
             ) if hasattr(manager, name)}
         else:
             pil_img,state=_mosaic_output
@@ -2133,12 +2139,12 @@ class VideoManager:
         cached = self._pixel_cache.get(str(path))
         if cached is None:
             with Image.open(path) as opened:
-                original = opened.convert('RGBA')
+                original,rgba=rgba_display(opened)
         else:
-            original = cached.convert('RGBA')
+            original,rgba=rgba_display(cached)
         # Background-colored slots belong to the configured layout. Cropping
         # them loses blank algorithm panes and invalidates hit-test coordinates.
-        return original, original, original.tobytes()
+        return original, original, rgba
 
     def shutdown(self):
         """Invalidate callbacks and stop accepting work without waiting on the GUI."""
@@ -2153,7 +2159,10 @@ class VideoManager:
             kwargs['cancel_futures'] = True
         for pool in (self._cache_executor, self.executor, self.stitch_executor, self._maintenance_executor, self._display_executor):
             if pool is not None:
-                pool.shutdown(wait=False) if pool is self._maintenance_executor else pool.shutdown(**kwargs)
+                if pool is self._maintenance_executor:
+                    pool.shutdown(wait=False)
+                else:
+                    pool.shutdown(**kwargs)
 
     def _ensure_batch_extracted(self, video_idx: int, local_b: int, wait: bool = True):
         n = self.shared_config.video_num_list[video_idx]
@@ -2359,18 +2368,20 @@ class VideoManager:
             # temporary path through slow Windows filesystem/antivirus calls.
             descriptor = os.open(temporary, os.O_RDWR | os.O_CREAT | os.O_TRUNC | getattr(os, 'O_BINARY', 0), 0o666)
             with os.fdopen(descriptor, 'w+b') as output:
-                image.save(output, format='PNG', compress_level=1) if cache_extension(config)=='png' else image.save(output, format='JPEG', quality=90)
+                if cache_extension(config)=='png':
+                    image.save(output, format='PNG', compress_level=1)
+                else:
+                    image.save(output, format='JPEG', quality=90)
             preview, preview_key = None, None
             target=self._preview_resize_target(vid,index,config,image)
-            if target is not None:
-                if target[0]*target[1]*4 <= self._pixel_cache.limit:
-                    # Large reductions use Pillow's high-quality staged
-                    # resampling, avoiding a full 4K filter pass per preview.
-                    # Encoding above still uses the untouched full image.
-                    reduction = (3.0 if image.width*image.height >= 1920*1080
-                                 and min(image.width/target[0],image.height/target[1]) >= 6 else None)
-                    preview = image.resize(target, Image.BICUBIC, reducing_gap=reduction) if target != image.size else image
-                    preview_key = ('preview', destination, target, int(Image.BICUBIC))
+            if target is not None and target[0]*target[1]*4 <= self._pixel_cache.limit:
+                # Large reductions use Pillow's high-quality staged
+                # resampling, avoiding a full 4K filter pass per preview.
+                # Encoding above still uses the untouched full image.
+                reduction = (3.0 if image.width*image.height >= 1920*1080
+                             and min(image.width/target[0],image.height/target[1]) >= 6 else None)
+                preview = image.resize(target, Image.BICUBIC, reducing_gap=reduction) if target != image.size else image
+                preview_key = ('preview', destination, target, int(Image.BICUBIC))
             with self._raw_io_lock(vid, config):
                 with self._cache_guard:
                     lo, hi = self._raw_windows.get(vid, (first, last+1))

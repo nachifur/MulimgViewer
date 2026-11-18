@@ -262,8 +262,7 @@ class VideoPlaybackMixin:
             self._video_tick_started_at = None
             if self.shared_config.video_mode:
                 key = getattr(self, '_video_display_key', None)
-                if (key is not None and key[0] == self.shared_config.batch_idx
-                        and key[-1] == self.video_manager._window_token):
+                if self.video_manager.is_display_current(key):
                     self._schedule_next_video_tick()
                 else:
                     # A seek followed immediately by Play must first display

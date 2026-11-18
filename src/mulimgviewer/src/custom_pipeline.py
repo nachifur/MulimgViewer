@@ -25,6 +25,7 @@ from .cache_layout import VisibleCache, processed_names, component, source_recor
 from .custom_workers import ImageWorkers
 from .stage_allocator import allocate_stages
 from .dependency_scheduler import DependencyScheduler, gather, prepared, run_inline
+from .thread_optimizer import available_memory_bytes
 
 
 def readable_name(value, limit):
@@ -109,15 +110,35 @@ class WorkBudget:
             try:
                 while True:
                     if cancelled():raise CancelledError()
-                    if self.memory is not None and size > self.memory:
-                        raise MemoryError('Custom processing exceeds the memory budget; reduce layout or batch size')
                     lanes,memory=self.capacity() if self.capacity is not None else (self.limit,self.memory)
                     if self.memory is not None:memory=self.memory if memory is None else min(memory,self.memory)
-                    fitting=[item for item in self.waiting if memory is None or self.bytes+item[3]<=memory]
+                    ceiling=self.memory
+                    shared=getattr(owner,'memory_budget',None)
+                    if shared is not None:ceiling=shared if ceiling is None else min(ceiling,shared)
+                    # The mode budget limits concurrency, not the size of a
+                    # single display. Drain other work before borrowing RAM.
+                    oversized=ceiling is not None and size>ceiling
+                    fitting=[item for item in self.waiting if memory is None or self.bytes+item[3]<=memory
+                             or (self.active==0 and ceiling is not None and item[3]>ceiling)]
                     if (self.active < min(self.limit,lanes) and fitting
                             and ticket==min(fitting,key=self._ticket_key)):
                         reservation=self.reservation
-                        if reservation is None or reservation(1,size):break
+                        busy=self.active or (owner is not None and owner.memory_snapshot()[0])
+                        if oversized and busy:
+                            self.condition.wait(.05)
+                            continue
+                        if oversized or size>=32*1024**2:
+                            available=available_memory_bytes()
+                            unsafe=(available is None and oversized) or (available is not None and size>int(available*.85))
+                            if unsafe:
+                                if busy:
+                                    self.condition.wait(.05)
+                                    continue
+                                raise MemoryError('Not enough available system memory for this task; reduce layout or display scale')
+                        if oversized:
+                            if reservation is None:break
+                            if owner is not None and owner.reserve_exclusive_downstream(size):break
+                        elif reservation is None or reservation(1,size):break
                     self.condition.wait(.05)
             finally:
                 self.waiting.remove(ticket);self.condition.notify_all()
@@ -376,7 +397,10 @@ class CustomPipeline:
                 self.readers.notify_all()
             self.request_prune()
 
-    def composition_bytes(self, flist, results, manager=None):
+    def composition_bytes(self, flist, results, manager=None, canvas_size=None):
+        if canvas_size is not None:
+            largest=max((image.width*image.height for image in manager.img_list),default=0)
+            return max(32*1024**2,int(largest*12+canvas_size[0]*canvas_size[1]*16))
         pixels=0;largest=0;width=height=1
         # Identity results reference the same inputs. Open each header once,
         # not once for the raw layer and again for every identity algorithm.

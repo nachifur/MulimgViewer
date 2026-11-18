@@ -25,6 +25,83 @@ def main(images, path, names=None):
 '''
 
 
+class SoftMemoryBudgetTests(unittest.TestCase):
+    def test_measure_only_layout_does_not_allocate_or_process_pixels(self):
+        import numpy as np
+        from mulimgviewer.src.utils_img import ImgUtils
+        layout=[[[1,1],[np.zeros((1,1)),np.zeros((1,1))],
+                 [np.array([[20]]),np.array([[12]])],[20,12],None],
+                [[1,2],[3,0],[],[],None],[[2,1],[0,4],[],[],None]]
+        process=Mock(side_effect=AssertionError('Unexpected pixel processing'))
+        with patch('PIL.Image.new',side_effect=AssertionError('Unexpected canvas allocation')):
+            size,_,_=ImgUtils().layout_2d(layout,None,[],process,process,
+                [False]*3,False,[process,process],measure_only=True)
+        self.assertEqual(size,(43,28))
+
+    def test_capacity_callback_does_not_block_a_safe_single_oversized_task(self):
+        budget=WorkBudget();budget.configure(4,100,capacity=lambda:(4,100))
+        with patch('mulimgviewer.src.custom_pipeline.available_memory_bytes',return_value=10000):
+            with budget.acquire(200):self.assertEqual(budget.bytes,200)
+        self.assertEqual((budget.active,budget.bytes),(0,0))
+
+    def test_standalone_budget_allows_one_safe_oversized_task(self):
+        budget=WorkBudget();budget.configure(4,100)
+        entered=threading.Event()
+        def second():
+            with budget.acquire(20):entered.set()
+        with patch('mulimgviewer.src.custom_pipeline.available_memory_bytes',return_value=10000):
+            with ThreadPoolExecutor(1) as pool:
+                with budget.acquire(200):
+                    future=pool.submit(second)
+                    self.assertFalse(entered.wait(.05))
+                    self.assertEqual(budget.bytes,200)
+                future.result(timeout=2)
+        self.assertTrue(entered.is_set())
+        self.assertEqual((budget.active,budget.bytes),(0,0))
+
+    def test_oversized_shared_task_drains_decoders_and_keeps_real_charge(self):
+        from mulimgviewer.src.pipeline_executor import PipelineWorkers
+        group=PipelineWorkers(2,1);group.configure(2,1,100,(30,30))
+        budget=WorkBudget();budget.configure(3,100,group.downstream_capacity,group.reserve_downstream)
+        raw_started,raw_release=threading.Event(),threading.Event()
+        big_started,big_release=threading.Event(),threading.Event()
+        later=threading.Event()
+        def raw():raw_started.set();raw_release.wait(3)
+        def big():
+            with budget.acquire(200):big_started.set();big_release.wait(3)
+        try:
+            running=group.stages[0].submit(raw,resource_key='raw')
+            self.assertTrue(raw_started.wait(2))
+            with patch('mulimgviewer.src.custom_pipeline.available_memory_bytes',return_value=10000), ThreadPoolExecutor(1) as pool:
+                future=pool.submit(big)
+                self.assertFalse(big_started.wait(.05))
+                raw_release.set();running.result(timeout=2)
+                self.assertTrue(big_started.wait(2))
+                self.assertEqual(group.memory_snapshot()[0],200)
+                queued=group.stages[0].submit(later.set,resource_key='later')
+                self.assertFalse(later.wait(.05))
+                big_release.set();future.result(timeout=2);queued.result(timeout=2)
+            self.assertTrue(later.is_set())
+            self.assertEqual(group.memory_snapshot()[0],0)
+        finally:
+            raw_release.set();big_release.set()
+            for stage in group.stages:stage.shutdown()
+
+    def test_system_headroom_still_protects_an_oversized_task(self):
+        budget=WorkBudget();budget.configure(4,100)
+        for available in (150,None):
+            with patch('mulimgviewer.src.custom_pipeline.available_memory_bytes',return_value=available), \
+                    self.assertRaisesRegex(MemoryError,'system memory'):
+                with budget.acquire(200):self.fail('Unsafe task entered')
+            self.assertEqual((budget.active,budget.bytes,budget.waiting),(0,0,[]))
+
+    def test_large_regular_task_checks_live_physical_memory(self):
+        budget=WorkBudget();budget.configure(4,128*1024**2)
+        with patch('mulimgviewer.src.custom_pipeline.available_memory_bytes',return_value=16*1024**2), \
+                self.assertRaisesRegex(MemoryError,'system memory'):
+            with budget.acquire(32*1024**2):self.fail('Unsafe task entered')
+
+
 class ProcessingStageTests(unittest.TestCase):
     def setUp(self):
         self.temp=tempfile.TemporaryDirectory();self.root=Path(self.temp.name)
@@ -235,7 +312,7 @@ class ProcessingStageTests(unittest.TestCase):
             native=self.stage.composition_bytes(paths,{0:paths,1:paths,2:paths},manager)
             self.assertGreater(native,preview)
             self.stage.configure(4,256*1024**2)
-            with self.assertRaises(MemoryError):
+            with patch('mulimgviewer.src.custom_pipeline.available_memory_bytes',return_value=128*1024**2), self.assertRaises(MemoryError):
                 with self.stage.budget.acquire(native):pass
 
     def test_transient_windows_directory_sharing_failure_is_retried(self):
@@ -303,7 +380,7 @@ class ProcessingStageTests(unittest.TestCase):
         self.assertFalse(list(self.stage.directory.glob('tmp_*')))
         self.assertFalse(list(self.stage.directory.glob('result_*')))
         self.stage.configure(4,1)
-        with self.assertRaises(MemoryError):
+        with patch('mulimgviewer.src.custom_pipeline.available_memory_bytes',return_value=0), self.assertRaises(MemoryError):
             with self.prepare(manager):pass
 
     def test_unknown_device_defaults_to_serialized_calls(self):

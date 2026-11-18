@@ -24,6 +24,29 @@ from video_index_store import VideoIndexStore, index_cache_directory
 
 
 class WorkerBudgetTests(unittest.TestCase):
+    def test_memory_snapshot_counts_downstream_and_charged_decoder_paths(self):
+        group=PipelineWorkers(4,2)
+        group.configure(4,2,memory_budget=1024,costs=(64,32))
+        entered,release=threading.Event(),threading.Event()
+        reserved=False
+        def decode():
+            entered.set()
+            release.wait(3)
+        try:
+            job=group.stages[0].submit(decode,resource_key='source.mp4',cpu_cost=2)
+            self.assertTrue(entered.wait(2))
+            reserved=group.reserve_downstream(1,96)
+            self.assertTrue(reserved)
+            self.assertEqual(group.memory_snapshot(),(224,frozenset({'source.mp4'})))
+            group.reserve_downstream(-1,-96)
+            reserved=False
+            release.set();job.result(timeout=2)
+            self.assertEqual(group.memory_snapshot(),(0,frozenset()))
+        finally:
+            release.set()
+            if reserved:group.reserve_downstream(-1,-96)
+            for stage in group.stages:stage.shutdown()
+
     def test_short_decode_burst_remains_visible_after_workers_are_idle(self):
         group=PipelineWorkers(4,1)
         try:
@@ -288,14 +311,13 @@ class PacketSeekIndexTests(unittest.TestCase):
                 children.append(child);entered.set()
                 yield child
         from concurrent.futures import ThreadPoolExecutor
-        with patch('video_seek_index.tracked_video_process',silent):
-            with ThreadPoolExecutor(1) as pool:
-                job=pool.submit(index.ensure,300,stop.is_set)
-                try:
-                    self.assertTrue(entered.wait(3))
-                    stop.set()
-                    with self.assertRaises(CancelledError):job.result(timeout=2)
-                finally:stop.set()
+        with patch('video_seek_index.tracked_video_process',silent), ThreadPoolExecutor(1) as pool:
+            job=pool.submit(index.ensure,300,stop.is_set)
+            try:
+                self.assertTrue(entered.wait(3))
+                stop.set()
+                with self.assertRaises(CancelledError):job.result(timeout=2)
+            finally:stop.set()
         self.assertIsNotNone(children[0].poll())
         self.assertFalse(any(t.name=='video-index-pipe' and t.is_alive() for t in threading.enumerate()))
         index.close()
@@ -677,7 +699,7 @@ class DecoderAccuracyTests(unittest.TestCase):
         paths=[]
         try:
             for index in range(3):
-                path=str(Path(self.temp.name)/('borrow_%d.mp4'%index))
+                path=str(Path(self.temp.name)/f'borrow_{index}.mp4')
                 os.link(self.path,path)
                 paths.append(path)
                 with bank.lease(path,10.,False,96*64) as session:

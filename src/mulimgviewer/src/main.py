@@ -18,6 +18,8 @@ from .custom_func.main import get_available_algorithms
 from .custom_func.runtime import capture_algorithms, compiled_source, AlgorithmSession
 from .utils import MyTestEvent, get_resource_path
 from .utils_img import ImgManager
+from .display_canvas import TiledImageCanvas
+from .video_memory import tiled_display
 from .resource_policy import resource_budget, positive_cache_integer
 from .image_pipeline import ImagePipeline
 from .video_paths import resolve_cache_format
@@ -586,8 +588,7 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
         text += ('\nPlayback: paused' if not cfg.is_playing else
                  f'\nPlayback: {fps:.1f} FPS' if fps is not None else '\nPlayback: sampling...')
         if cfg.is_playing:
-            pacer=vm._playback_pacer if cfg.video_mode else self.image_pipeline.supply_pacer
-            period=pacer.supply_period()
+            period=(vm.supply_period() if cfg.video_mode else self.image_pipeline.supply_pacer.supply_period())
             text+=(f" | Supply: {1/period:.2f} FPS" if period is not None and period>0
                    else " | Supply: sampling...")
         tooltip = self.power_mode.GetToolTip()
@@ -2881,11 +2882,17 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
         # ★ 判断尺寸是否变化，不变则跳过整个 sizer/layout 重建
         last_size = getattr(self, "_last_display_logical_size", None)
         size_changed = (last_size != logical_size)
+        tiled=tiled_display(pil_img.size)
+        bmp=None
+        if not tiled:
+            try:
+                bmp = (wx.Bitmap.FromBufferRGBA(logical_w, logical_h, prepared_rgba)
+                       if prepared_rgba is not None else self.ImgManager.ImgF.PIL2wx(pil_img))
+                tiled=not bmp.IsOk()
+            except (RuntimeError,MemoryError):
+                tiled=True
         self._last_display_logical_size = logical_size
-
-        # ★ Freeze 必须在一切 layout 操作之前，否则无效
-        bmp = (wx.Bitmap.FromBufferRGBA(logical_w, logical_h, prepared_rgba)
-               if prepared_rgba is not None else self.ImgManager.ImgF.PIL2wx(pil_img))
+        self._status_canvas_info=(tuple(pil_img.size),pil_img.mode)
         frozen = False
         try:
             if size_changed:
@@ -2896,10 +2903,16 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
 
         self._set_placeholder_visible(False)
 
-        if hasattr(self, "img_last") and self.img_last:
-            self.img_last.SetBitmap(bmp)
+        previous=getattr(self,'img_last',None)
+        if previous and isinstance(previous,TiledImageCanvas)==tiled:
+            if tiled:previous.SetImage(pil_img)
+            else:previous.SetBitmap(bmp)
         else:
-            self.img_last = wx.StaticBitmap(self.img_panel, bitmap=bmp)
+            if previous:
+                if hasattr(self,'img_panel_sizer'):self.img_panel_sizer.Detach(previous)
+                previous.Destroy()
+            self.img_last = (TiledImageCanvas(self.img_panel,self.scrolledWindow_img,pil_img)
+                             if tiled else wx.StaticBitmap(self.img_panel,bitmap=bmp))
             size_changed = True  # 新控件必须走一次完整 layout
         self._ensure_img_bindings()
 
@@ -2946,8 +2959,8 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
     def _consume_auto_window_fit(self,size):
         pending=getattr(self,'_auto_fit_pending',None)
         if pending is None:return
+        serial,context=tuple(pending)
         self._auto_fit_pending=None
-        serial,context=pending
         if context!=self._auto_fit_context():return
         width,height=map(int,size)
         if width<=0 or height<=0:return
@@ -3145,7 +3158,8 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
     def add_custom_algorithm(self, event):
         algorithm_path = self.custom_algorithm_input.GetValue().strip()
         if not algorithm_path:
-            event.Skip() if hasattr(event, "Skip") else None
+            if hasattr(event, "Skip"):
+                event.Skip()
             return
 
         source_path = Path(algorithm_path)

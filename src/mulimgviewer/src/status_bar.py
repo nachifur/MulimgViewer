@@ -1,6 +1,6 @@
 """Four-field status bar: action, selection, input/source, output path."""
 import wx
-from .status_info import selection_info, status_widths
+from .status_info import selection_info, status_widths, image_memory_tooltip
 from .display_modes import loaded_input_mode
 
 
@@ -36,7 +36,11 @@ class StatusBarMixin:
         bar = self.m_statusBar1
         for field in range(4):
             if bar.GetFieldRect(field).Contains(event.GetPosition()):
-                tip = (self._status_field_tooltips[field] if field in (1, 2) else '') or bar.GetStatusText(field)
+                if field==0:
+                    tip=bar.GetStatusText(0)+'\n'+image_memory_tooltip(self.ImgManager,
+                        getattr(self,'_status_canvas_info',None),getattr(self,'_status_selected_grid',0))
+                else:
+                    tip = (self._status_field_tooltips[field] if field in (1, 2) else '') or bar.GetStatusText(field)
                 current = bar.GetToolTip()
                 if not current or current.GetTip() != tip:
                     bar.SetToolTip(tip)

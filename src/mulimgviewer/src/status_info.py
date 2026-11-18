@@ -50,9 +50,9 @@ class ImageSourceIndex:
         return position, total, directory, len(self.folders)
 
 
-def selection_info(manager, cfg, grid=0):
-    """Resolve layout cell -> source, using only already displayed metadata."""
-    paths = list(getattr(manager, 'flist', []))
+def source_slot(manager, grid=0):
+    """Resolve a painted cell, including algorithm panes, to its raw source."""
+    paths = getattr(manager, 'flist', [])
     mapping = getattr(manager, 'xy_grids_id_list', [])
     if not paths or grid < 0 or grid >= len(mapping):
         return None
@@ -63,6 +63,41 @@ def selection_info(manager, cfg, grid=0):
             return None
         slot = variants[slot]
     if not 0 <= slot < len(paths):
+        return None
+    if int(mapping[grid]) in getattr(manager, '_blank_img_ids', ()):
+        return None
+    return slot
+
+
+def pixel_memory(size, mode):
+    """Pillow pixel storage estimate; RGB uses four bytes internally too."""
+    width, height = map(int, size)
+    channels = 1 if mode in ('1', 'L', 'P') else 2 if mode.startswith('I;16') else 4
+    return max(0, width)*max(0, height)*channels
+
+
+def image_memory_tooltip(manager, canvas, grid=0):
+    """Metadata only: never decode, allocate a canvas or inspect the disk here."""
+    lines=[]
+    slot=source_slot(manager,grid)
+    sources=getattr(manager,'_status_source_images',())
+    for label, info in (('Original (selected)', sources[slot] if slot is not None and slot<len(sources) else None),
+                        ('Page mosaic',canvas)):
+        if info is None:
+            lines.append(f'{label}: unavailable')
+            continue
+        size,mode=info
+        amount=pixel_memory(size,mode)/1024**2
+        lines.append(f'{label}: {size[0]} x {size[1]} {mode} | pixels ~ {amount:.2f} MiB')
+    lines.append('Pixel estimates only; codec, processing and GUI copies need extra RAM.')
+    return '\n'.join(lines)
+
+
+def selection_info(manager, cfg, grid=0):
+    """Resolve layout cell -> source, using only already displayed metadata."""
+    paths = getattr(manager, 'flist', [])
+    slot = source_slot(manager, grid)
+    if slot is None:
         return None
     if cfg.video_mode:
         sources = getattr(manager, '_status_video_sources', ())

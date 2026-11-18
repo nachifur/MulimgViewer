@@ -48,7 +48,7 @@ from stage_allocator import allocate_stages
 from pipeline_executor import PipelineWorkers
 from admission_optimizer import AdaptiveAdmissionBudget
 from video_decoder import DecoderBank
-from video_memory import PixelCache, source_resolution
+from video_memory import PixelCache, source_resolution, rgba_display
 from playback_pacer import PlaybackPacer, ProductionJob, completion_estimates, refill_guard
 tree = ast.parse(source.read_text(encoding='utf-8'))
 classes = [node for node in tree.body if isinstance(node, ast.ClassDef)
@@ -456,6 +456,22 @@ class VideoCacheTests(unittest.TestCase):
         self.assertEqual(prepared.size, (80, 48))
         self.assertEqual(prepared.tobytes(), image.tobytes())
         self.assertEqual(rgba, prepared.tobytes())
+        self.assertTrue(prepared.readonly,'Display pixels should share their immutable RGBA buffer')
+
+    def test_rgba_display_shares_one_buffer_preserves_alpha_and_keeps_cached_pixels_immutable(self):
+        from video_memory import rgba_display
+        for mode,color in (('RGB',(40,80,120)),('RGBA',(40,80,120,42)),('L',50),('I;16',1000)):
+            with self.subTest(mode=mode):
+                source=Image.new(mode,(8,6),color)
+                expected=source.convert('RGBA').tobytes()
+                image,data=rgba_display(source)
+                self.assertEqual(data,expected)
+                self.assertTrue(image.readonly)
+                source.close()
+                self.assertEqual(image.tobytes(),expected)
+                image.putpixel((0,0),(1,2,3,4))
+                self.assertEqual(data,expected,'Copy-on-write must not mutate a retained buffer')
+                image.close()
 
     def test_context_change_while_workers_active(self):
         self.vm.update_cache()
@@ -662,8 +678,7 @@ class VideoCacheTests(unittest.TestCase):
         mib=1024**2
         self.cfg.memory_budget=512*mib
         path=self.cfg.real_video_path[0]
-        group=SimpleNamespace(lock=threading.RLock(),keys={(0,path),(1,'page')},
-                              _memory_used=lambda:224*mib)
+        group=SimpleNamespace(memory_snapshot=lambda:(224*mib,frozenset({path})))
         with patch.object(self.vm,'_pipeline_workers',group):
             limit,covered=self.vm._decoder_idle_allowance()
             self.assertEqual(limit,max(0,512*mib-self.vm._pixel_cache.limit-64*mib-224*mib))
@@ -676,7 +691,7 @@ class VideoCacheTests(unittest.TestCase):
         self.cfg.memory_budget=512*mib
         self.vm._decoder_bank.configure(64*mib)
         self.vm._decoder_bank.idle_bytes=128*mib
-        group=SimpleNamespace(lock=threading.RLock(),_memory_used=lambda:64*mib)
+        group=SimpleNamespace(memory_snapshot=lambda:(64*mib,frozenset()))
         with patch.object(self.vm,'_pipeline_workers',group), \
                 patch('test_video_cache.available_memory_bytes',return_value=64*mib):
             self.assertEqual(self.vm._planning_memory_budget(),int(256*mib*.9))

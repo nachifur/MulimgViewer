@@ -561,7 +561,7 @@ class MulimgViewerGui ( wx.Frame ):
 
 		box_positionChoices = [ u"middle bottom", u"left bottom", u"right bottom", u"left top", u"right top" ]
 		self.box_position = wx.Choice( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.Size( 105,-1 ), box_positionChoices, 0 )
-		self.box_position.SetSelection( 1 )
+		self.box_position.SetSelection( 0 )
 		wSizer7.Add( self.box_position, 0, wx.ALL, 5 )
 
 

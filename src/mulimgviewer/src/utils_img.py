@@ -416,7 +416,7 @@ class ImgUtils():
                     id += 1
         return output
 
-    def layout_2d(self, layout_list, gap_color, img_list, img_preprocessing, img_preprocessing_sub, vertical_list, onetitle, title_func, title_hook=None):
+    def layout_2d(self, layout_list, gap_color, img_list, img_preprocessing, img_preprocessing_sub, vertical_list, onetitle, title_func, title_hook=None, measure_only=False):
         # Two-dimensional arrangement
         # layout_list = [
         #                 [[row_2,col_2],[gap_x_2,gap_y_2],[width_2,height_2],[target_width_2, target_height_2],discard_table_2],
@@ -465,6 +465,9 @@ class ImgUtils():
                 width, height, row, col, gap_x, gap_y, per_gap=per_gap[i]))
 
             i += 1
+
+        if measure_only:
+            return (int(target_width),int(target_height)), [], []
 
         # Construct a blank image
         memory_limit = getattr(getattr(self,'manager',None), '_video_memory_budget', None)
@@ -957,6 +960,7 @@ class ImgManager(ImgData):
             else:
                 self.full_exif_cache[i] = {"raw_exif": {}, "formatted_exif": {}, "has_exif": False}
         out_path_str = self.layout_params[33]
+        self._status_source_images=tuple((tuple(image.size),image.mode) for image in img_list)
         # custom
         if show_custom_func and getattr(self,'_custom_results',None) is None:
             algorithm_type = self.layout_params[37] if len(self.layout_params) > 37 else 0
@@ -1061,6 +1065,7 @@ class ImgManager(ImgData):
                 pass
 
         all_func_img_lists = []
+        self._status_source_images=tuple((tuple(image.size),image.mode) for image in original_img_list)
         out_path_str = self.layout_params[33]
         registry=self._custom_algorithm_registry
         original=original_index(registry)
@@ -1627,7 +1632,9 @@ class ImgManager(ImgData):
                     if row!=0 and gap_x_y_2[1][row,col]==0 and i<sum(layout_level_2):
                         gap_x_y_2[1][row,col] = self.layout_params[3][5]
 
-                if self.box_position == 0 and i<sum(layout_level_2) and not getattr(self, "video_mode", False):
+                # Image and decoded-video tiles share the same geometry.
+                # Center smaller magnifier cells in the original's column.
+                if self.box_position == 0 and i<sum(layout_level_2):
                     if height_2[row,col]<height_2[row][0]:
                         gap_x_y_2[1][row,col] = gap_x_y_2[1][row,col]+int((height_2[row][0]-height_2[row,col])/2)
                     else:
@@ -1683,11 +1690,11 @@ class ImgManager(ImgData):
         return layout_list, img_preprocessing_sub, show_img
 
     @render_context
-    def stitch_images(self, img_mode, draw_points=[], flist=None):
+    def stitch_images(self, img_mode, draw_points=[], flist=None, prepared_layout=None):
         """img_mode, 0: show, 1: save"""
         # init
-        layout_list, img_preprocessing_sub, show_img = self.stitch_img_init(
-            img_mode, draw_points, flist=flist)
+        layout_list, img_preprocessing_sub, show_img = (prepared_layout if prepared_layout is not None else
+            self.stitch_img_init(img_mode, draw_points, flist=flist))
         if show_img:
             # stitch img
             # try:
@@ -1738,6 +1745,7 @@ class ImgManager(ImgData):
         self._flist_groups = None
         self._status_source_slots = None
         self.full_exif_cache = {}
+        self._status_source_images = ()
         self.pdf_title_layers = []
         self._last_title_layout = None
 

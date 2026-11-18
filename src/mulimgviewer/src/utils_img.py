@@ -583,7 +583,7 @@ class ImgUtils():
 
         return img, xy_grids_output, xy_grids_id_list
 
-    def identity_transformation(self, img, id=0):
+    def identity_transformation(self, img, id=0, rowcol=None):
         return img
 
     def cal_txt_size_adjust_title(self, title_list, standard_size, font, font_size):
@@ -1530,7 +1530,17 @@ class ImgManager(ImgData):
         # show title
         self.title_setting = self.layout_params[17]
         self.onetitle = self.layout_params[30]
-        if self.onetitle:
+        if not width_2 and self.title_setting[1]:
+            # Titles do not require a visible original or magnifier. Measure
+            # them from source metadata rather than an absent image cell.
+            title_width_height = self.title_init(*self.to_size)
+            width_2.append(self.to_size[0] if self.onetitle else title_width_height[0])
+            height_2.append(0 if self.onetitle else title_width_height[1])
+            img_preprocessing_sub.append(self.fill_func if self.onetitle else self.title_preprocessing)
+            layout_level_2.append(1)
+            gap_x_y_2[0].append(0)
+            gap_x_y_2[1].append(0)
+        elif self.onetitle:
             if len(width_2) != 0:
                 self.title_init(width_2[0], height_2[0])
         else:
@@ -1652,42 +1662,34 @@ class ImgManager(ImgData):
                 self.layout_params[2][1] = row_col2[1] + 1
             return self.stitch_img_init(img_mode, draw_points, first_run=False)
 
-        if sum(layout_level_2) != 0:
-            # Since the title is up, we need to correct crop_points
-            if self.magnifier_flag:
-                self.crop_points_process(copy.deepcopy(
-                    draw_points), img_mode=img_mode)
+        empty_layout = not any(layout_level_2)
+        if empty_layout:
+            # Hiding the original before drawing any magnifier is legal.
+            # Retain the page footprint, but neither decode tiles nor invent
+            # clickable image cells for a background-only frame.
+            width_2[0, 0] = max(1, self.to_size[0])
+            height_2[0, 0] = max(1, self.to_size[1])
+            self.onetitle = False
+        elif self.magnifier_flag:
+            # Since the title is up, we need to correct crop_points.
+            self.crop_points_process(copy.deepcopy(draw_points), img_mode=img_mode)
 
-            gap_x_y_1 = [self.layout_params[3][2], self.layout_params[3][3]]
-            gap_x_y_0 = [self.layout_params[3][0], self.layout_params[3][1]]
-
-            # width_2,height_2 = [[],[]]
-            width_1, height_1 = [[], []]
-            width_0, height_0 = [[], []]
-
-            target_width_2, target_height_2 = [
-                width_2[0, :].sum()+gap_x_y_2[0][0, :].sum(), height_2[:, 0].sum()+gap_x_y_2[1][:, 0].sum()]
-
-            target_width_1, target_height_1 = [0, 0]
-            target_width_0, target_height_0 = [0, 0]
-
-            discard_table_2 = np.zeros(tuple(row_col2))
-            discard_table_1 = np.zeros(tuple(row_col1))
-            discard_table_0 = np.zeros(tuple(row_col0))
-            layout_list = [
-                [row_col2, gap_x_y_2, [width_2, height_2], [
-                    target_width_2, target_height_2], discard_table_2],
-                [row_col1, gap_x_y_1, [width_1, height_1], [
-                    target_width_1, target_height_1], discard_table_1],
-                [row_col0, gap_x_y_0, [width_0, height_0], [
-                    target_width_0, target_height_0], discard_table_0],
-            ]
-            show_img = True
-        else:
-            layout_list = []
-            show_img = False
-            img_preprocessing_sub = []
-        return layout_list, img_preprocessing_sub, show_img
+        gap_x_y_1 = [self.layout_params[3][2], self.layout_params[3][3]]
+        gap_x_y_0 = [self.layout_params[3][0], self.layout_params[3][1]]
+        width_1, height_1 = [[], []]
+        width_0, height_0 = [[], []]
+        target_width_2, target_height_2 = [
+            width_2[0, :].sum()+gap_x_y_2[0][0, :].sum(), height_2[:, 0].sum()+gap_x_y_2[1][:, 0].sum()]
+        discard_table_2 = np.zeros(tuple(row_col2))
+        discard_table_1 = np.full(tuple(row_col1), int(empty_layout))
+        discard_table_0 = np.full(tuple(row_col0), int(empty_layout))
+        layout_list = [
+            [row_col2, gap_x_y_2, [width_2, height_2], [
+                target_width_2, target_height_2], discard_table_2],
+            [row_col1, gap_x_y_1, [width_1, height_1], [0, 0], discard_table_1],
+            [row_col0, gap_x_y_0, [width_0, height_0], [0, 0], discard_table_0],
+        ]
+        return layout_list, img_preprocessing_sub, True
 
     @render_context
     def stitch_images(self, img_mode, draw_points=[], flist=None, prepared_layout=None):
@@ -1705,7 +1707,10 @@ class ImgManager(ImgData):
             self._last_title_layout = None
             title_hook = self._title_capture_hook if self.collect_pdf_layers else None
             self.img, self.xy_grid, self.xy_grids_id_list = self.ImgF.layout_2d(
-                layout_list, self.gap_color, copy.deepcopy(self.img_list), self.img_preprocessing, img_preprocessing_sub, [self.img_vertical, self.one_img_vertical, self.img_unit_vertical],self.onetitle, [self.title_init,self.title_preprocessing], title_hook=title_hook)
+                layout_list, self.gap_color, copy.deepcopy(self.img_list),
+                self.img_preprocessing if self.show_original or self.show_crop else self.ImgF.identity_transformation,
+                img_preprocessing_sub, [self.img_vertical, self.one_img_vertical, self.img_unit_vertical],self.onetitle,
+                [self.title_init,self.title_preprocessing], title_hook=title_hook)
 
             self.show_box = self.layout_params[14]
             if self.show_original and self.show_box and len(draw_points) != 0:

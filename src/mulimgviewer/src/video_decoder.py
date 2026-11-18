@@ -49,12 +49,20 @@ class DecoderSession:
         self.next_index = 0
         self.opens += 1
 
+    def _packet_seek_supported(self):
+        codec=self.stream.codec_context.name
+        if codec in ('rv30','rv40'):return True
+        # MOV/MP4 and Matroska carry access-unit packets for these codecs.
+        # Do not apply this to raw streams, packed AVI, VP9 superframes, etc.
+        formats=set(getattr(getattr(self.container,'format',None),'name','').split(','))
+        return codec in ('h264','hevc','mpeg4') and bool(formats & {'mov','mp4','matroska','webm'})
+
     def _seek(self, target, cancelled=lambda:False):
         # Known keyframe ordinals work for VFR and nonzero stream start times.
         anchors = [(index, pts) for index, pts in self.anchors.items() if index <= target]
         distance = target-max((index for index,_ in anchors), default=0)
         if (not self.fast_seek and not self.packet_index_failed and distance>128
-                and self.stream.codec_context.name in ('rv30','rv40')):
+                and self._packet_seek_supported()):
             try:
                 if self.packet_index is None:
                     self.packet_index = PacketKeyframeIndex(self.path, av.open,
@@ -149,7 +157,7 @@ class DecoderSession:
         if opened:
             self._open()
         distant = (first-self.next_index>max(128,int(self.fps*2))
-                   and (self.fast_seek or self.stream.codec_context.name in ('rv30','rv40')))
+                   and (self.fast_seek or self._packet_seek_supported()))
         if first < self.next_index or (opened and first > 0) or distant:
             try:self._seek(first, cancelled)
             except CancelledError:

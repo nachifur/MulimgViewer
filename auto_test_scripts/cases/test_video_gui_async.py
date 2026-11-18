@@ -321,6 +321,68 @@ class VideoGuiAsyncTests(unittest.TestCase):
                     results.append((manager.img.size,manager.img.tobytes()))
                 with self.subTest(position=position,render_mode=mode):self.assertEqual(*results)
 
+    def test_hidden_content_is_a_background_page_and_recovers_when_magnifier_is_added(self):
+        frame=self.frame
+        for video in (True,False):
+            if not video:self._use_image_input()
+            frame.row_col_img_unit.ChangeValue('3,1')
+            frame.img_resolution.ChangeValue('80,48')
+            frame.show_scale.ChangeValue('1,1')
+            frame.gap.ChangeValue('0,0,0,0,0,0,0,0')
+            frame.colourPicker_gap.SetColour(wx.Colour(20,30,40))
+            frame.show_original.SetValue(False)
+            frame.show_magnifer.SetValue(True)
+            frame.title_show.SetValue(False)
+            frame.show_custom_func.SetValue(False);frame.show_all_func.SetValue(False)
+            frame.xy_magnifier=[]
+            frame.refresh(None)
+            if video:self.pump_until(self.video_page_ready)
+            else:self.pump_until(lambda:frame.image_pipeline.displayed_key is not None and
+                frame.image_pipeline.displayed_key[:2]==(frame.image_pipeline.generation,frame.shared_config.batch_idx))
+            image=frame.show_bmp_in_panel
+            self.assertEqual(image.size,(160,48))
+            self.assertEqual(image.getextrema(),((20,20),(30,30),(40,40),(255,255)))
+            self.assertEqual(len(frame.ImgManager.xy_grids_id_list),0)
+            frame.xy_magnifier=[[4,4,24,14,1,1,False]]
+            frame.color_list=[wx.Colour(255,0,0)]
+            frame.refresh(None)
+            if video:self.pump_until(self.video_page_ready)
+            else:self.pump_until(lambda:frame.image_pipeline.displayed_key is not None and
+                frame.image_pipeline.displayed_key[:2]==(frame.image_pipeline.generation,frame.shared_config.batch_idx))
+            self.assertGreater(len(frame.ImgManager.xy_grids_id_list),0)
+
+    def test_titles_render_without_original_or_magnifier_in_image_and_video_modes(self):
+        frame=self.frame
+        for video in (True,False):
+            if not video:self._use_image_input()
+            for one_title in (False,True):
+                with self.subTest(video=video,one_title=one_title):
+                    frame.img_resolution.ChangeValue('80,48');frame.show_scale.ChangeValue('1,1')
+                    frame.row_col_img_unit.ChangeValue('3,1')
+                    frame.gap.ChangeValue('0,0,0,0,0,0,0,0')
+                    frame.show_original.SetValue(False);frame.show_magnifer.SetValue(False)
+                    frame.title_show.SetValue(True);frame.onetitle.SetValue(one_title)
+                    frame.title_font_size.ChangeValue('12')
+                    frame.colourPicker_gap.SetColour(wx.Colour(255,255,255))
+                    frame.font_color.SetColour(wx.Colour(0,0,0))
+                    frame.show_custom_func.SetValue(False);frame.show_all_func.SetValue(False)
+                    frame.xy_magnifier=[]
+                    frame.refresh(None)
+                    if video:self.pump_until(self.video_page_ready)
+                    else:self.pump_until(lambda:frame.image_pipeline.displayed_key is not None and
+                        frame.image_pipeline.displayed_key[:2]==(frame.image_pipeline.generation,frame.shared_config.batch_idx))
+                    image=frame.show_bmp_in_panel
+                    self.assertGreater(min(image.size),0)
+                    self.assertGreater(frame.ImgManager.title_max_size[1],0)
+                    self.assertGreater(len(frame.ImgManager.xy_grids_id_list),0)
+                    extrema=image.convert('RGB').getextrema()
+                    self.assertTrue(any(low<high for low,high in extrema),'Title text must be visible on the background')
+                    export=frame.ImgManager.video_stitch_snapshot()
+                    export._video_lazy_frames=True
+                    with patch.object(export,'img_preprocessing',side_effect=AssertionError('Title-only pages must not decode source pixels')):
+                        self.assertEqual(export.stitch_images(1,[],flist=list(frame.ImgManager.flist)),0)
+                    self.assertGreater(min(export.img.size),0)
+
     def test_gui_processes_events_while_real_compositor_waits(self):
         entered, release = threading.Event(), threading.Event()
         heartbeat = []

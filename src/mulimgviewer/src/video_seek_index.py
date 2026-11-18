@@ -1,4 +1,4 @@
-"""Bounded, lazy packet indexes for RealVideo's one-frame demux packets."""
+"""Bounded, lazy ordinal indexes for supported frame-aligned video packets."""
 from collections import OrderedDict
 from concurrent.futures import CancelledError
 from heapq import heappop, heappush
@@ -11,10 +11,12 @@ if __package__:
     from .video_tools import resolve_video_tools
     from .resource_monitor import tracked_video_process
     from .video_index_store import VideoIndexStore
+    from .video_mp4_index import mp4_keyframes
 else:
     from video_tools import resolve_video_tools
     from resource_monitor import tracked_video_process
     from video_index_store import VideoIndexStore
+    from video_mp4_index import mp4_keyframes
 
 
 # Packet scans share disk bandwidth and Python demux/reorder work. Starting
@@ -102,7 +104,7 @@ class PacketKeyframeIndex:
                 while self.heap:self._commit()
                 self.exhausted = True
                 break
-            if not packet.size:continue
+            if not packet.size or getattr(packet,'is_discard',False):continue
             if packet.pts is None:raise ValueError('Packet has no presentation timestamp')
             heappush(self.heap, (int(packet.pts), bool(packet.is_keyframe)))
             if len(self.heap)>64:self._commit()
@@ -129,6 +131,14 @@ class PacketKeyframeIndex:
             self._probe_through = -1
         if target <= self._probe_through:
             return [(i,p) for i,p in self.anchors.items() if i<=target]
+        tables=mp4_keyframes(self.path,self.opener,self.probe_time_base,target)
+        if cancelled():raise CancelledError()
+        if tables is not None:
+            self._probe_through,anchors=tables
+            self.anchors=OrderedDict(anchors)
+            self.count=self._probe_through+1
+            if self._store is not None:self._store.save(self._probe_through,anchors)
+            return anchors
         known = [(i,p) for i,p in self.anchors.items() if i<=target]
         start = max(known) if known else None
         self.count = start[0] if start else 0
@@ -203,7 +213,7 @@ class PacketKeyframeIndex:
                         if not line.strip():continue
                         pts,separator,flags=line.strip().partition(b',')
                         if not separator:raise ValueError('Invalid packet probe record')
-                        yield int(pts),b'K' in flags
+                        if b'D' not in flags:yield int(pts),b'K' in flags
             finally:
                 stop.set()
                 if process.poll() is None:process.kill()

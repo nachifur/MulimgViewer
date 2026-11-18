@@ -636,6 +636,75 @@ class DecoderAccuracyTests(unittest.TestCase):
         finally:
             native.close();baseline.close();decoder.close()
 
+    def test_vfr_mp4_far_seek_automatically_indexes_packets_instead_of_decoding_prefix(self):
+        path=str(Path(self.temp.name)/'automatic_vfr_seek.mp4')
+        subprocess.run(['ffmpeg','-v','error','-f','lavfi','-i',
+            'testsrc2=size=96x64:rate=10:duration=24','-vf',
+            'setpts=if(lt(N\\,100)\\,N\\,100+(N-100)*2)/(10*TB)',
+            '-fps_mode','vfr','-c:v','libx264','-g','12','-bf','2',
+            '-output_ts_offset','2.5','-y',path],check=True,capture_output=True)
+        with av.open(path) as container:
+            expected=[frame.to_image().tobytes() for frame in container.decode(video=0)]
+        decoder=DecoderSession(path,10.,False,96*64)
+        try:
+            with patch.object(PacketKeyframeIndex,'_probe_packets',side_effect=AssertionError('MP4 tables must avoid a packet scan')):
+                for target in (170,20,210):
+                    before=decoder.decoded
+                    actual=list(decoder.frames(target,target+3,1,lambda:False))
+                    self.assertEqual([image.tobytes() for _,image in actual],expected[target:target+4])
+                    self.assertLess(decoder.decoded-before,80,'Distant MP4 seeks must not decode the entire prefix')
+            self.assertIsNotNone(decoder.packet_index)
+            self.assertGreaterEqual(decoder.seeks,3)
+        finally:decoder.close()
+
+    def test_mp4_table_parser_matches_packet_ordinals_and_rejects_truncated_boxes(self):
+        from video_mp4_index import mp4_keyframes
+        with av.open(self.path) as container:time_base=container.streams.video[0].time_base
+        baseline=PacketKeyframeIndex(self.path,av.open)
+        try:
+            table=mp4_keyframes(self.path,av.open,time_base,65)
+            self.assertIsNotNone(table)
+            self.assertEqual(table[1],baseline.ensure(65,lambda:False))
+        finally:baseline.close()
+        for contents in (b'',b'broken',b'\x00\x00\x00\x04moov',b'\x00\x00\x00\x01moov'):
+            path=Path(self.temp.name)/'truncated.mp4';path.write_bytes(contents)
+            self.assertIsNone(mp4_keyframes(str(path),av.open,time_base,65))
+
+    def test_fragmented_mp4_falls_back_to_exact_packet_indexing(self):
+        from video_mp4_index import mp4_keyframes
+        path=str(Path(self.temp.name)/'fragmented.mp4')
+        subprocess.run(['ffmpeg','-v','error','-i',self.path,'-c','copy',
+            '-movflags','frag_keyframe+empty_moov','-y',path],check=True,capture_output=True)
+        with av.open(path) as container:
+            time_base=container.streams.video[0].time_base
+            expected=[frame.to_image().tobytes() for frame in container.decode(video=0)]
+        self.assertIsNone(mp4_keyframes(path,av.open,time_base,65))
+        index=PacketKeyframeIndex(path,av.open,probe_time_base=time_base,
+            index_cache_dir=Path(self.temp.name)/'fragmented_index')
+        decoder=DecoderSession(path,10.,False,96*64)
+        try:
+            decoder.anchors.update(index.ensure(65,lambda:False))
+            actual=list(decoder.frames(65,68,1,lambda:False))
+            self.assertEqual([image.tobytes() for _,image in actual],expected[65:69])
+        finally:decoder.close();index.close()
+
+    def test_automatic_packet_seek_preserves_mpeg4_mp4_and_h264_matroska_pixels(self):
+        for codec,suffix in (('mpeg4','.mp4'),('libx264','.mkv')):
+            with self.subTest(codec=codec,container=suffix):
+                path=str(Path(self.temp.name)/('family_'+codec+suffix))
+                subprocess.run(['ffmpeg','-v','error','-f','lavfi','-i',
+                    'testsrc2=size=96x64:rate=10:duration=24','-vf',
+                    'setpts=if(lt(N\\,100)\\,N\\,100+(N-100)*2)/(10*TB)',
+                    '-fps_mode','vfr','-c:v',codec,'-g','12','-bf','2','-y',path],check=True,capture_output=True)
+                with av.open(path) as container:
+                    expected=[frame.to_image().tobytes() for frame in container.decode(video=0)]
+                decoder=DecoderSession(path,10.,False,96*64)
+                try:
+                    actual=list(decoder.frames(170,173,1,lambda:False))
+                    self.assertEqual([image.tobytes() for _,image in actual],expected[170:174])
+                    self.assertLess(decoder.decoded,80)
+                finally:decoder.close()
+
     def test_cyclic_scan_larger_than_idle_cache_keeps_resident_decoders(self):
         bank=DecoderBank(16*1024**2)
         paths=[]

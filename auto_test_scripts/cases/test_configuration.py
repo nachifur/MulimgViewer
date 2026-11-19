@@ -346,7 +346,7 @@ class ConfigurationTests(unittest.TestCase):
         initialize = MulimgViewerGui.__init__
         def upgraded(owner, *args, **kwargs):
             initialize(owner, *args, **kwargs)
-            owner.future_option = wx.CheckBox(owner.m_panel4, label='Future option')
+            owner.future_option = wx.CheckBox(owner.scrolledWindow_set, label='Future option')
             owner.future_option.SetValue(True)
         with patch.object(MulimgViewerGui, '__init__', upgraded):
             upgraded_frame = self.frame()

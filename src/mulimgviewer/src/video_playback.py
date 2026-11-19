@@ -19,6 +19,7 @@ class VideoPlaybackMixin:
     def on_enable_video_mode(self, event):
         prev_video_mode = self.shared_config.video_mode
         self.shared_config.video_mode = self.video_mode.GetValue()
+        self._sync_save_controls()
         self._commit_video_settings()
         on_video_mode_change(self.shared_config.video_mode)
 

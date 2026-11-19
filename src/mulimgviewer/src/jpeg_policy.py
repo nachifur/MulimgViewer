@@ -17,3 +17,10 @@ def ffmpeg_jpeg_options(owner):
 
 def ffmpeg_jpeg_args(owner):
     return [part for key,value in ffmpeg_jpeg_options(owner).items() for part in ('-'+key,str(value))]
+
+
+def cache_quality(owner):
+    value=getattr(owner,'cache_jpeg_quality',None)
+    if value is None:return jpeg_quality(owner)
+    try:return max(0,min(100,int(value)))
+    except (TypeError,ValueError,OverflowError):return jpeg_quality(owner)

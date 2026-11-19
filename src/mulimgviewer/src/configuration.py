@@ -11,7 +11,7 @@ import wx
 from .export_formats import ORDER, LEGACY_TO_CURRENT
 from .layout_gaps import normalize_gaps
 
-ALIASES = {'m_checkBox33': 'video_mode', 'row_col12': 'cache_frames',
+ALIASES = {'show_unit': 'show_original_panel', 'm_checkBox33': 'video_mode', 'row_col12': 'cache_frames',
            'row_col1': 'interval', 'row_col13': 'skip_frames',
            'cache_multipliler': 'cache_multiplier', 'power_model': 'power_mode',
            'm_checkBox31': 'title_show_rename', 'm_textCtrl16': 'title_rename_text',
@@ -31,7 +31,7 @@ def settings_controls(owner):
                                     wx.SpinCtrl, wx.SpinCtrlDouble, wx.Slider)) or id(control) in seen:
             continue
         parent = control.GetParent()
-        while parent is not None and parent is not owner.m_panel4:
+        while parent is not None and parent is not owner.scrolledWindow_set:
             parent = parent.GetParent()
         # Input mode lives in the toolbar but is still a persisted preference.
         if parent is None and name != 'choice_input_mode':
@@ -96,7 +96,7 @@ def read_config(path):
         return {}
     if 'output' not in data:
         sections = {key: data.pop(key) for key in
-                    ('hotkeys', 'exif_display', 'exif_tag_mappings', 'window_state', 'save_format_order') if key in data}
+                    ('hotkeys', 'exif_display', 'exif_tag_mappings', 'window_state', 'save_format_order', 'settings_sections') if key in data}
         data = dict(sections, output=data)
     output = data.get('output')
     if not isinstance(output, dict):
@@ -104,6 +104,8 @@ def read_config(path):
     for old, new in ALIASES.items():
         if old in output and new not in output:
             output[new] = output[old]
+    # Retire the ambiguous old name after preserving its value.
+    output.pop('show_unit',None)
     if isinstance(output.get('gap'), str):
         try:
             output['gap'] = ','.join(map(str, normalize_gaps(output['gap'])))
@@ -165,11 +167,14 @@ def migrate_config_roles(directory):
     journal.unlink(missing_ok=True)
 
 
-def synchronize(directory, gui_defaults, hotkeys):
+def synchronize(directory, gui_defaults, hotkeys, section_defaults=None):
     directory = Path(directory)
     migrate_config_roles(directory)
     baseline_path, saved_path = directory / 'default_config.json', directory / 'userdef_config.json'
     fallback = {'output': gui_defaults, 'hotkeys': hotkeys}
+    if section_defaults is not None:
+        fallback['settings_sections']=section_defaults
+        fallback['window_state']={'sidebar_width_dip':None}
     if 'save_format' in gui_defaults:fallback['save_format_order']=ORDER
     baseline = read_config(baseline_path)
     baseline = merge_missing(baseline, fallback)

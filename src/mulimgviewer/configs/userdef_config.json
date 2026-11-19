@@ -1,11 +1,11 @@
 {
  "output": {
-  "row_col": "1,6",
+  "row_col": "4,6",
   "row_col_one_img": "1,1",
-  "show_scale": "0.1,0.1",
+  "show_scale": "1,1",
   "row_col_img_unit": "3,1",
-  "gap": "10,10,5,5,3,3,2,2",
-  "magnifer_row_col": "1,2",
+  "gap": "10,10,10,10,5,5,3,3,2,2",
+  "magnifer_row_col": "1,1",
   "output_scale": "1,1",
   "img_resolution": "-1,-1",
   "magnifer_resolution": "-1,-1",
@@ -37,25 +37,24 @@
   "show_box": true,
   "show_box_in_crop": true,
   "select_img_box": false,
-  "title_auto": true,
+  "title_auto": false,
   "title_exif": false,
-  "title_show_parent": false,
+  "title_show_parent": true,
   "title_show_prefix": true,
   "title_show_name": true,
-  "title_show_suffix": false,
+  "title_show_suffix": true,
   "title_down_up": false,
   "save_format": 0,
   "title_show_rename": false,
   "customfunc_choice": 0,
-  "show_all_func": true,
-  "show_all_func_layout": "4,1",
+  "show_all_func": false,
+  "show_all_func_layout": "2,2",
   "func_layout_vertical": false,
-  "power_mode": 2,
+  "power_mode": 4,
   "cache_frames": "4",
   "cache_multiplier": "2",
-  "show_unit": true,
   "video_mode": true,
-  "interval": "0.1",
+  "interval": "0.05",
   "skip_frames": "0",
   "title_position": 1,
   "title_rename_text": "",
@@ -73,7 +72,7 @@
    255
   ],
   "checkBox_auto_draw_color": true,
-  "choice_input_mode": 2,
+  "choice_input_mode": 1,
   "font_color": [
    0,
    0,
@@ -82,20 +81,27 @@
   ],
   "cache_save_format": 0,
   "background_slider": 255,
-  "foreground_slider": 255
+  "foreground_slider": 255,
+  "cache_quality_follow_save": true,
+  "cache_jpg_quality": 100,
+  "output_directory": "",
+  "save_quality": 100,
+  "png_compression": 1,
+  "pdf_compression": 0,
+  "show_original_panel": true
  },
  "hotkeys": {
   "next_img": "CTRL+N",
   "last_img": "CTRL+L",
   "save_img": "CTRL+S",
+  "pause_tasks": "ESC",
   "refresh": "CTRL+R",
   "hidden": "CTRL+H",
   "move_up": "UP",
   "move_down": "DOWN",
   "move_left": "LEFT",
   "move_right": "RIGHT",
-  "delete_box": "DELETE",
-  "pause_tasks": "ESC"
+  "delete_box": "DELETE"
  },
  "exif_display": {
   "Make": true,
@@ -304,12 +310,24 @@
    "31": "GPSHPositioningError"
   }
  },
+ "save_format_order": "jpg,png,pdf",
  "window_state": {
-  "x": 500,
-  "y": 120,
-  "w": 1274,
-  "h": 974,
-  "maximized": false
+  "x": -7,
+  "y": 0,
+  "w": 794,
+  "h": 999,
+  "maximized": true,
+  "sidebar_width_dip": null
  },
- "save_format_order": "jpg,png,pdf"
+ "settings_sections": {
+  "input_settings_pane": false,
+  "performance_settings_pane": false,
+  "layout_settings_pane": false,
+  "custom_settings_pane": false,
+  "magnifier_settings_pane": false,
+  "title_settings_pane": false,
+  "save_settings_pane": false,
+  "colour_settings_pane": false,
+  "configuration_settings_pane": false
+ }
 }

@@ -67,8 +67,8 @@ class MagnifierMemoryTests(unittest.TestCase):
                     before=source.tobytes()
                     with source.convert('RGBA') as rgba, Image.new('RGB',source.size,'white') as matte:
                         with rgba.getchannel('A') as alpha:matte.paste(rgba,mask=alpha)
-                        expected=io.BytesIO();matte.save(expected,format='JPEG',quality=90)
-                    actual=io.BytesIO();save_cache_image(source,actual,'jpeg')
+                        expected=io.BytesIO();matte.save(expected,format='JPEG',quality=90,subsampling=0)
+                    actual=io.BytesIO();save_cache_image(source,actual,'jpeg',jpeg_quality=90)
                     self.assertEqual(actual.getvalue(),expected.getvalue())
                     self.assertEqual(source.tobytes(),before)
 

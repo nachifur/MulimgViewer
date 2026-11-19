@@ -3,7 +3,7 @@
 Only metadata is queued. User pixels exist while a task holds a resource permit;
 completed results are disk-backed JPG/PNG paths. Waiters never hold a pixel/CPU permit.
 """
-from .jpeg_policy import jpeg_quality
+from .jpeg_policy import cache_quality
 import hashlib
 import json
 import re
@@ -343,7 +343,7 @@ class CustomPipeline:
         registry=manager._custom_algorithm_registry
         spec=specification(registry,index)
         signature,pixels=self._input_signature(paths) if inputs is None else inputs
-        version=(registry[index],signature,batch,cache_image_extension(manager),jpeg_quality(manager))
+        version=(registry[index],signature,batch,cache_image_extension(manager),cache_quality(manager))
         if not spec['cacheable']:version+=(owner,repr(epoch),batch)
         digest=hashlib.sha256(repr(version).encode('utf-8')).hexdigest()
         size=max(32*1024**2,pixels*spec['working_set_bytes_per_pixel']+spec['working_set_bytes'])
@@ -488,7 +488,7 @@ class CustomPipeline:
                     if entry is None:
                         name=readable_name(registry[index][0],32)
                         entry=dict(directory=self.directory/f'result_{name}__page_{batch+1:06d}__{uuid.uuid4().hex[:12]}',users=set(),pins=0,
-                                   used=time.monotonic(),bytes=0,input_paths=paths,page=batch,cacheable=spec['cacheable'],algorithm=algorithm,jpeg_quality=jpeg_quality(manager))
+                                   used=time.monotonic(),bytes=0,input_paths=paths,page=batch,cacheable=spec['cacheable'],algorithm=algorithm,jpeg_quality=cache_quality(manager))
                         self.entries[key]=entry;self.misses+=1
                         try:entry['future']=self._submit_process(manager,paths,index,spec,size,entry,owner,epoch,batch,cancelled)
                         except BaseException:

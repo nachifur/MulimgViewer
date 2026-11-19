@@ -273,6 +273,9 @@ def start_save(viewer,event=None,*,selection_only=False,selected_grid=None):
     quality=viewer.save_quality.GetValue() if hasattr(viewer,'save_quality') else jpeg_quality(manager)
     if len(manager.layout_params)<=42:manager.layout_params.extend([None]*(43-len(manager.layout_params)))
     manager.layout_params[42]=quality
+    manager.cache_jpeg_quality=quality
+    from .export_encoding import capture_export_encoding
+    capture_export_encoding(viewer,manager)
     config=copy.copy(viewer.shared_config)
     for name in ('video_path','real_video_path','video_fps_list','video_num_list'):
         setattr(config,name,list(getattr(config,name)))

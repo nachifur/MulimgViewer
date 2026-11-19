@@ -467,6 +467,25 @@ class VideoGuiAsyncTests(unittest.TestCase):
         finally:
             release.set()
 
+    def test_cache_jpg_quality_can_differ_from_export_then_follow_again(self):
+        from PIL.JpegImagePlugin import get_sampling
+        frame=self.frame;frame.cache_save_format.SetSelection(0)
+        frame.cache_quality_follow_save.SetValue(False)
+        frame.cache_jpg_quality.SetValue(25);frame.save_quality.SetValue(95)
+        frame.show_img_init();self.warm_current_window()
+        cfg=frame.shared_config;vm=frame.video_manager
+        path=Path(cfg.video_path[0])/vm._filename_converter(20,0)
+        with Image.open(path) as image:low=sum(image.quantization[0])
+        self.assertEqual(cfg.save_quality,25)
+        self.assertEqual(frame.ImgManager.cache_jpeg_quality,25)
+        self.assertEqual(frame.ImgManager.layout_params[42],95)
+        frame.cache_quality_follow_save.SetValue(True)
+        frame.show_img_init();self.warm_current_window()
+        with Image.open(path) as image:
+            self.assertEqual(get_sampling(image),0)
+            self.assertLess(sum(image.quantization[0]),low)
+        self.assertEqual(cfg.save_quality,95)
+
     def test_jpeg_quality_applies_on_refresh_and_is_captured_in_snapshot(self):
         frame=self.frame
         frame.save_quality.SetValue(73)
@@ -1071,7 +1090,7 @@ class VideoGuiAsyncTests(unittest.TestCase):
         for video in (True,False):
             if not video:self._use_image_input()
             self.frame.show_all_func.SetValue(True)
-            self.frame.show_unit.SetValue(False)
+            self.frame.show_original_panel.SetValue(False)
             self.frame.show_all_func_layout.ChangeValue('2,1')
             samples=[]
             with patch.object(Image.Image,'save',make_sampler(samples)):
@@ -1546,7 +1565,7 @@ class VideoGuiAsyncTests(unittest.TestCase):
             self.frame.show_custom_func.SetValue(False)
             self.frame.show_all_func.SetValue(True)
             for show_original in (False,True):
-                self.frame.show_unit.SetValue(show_original)
+                self.frame.show_original_panel.SetValue(show_original)
                 self.frame.refresh(None)
                 if video:
                     self.pump_until(self.video_page_ready)
@@ -1573,7 +1592,7 @@ class VideoGuiAsyncTests(unittest.TestCase):
             if not video:self._use_image_input()
             self.frame.show_custom_func.SetValue(False)
             self.frame.show_all_func.SetValue(True)
-            self.frame.show_unit.SetValue(True)
+            self.frame.show_original_panel.SetValue(True)
             self.frame.show_all_func_layout.ChangeValue('6,1')
             self.frame.refresh(None)
             vm=self.frame.video_manager;pipeline=self.frame.image_pipeline
@@ -1594,7 +1613,7 @@ class VideoGuiAsyncTests(unittest.TestCase):
                 calls.append(kwargs.get('algorithm_type'))
                 return original(*args,**kwargs)
             with patch.object(functions,'main',partial(process,calls,original)):
-                self.frame.show_unit.SetValue(False)
+                self.frame.show_original_panel.SetValue(False)
                 self.frame.show_all_func_layout.ChangeValue('2,1')
                 self.frame.refresh(None)
                 self.pump_until(quiet)
@@ -2068,6 +2087,8 @@ class VideoGuiAsyncTests(unittest.TestCase):
         self._use_image_input();self.frame.show_img()
         self.pump_until(lambda:self.frame.image_pipeline.displayed_key is not None)
         output=Path('async_output').absolute();output.mkdir();self.frame.out_path_str=str(output)
+        self.frame.png_compression.SetSelection(0);self.frame.pdf_compression.SetSelection(1)
+        self.frame.save_quality.SetValue(63)
         entered=threading.Event();release=threading.Event();captured=[]
         def save(job,**kwargs):
             captured.append(job)
@@ -2083,9 +2104,14 @@ class VideoGuiAsyncTests(unittest.TestCase):
                 heartbeat=[];wx.CallAfter(lambda:heartbeat.append(True))
                 self.pump_until(lambda:heartbeat)
                 self.frame.output_scale.ChangeValue('2,2')
+                self.frame.png_compression.SetSelection(2);self.frame.pdf_compression.SetSelection(0)
+                self.frame.save_quality.SetValue(12)
                 self.frame.save_img(None)
                 self.assertIs(self.frame._export_future,future)
                 self.assertEqual(captured[0].ImgManager.layout_params[5],[1.,1.])
+                self.assertEqual(captured[0].ImgManager.png_compression_level,1)
+                self.assertEqual(captured[0].ImgManager.pdf_compression,1)
+                self.assertEqual(captured[0].ImgManager.layout_params[42],63)
                 self.assertTrue(captured[0].ImgManager.flist)
                 self.frame.SetStatusText_(['-1','-1','-1','Output: changed'])
                 self.assertIn('Saving',self.frame.m_statusBar1.GetStatusText(3))
@@ -2174,7 +2200,7 @@ class VideoGuiAsyncTests(unittest.TestCase):
 
     def test_single_algorithm_keeps_default_original_but_not_other_algorithms(self):
         self._use_image_input()
-        self.frame.show_unit.SetValue(False)
+        self.frame.show_original_panel.SetValue(False)
         self.frame.customfunc_choice.SetStringSelection('Gaussian Blur')
         self.frame.show_custom_func.SetValue(True)
         self.frame.on_show_custom_func_changed(None)
@@ -2193,7 +2219,7 @@ class VideoGuiAsyncTests(unittest.TestCase):
         for video in (True,False):
             if not video:self._use_image_input()
             self.frame.show_all_func_layout.ChangeValue(f'{canvas_rows},1')
-            self.frame.show_unit.SetValue(True)
+            self.frame.show_original_panel.SetValue(True)
             self.frame.customfunc_choice.SetStringSelection('Gaussian Blur')
             self.frame.colourPicker_gap.SetColour(wx.Colour(35,65,95,255))
             self.frame.colour_change(None)
@@ -2229,7 +2255,7 @@ class VideoGuiAsyncTests(unittest.TestCase):
         from mulimgviewer.src.index_catalog import IndexCatalog
         for video in (True,False):
             if not video:self._use_image_input()
-            self.frame.show_unit.SetValue(True)
+            self.frame.show_original_panel.SetValue(True)
             self.frame.show_custom_func.SetValue(True)
             self.frame.show_all_func.SetValue(False)
             self.frame.show_all_func_layout.ChangeValue('2,2')
@@ -2637,7 +2663,7 @@ class VideoGuiAsyncTests(unittest.TestCase):
                     frame.choice_output.SetSelection(6)
                     frame.save_format.SetSelection(1)
                     frame.magnifier.SetValue(False)
-                    frame.show_unit.SetValue(True)
+                    frame.show_original_panel.SetValue(True)
                     frame.customfunc_choice.SetStringSelection('Gaussian Blur')
                     frame.show_custom_func.SetValue(mode=='single')
                     frame.show_all_func.SetValue(mode=='all')
@@ -2893,7 +2919,7 @@ class VideoGuiAsyncTests(unittest.TestCase):
             if not video:self._use_image_input()
             self.frame.row_col.ChangeValue('1,3')  # Two inputs, one empty source slot.
             self.frame.show_all_func_layout.ChangeValue('2,3')
-            self.frame.show_unit.SetValue(True)
+            self.frame.show_original_panel.SetValue(True)
             self.frame.customfunc_choice.SetStringSelection('Gaussian Blur')
             for all_algorithms,vertical in ((False,False),(True,False),(True,True)):
                 self.frame.show_custom_func.SetValue(not all_algorithms)

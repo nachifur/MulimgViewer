@@ -1,5 +1,5 @@
 """Bounded asynchronous image composition. Workers never touch wx or the live model."""
-from .jpeg_policy import jpeg_quality
+from .jpeg_policy import cache_quality
 import copy
 import os
 import threading
@@ -300,7 +300,7 @@ class ImagePipeline:
                 with plan.composed(results) as (image,state):
                     self.directory.mkdir(parents=True,exist_ok=True)
                     temporary=self.directory/f'__image_{generation}_{batch}_{time.time_ns()}.tmp'
-                    try:save_cache_image(image,temporary,cache_image_extension(manager),jpeg_quality=jpeg_quality(manager))
+                    try:save_cache_image(image,temporary,cache_image_extension(manager),jpeg_quality=cache_quality(manager))
                     except BaseException:
                         temporary.unlink(missing_ok=True);raise
                     inputs=state.get('img_resolution_origin',image.size)
@@ -337,7 +337,7 @@ class ImagePipeline:
         self.directory.mkdir(parents=True, exist_ok=True)
         temporary = self.directory / f'__image_{generation}_{batch}_{time.time_ns()}.tmp'
         try:
-            save_cache_image(image,temporary,cache_image_extension(manager),jpeg_quality=jpeg_quality(manager))
+            save_cache_image(image,temporary,cache_image_extension(manager),jpeg_quality=cache_quality(manager))
         except BaseException:
             temporary.unlink(missing_ok=True)
             raise

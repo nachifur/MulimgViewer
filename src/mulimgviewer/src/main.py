@@ -40,6 +40,9 @@ from .video_playback import VideoPlaybackMixin
 from .status_bar import StatusBarMixin
 from .navigation import NavigationMixin
 from .configuration_controller import ConfigurationMixin
+from .settings_panel import SettingsPanelMixin
+from .sidebar_layout import SidebarLayoutMixin
+from .export_encoding import capture_export_encoding
 
 
 try:
@@ -48,7 +51,7 @@ except ImportError:
     winreg = None
 
 
-class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, ConfigurationMixin, MulimgViewerGui):
+class MulimgViewer(SidebarLayoutMixin, SettingsPanelMixin, NavigationMixin, StatusBarMixin, VideoPlaybackMixin, ConfigurationMixin, MulimgViewerGui):
     """Compose generated widgets with playback/configuration event handlers.
 
     Mixins precede the generated GUI so Bind calls resolve concrete handlers,
@@ -139,20 +142,7 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
         self.flip.SetToolTip("flip")
         self.load_config_button.SetToolTip("load_configuration")
         self.reset_config_button.SetToolTip("reset_configuration")
-        # Different platforms may need to adjust the width of the scrolledWindow_set
-        sys_platform = platform.system()
-        if sys_platform.find("Windows") >= 0:
-            self.width_setting = 300
-        elif sys_platform.find("Linux") >= 0:
-            self.width_setting = 280
-        elif sys_platform.find("Darwin") >= 0:
-            self.width_setting = 350
-        else:
-            self.width_setting = 300
-        self.SashPosition = self.width-self.width_setting
-        self.m_splitter1.SetSashPosition(self.SashPosition)
-        self.split_changing = False
-        self.width_setting_ = self.width_setting
+        self._initialize_sidebar_layout()
         self.play_timer = wx.Timer(self)
         self.Bind(wx.EVT_TIMER, self.on_play_timer, self.play_timer)
         self._from_timer = False     # Distinguish timer-triggered actions from user clicks
@@ -170,6 +160,7 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
 
         self._bind_legacy_control_aliases()
         self.refresh_algorithm_list()
+        self._initialize_settings_panels()
         self._capture_configuration_defaults()
 
         # open default path
@@ -199,6 +190,7 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
         self.scrolledWindow_img.Bind(wx.EVT_KEY_DOWN, self.key_down_detect)
         self.scrolledWindow_img.Bind(wx.EVT_KEY_UP, self.key_up_detect)
         self._restore_window_state()
+        self._restore_sidebar_width()
 
     def _bind_legacy_control_aliases(self):
         # Keep older handwritten logic working after GUI control renames.
@@ -1434,8 +1426,7 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
                         wx.DD_DEFAULT_STYLE | wx.DD_DIR_MUST_EXIST)
 
         if dlg.ShowModal() == wx.ID_OK:
-            self.out_path_str = dlg.GetPath()
-            self.SetStatusText_(["-1", "-1", "-1", "Output: " + self.out_path_str])
+            self._set_output_directory(dlg.GetPath())
 
         dlg.Destroy()
 
@@ -2213,7 +2204,9 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
         self.ImgManager.gap_color=(color.red,color.green,color.blue,self.ImgManager.gap_alpha)
         self.shared_config.cache_save_format=resolve_cache_format(layout_params[41],layout_params[35],layout_params[5])
         self.ImgManager.cache_save_format=layout_params[41]
-        self.shared_config.save_quality=layout_params[42]
+        self.shared_config.save_quality=self._effective_cache_quality()
+        self.ImgManager.cache_jpeg_quality=self.shared_config.save_quality
+        capture_export_encoding(self,self.ImgManager)
         try:
             registry = capture_algorithms(get_available_algorithms())
         except (OSError, UnicodeError, ValueError, TypeError) as error:
@@ -2233,7 +2226,7 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
             self.video_manager._pacing_model_period=None
         # ★ 修复：图片模式 + 视频模式 都要在 layout 变化时清空缓存与磁盘缓存文件
         vm = getattr(self, "video_manager", None)
-        layout_token = repr((layout_params, hash(registry), tuple(self.ImgManager.gap_color), int(self.ImgManager.img_alpha)))
+        layout_token = repr((layout_params, self.ImgManager.cache_jpeg_quality, hash(registry), tuple(self.ImgManager.gap_color), int(self.ImgManager.img_alpha)))
         if not getattr(self.shared_config, "video_mode", False):
             # ★ 缓存 token 里带上列表文件的内容指纹:
             #   以前 token 只有 (布局, 类型, 输入路径), 同一个 1.txt 改内容再重新选择时
@@ -2432,7 +2425,7 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
                     self.out_path_str,                      # 33
                     self.Magnifier_format.GetSelection(),   # 34
                     self.save_format.GetSelection(),        # 35
-                    self.show_unit.Value,                   # 36
+                    self.show_original_panel.Value,                   # 36
                     self.customfunc_choice.GetSelection(),  # 37
                     self.show_all_func.Value,               # 38
                     self.show_all_func_layout.Value,        # 39
@@ -3028,11 +3021,8 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
                     target=wx.Rect(x,y,width,height)
                     if self.GetRect()!=target:self.SetSize(target)
             self.init_min_size()
-            self.scrolledWindow_set.SetMinSize(wx.Size(int(self.width_setting),-1))
-            self.scrolledWindow_img.SetMinSize(wx.Size(
-                max(50,self.Size.width-int(self.width_setting)),
-                max(50,self.Size.height-150+(50 if hidden else 0))))
-            if hidden:self.m_splitter1.SetSashPosition(self.Size.width)
+            self.Layout()
+            self._apply_sidebar_width()
             canvas=getattr(self,'img_last',None)
             if isinstance(canvas,TiledImageCanvas) and canvas.viewport_backed:
                 # Its native window is only a viewport, not the virtual canvas.
@@ -3043,26 +3033,17 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
         finally:self._auto_layout_busy=False
 
     def init_min_size(self):
-        self.scrolledWindow_set.SetMinSize(wx.Size(50,-1))
-        self.scrolledWindow_img.SetMinSize(wx.Size(50,max(50,self.Size.height-150)))
+        # Only true lower bounds belong here; current widths must not become
+        # minimum widths that fight native splitter dragging.
+        minimum=self.FromDIP(wx.Size(80,50))
+        self.scrolledWindow_set.SetMinSize(minimum)
+        self.scrolledWindow_img.SetMinSize(minimum)
 
     def split_sash_pos_changing(self, event):
-
-        self.init_min_size()
-        self.split_changing = True
+        self._sidebar_sash_changing(event)
 
     def split_sash_pos_changed(self, event):
-        self.SashPosition = self.m_splitter1.SashPosition
-
-        if self.split_changing:
-            self.width_setting = self.Size[0]-self.SashPosition
-
-        self.scrolledWindow_set.SetMinSize(
-            wx.Size((self.width_setting, -1)))
-        self.scrolledWindow_img.SetMinSize(
-            wx.Size((self.Size[0]-self.width_setting,self.Size[1]-150)))
-
-        self.split_changing = False
+        self._sidebar_sash_changed(event)
 
     def about_gui(self, event, update=False, new_version=None):
         self.aboutgui = About(self, self.version,
@@ -3153,7 +3134,7 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
     def hidden(self, event):
         if self.hidden_flag == 0:
             self.Sizer.Hide(self.m_panel1)
-            self.scrolledWindow_set.Sizer.Hide(self.m_panel4)
+            self.scrolledWindow_set.Sizer.ShowItems(False)
 
             self.width_setting_ = self.width_setting
             self.width_setting = 0
@@ -3161,7 +3142,7 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
             self.hidden_flag = 1
         else:
             self.Sizer.Show(self.m_panel1)
-            self.scrolledWindow_set.Sizer.Show(self.m_panel4)
+            self.scrolledWindow_set.Sizer.ShowItems(True)
 
             self.width_setting = self.width_setting_
 

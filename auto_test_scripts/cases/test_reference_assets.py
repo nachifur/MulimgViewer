@@ -90,7 +90,13 @@ class ReferenceAssetTests(unittest.TestCase):
             self.assertTrue(manager.update_image_exif_37510(str(jpeg),title))
             actual=piexif.helper.UserComment.load(piexif.load(str(jpeg))['Exif'][piexif.ExifIFD.UserComment])
             self.assertEqual(actual,title)
-            self.assertFalse(manager.update_image_exif_37510(str(target),title))
+            # PNG title metadata is supported without changing rotated pixels.
+            with Image.open(target) as image:before=image.tobytes()
+            self.assertTrue(manager.update_image_exif_37510(str(target),title))
+            with Image.open(target) as image:
+                self.assertEqual(image.tobytes(),before)
+                stored=piexif.load(image.info['exif'])['Exif'][piexif.ExifIFD.UserComment]
+                self.assertEqual(piexif.helper.UserComment.load(stored),title)
         finally:original.close()
 
     def test_processed_pixels_and_second_level_composition_match_independent_oracles(self):

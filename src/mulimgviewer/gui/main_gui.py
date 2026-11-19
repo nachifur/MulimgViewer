@@ -7,6 +7,7 @@
 ## PLEASE DO *NOT* EDIT THIS FILE!
 ###########################################################################
 
+from ..src.settings_section import SettingsSection
 import wx
 import wx.xrc
 
@@ -22,6 +23,8 @@ class MulimgViewerGui ( wx.Frame ):
 		self.SetSizeHints( wx.DefaultSize, wx.DefaultSize )
 
 		fgSizer1 = wx.FlexGridSizer( 2, 1, 0, 0 )
+		fgSizer1.AddGrowableCol( 0 )
+		fgSizer1.AddGrowableRow( 1 )
 		fgSizer1.SetFlexibleDirection( wx.BOTH )
 		fgSizer1.SetNonFlexibleGrowMode( wx.FLEX_GROWMODE_SPECIFIED )
 
@@ -40,12 +43,6 @@ class MulimgViewerGui ( wx.Frame ):
 
 		self.m_staticline4 = wx.StaticLine( self.m_panel1, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_VERTICAL )
 		wSizer1.Add( self.m_staticline4, 0, wx.EXPAND |wx.ALL, 5 )
-
-		self.out_path_button = wx.Button( self.m_panel1, wx.ID_ANY, u"📁️", wx.DefaultPosition, wx.Size( 50,30 ), wx.BORDER_NONE )
-		self.out_path_button.SetFont( wx.Font( 20, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL, False, wx.EmptyString ) )
-		self.out_path_button.SetMinSize( wx.Size( 50,30 ) )
-
-		wSizer1.Add( self.out_path_button, 0, wx.ALL|wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
 		self.save_butoon = wx.Button( self.m_panel1, wx.ID_ANY, u"💾️", wx.DefaultPosition, wx.Size( 50,30 ), wx.BORDER_NONE )
 		self.save_butoon.SetFont( wx.Font( 20, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL, False, wx.EmptyString ) )
@@ -76,7 +73,7 @@ class MulimgViewerGui ( wx.Frame ):
 		self.slider_value = wx.TextCtrl( self.m_panel1, wx.ID_ANY, u"1", wx.DefaultPosition, wx.Size( 50,-1 ), wx.TE_PROCESS_ENTER )
 		wSizer1.Add( self.slider_value, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_CENTER_HORIZONTAL, 5 )
 
-		self.slider_img = wx.Slider( self.m_panel1, wx.ID_ANY, 1, 1, 100, wx.DefaultPosition, wx.Size( 150,30 ), wx.SL_HORIZONTAL )
+		self.slider_img = wx.Slider( self.m_panel1, wx.ID_ANY, 1, 1, 100, wx.DefaultPosition, wx.Size( 120,30 ), wx.SL_HORIZONTAL )
 		wSizer1.Add( self.slider_img, 0, wx.ALL|wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
 		self.slider_value_max = wx.StaticText( self.m_panel1, wx.ID_ANY, u"1", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
@@ -109,12 +106,13 @@ class MulimgViewerGui ( wx.Frame ):
 		fgSizer1.Add( self.m_panel1, 1, wx.EXPAND |wx.ALL, 5 )
 
 		self.m_panel3 = wx.Panel( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.TAB_TRAVERSAL )
-		fgSizer5 = wx.FlexGridSizer( 1, 2, 0, 0 )
+		fgSizer5 = wx.FlexGridSizer( 1, 1, 0, 0 )
+		fgSizer5.AddGrowableCol( 0 )
+		fgSizer5.AddGrowableRow( 0 )
 		fgSizer5.SetFlexibleDirection( wx.BOTH )
 		fgSizer5.SetNonFlexibleGrowMode( wx.FLEX_GROWMODE_SPECIFIED )
 
-		fgSizer5.SetMinSize( wx.Size( 1000,600 ) )
-		self.m_splitter1 = wx.SplitterWindow( self.m_panel3, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.SP_3D )
+		self.m_splitter1 = wx.SplitterWindow( self.m_panel3, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.SP_3D|wx.SP_LIVE_UPDATE )
 		self.scrolledWindow_img = wx.ScrolledWindow( self.m_splitter1, wx.ID_ANY, wx.DefaultPosition, wx.Size( -1,-1 ), wx.HSCROLL|wx.VSCROLL )
 		self.scrolledWindow_img.SetScrollRate( 5, 5 )
 		fgSizer4 = wx.FlexGridSizer( 2, 1, 0, 0 )
@@ -136,765 +134,980 @@ class MulimgViewerGui ( wx.Frame ):
 		fgSizer4.Fit( self.scrolledWindow_img )
 		self.scrolledWindow_set = wx.ScrolledWindow( self.m_splitter1, wx.ID_ANY, wx.DefaultPosition, wx.Size( -1,-1 ), wx.HSCROLL|wx.VSCROLL )
 		self.scrolledWindow_set.SetScrollRate( 5, 5 )
-		bSizer13 = wx.BoxSizer( wx.VERTICAL )
+		fgSizer3 = wx.BoxSizer( wx.VERTICAL )
 
-		self.m_panel4 = wx.Panel( self.scrolledWindow_set, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.TAB_TRAVERSAL )
-		fgSizer3 = wx.FlexGridSizer( 0, 1, 0, 0 )
-		fgSizer3.SetFlexibleDirection( wx.BOTH )
-		fgSizer3.SetNonFlexibleGrowMode( wx.FLEX_GROWMODE_SPECIFIED )
+		self.input_settings_pane = SettingsSection( self.scrolledWindow_set, wx.ID_ANY, wx.DefaultPosition, wx.Size( -1,-1 ), wx.TAB_TRAVERSAL|wx.BORDER_NONE )
+		input_settings_pane_card_sizer = wx.BoxSizer( wx.VERTICAL )
 
-		fgSizer3.SetMinSize( wx.Size( 300,600 ) )
-		self.m_staticText38 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Input/Output", wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.m_staticText38.Wrap( -1 )
+		self.input_settings_pane_header = wx.Button( self.input_settings_pane, wx.ID_ANY, u"Input && Playback", wx.DefaultPosition, wx.Size( -1,-1 ), wx.BU_LEFT|wx.BORDER_NONE, wx.DefaultValidator, u"input_settings_pane_header" )
+		input_settings_pane_card_sizer.Add( self.input_settings_pane_header, 0, wx.EXPAND|wx.ALL, 1 )
 
-		self.m_staticText38.SetFont( wx.Font( 12, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD, False, wx.EmptyString ) )
+		self.input_settings_pane_content = wx.Panel( self.input_settings_pane, wx.ID_ANY, wx.DefaultPosition, wx.Size( -1,-1 ), wx.TAB_TRAVERSAL|wx.BORDER_NONE, u"input_settings_pane_content" )
+		input_settings_pane_sizer = wx.BoxSizer( wx.VERTICAL )
 
-		fgSizer3.Add( self.m_staticText38, 0, wx.ALL, 5 )
+		self.video_mode = wx.CheckBox( self.input_settings_pane_content, wx.ID_ANY, u"Video mode", wx.DefaultPosition, wx.DefaultSize, 0 )
+		input_settings_pane_sizer.Add( self.video_mode, 0, wx.EXPAND|wx.ALL, 2 )
 
-		self.m_staticline3 = wx.StaticLine( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_HORIZONTAL )
-		fgSizer3.Add( self.m_staticline3, 0, wx.EXPAND |wx.ALL, 5 )
+		playback_fields = wx.FlexGridSizer( 0, 2, 3, 6 )
+		playback_fields.AddGrowableCol( 1 )
+		playback_fields.SetFlexibleDirection( wx.BOTH )
+		playback_fields.SetNonFlexibleGrowMode( wx.FLEX_GROWMODE_SPECIFIED )
 
-		bSizer16 = wx.BoxSizer( wx.HORIZONTAL )
-
-		self.m_staticText21 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"UniformSize", wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.m_staticText21.Wrap( -1 )
-
-		bSizer16.Add( self.m_staticText21, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
-
-		choice_normalized_sizeChoices = [ u"resize", u"crop", u"fill" ]
-		self.choice_normalized_size = wx.Choice( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.Size( 90,-1 ), choice_normalized_sizeChoices, 0 )
-		self.choice_normalized_size.SetSelection( 0 )
-		bSizer16.Add( self.choice_normalized_size, 0, wx.ALL|wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL, 5 )
-
-
-		fgSizer3.Add( bSizer16, 1, wx.EXPAND, 5 )
-
-		bSizer15 = wx.BoxSizer( wx.HORIZONTAL )
-
-		self.m_staticText19 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"OutputMode", wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.m_staticText19.Wrap( -1 )
-
-		bSizer15.Add( self.m_staticText19, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
-
-		choice_outputChoices = [ u"1:stitch", u"2:select", u"3:1+2", u"4:magnifer", u"5:1+4", u"6:2+4", u"7:1+2+4" ]
-		self.choice_output = wx.Choice( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.Size( 90,-1 ), choice_outputChoices, 0 )
-		self.choice_output.SetSelection( 0 )
-		bSizer15.Add( self.choice_output, 0, wx.ALL, 5 )
-
-
-		fgSizer3.Add( bSizer15, 1, wx.EXPAND, 5 )
-
-		bSizer23 = wx.BoxSizer( wx.HORIZONTAL )
-
-		self.m_staticText28 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"ImgInterp🔍️", wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.m_staticText28.Wrap( -1 )
-
-		bSizer23.Add( self.m_staticText28, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
-
-		image_interpChoices = [ u"nearest", u"cubic", u"linear" ]
-		self.image_interp = wx.Choice( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.Size( 90,-1 ), image_interpChoices, 0 )
-		self.image_interp.SetSelection( 2 )
-		bSizer23.Add( self.image_interp, 0, wx.ALL, 5 )
-
-
-		fgSizer3.Add( bSizer23, 1, wx.EXPAND, 5 )
-
-		bSizer162 = wx.BoxSizer( wx.HORIZONTAL )
-
-		self.m_staticText211 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"SaveFormat", wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.m_staticText211.Wrap( -1 )
-
-		bSizer162.Add( self.m_staticText211, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
-
-		save_formatChoices = [ u"jpg", u"png", u"pdf" ]
-		self.save_format = wx.Choice( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.Size( 90,-1 ), save_formatChoices, 0 )
-		self.save_format.SetSelection( 0 )
-		bSizer162.Add( self.save_format, 0, wx.ALL|wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL, 5 )
-
-		self.save_quality = wx.Slider( self.m_panel4, wx.ID_ANY, 100, 0, 100, wx.DefaultPosition, wx.Size( 80,-1 ), wx.SL_HORIZONTAL )
-		self.save_quality.SetToolTip( u"JPG quality: 0-100. Higher values preserve more detail and use more disk space. Cache changes apply on Refresh; exports capture the value when Save is clicked. Controls JPG encoding only; PNG/PDF encoding is unchanged." )
-
-		bSizer162.Add( self.save_quality, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
-
-
-		fgSizer3.Add( bSizer162, 1, wx.EXPAND, 5 )
-
-		bSizer21 = wx.BoxSizer( wx.HORIZONTAL )
-
-		self.m_staticText26 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Parallel+Sequential", wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.m_staticText26.Wrap( -1 )
-
-		bSizer21.Add( self.m_staticText26, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
-
-		self.parallel_sequential = wx.CheckBox( self.m_panel4, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
-		bSizer21.Add( self.parallel_sequential, 0, wx.ALL, 5 )
-
-
-		fgSizer3.Add( bSizer21, 1, wx.EXPAND, 5 )
-
-		bSizer29 = wx.BoxSizer( wx.HORIZONTAL )
-
-		self.m_staticText37 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Parallel->Sequential", wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.m_staticText37.Wrap( -1 )
-
-		bSizer29.Add( self.m_staticText37, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
-
-		self.parallel_to_sequential = wx.CheckBox( self.m_panel4, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
-		bSizer29.Add( self.parallel_to_sequential, 0, wx.ALL, 5 )
-
-
-		fgSizer3.Add( bSizer29, 1, wx.EXPAND, 5 )
-
-		wSizer3 = wx.WrapSizer( wx.HORIZONTAL, wx.WRAPSIZER_DEFAULT_FLAGS )
-
-		self.auto_save_all = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"AutoSaveAll", wx.DefaultPosition, wx.DefaultSize, 0 )
-		wSizer3.Add( self.auto_save_all, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
-
-		self.move_file = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"MoveFile", wx.DefaultPosition, wx.DefaultSize, 0 )
-		wSizer3.Add( self.move_file, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
-
-
-		fgSizer3.Add( wSizer3, 1, wx.EXPAND, 5 )
-
-		self.m_staticline28 = wx.StaticLine( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_HORIZONTAL )
-		fgSizer3.Add( self.m_staticline28, 0, wx.EXPAND |wx.ALL, 5 )
-
-		wSizer112 = wx.WrapSizer( wx.HORIZONTAL, wx.WRAPSIZER_DEFAULT_FLAGS )
-
-		self.m_staticText361 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Config", wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.m_staticText361.Wrap( -1 )
-
-		self.m_staticText361.SetFont( wx.Font( wx.NORMAL_FONT.GetPointSize(), wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD, False, wx.EmptyString ) )
-
-		wSizer112.Add( self.m_staticText361, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
-
-		self.m_staticline201 = wx.StaticLine( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_VERTICAL )
-		wSizer112.Add( self.m_staticline201, 0, wx.EXPAND |wx.ALL, 5 )
-
-		self.load_config_button = wx.Button( self.m_panel4, wx.ID_ANY, u"Load", wx.Point( -1,-1 ), wx.Size( 50,-1 ), 0 )
-		wSizer112.Add( self.load_config_button, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
-
-		self.save_config_button = wx.Button( self.m_panel4, wx.ID_ANY, u"Save", wx.DefaultPosition, wx.Size( 50,-1 ), 0 )
-		wSizer112.Add( self.save_config_button, 0, wx.ALL, 5 )
-
-		self.reset_config_button = wx.Button( self.m_panel4, wx.ID_ANY, u"Reset", wx.DefaultPosition, wx.Size( 50,-1 ), 0 )
-		wSizer112.Add( self.reset_config_button, 0, wx.ALL, 5 )
-
-
-		fgSizer3.Add( wSizer112, 1, wx.EXPAND, 5 )
-
-		wSizer13 = wx.WrapSizer( wx.HORIZONTAL, wx.WRAPSIZER_DEFAULT_FLAGS )
-
-		self.m_staticText47 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Performance && Cache", wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.m_staticText47.Wrap( -1 )
-
-		self.m_staticText47.SetFont( wx.Font( wx.NORMAL_FONT.GetPointSize(), wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD, False, wx.EmptyString ) )
-
-		wSizer13.Add( self.m_staticText47, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
-
-		self.m_staticline27 = wx.StaticLine( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_VERTICAL )
-		wSizer13.Add( self.m_staticline27, 0, wx.EXPAND |wx.ALL, 5 )
-
-		power_modeChoices = [ u"1.Eco", u"2.Balanced", u"3.Performance", u"4.Maximum" ]
-		self.power_mode = wx.Choice( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.Size( 90,-1 ), power_modeChoices, 0 )
-		self.power_mode.SetSelection( 1 )
-		wSizer13.Add( self.power_mode, 0, wx.ALL, 5 )
-
-		self.m_staticText242 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Cache Frames", wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.m_staticText242.Wrap( -1 )
-
-		wSizer13.Add( self.m_staticText242, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
-
-		self.cache_frames = wx.TextCtrl( self.m_panel4, wx.ID_ANY, u"2", wx.DefaultPosition, wx.Size( 20,-1 ), 0 )
-		wSizer13.Add( self.cache_frames, 0, wx.ALL, 5 )
-
-		self.m_staticText46 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Cache Multiplier", wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.m_staticText46.Wrap( -1 )
-
-		wSizer13.Add( self.m_staticText46, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
-
-		self.cache_multiplier = wx.TextCtrl( self.m_panel4, wx.ID_ANY, u"1", wx.DefaultPosition, wx.Size( 20,-1 ), 0 )
-		wSizer13.Add( self.cache_multiplier, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
-
-		self.cache_format_label = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Cache format", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
-		self.cache_format_label.Wrap( -1 )
-
-		wSizer13.Add( self.cache_format_label, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
-
-		cache_save_formatChoices = [ u"jpg", u"png", u"auto" ]
-		self.cache_save_format = wx.Choice( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.Size( -1,-1 ), cache_save_formatChoices, 0 )
-		self.cache_save_format.SetSelection( 2 )
-		self.cache_save_format.SetToolTip( u"Cache format for all stages. auto: png for png/pdf export with both output scales >= 1; jpg otherwise. Refresh applies changes." )
-
-		wSizer13.Add( self.cache_save_format, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
-
-
-		fgSizer3.Add( wSizer13, 1, wx.EXPAND, 5 )
-
-		self.m_staticline13 = wx.StaticLine( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_HORIZONTAL )
-		fgSizer3.Add( self.m_staticline13, 0, wx.EXPAND |wx.ALL, 5 )
-
-		bSizer151 = wx.BoxSizer( wx.HORIZONTAL )
-
-		self.m_staticText16 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Layout", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
-		self.m_staticText16.Wrap( -1 )
-
-		self.m_staticText16.SetFont( wx.Font( 12, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD, False, wx.EmptyString ) )
-
-		bSizer151.Add( self.m_staticText16, 1, wx.ALL, 5 )
-
-		self.auto_layout_check = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"AutoWinSize", wx.DefaultPosition, wx.DefaultSize, 0 )
-		bSizer151.Add( self.auto_layout_check, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
-
-		self.m_staticline19 = wx.StaticLine( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_VERTICAL )
-		bSizer151.Add( self.m_staticline19, 0, wx.EXPAND |wx.ALL, 5 )
-
-		self.m_staticText34 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Vertical", wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.m_staticText34.Wrap( -1 )
-
-		bSizer151.Add( self.m_staticText34, 0, wx.ALL, 5 )
-
-
-		fgSizer3.Add( bSizer151, 1, wx.EXPAND, 5 )
-
-		self.m_staticline14 = wx.StaticLine( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_HORIZONTAL )
-		fgSizer3.Add( self.m_staticline14, 0, wx.EXPAND |wx.ALL, 5 )
-
-		bSizer181 = wx.BoxSizer( wx.HORIZONTAL )
-
-		self.m_staticText25 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"RowCol（Func）", wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.m_staticText25.Wrap( -1 )
-
-		bSizer181.Add( self.m_staticText25, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
-
-		self.show_all_func_layout = wx.TextCtrl( self.m_panel4, wx.ID_ANY, u"2,2", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
-		bSizer181.Add( self.show_all_func_layout, 0, wx.ALL, 5 )
-
-		self.func_layout_vertical = wx.CheckBox( self.m_panel4, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
-		bSizer181.Add( self.func_layout_vertical, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
-
-
-		fgSizer3.Add( bSizer181, 1, wx.EXPAND, 5 )
-
-		bSizer18 = wx.BoxSizer( wx.HORIZONTAL )
-
-		self.m_staticText2 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"RowCol", wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.m_staticText2.Wrap( -1 )
-
-		bSizer18.Add( self.m_staticText2, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
-
-		self.row_col = wx.TextCtrl( self.m_panel4, wx.ID_ANY, u"1,1", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
-		bSizer18.Add( self.row_col, 0, wx.ALL, 5 )
-
-		self.img_vertical = wx.CheckBox( self.m_panel4, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
-		bSizer18.Add( self.img_vertical, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
-
-
-		fgSizer3.Add( bSizer18, 1, wx.EXPAND, 5 )
-
-		bSizer10 = wx.BoxSizer( wx.HORIZONTAL )
-
-		self.m_staticText4 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"RowCol->OneImg", wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.m_staticText4.Wrap( -1 )
-
-		bSizer10.Add( self.m_staticText4, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
-
-		self.row_col_one_img = wx.TextCtrl( self.m_panel4, wx.ID_ANY, u"1,1", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
-		bSizer10.Add( self.row_col_one_img, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
-
-		self.one_img_vertical = wx.CheckBox( self.m_panel4, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
-		bSizer10.Add( self.one_img_vertical, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
-
-
-		fgSizer3.Add( bSizer10, 1, wx.EXPAND, 5 )
-
-		bSizer14 = wx.BoxSizer( wx.HORIZONTAL )
-
-		self.m_staticText331 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"RowCol(ImgUnit)", wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.m_staticText331.Wrap( -1 )
-
-		bSizer14.Add( self.m_staticText331, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
-
-		self.row_col_img_unit = wx.TextCtrl( self.m_panel4, wx.ID_ANY, u"3,1", wx.DefaultPosition, wx.DefaultSize, 0 )
-		bSizer14.Add( self.row_col_img_unit, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
-
-		self.img_unit_vertical = wx.CheckBox( self.m_panel4, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
-		bSizer14.Add( self.img_unit_vertical, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
-
-
-		fgSizer3.Add( bSizer14, 1, wx.EXPAND, 5 )
-
-		bSizer101 = wx.BoxSizer( wx.HORIZONTAL )
-
-		self.m_staticText41 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"RowCol(🔍️)", wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.m_staticText41.Wrap( -1 )
-
-		bSizer101.Add( self.m_staticText41, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
-
-		self.magnifer_row_col = wx.TextCtrl( self.m_panel4, wx.ID_ANY, u"1,1", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
-		bSizer101.Add( self.magnifer_row_col, 0, wx.ALL, 5 )
-
-		self.magnifer_vertical = wx.CheckBox( self.m_panel4, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.magnifer_vertical.SetValue(True)
-		bSizer101.Add( self.magnifer_vertical, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
-
-
-		fgSizer3.Add( bSizer101, 1, wx.EXPAND, 5 )
-
-		bSizer4 = wx.BoxSizer( wx.HORIZONTAL )
-
-		self.m_staticText5 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Gap(Func,XY,One,Unit,🔍️)", wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.m_staticText5.Wrap( -1 )
-
-		bSizer4.Add( self.m_staticText5, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
-
-		self.gap = wx.TextCtrl( self.m_panel4, wx.ID_ANY, u"10,10,10,10,5,5,3,3,2,2", wx.DefaultPosition, wx.DefaultSize, 0 )
-		bSizer4.Add( self.gap, 0, wx.ALL, 5 )
-
-
-		fgSizer3.Add( bSizer4, 1, wx.EXPAND, 5 )
-
-		wSizer81 = wx.WrapSizer( wx.HORIZONTAL, wx.WRAPSIZER_DEFAULT_FLAGS )
-
-		self.m_staticText32 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"ShowUnit", wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.m_staticText32.Wrap( -1 )
-
-		wSizer81.Add( self.m_staticText32, 0, wx.ALL, 5 )
-
-		self.show_unit = wx.CheckBox( self.m_panel4, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.show_unit.SetValue(True)
-		wSizer81.Add( self.show_unit, 0, wx.ALL, 5 )
-
-		self.m_staticline18 = wx.StaticLine( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_VERTICAL )
-		wSizer81.Add( self.m_staticline18, 0, wx.EXPAND |wx.ALL, 5 )
-
-		self.show_original = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"Img", wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.show_original.SetValue(True)
-		wSizer81.Add( self.show_original, 0, wx.ALL, 5 )
-
-		self.show_magnifer = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"🔍️", wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.show_magnifer.SetValue(True)
-		wSizer81.Add( self.show_magnifer, 0, wx.ALL, 5 )
-
-		self.title_show = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"Title", wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.title_show.SetValue(True)
-		wSizer81.Add( self.title_show, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
-
-		self.m_staticline211 = wx.StaticLine( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_VERTICAL )
-		wSizer81.Add( self.m_staticline211, 0, wx.EXPAND |wx.ALL, 5 )
-
-		self.one_img = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"OneImg", wx.DefaultPosition, wx.DefaultSize, 0 )
-		wSizer81.Add( self.one_img, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
-
-		self.onetitle = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"OneTitle", wx.DefaultPosition, wx.DefaultSize, 0 )
-		wSizer81.Add( self.onetitle, 0, wx.ALL, 5 )
-
-
-		fgSizer3.Add( wSizer81, 1, wx.EXPAND, 5 )
-
-		wSizer11 = wx.WrapSizer( wx.HORIZONTAL, wx.WRAPSIZER_DEFAULT_FLAGS )
-
-		self.m_staticText382 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"CustomFunc", wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.m_staticText382.Wrap( -1 )
-
-		wSizer11.Add( self.m_staticText382, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
-
-		self.m_staticline221 = wx.StaticLine( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_VERTICAL )
-		wSizer11.Add( self.m_staticline221, 0, wx.EXPAND |wx.ALL, 5 )
-
-		customfunc_choiceChoices = [ u"Image Enhancement", u"Image Darkening", u"Gaussian Blur" ]
-		self.customfunc_choice = wx.Choice( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, customfunc_choiceChoices, 0 )
-		self.customfunc_choice.SetSelection( 0 )
-		wSizer11.Add( self.customfunc_choice, 0, wx.ALL, 5 )
-
-		self.show_custom_func = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"Show", wx.DefaultPosition, wx.DefaultSize, 0 )
-		wSizer11.Add( self.show_custom_func, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
-
-		self.show_all_func = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"ShowALLFunc", wx.DefaultPosition, wx.DefaultSize, 0 )
-		wSizer11.Add( self.show_all_func, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
-
-		self.m_staticline23 = wx.StaticLine( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_VERTICAL )
-		wSizer11.Add( self.m_staticline23, 0, wx.EXPAND |wx.ALL, 5 )
-
-		self.m_staticText391 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"AddFunc", wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.m_staticText391.Wrap( -1 )
-
-		wSizer11.Add( self.m_staticText391, 0, wx.ALL, 5 )
-
-		self.addfunc = wx.TextCtrl( self.m_panel4, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
-		wSizer11.Add( self.addfunc, 0, wx.ALL, 5 )
-
-		self.delfunc = wx.Button( self.m_panel4, wx.ID_ANY, u"DelFunc", wx.DefaultPosition, wx.DefaultSize, 0 )
-		wSizer11.Add( self.delfunc, 0, wx.ALL, 5 )
-
-
-		fgSizer3.Add( wSizer11, 1, wx.EXPAND, 5 )
-
-		self.m_staticline15 = wx.StaticLine( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_HORIZONTAL )
-		fgSizer3.Add( self.m_staticline15, 0, wx.EXPAND |wx.ALL, 5 )
-
-		wSizer7 = wx.WrapSizer( wx.HORIZONTAL, wx.WRAPSIZER_DEFAULT_FLAGS )
-
-		self.m_staticText40 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Box", wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.m_staticText40.Wrap( -1 )
-
-		self.m_staticText40.SetFont( wx.Font( 12, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD, False, wx.EmptyString ) )
-
-		wSizer7.Add( self.m_staticText40, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
-
-		self.m_staticline10 = wx.StaticLine( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_VERTICAL )
-		wSizer7.Add( self.m_staticline10, 0, wx.EXPAND |wx.ALL, 5 )
-
-		self.show_box = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"InImg", wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.show_box.SetValue(True)
-		wSizer7.Add( self.show_box, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
-
-		self.show_box_in_crop = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"In🔍️", wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.show_box_in_crop.SetValue(True)
-		wSizer7.Add( self.show_box_in_crop, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
-
-		self.m_staticText23 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Width", wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.m_staticText23.Wrap( -1 )
-
-		wSizer7.Add( self.m_staticText23, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
-
-		self.line_width = wx.TextCtrl( self.m_panel4, wx.ID_ANY, u"2,2", wx.DefaultPosition, wx.Size( 35,-1 ), 0 )
-		wSizer7.Add( self.line_width, 0, wx.ALL, 5 )
-
-		self.select_img_box = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"SelectBox", wx.DefaultPosition, wx.DefaultSize, 0 )
-		wSizer7.Add( self.select_img_box, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
-
-		box_positionChoices = [ u"middle bottom", u"left bottom", u"right bottom", u"left top", u"right top" ]
-		self.box_position = wx.Choice( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.Size( 105,-1 ), box_positionChoices, 0 )
-		self.box_position.SetSelection( 0 )
-		wSizer7.Add( self.box_position, 0, wx.ALL, 5 )
-
-
-		fgSizer3.Add( wSizer7, 1, wx.EXPAND, 5 )
-
-		wSizer111 = wx.WrapSizer( wx.HORIZONTAL, wx.WRAPSIZER_DEFAULT_FLAGS )
-
-		self.m_staticText36 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"🔍️Typed", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
-		self.m_staticText36.Wrap( -1 )
-
-		wSizer111.Add( self.m_staticText36, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
-
-		Magnifier_formatChoices = [ u"equal width height", u"equal width", u"equal height " ]
-		self.Magnifier_format = wx.Choice( self.m_panel4, wx.ID_ANY, wx.Point( -1,-1 ), wx.DefaultSize, Magnifier_formatChoices, 0 )
-		self.Magnifier_format.SetSelection( 0 )
-		wSizer111.Add( self.Magnifier_format, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
-
-
-		fgSizer3.Add( wSizer111, 1, wx.EXPAND, 5 )
-
-		self.m_staticline16 = wx.StaticLine( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_HORIZONTAL )
-		fgSizer3.Add( self.m_staticline16, 0, wx.EXPAND |wx.ALL, 5 )
-
-		wSizer12 = wx.WrapSizer( wx.HORIZONTAL, wx.WRAPSIZER_DEFAULT_FLAGS )
-
-		self.m_staticText411 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Video", wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.m_staticText411.Wrap( -1 )
-
-		self.m_staticText411.SetFont( wx.Font( 12, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD, False, wx.EmptyString ) )
-
-		wSizer12.Add( self.m_staticText411, 0, wx.ALL, 5 )
-
-		self.m_staticline25 = wx.StaticLine( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_VERTICAL )
-		wSizer12.Add( self.m_staticline25, 0, wx.EXPAND |wx.ALL, 5 )
-
-		self.video_mode = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"Video Mode", wx.DefaultPosition, wx.DefaultSize, 0 )
-		wSizer12.Add( self.video_mode, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
-
-		self.m_staticText24 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Interval (s)", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText24 = wx.StaticText( self.input_settings_pane_content, wx.ID_ANY, u"Interval (s)", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
 		self.m_staticText24.Wrap( -1 )
 
-		wSizer12.Add( self.m_staticText24, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+		playback_fields.Add( self.m_staticText24, 0, wx.ALIGN_CENTER_VERTICAL, 0 )
 
-		self.interval = wx.TextCtrl( self.m_panel4, wx.ID_ANY, u"1.0", wx.DefaultPosition, wx.Size( 40,-1 ), 0 )
-		wSizer12.Add( self.interval, 0, wx.ALL, 5 )
+		self.interval = wx.TextCtrl( self.input_settings_pane_content, wx.ID_ANY, u"1.0", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
+		self.interval.SetMinSize( wx.Size( 64,-1 ) )
 
-		self.m_staticText243 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Skip Frame", wx.DefaultPosition, wx.DefaultSize, 0 )
+		playback_fields.Add( self.interval, 0, wx.EXPAND, 0 )
+
+		self.m_staticText243 = wx.StaticText( self.input_settings_pane_content, wx.ID_ANY, u"Skip frames", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
 		self.m_staticText243.Wrap( -1 )
 
-		wSizer12.Add( self.m_staticText243, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+		playback_fields.Add( self.m_staticText243, 0, wx.ALIGN_CENTER_VERTICAL, 0 )
 
-		self.row_col13 = wx.TextCtrl( self.m_panel4, wx.ID_ANY, u"0", wx.DefaultPosition, wx.Size( 30,-1 ), 0 )
-		wSizer12.Add( self.row_col13, 0, wx.ALL, 5 )
+		self.row_col13 = wx.TextCtrl( self.input_settings_pane_content, wx.ID_ANY, u"0", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
+		self.row_col13.SetMinSize( wx.Size( 64,-1 ) )
+
+		playback_fields.Add( self.row_col13, 0, wx.EXPAND, 0 )
 
 
-		fgSizer3.Add( wSizer12, 1, wx.EXPAND, 5 )
+		input_settings_pane_sizer.Add( playback_fields, 0, wx.EXPAND|wx.ALL, 2 )
 
-		self.m_staticline24 = wx.StaticLine( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_HORIZONTAL )
-		fgSizer3.Add( self.m_staticline24, 0, wx.EXPAND |wx.ALL, 5 )
+		self.parallel_sequential = wx.CheckBox( self.input_settings_pane_content, wx.ID_ANY, u"Parallel + sequential", wx.DefaultPosition, wx.DefaultSize, 0 )
+		input_settings_pane_sizer.Add( self.parallel_sequential, 0, wx.EXPAND|wx.ALL, 2 )
 
-		wSizer2 = wx.WrapSizer( wx.HORIZONTAL, wx.WRAPSIZER_DEFAULT_FLAGS )
+		self.parallel_to_sequential = wx.CheckBox( self.input_settings_pane_content, wx.ID_ANY, u"Parallel to sequential", wx.DefaultPosition, wx.DefaultSize, 0 )
+		input_settings_pane_sizer.Add( self.parallel_to_sequential, 0, wx.EXPAND|wx.ALL, 2 )
 
-		self.m_staticText33 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Title", wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.m_staticText33.Wrap( -1 )
 
-		self.m_staticText33.SetFont( wx.Font( 12, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD, False, wx.EmptyString ) )
+		self.input_settings_pane_content.SetSizer( input_settings_pane_sizer )
+		self.input_settings_pane_content.Layout()
+		input_settings_pane_sizer.Fit( self.input_settings_pane_content )
+		input_settings_pane_card_sizer.Add( self.input_settings_pane_content, 0, wx.EXPAND|wx.LEFT|wx.RIGHT|wx.BOTTOM, 1 )
 
-		wSizer2.Add( self.m_staticText33, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
-		self.m_staticline11 = wx.StaticLine( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_VERTICAL )
-		self.m_staticline11.Enable( False )
+		self.input_settings_pane.SetSizer( input_settings_pane_card_sizer )
+		self.input_settings_pane.Layout()
+		input_settings_pane_card_sizer.Fit( self.input_settings_pane )
+		fgSizer3.Add( self.input_settings_pane, 0, wx.EXPAND|wx.LEFT|wx.RIGHT|wx.BOTTOM, 4 )
 
-		wSizer2.Add( self.m_staticline11, 0, wx.EXPAND |wx.ALL, 5 )
+		self.performance_settings_pane = SettingsSection( self.scrolledWindow_set, wx.ID_ANY, wx.DefaultPosition, wx.Size( -1,-1 ), wx.TAB_TRAVERSAL|wx.BORDER_NONE )
+		performance_settings_pane_card_sizer = wx.BoxSizer( wx.VERTICAL )
 
-		self.title_auto = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"Auto", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.performance_settings_pane_header = wx.Button( self.performance_settings_pane, wx.ID_ANY, u"Performance && Cache", wx.DefaultPosition, wx.Size( -1,-1 ), wx.BU_LEFT|wx.BORDER_NONE, wx.DefaultValidator, u"performance_settings_pane_header" )
+		performance_settings_pane_card_sizer.Add( self.performance_settings_pane_header, 0, wx.EXPAND|wx.ALL, 1 )
+
+		self.performance_settings_pane_content = wx.Panel( self.performance_settings_pane, wx.ID_ANY, wx.DefaultPosition, wx.Size( -1,-1 ), wx.TAB_TRAVERSAL|wx.BORDER_NONE, u"performance_settings_pane_content" )
+		performance_settings_pane_sizer = wx.BoxSizer( wx.VERTICAL )
+
+		performance_fields = wx.FlexGridSizer( 0, 2, 3, 6 )
+		performance_fields.AddGrowableCol( 1 )
+		performance_fields.SetFlexibleDirection( wx.BOTH )
+		performance_fields.SetNonFlexibleGrowMode( wx.FLEX_GROWMODE_SPECIFIED )
+
+		self.power_mode_label = wx.StaticText( self.performance_settings_pane_content, wx.ID_ANY, u"Power mode", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
+		self.power_mode_label.Wrap( -1 )
+
+		performance_fields.Add( self.power_mode_label, 0, wx.ALIGN_CENTER_VERTICAL, 0 )
+
+		power_modeChoices = [ u"1.Eco", u"2.Balanced", u"3.Performance", u"4.Maximum" ]
+		self.power_mode = wx.Choice( self.performance_settings_pane_content, wx.ID_ANY, wx.DefaultPosition, wx.Size( -1,-1 ), power_modeChoices, 0 )
+		self.power_mode.SetSelection( 1 )
+		self.power_mode.SetMinSize( wx.Size( 64,-1 ) )
+
+		performance_fields.Add( self.power_mode, 0, wx.EXPAND, 0 )
+
+		self.m_staticText242 = wx.StaticText( self.performance_settings_pane_content, wx.ID_ANY, u"Cache frames", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
+		self.m_staticText242.Wrap( -1 )
+
+		performance_fields.Add( self.m_staticText242, 0, wx.ALIGN_CENTER_VERTICAL, 0 )
+
+		self.cache_frames = wx.TextCtrl( self.performance_settings_pane_content, wx.ID_ANY, u"2", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
+		self.cache_frames.SetMinSize( wx.Size( 64,-1 ) )
+
+		performance_fields.Add( self.cache_frames, 0, wx.EXPAND, 0 )
+
+		self.m_staticText46 = wx.StaticText( self.performance_settings_pane_content, wx.ID_ANY, u"Cache multiplier", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
+		self.m_staticText46.Wrap( -1 )
+
+		performance_fields.Add( self.m_staticText46, 0, wx.ALIGN_CENTER_VERTICAL, 0 )
+
+		self.cache_multiplier = wx.TextCtrl( self.performance_settings_pane_content, wx.ID_ANY, u"1", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
+		self.cache_multiplier.SetMinSize( wx.Size( 64,-1 ) )
+
+		performance_fields.Add( self.cache_multiplier, 0, wx.EXPAND, 0 )
+
+		self.cache_format_label = wx.StaticText( self.performance_settings_pane_content, wx.ID_ANY, u"Cache format", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
+		self.cache_format_label.Wrap( -1 )
+
+		performance_fields.Add( self.cache_format_label, 0, wx.ALIGN_CENTER_VERTICAL, 0 )
+
+		cache_save_formatChoices = [ u"jpg", u"png", u"auto" ]
+		self.cache_save_format = wx.Choice( self.performance_settings_pane_content, wx.ID_ANY, wx.DefaultPosition, wx.Size( -1,-1 ), cache_save_formatChoices, 0 )
+		self.cache_save_format.SetSelection( 2 )
+		self.cache_save_format.SetToolTip( u"Cache format for all stages. auto: png for png/pdf export with both output scales >= 1; jpg otherwise. Refresh applies changes." )
+		self.cache_save_format.SetMinSize( wx.Size( 64,-1 ) )
+
+		performance_fields.Add( self.cache_save_format, 0, wx.EXPAND, 0 )
+
+
+		performance_settings_pane_sizer.Add( performance_fields, 0, wx.EXPAND|wx.ALL, 2 )
+
+		self.cache_quality_follow_save = wx.CheckBox( self.performance_settings_pane_content, wx.ID_ANY, u"Follow saved JPG quality", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.cache_quality_follow_save.SetValue(True)
+		self.cache_quality_follow_save.SetToolTip( u"Use Save Settings JPG quality for caches. Refresh applies changes." )
+
+		performance_settings_pane_sizer.Add( self.cache_quality_follow_save, 0, wx.EXPAND|wx.ALL, 2 )
+
+		cache_quality_fields = wx.FlexGridSizer( 0, 2, 3, 6 )
+		cache_quality_fields.AddGrowableCol( 1 )
+		cache_quality_fields.SetFlexibleDirection( wx.BOTH )
+		cache_quality_fields.SetNonFlexibleGrowMode( wx.FLEX_GROWMODE_SPECIFIED )
+
+		self.cache_jpg_quality_label = wx.StaticText( self.performance_settings_pane_content, wx.ID_ANY, u"Cache JPG quality", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
+		self.cache_jpg_quality_label.Wrap( -1 )
+
+		cache_quality_fields.Add( self.cache_jpg_quality_label, 0, wx.ALIGN_CENTER_VERTICAL, 0 )
+
+		self.cache_jpg_quality = wx.Slider( self.performance_settings_pane_content, wx.ID_ANY, 100, 0, 100, wx.DefaultPosition, wx.Size( -1,-1 ), wx.SL_HORIZONTAL )
+		self.cache_jpg_quality.SetToolTip( u"Independent cache JPG quality. Ignored while Follow saved JPG quality is enabled. Refresh applies changes." )
+		self.cache_jpg_quality.SetMinSize( wx.Size( 64,-1 ) )
+
+		cache_quality_fields.Add( self.cache_jpg_quality, 0, wx.EXPAND, 0 )
+
+
+		performance_settings_pane_sizer.Add( cache_quality_fields, 0, wx.EXPAND|wx.ALL, 2 )
+
+
+		self.performance_settings_pane_content.SetSizer( performance_settings_pane_sizer )
+		self.performance_settings_pane_content.Layout()
+		performance_settings_pane_sizer.Fit( self.performance_settings_pane_content )
+		performance_settings_pane_card_sizer.Add( self.performance_settings_pane_content, 0, wx.EXPAND|wx.LEFT|wx.RIGHT|wx.BOTTOM, 1 )
+
+
+		self.performance_settings_pane.SetSizer( performance_settings_pane_card_sizer )
+		self.performance_settings_pane.Layout()
+		performance_settings_pane_card_sizer.Fit( self.performance_settings_pane )
+		fgSizer3.Add( self.performance_settings_pane, 0, wx.EXPAND|wx.LEFT|wx.RIGHT|wx.BOTTOM, 4 )
+
+		self.layout_settings_pane = SettingsSection( self.scrolledWindow_set, wx.ID_ANY, wx.DefaultPosition, wx.Size( -1,-1 ), wx.TAB_TRAVERSAL|wx.BORDER_NONE )
+		layout_settings_pane_card_sizer = wx.BoxSizer( wx.VERTICAL )
+
+		self.layout_settings_pane_header = wx.Button( self.layout_settings_pane, wx.ID_ANY, u"Layout && Display", wx.DefaultPosition, wx.Size( -1,-1 ), wx.BU_LEFT|wx.BORDER_NONE, wx.DefaultValidator, u"layout_settings_pane_header" )
+		layout_settings_pane_card_sizer.Add( self.layout_settings_pane_header, 0, wx.EXPAND|wx.ALL, 1 )
+
+		self.layout_settings_pane_content = wx.Panel( self.layout_settings_pane, wx.ID_ANY, wx.DefaultPosition, wx.Size( -1,-1 ), wx.TAB_TRAVERSAL|wx.BORDER_NONE, u"layout_settings_pane_content" )
+		layout_settings_pane_sizer = wx.BoxSizer( wx.VERTICAL )
+
+		image_display_fields = wx.FlexGridSizer( 0, 2, 3, 6 )
+		image_display_fields.AddGrowableCol( 1 )
+		image_display_fields.SetFlexibleDirection( wx.BOTH )
+		image_display_fields.SetNonFlexibleGrowMode( wx.FLEX_GROWMODE_SPECIFIED )
+
+		self.m_staticText21 = wx.StaticText( self.layout_settings_pane_content, wx.ID_ANY, u"Size mode", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
+		self.m_staticText21.Wrap( -1 )
+
+		image_display_fields.Add( self.m_staticText21, 0, wx.ALIGN_CENTER_VERTICAL, 0 )
+
+		choice_normalized_sizeChoices = [ u"resize", u"crop", u"fill" ]
+		self.choice_normalized_size = wx.Choice( self.layout_settings_pane_content, wx.ID_ANY, wx.DefaultPosition, wx.Size( -1,-1 ), choice_normalized_sizeChoices, 0 )
+		self.choice_normalized_size.SetSelection( 0 )
+		self.choice_normalized_size.SetMinSize( wx.Size( 64,-1 ) )
+
+		image_display_fields.Add( self.choice_normalized_size, 0, wx.EXPAND, 0 )
+
+		self.m_staticText28 = wx.StaticText( self.layout_settings_pane_content, wx.ID_ANY, u"Zoom interpolation", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
+		self.m_staticText28.Wrap( -1 )
+
+		image_display_fields.Add( self.m_staticText28, 0, wx.ALIGN_CENTER_VERTICAL, 0 )
+
+		image_interpChoices = [ u"nearest", u"cubic", u"linear" ]
+		self.image_interp = wx.Choice( self.layout_settings_pane_content, wx.ID_ANY, wx.DefaultPosition, wx.Size( -1,-1 ), image_interpChoices, 0 )
+		self.image_interp.SetSelection( 2 )
+		self.image_interp.SetMinSize( wx.Size( 64,-1 ) )
+
+		image_display_fields.Add( self.image_interp, 0, wx.EXPAND, 0 )
+
+
+		layout_settings_pane_sizer.Add( image_display_fields, 0, wx.EXPAND|wx.ALL, 2 )
+
+		self.auto_layout_check = wx.CheckBox( self.layout_settings_pane_content, wx.ID_ANY, u"Fit window to image", wx.DefaultPosition, wx.DefaultSize, 0 )
+		layout_settings_pane_sizer.Add( self.auto_layout_check, 0, wx.EXPAND|wx.ALL, 2 )
+
+		layout_grid_fields = wx.FlexGridSizer( 0, 3, 3, 6 )
+		layout_grid_fields.AddGrowableCol( 1 )
+		layout_grid_fields.SetFlexibleDirection( wx.BOTH )
+		layout_grid_fields.SetNonFlexibleGrowMode( wx.FLEX_GROWMODE_SPECIFIED )
+
+		self.m_staticText16 = wx.StaticText( self.layout_settings_pane_content, wx.ID_ANY, u"Grid", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
+		self.m_staticText16.Wrap( -1 )
+
+		layout_grid_fields.Add( self.m_staticText16, 0, wx.ALIGN_CENTER_VERTICAL, 0 )
+
+		self.grid_dimensions_label = wx.StaticText( self.layout_settings_pane_content, wx.ID_ANY, u"Rows, cols", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
+		self.grid_dimensions_label.Wrap( -1 )
+
+		layout_grid_fields.Add( self.grid_dimensions_label, 0, wx.ALIGN_CENTER_VERTICAL, 0 )
+
+		self.m_staticText34 = wx.StaticText( self.layout_settings_pane_content, wx.ID_ANY, u"V", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
+		self.m_staticText34.Wrap( -1 )
+
+		self.m_staticText34.SetToolTip( u"Fill this grid vertically instead of horizontally" )
+
+		layout_grid_fields.Add( self.m_staticText34, 0, wx.ALIGN_CENTER_VERTICAL, 0 )
+
+		self.m_staticText25 = wx.StaticText( self.layout_settings_pane_content, wx.ID_ANY, u"Algorithms", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
+		self.m_staticText25.Wrap( -1 )
+
+		layout_grid_fields.Add( self.m_staticText25, 0, wx.ALIGN_CENTER_VERTICAL, 0 )
+
+		self.show_all_func_layout = wx.TextCtrl( self.layout_settings_pane_content, wx.ID_ANY, u"2,2", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
+		self.show_all_func_layout.SetMinSize( wx.Size( 64,-1 ) )
+
+		layout_grid_fields.Add( self.show_all_func_layout, 0, wx.EXPAND, 0 )
+
+		self.func_layout_vertical = wx.CheckBox( self.layout_settings_pane_content, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.func_layout_vertical.SetToolTip( u"Fill this grid vertically instead of horizontally" )
+
+		layout_grid_fields.Add( self.func_layout_vertical, 0, wx.ALIGN_CENTER_VERTICAL, 0 )
+
+		self.m_staticText2 = wx.StaticText( self.layout_settings_pane_content, wx.ID_ANY, u"Page", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
+		self.m_staticText2.Wrap( -1 )
+
+		layout_grid_fields.Add( self.m_staticText2, 0, wx.ALIGN_CENTER_VERTICAL, 0 )
+
+		self.row_col = wx.TextCtrl( self.layout_settings_pane_content, wx.ID_ANY, u"1,1", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
+		self.row_col.SetMinSize( wx.Size( 64,-1 ) )
+
+		layout_grid_fields.Add( self.row_col, 0, wx.EXPAND, 0 )
+
+		self.img_vertical = wx.CheckBox( self.layout_settings_pane_content, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.img_vertical.SetToolTip( u"Fill this grid vertically instead of horizontally" )
+
+		layout_grid_fields.Add( self.img_vertical, 0, wx.ALIGN_CENTER_VERTICAL, 0 )
+
+		self.m_staticText4 = wx.StaticText( self.layout_settings_pane_content, wx.ID_ANY, u"Per source", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
+		self.m_staticText4.Wrap( -1 )
+
+		layout_grid_fields.Add( self.m_staticText4, 0, wx.ALIGN_CENTER_VERTICAL, 0 )
+
+		self.row_col_one_img = wx.TextCtrl( self.layout_settings_pane_content, wx.ID_ANY, u"1,1", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
+		self.row_col_one_img.SetMinSize( wx.Size( 64,-1 ) )
+
+		layout_grid_fields.Add( self.row_col_one_img, 0, wx.EXPAND, 0 )
+
+		self.one_img_vertical = wx.CheckBox( self.layout_settings_pane_content, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.one_img_vertical.SetToolTip( u"Fill this grid vertically instead of horizontally" )
+
+		layout_grid_fields.Add( self.one_img_vertical, 0, wx.ALIGN_CENTER_VERTICAL, 0 )
+
+		self.m_staticText331 = wx.StaticText( self.layout_settings_pane_content, wx.ID_ANY, u"Image unit", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
+		self.m_staticText331.Wrap( -1 )
+
+		layout_grid_fields.Add( self.m_staticText331, 0, wx.ALIGN_CENTER_VERTICAL, 0 )
+
+		self.row_col_img_unit = wx.TextCtrl( self.layout_settings_pane_content, wx.ID_ANY, u"3,1", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
+		self.row_col_img_unit.SetMinSize( wx.Size( 64,-1 ) )
+
+		layout_grid_fields.Add( self.row_col_img_unit, 0, wx.EXPAND, 0 )
+
+		self.img_unit_vertical = wx.CheckBox( self.layout_settings_pane_content, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.img_unit_vertical.SetToolTip( u"Fill this grid vertically instead of horizontally" )
+
+		layout_grid_fields.Add( self.img_unit_vertical, 0, wx.ALIGN_CENTER_VERTICAL, 0 )
+
+		self.m_staticText41 = wx.StaticText( self.layout_settings_pane_content, wx.ID_ANY, u"Magnifiers", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
+		self.m_staticText41.Wrap( -1 )
+
+		layout_grid_fields.Add( self.m_staticText41, 0, wx.ALIGN_CENTER_VERTICAL, 0 )
+
+		self.magnifer_row_col = wx.TextCtrl( self.layout_settings_pane_content, wx.ID_ANY, u"1,1", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
+		self.magnifer_row_col.SetMinSize( wx.Size( 64,-1 ) )
+
+		layout_grid_fields.Add( self.magnifer_row_col, 0, wx.EXPAND, 0 )
+
+		self.magnifer_vertical = wx.CheckBox( self.layout_settings_pane_content, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.magnifer_vertical.SetValue(True)
+		self.magnifer_vertical.SetToolTip( u"Fill this grid vertically instead of horizontally" )
+
+		layout_grid_fields.Add( self.magnifer_vertical, 0, wx.ALIGN_CENTER_VERTICAL, 0 )
+
+
+		layout_settings_pane_sizer.Add( layout_grid_fields, 0, wx.EXPAND|wx.ALL, 2 )
+
+		self.m_staticText5 = wx.StaticText( self.layout_settings_pane_content, wx.ID_ANY, u"Gaps (Func / XY / One / Unit / Zoom)", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
+		self.m_staticText5.Wrap( -1 )
+
+		layout_settings_pane_sizer.Add( self.m_staticText5, 0, wx.EXPAND|wx.ALL, 2 )
+
+		self.gap = wx.TextCtrl( self.layout_settings_pane_content, wx.ID_ANY, u"10,10,10,10,5,5,3,3,2,2", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
+		self.gap.SetToolTip( u"Five x,y gap pairs: algorithms, page, per-source grid, image unit, magnifiers. Refresh applies changes." )
+		self.gap.SetMinSize( wx.Size( 64,-1 ) )
+
+		layout_settings_pane_sizer.Add( self.gap, 0, wx.EXPAND|wx.ALL, 2 )
+
+		visible_content_fields = wx.FlexGridSizer( 0, 3, 3, 6 )
+		visible_content_fields.AddGrowableCol( 0 )
+		visible_content_fields.AddGrowableCol( 1 )
+		visible_content_fields.AddGrowableCol( 2 )
+		visible_content_fields.SetFlexibleDirection( wx.BOTH )
+		visible_content_fields.SetNonFlexibleGrowMode( wx.FLEX_GROWMODE_SPECIFIED )
+
+		self.show_original = wx.CheckBox( self.layout_settings_pane_content, wx.ID_ANY, u"Image", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.show_original.SetValue(True)
+		visible_content_fields.Add( self.show_original, 0, wx.ALIGN_CENTER_VERTICAL, 0 )
+
+		self.show_magnifer = wx.CheckBox( self.layout_settings_pane_content, wx.ID_ANY, u"Magnifier", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.show_magnifer.SetValue(True)
+		visible_content_fields.Add( self.show_magnifer, 0, wx.ALIGN_CENTER_VERTICAL, 0 )
+
+		self.title_show = wx.CheckBox( self.layout_settings_pane_content, wx.ID_ANY, u"Title", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.title_show.SetValue(True)
+		visible_content_fields.Add( self.title_show, 0, wx.ALIGN_CENTER_VERTICAL, 0 )
+
+		self.one_img = wx.CheckBox( self.layout_settings_pane_content, wx.ID_ANY, u"Split image", wx.DefaultPosition, wx.DefaultSize, 0 )
+		visible_content_fields.Add( self.one_img, 0, wx.ALIGN_CENTER_VERTICAL, 0 )
+
+		self.onetitle = wx.CheckBox( self.layout_settings_pane_content, wx.ID_ANY, u"One title", wx.DefaultPosition, wx.DefaultSize, 0 )
+		visible_content_fields.Add( self.onetitle, 0, wx.ALIGN_CENTER_VERTICAL, 0 )
+
+
+		layout_settings_pane_sizer.Add( visible_content_fields, 0, wx.EXPAND|wx.ALL, 2 )
+
+		display_scale_fields = wx.FlexGridSizer( 0, 2, 3, 6 )
+		display_scale_fields.AddGrowableCol( 1 )
+		display_scale_fields.SetFlexibleDirection( wx.BOTH )
+		display_scale_fields.SetNonFlexibleGrowMode( wx.FLEX_GROWMODE_SPECIFIED )
+
+		self.m_staticText6 = wx.StaticText( self.layout_settings_pane_content, wx.ID_ANY, u"Display scale", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
+		self.m_staticText6.Wrap( -1 )
+
+		display_scale_fields.Add( self.m_staticText6, 0, wx.ALIGN_CENTER_VERTICAL, 0 )
+
+		self.show_scale = wx.TextCtrl( self.layout_settings_pane_content, wx.ID_ANY, u"1,1", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
+		self.show_scale.SetMinSize( wx.Size( 64,-1 ) )
+
+		display_scale_fields.Add( self.show_scale, 0, wx.EXPAND, 0 )
+
+		self.m_staticText18 = wx.StaticText( self.layout_settings_pane_content, wx.ID_ANY, u"Zoom scale", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
+		self.m_staticText18.Wrap( -1 )
+
+		display_scale_fields.Add( self.m_staticText18, 0, wx.ALIGN_CENTER_VERTICAL, 0 )
+
+		self.magnifier_show_scale = wx.TextCtrl( self.layout_settings_pane_content, wx.ID_ANY, u"-1,-1", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
+		self.magnifier_show_scale.SetMinSize( wx.Size( 64,-1 ) )
+
+		display_scale_fields.Add( self.magnifier_show_scale, 0, wx.EXPAND, 0 )
+
+		self.m_staticText8 = wx.StaticText( self.layout_settings_pane_content, wx.ID_ANY, u"Image size", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
+		self.m_staticText8.Wrap( -1 )
+
+		display_scale_fields.Add( self.m_staticText8, 0, wx.ALIGN_CENTER_VERTICAL, 0 )
+
+		self.img_resolution = wx.TextCtrl( self.layout_settings_pane_content, wx.ID_ANY, u"-1,-1", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
+		self.img_resolution.SetMinSize( wx.Size( 64,-1 ) )
+
+		display_scale_fields.Add( self.img_resolution, 0, wx.EXPAND, 0 )
+
+		self.m_staticText381 = wx.StaticText( self.layout_settings_pane_content, wx.ID_ANY, u"Zoom size", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
+		self.m_staticText381.Wrap( -1 )
+
+		display_scale_fields.Add( self.m_staticText381, 0, wx.ALIGN_CENTER_VERTICAL, 0 )
+
+		self.magnifer_resolution = wx.TextCtrl( self.layout_settings_pane_content, wx.ID_ANY, u"-1,-1", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
+		self.magnifer_resolution.SetMinSize( wx.Size( 64,-1 ) )
+
+		display_scale_fields.Add( self.magnifer_resolution, 0, wx.EXPAND, 0 )
+
+
+		layout_settings_pane_sizer.Add( display_scale_fields, 0, wx.EXPAND|wx.ALL, 2 )
+
+		self.keep_magnifer_size = wx.CheckBox( self.layout_settings_pane_content, wx.ID_ANY, u"Keep zoom size", wx.DefaultPosition, wx.DefaultSize, 0 )
+		layout_settings_pane_sizer.Add( self.keep_magnifer_size, 0, wx.EXPAND|wx.ALL, 2 )
+
+
+		self.layout_settings_pane_content.SetSizer( layout_settings_pane_sizer )
+		self.layout_settings_pane_content.Layout()
+		layout_settings_pane_sizer.Fit( self.layout_settings_pane_content )
+		layout_settings_pane_card_sizer.Add( self.layout_settings_pane_content, 0, wx.EXPAND|wx.LEFT|wx.RIGHT|wx.BOTTOM, 1 )
+
+
+		self.layout_settings_pane.SetSizer( layout_settings_pane_card_sizer )
+		self.layout_settings_pane.Layout()
+		layout_settings_pane_card_sizer.Fit( self.layout_settings_pane )
+		fgSizer3.Add( self.layout_settings_pane, 0, wx.EXPAND|wx.LEFT|wx.RIGHT|wx.BOTTOM, 4 )
+
+		self.custom_settings_pane = SettingsSection( self.scrolledWindow_set, wx.ID_ANY, wx.DefaultPosition, wx.Size( -1,-1 ), wx.TAB_TRAVERSAL|wx.BORDER_NONE )
+		custom_settings_pane_card_sizer = wx.BoxSizer( wx.VERTICAL )
+
+		self.custom_settings_pane_header = wx.Button( self.custom_settings_pane, wx.ID_ANY, u"Custom Functions", wx.DefaultPosition, wx.Size( -1,-1 ), wx.BU_LEFT|wx.BORDER_NONE, wx.DefaultValidator, u"custom_settings_pane_header" )
+		custom_settings_pane_card_sizer.Add( self.custom_settings_pane_header, 0, wx.EXPAND|wx.ALL, 1 )
+
+		self.custom_settings_pane_content = wx.Panel( self.custom_settings_pane, wx.ID_ANY, wx.DefaultPosition, wx.Size( -1,-1 ), wx.TAB_TRAVERSAL|wx.BORDER_NONE, u"custom_settings_pane_content" )
+		custom_settings_pane_sizer = wx.BoxSizer( wx.VERTICAL )
+
+		customfunc_choiceChoices = [ u"Image Enhancement", u"Image Darkening", u"Gaussian Blur" ]
+		self.customfunc_choice = wx.Choice( self.custom_settings_pane_content, wx.ID_ANY, wx.DefaultPosition, wx.Size( -1,-1 ), customfunc_choiceChoices, 0 )
+		self.customfunc_choice.SetSelection( 0 )
+		self.customfunc_choice.SetMinSize( wx.Size( 64,-1 ) )
+
+		custom_settings_pane_sizer.Add( self.customfunc_choice, 0, wx.EXPAND|wx.ALL, 2 )
+
+		algorithm_display_fields = wx.FlexGridSizer( 0, 2, 3, 6 )
+		algorithm_display_fields.AddGrowableCol( 0 )
+		algorithm_display_fields.AddGrowableCol( 1 )
+		algorithm_display_fields.SetFlexibleDirection( wx.BOTH )
+		algorithm_display_fields.SetNonFlexibleGrowMode( wx.FLEX_GROWMODE_SPECIFIED )
+
+		self.show_custom_func = wx.CheckBox( self.custom_settings_pane_content, wx.ID_ANY, u"Selected", wx.DefaultPosition, wx.DefaultSize, 0 )
+		algorithm_display_fields.Add( self.show_custom_func, 0, wx.ALIGN_CENTER_VERTICAL, 0 )
+
+		self.show_all_func = wx.CheckBox( self.custom_settings_pane_content, wx.ID_ANY, u"All algorithms", wx.DefaultPosition, wx.DefaultSize, 0 )
+		algorithm_display_fields.Add( self.show_all_func, 0, wx.ALIGN_CENTER_VERTICAL, 0 )
+
+
+		custom_settings_pane_sizer.Add( algorithm_display_fields, 0, wx.EXPAND|wx.ALL, 2 )
+
+		self.show_original_panel = wx.CheckBox( self.custom_settings_pane_content, wx.ID_ANY, u"Show original panel", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.show_original_panel.SetValue(True)
+		self.show_original_panel.SetToolTip( u"Include the unprocessed mosaic in custom algorithm comparisons. Applies when Selected or All algorithms is enabled. Refresh applies changes." )
+
+		custom_settings_pane_sizer.Add( self.show_original_panel, 0, wx.EXPAND|wx.ALL, 2 )
+
+		self.m_staticText391 = wx.StaticText( self.custom_settings_pane_content, wx.ID_ANY, u"Add function (Enter)", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
+		self.m_staticText391.Wrap( -1 )
+
+		custom_settings_pane_sizer.Add( self.m_staticText391, 0, wx.EXPAND|wx.ALL, 2 )
+
+		algorithm_add_row = wx.BoxSizer( wx.HORIZONTAL )
+
+		self.addfunc = wx.TextCtrl( self.custom_settings_pane_content, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
+		self.addfunc.SetMinSize( wx.Size( 64,-1 ) )
+
+		algorithm_add_row.Add( self.addfunc, 1, wx.EXPAND|wx.RIGHT, 4 )
+
+		self.delfunc = wx.Button( self.custom_settings_pane_content, wx.ID_ANY, u"Remove", wx.DefaultPosition, wx.DefaultSize, 0 )
+		algorithm_add_row.Add( self.delfunc, 0, wx.ALIGN_CENTER_VERTICAL, 0 )
+
+
+		custom_settings_pane_sizer.Add( algorithm_add_row, 0, wx.EXPAND|wx.ALL, 2 )
+
+
+		self.custom_settings_pane_content.SetSizer( custom_settings_pane_sizer )
+		self.custom_settings_pane_content.Layout()
+		custom_settings_pane_sizer.Fit( self.custom_settings_pane_content )
+		custom_settings_pane_card_sizer.Add( self.custom_settings_pane_content, 0, wx.EXPAND|wx.LEFT|wx.RIGHT|wx.BOTTOM, 1 )
+
+
+		self.custom_settings_pane.SetSizer( custom_settings_pane_card_sizer )
+		self.custom_settings_pane.Layout()
+		custom_settings_pane_card_sizer.Fit( self.custom_settings_pane )
+		fgSizer3.Add( self.custom_settings_pane, 0, wx.EXPAND|wx.LEFT|wx.RIGHT|wx.BOTTOM, 4 )
+
+		self.magnifier_settings_pane = SettingsSection( self.scrolledWindow_set, wx.ID_ANY, wx.DefaultPosition, wx.Size( -1,-1 ), wx.TAB_TRAVERSAL|wx.BORDER_NONE )
+		magnifier_settings_pane_card_sizer = wx.BoxSizer( wx.VERTICAL )
+
+		self.magnifier_settings_pane_header = wx.Button( self.magnifier_settings_pane, wx.ID_ANY, u"Magnifier && Boxes", wx.DefaultPosition, wx.Size( -1,-1 ), wx.BU_LEFT|wx.BORDER_NONE, wx.DefaultValidator, u"magnifier_settings_pane_header" )
+		magnifier_settings_pane_card_sizer.Add( self.magnifier_settings_pane_header, 0, wx.EXPAND|wx.ALL, 1 )
+
+		self.magnifier_settings_pane_content = wx.Panel( self.magnifier_settings_pane, wx.ID_ANY, wx.DefaultPosition, wx.Size( -1,-1 ), wx.TAB_TRAVERSAL|wx.BORDER_NONE, u"magnifier_settings_pane_content" )
+		magnifier_settings_pane_sizer = wx.BoxSizer( wx.VERTICAL )
+
+		self.show_box = wx.CheckBox( self.magnifier_settings_pane_content, wx.ID_ANY, u"Boxes on images", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.show_box.SetValue(True)
+		magnifier_settings_pane_sizer.Add( self.show_box, 0, wx.EXPAND|wx.ALL, 2 )
+
+		self.show_box_in_crop = wx.CheckBox( self.magnifier_settings_pane_content, wx.ID_ANY, u"Boxes on magnifiers", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.show_box_in_crop.SetValue(True)
+		magnifier_settings_pane_sizer.Add( self.show_box_in_crop, 0, wx.EXPAND|wx.ALL, 2 )
+
+		magnifier_fields = wx.FlexGridSizer( 0, 2, 3, 6 )
+		magnifier_fields.AddGrowableCol( 1 )
+		magnifier_fields.SetFlexibleDirection( wx.BOTH )
+		magnifier_fields.SetNonFlexibleGrowMode( wx.FLEX_GROWMODE_SPECIFIED )
+
+		self.m_staticText23 = wx.StaticText( self.magnifier_settings_pane_content, wx.ID_ANY, u"Line widths", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
+		self.m_staticText23.Wrap( -1 )
+
+		magnifier_fields.Add( self.m_staticText23, 0, wx.ALIGN_CENTER_VERTICAL, 0 )
+
+		self.line_width = wx.TextCtrl( self.magnifier_settings_pane_content, wx.ID_ANY, u"2,2", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
+		self.line_width.SetMinSize( wx.Size( 64,-1 ) )
+
+		magnifier_fields.Add( self.line_width, 0, wx.EXPAND, 0 )
+
+		self.box_position_label = wx.StaticText( self.magnifier_settings_pane_content, wx.ID_ANY, u"Position", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
+		self.box_position_label.Wrap( -1 )
+
+		magnifier_fields.Add( self.box_position_label, 0, wx.ALIGN_CENTER_VERTICAL, 0 )
+
+		box_positionChoices = [ u"middle bottom", u"left bottom", u"right bottom", u"left top", u"right top" ]
+		self.box_position = wx.Choice( self.magnifier_settings_pane_content, wx.ID_ANY, wx.DefaultPosition, wx.Size( -1,-1 ), box_positionChoices, 0 )
+		self.box_position.SetSelection( 0 )
+		self.box_position.SetMinSize( wx.Size( 64,-1 ) )
+
+		magnifier_fields.Add( self.box_position, 0, wx.EXPAND, 0 )
+
+		self.m_staticText36 = wx.StaticText( self.magnifier_settings_pane_content, wx.ID_ANY, u"Magnifier fit", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
+		self.m_staticText36.Wrap( -1 )
+
+		magnifier_fields.Add( self.m_staticText36, 0, wx.ALIGN_CENTER_VERTICAL, 0 )
+
+		Magnifier_formatChoices = [ u"equal width height", u"equal width", u"equal height " ]
+		self.Magnifier_format = wx.Choice( self.magnifier_settings_pane_content, wx.ID_ANY, wx.Point( -1,-1 ), wx.Size( -1,-1 ), Magnifier_formatChoices, 0 )
+		self.Magnifier_format.SetSelection( 0 )
+		self.Magnifier_format.SetMinSize( wx.Size( 64,-1 ) )
+
+		magnifier_fields.Add( self.Magnifier_format, 0, wx.EXPAND, 0 )
+
+
+		magnifier_settings_pane_sizer.Add( magnifier_fields, 0, wx.EXPAND|wx.ALL, 2 )
+
+		self.select_img_box = wx.CheckBox( self.magnifier_settings_pane_content, wx.ID_ANY, u"Select individual box", wx.DefaultPosition, wx.DefaultSize, 0 )
+		magnifier_settings_pane_sizer.Add( self.select_img_box, 0, wx.EXPAND|wx.ALL, 2 )
+
+
+		self.magnifier_settings_pane_content.SetSizer( magnifier_settings_pane_sizer )
+		self.magnifier_settings_pane_content.Layout()
+		magnifier_settings_pane_sizer.Fit( self.magnifier_settings_pane_content )
+		magnifier_settings_pane_card_sizer.Add( self.magnifier_settings_pane_content, 0, wx.EXPAND|wx.LEFT|wx.RIGHT|wx.BOTTOM, 1 )
+
+
+		self.magnifier_settings_pane.SetSizer( magnifier_settings_pane_card_sizer )
+		self.magnifier_settings_pane.Layout()
+		magnifier_settings_pane_card_sizer.Fit( self.magnifier_settings_pane )
+		fgSizer3.Add( self.magnifier_settings_pane, 0, wx.EXPAND|wx.LEFT|wx.RIGHT|wx.BOTTOM, 4 )
+
+		self.title_settings_pane = SettingsSection( self.scrolledWindow_set, wx.ID_ANY, wx.DefaultPosition, wx.Size( -1,-1 ), wx.TAB_TRAVERSAL|wx.BORDER_NONE )
+		title_settings_pane_card_sizer = wx.BoxSizer( wx.VERTICAL )
+
+		self.title_settings_pane_header = wx.Button( self.title_settings_pane, wx.ID_ANY, u"Titles", wx.DefaultPosition, wx.Size( -1,-1 ), wx.BU_LEFT|wx.BORDER_NONE, wx.DefaultValidator, u"title_settings_pane_header" )
+		title_settings_pane_card_sizer.Add( self.title_settings_pane_header, 0, wx.EXPAND|wx.ALL, 1 )
+
+		self.title_settings_pane_content = wx.Panel( self.title_settings_pane, wx.ID_ANY, wx.DefaultPosition, wx.Size( -1,-1 ), wx.TAB_TRAVERSAL|wx.BORDER_NONE, u"title_settings_pane_content" )
+		title_settings_pane_sizer = wx.BoxSizer( wx.VERTICAL )
+
+		self.title_auto = wx.CheckBox( self.title_settings_pane_content, wx.ID_ANY, u"Auto title", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.title_auto.SetValue(True)
-		wSizer2.Add( self.title_auto, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+		title_settings_pane_sizer.Add( self.title_auto, 0, wx.EXPAND|wx.ALL, 2 )
 
-		self.title_exif = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"EXIF", wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.title_exif.Enable( False )
+		title_parts_fields = wx.FlexGridSizer( 0, 3, 3, 6 )
+		title_parts_fields.AddGrowableCol( 0 )
+		title_parts_fields.AddGrowableCol( 1 )
+		title_parts_fields.AddGrowableCol( 2 )
+		title_parts_fields.SetFlexibleDirection( wx.BOTH )
+		title_parts_fields.SetNonFlexibleGrowMode( wx.FLEX_GROWMODE_SPECIFIED )
 
-		wSizer2.Add( self.title_exif, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
-
-		self.title_show_parent = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"Parent", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.title_show_parent = wx.CheckBox( self.title_settings_pane_content, wx.ID_ANY, u"Parent", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.title_show_parent.Enable( False )
 
-		wSizer2.Add( self.title_show_parent, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+		title_parts_fields.Add( self.title_show_parent, 0, wx.ALIGN_CENTER_VERTICAL, 0 )
 
-		self.title_show_prefix = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"Prefix", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.title_show_prefix = wx.CheckBox( self.title_settings_pane_content, wx.ID_ANY, u"Prefix", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.title_show_prefix.SetValue(True)
 		self.title_show_prefix.Enable( False )
 
-		wSizer2.Add( self.title_show_prefix, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+		title_parts_fields.Add( self.title_show_prefix, 0, wx.ALIGN_CENTER_VERTICAL, 0 )
 
-		self.title_show_name = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"Name", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.title_show_name = wx.CheckBox( self.title_settings_pane_content, wx.ID_ANY, u"Name", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.title_show_name.SetValue(True)
 		self.title_show_name.Enable( False )
 
-		wSizer2.Add( self.title_show_name, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+		title_parts_fields.Add( self.title_show_name, 0, wx.ALIGN_CENTER_VERTICAL, 0 )
 
-		self.title_show_suffix = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"Suffix", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.title_show_suffix = wx.CheckBox( self.title_settings_pane_content, wx.ID_ANY, u"Suffix", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.title_show_suffix.Enable( False )
 
-		wSizer2.Add( self.title_show_suffix, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+		title_parts_fields.Add( self.title_show_suffix, 0, wx.ALIGN_CENTER_VERTICAL, 0 )
 
-		self.title_down_up = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"Down", wx.Point( -1,-1 ), wx.Size( 50,-1 ), 0 )
+		self.title_exif = wx.CheckBox( self.title_settings_pane_content, wx.ID_ANY, u"EXIF", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.title_exif.Enable( False )
+
+		title_parts_fields.Add( self.title_exif, 0, wx.ALIGN_CENTER_VERTICAL, 0 )
+
+		self.title_down_up = wx.CheckBox( self.title_settings_pane_content, wx.ID_ANY, u"Down", wx.Point( -1,-1 ), wx.Size( 50,-1 ), 0 )
 		self.title_down_up.Enable( False )
 
-		wSizer2.Add( self.title_down_up, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+		title_parts_fields.Add( self.title_down_up, 0, wx.ALIGN_CENTER_VERTICAL, 0 )
+
+
+		title_settings_pane_sizer.Add( title_parts_fields, 0, wx.EXPAND|wx.ALL, 2 )
+
+		title_format_fields = wx.FlexGridSizer( 0, 2, 3, 6 )
+		title_format_fields.AddGrowableCol( 1 )
+		title_format_fields.SetFlexibleDirection( wx.BOTH )
+		title_format_fields.SetNonFlexibleGrowMode( wx.FLEX_GROWMODE_SPECIFIED )
+
+		self.title_alignment_label = wx.StaticText( self.title_settings_pane_content, wx.ID_ANY, u"Alignment", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
+		self.title_alignment_label.Wrap( -1 )
+
+		title_format_fields.Add( self.title_alignment_label, 0, wx.ALIGN_CENTER_VERTICAL, 0 )
 
 		title_positionChoices = [ u"left", u"center", u"right" ]
-		self.title_position = wx.Choice( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.Size( -1,-1 ), title_positionChoices, 0 )
+		self.title_position = wx.Choice( self.title_settings_pane_content, wx.ID_ANY, wx.DefaultPosition, wx.Size( -1,-1 ), title_positionChoices, 0 )
 		self.title_position.SetSelection( 1 )
 		self.title_position.Enable( False )
+		self.title_position.SetMinSize( wx.Size( 64,-1 ) )
 
-		wSizer2.Add( self.title_position, 0, wx.ALL, 5 )
+		title_format_fields.Add( self.title_position, 0, wx.EXPAND, 0 )
 
-		self.m_staticline26 = wx.StaticLine( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_VERTICAL )
-		wSizer2.Add( self.m_staticline26, 0, wx.EXPAND |wx.ALL, 5 )
-
-		self.rename = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"Rename", wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.rename.Enable( False )
-
-		wSizer2.Add( self.rename, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
-
-		self.rename_edit_txt = wx.TextCtrl( self.m_panel4, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size( 75,-1 ), 0 )
-		self.rename_edit_txt.Enable( False )
-
-		wSizer2.Add( self.rename_edit_txt, 0, wx.ALL, 5 )
-
-		self.m_staticline20 = wx.StaticLine( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_VERTICAL )
-		wSizer2.Add( self.m_staticline20, 0, wx.EXPAND |wx.ALL, 5 )
-
-		self.m_staticText351 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Font", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText351 = wx.StaticText( self.title_settings_pane_content, wx.ID_ANY, u"Font size", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
 		self.m_staticText351.Wrap( -1 )
 
-		wSizer2.Add( self.m_staticText351, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+		title_format_fields.Add( self.m_staticText351, 0, wx.ALIGN_CENTER_VERTICAL, 0 )
 
-		self.title_font_size = wx.TextCtrl( self.m_panel4, wx.ID_ANY, u"20", wx.DefaultPosition, wx.Size( 40,-1 ), 0 )
-		wSizer2.Add( self.title_font_size, 0, wx.ALL, 5 )
+		self.title_font_size = wx.TextCtrl( self.title_settings_pane_content, wx.ID_ANY, u"20", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
+		self.title_font_size.SetMinSize( wx.Size( 64,-1 ) )
+
+		title_format_fields.Add( self.title_font_size, 0, wx.EXPAND, 0 )
+
+		self.title_font_label = wx.StaticText( self.title_settings_pane_content, wx.ID_ANY, u"Font", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
+		self.title_font_label.Wrap( -1 )
+
+		title_format_fields.Add( self.title_font_label, 0, wx.ALIGN_CENTER_VERTICAL, 0 )
 
 		title_fontChoices = []
-		self.title_font = wx.Choice( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.Size( 110,-1 ), title_fontChoices, 0 )
+		self.title_font = wx.Choice( self.title_settings_pane_content, wx.ID_ANY, wx.DefaultPosition, wx.Size( -1,-1 ), title_fontChoices, 0 )
 		self.title_font.SetSelection( 0 )
-		wSizer2.Add( self.title_font, 0, wx.ALL, 5 )
+		self.title_font.SetMinSize( wx.Size( 64,-1 ) )
+
+		title_format_fields.Add( self.title_font, 0, wx.EXPAND, 0 )
 
 
-		fgSizer3.Add( wSizer2, 1, wx.EXPAND, 5 )
+		title_settings_pane_sizer.Add( title_format_fields, 0, wx.EXPAND|wx.ALL, 2 )
 
-		self.m_staticline1 = wx.StaticLine( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_HORIZONTAL )
-		fgSizer3.Add( self.m_staticline1, 0, wx.EXPAND |wx.ALL, 5 )
+		title_rename_row = wx.BoxSizer( wx.HORIZONTAL )
 
-		wSizer6 = wx.WrapSizer( wx.HORIZONTAL, wx.WRAPSIZER_DEFAULT_FLAGS )
+		self.rename = wx.CheckBox( self.title_settings_pane_content, wx.ID_ANY, u"Rename", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.rename.Enable( False )
 
-		self.m_staticText20 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Scale", wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.m_staticText20.Wrap( -1 )
+		title_rename_row.Add( self.rename, 0, wx.ALIGN_CENTER_VERTICAL|wx.RIGHT, 6 )
 
-		self.m_staticText20.SetFont( wx.Font( 12, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD, False, wx.EmptyString ) )
+		self.rename_edit_txt = wx.TextCtrl( self.title_settings_pane_content, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
+		self.rename_edit_txt.Enable( False )
+		self.rename_edit_txt.SetMinSize( wx.Size( 64,-1 ) )
 
-		wSizer6.Add( self.m_staticText20, 0, wx.ALL, 5 )
+		title_rename_row.Add( self.rename_edit_txt, 1, wx.EXPAND, 0 )
 
-		self.m_staticline8 = wx.StaticLine( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_VERTICAL )
-		wSizer6.Add( self.m_staticline8, 0, wx.EXPAND |wx.ALL, 5 )
 
-		self.m_staticText6 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Show", wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.m_staticText6.Wrap( -1 )
+		title_settings_pane_sizer.Add( title_rename_row, 0, wx.EXPAND|wx.ALL, 2 )
 
-		wSizer6.Add( self.m_staticText6, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
-		self.show_scale = wx.TextCtrl( self.m_panel4, wx.ID_ANY, u"1,1", wx.DefaultPosition, wx.Size( 50,-1 ), 0 )
-		wSizer6.Add( self.show_scale, 0, wx.ALL, 5 )
+		self.title_settings_pane_content.SetSizer( title_settings_pane_sizer )
+		self.title_settings_pane_content.Layout()
+		title_settings_pane_sizer.Fit( self.title_settings_pane_content )
+		title_settings_pane_card_sizer.Add( self.title_settings_pane_content, 0, wx.EXPAND|wx.LEFT|wx.RIGHT|wx.BOTTOM, 1 )
 
-		self.m_staticText7 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Out", wx.DefaultPosition, wx.DefaultSize, 0 )
+
+		self.title_settings_pane.SetSizer( title_settings_pane_card_sizer )
+		self.title_settings_pane.Layout()
+		title_settings_pane_card_sizer.Fit( self.title_settings_pane )
+		fgSizer3.Add( self.title_settings_pane, 0, wx.EXPAND|wx.LEFT|wx.RIGHT|wx.BOTTOM, 4 )
+
+		self.save_settings_pane = SettingsSection( self.scrolledWindow_set, wx.ID_ANY, wx.DefaultPosition, wx.Size( -1,-1 ), wx.TAB_TRAVERSAL|wx.BORDER_NONE )
+		save_settings_pane_card_sizer = wx.BoxSizer( wx.VERTICAL )
+
+		self.save_settings_pane_header = wx.Button( self.save_settings_pane, wx.ID_ANY, u"Save Settings", wx.DefaultPosition, wx.Size( -1,-1 ), wx.BU_LEFT|wx.BORDER_NONE, wx.DefaultValidator, u"save_settings_pane_header" )
+		save_settings_pane_card_sizer.Add( self.save_settings_pane_header, 0, wx.EXPAND|wx.ALL, 1 )
+
+		self.save_settings_pane_content = wx.Panel( self.save_settings_pane, wx.ID_ANY, wx.DefaultPosition, wx.Size( -1,-1 ), wx.TAB_TRAVERSAL|wx.BORDER_NONE, u"save_settings_pane_content" )
+		save_settings_pane_sizer = wx.BoxSizer( wx.VERTICAL )
+
+		output_folder_fields = wx.FlexGridSizer( 0, 2, 3, 6 )
+		output_folder_fields.AddGrowableCol( 1 )
+		output_folder_fields.SetFlexibleDirection( wx.BOTH )
+		output_folder_fields.SetNonFlexibleGrowMode( wx.FLEX_GROWMODE_SPECIFIED )
+
+		self.output_directory_label = wx.StaticText( self.save_settings_pane_content, wx.ID_ANY, u"Output folder", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
+		self.output_directory_label.Wrap( -1 )
+
+		output_folder_fields.Add( self.output_directory_label, 0, wx.ALIGN_CENTER_VERTICAL, 0 )
+
+		self.out_path_button = wx.Button( self.save_settings_pane_content, wx.ID_ANY, u"Browse...", wx.DefaultPosition, wx.Size( -1,-1 ), wx.BORDER_NONE )
+		self.out_path_button.SetToolTip( u"Choose the output directory" )
+
+		output_folder_fields.Add( self.out_path_button, 0, wx.EXPAND, 0 )
+
+
+		save_settings_pane_sizer.Add( output_folder_fields, 0, wx.EXPAND|wx.ALL, 2 )
+
+		self.output_directory = wx.TextCtrl( self.save_settings_pane_content, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
+		self.output_directory.SetToolTip( u"Output directory; restored with your configuration" )
+		self.output_directory.SetMinSize( wx.Size( 64,-1 ) )
+
+		save_settings_pane_sizer.Add( self.output_directory, 0, wx.EXPAND|wx.ALL, 2 )
+
+		export_format_fields = wx.FlexGridSizer( 0, 2, 3, 6 )
+		export_format_fields.AddGrowableCol( 1 )
+		export_format_fields.SetFlexibleDirection( wx.BOTH )
+		export_format_fields.SetNonFlexibleGrowMode( wx.FLEX_GROWMODE_SPECIFIED )
+
+		self.m_staticText19 = wx.StaticText( self.save_settings_pane_content, wx.ID_ANY, u"Content", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
+		self.m_staticText19.Wrap( -1 )
+
+		export_format_fields.Add( self.m_staticText19, 0, wx.ALIGN_CENTER_VERTICAL, 0 )
+
+		choice_outputChoices = [ u"1:stitch", u"2:select", u"3:1+2", u"4:magnifer", u"5:1+4", u"6:2+4", u"7:1+2+4" ]
+		self.choice_output = wx.Choice( self.save_settings_pane_content, wx.ID_ANY, wx.DefaultPosition, wx.Size( -1,-1 ), choice_outputChoices, 0 )
+		self.choice_output.SetSelection( 0 )
+		self.choice_output.SetMinSize( wx.Size( 64,-1 ) )
+
+		export_format_fields.Add( self.choice_output, 0, wx.EXPAND, 0 )
+
+		self.m_staticText211 = wx.StaticText( self.save_settings_pane_content, wx.ID_ANY, u"Format", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
+		self.m_staticText211.Wrap( -1 )
+
+		export_format_fields.Add( self.m_staticText211, 0, wx.ALIGN_CENTER_VERTICAL, 0 )
+
+		save_formatChoices = [ u"jpg", u"png", u"pdf" ]
+		self.save_format = wx.Choice( self.save_settings_pane_content, wx.ID_ANY, wx.DefaultPosition, wx.Size( -1,-1 ), save_formatChoices, 0 )
+		self.save_format.SetSelection( 0 )
+		self.save_format.SetMinSize( wx.Size( 64,-1 ) )
+
+		export_format_fields.Add( self.save_format, 0, wx.EXPAND, 0 )
+
+		self.save_jpg_quality_label = wx.StaticText( self.save_settings_pane_content, wx.ID_ANY, u"JPG quality", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
+		self.save_jpg_quality_label.Wrap( -1 )
+
+		export_format_fields.Add( self.save_jpg_quality_label, 0, wx.ALIGN_CENTER_VERTICAL, 0 )
+
+		self.save_quality = wx.Slider( self.save_settings_pane_content, wx.ID_ANY, 100, 0, 100, wx.DefaultPosition, wx.Size( -1,-1 ), wx.SL_HORIZONTAL )
+		self.save_quality.SetToolTip( u"JPG quality, 0-100. All generated JPGs use 4:4:4. Save captures the clicked value." )
+		self.save_quality.SetMinSize( wx.Size( 64,-1 ) )
+
+		export_format_fields.Add( self.save_quality, 0, wx.EXPAND, 0 )
+
+		self.png_compression_label = wx.StaticText( self.save_settings_pane_content, wx.ID_ANY, u"PNG compression", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
+		self.png_compression_label.Wrap( -1 )
+
+		export_format_fields.Add( self.png_compression_label, 0, wx.ALIGN_CENTER_VERTICAL, 0 )
+
+		png_compressionChoices = [ u"Fast", u"Balanced", u"Smaller file" ]
+		self.png_compression = wx.Choice( self.save_settings_pane_content, wx.ID_ANY, wx.DefaultPosition, wx.Size( -1,-1 ), png_compressionChoices, 0 )
+		self.png_compression.SetSelection( 1 )
+		self.png_compression.SetToolTip( u"All levels preserve pixels. Fast=1, Balanced=6, Smaller file=9. This controls export compression only." )
+		self.png_compression.SetMinSize( wx.Size( 64,-1 ) )
+
+		export_format_fields.Add( self.png_compression, 0, wx.EXPAND, 0 )
+
+		self.pdf_compression_label = wx.StaticText( self.save_settings_pane_content, wx.ID_ANY, u"PDF compression", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
+		self.pdf_compression_label.Wrap( -1 )
+
+		export_format_fields.Add( self.pdf_compression_label, 0, wx.ALIGN_CENTER_VERTICAL, 0 )
+
+		pdf_compressionChoices = [ u"Lossless", u"Compact (JPG)" ]
+		self.pdf_compression = wx.Choice( self.save_settings_pane_content, wx.ID_ANY, wx.DefaultPosition, wx.Size( -1,-1 ), pdf_compressionChoices, 0 )
+		self.pdf_compression.SetSelection( 0 )
+		self.pdf_compression.SetToolTip( u"Lossless adds no JPG encoding. Compact embeds JPG pictures using saved JPG quality; vector titles are preserved. PNG caches avoid upstream JPG loss." )
+		self.pdf_compression.SetMinSize( wx.Size( 64,-1 ) )
+
+		export_format_fields.Add( self.pdf_compression, 0, wx.EXPAND, 0 )
+
+		self.m_staticText7 = wx.StaticText( self.save_settings_pane_content, wx.ID_ANY, u"Output scale", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
 		self.m_staticText7.Wrap( -1 )
 
-		wSizer6.Add( self.m_staticText7, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+		export_format_fields.Add( self.m_staticText7, 0, wx.ALIGN_CENTER_VERTICAL, 0 )
 
-		self.output_scale = wx.TextCtrl( self.m_panel4, wx.ID_ANY, u"1,1", wx.DefaultPosition, wx.Size( 50,-1 ), 0 )
-		wSizer6.Add( self.output_scale, 0, wx.ALL, 5 )
+		self.output_scale = wx.TextCtrl( self.save_settings_pane_content, wx.ID_ANY, u"1,1", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
+		self.output_scale.SetMinSize( wx.Size( 64,-1 ) )
 
-		self.m_staticText18 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"🔍️Show", wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.m_staticText18.Wrap( -1 )
+		export_format_fields.Add( self.output_scale, 0, wx.EXPAND, 0 )
 
-		wSizer6.Add( self.m_staticText18, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
-
-		self.magnifier_show_scale = wx.TextCtrl( self.m_panel4, wx.ID_ANY, u"-1,-1", wx.DefaultPosition, wx.Size( 60,-1 ), 0 )
-		wSizer6.Add( self.magnifier_show_scale, 0, wx.ALL, 5 )
-
-		self.m_staticText341 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"🔍️Out", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText341 = wx.StaticText( self.save_settings_pane_content, wx.ID_ANY, u"Zoom output scale", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
 		self.m_staticText341.Wrap( -1 )
 
-		wSizer6.Add( self.m_staticText341, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+		export_format_fields.Add( self.m_staticText341, 0, wx.ALIGN_CENTER_VERTICAL, 0 )
 
-		self.magnifier_out_scale = wx.TextCtrl( self.m_panel4, wx.ID_ANY, u"1,1", wx.DefaultPosition, wx.Size( 60,-1 ), 0 )
-		wSizer6.Add( self.magnifier_out_scale, 0, wx.ALL, 5 )
+		self.magnifier_out_scale = wx.TextCtrl( self.save_settings_pane_content, wx.ID_ANY, u"1,1", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
+		self.magnifier_out_scale.SetMinSize( wx.Size( 64,-1 ) )
 
-
-		fgSizer3.Add( wSizer6, 1, wx.EXPAND, 5 )
-
-		self.m_staticline21 = wx.StaticLine( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_HORIZONTAL )
-		fgSizer3.Add( self.m_staticline21, 0, wx.EXPAND |wx.ALL, 5 )
-
-		wSizer10 = wx.WrapSizer( wx.HORIZONTAL, wx.WRAPSIZER_DEFAULT_FLAGS )
-
-		self.m_staticText39 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Size", wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.m_staticText39.Wrap( -1 )
-
-		self.m_staticText39.SetFont( wx.Font( 12, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD, False, "宋体" ) )
-
-		wSizer10.Add( self.m_staticText39, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
-
-		self.m_staticline22 = wx.StaticLine( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_VERTICAL )
-		wSizer10.Add( self.m_staticline22, 0, wx.EXPAND |wx.ALL, 5 )
-
-		self.m_staticText8 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Img", wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.m_staticText8.Wrap( -1 )
-
-		wSizer10.Add( self.m_staticText8, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
-
-		self.img_resolution = wx.TextCtrl( self.m_panel4, wx.ID_ANY, u"-1,-1", wx.DefaultPosition, wx.Size( 60,-1 ), 0 )
-		wSizer10.Add( self.img_resolution, 1, wx.ALL, 5 )
-
-		self.m_staticText381 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"🔍️", wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.m_staticText381.Wrap( -1 )
-
-		wSizer10.Add( self.m_staticText381, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
-
-		self.magnifer_resolution = wx.TextCtrl( self.m_panel4, wx.ID_ANY, u"-1,-1", wx.DefaultPosition, wx.Size( 60,-1 ), 0 )
-		wSizer10.Add( self.magnifer_resolution, 0, wx.ALL, 5 )
-
-		self.keep_magnifer_size = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"🔍️KeepSize", wx.DefaultPosition, wx.DefaultSize, 0 )
-		wSizer10.Add( self.keep_magnifer_size, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+		export_format_fields.Add( self.magnifier_out_scale, 0, wx.EXPAND, 0 )
 
 
-		fgSizer3.Add( wSizer10, 1, wx.EXPAND, 5 )
+		save_settings_pane_sizer.Add( export_format_fields, 0, wx.EXPAND|wx.ALL, 2 )
 
-		self.m_staticline7 = wx.StaticLine( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_HORIZONTAL )
-		fgSizer3.Add( self.m_staticline7, 0, wx.EXPAND |wx.ALL, 5 )
+		export_actions_fields = wx.FlexGridSizer( 0, 2, 3, 6 )
+		export_actions_fields.AddGrowableCol( 0 )
+		export_actions_fields.AddGrowableCol( 1 )
+		export_actions_fields.SetFlexibleDirection( wx.BOTH )
+		export_actions_fields.SetNonFlexibleGrowMode( wx.FLEX_GROWMODE_SPECIFIED )
 
-		self.m_staticText13 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Color/transparency", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
-		self.m_staticText13.Wrap( -1 )
+		self.auto_save_all = wx.CheckBox( self.save_settings_pane_content, wx.ID_ANY, u"Save all pages", wx.DefaultPosition, wx.DefaultSize, 0 )
+		export_actions_fields.Add( self.auto_save_all, 0, wx.ALIGN_CENTER_VERTICAL, 0 )
 
-		self.m_staticText13.SetFont( wx.Font( 12, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD, False, wx.EmptyString ) )
+		self.move_file = wx.CheckBox( self.save_settings_pane_content, wx.ID_ANY, u"Move files", wx.DefaultPosition, wx.DefaultSize, 0 )
+		export_actions_fields.Add( self.move_file, 0, wx.ALIGN_CENTER_VERTICAL, 0 )
 
-		fgSizer3.Add( self.m_staticText13, 0, wx.ALL, 5 )
 
-		self.m_staticline2 = wx.StaticLine( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_HORIZONTAL )
-		fgSizer3.Add( self.m_staticline2, 0, wx.EXPAND |wx.ALL, 5 )
+		save_settings_pane_sizer.Add( export_actions_fields, 0, wx.EXPAND|wx.ALL, 2 )
 
-		wSizer8 = wx.WrapSizer( wx.HORIZONTAL, wx.WRAPSIZER_DEFAULT_FLAGS )
 
-		self.m_staticText22 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Draw", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
+		self.save_settings_pane_content.SetSizer( save_settings_pane_sizer )
+		self.save_settings_pane_content.Layout()
+		save_settings_pane_sizer.Fit( self.save_settings_pane_content )
+		save_settings_pane_card_sizer.Add( self.save_settings_pane_content, 0, wx.EXPAND|wx.LEFT|wx.RIGHT|wx.BOTTOM, 1 )
+
+
+		self.save_settings_pane.SetSizer( save_settings_pane_card_sizer )
+		self.save_settings_pane.Layout()
+		save_settings_pane_card_sizer.Fit( self.save_settings_pane )
+		fgSizer3.Add( self.save_settings_pane, 0, wx.EXPAND|wx.LEFT|wx.RIGHT|wx.BOTTOM, 4 )
+
+		self.colour_settings_pane = SettingsSection( self.scrolledWindow_set, wx.ID_ANY, wx.DefaultPosition, wx.Size( -1,-1 ), wx.TAB_TRAVERSAL|wx.BORDER_NONE )
+		colour_settings_pane_card_sizer = wx.BoxSizer( wx.VERTICAL )
+
+		self.colour_settings_pane_header = wx.Button( self.colour_settings_pane, wx.ID_ANY, u"Colour && Transparency", wx.DefaultPosition, wx.Size( -1,-1 ), wx.BU_LEFT|wx.BORDER_NONE, wx.DefaultValidator, u"colour_settings_pane_header" )
+		colour_settings_pane_card_sizer.Add( self.colour_settings_pane_header, 0, wx.EXPAND|wx.ALL, 1 )
+
+		self.colour_settings_pane_content = wx.Panel( self.colour_settings_pane, wx.ID_ANY, wx.DefaultPosition, wx.Size( -1,-1 ), wx.TAB_TRAVERSAL|wx.BORDER_NONE, u"colour_settings_pane_content" )
+		colour_settings_pane_sizer = wx.BoxSizer( wx.VERTICAL )
+
+		colour_fields = wx.FlexGridSizer( 0, 3, 3, 6 )
+		colour_fields.AddGrowableCol( 0 )
+		colour_fields.AddGrowableCol( 1 )
+		colour_fields.AddGrowableCol( 2 )
+		colour_fields.SetFlexibleDirection( wx.BOTH )
+		colour_fields.SetNonFlexibleGrowMode( wx.FLEX_GROWMODE_SPECIFIED )
+
+		colourPicker_draw_cell = wx.BoxSizer( wx.VERTICAL )
+
+		self.m_staticText22 = wx.StaticText( self.colour_settings_pane_content, wx.ID_ANY, u"Box", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
 		self.m_staticText22.Wrap( -1 )
 
-		wSizer8.Add( self.m_staticText22, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+		colourPicker_draw_cell.Add( self.m_staticText22, 0, wx.EXPAND|wx.ALL, 2 )
 
-		self.colourPicker_draw = wx.ColourPickerCtrl( self.m_panel4, wx.ID_ANY, wx.Colour( 239, 41, 41 ), wx.DefaultPosition, wx.Size( 40,-1 ), wx.CLRP_DEFAULT_STYLE )
-		wSizer8.Add( self.colourPicker_draw, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+		self.colourPicker_draw = wx.ColourPickerCtrl( self.colour_settings_pane_content, wx.ID_ANY, wx.Colour( 239, 41, 41 ), wx.DefaultPosition, wx.Size( -1,-1 ), wx.CLRP_DEFAULT_STYLE )
+		self.colourPicker_draw.SetMinSize( wx.Size( 64,-1 ) )
 
-		self.m_staticText17 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Gap", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
+		colourPicker_draw_cell.Add( self.colourPicker_draw, 0, wx.EXPAND|wx.ALL, 2 )
+
+
+		colour_fields.Add( colourPicker_draw_cell, 0, wx.EXPAND, 0 )
+
+		colourPicker_gap_cell = wx.BoxSizer( wx.VERTICAL )
+
+		self.m_staticText17 = wx.StaticText( self.colour_settings_pane_content, wx.ID_ANY, u"Gap", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
 		self.m_staticText17.Wrap( -1 )
 
-		wSizer8.Add( self.m_staticText17, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+		colourPicker_gap_cell.Add( self.m_staticText17, 0, wx.EXPAND|wx.ALL, 2 )
 
-		self.colourPicker_gap = wx.ColourPickerCtrl( self.m_panel4, wx.ID_ANY, wx.Colour( 255, 255, 255 ), wx.DefaultPosition, wx.Size( 40,-1 ), wx.CLRP_DEFAULT_STYLE )
-		wSizer8.Add( self.colourPicker_gap, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+		self.colourPicker_gap = wx.ColourPickerCtrl( self.colour_settings_pane_content, wx.ID_ANY, wx.Colour( 255, 255, 255 ), wx.DefaultPosition, wx.Size( -1,-1 ), wx.CLRP_DEFAULT_STYLE )
+		self.colourPicker_gap.SetMinSize( wx.Size( 64,-1 ) )
 
-		self.m_staticText471 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Font", wx.DefaultPosition, wx.DefaultSize, 0 )
+		colourPicker_gap_cell.Add( self.colourPicker_gap, 0, wx.EXPAND|wx.ALL, 2 )
+
+
+		colour_fields.Add( colourPicker_gap_cell, 0, wx.EXPAND, 0 )
+
+		font_color_cell = wx.BoxSizer( wx.VERTICAL )
+
+		self.m_staticText471 = wx.StaticText( self.colour_settings_pane_content, wx.ID_ANY, u"Font", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
 		self.m_staticText471.Wrap( -1 )
 
-		wSizer8.Add( self.m_staticText471, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+		font_color_cell.Add( self.m_staticText471, 0, wx.EXPAND|wx.ALL, 2 )
 
-		self.font_color = wx.ColourPickerCtrl( self.m_panel4, wx.ID_ANY, wx.Colour( 0, 0, 0 ), wx.DefaultPosition, wx.Size( 40,-1 ), wx.CLRP_DEFAULT_STYLE )
-		wSizer8.Add( self.font_color, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+		self.font_color = wx.ColourPickerCtrl( self.colour_settings_pane_content, wx.ID_ANY, wx.Colour( 0, 0, 0 ), wx.DefaultPosition, wx.Size( -1,-1 ), wx.CLRP_DEFAULT_STYLE )
+		self.font_color.SetMinSize( wx.Size( 64,-1 ) )
+
+		font_color_cell.Add( self.font_color, 0, wx.EXPAND|wx.ALL, 2 )
 
 
-		fgSizer3.Add( wSizer8, 1, wx.EXPAND, 5 )
+		colour_fields.Add( font_color_cell, 0, wx.EXPAND, 0 )
 
-		bSizer22 = wx.BoxSizer( wx.HORIZONTAL )
 
-		self.m_staticText27 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"AutoDrawColor", wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.m_staticText27.Wrap( -1 )
+		colour_settings_pane_sizer.Add( colour_fields, 0, wx.EXPAND|wx.ALL, 2 )
 
-		bSizer22.Add( self.m_staticText27, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
-
-		self.checkBox_auto_draw_color = wx.CheckBox( self.m_panel4, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.checkBox_auto_draw_color = wx.CheckBox( self.colour_settings_pane_content, wx.ID_ANY, u"Automatic box colour", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.checkBox_auto_draw_color.SetValue(True)
-		bSizer22.Add( self.checkBox_auto_draw_color, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+		colour_settings_pane_sizer.Add( self.checkBox_auto_draw_color, 0, wx.EXPAND|wx.ALL, 2 )
 
+		opacity_fields = wx.FlexGridSizer( 0, 2, 3, 6 )
+		opacity_fields.AddGrowableCol( 1 )
+		opacity_fields.SetFlexibleDirection( wx.BOTH )
+		opacity_fields.SetNonFlexibleGrowMode( wx.FLEX_GROWMODE_SPECIFIED )
 
-		fgSizer3.Add( bSizer22, 1, wx.EXPAND, 5 )
-
-		bSizer12 = wx.BoxSizer( wx.HORIZONTAL )
-
-		self.m_staticText14 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Background", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText14 = wx.StaticText( self.colour_settings_pane_content, wx.ID_ANY, u"Background", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
 		self.m_staticText14.Wrap( -1 )
 
-		bSizer12.Add( self.m_staticText14, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+		opacity_fields.Add( self.m_staticText14, 0, wx.ALIGN_CENTER_VERTICAL, 0 )
 
-		self.background_slider = wx.Slider( self.m_panel4, wx.ID_ANY, 255, 0, 255, wx.DefaultPosition, wx.Size( -1,-1 ), wx.SL_HORIZONTAL )
-		bSizer12.Add( self.background_slider, 1, wx.ALL, 5 )
+		self.background_slider = wx.Slider( self.colour_settings_pane_content, wx.ID_ANY, 255, 0, 255, wx.DefaultPosition, wx.Size( -1,-1 ), wx.SL_HORIZONTAL )
+		self.background_slider.SetMinSize( wx.Size( 64,-1 ) )
 
+		opacity_fields.Add( self.background_slider, 0, wx.EXPAND, 0 )
 
-		fgSizer3.Add( bSizer12, 1, wx.EXPAND, 5 )
-
-		bSizer11 = wx.BoxSizer( wx.HORIZONTAL )
-
-		self.m_staticText12 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Foreground", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText12 = wx.StaticText( self.colour_settings_pane_content, wx.ID_ANY, u"Foreground", wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
 		self.m_staticText12.Wrap( -1 )
 
-		bSizer11.Add( self.m_staticText12, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+		opacity_fields.Add( self.m_staticText12, 0, wx.ALIGN_CENTER_VERTICAL, 0 )
 
-		self.foreground_slider = wx.Slider( self.m_panel4, wx.ID_ANY, 255, 0, 255, wx.DefaultPosition, wx.Size( -1,-1 ), wx.SL_HORIZONTAL )
-		bSizer11.Add( self.foreground_slider, 1, wx.ALL, 5 )
+		self.foreground_slider = wx.Slider( self.colour_settings_pane_content, wx.ID_ANY, 255, 0, 255, wx.DefaultPosition, wx.Size( -1,-1 ), wx.SL_HORIZONTAL )
+		self.foreground_slider.SetMinSize( wx.Size( 64,-1 ) )
 
-
-		fgSizer3.Add( bSizer11, 1, wx.EXPAND, 5 )
-
-
-		self.m_panel4.SetSizer( fgSizer3 )
-		self.m_panel4.Layout()
-		fgSizer3.Fit( self.m_panel4 )
-		bSizer13.Add( self.m_panel4, 0, wx.ALL|wx.EXPAND, 5 )
+		opacity_fields.Add( self.foreground_slider, 0, wx.EXPAND, 0 )
 
 
-		self.scrolledWindow_set.SetSizer( bSizer13 )
+		colour_settings_pane_sizer.Add( opacity_fields, 0, wx.EXPAND|wx.ALL, 2 )
+
+
+		self.colour_settings_pane_content.SetSizer( colour_settings_pane_sizer )
+		self.colour_settings_pane_content.Layout()
+		colour_settings_pane_sizer.Fit( self.colour_settings_pane_content )
+		colour_settings_pane_card_sizer.Add( self.colour_settings_pane_content, 0, wx.EXPAND|wx.LEFT|wx.RIGHT|wx.BOTTOM, 1 )
+
+
+		self.colour_settings_pane.SetSizer( colour_settings_pane_card_sizer )
+		self.colour_settings_pane.Layout()
+		colour_settings_pane_card_sizer.Fit( self.colour_settings_pane )
+		fgSizer3.Add( self.colour_settings_pane, 0, wx.EXPAND|wx.LEFT|wx.RIGHT|wx.BOTTOM, 4 )
+
+		self.configuration_settings_pane = SettingsSection( self.scrolledWindow_set, wx.ID_ANY, wx.DefaultPosition, wx.Size( -1,-1 ), wx.TAB_TRAVERSAL|wx.BORDER_NONE )
+		configuration_settings_pane_card_sizer = wx.BoxSizer( wx.VERTICAL )
+
+		self.configuration_settings_pane_header = wx.Button( self.configuration_settings_pane, wx.ID_ANY, u"Configuration", wx.DefaultPosition, wx.Size( -1,-1 ), wx.BU_LEFT|wx.BORDER_NONE, wx.DefaultValidator, u"configuration_settings_pane_header" )
+		configuration_settings_pane_card_sizer.Add( self.configuration_settings_pane_header, 0, wx.EXPAND|wx.ALL, 1 )
+
+		self.configuration_settings_pane_content = wx.Panel( self.configuration_settings_pane, wx.ID_ANY, wx.DefaultPosition, wx.Size( -1,-1 ), wx.TAB_TRAVERSAL|wx.BORDER_NONE, u"configuration_settings_pane_content" )
+		configuration_settings_pane_sizer = wx.BoxSizer( wx.VERTICAL )
+
+		configuration_buttons = wx.FlexGridSizer( 0, 3, 3, 6 )
+		configuration_buttons.AddGrowableCol( 0 )
+		configuration_buttons.AddGrowableCol( 1 )
+		configuration_buttons.AddGrowableCol( 2 )
+		configuration_buttons.SetFlexibleDirection( wx.BOTH )
+		configuration_buttons.SetNonFlexibleGrowMode( wx.FLEX_GROWMODE_SPECIFIED )
+
+		self.load_config_button = wx.Button( self.configuration_settings_pane_content, wx.ID_ANY, u"Load", wx.Point( -1,-1 ), wx.Size( 50,-1 ), 0 )
+		configuration_buttons.Add( self.load_config_button, 0, wx.EXPAND, 0 )
+
+		self.save_config_button = wx.Button( self.configuration_settings_pane_content, wx.ID_ANY, u"Save", wx.DefaultPosition, wx.Size( 50,-1 ), 0 )
+		configuration_buttons.Add( self.save_config_button, 0, wx.EXPAND, 0 )
+
+		self.reset_config_button = wx.Button( self.configuration_settings_pane_content, wx.ID_ANY, u"Reset", wx.DefaultPosition, wx.Size( 50,-1 ), 0 )
+		configuration_buttons.Add( self.reset_config_button, 0, wx.EXPAND, 0 )
+
+
+		configuration_settings_pane_sizer.Add( configuration_buttons, 0, wx.EXPAND|wx.ALL, 2 )
+
+
+		self.configuration_settings_pane_content.SetSizer( configuration_settings_pane_sizer )
+		self.configuration_settings_pane_content.Layout()
+		configuration_settings_pane_sizer.Fit( self.configuration_settings_pane_content )
+		configuration_settings_pane_card_sizer.Add( self.configuration_settings_pane_content, 0, wx.EXPAND|wx.LEFT|wx.RIGHT|wx.BOTTOM, 1 )
+
+
+		self.configuration_settings_pane.SetSizer( configuration_settings_pane_card_sizer )
+		self.configuration_settings_pane.Layout()
+		configuration_settings_pane_card_sizer.Fit( self.configuration_settings_pane )
+		fgSizer3.Add( self.configuration_settings_pane, 0, wx.EXPAND|wx.LEFT|wx.RIGHT|wx.BOTTOM, 4 )
+
+
+		self.scrolledWindow_set.SetSizer( fgSizer3 )
 		self.scrolledWindow_set.Layout()
-		bSizer13.Fit( self.scrolledWindow_set )
+		fgSizer3.Fit( self.scrolledWindow_set )
 		self.m_splitter1.SplitVertically( self.scrolledWindow_img, self.scrolledWindow_set, -1 )
 		fgSizer5.Add( self.m_splitter1, 1, wx.EXPAND, 5 )
 
@@ -993,7 +1206,6 @@ class MulimgViewerGui ( wx.Frame ):
 		# Connect Events
 		self.Bind( wx.EVT_SIZE, self.frame_resize )
 		self.button_open_all.Bind( wx.EVT_BUTTON, self.open_all_img )
-		self.out_path_button.Bind( wx.EVT_BUTTON, self.out_path )
 		self.save_butoon.Bind( wx.EVT_BUTTON, self.save_img )
 		self.left_arrow_button.Bind( wx.EVT_BUTTON, self.last_img )
 		self.play.Bind( wx.EVT_BUTTON, self.last_img )
@@ -1006,20 +1218,30 @@ class MulimgViewerGui ( wx.Frame ):
 		self.flip.Bind( wx.EVT_TOGGLEBUTTON, self.flip_fc )
 		self.m_splitter1.Bind( wx.EVT_SPLITTER_SASH_POS_CHANGED, self.split_sash_pos_changed )
 		self.m_splitter1.Bind( wx.EVT_SPLITTER_SASH_POS_CHANGING, self.split_sash_pos_changing )
-		self.choice_normalized_size.Bind( wx.EVT_CHOICE, self.change_img_stitch_mode )
-		self.save_format.Bind( wx.EVT_CHOICE, self.change_img_stitch_mode )
+		self.input_settings_pane_header.Bind( wx.EVT_BUTTON, self.on_settings_section_changed )
+		self.video_mode.Bind( wx.EVT_CHECKBOX, self.on_enable_video_mode )
 		self.parallel_sequential.Bind( wx.EVT_CHECKBOX, self.parallel_sequential_fc )
 		self.parallel_to_sequential.Bind( wx.EVT_CHECKBOX, self.parallel_to_sequential_fc )
-		self.load_config_button.Bind( wx.EVT_BUTTON, self.load_configuration )
-		self.save_config_button.Bind( wx.EVT_BUTTON, self.save_configuration )
-		self.reset_config_button.Bind( wx.EVT_BUTTON, self.reset_configuration )
+		self.performance_settings_pane_header.Bind( wx.EVT_BUTTON, self.on_settings_section_changed )
+		self.layout_settings_pane_header.Bind( wx.EVT_BUTTON, self.on_settings_section_changed )
+		self.choice_normalized_size.Bind( wx.EVT_CHOICE, self.change_img_stitch_mode )
+		self.custom_settings_pane_header.Bind( wx.EVT_BUTTON, self.on_settings_section_changed )
+		self.magnifier_settings_pane_header.Bind( wx.EVT_BUTTON, self.on_settings_section_changed )
 		self.select_img_box.Bind( wx.EVT_CHECKBOX, self.select_img_box_func )
-		self.video_mode.Bind( wx.EVT_CHECKBOX, self.on_enable_video_mode )
+		self.title_settings_pane_header.Bind( wx.EVT_BUTTON, self.on_settings_section_changed )
 		self.title_auto.Bind( wx.EVT_CHECKBOX, self.title_auto_fc )
 		self.title_down_up.Bind( wx.EVT_CHECKBOX, self.title_down_up_fc )
+		self.save_settings_pane_header.Bind( wx.EVT_BUTTON, self.on_settings_section_changed )
+		self.out_path_button.Bind( wx.EVT_BUTTON, self.out_path )
+		self.save_format.Bind( wx.EVT_CHOICE, self.change_img_stitch_mode )
+		self.colour_settings_pane_header.Bind( wx.EVT_BUTTON, self.on_settings_section_changed )
 		self.colourPicker_gap.Bind( wx.EVT_COLOURPICKER_CHANGED, self.colour_change )
 		self.background_slider.Bind( wx.EVT_SCROLL, self.background_alpha )
 		self.foreground_slider.Bind( wx.EVT_SCROLL, self.foreground_alpha )
+		self.configuration_settings_pane_header.Bind( wx.EVT_BUTTON, self.on_settings_section_changed )
+		self.load_config_button.Bind( wx.EVT_BUTTON, self.load_configuration )
+		self.save_config_button.Bind( wx.EVT_BUTTON, self.save_configuration )
+		self.reset_config_button.Bind( wx.EVT_BUTTON, self.reset_configuration )
 		self.Bind( wx.EVT_MENU, self.one_dir_mul_img, id = self.menu_open_sequential.GetId() )
 		self.Bind( wx.EVT_MENU, self.one_dir_mul_dir_auto, id = self.menu_open_auto.GetId() )
 		self.Bind( wx.EVT_MENU, self.one_dir_mul_dir_manual, id = self.menu_open_manual.GetId() )
@@ -1051,9 +1273,6 @@ class MulimgViewerGui ( wx.Frame ):
 		event.Skip()
 
 	def open_all_img( self, event ):
-		event.Skip()
-
-	def out_path( self, event ):
 		event.Skip()
 
 	def save_img( self, event ):
@@ -1090,9 +1309,11 @@ class MulimgViewerGui ( wx.Frame ):
 	def split_sash_pos_changing( self, event ):
 		event.Skip()
 
-	def change_img_stitch_mode( self, event ):
+	def on_settings_section_changed( self, event ):
 		event.Skip()
 
+	def on_enable_video_mode( self, event ):
+		event.Skip()
 
 	def parallel_sequential_fc( self, event ):
 		event.Skip()
@@ -1100,26 +1321,28 @@ class MulimgViewerGui ( wx.Frame ):
 	def parallel_to_sequential_fc( self, event ):
 		event.Skip()
 
-	def load_configuration( self, event ):
+
+
+	def change_img_stitch_mode( self, event ):
 		event.Skip()
 
-	def save_configuration( self, event ):
-		event.Skip()
 
-	def reset_configuration( self, event ):
-		event.Skip()
 
 	def select_img_box_func( self, event ):
 		event.Skip()
 
-	def on_enable_video_mode( self, event ):
-		event.Skip()
 
 	def title_auto_fc( self, event ):
 		event.Skip()
 
 	def title_down_up_fc( self, event ):
 		event.Skip()
+
+
+	def out_path( self, event ):
+		event.Skip()
+
+
 
 	def colour_change( self, event ):
 		event.Skip()
@@ -1128,6 +1351,16 @@ class MulimgViewerGui ( wx.Frame ):
 		event.Skip()
 
 	def foreground_alpha( self, event ):
+		event.Skip()
+
+
+	def load_configuration( self, event ):
+		event.Skip()
+
+	def save_configuration( self, event ):
+		event.Skip()
+
+	def reset_configuration( self, event ):
 		event.Skip()
 
 	def one_dir_mul_img( self, event ):

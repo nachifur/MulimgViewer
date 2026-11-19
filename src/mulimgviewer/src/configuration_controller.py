@@ -38,6 +38,7 @@ class ConfigurationMixin:
                 "h": int(h),
                 "maximized": maximized,
             }
+            self._capture_sidebar_preference(data)
             write_config(self.output_config_path, data)
         except Exception:
             pass
@@ -229,7 +230,8 @@ class ConfigurationMixin:
         directory = Path(get_resource_path(str(Path("configs"))))
         self.output_config_path = directory / "session_config.json"
         self.ImgManager.exif_config_path = self.output_config_path
-        return synchronize(directory, self._gui_config_defaults, self.get_default_hotkeys())
+        return synchronize(directory, self._gui_config_defaults, self.get_default_hotkeys(),
+                           section_defaults=self._gui_section_defaults)
 
 
     def _capture_configuration(self):
@@ -244,8 +246,11 @@ class ConfigurationMixin:
         # Automatic pacing must not overwrite the user's requested interval.
         if self.shared_config.video_mode and self.shared_config.manual_interval is not None:
             data['interval'] = str(self.shared_config.manual_interval)
+        data['output_directory']=self.out_path_str
         current['output'].update(data)
         current['hotkeys'] = self.hotkeys
+        current['settings_sections'] = self._capture_settings_sections()
+        self._capture_sidebar_preference(current)
         return current
 
 
@@ -272,7 +277,10 @@ class ConfigurationMixin:
             # Reset first so invalid values cannot inherit a previous session's UI.
             apply_value(name, control, self._gui_config_defaults[name])
             apply_value(name, control, full_config['output'].get(name))
+        self._restore_settings_sections(full_config.get('settings_sections'))
         self._sync_title_controls()
+        self._sync_save_controls()
+        self._set_output_directory(self.output_directory.GetValue())
         self._interval_user_edited = True
         self.shared_config.interval_recommend = None
         self.shared_config.manual_interval = None
@@ -284,6 +292,7 @@ class ConfigurationMixin:
         # The active session follows Load/Reset, while the manual snapshot stays
         # unchanged until the user explicitly presses Save.
         write_config(self.output_config_path, full_config)
+        self._restore_sidebar_width()
         self.ImgManager._full_mappings = None
         self.ImgManager.load_exif_display_config(force_reload=True)
         self.apply_hotkeys(full_config.get('hotkeys', {}))
@@ -309,6 +318,7 @@ class ConfigurationMixin:
 
     def _capture_configuration_defaults(self):
         # Capture pristine GUI values before loading the saved session.
+        self._gui_section_defaults = self._capture_settings_sections()
         self._config_controls = settings_controls(self)
         self._gui_config_defaults = {name: control_value(name, control)
                                      for name, control in self._config_controls.items()}

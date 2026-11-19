@@ -17,7 +17,6 @@ from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfgen import canvas
 from .export_formats import JPG, PNG, PDF
-from reportlab.lib.utils import ImageReader
 from reportlab.pdfbase import pdfmetrics
 
 from .video_memory import LazyVideoImage, source_resolution
@@ -644,8 +643,19 @@ class ImgUtils():
         return img
 
     def save_img_diff_format(self, png_path,img,save_format=0,use_vector_titles=True):
+        from .export_encoding import png_level,pdf_raster
+        settings=getattr(self,'manager',None)
         if save_format == PNG:
-            img.save(png_path, 'PNG')
+            # Changing PNG compression must not discard source metadata.
+            # Accessing .text loads any metadata chunks following pixel data.
+            text=getattr(img,'text',{})
+            options={key:img.info[key] for key in ('exif','icc_profile','dpi') if img.info.get(key)}
+            if text:
+                from PIL.PngImagePlugin import PngInfo
+                info=PngInfo()
+                for key,value in text.items():info.add_itxt(key,value)
+                options['pnginfo']=info
+            img.save(png_path, 'PNG',compress_level=png_level(settings),**options)
         elif save_format == JPG:
             # Gap colour is already painted into gap/blank pixels. It must
             # never become a full-image matte and tint translucent image tiles.
@@ -683,7 +693,8 @@ class ImgUtils():
                     # PIL's RGB PDF writer uses JPEG. Use the same lossless
                     # raster embedding path for selected images and crops too.
                     pdf=canvas.Canvas(str(new_path),pagesize=base_img.size)
-                    pdf.drawImage(ImageReader(base_img),0,0,width=base_img.width,height=base_img.height,mask='auto')
+                    with pdf_raster(base_img,settings) as reader:
+                        pdf.drawImage(reader,0,0,width=base_img.width,height=base_img.height,mask='auto')
                     pdf.save()
             finally:base_img.close()
 
@@ -799,8 +810,9 @@ class ImgManager(ImgData):
 
         width, height = base_img.size
         pdf_canvas = canvas.Canvas(str(pdf_path), pagesize=(width, height))
-        img_reader = ImageReader(base_img)
-        pdf_canvas.drawImage(img_reader, 0, 0, width=width, height=height, mask='auto')
+        from .export_encoding import pdf_raster
+        with pdf_raster(base_img,self) as img_reader:
+            pdf_canvas.drawImage(img_reader, 0, 0, width=width, height=height, mask='auto')
 
         set_fill_alpha = getattr(pdf_canvas, "setFillAlpha", None)
 
@@ -2445,14 +2457,14 @@ class ImgManager(ImgData):
                 self._blank_img_ids = restore_show_all["blank_img_ids"]
 
     def show_stitch_img_and_customfunc_img(self, show_custom_func):
-        show_unit = self.layout_params[36]
+        show_original_panel = self.layout_params[36]
         img = self.img
         if show_custom_func and self.customfunc_img != None:
-            if show_unit and show_custom_func:
+            if show_original_panel and show_custom_func:
                 img = self.ImgF.cat_img(self.img, self.customfunc_img)
-            elif not show_unit and show_custom_func:
+            elif not show_original_panel and show_custom_func:
                 img = self.customfunc_img
-            elif show_unit and not show_custom_func:
+            elif show_original_panel and not show_custom_func:
                 img = img
         return img
 

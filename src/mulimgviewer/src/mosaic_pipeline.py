@@ -1,5 +1,5 @@
 """Cache each algorithm mosaic, then compose mosaics without rerendering tiles."""
-from .jpeg_policy import jpeg_quality
+from .jpeg_policy import cache_quality
 import copy
 import hashlib
 import json
@@ -26,7 +26,7 @@ def mosaic_request_key(manager,index,inputs,points,batch):
     if len(params)>41:params[41]=manager_cache_format(manager)
     params[32]=False;params[37]=0;params[38]=False;params[39]='1,1';params[40]=False;params[33]='';params[36]=False;params[35]=1
     signature=[(str(path),Path(path).stat().st_size,Path(path).stat().st_mtime_ns) for path in inputs]
-    key='mosaic:'+hashlib.sha256(repr((params,tuple(manager.gap_color),int(getattr(manager,'img_alpha',255)),signature,points,batch,
+    key='mosaic:'+hashlib.sha256(repr((params,cache_quality(manager),tuple(manager.gap_color),int(getattr(manager,'img_alpha',255)),signature,points,batch,
         repr(getattr(manager,'exif_display_config',None)))).encode('utf-8')).hexdigest()
     algorithm='original' if index is None else specification(manager._custom_algorithm_registry,index).get(
         'cache_name',manager._custom_algorithm_registry[index][0])
@@ -155,7 +155,7 @@ class MosaicPlan:
                 self.cache.request_prune()
                 entry['directory'].mkdir(parents=True)
                 path=entry['directory']/page_name(self.batch,cache_image_extension(self.manager))
-                with open(path,'wb') as stream:save_cache_image(manager.img,stream,cache_image_extension(self.manager),checkpoint=checkpoint,jpeg_quality=jpeg_quality(self.manager))
+                with open(path,'wb') as stream:save_cache_image(manager.img,stream,cache_image_extension(self.manager),checkpoint=checkpoint,jpeg_quality=cache_quality(self.manager))
                 info=path.with_suffix('.json')
                 info.write_text(json.dumps(dict(algorithm=algorithm,page=self.batch+1,
                     inputs=list(self.paths)),ensure_ascii=False,indent=2),encoding='utf-8')

@@ -54,18 +54,16 @@ def _write_export_file(work,source,target,formats):
     checkpoint()
     target=Path(target).with_suffix('.png' if formats==PNG else '.jpg' if formats==JPG else '.pdf')
     target.parent.mkdir(parents=True,exist_ok=True)
-    # PNG can reuse its lossless encoding. JPG must use the clicked quality
-    # and 4:4:4 policy even when its source is already a JPEG file.
+    # Matching extensions still need the captured compression settings;
+    # cached pixels remain reusable, but their encoded bytes may differ.
     with Image.open(source) as image:
-        copy_encoded=(formats==PNG and image.format=='PNG')
-        size=1024**2 if copy_encoded else max(1024**2,image.width*image.height*16)
+        size=max(1024**2,image.width*image.height*16)
         budget=getattr(work,'_export_file_budget',None)
         with budget.acquire(size,cancelled) if budget is not None else nullcontext():
             # Once admitted this file is the current task. Finish and release
             # permits before the next checkpoint; pausing must not pin CPU lanes.
             if cancelled():raise CancelledError()
-            if copy_encoded:shutil.copyfile(source,target)
-            else:work.ImgF.save_img_diff_format(target,image,formats,use_vector_titles=False)
+            work.ImgF.save_img_diff_format(target,image,formats,use_vector_titles=False)
     return target
 
 
@@ -181,7 +179,7 @@ def export_page(manager,root,output,memory=None,workers=1,defer_moves=False,sele
                         if bits&1:
                             target=base/'stitch_images'/page_name(manager.action_count)
                             target.parent.mkdir(parents=True,exist_ok=True)
-                            if cached_mosaic is not None and formats==PNG and Path(cached_mosaic[0]).suffix.lower()=='.png':shutil.copyfile(cached_mosaic[0],target)
+                            if cached_mosaic is not None and formats==PNG and Path(cached_mosaic[0]).suffix.lower()=='.png' and getattr(work,'png_compression_level',6)==1:shutil.copyfile(cached_mosaic[0],target)
                             else:work.ImgF.save_img_diff_format(target,work.img,formats)
                             private=target.with_suffix('.png' if formats==PNG else '.jpg' if formats==JPG else '.pdf')
                             if index in visible and not direct_composite:

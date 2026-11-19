@@ -53,7 +53,6 @@
   "power_mode": 2,
   "cache_frames": "2",
   "cache_multiplier": "1",
-  "show_unit": true,
   "video_mode": false,
   "interval": "1.0",
   "skip_frames": "0",
@@ -82,7 +81,14 @@
   ],
   "cache_save_format": 0,
   "background_slider": 255,
-  "foreground_slider": 255
+  "foreground_slider": 255,
+  "cache_quality_follow_save": true,
+  "cache_jpg_quality": 100,
+  "output_directory": "",
+  "save_quality": 100,
+  "png_compression": 1,
+  "pdf_compression": 0,
+  "show_original_panel": true
  },
  "hotkeys": {
   "next_img": "CTRL+N",
@@ -304,5 +310,19 @@
    "31": "GPSHPositioningError"
   }
  },
- "save_format_order": "jpg,png,pdf"
+ "save_format_order": "jpg,png,pdf",
+ "settings_sections": {
+  "input_settings_pane": false,
+  "performance_settings_pane": false,
+  "layout_settings_pane": false,
+  "custom_settings_pane": false,
+  "magnifier_settings_pane": false,
+  "title_settings_pane": false,
+  "save_settings_pane": false,
+  "colour_settings_pane": false,
+  "configuration_settings_pane": false
+ },
+ "window_state": {
+  "sidebar_width_dip": null
+ }
 }

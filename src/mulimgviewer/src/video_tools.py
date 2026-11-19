@@ -5,46 +5,67 @@ import sys
 from pathlib import Path
 
 
+def application_video_tools_dir():
+    """Optional local tools, independent of cwd, Conda and regression reports."""
+    return Path(__file__).resolve().parents[3]/'tools'/'ffmpeg'/'bin'
+
+
+def _prefix_directories(prefix):
+    prefix=Path(prefix)
+    if sys.platform.startswith('win'):
+        return (prefix/'Library'/'bin',prefix/'Scripts',prefix/'bin',prefix)
+    return (prefix/'bin',prefix)
+
+
+def _in_directories(name,directories):
+    executable=name+('.exe' if sys.platform.startswith('win') else '')
+    for directory in directories:
+        command=shutil.which(str(directory/executable))
+        if command is not None:return command
+    return None
+
+
 def resolve_video_tools():
     """Return absolute commands plus a child-only DLL/library search environment.
 
-    Respect explicit overrides and PATH first. Conda's installed-package cache
-    is a last resort for an environment with missing executable links; we do
-    not copy files, install packages, or edit the user's system PATH.
+    Explicit overrides win, followed by the interpreter's environment, PATH,
+    platform locations, optional portable tools and the matching Conda cache.
+    No installation, download or process-wide PATH mutation happens here.
     """
     prefixes = [Path(sys.prefix)]
-    if os.environ.get('CONDA_PREFIX'):
-        prefixes.append(Path(os.environ['CONDA_PREFIX']))
+    # A venv may wrap a Conda Python. A stale CONDA_PREFIX from another shell
+    # must not select a different environment ahead of the running interpreter.
+    if sys.base_prefix!=sys.prefix:prefixes.append(Path(sys.base_prefix))
     directories = []
     for prefix in prefixes:
-        directories.extend((prefix / 'Library' / 'bin', prefix / 'bin', prefix / 'Scripts', prefix))
+        directories.extend(_prefix_directories(prefix))
+    system=[]
     if sys.platform == 'darwin':
-        directories.extend((Path('/opt/homebrew/bin'), Path('/usr/local/bin')))
+        system.extend((Path('/opt/homebrew/bin'), Path('/usr/local/bin')))
     elif sys.platform.startswith('linux'):
-        directories.extend((Path('/usr/local/bin'), Path('/usr/bin')))
+        system.extend((Path('/usr/local/bin'), Path('/usr/bin')))
     cached = []
     for prefix in prefixes:
         root = prefix.parent.parent if prefix.parent.name == 'envs' else prefix
         # Use the installed build's package record, not an arbitrary other version.
         for record in (prefix / 'conda-meta').glob('ffmpeg-*.json'):
             package = root / 'pkgs' / record.stem
-            cached.extend((package / 'Library' / 'bin', package / 'bin'))
+            cached.extend(_prefix_directories(package))
     tools = {}
     for name in ('ffmpeg', 'ffprobe'):
         override = os.environ.get(name.upper() + '_BINARY')
-        command = shutil.which(override or name)
+        command = shutil.which(os.path.expanduser(override)) if override else _in_directories(name,directories)
         if override and command is None:
             raise FileNotFoundError(f'{name.upper()}_BINARY is not executable: {override}')
         if command is None:
-            executable = name + ('.exe' if os.name == 'nt' else '')
-            for directory in directories + cached:
-                command = shutil.which(str(directory / executable))
-                if command is not None:
-                    break
+            command=shutil.which(name)
+        if command is None:
+            command=_in_directories(name,system+[application_video_tools_dir()]+cached)
         if command is None:
             raise FileNotFoundError(
                 f'{name} executable not found (Python: {sys.executable}). '
-                'Install FFmpeg in this environment or set '
+                'Install FFmpeg in this environment with "conda install -c conda-forge ffmpeg"; '
+                'verify both "ffmpeg -version" and "ffprobe -version", or set '
                 f'{name.upper()}_BINARY to its executable path.')
         tools[name] = str(Path(command).resolve())
     env = os.environ.copy()

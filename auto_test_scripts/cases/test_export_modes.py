@@ -11,6 +11,7 @@ from PIL import Image
 from mulimgviewer.src.utils_img import ImgManager
 from mulimgviewer.src.custom_func.runtime import capture_algorithms,AlgorithmSession
 from mulimgviewer.src.export_controller import export_page, selection_slots, source_slot
+from mulimgviewer.src.layout_gaps import gap_pair
 
 
 class ExportModesTests(unittest.TestCase):
@@ -89,6 +90,21 @@ class ExportModesTests(unittest.TestCase):
         for path in (out/'composed').glob('*.jpg'):
             self.assertEqual(path.read_bytes(),(out/'algorithms/original/stitch_images'/path.name).read_bytes())
         self.assertEqual(len(list((out/'composed').glob('*.jpg'))),2)
+
+    def test_injected_title_changes_one_source_and_keeps_decoded_pixels(self):
+        for suffix in ('.jpg','.png','.tiff'):
+            m=self.manager(1,False,False,'original')
+            path=self.root/('injection'+suffix)
+            with Image.new('RGB',(32,20),(18,90,170)) as image:image.save(path)
+            with Image.open(path) as image:before=image.tobytes()
+            other=Path(m.flist[1]);unchanged=other.read_bytes()
+            m.flist[0]=str(path)
+            self.assertTrue(m.update_image_exif_37510(str(path),'Only this image'))
+            self.assertEqual(other.read_bytes(),unchanged)
+            with Image.open(path) as image:self.assertEqual(image.tobytes(),before)
+            self.assertEqual(m.get_display_title_from_cache(0,'original title',False),'original title')
+            self.assertEqual(m.get_display_title_from_cache(0,'original title',True),'Only this image')
+            self.assertFalse(list(self.root.glob('.title-*')))
 
     def test_page_cleanup_drains_its_kernels_without_closing_shared_workers(self):
         import threading
@@ -189,6 +205,65 @@ class ExportModesTests(unittest.TestCase):
             self.assertEqual(selection_slots(m,4),[4])
             m.type=1;m.video_mode=True;m.path_list=['a','b']
             self.assertEqual(selection_slots(m,4),[1,4])
+
+    def test_image_file_list_selects_only_clicked_entry_even_from_one_folder(self):
+        from types import SimpleNamespace
+        paths=[str(self.root/'a'/f'{index}.png') for index in range(2)]
+        manager=SimpleNamespace(type=3,video_mode=False,flist=paths,parallel_to_sequential=False)
+        self.assertEqual(selection_slots(manager,1),[1])
+
+    def test_flattened_parallel_export_selects_one_source_and_preserves_stitch(self):
+        from mulimgviewer.src.export_controller import save_viewer
+        for video in (False,True):
+            for output in (1,2):
+                with self.subTest(video=video,output=output):
+                    m=self.manager(1,True,False,'single')
+                    m.set_count_per_action(1);m.set_action_count(1);m.get_flist()
+                    self.assertEqual(len(m.flist),1)
+                    m.video_mode=video
+                    m._cache_input_mode='Parallel manual'
+                    original=list(m.flist)
+                    job=self.export_job(m,video=video)
+                    job.auto_save_all.Value=False
+                    out=self.root/f'flat_selection_{video}_{output}';out.mkdir()
+                    job.out_path_str=str(out)
+                    job.choice_output.GetSelection=lambda:output
+                    job._status_selected_grid=0
+                    if video:
+                        from types import SimpleNamespace
+                        job.shared_config.video_path=list(m.path_list)
+                        job.shared_config.real_video_path=list(m.path_list)
+                        job.shared_config.video_num_list=[2,2]
+                        job.shared_config.video_fps_list=[10.,10.]
+                        job.shared_config.count_per_action=1
+                        job.shared_config.parallel_to_sequential=True
+                        decoded=[]
+                        def decode(path,first,last,vid,config):
+                            decoded.append((vid,first,last))
+                            for index in range(first,last+1):
+                                (Path(config.video_path[vid])/f'{index}.png').write_bytes((Path(path)/f'{index}.png').read_bytes())
+                        job._export_isolate_video=True
+                        job.video_manager=SimpleNamespace(_filename_converter=lambda index,vid,config:f'{index}.png',
+                            _save_frame=decode,working_bytes=lambda path:1024**2)
+                    if output==2:
+                        baseline=out.with_name(out.name+'_stitch');baseline.mkdir()
+                        job.out_path_str=str(baseline);job.choice_output.GetSelection=lambda:0
+                        save_viewer(job)
+                        job.out_path_str=str(out);job.choice_output.GetSelection=lambda:output
+                    if video:decoded.clear()
+                    save_viewer(job)
+                    if video:self.assertEqual(sorted(decoded),[(0,1,1)])
+                    root=out/('video' if video else 'image')
+                    for name in ('original','Gaussian Blur'):
+                        selected=list((root/'algorithms'/name/'select_images').rglob('*.jpg'))
+                        self.assertEqual(len(selected),1)
+                        self.assertEqual({path.stem for path in selected},{'1'})
+                    if output==2:
+                        self.assertEqual(len(list((root/'composed').glob('*.jpg'))),1)
+                        for image in (root/'composed').glob('*.jpg'):
+                            self.assertEqual(image.read_bytes(),(baseline/('video' if video else 'image')/'composed'/image.name).read_bytes())
+                    else:self.assertFalse((root/'composed').exists())
+                    self.assertEqual(m.flist,original)
 
     def test_painted_algorithm_cell_resolves_raw_slot_and_rejects_blank(self):
         from types import SimpleNamespace
@@ -365,6 +440,124 @@ class ExportModesTests(unittest.TestCase):
         self.assertFalse((output/'image/composed').exists())
         self.assertTrue(all(Path(path).exists() for path in m.flist))
 
+    def test_select_image_mode_matrix_exports_the_clicked_item_and_matching_sources(self):
+        from types import SimpleNamespace
+        from collections import Counter
+        from PIL import ImageEnhance,ImageFilter
+        from mulimgviewer.src.export_controller import save_viewer
+        from mulimgviewer.src.custom_func.contract import display_indices
+        for source,folder in enumerate(('a','b')):
+            for index in range(3):
+                Image.new('RGB',(24,16),(30+source*90,40+index*50,20+index*20)).save(self.root/folder/f'{index}.png')
+        number=0
+        for video in (False,True):
+            for input_mode in range(4):
+                for serial in (False,True):
+                    for sequential in (False,True):
+                        for algorithm in ('original','single','all'):
+                            with self.subTest(video=video,input_mode=input_mode,
+                                    parallel_to_sequential=serial,parallel_sequential=sequential,algorithm=algorithm):
+                                # Videos from a file list use the same parallel
+                                # source model as videos from auto/manual input.
+                                kind=(2 if input_mode==0 else 1) if video else (2,0,1,3)[input_mode]
+                                m=self.manager(kind,serial,sequential,algorithm,video=False)
+                                m.layout_params.append(1)  # Lossless caches make the pixel oracle exact.
+                                m.layout_params[1]=[1,3]
+                                m._cache_input_mode=('Sequential','Parallel auto','Parallel manual','Image File List')[input_mode]
+                                count=6 if m.parallel_to_sequential or kind in (2,3) else (3 if sequential else 1)
+                                m.set_count_per_action(count);m.get_flist()
+                                m.video_mode=video
+                                if video:
+                                    m.video_num_list=[3]*len(m.path_list);m.video_fps_list=[10.]*len(m.path_list)
+                                    m.layout_params[11]=True  # Video selections must still never move frames.
+                                paths=list(m.flist);clicked=len(paths)-1
+                                parallel=input_mode in (1,2) and not serial
+                                expected=([path for path in paths if Path(path).name==Path(paths[clicked]).name]
+                                    if parallel else [paths[clicked]])
+                                # The visual order can differ from source order
+                                # and the clicked cell can belong to an algorithm.
+                                panes=len(display_indices(m._custom_algorithm_registry,m.layout_params))
+                                m._status_source_slots=tuple(range(len(paths)))*panes
+                                m.xy_grids_id_list=list(reversed(range(len(paths)*panes)))
+                                self.assertEqual(source_slot(m,0),clicked)
+                                target=self.root/f'selection_matrix_{number}';target.mkdir();number+=1
+                                statuses=[]
+                                cfg=SimpleNamespace(video_mode=video,memory_budget=512*1024**2,thread=2,
+                                    video_path=list(m.path_list),real_video_path=list(m.path_list),
+                                    video_num_list=[3]*len(m.path_list),video_fps_list=[10.]*len(m.path_list),
+                                    count_per_action=count,parallel_to_sequential=m.parallel_to_sequential)
+                                viewer=SimpleNamespace(ImgManager=m,out_path_str=str(target),
+                                    choice_output=SimpleNamespace(GetSelection=lambda:6),
+                                    auto_save_all=SimpleNamespace(Value=True),save_format=SimpleNamespace(GetSelection=lambda:1),
+                                    xy_magnifier=[],shared_config=cfg,SetStatusText_=statuses.append,
+                                    video_manager=SimpleNamespace(_filename_converter=lambda index,vid,config:f'{index}.png'))
+                                save_viewer(viewer,selection_only=True,selected_grid=0)
+                                self.assertEqual(statuses[-1][2],'Save success!',statuses)
+                                base=target/('video' if video else 'image')
+                                transforms={'original':lambda image:image.copy()}
+                                if algorithm in ('single','all'):
+                                    transforms['Gaussian Blur']=lambda image:image.filter(ImageFilter.GaussianBlur(radius=2))
+                                if algorithm=='all':
+                                    transforms['Image Enhancement']=lambda image:ImageEnhance.Contrast(image).enhance(2)
+                                self.assertEqual({path.name for path in (base/'algorithms').iterdir()},set(transforms))
+                                for name,transform in transforms.items():
+                                    selected=list((base/'algorithms'/name/'select_images').rglob('*.png'))
+                                    self.assertEqual(len(selected),len(expected))
+                                    actual_pixels=[];expected_pixels=[]
+                                    for path in selected:
+                                        with Image.open(path) as image:actual_pixels.append(image.convert('RGB').tobytes())
+                                    for path in expected:
+                                        with Image.open(path) as image,transform(image) as result:
+                                            expected_pixels.append(result.convert('RGB').tobytes())
+                                    self.assertEqual(Counter(actual_pixels),Counter(expected_pixels),name)
+                                self.assertFalse((base/'composed').exists())
+                                self.assertFalse(list(base.rglob('stitch_images')))
+                                self.assertFalse(list(base.rglob('magnifier_images')))
+                                self.assertTrue(all(Path(path).is_file() for path in paths))
+        self.assertEqual(number,96)
+
+    def test_select_image_retains_original_and_only_exports_visible_algorithm(self):
+        from mulimgviewer.src.export_controller import save_viewer
+        for mode,chosen in (('single','Gaussian Blur'),('all','Image Enhancement')):
+            with self.subTest(custom=mode):
+                m=self.manager(1,False,False,mode)
+                m.layout_params[36]=False;m.layout_params[39]='1,1'
+                m.xy_grids_id_list=[0,1];m._status_source_slots=(0,1)
+                viewer=self.export_job(m)
+                viewer.out_path_str=str(self.root/f'hidden_selection_{mode}')
+                Path(viewer.out_path_str).mkdir()
+                save_viewer(viewer,selection_only=True,selected_grid=1)
+                base=Path(viewer.out_path_str)/'image/algorithms'
+                self.assertEqual({path.name for path in base.iterdir()},{'original',chosen})
+                for name in ('original',chosen):
+                    self.assertEqual(len(list((base/name/'select_images').rglob('*.jpg'))),2)
+
+    def test_select_image_rejects_blank_algorithm_pane_without_saving_a_default(self):
+        from mulimgviewer.src.export_controller import save_viewer
+        m=self.manager(1,False,False,'single')
+        m.xy_grids_id_list=[0,1,2];m._status_source_slots=(0,1,-1)
+        viewer=self.export_job(m);messages=[];viewer.SetStatusText_=messages.append
+        save_viewer(viewer,selection_only=True,selected_grid=2)
+        self.assertIn('Select a source image',messages[-1][2])
+        self.assertFalse(list(Path(viewer.out_path_str).iterdir()))
+
+    def test_video_export_directories_use_real_video_names_with_collision_suffixes(self):
+        m=self.manager(1,False,False,'all',video=True)
+        m._cache_original_paths=['/videos/left/clip.mp4','/videos/right/clip.mov']
+        root=self.root/'named_video'
+        export_page(m,root,6,512*1024**2,2)
+        out=root/'video'
+        expected={'clip','clip_002'}
+        self.assertEqual({path.name for path in (out/'sources').iterdir()},expected)
+        for name in expected:self.assertTrue((out/'sources'/name/'source.json').is_file())
+        for algorithm in ('original','Image Enhancement','Gaussian Blur'):
+            for kind in ('magnifier_images','select_images','origin_img_with_box','processed_img'):
+                path=out/'algorithms'/algorithm/kind
+                if kind=='processed_img' and algorithm=='original':continue
+                self.assertEqual({entry.name for entry in path.iterdir()},expected)
+        for source,path in zip(('clip','clip_002'),m._cache_original_paths):
+            self.assertEqual(json.loads((out/'sources'/source/'source.json').read_text(encoding='utf-8'))['path'],str(Path(path).absolute()))
+
     def test_boxed_images_use_output_resolution_and_flat_numbered_crops(self):
         for folder in ('a','b'):
             for i in range(2):Image.new('RGB',(24,16),'green').save(self.root/folder/f'{i}.png')
@@ -380,9 +573,11 @@ class ExportModesTests(unittest.TestCase):
                 with Image.open(path) as image:
                     self.assertEqual(image.size,(24,16))
                     self.assertEqual(image.getpixel((4,4))[:3],(255,0,0))
+            for kind in ('magnifier_images','select_images','origin_img_with_box'):
+                self.assertEqual({path.name for path in (base/kind).iterdir()},{'a','b'})
             crops=list((base/'magnifier_images').rglob('*.png'))
             self.assertEqual(len(crops),4)
-            self.assertEqual({p.parent.name for p in crops},{'source_001','source_002'})
+            self.assertEqual({p.parent.name for p in crops},{'a','b'})
             self.assertEqual({p.name[:4] for p in crops},{'001_','002_'})
         m.layout_params[5]=[2,2]
         export_page(m,self.root/'boxed_double',3,512*1024**2,2)
@@ -397,7 +592,7 @@ class ExportModesTests(unittest.TestCase):
             export_page(m,output,0,512*1024**2,2)
             root=output/('video' if video else 'image')
             with Image.open(root/'composed/page_000001.png') as composed, Image.open(root/'algorithms/Image Enhancement/stitch_images/page_000001.png') as tile:
-                self.assertEqual(composed.size,(tile.width,tile.height*2))
+                self.assertEqual(composed.size,(tile.width,tile.height*2+gap_pair(m.layout_params[3], 'func')[1]))
                 self.assertEqual(composed.crop((0,0,tile.width,tile.height)).tobytes(),tile.tobytes())
             self.assertTrue((root/'algorithms/original/stitch_images/page_000001.png').is_file())
             m.layout_params[36]=True
@@ -430,6 +625,20 @@ class ExportModesTests(unittest.TestCase):
             self.assertEqual([image.getpixel((0,0)) for image in images],[(10,20,30)]*2+[(11,20,30)]*2)
         finally:
             for image in images:image.close()
+
+    def test_synchronous_algorithm_boundaries_use_func_gaps_inside_xy_grid(self):
+        from unittest.mock import patch
+        m=self.manager(1,False,False,'all')
+        m.layout_params[3]=[11,13,17,19,23,29,31,37,41,43]
+        m.layout_params[39]='2,2'
+        with patch('mulimgviewer.src.utils_img.main_custom_func',
+                side_effect=lambda images,*args,**kwargs:[image.copy() for image in images]):
+            layout,_,_=m.stitch_img_init(0,[],flist=m.flist)
+        # Each algorithm contains one row and two XY cells. Only the middle
+        # boundary is Func; the two internal boundaries retain XY spacing.
+        self.assertEqual(layout[2][1][0].tolist(),[0,17,11,17])
+        self.assertEqual(layout[2][1][1].tolist(),[0,13])
+        m.clear_cache()
 
     def test_all_output_choices_input_orders_and_algorithms(self):
         cases=0
@@ -540,7 +749,11 @@ class ExportModesTests(unittest.TestCase):
         root=output/'image'
         self.assertTrue((root/'algorithms/original/stitch_images/page_000001.png').is_file())
         with Image.open(root/'composed/page_000001.png') as actual, Image.open(root/'algorithms/Gaussian Blur/stitch_images/page_000001.png') as selected:
-            self.assertEqual(actual.size,(selected.width*2,selected.height*2))
+            gap_x,gap_y=gap_pair(m.layout_params[3], 'func')
+            self.assertEqual(actual.size,(selected.width*2+gap_x,selected.height*2+gap_y))
+            background=tuple((c,c) for c in m.gap_color)
+            self.assertEqual(actual.crop((selected.width,0,selected.width+gap_x,actual.height)).getextrema(),background)
+            self.assertEqual(actual.crop((0,selected.height,actual.width,selected.height+gap_y)).getextrema(),background)
             self.assertEqual(actual.crop((0,0,selected.width,selected.height)).tobytes(),selected.tobytes())
             self.assertEqual(actual.getpixel((actual.width-1,actual.height-1)),tuple(m.gap_color))
 

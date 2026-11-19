@@ -7,6 +7,9 @@ from .configuration import (settings_controls, control_value, apply_value,
                             synchronize, read_config, write_config, merge_missing)
 import json
 
+EDITOR_NAVIGATION_KEYS = {wx.WXK_LEFT, wx.WXK_RIGHT, wx.WXK_UP, wx.WXK_DOWN,
+    wx.WXK_HOME, wx.WXK_END, wx.WXK_PAGEUP, wx.WXK_PAGEDOWN, wx.WXK_DELETE, wx.WXK_BACK}
+
 
 class ConfigurationMixin:
     """GUI configuration lifecycle; never owns playback workers or caches."""
@@ -183,7 +186,27 @@ class ConfigurationMixin:
     def update_hotkey_menu_labels(self):
         for action, (menu_item, base_label) in self.get_hotkey_menu_items().items():
             hotkey_text = self.format_hotkey_for_menu(self.hotkeys[action])
-            menu_item.SetItemLabel(f"{base_label}\t{hotkey_text}")
+            # Menu labels create native accelerators too. Clearing only the
+            # frame's AcceleratorTable leaves these active on some platforms.
+            parsed = self.parse_hotkey(self.hotkeys[action])
+            reserved = getattr(self, '_editing_accelerators', False) and parsed and parsed[1] in EDITOR_NAVIGATION_KEYS
+            label = base_label if reserved else f"{base_label}\t{hotkey_text}"
+            if menu_item.GetItemLabel() != label:
+                menu_item.SetItemLabel(label)
+
+    def _sync_accelerator_focus(self):
+        if getattr(self, '_is_closing', False):
+            return
+        focus = wx.Window.FindFocus()
+        editing = False
+        while focus is not None and focus is not self:
+            if isinstance(focus, (wx.TextCtrl, wx.SearchCtrl, wx.ComboBox, wx.SpinCtrl, wx.SpinCtrlDouble)):
+                editing = self.IsDescendant(focus)
+                break
+            focus = focus.GetParent()
+        self._editing_accelerators = editing
+        self.SetAcceleratorTable(self._editing_acceltbl if editing else self.acceltbl)
+        self.update_hotkey_menu_labels()
 
 
     def apply_hotkeys(self, hotkeys):
@@ -197,8 +220,9 @@ class ConfigurationMixin:
             entries.append((modifiers, keycode, menu_item.GetId()))
         self.hotkeys = hotkeys
         self.acceltbl = wx.AcceleratorTable(entries)
-        self.SetAcceleratorTable(self.acceltbl)
-        self.update_hotkey_menu_labels()
+        self._editing_acceltbl = wx.AcceleratorTable([
+            entry for entry in entries if entry[1] not in EDITOR_NAVIGATION_KEYS])
+        self._sync_accelerator_focus()
 
 
     def _configuration_files(self):
@@ -248,6 +272,7 @@ class ConfigurationMixin:
             # Reset first so invalid values cannot inherit a previous session's UI.
             apply_value(name, control, self._gui_config_defaults[name])
             apply_value(name, control, full_config['output'].get(name))
+        self._sync_title_controls()
         self._interval_user_edited = True
         self.shared_config.interval_recommend = None
         self.shared_config.manual_interval = None
@@ -262,6 +287,7 @@ class ConfigurationMixin:
         self.ImgManager._full_mappings = None
         self.ImgManager.load_exif_display_config(force_reload=True)
         self.apply_hotkeys(full_config.get('hotkeys', {}))
+        if not getattr(self.ImgManager,'img_num',0):self._show_input_status()
 
 
     def reset_configuration(self, event):

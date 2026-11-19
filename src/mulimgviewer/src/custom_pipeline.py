@@ -26,6 +26,7 @@ from .custom_workers import ImageWorkers
 from .stage_allocator import allocate_stages
 from .dependency_scheduler import DependencyScheduler, gather, prepared, run_inline
 from .thread_optimizer import available_memory_bytes
+from .video_memory import mosaic_working_bytes
 
 
 def readable_name(value, limit):
@@ -99,8 +100,9 @@ class WorkBudget:
         with self.condition:self.condition.notify_all()
 
     @contextmanager
-    def acquire(self, size=0, cancelled=lambda:False, priority=0, order=lambda:0, units=1.):
+    def acquire(self, size=0, cancelled=lambda:False, priority=0, order=lambda:0, units=1., resident_size=None):
         size=max(0,int(size))
+        resident=size if resident_size is None else max(0,int(resident_size))
         with self.condition:
             self.serial+=1;ticket=(-priority,order,self.serial,size)
             self.waiting.append(ticket)
@@ -129,7 +131,7 @@ class WorkBudget:
                             continue
                         if oversized or size>=32*1024**2:
                             available=available_memory_bytes()
-                            unsafe=(available is None and oversized) or (available is not None and size>int(available*.85))
+                            unsafe=(available is None and oversized) or (available is not None and resident>int(available*.85))
                             if unsafe:
                                 if busy:
                                     self.condition.wait(.05)
@@ -400,7 +402,7 @@ class CustomPipeline:
     def composition_bytes(self, flist, results, manager=None, canvas_size=None):
         if canvas_size is not None:
             largest=max((image.width*image.height for image in manager.img_list),default=0)
-            return max(32*1024**2,int(largest*12+canvas_size[0]*canvas_size[1]*16))
+            return mosaic_working_bytes(canvas_size,largest,getattr(manager,'_disk_backed_canvas',None))
         pixels=0;largest=0;width=height=1
         # Identity results reference the same inputs. Open each header once,
         # not once for the raw layer and again for every identity algorithm.
@@ -434,7 +436,7 @@ class CustomPipeline:
         title_height=2*float(title[8]) if title[1] else 0
         canvas=(width+gap)*cols*(height+gap+title_height)*rows
         # One decoded source tile at a time, plus canvases and display copies.
-        return max(32*1024**2,int(largest*12+canvas*16))
+        return mosaic_working_bytes((canvas,1),largest)
 
     @contextmanager
     def prepare(self, manager, flist, batch, owner, epoch, cancelled=lambda:False, on_ready=None):
@@ -634,18 +636,23 @@ class CustomPipeline:
         entry['_public_target']=visible
         entry['_public_files']={name:entry['directory']/name for name in names}
         catalogs={}
-        for name,source in zip(names,paths):
-            folder=Path(name).parts[0]
-            manifest=(Path(folder)/'source.json').as_posix()
+        from .cache_layout import source_directory_names, source_names
+        original_names=source_directory_names(manager)
+        for name,source,relative in zip(names,paths,source_names(manager,paths)):
+            folder=Path(name).parts[1]
+            manifest=(Path('json')/(folder+'.json')).as_posix()
             if manifest in catalogs:continue
-            value=source_record(manager,int(folder.removeprefix('source_'))-1,Path(source).parent)
+            number=int(Path(relative).parts[0].removeprefix('source_'))-1
+            value=source_record(manager,number,Path(source).parent)
+            catalog_name=original_names.get(number,Path(value['path']).stem if value['media']=='video' else Path(value['path']).name)
+            source_catalog=self.visible.root.parent/'sources'/'json'/value['media']/(catalog_name+'.json')
             value.update(algorithm=manager._custom_algorithm_registry[index][0],
                 algorithm_path=str(Path(manager._custom_algorithm_registry[index][1]).absolute()),
                 cache_version=spec['cache_version'],
                 processed_encoding=cache_image_extension(manager),
                 raw_frames_path=str(Path(source).parent.absolute()),
-                processed_frames_path=str(visible/folder/'frames'),
-                source_catalog=str(self.visible.root.parent/'sources'/value['media']/folder/'source.json'))
+                processed_frames_path=str(visible/'frames'/folder),
+                source_catalog=str(source_catalog))
             catalogs[manifest]=value
         entry['_public_metadata']=catalogs
         self.publish_entry(entry,lambda:not cancelled())

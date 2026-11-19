@@ -85,6 +85,31 @@ from pathlib import Path
 ```
 [pathlib使用说明](https://zhuanlan.zhihu.com/p/13978333)
 
+### 跨平台运行环境与视频依赖
+
+推荐使用项目根目录的 `environment.yml` 创建环境。Windows、Linux 和 macOS 共用此文件；Conda 从 conda-forge 安装对应平台的 FFmpeg、wxPython 和其他原生依赖，pip 复用项目的 `requirements.txt` 安装 Python 依赖。环境文件不包含个人绝对路径或某个平台的构建编号。
+
+在项目根目录执行以下命令。若已有同名环境，可用 `conda env create -n mulimgviewer-new -f environment.yml` 创建新环境；不要为了安装视频工具而覆盖已有环境。
+
+```sh
+conda env create -f environment.yml
+conda activate mulimgviewer
+python tools/check_video_tools.py
+python MulimgViewer.py
+```
+
+macOS 的 Conda wxPython 可能需要框架启动器：在该环境安装 `conda install -c conda-forge python.app`，然后使用 `pythonw MulimgViewer.py` 启动 GUI。工具检测脚本仍使用 `python`。参见 [wxPython 官方说明](https://www.wxpython.org/pages/downloads/)。
+
+只需为已有环境补装视频工具时，执行 `conda install -n mulimgviewer -c conda-forge ffmpeg`，并使用该环境的 Python 运行 `tools/check_video_tools.py`。此脚本会输出实际解释器和两个工具的路径、执行版本检查，失败时以非零状态退出；`ffmpeg-python` 是调用封装，不能代替 FFmpeg 和 FFprobe 可执行程序。
+
+工具查找顺序为：`FFMPEG_BINARY` / `FFPROBE_BINARY` 显式设置、当前 Python 环境、系统 PATH、平台常见目录、可选的 `tools/ffmpeg/bin`、当前环境登记的同版本 Conda 包缓存。Windows 使用 `.exe` 与 `Library/bin`；Linux/macOS 使用无扩展名程序与 `bin`。过期的 `CONDA_PREFIX` 不会覆盖实际运行的解释器。程序只为子进程构造依赖搜索路径，不修改系统 PATH，不自动安装或下载软件。
+
+`tools/ffmpeg/bin` 只是便携部署的可选兜底，不是运行所必需的目录，也不能把 Windows 的 `.exe` 分发给 Linux/macOS 使用。该目录中的本机二进制已加入 Git 忽略规则。Conda 安装和环境管理方式参见 [conda-forge FFmpeg](https://anaconda.org/channels/conda-forge/packages/ffmpeg) 和 [Conda 环境文档](https://docs.conda.io/projects/conda/en/stable/user-guide/tasks/manage-environments.html)。
+
+如果包记录显示 FFmpeg 已安装，但文件缺失，可执行 `conda install -n mulimgviewer -c conda-forge --force-reinstall ffmpeg` 后重新检测。若文件再次消失或启动被拒绝，需要检查本机的文件删除、隔离或权限原因；仅重新配置 PATH 无法修复缺失的程序。
+
+`.github/workflows/video-environment.yml` 在 Windows、Linux、macOS 上从该环境文件安装依赖，检查 FFmpeg/FFprobe 能否启动、原生 Python 依赖能否导入，并执行不依赖 GUI 的工具查找测试。这些检查不等同于三平台完整 GUI 回归；完整功能回归仍使用下面的入口执行。
+
 ### 开发回归测试与 PR 审查
 
 开发新功能或修复问题时，请按下面的顺序检查已有功能，并把对应的测试报告附在 PR 中，方便维护者审查。

@@ -17,7 +17,7 @@ from .resource_policy import cache_window, composition_workers
 from .thread_optimizer import available_memory_bytes
 from .custom_pipeline import CustomPipeline, current_only
 from .mosaic_pipeline import MosaicStage
-from .cache_layout import page_name, write_source_catalog, cache_image_extension, save_cache_image
+from .cache_layout import page_name, write_source_catalog, cache_image_extension, save_cache_image, write_page_catalog, remove_page_catalog
 from .custom_func.contract import active_cache_names
 from .video_memory import rgba_display
 
@@ -35,6 +35,8 @@ RENDER_STATE = (
 class ImagePipeline:
     def __init__(self, directory, notify, dispatch):
         self.directory = Path(directory)
+        self.cache_root=(self.directory.parent.parent if self.directory.name=='frames' and self.directory.parent.name=='composed'
+                         else self.directory.parent)
         self.notify, self.dispatch = notify, dispatch
         self.lock = threading.RLock()
         self.coordinator = ThreadPoolExecutor(1, thread_name_prefix='image-schedule')
@@ -59,7 +61,7 @@ class ImagePipeline:
         self._pump_queued = False
         self._legacy_cleaned = False
         self._published_files = {}
-        self.processing = CustomPipeline(self.directory.parent/'.work'/'processed',public_root=self.directory.parent/'algorithms')
+        self.processing = CustomPipeline(self.cache_root/'.work'/'processed',public_root=self.cache_root/'algorithms')
         self.processing.mosaic_stage=MosaicStage(self.processing)
 
     def _schedule(self):
@@ -119,7 +121,7 @@ class ImagePipeline:
         if template is not None and current_window is not None:
             if getattr(self,'_catalog_pending',False):
                 self._catalog_pending=False
-                write_source_catalog(template,self.directory.parent,split_media=True)
+                write_source_catalog(template,self.cache_root,split_media=True)
             self.processing.set_window('image',('image',repr(getattr(template,'input_path',''))),current_window,current,active_cache_names(template))
             self.processing.request_prune()
         with self.lock:
@@ -155,6 +157,7 @@ class ImagePipeline:
                         path = self.directory / page_name(batch,cache_image_extension(template))
                         os.replace(temporary, path)
                         self._published_files[path] = path.stat()
+                        write_page_catalog(path,batch,'image',state.get('flist',()))
                     else:
                         Path(temporary).unlink(missing_ok=True)
                 except OSError as exc:
@@ -189,9 +192,9 @@ class ImagePipeline:
                 self.directory.mkdir(parents=True, exist_ok=True)
                 if not self._legacy_cleaned:
                     self._legacy_cleaned = True
-                    root=self.directory.parent.resolve()
+                    root=self.cache_root.resolve()
                     for name in ('image_stitch_cache','stitch_cache','custom_cache'):
-                        legacy=self.directory.parent/name
+                        legacy=self.cache_root/name
                         if legacy!=self.directory and legacy.is_dir() and legacy.resolve().parent==root:
                             shutil.rmtree(str(legacy.resolve()),ignore_errors=True)
                 # Retire legacy names once; new files share the video's naming
@@ -211,6 +214,7 @@ class ImagePipeline:
                             if (current.st_dev, current.st_ino, current.st_mtime_ns, current.st_size) == (
                                     published.st_dev, published.st_ino, published.st_mtime_ns, published.st_size):
                                 path.unlink(missing_ok=True)
+                                remove_page_catalog(path)
                         except OSError:
                             pass
                         self._published_files.pop(path, None)

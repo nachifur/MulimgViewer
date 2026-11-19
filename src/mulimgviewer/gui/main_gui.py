@@ -438,12 +438,12 @@ class MulimgViewerGui ( wx.Frame ):
 
 		bSizer4 = wx.BoxSizer( wx.HORIZONTAL )
 
-		self.m_staticText5 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Gap(XY,One,Unit,🔍️)", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText5 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"Gap(Func,XY,One,Unit,🔍️)", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText5.Wrap( -1 )
 
 		bSizer4.Add( self.m_staticText5, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
-		self.gap = wx.TextCtrl( self.m_panel4, wx.ID_ANY, u"10,10,5,5,3,3,2,2", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.gap = wx.TextCtrl( self.m_panel4, wx.ID_ANY, u"10,10,10,10,5,5,3,3,2,2", wx.DefaultPosition, wx.DefaultSize, 0 )
 		bSizer4.Add( self.gap, 0, wx.ALL, 5 )
 
 
@@ -682,15 +682,15 @@ class MulimgViewerGui ( wx.Frame ):
 		self.m_staticline26 = wx.StaticLine( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_VERTICAL )
 		wSizer2.Add( self.m_staticline26, 0, wx.EXPAND |wx.ALL, 5 )
 
-		self.m_checkBox31 = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"Rename", wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.m_checkBox31.Enable( False )
+		self.rename = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"Rename", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.rename.Enable( False )
 
-		wSizer2.Add( self.m_checkBox31, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+		wSizer2.Add( self.rename, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
-		self.m_textCtrl16 = wx.TextCtrl( self.m_panel4, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size( 75,-1 ), 0 )
-		self.m_textCtrl16.Enable( False )
+		self.rename_edit_txt = wx.TextCtrl( self.m_panel4, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size( 75,-1 ), 0 )
+		self.rename_edit_txt.Enable( False )
 
-		wSizer2.Add( self.m_textCtrl16, 0, wx.ALL, 5 )
+		wSizer2.Add( self.rename_edit_txt, 0, wx.ALL, 5 )
 
 		self.m_staticline20 = wx.StaticLine( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_VERTICAL )
 		wSizer2.Add( self.m_staticline20, 0, wx.EXPAND |wx.ALL, 5 )

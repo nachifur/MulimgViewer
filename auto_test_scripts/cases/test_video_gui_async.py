@@ -20,6 +20,7 @@ from mulimgviewer.src.main import MulimgViewer
 from mulimgviewer.src.utils_img import ImgManager
 from mulimgviewer.src.resource_policy import ResourceBudget
 from mulimgviewer.src.video_tools import resolve_video_tools
+from mulimgviewer.src.layout_gaps import gap_pair
 
 
 class HiddenViewer(MulimgViewer):
@@ -256,7 +257,7 @@ class VideoGuiAsyncTests(unittest.TestCase):
         self.assertIsNot(snapshot.title_max_size,frame.ImgManager.title_max_size)
         snapshot.crop_points_process([[4,4,24,20,1,1,False]])
         expected=snapshot.crop_points[0][:4]
-        offset=snapshot.title_max_size[1]+snapshot.layout_params[3][5]
+        offset=snapshot.title_max_size[1]+gap_pair(snapshot.layout_params[3], 'unit')[1]
         snapshot.crop_points_process([[4,4+offset,24,20+offset,1,1,True]])
         self.assertEqual(snapshot.crop_points[0][:4],expected)
 
@@ -743,6 +744,40 @@ class VideoGuiAsyncTests(unittest.TestCase):
                 self.assertFalse(release.is_set())
         finally:
             release.set()
+
+    def test_rapid_next_during_frame_publication_displays_latest_page_without_decode_failure(self):
+        self.warm_current_window()
+        vm=self.frame.video_manager
+        if not vm._decoder_bank.available:self.skipTest('PyAV required')
+        entered,release=threading.Event(),threading.Event()
+        gate=threading.Lock();claimed=[];statuses=[]
+        original=vm._store_decoded_frame;disabled=set(vm._decoder_bank.disabled)
+        def delayed(index,*args):
+            with gate:
+                hold=index>=27 and not claimed
+                if hold:claimed.append(index)
+            if hold:
+                entered.set()
+                if not release.wait(10):raise TimeoutError('GUI did not release superseded frame publication')
+            return original(index,*args)
+        try:
+            with patch.object(vm,'_store_decoded_frame',side_effect=delayed), \
+                    patch.object(vm,'_set_video_status',side_effect=statuses.append):
+                for _ in range(6):
+                    self.frame.next_img(None)
+                    self.app.Yield(True)
+                self.pump_until(entered.is_set)
+                while self.frame.shared_config.batch_idx<60:
+                    self.frame.next_img(None)
+                    self.app.Yield(True)
+                self.assertEqual(self.frame.shared_config.batch_idx,60)
+                heartbeat=[];wx.CallAfter(lambda:heartbeat.append(True))
+                self.pump_until(lambda:bool(heartbeat))
+                release.set()
+                self.pump_until(lambda:self.video_page_ready() and self.frame._status_display_batch==60,timeout=20)
+            self.assertFalse([text for text in statuses if 'failed' in text.lower()],statuses)
+            self.assertEqual(vm._decoder_bank.disabled,disabled)
+        finally:release.set()
 
     def test_many_requests_coalesce_to_the_latest_batch(self):
         self.warm_current_window()
@@ -1375,6 +1410,84 @@ class VideoGuiAsyncTests(unittest.TestCase):
         finally:window.Destroy();self.app.Yield(True)
 
 
+    def test_viewport_canvas_paints_beyond_native_window_limit_and_preserves_mouse_coordinates(self):
+        from mulimgviewer.src.display_canvas import TiledImageCanvas
+        window=wx.Frame(None,size=(320,180))
+        viewport=wx.ScrolledWindow(window);viewport.SetScrollRate(1,1)
+        source=Image.new('RGBA',(49232,80),(20,40,60,255))
+        canvas=TiledImageCanvas(viewport,viewport,source)
+        viewport.SetVirtualSize(source.size)
+        try:
+            window.Show();self.app.Yield(True);canvas._sync_viewport()
+            canvas.Update();self.pump_until(lambda:bool(canvas.tiles))
+            self.assertLessEqual(canvas.Size.width,viewport.ClientSize.width)
+            viewport.Scroll(45000,0)
+            viewport.Refresh();viewport.Update()
+            self.pump_until(lambda:any(x>=44000 for x,y in canvas.tiles))
+            self.assertEqual(canvas.Position,(0,0))
+            received=[]
+            canvas.bind_image_mouse(wx.EVT_LEFT_DOWN,lambda event:received.append(tuple(event.GetPosition())))
+            event=wx.MouseEvent(wx.wxEVT_LEFT_DOWN);event.SetPosition((21,13))
+            canvas.GetEventHandler().ProcessEvent(event)
+            self.assertEqual(received,[(45021,13)])
+            self.assertLessEqual(canvas.tile_bytes,canvas.cache_limit)
+        finally:
+            window.Destroy();self.app.Yield(True);source.close()
+
+    def test_main_switches_between_viewport_and_regular_image_without_clipping(self):
+        from mulimgviewer.src.display_canvas import TiledImageCanvas
+        with Image.new('RGBA',(49232,80),'red') as image:
+            self.frame.display_bitmap(False,image)
+            canvas=self.frame.img_last
+            self.assertIsInstance(canvas,TiledImageCanvas)
+            self.assertTrue(canvas.viewport_backed)
+            self.assertIs(canvas.GetParent(),self.frame.scrolledWindow_img)
+            self.assertFalse(self.frame.img_panel.IsShown())
+            self.frame.Show();self.app.Yield(True)
+            self.frame.auto_layout(frame_resize=True)
+            self.app.Yield(True)
+            self.assertGreaterEqual(self.frame.scrolledWindow_img.GetVirtualSize().width,image.width)
+            with Image.new('RGBA',(80,48),'blue') as small:
+                self.frame.display_bitmap(False,small)
+                self.assertIsInstance(self.frame.img_last,wx.StaticBitmap)
+                self.assertTrue(self.frame.img_panel.IsShown())
+                self.assertIs(self.frame.img_last.GetParent(),self.frame.img_panel)
+
+    def test_stale_or_cancelled_display_does_not_latch_future_requests(self):
+        vm=self.frame.video_manager;cfg=self.frame.shared_config
+        first,second=Future(),Future()
+        with patch.object(vm._display_executor,'submit',side_effect=[first,second]) as submit:
+            self.frame._request_video_display(20,'cached-page')
+            cfg.batch_idx=21
+            image=Image.new('RGBA',(80,48),'blue')
+            first.set_result(((image,image,None),.001))
+            self.pump_until(lambda:vm._display_future is None)
+            self.assertFalse(vm._display_delivery_pending)
+            cfg.batch_idx=20
+            self.frame._request_video_display(20,'cached-page')
+            self.assertEqual(submit.call_count,2)
+            second.cancel()
+            self.pump_until(lambda:vm._display_future is None)
+            self.assertFalse(vm._display_delivery_pending)
+            image.close()
+
+    def test_return_to_painted_page_supersedes_pending_load_without_cancelling_newer_request(self):
+        vm=self.frame.video_manager;cfg=self.frame.shared_config;token=vm._window_token
+        self.frame._video_display_key=(21,'painted',token)
+        first,second=Future(),Future();first.set_running_or_notify_cancel()
+        with patch.object(vm._display_executor,'submit',side_effect=[first,second]) as submit:
+            self.frame._request_video_display(20,'cached-page')
+            cfg.batch_idx=21;self.frame._request_video_display(21,'painted')
+            self.assertFalse(vm._display_delivery_pending)
+            cfg.batch_idx=20;self.frame._request_video_display(20,'cached-page')
+            self.assertEqual(submit.call_count,2)
+            image=Image.new('RGBA',(80,48),'blue')
+            first.set_result(((image,image,None),.001))
+            self.app.Yield(True)
+            self.assertTrue(vm._display_delivery_pending,'Old completion must not clear a newer request')
+            second.cancel();self.pump_until(lambda:vm._display_future is None)
+            image.close()
+
     def test_status_first_field_hover_shows_raw_and_display_sizes_in_image_and_video_modes(self):
         for video in (True,False):
             if not video:self._use_image_input()
@@ -1426,7 +1539,7 @@ class VideoGuiAsyncTests(unittest.TestCase):
                 self.assertEqual('Original' in names,show_original)
                 self.assertEqual(names,({'Original'} if show_original else set())|{registry[i][0] for i in selected})
                 cache=self.frame.image_pipeline.processing
-                self.assertTrue(list((cache.visible.root/'original'/'stitched').glob('*.png')))
+                self.assertTrue(list((cache.visible.root/'original'/'stitched'/'frames').glob('*.png')))
 
     def test_shrinking_algorithm_canvas_retires_hidden_processing_and_mosaic_caches(self):
         from mulimgviewer.src.custom_func import main as functions
@@ -1449,7 +1562,7 @@ class VideoGuiAsyncTests(unittest.TestCase):
             root=pipeline.processing.visible.root
             for name in names:
                 self.assertTrue(list((root/name/'processed').rglob('*.png')),name)
-                self.assertTrue(list((root/name/'stitched').glob('*.png')),name)
+                self.assertTrue(list((root/name/'stitched'/'frames').glob('*.png')),name)
             calls=[];original=functions.main
             def process(calls,original,*args,**kwargs):
                 calls.append(kwargs.get('algorithm_type'))
@@ -2043,8 +2156,8 @@ class VideoGuiAsyncTests(unittest.TestCase):
         pipeline=self.frame.image_pipeline
         self.pump_until(lambda:pipeline.displayed_key is not None and not pipeline.running)
         root=pipeline.processing.visible.root
-        self.assertTrue((root/'Gaussian Blur'/'stitched'/'page_000021.png').is_file())
-        self.assertTrue((root/'original'/'stitched'/'page_000021.png').is_file())
+        self.assertTrue((root/'Gaussian Blur'/'stitched'/'frames'/'page_000021.png').is_file())
+        self.assertTrue((root/'original'/'stitched'/'frames'/'page_000021.png').is_file())
         self.assertFalse((root/'Image Darkening').exists())
 
     def test_algorithm_canvas_retains_blank_row_without_background_cropping(self):
@@ -2076,9 +2189,10 @@ class VideoGuiAsyncTests(unittest.TestCase):
                 self.assertEqual(self.frame._last_display_logical_size,image.size)
                 if mode=='original':base=image.size
                 else:
-                    self.assertEqual(image.size,(base[0],base[1]*panes))
+                    gap_y=manager.layout_params[3][1]
+                    self.assertEqual(image.size,(base[0],base[1]*panes+gap_y*(panes-1)))
                     occupied=algorithm_count if mode=='all' else 2
-                    empty=image.crop((0,base[1]*occupied,image.width,image.height))
+                    empty=image.crop((0,(base[1]+gap_y)*occupied,image.width,image.height))
                     self.assertEqual(empty.getextrema(),tuple((c,c) for c in color))
                     self.assertEqual(len(manager._blank_img_ids),(panes-occupied)*2)
                 # The synchronous fallback must retain the same canvas as well.
@@ -2093,6 +2207,7 @@ class VideoGuiAsyncTests(unittest.TestCase):
             self.frame.show_custom_func.SetValue(True)
             self.frame.show_all_func.SetValue(False)
             self.frame.show_all_func_layout.ChangeValue('2,2')
+            self.frame.gap.ChangeValue('10,7,10,10,5,5,3,3,2,2')
             self.frame.customfunc_choice.SetStringSelection('Gaussian Blur')
             for vertical in (False,True):
                 self.frame.func_layout_vertical.SetValue(vertical)
@@ -2108,6 +2223,16 @@ class VideoGuiAsyncTests(unittest.TestCase):
                 self.assertEqual(len(manager._blank_img_ids),4)
                 self.assertEqual(manager._status_source_slots,(0,1,0,1,-1,-1,-1,-1))
                 image=manager.img
+                pane_width=(image.width-10)//2
+                pane_height=(image.height-7)//2
+                background=tuple((c,c) for c in manager.gap_color)
+                # Non-square spacing must survive both asynchronous pipelines,
+                # including blank panes and either algorithm ordering.
+                self.assertEqual(image.crop((pane_width,0,pane_width+10,image.height)).getextrema(),background)
+                self.assertEqual(image.crop((0,pane_height,image.width,pane_height+7)).getextrema(),background)
+                first,second=manager.xy_grid[0],manager.xy_grid[2]
+                self.assertEqual(tuple(second-first),
+                    (0,pane_height+7) if vertical else (pane_width+10,0))
                 self.assertNotEqual(image.crop((0,0,image.width//2,image.height//2)).getextrema(),
                     tuple((c,c) for c in manager.gap_color))
                 # Both unused panes contain only background, no old algorithm pixels.
@@ -2127,7 +2252,7 @@ class VideoGuiAsyncTests(unittest.TestCase):
         pipeline=self.frame.image_pipeline;cache=pipeline.processing
         self.pump_until(lambda:pipeline.displayed_key is not None and len(pipeline.cache)==13 and not pipeline.running)
         for name in ('original','Gaussian Blur','Image Darkening','Image Enhancement'):
-            self.assertTrue((cache.visible.root/name/'stitched'/'page_000021.png').is_file())
+            self.assertTrue((cache.visible.root/name/'stitched'/'frames'/'page_000021.png').is_file())
         count=cache.mosaic_stage.completed;processed=cache.misses
         self.frame.func_layout_vertical.SetValue(not self.frame.func_layout_vertical.GetValue())
         self.frame._custom_settings_changed()
@@ -2159,7 +2284,7 @@ class VideoGuiAsyncTests(unittest.TestCase):
         self.assertTrue((root/'composed'/'page_000001.png').is_file())
         for name in ('original','Gaussian Blur','Image Darkening','Image Enhancement'):
             self.assertTrue((root/'algorithms'/name/'stitch_images'/'page_000001.png').is_file(),name)
-        self.assertTrue((root/'sources'/'source_001'/'source.json').is_file())
+        self.assertTrue((root/'sources'/'a'/'source.json').is_file())
 
     def test_layered_video_export_uses_sources_and_shared_page_names(self):
         self.warm_current_window()
@@ -2171,9 +2296,9 @@ class VideoGuiAsyncTests(unittest.TestCase):
         root=output/'video'
         self.assertTrue((root/'composed'/'page_000021.png').is_file(),self.frame.m_statusBar1.GetStatusText(3))
         self.assertTrue((root/'algorithms'/'original'/'stitch_images'/'page_000021.png').is_file())
-        self.assertTrue((root/'sources'/'source_001'/'source.json').is_file())
+        self.assertTrue((root/'sources'/'sample'/'source.json').is_file())
         selected=root/'algorithms'/'original'/'select_images'
-        self.assertEqual({p.name for p in selected.iterdir()},{'source_001','source_002'})
+        self.assertEqual({p.name for p in selected.iterdir()},{'sample','sample_002'})
 
     def test_bulk_export_decoder_reuses_session_and_matches_exact_ffmpeg_frames(self):
         import copy
@@ -2298,6 +2423,7 @@ class VideoGuiAsyncTests(unittest.TestCase):
             return original(*args,**kwargs)
         self.frame.show_all_func_layout.ChangeValue('4,2')
         self.frame.row_col_one_img.ChangeValue('2,2')
+        self.frame.parallel_sequential.SetValue(True)
         self.frame.shared_config.batch_idx=5
         self.frame.ImgManager.set_action_count(5)
         with patch.object(utils_img,'main',process):
@@ -2436,6 +2562,306 @@ class VideoGuiAsyncTests(unittest.TestCase):
         self.frame.img_left_click(event)
         return tuple(self.frame.m_statusBar1.GetStatusText(i) for i in range(3))
 
+    def test_selected_box_counter_appends_to_second_status_field_in_image_and_video(self):
+        frame=self.frame
+        for video in (True,False):
+            if not video:self._use_image_input()
+            frame.img_resolution.ChangeValue('80,48');frame.show_scale.ChangeValue('1,1')
+            frame.row_col_img_unit.ChangeValue('3,1')
+            frame.title_show.SetValue(False)
+            frame.show_original.SetValue(True);frame.show_magnifer.SetValue(True)
+            frame.show_custom_func.SetValue(True);frame.show_all_func.SetValue(False)
+            frame.xy_magnifier=[[4,4,24,16,1,1,False],[40,25,70,43,1,1,False]]
+            frame.color_list=[wx.Colour(255,0,0),wx.Colour(0,0,255)]
+            for control in (frame.magnifier,frame.rotation,frame.flip):control.SetValue(False)
+            frame.select_img_box.SetValue(True)
+            frame.refresh(None)
+            if video:self.pump_until(self.video_page_ready)
+            else:self.pump_until(lambda:frame.image_pipeline.displayed_key is not None)
+            grid=frame._display_grid_order()[-1]  # Also exercise a processed pane.
+            x,y=frame.ImgManager.xy_grid[grid]
+            event=Mock();event.GetPosition.return_value=(int(x)+14,int(y)+10)
+            frame.img_left_click(event)
+            self.assertTrue(frame.m_statusBar1.GetStatusText(1).endswith(' | Box 1/2'))
+            event.GetPosition.return_value=(int(x)+55,int(y)+34)
+            frame.img_left_click(event)
+            self.assertEqual(frame.box_id,1)
+            text=frame.m_statusBar1.GetStatusText(1)
+            self.assertTrue(text.endswith(' | Box 2/2'),text)
+            self.assertIn('Page ',text)
+            self.assertIn('Video' if video else 'Folder',text)
+            self.assertIn('Box 2/2',frame._status_field_tooltips[1])
+            frame.update_status_bar_for_current_page()
+            self.assertEqual(frame.m_statusBar1.GetStatusText(1),text)
+            frame.select_img_box.SetValue(False)
+            frame.update_status_bar_for_current_page()
+            self.assertNotIn('Box ',frame.m_statusBar1.GetStatusText(1))
+
+    def test_select_image_context_menu_exports_clicked_algorithm_cell_in_image_and_video(self):
+        from mulimgviewer.src.export_controller import source_slot
+        from mulimgviewer.src.custom_func.contract import processing_indices
+        for video in (True,False):
+            if not video:self._use_image_input()
+            for mode in ('original','single','all'):
+                with self.subTest(video=video,custom=mode):
+                    frame=self.frame
+                    destination=Path(f'context_selection_{video}_{mode}').absolute();destination.mkdir()
+                    frame.out_path_str=str(destination)
+                    frame.auto_save_all.SetValue(True)
+                    frame.choice_output.SetSelection(6)
+                    frame.save_format.SetSelection(1)
+                    frame.magnifier.SetValue(False)
+                    frame.show_unit.SetValue(True)
+                    frame.customfunc_choice.SetStringSelection('Gaussian Blur')
+                    frame.show_custom_func.SetValue(mode=='single')
+                    frame.show_all_func.SetValue(mode=='all')
+                    frame.refresh(None)
+                    if video:self.pump_until(self.video_page_ready)
+                    else:self.pump_until(lambda:frame.image_pipeline.displayed_key is not None)
+                    manager=frame.ImgManager
+                    grid=next(i for i in reversed(range(len(manager.xy_grids_id_list))) if source_slot(manager,i)==1)
+                    x,y=map(int,manager.xy_grid[grid])
+                    event=Mock();event.GetPosition.return_value=(x+1,y+1)
+                    def choose(menu,*args):
+                        item=menu.FindItemByPosition(4)
+                        self.assertEqual(item.GetItemLabel(),'Select image')
+                        command=wx.CommandEvent(wx.EVT_MENU.typeId,item.GetId())
+                        command.SetEventObject(menu)
+                        self.assertTrue(menu.ProcessEvent(command))
+                    with patch.object(frame,'PopupMenu',side_effect=choose):
+                        frame.on_right_click(event)
+                    self.pump_until(lambda:not getattr(frame,'_export_active',False)
+                        and frame._export_future.done(),timeout=20)
+                    self.assertEqual(frame._export_status,'Save: success')
+                    self.assertEqual(frame._status_selected_grid,grid)
+                    root=destination/('video' if video else 'image')
+                    names={'original'}|{manager._custom_algorithm_registry[index][0]
+                        for index in processing_indices(manager._custom_algorithm_registry,manager.layout_params)}
+                    self.assertEqual({path.name for path in (root/'algorithms').iterdir()},names)
+                    for name in names:
+                        self.assertEqual(len(list((root/'algorithms'/name/'select_images').rglob('*.png'))),2)
+                    self.assertFalse((root/'composed').exists())
+                    self.assertFalse(list(root.rglob('stitch_images')))
+                    # Left-click + output 2:select must produce identical files.
+                    normal=destination.with_name(destination.name+'_button');normal.mkdir()
+                    frame.out_path_str=str(normal);frame.auto_save_all.SetValue(False)
+                    frame.choice_output.SetSelection(1);frame.img_left_click(event)
+                    frame.save_img(None)
+                    self.pump_until(lambda:not frame._export_active and frame._export_future.done(),timeout=20)
+                    self.assertEqual(frame._export_status,'Save: success')
+                    expected={str(p.relative_to(destination)):p.read_bytes() for p in destination.rglob('*.png')}
+                    actual={str(p.relative_to(normal)):p.read_bytes() for p in normal.rglob('*.png')}
+                    self.assertEqual(actual,expected)
+
+            frame.select_img_box.SetValue(True)
+            frame.xy_magnifier=[]
+            frame.img_left_click(event)  # Empty/stale box lists must not call argmin.
+            self.assertEqual(frame.box_id,-1)
+            self.assertNotIn('Box ',frame.m_statusBar1.GetStatusText(1))
+
+    def test_image_file_list_button_and_context_select_export_only_clicked_entry(self):
+        self._use_image_input();frame=self.frame
+        listing=Path('parallel-image-list.txt').absolute()
+        entries=[Path('images/a/000.png').absolute(),Path('images/a/001.png').absolute(),Path('images/b/000.png').absolute()]
+        listing.write_text('\n'.join(map(str,entries)),encoding='utf-8')
+        frame.ImgManager.init(str(listing),type=3)
+        frame.row_col.ChangeValue('1,3');frame.row_col_one_img.ChangeValue('1,1')
+        frame.show_custom_func.SetValue(True);frame.customfunc_choice.SetStringSelection('Gaussian Blur')
+        frame.show_all_func.SetValue(False);frame.magnifier.SetValue(False)
+        frame.auto_save_all.SetValue(False);frame.save_format.SetSelection(1)
+        frame.shared_config.batch_idx=0;frame.slider_value.ChangeValue('1')
+        frame.refresh(None)
+        self.pump_until(lambda:frame.image_pipeline.displayed_key is not None)
+        self.assertEqual(frame.ImgManager.flist,list(map(str,entries)))
+        x,y=map(int,frame.ImgManager.xy_grid[1])
+        event=Mock();event.GetPosition.return_value=(x+1,y+1)
+        results=[]
+        for context in (False,True):
+            destination=Path(f'list_pick_{context}').absolute();destination.mkdir()
+            frame.out_path_str=str(destination)
+            if context:
+                frame.choice_output.SetSelection(0)
+                def choose(menu,*args):
+                    item=menu.FindItemByPosition(4)
+                    command=wx.CommandEvent(wx.EVT_MENU.typeId,item.GetId());command.SetEventObject(menu)
+                    self.assertTrue(menu.ProcessEvent(command))
+                with patch.object(frame,'PopupMenu',side_effect=choose):frame.on_right_click(event)
+            else:
+                frame.choice_output.SetSelection(1);frame.img_left_click(event);frame.save_img(None)
+            self.pump_until(lambda:not frame._export_active and frame._export_future.done(),timeout=20)
+            self.assertEqual(frame._export_status,'Save: success')
+            for name in ('original','Gaussian Blur'):
+                self.assertEqual(len(list((destination/'image/algorithms'/name/'select_images').rglob('*.png'))),1)
+            results.append({str(path.relative_to(destination)):path.read_bytes() for path in destination.rglob('*.png')})
+        self.assertEqual(results[0],results[1])
+
+    def test_context_title_injection_targets_one_original_source_and_respects_rename(self):
+        from mulimgviewer.src.export_controller import source_slot
+        for video in (True,False):
+            if not video:self._use_image_input()
+            frame=self.frame;frame.magnifier.SetValue(False)
+            frame.title_auto.SetValue(False);frame.title_show.SetValue(True)
+            frame.title_font_size.ChangeValue('12')
+            frame.show_custom_func.SetValue(True);frame.show_all_func.SetValue(False)
+            frame.customfunc_choice.SetStringSelection('Gaussian Blur')
+            frame.rename.SetValue(False);frame.rename_edit_txt.ChangeValue('Injected target')
+            frame.refresh(None)
+            ready=self.video_page_ready if video else lambda:frame.image_pipeline.displayed_key is not None
+            self.pump_until(ready)
+            manager=frame.ImgManager
+            original=frame.show_bmp_in_panel.tobytes()
+            sources=list(manager.flist);untouched=Path(sources[0]).read_bytes()
+            grid=next(i for i in reversed(range(len(manager.xy_grids_id_list))) if source_slot(manager,i)==1)
+            x,y=map(int,manager.xy_grid[grid]);event=Mock();event.GetPosition.return_value=(x+1,y+1)
+            writes=[];write=manager.update_image_exif_37510
+            def inject(path,text):
+                writes.append(path);return write(path,text)
+            def choose(menu,*args):
+                item=next(item for item in menu.GetMenuItems() if 'Inject title:' in item.GetItemLabel())
+                command=wx.CommandEvent(wx.EVT_MENU.typeId,item.GetId());command.SetEventObject(menu)
+                self.assertTrue(menu.ProcessEvent(command))
+            with patch.object(manager,'update_image_exif_37510',side_effect=inject),patch.object(frame,'PopupMenu',side_effect=choose):
+                frame.on_right_click(event)
+            self.pump_until(ready)
+            self.assertEqual(writes,[sources[1]])
+            self.assertEqual(Path(sources[0]).read_bytes(),untouched)
+            self.assertEqual(frame.show_bmp_in_panel.tobytes(),original)
+            self.assertTrue(frame.rename.IsEnabled());self.assertTrue(frame.rename_edit_txt.IsEnabled())
+            frame.rename.SetValue(True);frame.refresh(None);self.pump_until(ready)
+            self.assertNotEqual(frame.show_bmp_in_panel.tobytes(),original)
+            frame.rename.SetValue(False);frame.refresh(None);self.pump_until(ready)
+            self.assertEqual(frame.show_bmp_in_panel.tobytes(),original)
+
+    def test_parallel_video_frame_counts_match_image_modes_and_cache_paths_use_video_names(self):
+        frame=self.frame;cfg=frame.shared_config
+        frame.row_col.ChangeValue('1,2');frame.row_col_one_img.ChangeValue('2,2')
+        frame.row_col_img_unit.ChangeValue('1,1');frame.title_show.SetValue(False)
+        frame.show_magnifer.SetValue(False)
+        frame.parallel_to_sequential.SetValue(False)
+        for mode in (1,2):
+            cfg.input_mode=mode;frame.choice_input_mode.SetSelection(mode)
+            for sequential,count in ((False,1),(True,4),(False,1)):
+                frame.parallel_sequential.SetValue(sequential)
+                frame.refresh(None)
+                self.pump_until(self.video_page_ready)
+                self.assertEqual(cfg.count_per_action,count)
+                self.assertEqual(len(frame.ImgManager.flist),2*count)
+                sources=frame.ImgManager._status_video_sources
+                self.assertEqual(sources,tuple((vid,index) for vid in (0,1)
+                    for index in range(cfg.batch_idx*count,(cfg.batch_idx+1)*count)))
+        vm=frame.video_manager
+        cfg.real_video_path=[str(Path('sample.mp4').absolute())]*2
+        vm.init_video_frame_cache()
+        self.assertEqual([Path(path).name for path in cfg.video_path],['sample','sample_002'])
+        self.assertTrue(all(Path(path).parent==Path('cache_frames/sources/frames/video') for path in cfg.video_path))
+
+    def test_video_reselection_refreshes_catalog_names_and_original_paths(self):
+        frame=self.frame;cfg=frame.shared_config
+        initial=Path('sample.mp4').absolute()
+        for stem in ('01','02'):shutil.copyfile(initial,stem+'.mp4')
+        cfg.real_video_path=[str(Path(stem+'.mp4').absolute()) for stem in ('01','02')]
+        cfg.input_mode=1
+        self.assertTrue(frame.video_manager.select_video(type=-1))
+        frame.refresh(None)
+        self.pump_until(self.video_page_ready)
+        root=Path('cache_frames/sources/json/video')
+        self.pump_until(lambda:{p.name for p in root.glob('*.json')}=={'01.json','02.json'})
+        for original,path in zip(cfg.real_video_path,cfg.video_path):
+            self.assertEqual(Path(path).name,Path(original).stem)
+            record=json.loads((root/(Path(original).stem+'.json')).read_text(encoding='utf-8'))
+            self.assertEqual(record['path'],original)
+        self.assertFalse((Path(cfg.video_path[0])/'source.json').exists())
+
+    def test_image_sources_use_original_paths_while_composed_cache_follows_outer_window(self):
+        self._use_image_input()
+        frame=self.frame;pipeline=frame.image_pipeline
+        frame.show_custom_func.SetValue(True);frame.show_all_func.SetValue(False)
+        frame.refresh(None)
+        self.pump_until(lambda:pipeline.displayed_key is not None)
+        root=Path('cache_frames/sources')
+        original=Path(frame.ImgManager.flist[0])
+        cached=Path(pipeline.cache[frame.shared_config.batch_idx][0])
+        self.assertTrue(original.is_file())
+        self.assertEqual(original.parent.resolve(),Path('images/a').resolve())
+        self.assertFalse((root/'frames/image').exists())
+        for folder in ('a','b'):
+            record=json.loads((root/'json/image'/(folder+'.json')).read_text(encoding='utf-8'))
+            self.assertEqual(record['path'],str(Path('images',folder).absolute()))
+        frame._seek_display_page(59)
+        self.pump_until(lambda:pipeline.displayed_key is not None and pipeline.displayed_key[1]==58)
+        self.pump_until(lambda:not cached.exists())
+        self.assertTrue(original.is_file(),'Cache pruning must never remove the input image')
+        self.assertEqual(Path(frame.ImgManager.flist[0]).resolve(),Path('images/a/058.png').resolve())
+        self.assertFalse((root/'frames/image').exists())
+
+    def test_algorithm_and_composed_cache_separate_frames_json_and_prune_together(self):
+        from mulimgviewer.src.cache_layout import source_directory_names
+        frame=self.frame
+        for video in (True,False):
+            if not video:self._use_image_input()
+            frame.customfunc_choice.SetStringSelection('Image Darkening')
+            frame.show_custom_func.SetValue(True);frame.show_all_func.SetValue(False)
+            frame.show_all_func_layout.ChangeValue('2,1')
+            frame.refresh(None)
+            if video:self.pump_until(self.video_page_ready)
+            else:self.pump_until(lambda:frame.image_pipeline.displayed_key is not None)
+            batch=frame.shared_config.batch_idx
+            filename=f'page_{batch+1:06d}.png'
+            root=Path('cache_frames')
+            composed=root/'composed/frames'/filename
+            composed_json=root/'composed/json'/Path(filename).with_suffix('.json')
+            self.assertTrue(composed.is_file())
+            self.assertTrue(composed_json.is_file())
+            self.assertEqual(json.loads(composed_json.read_text(encoding='utf-8'))['size'],list(frame.img_size))
+            for name in ('original','Image Darkening'):
+                base=root/'algorithms'/name/'stitched'
+                self.assertTrue((base/'frames'/filename).is_file())
+                self.assertTrue((base/'json'/Path(filename).with_suffix('.json')).is_file())
+                self.assertEqual({p.name for p in base.iterdir()},{'frames','json'})
+            processed=root/'algorithms/Image Darkening/processed'
+            names=source_directory_names(frame.ImgManager)
+            for directory in names.values():
+                self.assertTrue((processed/'frames'/directory).is_dir())
+                metadata=processed/'json'/(directory+'.json')
+                self.assertTrue(metadata.is_file())
+                descriptor=json.loads(metadata.read_text(encoding='utf-8'))
+                self.assertTrue(Path(descriptor['source_catalog']).is_file())
+                self.assertEqual(Path(descriptor['processed_frames_path']).resolve(),(processed/'frames'/directory).resolve())
+            for directory in names.values():
+                self.assertFalse(list((processed/'frames'/directory).glob('*.json')))
+            self.assertFalse(list((root/'composed/frames').glob('*.json')))
+            target=60 if batch<40 else 21
+            frame._seek_display_page(target)
+            if video:self.pump_until(self.video_page_ready)
+            else:self.pump_until(lambda:frame.image_pipeline.displayed_key is not None and frame.image_pipeline.displayed_key[1]==target-1)
+            self.pump_until(lambda:not composed.exists() and not composed_json.exists())
+            for name in ('original','Image Darkening'):
+                base=root/'algorithms'/name/'stitched'
+                self.pump_until(lambda base=base:not (base/'frames'/filename).exists() and
+                    not (base/'json'/Path(filename).with_suffix('.json')).exists())
+
+    def test_original_image_paths_and_catalog_support_all_input_modes(self):
+        self._use_image_input();frame=self.frame
+        root=Path('cache_frames/sources')
+        listing=Path('images.txt')
+        listing.write_text('images/a/000.png\nimages/b/000.png\n',encoding='utf-8')
+        cases=((2,str(Path('images/a')),0,{'a'}),(0,str(Path('images')),1,{'a','b'}),
+               (1,['images/a','images/b'],2,{'a','b'}),(3,str(listing),3,{'a','b'}))
+        for kind,paths,mode,expected in cases:
+            with self.subTest(mode=mode):
+                frame.ImgManager.init(paths,type=kind,video_mode=False)
+                frame.shared_config.input_mode=mode;frame.choice_input_mode.SetSelection(mode)
+                frame.shared_config.batch_idx=0
+                frame.refresh(None)
+                pipeline=frame.image_pipeline
+                self.pump_until(lambda:pipeline.displayed_key is not None and pipeline.displayed_key[1]==0)
+                self.assertFalse((root/'frames/image').exists())
+                self.assertTrue(all(Path(path).is_file() for path in frame.ImgManager.flist))
+                for folder in expected:
+                    self.assertTrue((root/'json/image'/(folder+'.json')).is_file())
+                    self.assertTrue(any(Path(path).resolve()==Path('images',folder,'000.png').resolve()
+                        for path in frame.ImgManager.flist))
+
     def test_custom_index_paths_and_round_trip_follow_panes_in_sparse_layout(self):
         for video in (True,False):
             if not video:self._use_image_input()
@@ -2467,7 +2893,7 @@ class VideoGuiAsyncTests(unittest.TestCase):
                             self.assertTrue(Path(entry['algorithm_path']).is_file(),entry)
                         if entry.get('processed'):
                             self.assertIn('processed',Path(entry['path']).parts)
-                            self.assertEqual(Path(entry['path']).parent.name,'frames')
+                            self.assertEqual(Path(entry['path']).parent.parent.name,'frames')
                             self.assertFalse(any(part.startswith('page_') for part in Path(entry['path']).parts))
                         x,y=self.frame.ImgManager.xy_grid[grid]
                         event=Mock();event.GetPosition.return_value=(int(x)+1,int(y)+1)
@@ -2868,6 +3294,226 @@ class VideoGuiAsyncTests(unittest.TestCase):
         with patch.object(self.frame, 'set_img_layout') as layout:
             self.frame.show_img_init()
         layout.assert_not_called()
+
+    def test_invalid_initial_video_layout_reports_field_without_starting_cache(self):
+        frame=self.frame;vm=frame.video_manager
+        frame.ImgManager.layout_params=[]
+        frame.magnifier_show_scale.ChangeValue('-1.-1')
+        with patch.object(frame,'SetStatusText_') as status, \
+                patch.object(vm,'_enqueue_cache_config') as enqueue:
+            vm.update_cache()
+            self.assertIsNone(vm._render_snapshot)
+            enqueue.assert_not_called()
+            self.assertIn('magnifier_show_scale',status.call_args.args[0][2])
+            frame.show_img()  # Must preserve the validation message, not start waiting.
+            enqueue.assert_not_called()
+        frame.magnifier_show_scale.ChangeValue('-1,-1')
+        vm.update_cache();frame.show_img()
+        self.pump_until(self.video_page_ready)
+        self.assertEqual(len(frame.ImgManager.layout_params),42)
+
+    def test_disk_backed_video_magnifier_preserves_resolution_and_gui_handoff(self):
+        from mulimgviewer.src.disk_canvas import DiskCanvas
+        frame=self.frame
+        frame.show_scale.ChangeValue('1,1');frame.show_original.SetValue(True)
+        frame.row_col_img_unit.ChangeValue('3,1');frame.title_show.SetValue(False)
+        with patch('mulimgviewer.src.disk_canvas.LARGE_CANVAS_BYTES',0), \
+                patch('mulimgviewer.src.disk_canvas.available_memory_bytes',return_value=0):
+            frame.refresh(None);self.pump_until(self.video_page_ready)
+            self.assertIsInstance(frame.ImgManager.img,DiskCanvas)
+            old_size=frame.ImgManager.img.size;old_key=frame._video_display_key
+            x,y=map(int,frame.ImgManager.xy_grid[0])
+            frame.magnifier.SetValue(True)
+            event=Mock();event.GetPosition.return_value=(x+10,y+10)
+            frame.img_left_click(event)
+            event.GetPosition.return_value=(x+42,y+28)
+            frame.img_left_move(event);frame.img_left_release(event)
+            self.pump_until(lambda:self.video_page_ready() and frame._video_display_key!=old_key)
+            self.assertIsInstance(frame.ImgManager.img,DiskCanvas)
+            self.assertEqual(frame.show_scale.GetValue(),'1,1')
+            self.assertGreater(frame.ImgManager.img.height,old_size[1])
+            self.assertEqual(len(frame.xy_magnifier),1)
+            self.assertEqual(len(frame.ImgManager._status_video_sources),2)
+
+    def test_long_video_frame_wait_never_resumes_timer_before_frame_is_ready(self):
+        frame=self.frame;cfg=frame.shared_config
+        cfg.is_playing=True;cfg.batch_idx=20;frame._play_timer_suspended=True
+        callbacks=[]
+        with patch('wx.CallLater',side_effect=lambda delay,callback:callbacks.append(callback) or Mock()), \
+                patch.object(frame,'_video_cached_batch_path',return_value=None), \
+                patch.object(frame,'_resume_play_timer_after_wait') as resume, \
+                patch.object(frame,'show_img') as show:
+            frame._schedule_frame_wait_retry(20,80,attempt=125)
+            for _ in range(4):callbacks.pop(0)()
+            self.assertEqual(cfg.batch_idx,20)
+            self.assertTrue(frame._play_timer_suspended)
+            resume.assert_not_called();show.assert_not_called()
+            with patch.object(frame,'_video_cached_batch_path',return_value='ready.jpeg'):
+                callbacks.pop(0)()
+            show.assert_called_once_with()
+            resume.assert_not_called()
+        cfg.is_playing=False
+
+    def test_refresh_submits_only_the_final_visible_slider_page(self):
+        frame=self.frame;cfg=frame.shared_config
+        cfg.batch_idx=21;frame.ImgManager.set_action_count(21)
+        frame.slider_value.ChangeValue('21')  # Visible page 21 has zero-based ID 20.
+        requests=[]
+        with patch.object(frame.video_manager,'update_cache',side_effect=lambda:requests.append(cfg.batch_idx)), \
+                patch.object(frame,'show_img'):
+            frame.refresh(None)
+        self.assertTrue(requests)
+        self.assertEqual(set(requests),{20})
+        self.assertEqual(frame.ImgManager.img_count,20*cfg.count_per_action)
+
+    def test_magnifier_invalidation_suspends_playback_until_replacement_is_painted(self):
+        frame=self.frame;cfg=frame.shared_config
+        cfg.is_playing=True;frame._play_timer_suspended=False
+        frame.play_timer.Start(1000,oneShot=True)
+        frame._invalidate_render_cache()
+        self.assertTrue(frame._play_timer_suspended)
+        self.assertFalse(frame.play_timer.IsRunning())
+        self.assertTrue(cfg.is_playing)
+        cfg.is_playing=False
+
+    def test_superseded_frame_wait_cannot_resume_or_cancel_the_new_wait(self):
+        frame=self.frame;cfg=frame.shared_config;callbacks=[]
+        cfg.is_playing=True;cfg.batch_idx=20;frame._play_timer_suspended=True
+        with patch('wx.CallLater',side_effect=lambda delay,callback:callbacks.append(callback) or Mock()), \
+                patch.object(frame,'_resume_play_timer_after_wait') as resume,patch.object(frame,'show_img') as show:
+            frame._schedule_frame_wait_retry(20)
+            cfg.batch_idx=21;frame._schedule_frame_wait_retry(21)
+            active_timer=frame._pending_frame_wait_timer
+            callbacks[0]()  # The old native callback was already queued before cancellation.
+            self.assertIs(frame._pending_frame_wait_timer,active_timer)
+            resume.assert_not_called();show.assert_not_called()
+            self.assertTrue(frame._play_timer_suspended)
+        cfg.is_playing=False
+
+    def test_layout_pair_validation_rejects_incomplete_and_nonfinite_values(self):
+        frame=self.frame
+        for name,text in (('row_col','4'),('show_scale','nan,1'),('output_scale','1,inf'),
+                          ('magnifier_show_scale','-1.-1'),('line_width','2,2,2')):
+            with self.subTest(field=name,text=text):
+                control=getattr(frame,name);original=control.GetValue()
+                control.ChangeValue(text)
+                try:
+                    with patch.object(frame,'SetStatusText_') as status:
+                        self.assertFalse(frame.set_img_layout())
+                        self.assertIn(name,status.call_args.args[0][2])
+                finally:control.ChangeValue(original)
+
+    def test_failed_snapshot_initialization_does_not_index_short_layout(self):
+        frame=self.frame;vm=frame.video_manager
+        for values in ([],[None]*33,[None]*41):
+            frame.ImgManager.layout_params=values
+            with patch.object(frame,'show_img_init',return_value=None), \
+                    patch.object(vm,'_enqueue_cache_config') as enqueue:
+                vm.update_cache()
+                enqueue.assert_not_called()
+                self.assertIsNone(vm._render_snapshot)
+
+    def test_video_mode_rejects_image_directory_and_preserves_current_input_and_error(self):
+        self.warm_current_window();frame=self.frame;cfg=frame.shared_config
+        folder=Path('image-only').absolute();folder.mkdir();Image.new('RGB',(16,12),'red').save(folder/'frame.png')
+        before=(list(cfg.real_video_path),list(cfg.video_num_list),list(cfg.video_path),cfg.batch_idx)
+        output=frame.m_statusBar1.GetStatusText(3)
+        frame.choice_input_mode.SetSelection(1)
+        with patch.object(wx,'DirDialog') as dialog:
+            dialog.return_value.ShowModal.return_value=wx.ID_OK
+            dialog.return_value.GetPath.return_value=str(folder)
+            frame.open_all_img(None)
+        self.assertEqual((cfg.real_video_path,cfg.video_num_list,cfg.video_path,cfg.batch_idx),before)
+        self.assertIn('Input error',frame.m_statusBar1.GetStatusText(0))
+        self.assertIn('Video mode',frame.m_statusBar1.GetStatusText(2))
+        self.assertIn(str(folder),frame.m_statusBar1.GetStatusText(2))
+        frame.update_status_bar_for_current_page()
+        self.assertIn('Input error',frame.m_statusBar1.GetStatusText(0))
+        self.assertEqual(frame.m_statusBar1.GetStatusText(3),output)
+        videos=Path('valid-video').absolute();videos.mkdir();shutil.copyfile('sample.mp4',videos/'clip.mp4')
+        with patch.object(wx,'DirDialog') as dialog:
+            dialog.return_value.ShowModal.return_value=wx.ID_OK
+            dialog.return_value.GetPath.return_value=str(videos)
+            frame.open_all_img(None)
+        self.pump_until(self.video_page_ready)
+        self.assertNotIn('error',frame.m_statusBar1.GetStatusText(0).lower())
+        self.assertIsNone(frame._input_feedback)
+
+    def test_manual_video_mode_rejects_image_directory_without_replacing_video_paths(self):
+        from mulimgviewer.src.path_select import PathSelectFrame,on_video_mode_change,_PATH_SELECT_STATE
+        frame=self.frame;cfg=frame.shared_config
+        before=list(cfg.real_video_path)
+        directory=Path('manual-images').absolute();directory.mkdir()
+        Image.new('RGB',(16,12),'red').save(directory/'image.png')
+        previous=_PATH_SELECT_STATE['video_mode']
+        self.addCleanup(on_video_mode_change,previous)
+        on_video_mode_change(True)
+        selector=PathSelectFrame(frame,lambda *args,**kwargs:None,lambda:0,video_manager=frame.video_manager)
+        selector.set_video_manager(frame.video_manager,cfg)
+        selector.m_richText1.SetValue(str(directory))
+        selector._finalize_and_return()
+        self.app.Yield(True)
+        self.assertEqual(cfg.real_video_path,before)
+        self.assertIn('Input error',frame.m_statusBar1.GetStatusText(0))
+        self.assertIn('Not a supported video file',frame.m_statusBar1.GetStatusText(2))
+
+    def test_image_open_reports_empty_and_corrupt_inputs_then_recovers(self):
+        self._use_image_input();frame=self.frame
+        frame.show_img()
+        self.pump_until(lambda:frame.image_pipeline.displayed_key is not None)
+        before=frame.ImgManager.input_path
+        output=frame.m_statusBar1.GetStatusText(3)
+        empty=Path('empty-images').absolute();empty.mkdir()
+        for mode in (0,1):
+            frame.choice_input_mode.SetSelection(mode)
+            with patch.object(wx,'DirDialog') as dialog:
+                dialog.return_value.ShowModal.return_value=wx.ID_OK
+                dialog.return_value.GetPath.return_value=str(empty)
+                frame.open_all_img(None)
+            self.assertIn('Input error',frame.m_statusBar1.GetStatusText(0))
+            self.assertIn('image',frame.m_statusBar1.GetStatusText(2).lower())
+            self.assertEqual(frame.ImgManager.input_path,before)
+        broken=Path('broken-images').absolute();broken.mkdir();(broken/'invalid.png').write_bytes(b'not an image')
+        frame.choice_input_mode.SetSelection(0)
+        with patch.object(wx,'DirDialog') as dialog:
+            dialog.return_value.ShowModal.return_value=wx.ID_OK
+            dialog.return_value.GetPath.return_value=str(broken)
+            frame.open_all_img(None)
+        self.pump_until(lambda:'error' in frame.m_statusBar1.GetStatusText(0).lower())
+        self.assertIn('image',frame.m_statusBar1.GetStatusText(2).lower())
+        self.assertEqual(frame.m_statusBar1.GetStatusText(3),output)
+        with patch.object(wx,'DirDialog') as dialog:
+            dialog.return_value.ShowModal.return_value=wx.ID_OK
+            dialog.return_value.GetPath.return_value=str(Path('images/a').absolute())
+            frame.open_all_img(None)
+        self.pump_until(lambda:frame.image_pipeline.displayed_key is not None and frame._status_display_batch==0)
+        self.assertIsNone(frame._input_feedback)
+        self.assertNotIn('error',frame.m_statusBar1.GetStatusText(0).lower())
+
+    def test_manual_image_callback_reports_invalid_directory_and_can_load_valid_images(self):
+        from types import SimpleNamespace
+        from mulimgviewer.__main__ import MainAPP
+        self._use_image_input();frame=self.frame
+        empty=Path('manual-empty').absolute();empty.mkdir()
+        app=SimpleNamespace(frame=[frame,Mock()],_last_manual_paths=[],
+            _normalize_paths=lambda paths:list(paths or []),SetTopWindow=Mock())
+        MainAPP.UpdateUI(app,0,input_path=[str(empty)],parallel_to_sequential=False)
+        self.assertIn('Input error',frame.m_statusBar1.GetStatusText(0))
+        self.assertIn('No supported image files',frame.m_statusBar1.GetStatusText(2))
+        app.SetTopWindow.assert_called_with(frame)
+        MainAPP.UpdateUI(app,0,input_path=[str(Path('images/a').absolute())],parallel_to_sequential=False)
+        self.pump_until(lambda:frame.image_pipeline.displayed_key is not None and frame._status_display_batch==0)
+        self.assertIsNone(frame._input_feedback)
+        self.assertEqual(frame.choice_input_mode.GetSelection(),2)
+
+    def test_open_button_reports_unexpected_load_exception_in_input_status(self):
+        frame=self.frame;before=frame.shared_config.batch_idx
+        frame.choice_input_mode.SetSelection(0)
+        with patch.object(frame,'one_dir_mul_img',side_effect=OSError('test unreadable input')):
+            self.assertFalse(frame.open_all_img(None))
+        self.assertEqual(frame.shared_config.batch_idx,before)
+        self.assertIn('Input error',frame.m_statusBar1.GetStatusText(0))
+        self.assertIn('test unreadable input',frame.m_statusBar1.GetStatusText(2))
 
     def test_image_directory_can_open_after_initial_cancellation(self):
         self.frame.shared_config.video_mode = False

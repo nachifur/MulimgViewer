@@ -3,6 +3,22 @@ import threading
 from collections import OrderedDict
 from PIL import Image
 from typing import NamedTuple
+if __package__:
+    from .disk_canvas import disk_backed, rgba_copy, scratch_bytes, DiskCanvas, decode_jpeg_canvas
+    from .thread_optimizer import available_memory_bytes
+else:
+    from disk_canvas import disk_backed, rgba_copy, scratch_bytes, DiskCanvas, decode_jpeg_canvas
+    from thread_optimizer import available_memory_bytes
+
+
+def mosaic_working_bytes(size, source_pixels=0, mapped=None):
+    """RGBA canvas + RGB JPEG output, with bounded tile/encoder scratch space.
+
+    Drawing is in place and alpha flattening uses strips. No full-canvas NumPy
+    array, RGBA duplicate or alpha mask needs to coexist with these buffers.
+    """
+    if (disk_backed(size) if mapped is None else mapped):return scratch_bytes(source_pixels)
+    return max(32*1024**2, int(size[0]*size[1]*8 + source_pixels*20 + 16*1024**2))
 
 
 def tiled_display(size):
@@ -19,7 +35,17 @@ def rgba_display(source):
     """
     # Large frames use viewport tiles; retain only one Pillow canvas and skip
     # a full-size RGBA byte copy. The source file may close after this call.
+    if isinstance(source,DiskCanvas):return source,None
     if tiled_display(source.size):
+        if (getattr(source,'format',None)=='JPEG' and source.mode=='RGB'
+                and getattr(source,'fp',None) is not None
+                and source.width*source.height*4>256*1024**2):
+            return decode_jpeg_canvas(source),None
+        if source.width*source.height*4>256*1024**2 and getattr(source,'fp',None) is not None:
+            available=available_memory_bytes()
+            if available is not None and source.width*source.height*4+16*1024**2>available*.85:
+                raise MemoryError('Not enough system memory to decode this cached display safely')
+        if disk_backed(source.size):return rgba_copy(source),None
         return (source.copy() if source.mode=='RGBA' else source.convert('RGBA')),None
     rgba=source if source.mode=='RGBA' else source.convert('RGBA')
     try:
@@ -63,6 +89,7 @@ class PixelCache:
         self._raw = OrderedDict()
         self._priority = OrderedDict()
         self.priority_bytes = 0
+        self._mapped_keys=set();self._mapped_id=None
 
     def configure(self, limit):
         with self.lock:
@@ -77,6 +104,8 @@ class PixelCache:
             del self._priority[key]
         else:
             del self._raw[key]
+        self._mapped_keys.discard(key)
+        if not self._mapped_keys:self._mapped_id=None
 
     def _trim(self):
         # Two LRU indexes avoid scanning every protected preview for each raw
@@ -86,11 +115,16 @@ class PixelCache:
 
     def put(self, key, image, owner=None, priority=False):
         key = str(key)
-        weight = (256+2*len(key)+2*len(str(owner or key)) if isinstance(image,CachedImageInfo) else
+        mapped=isinstance(image,DiskCanvas)
+        weight = (4096 if mapped else 256+2*len(key)+2*len(str(owner or key)) if isinstance(image,CachedImageInfo) else
                   max(image.width * image.height * max(4,len(image.getbands())),int(getattr(image,'_video_buffer_bytes',0))))
         with self.lock:
             if weight > self.limit:
                 return False
+            if mapped and self._mapped_id!=id(image):
+                # A handoff to the current display, not another raster cache:
+                # retain at most one mapped canvas (and its path aliases).
+                for previous in tuple(self._mapped_keys):self._remove(previous)
             old = self.entries.get(key)
             protected = self.priority_bytes - (old[1] if old and old[3] else 0)
             if not priority and weight + protected > self.limit:
@@ -98,6 +132,8 @@ class PixelCache:
             if old is not None:
                 self._remove(key)
             self.entries[key] = image, weight, str(owner) if owner is not None else key, priority
+            if mapped:
+                self._mapped_keys.add(key);self._mapped_id=id(image)
             self.bytes += weight
             if priority:
                 self.priority_bytes += weight
@@ -132,6 +168,7 @@ class PixelCache:
             self._raw.clear()
             self._priority.clear()
             self.bytes = self.priority_bytes = 0
+            self._mapped_keys.clear();self._mapped_id=None
 
 
 class LazyVideoImage:

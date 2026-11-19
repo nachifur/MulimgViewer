@@ -180,8 +180,8 @@ class TimelineTests(unittest.TestCase):
         entry=model.visual_entry(target)
         self.assertEqual(entry['algorithm'],'Example')
         self.assertEqual(entry['algorithm_path'],'/plugins/Example/main.py')
-        self.assertEqual(Path(entry['path']).parent.name,'frames')
-        self.assertIn('source_001',entry['path'])
+        self.assertEqual(Path(entry['path']).parent.parent.name,'frames')
+        self.assertEqual(Path(entry['path']).parent.name,'one')
         self.assertTrue(entry['path'].endswith('.jpeg'))
         manager.cache_save_format=1
         png_model=IndexCatalog(manager,cfg)

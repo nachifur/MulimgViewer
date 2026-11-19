@@ -57,9 +57,8 @@ class PathSelectFrame(PathSelectFrameGui):
         """Collect selected paths, invoke callback, then close the window."""
         paths = [p for p in self.m_richText1.Value.split("\n") if p]
         if _PATH_SELECT_STATE["video_mode"]:
-            self.shared_config.real_video_path = paths if _PATH_SELECT_STATE["video_mode"] else []
             if self.shared_config.video_mode:
-                self.video_manager.select_video(type=-1)
+                self.video_manager.select_video(type=-1,paths=paths)
         else:
             _PATH_SELECT_STATE["last_manual_paths"] = paths
         if self.get_type() == -1:

@@ -5,8 +5,13 @@ import shutil
 import threading
 import uuid
 import stat
+import io
 from pathlib import Path
 from PIL import Image
+if __package__:
+    from .disk_canvas import new_canvas, disk_backed, DiskCanvas
+else:
+    from disk_canvas import new_canvas, disk_backed, DiskCanvas
 
 
 def canonical_path(path):
@@ -35,27 +40,54 @@ def cache_image_extension(manager):
     return 'png' if manager_cache_format(manager)==1 else 'jpeg'
 
 
-def save_cache_image(image,path,extension,**png_options):
+def save_cache_image(image,path,extension,checkpoint=None,**png_options):
     """Encode with the captured cache policy; JPEG has no alpha channel."""
     if not isinstance(image,Image.Image):
         # CachedCanvas already has this policy's encoding; keep the link fast path.
         image.save(path)
         return
+    if checkpoint is not None:
+        checkpoint()
+        if hasattr(path,'write'):
+            original=path
+            class Writer:
+                def write(self,data):checkpoint();return original.write(data)
+                def flush(self):return original.flush()
+                def fileno(self):raise io.UnsupportedOperation('Use cancellable write chunks')
+            path=Writer()
+    if isinstance(image,DiskCanvas):image.flush(checkpoint)
     if extension=='png':
         image.save(path,format='PNG',compress_level=1,**png_options)
         return
-    converted=None;rgba=None
+    converted=None
     try:
         if image.mode!='RGB':
             if image.mode in ('RGBA','LA') or 'transparency' in image.info:
-                rgba=image.convert('RGBA')
-                converted=Image.new('RGB',image.size,'white')
-                converted.paste(rgba,mask=rgba.getchannel('A'))
+                mapped=isinstance(image,DiskCanvas) or disk_backed(image.size)
+                converted=new_canvas('RGBX' if mapped else 'RGB',image.size,None if mapped else 'white',mapped=mapped)
+                # Flatten bounded strips instead of duplicating a huge RGBA
+                # canvas and its full-size alpha channel alongside the RGB copy.
+                rows=max(1,(4*1024**2)//max(1,image.width*4))
+                for top in range(0,image.height,rows):
+                    if checkpoint is not None:checkpoint()
+                    with image.crop((0,top,image.width,min(image.height,top+rows))) as strip:
+                        rgba=strip if strip.mode=='RGBA' else strip.convert('RGBA')
+                        try:
+                            with rgba.getchannel('A') as alpha:
+                                if mapped:
+                                    # Initialize only this stripe, not the huge
+                                    # mapped RGBX buffer before overwriting it.
+                                    with Image.new('RGB',rgba.size,'white') as matte:
+                                        matte.paste(rgba,mask=alpha)
+                                        converted.paste(matte,(0,top))
+                                else:converted.paste(rgba,(0,top),mask=alpha)
+                        finally:
+                            if rgba is not strip:rgba.close()
             else:converted=image.convert('RGB')
+        if isinstance(converted,DiskCanvas):converted.flush(checkpoint)
         (converted if converted is not None else image).save(path,format='JPEG',quality=90)
     finally:
         if converted is not None:converted.close()
-        if rgba is not None:rgba.close()
 
 
 def page_name(batch,extension='png'):
@@ -70,16 +102,19 @@ def component(name):
     return value
 
 
-def source_names(manager, paths):
+def source_names(manager, paths, *, readable=False):
     from .status_info import key
     index=getattr(manager,'_status_source_index',None)
     folders={key(Path(p).absolute()):i for p,i in index.folders.items()} if index is not None else {
         key(Path(p).absolute()):i for i,p in enumerate(getattr(manager,'path_list',()))}
+    directories=source_directory_names(manager) if readable else {}
     result=[];seen={}
     for path in paths:
         source=key(Path(path).parent.absolute())
         if source not in folders:folders[source]=len(folders)
-        name=Path(f'source_{folders[source]+1:03d}')/(Path(path).stem+'.png')
+        directory=(directories.get(folders[source],Path(path).parent.name) if readable
+                   else f'source_{folders[source]+1:03d}')
+        name=Path(directory)/(Path(path).stem+'.png')
         count=seen.get(str(name),0)+1;seen[str(name)]=count
         if count>1:name=name.parent/f'entry_{count:03d}'/name.name
         result.append(name.as_posix())
@@ -87,9 +122,45 @@ def source_names(manager, paths):
 
 
 def processed_names(manager, paths):
-    """Same source IDs and frame stems as the raw layer, without page folders."""
-    return [(Path(name).parent/'frames'/Path(name).with_suffix('.'+cache_image_extension(manager)).name).as_posix()
-            for name in source_names(manager,paths)]
+    """Mirror source directory names beneath processed/frames, keeping stems."""
+    directories=source_directory_names(manager)
+    result=[]
+    for path,name in zip(paths,source_names(manager,paths)):
+        relative=Path(name)
+        number=int(relative.parts[0].removeprefix('source_'))-1
+        directory=directories.get(number,Path(path).parent.name)
+        result.append((Path('frames')/directory/Path(*relative.parts[1:])).with_suffix(
+            '.'+cache_image_extension(manager)).as_posix())
+    return result
+
+
+def page_catalog_path(image_path):
+    path=Path(image_path)
+    root=path.parent.parent if path.parent.name=='frames' else path.parent
+    return root/'json'/(path.stem+'.json')
+
+
+def write_page_catalog(image_path,batch,media,inputs,size=None):
+    if size is None:
+        with Image.open(image_path) as image:size=image.size
+    target=page_catalog_path(image_path)
+    target.parent.mkdir(parents=True,exist_ok=True)
+    temporary=target.with_name('__tmp_'+uuid.uuid4().hex)
+    try:
+        temporary.write_text(json.dumps(dict(page=batch+1,media=media,inputs=list(inputs),
+            size=list(size),frame=str(Path(image_path).absolute())),ensure_ascii=False,indent=2),encoding='utf-8')
+        os.replace(temporary,target)
+    finally:temporary.unlink(missing_ok=True)
+
+
+def remove_page_catalog(image_path):
+    """An old PNG cleanup must not erase a newer JPG page's descriptor."""
+    target=page_catalog_path(image_path)
+    try:
+        data=json.loads(target.read_text(encoding='utf-8'))
+        if os.path.normcase(os.path.abspath(data['frame']))==os.path.normcase(os.path.abspath(image_path)):
+            target.unlink(missing_ok=True)
+    except (OSError,ValueError,KeyError,TypeError):pass
 
 
 def source_record(manager, number, path):
@@ -111,20 +182,46 @@ def source_record(manager, number, path):
     return value
 
 
-def write_source_catalog(manager, root, split_media=False):
+def source_folders(manager):
     from .status_info import key
-    root=Path(root)/'sources'
-    if split_media:root=root/('video' if getattr(manager,'video_mode',False) else 'image')
     index=getattr(manager,'_status_source_index',None)
-    folders=(index.folders if index is not None else
-             {key(path):i for i,path in enumerate(getattr(manager,'path_list',()))})
+    return (index.folders if index is not None else
+            {key(path):i for i,path in enumerate(getattr(manager,'path_list',()))})
+
+
+def source_directory_names(manager):
+    from .video_paths import video_source_names
+    folders=source_folders(manager)
+    video=bool(getattr(manager,'video_mode',False))
+    originals=getattr(manager,'_cache_original_paths',())
+    ordered=sorted(folders.items(),key=lambda item:item[1])
+    labels=[originals[number] if video and number<len(originals) else path for path,number in ordered]
+    return dict(zip((number for _,number in ordered),video_source_names(labels,directories=not video)))
+
+
+def write_source_catalog(manager, root, split_media=False):
+    root=Path(root)/'sources'
+    video=bool(getattr(manager,'video_mode',False))
+    if split_media:root=root/'json'/('video' if video else 'image')
+    names=source_directory_names(manager)
+    folders=source_folders(manager)
+    published=set()
     for path,number in folders.items():
-        target=root/f'source_{number+1:03d}'/'source.json'
+        name=names.get(number,f'source_{number+1:03d}')
+        target=root/(name+'.json') if split_media else root/name/'source.json'
         target.parent.mkdir(parents=True,exist_ok=True)
         value=source_record(manager,number,path)
         temporary=target.with_name('__tmp_'+uuid.uuid4().hex)
         temporary.write_text(json.dumps(value,ensure_ascii=False,indent=2),encoding='utf-8')
         os.replace(temporary,target)
+        published.add(target.name)
+    if split_media:
+        for target in root.glob('*.json'):
+            if target.name in published:continue
+            try:
+                value=json.loads(target.read_text(encoding='utf-8'))
+                if value.get('media')==('video' if video else 'image') and 'source' in value and 'path' in value:target.unlink()
+            except (OSError,ValueError,AttributeError):pass
 
 
 class VisibleCache:

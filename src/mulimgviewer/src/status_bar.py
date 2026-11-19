@@ -15,6 +15,21 @@ class StatusBarMixin:
         self.m_statusBar1.SetStatusText('Output: not set', 3)
         self._fit_status_fields()
 
+    def _show_input_status(self, message=None, state='Ready', path=None, persistent=False):
+        media='Video' if self.shared_config.video_mode else 'Image'
+        mode=self.choice_input_mode.GetStringSelection()
+        if message is None:
+            message=('Video mode: please select a video input' if self.shared_config.video_mode
+                     else 'Image mode: please select an image input')
+        detail=f'{mode} | {message}'
+        if path is not None:detail+=f' | {path}'
+        action=f'{media} | {state}'
+        self._input_feedback=(action,detail) if persistent else None
+        loaded=(getattr(self.ImgManager,'img_num',0) and
+                bool(getattr(self.ImgManager,'video_mode',False))==bool(self.shared_config.video_mode))
+        selection='-1' if loaded else 'No source loaded'
+        self.SetStatusText_([action,selection,detail,'-1'])
+
     def _fit_status_fields(self):
         bar = self.m_statusBar1
         width = bar.GetClientSize().width
@@ -70,11 +85,18 @@ class StatusBarMixin:
         playback = 'Playing' if self.shared_config.is_playing else 'Paused'
         input_mode = loaded_input_mode(self.ImgManager, self.shared_config, painted=True)
         position = info['position'] if info else 'No source selected'
-        self.SetStatusText_([f'{mode} | {playback}', f'Page {batch+1}/{pages} | {position}',
-                             f'{input_mode} | {info["source"]}' if info else input_mode, '-1'])
+        if self.select_img_box.Value:
+            total=min(len(self.xy_magnifier),len(getattr(self.ImgManager,'crop_points',())))
+            selected=getattr(self,'box_id',-1)
+            if 0<=selected<total:
+                position+=f' | Box {selected+1}/{total}'
+        feedback=getattr(self,'_input_feedback',None)
+        self.SetStatusText_([feedback[0] if feedback else f'{mode} | {playback}',
+            f'Page {batch+1}/{pages} | {position}',feedback[1] if feedback else
+            f'{input_mode} | {info["source"]}' if info else input_mode,'-1'])
         if info:
-            if info['timestamp']:
+            if info['timestamp'] and not feedback:
                 self.m_statusBar1.SetStatusText(f'{input_mode} | {info["source"]} | {info["timestamp"]}', 2)
             self._status_field_tooltips[1] = f'Page {batch+1}/{pages}\n{position}\n{info["detail"]}'
-            self._status_field_tooltips[2] = f'{input_mode}\n{info["source"]}\n{info["detail"]}'
+            if not feedback:self._status_field_tooltips[2] = f'{input_mode}\n{info["source"]}\n{info["detail"]}'
         self._fit_status_fields()

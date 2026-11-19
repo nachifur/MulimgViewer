@@ -4,6 +4,7 @@ import os
 from pathlib import Path
 from shutil import copyfile, move
 import textwrap
+import tempfile
 from .custom_func.main import main as main_custom_func
 import numpy as np
 import piexif
@@ -27,6 +28,8 @@ from .custom_func.runtime import render_context, state as processing_state
 from .custom_func.contract import specification, processing_indices, display_indices, display_grid, original_index
 from .cache_layout import page_name, source_names, write_source_catalog
 from .render_metrics import MeasuredFont
+from .layout_gaps import gap_pair
+from .disk_canvas import new_canvas, disk_backed
 
 class ImgUtils():
     """The set of functional programming modules"""
@@ -99,7 +102,7 @@ class ImgUtils():
 
         return box_point
 
-    def draw_rectangle(self, img, xy_grids, bounding_boxes, color_list, line_width=2, single_box=False):
+    def draw_rectangle(self, img, xy_grids, bounding_boxes, color_list, line_width=2, single_box=False, in_place=False):
         """img
         xy_grids: the position of bounding_boxes (list)
         bounding_boxes: the four points that make up a bounding boxes
@@ -111,37 +114,28 @@ class ImgUtils():
         else:
             xy_grids = xy_grids
 
-        img_array = np.array(img)
-
-        i = 0
-        k = 0
-        for bounding_box in bounding_boxes:
-            x_0, y_0, x, y = bounding_box[0:4]
-            height = y-y_0
-            width = x - x_0
-            color = color_list[k]
-            draw_colour = np.array(
-                [color.red, color.green, color.blue, color.alpha])
-
+        # A private stitch canvas can be updated directly. Other callers retain
+        # the historical copy semantics, so cached/source pixels stay immutable.
+        result = img if in_place and img.mode == 'RGBA' else img.convert('RGBA')
+        line_width = int(line_width)
+        if line_width <= 0 or not color_list:
+            return result
+        draw = ImageDraw.Draw(result)
+        for index, bounding_box in enumerate(bounding_boxes):
+            color = color_list[index % len(color_list)]
+            rgba = (color.red, color.green, color.blue, color.alpha)
             for xy in xy_grids:
-                x_left_up = [x_0+xy[0], y_0+xy[1]]
-                x_left_down = [x_0+xy[0], y_0+xy[1]+height]
-                x_right_up = [x_0+xy[0]+width, y_0+xy[1]]
-                x_right_down = [x_0+xy[0]+width, y_0+xy[1]+height]
-                img_array[x_left_up[1]:x_left_down[1], x_left_up[0]:x_left_up[0]+line_width, :] = np.ones_like(
-                    img_array[x_left_up[1]:x_left_down[1], x_left_up[0]:x_left_up[0]+line_width, :])*draw_colour
-                img_array[x_left_up[1]:x_left_up[1]+line_width, x_left_up[0]:x_right_up[0], :] = np.ones_like(
-                    img_array[x_left_up[1]:x_left_up[1]+line_width, x_left_up[0]:x_right_up[0], :])*draw_colour
-                img_array[x_right_up[1]:x_right_down[1], x_right_up[0]-line_width:x_right_up[0], :] = np.ones_like(
-                    img_array[x_right_up[1]:x_right_down[1], x_right_up[0]-line_width:x_right_up[0], :])*draw_colour
-                img_array[x_left_down[1]-line_width:x_left_down[1], x_left_up[0]:x_right_up[0], :] = np.ones_like(
-                    img_array[x_left_down[1]-line_width:x_left_down[1], x_left_up[0]:x_right_up[0], :])*draw_colour
-            i += 1
-            k += 1
-            if k == len(color_list):
-                k = 0
-        img = Image.fromarray(img_array.astype('uint8')).convert('RGBA')
-        return img
+                x0, y0, x1, y1 = [int(value + xy[axis % 2])
+                    for axis, value in enumerate(bounding_box[:4])]
+                if x1 <= x0 or y1 <= y0:
+                    continue
+                # Pillow rectangles include their right/bottom pixel; keep the
+                # original half-open slice geometry and replace RGBA directly.
+                draw.rectangle((x0, y0, x0+line_width-1, y1-1), fill=rgba)
+                draw.rectangle((x0, y0, x1-1, y0+line_width-1), fill=rgba)
+                draw.rectangle((x1-line_width, y0, x1-1, y1-1), fill=rgba)
+                draw.rectangle((x0, y1-line_width, x1-1, y1-1), fill=rgba)
+        return result
 
     def cal_magnifier_size(self, magnifier_scale, crop_size, img_mode, gap, img_size, magnifer_row_col, show_original,
                            box_position=0, row_col_img_unit=[1, 1], img_unit_gap=[1, 1],magnifier_format=0):
@@ -471,9 +465,11 @@ class ImgUtils():
 
         # Construct a blank image
         memory_limit = getattr(getattr(self,'manager',None), '_video_memory_budget', None)
-        if memory_limit is not None and target_width * target_height * 16 > memory_limit:
+        mapped=getattr(getattr(self,'manager',None),'_disk_backed_canvas',None)
+        use_disk=disk_backed((target_width,target_height)) if mapped is None else mapped
+        if memory_limit is not None and not use_disk and target_width * target_height * 4 > memory_limit:
             raise MemoryError('Video canvas exceeds the memory budget; reduce preview size or layout')
-        img = Image.new('RGBA', (target_width, target_height), gap_color)
+        img = new_canvas('RGBA', (target_width, target_height), gap_color, mapped=use_disk)
 
         # Fill the image
         layout_list.reverse()
@@ -506,6 +502,12 @@ class ImgUtils():
         # level_0
         for iy_0 in range(Row['level_0']):
             for ix_0 in range(Col['level_0']):
+                checkpoint=getattr(getattr(self,'manager',None),'_render_checkpoint',None)
+                if checkpoint is not None:
+                    try:checkpoint()
+                    except BaseException:
+                        img.close()
+                        raise
                 level = 0
                 x_offset_0 = xy_grids[level][0, iy_0, ix_0]
                 y_offset_0 = xy_grids[level][1, iy_0, ix_0]
@@ -948,10 +950,14 @@ class ImgManager(ImgData):
                         img = (255 * img).astype(np.uint8)
                     pil_img = Image.fromarray(img)
                     img_list.append(pil_img.convert('RGBA' if pil_img.mode=='RGBA' else 'RGB'))
-                    self.full_exif_cache[i] = {"raw_exif": {}, "formatted_exif": {}, "has_exif": False}
+                    self.full_exif_cache[i] = (self.extract_complete_exif(self.flist[i])
+                        if any(self.layout_params[17][11:13]) else
+                        {"raw_exif": {}, "formatted_exif": {}, "has_exif": False})
                 elif cached_paths is not None or (getattr(self, '_video_lazy_frames', False) and not show_custom_func):
                     img_list.append(LazyVideoImage(path, getattr(self, '_video_pixel_provider', None)))
-                    self.full_exif_cache[i] = {'raw_exif': {}, 'formatted_exif': {}, 'has_exif': False}
+                    self.full_exif_cache[i] = (self.extract_complete_exif(self.flist[i])
+                        if any(self.layout_params[17][11:13]) else
+                        {'raw_exif': {}, 'formatted_exif': {}, 'has_exif': False})
                 else:
                     with Image.open(path) as source:
                         img=source.convert('RGBA' if source.mode in ('RGBA','LA') or 'transparency' in source.info else 'RGB')
@@ -1169,9 +1175,12 @@ class ImgManager(ImgData):
     def extract_complete_exif(self, img_path):
         try:
             with Image.open(img_path) as img:
-                if 'exif' not in img.info:
-                    return {"raw_exif": {}, "formatted_exif": {}, "has_exif": False}
-                exif_dict = piexif.load(img.info['exif'])
+                raw=img.info.get('exif')
+                if not raw:
+                    metadata=img.getexif()
+                    if not metadata:return {"raw_exif": {}, "formatted_exif": {}, "has_exif": False}
+                    raw=metadata.tobytes()
+                exif_dict = piexif.load(raw)
                 formatted_exif = {}
                 tag_mappings = self.get_complete_tag_mappings()
                 enabled_fields = set(k for k, v in self.exif_display_config.items() if v)
@@ -1206,6 +1215,7 @@ class ImgManager(ImgData):
 
     def format_field_value(self, field_name, value):
         try:
+            if field_name=='UserComment' and isinstance(value,tuple):value=bytes(value)
             if hasattr(value, 'numerator') and hasattr(value, 'denominator'):
                 num, den = value.numerator, value.denominator
             elif isinstance(value, tuple) and len(value) == 2:
@@ -1315,72 +1325,45 @@ class ImgManager(ImgData):
         return "\n".join(display_lines)
 
     def get_display_title_from_cache(self, img_index, original_title, title_rename_enabled):
-        if not title_rename_enabled:
-            return original_title
-        exif_data = self.full_exif_cache.get(img_index, {"formatted_exif": {}, "has_exif": False})
-        if exif_data["has_exif"]:
-            custom_title = exif_data["formatted_exif"].get("CustomTitle", "N/A")
-            if custom_title != "N/A" and custom_title.strip():
-                path = Path(self.flist[img_index])
-                title_parts = []
-                if hasattr(self, 'type') and self.type in [0, 1]:
-                    if self.title_setting[3]:
-                        title_parts.append(custom_title)
-                    if self.title_setting[5]:
-                        if self.title_setting[3]:
-                            title_parts.append("/")
-                        name = path.stem
-                        if not self.title_setting[4]:
-                            try:
-                                name = name.split("_", 1)[1]
-                            except:
-                                pass
-                        title_parts.append(name)
-                    if self.title_setting[6]:
-                        title_parts.append(path.suffix)
-                    return "".join(title_parts)
-                else:
-                    if self.title_setting[3]:
-                        title_parts.append(path.parent.parts[-1])
-                    if self.title_setting[5]:
-                        if self.title_setting[3]:
-                            title_parts.append("/")
-                        title_parts.append(custom_title)
-                    if self.title_setting[6]:
-                        title_parts.append(path.suffix)
-                    return "".join(title_parts)
-        return original_title
+        if not title_rename_enabled:return original_title
+        exif_data=self.full_exif_cache.get(img_index,{})
+        custom=exif_data.get('formatted_exif',{}).get('CustomTitle','N/A')
+        return custom if custom and custom!='N/A' and custom.strip() else original_title
 
     def update_image_exif_37510(self, img_path, new_title):
+        """Write one source's title; JPEG pixels are never recompressed."""
+        path=Path(img_path)
+        if path.suffix.lower() not in ('.jpg','.jpeg','.png','.tiff','.tif'):return False
+        temporary=None
         try:
-            if not img_path.lower().endswith(('.jpg', '.jpeg', '.tiff', '.tif')):
-                return False
-            img = Image.open(img_path)
-            if 'exif' in img.info:
+            with Image.open(path) as image:
                 try:
-                    exif_dict = piexif.load(img.info['exif'])
-                except:
-                    exif_dict = {"0th": {}, "Exif": {}, "GPS": {}, "1st": {}, "thumbnail": None}
-            else:
-                exif_dict = {"0th": {}, "Exif": {}, "GPS": {}, "1st": {}, "thumbnail": None}
-            user_comment_tag = 0x9286
-            exif_dict["Exif"][user_comment_tag] = piexif.helper.UserComment.dump(new_title, encoding="unicode")
-            exif_bytes = piexif.dump(exif_dict)
-            img.save(img_path, exif=exif_bytes)
-            for i, path in enumerate(self.flist):
-                if str(path) == str(img_path):
-                    if i in self.full_exif_cache:
-                        self.full_exif_cache[i]["has_exif"] = True
-                        self.full_exif_cache[i]["formatted_exif"]["CustomTitle"] = new_title
-                        if "raw_exif" not in self.full_exif_cache[i] or not isinstance(self.full_exif_cache[i]["raw_exif"], dict):
-                            self.full_exif_cache[i]["raw_exif"] = {}
-                        if "Exif" not in self.full_exif_cache[i]["raw_exif"] or not isinstance(self.full_exif_cache[i]["raw_exif"]["Exif"], dict):
-                            self.full_exif_cache[i]["raw_exif"]["Exif"] = {}
-                        self.full_exif_cache[i]["raw_exif"]["Exif"][user_comment_tag] = piexif.helper.UserComment.dump(new_title, encoding="unicode")
-                    break
+                    raw=image.info.get('exif')
+                    if not raw and image.getexif():raw=image.getexif().tobytes()
+                    exif=piexif.load(raw) if raw else {'0th':{},'Exif':{},'GPS':{},'1st':{},'thumbnail':None}
+                except (ValueError,piexif.InvalidImageDataError):
+                    exif={'0th':{},'Exif':{},'GPS':{},'1st':{},'thumbnail':None}
+                exif['Exif'][0x9286]=piexif.helper.UserComment.dump(new_title,encoding='unicode')
+                encoded=piexif.dump(exif)
+                descriptor,temporary=tempfile.mkstemp(prefix='.title-',suffix=path.suffix,dir=str(path.parent))
+                os.close(descriptor)
+                if image.format!='JPEG':
+                    options={key:image.info[key] for key in ('icc_profile','dpi','transparency') if key in image.info}
+                    if image.format=='PNG':
+                        from PIL.PngImagePlugin import PngInfo
+                        info=PngInfo()
+                        for key,value in getattr(image,'text',{}).items():info.add_itxt(key,value)
+                        options['pnginfo']=info
+                    image.save(temporary,format=image.format,exif=encoded,**options)
+            if path.suffix.lower() in ('.jpg','.jpeg'):
+                piexif.insert(encoded,str(path),temporary)
+            os.replace(temporary,path)
+            for index,source in enumerate(self.flist):
+                if str(source)==str(path):self.full_exif_cache[index]=self.extract_complete_exif(path)
             return True
-        except:
-            return False
+        except (OSError,ValueError,piexif.InvalidImageDataError):return False
+        finally:
+            if temporary is not None and os.path.exists(temporary):os.unlink(temporary)
 
     def update_exif_config(self, new_config):
         self.exif_display_config = new_config
@@ -1406,6 +1389,7 @@ class ImgManager(ImgData):
     def stitch_img_init(self, img_mode, draw_points, flist=None, first_run=True):
         """img_mode, 0: show, 1: save"""
         # init
+        unit_gap = gap_pair(self.layout_params[3], 'unit')
         show_all_func = len(self.layout_params) > 38 and self.layout_params[38]
         if show_all_func:
 
@@ -1503,7 +1487,7 @@ class ImgManager(ImgData):
             crop_height = self.crop_points[0][3]-self.crop_points[0][1]
             magnifer_row_col = self.layout_params[29]
             _, delta, magnifier_img_all_size = self.ImgF.cal_magnifier_size(
-                self.layout_params[8], [crop_width, crop_height], 0, self.layout_params[3][6:8], self.to_size, magnifer_row_col, self.show_original, box_position=self.box_position, row_col_img_unit=self.layout_params[2], img_unit_gap=self.layout_params[3][4:6], magnifier_format=self.layout_params[34])
+                self.layout_params[8], [crop_width, crop_height], 0, gap_pair(self.layout_params[3], 'magnifier'), self.to_size, magnifer_row_col, self.show_original, box_position=self.box_position, row_col_img_unit=self.layout_params[2], img_unit_gap=unit_gap, magnifier_format=self.layout_params[34])
             img_preprocessing_sub.append(self.magnifier_preprocessing)
 
             if layout_level_2[0] == 0:
@@ -1635,12 +1619,12 @@ class ImgManager(ImgData):
         for row in range(row_col2[0]):
             for col in range(row_col2[1]):
                 i = row*row_col2[1]+col
-                if gap_x_y_2[1][row,col]>=0 and gap_x_y_2[1][row,col]<=self.layout_params[3][5] and gap_x_y_2[0][row,col]>=0 and gap_x_y_2[0][row,col]<=self.layout_params[3][4]:
+                if gap_x_y_2[1][row,col]>=0 and gap_x_y_2[1][row,col]<=unit_gap[1] and gap_x_y_2[0][row,col]>=0 and gap_x_y_2[0][row,col]<=unit_gap[0]:
                     if col!=0 and gap_x_y_2[0][row,col]==0 and i<sum(layout_level_2):
-                        gap_x_y_2[0][row,col] = self.layout_params[3][4]
+                        gap_x_y_2[0][row,col] = unit_gap[0]
 
                     if row!=0 and gap_x_y_2[1][row,col]==0 and i<sum(layout_level_2):
-                        gap_x_y_2[1][row,col] = self.layout_params[3][5]
+                        gap_x_y_2[1][row,col] = unit_gap[1]
 
                 # Image and decoded-video tiles share the same geometry.
                 # Center smaller magnifier cells in the original's column.
@@ -1674,8 +1658,20 @@ class ImgManager(ImgData):
             # Since the title is up, we need to correct crop_points.
             self.crop_points_process(copy.deepcopy(draw_points), img_mode=img_mode)
 
-        gap_x_y_1 = [self.layout_params[3][2], self.layout_params[3][3]]
-        gap_x_y_0 = [self.layout_params[3][0], self.layout_params[3][1]]
+        gap_x_y_1 = gap_pair(self.layout_params[3], 'one')
+        gap_x_y_0 = gap_pair(self.layout_params[3], 'xy')
+        if show_all_func:
+            # The synchronous fallback expands the XY grid across algorithms.
+            # Use Func spacing at algorithm boundaries and XY spacing inside
+            # each algorithm, matching the asynchronous mosaic compositor.
+            func_x, func_y = gap_pair(self.layout_params[3], 'func')
+            xy_x, xy_y = gap_x_y_0
+            original_rows, original_cols = self._original_row_col
+            gap_x_y_0 = [
+                np.array([0] + [func_x if col % original_cols == 0 else xy_x
+                    for col in range(1, row_col0[1])]),
+                np.array([0] + [func_y if row % original_rows == 0 else xy_y
+                    for row in range(1, row_col0[0])])]
         width_1, height_1 = [[], []]
         width_0, height_0 = [[], []]
         target_width_2, target_height_2 = [
@@ -1715,8 +1711,8 @@ class ImgManager(ImgData):
             self.show_box = self.layout_params[14]
             if self.show_original and self.show_box and len(draw_points) != 0:
                 crop_points = self.crop_points
-                offset = [self.title_max_size[0]+self.layout_params[3]
-                        [4], self.title_max_size[1]+self.layout_params[3][5]]
+                unit_gap = gap_pair(self.layout_params[3], 'unit')
+                offset = [self.title_max_size[0]+unit_gap[0], self.title_max_size[1]+unit_gap[1]]
                 for crop_point in crop_points:
                     up = crop_point[-1]  # down(False) or up(True)
                     if (up and self.title_setting[2] and self.title_setting[1]) or ((not up) and self.title_setting[2] and self.title_setting[1]):
@@ -1730,7 +1726,7 @@ class ImgManager(ImgData):
                 else:
                     filtered_xy_grid = self.xy_grid
                 self.img = self.ImgF.draw_rectangle(
-                    self.img, filtered_xy_grid, crop_points, self.layout_params[9], line_width=self.layout_params[10][0])
+                    self.img, filtered_xy_grid, crop_points, self.layout_params[9], line_width=self.layout_params[10][0], in_place=True)
             if self.layout_params[32]:
                 self.customfunc_img = self.img
         return 0
@@ -2125,7 +2121,7 @@ class ImgManager(ImgData):
             if crop_point_scale[6]:
                 # A box drawn below a title uses the title geometry of the
                 # displayed page, preserved in video render snapshots.
-                offset_y = self.title_max_size[1] + self.layout_params[3][5]
+                offset_y = self.title_max_size[1] + gap_pair(self.layout_params[3], 'unit')[1]
                 crop_point[1] -= offset_y
                 crop_point[3] -= offset_y
 
@@ -2160,12 +2156,12 @@ class ImgManager(ImgData):
             crop_point = copy.deepcopy(crop_point)
             img_list.append(img.crop(tuple(crop_point[0:4])))
 
-        gap = self.layout_params[3][6:8]
+        gap = gap_pair(self.layout_params[3], 'magnifier')
 
         # get the size of magnifier img
         magnifer_row_col = self.layout_params[29]
         to_resize, delta, magnifier_img_all_size = self.ImgF.cal_magnifier_size(
-            magnifier_scale, list(img_list[0].size), img_mode, gap, self.to_size, magnifer_row_col, self.show_original, box_position=self.box_position, row_col_img_unit=self.layout_params[2], img_unit_gap=self.layout_params[3][4:6], magnifier_format=self.layout_params[34])
+            magnifier_scale, list(img_list[0].size), img_mode, gap, self.to_size, magnifer_row_col, self.show_original, box_position=self.box_position, row_col_img_unit=self.layout_params[2], img_unit_gap=gap_pair(self.layout_params[3], 'unit'), magnifier_format=self.layout_params[34])
 
         # resize images
         line_width = self.layout_params[10][1]
@@ -2214,7 +2210,7 @@ class ImgManager(ImgData):
 
         # stitch magnifier img
         img = Image.new('RGBA', tuple(magnifier_img_all_size), self.gap_color)
-        gap = self.layout_params[3][6:8]
+        gap = gap_pair(self.layout_params[3], 'magnifier')
         magnifer_row_col = self.layout_params[29]
         width = [to_resize[0] for i in range(magnifer_row_col[1])]
         height = [to_resize[1] for i in range(magnifer_row_col[0])]
@@ -2338,7 +2334,7 @@ class ImgManager(ImgData):
 
     def save_select(self, dir_name):
         paths=list(self.flist)
-        names=source_names(self,paths)
+        names=source_names(self,paths,readable=True)
         variants=[('original',None)]
         if self.layout_params[32]:
             self.get_img_list(show_custom_func=True,flist=paths)
@@ -2749,7 +2745,7 @@ class ImgManager(ImgData):
     def save_select_for_algorithm(self, algorithm_name):
         self.get_img_list(show_custom_func=True,flist=self.flist)
         base=Path(self.out_path_str)/'algorithms'/algorithm_name/'processed'
-        for name,image in zip(source_names(self,self.flist),self.img_list):
+        for name,image in zip(source_names(self,self.flist,readable=True),self.img_list):
             target=base/name;target.parent.mkdir(parents=True,exist_ok=True)
             self.ImgF.save_img_diff_format(target,image,save_format=self.layout_params[35],use_vector_titles=False)
 

@@ -23,6 +23,24 @@ class FrameNames(Sequence):
     def __deepcopy__(self, _memo):
         return self
 
+def video_source_names(paths, directories=False):
+    """Readable video stems, unique even across folders, extensions and case."""
+    import re
+    from pathlib import Path
+    names=[];used=set()
+    for path in paths:
+        label=Path(path).name if directories else Path(path).stem
+        stem=re.sub(r'[<>:"/\\|?*\x00-\x1f]','_',label).strip(' .') or 'source'
+        if stem.split('.')[0].upper() in {'CON','PRN','AUX','NUL'} or re.fullmatch(r'(COM|LPT)[1-9]',stem.upper()):
+            stem='_'+stem
+        stem=stem[:100]
+        name=stem;number=2
+        while name.casefold() in used:
+            name=f'{stem}_{number:03d}';number+=1
+        used.add(name.casefold());names.append(name)
+    return names
+
+
 def frame_filename(index, fps, step=1, extension="jpeg"):
     physical = int(index)*max(1,int(step))
     fps = float(fps or 0)

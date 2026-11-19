@@ -13,6 +13,9 @@ from pathlib import Path
 import numpy as np
 from PIL import Image
 from .video_paths import manager_cache_format
+from .layout_gaps import gap_pair
+from .video_memory import mosaic_working_bytes
+from .disk_canvas import disk_backed, render_lane, DiskCanvas
 from .cache_layout import page_name, component, CachedCanvas, cache_image_extension, save_cache_image
 from .custom_func.contract import specification, original_index, display_indices, display_grid, processing_indices
 
@@ -127,21 +130,31 @@ class MosaicPlan:
             canvas_size,_,_=manager.ImgF.layout_2d(layout,manager.gap_color,[],manager.img_preprocessing,subprocessing,
                 [manager.img_vertical,manager.one_img_vertical,manager.img_unit_vertical],manager.onetitle,
                 [manager.title_init,manager.title_preprocessing],measure_only=True)
+        manager._disk_backed_canvas=disk_backed(canvas_size) if canvas_size is not None else None
         size=self.cache.composition_bytes(self.paths,{} if index is None else {0:inputs},manager,canvas_size=canvas_size)
+        resident=size
+        if manager._disk_backed_canvas:
+            # Reserve the mode's lane to drain competing work, but validate
+            # only resident scratch RAM: canvas pixels live in temporary maps.
+            size=max(size,self.cache.budget.memory or size)
         def stale():return not self.cache.node_valid(self.owner,self.epoch,self.batch,algorithm)
-        with self.cache.budget.acquire(size,stale,priority=1,
+        with render_lane(canvas_size or (0,0),lambda:self.cache._image_priority(self.owner,self.batch),stale), self.cache.budget.acquire(size,stale,priority=1,resident_size=resident,
                 order=lambda:self.cache._image_priority(self.owner,self.batch),
                 units=1/(1+len(processing_indices(self.manager._custom_algorithm_registry,self.manager.layout_params)))):
             started=time.perf_counter()
             manager._video_memory_budget=size
+            def checkpoint():
+                if stale():raise CancelledError()
+            manager._render_checkpoint=checkpoint
             flag=manager.stitch_images(0,copy.deepcopy(self.points),flist=self.paths,prepared_layout=prepared_layout)
             if flag!=0 or manager.img is None:raise RuntimeError(f'{algorithm}: mosaic failed')
             state={name:getattr(manager,name) for name in RENDER_STATE if hasattr(manager,name)}
             try:
+                checkpoint()
                 self.cache.request_prune()
                 entry['directory'].mkdir(parents=True)
                 path=entry['directory']/page_name(self.batch,cache_image_extension(self.manager))
-                with open(path,'wb') as stream:save_cache_image(manager.img,stream,cache_image_extension(self.manager))
+                with open(path,'wb') as stream:save_cache_image(manager.img,stream,cache_image_extension(self.manager),checkpoint=checkpoint)
                 info=path.with_suffix('.json')
                 info.write_text(json.dumps(dict(algorithm=algorithm,page=self.batch+1,
                     inputs=list(self.paths)),ensure_ascii=False,indent=2),encoding='utf-8')
@@ -151,12 +164,14 @@ class MosaicPlan:
                     entry['reserved']=0
                 if stale():raise CancelledError()
                 target=self.cache.visible.root/component(algorithm)/'stitched'
-                entry['_public_target']=target;entry['_public_files']={path.name:path,info.name:info}
+                entry['_public_target']=target;entry['_public_files']={'frames/'+path.name:path,'json/'+info.name:info}
                 self.cache.publish_entry(entry,lambda:not self.cancelled())
                 with self.cache.lock:
                     entry['bytes']=amount+entry.get('_visible_copied',0);entry['reserved']=0
                 if pixel_cache is not None:
-                    pixel_cache.put(str(path),manager.img,priority=True)
+                    current=self.cache.windows.get(self.owner,(None,None,None))[2]
+                    if not isinstance(manager.img,DiskCanvas) or self.batch==current:
+                        pixel_cache.put(str(path),manager.img,priority=True)
                     pixel_cache.put_header(str(path),manager.img.size,manager.img.mode)
                 with self.cache.lock:
                     self.stage.completed+=1;self.stage.seconds+=time.perf_counter()-started
@@ -203,11 +218,17 @@ class MosaicPlan:
             if cached is not None:width=max(width,cached.width);height=max(height,cached.height)
             else:
                 with Image.open(path) as image:width=max(width,image.width);height=max(height,image.height)
-        charge=max(32*1024**2,width*height*slots*16+width*height*8)
+        # The final algorithm grid is a separate layout level: retain the
+        # configured horizontal/vertical gaps between its cached mosaics.
+        gap_x,gap_y=gap_pair(params[3], 'func')
+        canvas_width=width*cols+gap_x*(cols-1)
+        canvas_height=height*rows+gap_y*(rows-1)
+        charge=mosaic_working_bytes((canvas_width,canvas_height),width*height)
         with self.cache.budget.acquire(charge,self.cancelled,priority=2,
                 order=lambda:self.cache._image_priority(self.owner,self.batch)):
             base_artifact=artifacts[indices[0]] if indices else reference
-            canvas=Image.new('RGBA',(width*cols,height*rows),tuple(base_artifact[1]['gap_color']))
+            from .disk_canvas import new_canvas
+            canvas=new_canvas('RGBA',(canvas_width,canvas_height),tuple(base_artifact[1]['gap_color']))
             state=copy.deepcopy(base_artifact[1])
             xy=[];ids=[];source_slots=[];blanks=set();titles=[]
             base_state=base_artifact[1]
@@ -215,7 +236,7 @@ class MosaicPlan:
             for slot in range(slots):
                 if algorithm_grid and params[40]:row=slot%rows;col=slot//rows
                 else:row,col=divmod(slot,cols)
-                x,y=col*width,row*height
+                x,y=col*(width+gap_x),row*(height+gap_y)
                 present=slot<len(indices)
                 current=artifacts[indices[slot]][1] if present else base_state
                 if present:

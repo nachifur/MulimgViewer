@@ -17,6 +17,58 @@ from mulimgviewer.src.video_memory import LazyVideoImage, PixelCache, source_res
 
 
 class CacheLayoutTests(unittest.TestCase):
+    def test_page_json_separation_and_format_change_cleanup_preserve_replacement(self):
+        from mulimgviewer.src.cache_layout import write_page_catalog, page_catalog_path, remove_page_catalog
+        with tempfile.TemporaryDirectory() as directory:
+            frames=Path(directory)/'composed/frames';frames.mkdir(parents=True)
+            png=frames/'page_000001.png';jpg=png.with_suffix('.jpeg')
+            Image.new('RGB',(10,6)).save(png)
+            write_page_catalog(png,0,'image',['source.png'])
+            target=page_catalog_path(png)
+            self.assertEqual(target,frames.parent/'json'/'page_000001.json')
+            self.assertEqual(json.loads(target.read_text())['size'],[10,6])
+            Image.new('RGB',(10,6)).save(jpg)
+            write_page_catalog(jpg,0,'video',['source.mp4'],(10,6))
+            remove_page_catalog(png)
+            self.assertTrue(target.exists(),'Old format cleanup must preserve the new descriptor')
+            remove_page_catalog(jpg)
+            self.assertFalse(target.exists())
+
+    def test_video_cache_names_are_readable_and_collision_safe(self):
+        from mulimgviewer.src.video_paths import video_source_names
+        paths=['one/01.mp4','two/01.mp4','three/01_002.mov','four/01.MOV','CON.mp4']
+        names=video_source_names(paths)
+        self.assertEqual(names,['01','01_002','01_002_002','01_003','_CON'])
+        self.assertEqual(len(set(name.casefold() for name in names)),len(paths))
+
+    def test_cache_catalog_is_separate_from_video_frames_and_points_to_original(self):
+        from mulimgviewer.src.cache_layout import write_source_catalog
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory)
+            manager=SimpleNamespace(video_mode=True,path_list=['cache/sources/frames/video/01'],
+                _cache_original_paths=['original/01.mp4'],video_fps_list=[30],video_num_list=[100],skip=0)
+            write_source_catalog(manager,root,split_media=True)
+            target=root/'sources/json/video/01.json'
+            self.assertTrue(target.is_file())
+            self.assertEqual(json.loads(target.read_text(encoding='utf-8'))['path'],str(Path('original/01.mp4').absolute()))
+            self.assertFalse((root/'sources/video').exists())
+
+    def test_image_view_copy_fallback_and_shared_page_pruning_preserve_original(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory);original=root/'original.png';original.write_bytes(b'original pixels')
+            publisher=VisibleCache(root/'sources/frames')
+            target=publisher.root/'image';first={'page':0};second={'page':1}
+            with patch('mulimgviewer.src.cache_layout.os.link',side_effect=OSError('Hard links unavailable')):
+                publisher.publish(target,{'photos/original.png':original},first)
+                publisher.publish(target,{'photos/original.png':original},second)
+            cached=target/'photos/original.png'
+            self.assertEqual(cached.read_bytes(),original.read_bytes())
+            publisher.remove(first)
+            self.assertTrue(cached.exists(),'Overlapping pages must share their cached source')
+            publisher.remove(second)
+            self.assertFalse(cached.exists())
+            self.assertEqual(original.read_bytes(),b'original pixels')
+
     def test_public_hardlink_alias_does_not_trigger_false_escape(self):
         with tempfile.TemporaryDirectory() as directory:
             root=Path(directory);source=root/'private.png';source.write_bytes(b'pixels')

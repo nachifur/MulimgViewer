@@ -2,6 +2,7 @@
 _version.py
 _metainfo.py
 .vscode/
+/tools/ffmpeg/
 test_output/mag*
 test_output/select*
 *.csv

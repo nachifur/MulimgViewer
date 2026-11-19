@@ -12,6 +12,7 @@ from .custom_pipeline import CustomPipeline, WorkBudget, current_only
 from .export_formats import PNG, JPG
 from .custom_workers import ImageWorkers
 from .video_timeline import page_segments
+from .layout_gaps import gap_pair
 
 
 def source_slot(manager, grid=0):
@@ -27,18 +28,18 @@ def source_slot(manager, grid=0):
     return slot if 0<=slot<len(manager.flist) else None
 
 
-def selection_slots(manager, slot=0):
-    """Pick a page-relative item across actual parallel sources, by position.
+def parallel_selection(manager):
+    if getattr(manager,'parallel_to_sequential',False):return False
+    mode=getattr(manager,'_cache_input_mode','')
+    if mode:return mode in ('Parallel auto','Parallel manual')
+    return getattr(manager,'type',None) in (0,1)
 
-    Sequential, flattened parallel and image file lists select one entry.
-    Parallel video file lists use their rendered parallel source groups too.
-    A shorter source is skipped instead of choosing a different item.
-    """
+
+def selection_slots(manager, slot=0):
+    """Only parallel auto/manual inputs select across sources, by position."""
     paths=list(manager.flist)
     if slot is None or not 0<=slot<len(paths):return []
-    parallel=(getattr(manager,'type',None) in (0,1) or
-        (getattr(manager,'video_mode',False) and len(getattr(manager,'path_list',()))>1))
-    if not parallel or getattr(manager,'parallel_to_sequential',False):return [slot]
+    if not parallel_selection(manager):return [slot]
     groups={}
     for index,path in enumerate(paths):
         groups.setdefault(str(Path(path).parent.absolute()),[]).append(index)
@@ -107,7 +108,7 @@ def export_page(manager,root,output,memory=None,workers=1,defer_moves=False,sele
     root=Path(root)/('video' if getattr(manager,'video_mode',False) else 'image')
     root.mkdir(parents=True,exist_ok=True)
     if write_catalog:write_source_catalog(manager,root)
-    names=source_names(manager,paths)
+    names=source_names(manager,paths,readable=True)
     slots=selection_slots(manager) if selected_slots is None else list(dict.fromkeys(selected_slots))
     if any(not 0<=i<len(paths) for i in slots):raise ValueError('Selection is outside the exported page')
     moves=[]
@@ -210,7 +211,10 @@ def export_page(manager,root,output,memory=None,workers=1,defer_moves=False,sele
                     width=max(mosaics[i][1][0] for i in (visible or [original]))
                     height=max(mosaics[i][1][1] for i in (visible or [original]))
                     rows,cols=display_grid(registry,params)
-                    charge=width*height*(rows*cols+1)*8
+                    gap_x,gap_y=gap_pair(params[3], 'func')
+                    canvas_width=width*cols+gap_x*(cols-1)
+                    canvas_height=height*rows+gap_y*(rows-1)
+                    charge=(canvas_width*canvas_height+width*height)*8
                 else:charge=0
                 checkpoint()
                 with stage.budget.acquire(charge,cancelled,priority=2):
@@ -220,16 +224,12 @@ def export_page(manager,root,output,memory=None,workers=1,defer_moves=False,sele
                         target.parent.mkdir(parents=True,exist_ok=True)
                         shutil.copyfile(source,target)
                     elif bits&1:
-                        rows,cols=display_grid(registry,params)
-                        width=max(mosaics[i][1][0] for i in (visible or [original]))
-                        height=max(mosaics[i][1][1] for i in (visible or [original]))
-                        charge=width*height*(rows*cols+1)*8
                         if memory is not None and charge>memory:raise MemoryError('Export canvas exceeds the memory budget')
-                        canvas=Image.new('RGBA',(width*cols,height*rows),tuple(manager.gap_color))
+                        canvas=Image.new('RGBA',(canvas_width,canvas_height),tuple(manager.gap_color))
                         titles=[]
                         for slot,index in enumerate(visible):
                             row,col=(slot%rows,slot//rows) if (params[32] or params[38]) and params[40] else divmod(slot,cols)
-                            x,y=col*width,row*height
+                            x,y=col*(width+gap_x),row*(height+gap_y)
                             with Image.open(mosaics[index][0]) as image:canvas.paste(image,(x,y))
                             for title in states[index]:
                                 title=copy.deepcopy(title);title['x']+=x;title['y']+=y;titles.append(title)
@@ -296,7 +296,10 @@ def save_viewer(viewer,event=None,*,selection_only=False,selected_grid=None):
     with ExitStack() as resources:
         source=manager;manager=source.video_stitch_snapshot()
         manager.video_mode=bool(viewer.shared_config.video_mode)
-        if manager.video_mode:manager.layout_params[11]=False
+        if manager.video_mode:
+            manager.layout_params[11]=False
+            manager._cache_original_paths=list(getattr(viewer.shared_config,'real_video_path',
+                getattr(manager,'_cache_original_paths',())))
         manager.flist=list(getattr(source,'flist',()))
         manager._flist_groups=copy.deepcopy(getattr(source,'_flist_groups',None))
         manager._export_checkpoint=checkpoint

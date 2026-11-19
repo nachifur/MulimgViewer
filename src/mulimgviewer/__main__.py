@@ -100,10 +100,7 @@ class MainAPP(wx.App):
         if normalized_input:
             self._last_manual_paths = normalized_input
             if not self.frame[0].shared_config.video_mode:
-                self.frame[0].ImgManager.init(normalized_input, 1, ptos_flag)
-                self.frame[0].show_img_init()
-                self.frame[0].ImgManager.set_action_count(0)
-                self.frame[0].show_img()
+                self.frame[0]._open_image_input(normalized_input,1)
 
         if type == -1:
             try:

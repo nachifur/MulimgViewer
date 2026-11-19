@@ -1,0 +1,19 @@
+---
+name: mulimgviewer
+channels:
+  - conda-forge
+  - nodefaults
+dependencies:
+  - python=3.11
+  - pip
+  # Native packages come from Conda on Windows, Linux and macOS.
+  - ffmpeg>=6
+  - wxpython>=4.2
+  - numpy
+  - pillow
+  - av>=12
+  - psutil>=5.9
+  - reportlab
+  # Reuse the Python dependency list; pip recognizes the packages above.
+  - pip:
+      - -r requirements.txt

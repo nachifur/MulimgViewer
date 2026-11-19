@@ -14,6 +14,7 @@ from .index_table import IndexTable
 from .index_catalog import IndexCatalog
 from .display_modes import auto_title_fields
 from .display_modes import loaded_input_mode
+from .layout_gaps import normalize_gaps
 from .custom_func.main import get_available_algorithms
 from .custom_func.runtime import capture_algorithms, compiled_source, AlgorithmSession
 from .utils import MyTestEvent, get_resource_path
@@ -184,22 +185,24 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
         self.Bind(wx.EVT_CONTEXT_MENU, self.on_right_click)
         self.custom_algorithms = []
         self._bind_compat_events()
+        if not getattr(self.ImgManager,'img_num',0):self._show_input_status()
         self._bind_settings_wheel_guard()
 
         def _bind_accel_guard_recursive(parent):
             for child in parent.GetChildren():
-                if isinstance(child, (wx.TextCtrl, wx.SpinCtrl, wx.SpinCtrlDouble)):
+                if isinstance(child, (wx.TextCtrl, wx.SearchCtrl, wx.ComboBox, wx.SpinCtrl, wx.SpinCtrlDouble)):
                     child.Bind(wx.EVT_SET_FOCUS, self.disable_accel)
                     child.Bind(wx.EVT_KILL_FOCUS, self.enable_accel)
                 _bind_accel_guard_recursive(child)
         _bind_accel_guard_recursive(self)
+        self._sync_accelerator_focus()
+        self.scrolledWindow_img.Bind(wx.EVT_KEY_DOWN, self.key_down_detect)
+        self.scrolledWindow_img.Bind(wx.EVT_KEY_UP, self.key_up_detect)
         self._restore_window_state()
 
     def _bind_legacy_control_aliases(self):
         # Keep older handwritten logic working after GUI control renames.
         alias_map = {
-            "title_show_rename": "m_checkBox31",
-            "title_rename_text": "m_textCtrl16",
             "custom_algorithm_input": "addfunc",
             "m_textCtrl28": "interval",
             "m_textCtrl30": "cache_frames",
@@ -211,17 +214,18 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
                 setattr(self, legacy_name, getattr(self, current_name))
 
     def _bind_compat_events(self):
+        self._sync_title_controls()
         self.power_mode.Bind(wx.EVT_ENTER_WINDOW, self._show_thread_pipeline_status)
         self.power_mode.Bind(wx.EVT_CHOICE, self.on_power_mode_changed)
         self.interval.Bind(wx.EVT_TEXT, self._on_interval_text_edited)
         if hasattr(self, "title_exif"):
             self.title_exif.Bind(wx.EVT_CHECKBOX, self.on_title_exif_changed)
 
-        if hasattr(self, "title_rename_text"):
-            self.title_rename_text.Bind(wx.EVT_SET_FOCUS, self.disable_accel)
-            self.title_rename_text.Bind(wx.EVT_KILL_FOCUS, self.enable_accel)
-        if hasattr(self, "title_show_rename"):
-            self.title_show_rename.Bind(wx.EVT_CHECKBOX, self.title_rename_fc)
+        if hasattr(self, "rename_edit_txt"):
+            self.rename_edit_txt.Bind(wx.EVT_SET_FOCUS, self.disable_accel)
+            self.rename_edit_txt.Bind(wx.EVT_KILL_FOCUS, self.enable_accel)
+        if hasattr(self, "rename"):
+            self.rename.Bind(wx.EVT_CHECKBOX, self.title_rename_fc)
 
         if hasattr(self, "show_all_func"):
             self.show_all_func.Bind(wx.EVT_CHECKBOX, self.on_show_all_func_changed)
@@ -885,7 +889,49 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
             self._normal_window_size = (size[0], size[1])
         self.auto_layout(frame_resize=True)
 
+    def _open_image_input(self, path, kind):
+        candidate=copy.copy(self.ImgManager)
+        try:
+            candidate.init(path,type=kind,parallel_to_sequential=bool(
+                kind in (0,1) and self.parallel_to_sequential.GetValue()))
+            if not getattr(candidate,'img_num',0):
+                raise ValueError('No supported image files found; enable Video mode to open videos')
+        except (OSError,ValueError,UnicodeError,IndexError,TypeError) as error:
+            self._show_input_status(f'Unable to open images: {error}','Input error',path,persistent=True)
+            return False
+        previous=dict(self.ImgManager.__dict__)
+        previous_position=(self.shared_config.batch_idx,self.shared_config.input_mode)
+        def restore():
+            self.ImgManager.__dict__.clear();self.ImgManager.__dict__.update(previous)
+            self.shared_config.batch_idx,self.shared_config.input_mode=previous_position
+        self.ImgManager.__dict__.update(candidate.__dict__)
+        self.shared_config.input_mode=1 if kind in (0,1) else kind
+        self.shared_config.batch_idx=0
+        self.choice_input_mode.SetSelection({2:0,0:1,1:2,3:3}[kind])
+        self._show_input_status('Loading images','Loading',path)
+        try:
+            if not self.show_img_init():
+                restore()
+                self._show_input_status(self.m_statusBar1.GetStatusText(2),'Input error',path,persistent=True)
+                return False
+            self.ImgManager.set_action_count(0)
+            self.show_img()
+            self._reset_image_view_origin()
+        except (OSError,ValueError,RuntimeError,IndexError) as error:
+            restore()
+            self._show_input_status(f'Unable to display images: {error}','Display error',path)
+            return False
+        return True
+
     def open_all_img(self, event):
+        previous=(self.shared_config.batch_idx,self.shared_config.input_mode)
+        try:return self._open_all_img(event)
+        except Exception as error:
+            self.shared_config.batch_idx,self.shared_config.input_mode=previous
+            self._show_input_status(f'Unable to open input: {error}','Input error',persistent=True)
+            return False
+
+    def _open_all_img(self, event):
         previous_batch = self.shared_config.batch_idx
         previous_input_mode = self.shared_config.input_mode
         input_mode = self.choice_input_mode.GetSelection()
@@ -929,8 +975,9 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
                            wx.DD_DEFAULT_STYLE | wx.DD_DIR_MUST_EXIST)
             try:
                 if dlg.ShowModal() != wx.ID_OK:
+                    self._show_input_status('Input selection cancelled','Cancelled')
                     return False
-                self.ImgManager.init(dlg.GetPath(), type=0, parallel_to_sequential=self.parallel_to_sequential.Value)
+                return self._open_image_input(dlg.GetPath(),0)
             finally:
                 dlg.Destroy()
         self.show_img_init()
@@ -999,7 +1046,7 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
         if pipeline.closed and getattr(vm,'_closed',False):
             from .cache_shutdown import schedule_cache_removal
             root=Path(vm.cache_dir).absolute()
-            if root!=pipeline.directory.parent.absolute():
+            if root!=pipeline.cache_root.absolute():
                 raise ValueError('Image and video cache roots differ; refusing recursive cleanup')
             pools=(pipeline.coordinator,pipeline.pool,pipeline.display,*pipeline.retired_pools,
                    vm._cache_executor,vm.executor,vm.stitch_executor,vm._maintenance_executor,vm._display_executor,
@@ -1128,6 +1175,7 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
         start_save(self,event)
 
     def refresh(self, event):
+        self._sync_title_controls()
         self._auto_fit_serial=getattr(self,'_auto_fit_serial',0)+1
         self._auto_fit_pending=None
         self._custom_settings_dirty=False
@@ -1195,20 +1243,6 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
                 self.shared_config.batch_idx = self.ImgManager.max_action_num - 1
 
         if self.shared_config.video_mode:
-            current_batch = self.shared_config.batch_idx
-            current_count_per_action = self.shared_config.count_per_action
-
-            last_batch = getattr(self, '_last_refresh_batch', None)
-            last_count_per_action = getattr(self, '_last_refresh_count_per_action', None)
-            if (last_batch != current_batch or
-                last_count_per_action != current_count_per_action or
-                last_batch is None):
-                self.video_manager.update_cache()
-                self._last_refresh_batch = current_batch
-                self._last_refresh_count_per_action = current_count_per_action
-            else:
-                pass
-
             if self.ImgManager.action_count >= self.ImgManager.max_action_num:
                 self.ImgManager.action_count = self.ImgManager.max_action_num-1
                 self.shared_config.batch_idx = self.ImgManager.action_count
@@ -1225,7 +1259,15 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
 
             # 更新状态
             self.shared_config.batch_idx = clamped
-            self.ImgManager.action_count = clamped
+            self.ImgManager.set_action_count(clamped)
+            # Capture only the final requested page. During playback the
+            # previous pending page can be ahead of the visible slider value.
+            current_count_per_action = self.shared_config.count_per_action
+            if (getattr(self,'_last_refresh_batch',None)!=clamped or
+                    getattr(self,'_last_refresh_count_per_action',None)!=current_count_per_action):
+                self.video_manager.update_cache()
+                self._last_refresh_batch=clamped
+                self._last_refresh_count_per_action=current_count_per_action
 
         if self.ImgManager.img_num != 0:
             # 图片模式：读取文本框值并跳转到对应位置
@@ -1275,6 +1317,9 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
 
     def _invalidate_render_cache(self):
         """Clear current cache to force restitching (shared by video/image modes)."""
+        if self.shared_config.video_mode and self.shared_config.is_playing:
+            self._suspend_play_timer_for_wait()
+            self._cancel_pending_frame_wait()
         self.shared_config.image_cache_img = []
         self.shared_config.image_cache_paths = []
         if hasattr(self, 'image_pipeline'):
@@ -1308,8 +1353,9 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
 
             try:
                 if dlg.ShowModal() != wx.ID_OK:
+                    self._show_input_status('Input selection cancelled','Cancelled')
                     return False
-                self.ImgManager.init(dlg.GetPath(), type=2)
+                return self._open_image_input(dlg.GetPath(),2)
             finally:
                 dlg.Destroy()
         if self.shared_config.video_mode:
@@ -1337,6 +1383,7 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
                             wx.FD_DEFAULT_STYLE | wx.FD_FILE_MUST_EXIST)
         try:
             if dlg.ShowModal() != wx.ID_OK:
+                self._show_input_status('Input selection cancelled','Cancelled')
                 return False
             path = dlg.GetPath()
         finally:
@@ -1346,25 +1393,7 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
         return self._open_image_file_list(path)
 
     def _open_image_file_list(self, path):
-        # Validate on a shallow metadata copy so a bad list preserves the
-        # current manager (also referenced by the video/cache controllers).
-        candidate = copy.copy(self.ImgManager)
-        try:
-            candidate.init(path, type=3)
-        except (OSError, ValueError, UnicodeError) as error:
-            self.SetStatusText_(['Input', '-1', f'Unable to read image list: {error}', '-1'])
-            return False
-        if not len(candidate.path_list):
-            self.SetStatusText_(['Input', '-1', 'No valid image files in this list', '-1'])
-            return False
-        self.ImgManager.__dict__.update(candidate.__dict__)
-        self.shared_config.input_mode = 3
-        self.choice_input_mode.SetSelection(3)
-        self.show_img_init()
-        self.ImgManager.set_action_count(0)
-        self.show_img()
-        self.choice_input_mode.SetSelection(3)
-        return True
+        return self._open_image_input(path,3)
 
     def input_flist_parallel_manual(self, event):
         # Initialize the image stitch pool
@@ -1551,6 +1580,10 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
 
 
     def img_left_click(self, event):
+        if not (self.indextablegui or self.aboutgui):
+            # StaticBitmap is not focusable on every platform. Focus the
+            # viewport so clicking the image reliably exits text-editing mode.
+            self.scrolledWindow_img.SetFocus()
         if not len(getattr(self.ImgManager, 'xy_grid', [])):
             return
 
@@ -1569,14 +1602,14 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
             x = x-xy_grid[0]
             y = y-xy_grid[1]
             x_y_array = []
-            for i in range(len(self.ImgManager.crop_points)):
+            for i in range(min(len(self.ImgManager.crop_points),len(self.xy_magnifier))):
                 x_y_array.append(self.get_center_box(
                     self.ImgManager.crop_points[i][0:4]))
-            x_y_array = np.array(x_y_array)
-            dist = (x_y_array[:, 0]-x)**2+(x_y_array[:, 1]-y)**2
-            self.box_id = np.array(dist).argmin()
-            str_ = str(self.box_id)
-            self.SetStatusText_(["Select "+str_+"-th box",  "-1", "-1", "-1"])
+            self.box_id = -1
+            if x_y_array:
+                x_y_array = np.array(x_y_array)
+                dist = (x_y_array[:, 0]-x)**2+(x_y_array[:, 1]-y)**2
+                self.box_id = int(np.argmin(dist))
 
             self.start_flag = 0
         else:
@@ -1609,17 +1642,15 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
 
             self.SetStatusText_(["Flip", "-1", "-1", "-1"])
 
-        # focus img
-        if self.indextablegui or self.aboutgui:
-            pass
-        else:
-            self.img_panel.Children[0].SetFocus()
-
         # show dir_id
         x, y = event.GetPosition()
-        id = self.get_img_id_from_point([x, y])
-        self._remember_main_selection(id)
-        self.update_status_bar_for_current_page(id)
+        self._select_image_at_point(x,y)
+
+    def _select_image_at_point(self,x,y):
+        grid=self.get_img_id_from_point([x,y])
+        self._remember_main_selection(grid)
+        self.update_status_bar_for_current_page(grid)
+        return grid
 
     def img_left_dclick(self, event):
         if self.select_img_box.Value:
@@ -1778,12 +1809,10 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
         menu.Bind(wx.EVT_MENU, save_current_page, id=save_single_id)
 
         save_column_id = wx.Window.NewControlId()
-        menu.Append(save_column_id, "Select images at this position")
+        menu.Append(save_column_id, "Select image")
         def save_selected_column(evt):
             x, y = event.GetPosition()
-            grid = self.get_img_id_from_point([x, y])
-            self._remember_main_selection(grid)
-            self.update_status_bar_for_current_page(grid)
+            grid = self._select_image_at_point(x,y)
             from .export_async import start_save
             start_save(self, evt, selection_only=True, selected_grid=grid)
         menu.Bind(wx.EVT_MENU, save_selected_column, id=save_column_id)
@@ -1855,16 +1884,20 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
                 box_menu.Bind(wx.EVT_MENU, delete_specific_box, id=delete_box_id)
             menu.AppendSubMenu(box_menu, f"Selection box" + (f" ({self.box_id})" if self.box_id != -1 else ""))
 
-        if hasattr(self, 'title_rename_text'):
-            new_title = self.title_rename_text.GetValue().strip()
+        if hasattr(self, 'rename_edit_txt'):
+            new_title = self.rename_edit_txt.GetValue().strip()
             if new_title:
                 inject_title_id = wx.Window.NewControlId()
                 display_title = new_title[:20] + "..." if len(new_title) > 20 else new_title
                 menu.Append(inject_title_id, f"📝 Inject title: {display_title}")
+                from .export_controller import source_slot
+                x,y=event.GetPosition()
+                inject_grid=self.get_img_id_from_point([x,y])
+                inject_slot=source_slot(self.ImgManager,inject_grid)
+                inject_path=(str(self.ImgManager.flist[inject_slot]) if inject_slot is not None else None)
                 def inject_title_directly(evt):
-                    x, y = event.GetPosition()
-                    id = self.get_img_id_from_point([x, y])
-                    success = self.handle_title_injection(id)
+                    success = (self.inject_new_title(new_title,inject_grid,source_path=inject_path)
+                               if inject_path is not None else False)
                     if success:
                         self.SetStatusText_(["Title injected successfully", "-1", "-1", "-1"])
                     else:
@@ -1887,41 +1920,27 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
                 self.ImgManager.layout_params[17][11] = self.title_exif.Value
                 self.ImgManager.load_exif_display_config(force_reload=True)
 
-    def inject_new_title(self, new_title, img_id=None):
+    def inject_new_title(self, new_title, img_id=None, *, source_path=None):
+        from .export_controller import source_slot
         try:
-            if img_id is not None:
-                current_index = img_id
-            else:
-                current_index = getattr(self, 'selected_img_id', self.ImgManager.action_count)
-            if hasattr(self.ImgManager, 'xy_grids_id_list') and current_index < len(self.ImgManager.xy_grids_id_list):
-                actual_img_index = self.ImgManager.xy_grids_id_list[current_index]
-            else:
-                actual_img_index = current_index
-            if actual_img_index < len(self.ImgManager.flist):
-                img_path = self.ImgManager.flist[actual_img_index]
-                success = self.ImgManager.update_image_exif_37510(img_path, new_title)
-                if success:
-                    self._invalidate_render_cache()
-                    self.refresh(None)
-                    self.SetStatusText("✅ Title updated successfully!")
-
-                    if hasattr(self, 'title_rename_text'):
-                        self.title_rename_text.SetValue("")
-                    self.SetStatusText_([f"The title has been injected into {current_index+1} images: {new_title}", "-1", "-1", "-1"])
-                    return True
-                else:
-                    raise Exception("Failed to write EXIF")
-            else:
-                raise Exception(f"Picture index {actual_img_index} out of range")
-
+            grid=getattr(self,'_status_selected_grid',0) if img_id is None else img_id
+            slot=source_slot(self.ImgManager,grid)
+            if source_path is None and slot is None:raise ValueError('Select a source image first')
+            img_path=str(source_path if source_path is not None else self.ImgManager.flist[slot])
+            if not self.ImgManager.update_image_exif_37510(img_path,new_title):
+                raise ValueError('Cannot write title metadata to this image')
+            self._invalidate_render_cache()
+            self.refresh(None)
+            self.SetStatusText_(['-1','-1',f'Title injected into {Path(img_path).name}: {new_title}','-1'])
+            return True
         except Exception as exc:
-            self.SetStatusText_([f"Inject title failed: {exc}", "-1", "-1", "-1"])
+            self.SetStatusText_([f'Inject title failed: {exc}','-1','-1','-1'])
             return False
 
     def handle_title_injection(self, img_id = None):
-        if not hasattr(self, 'title_rename_text'):
+        if not hasattr(self, 'rename_edit_txt'):
             return False
-        new_title = self.title_rename_text.GetValue().strip()
+        new_title = self.rename_edit_txt.GetValue().strip()
         if not new_title:
             return False
         return bool(self.inject_new_title(new_title, img_id))
@@ -2235,6 +2254,9 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
             # 视频模式：layout 参数变化时清空 cache_img 与磁盘缓存，
             # 避免旧尺寸的拼接帧被后续 show_img/update_cache 错误复用
             if layout_token != getattr(self, "_video_layout_token", None):
+                if self.shared_config.is_playing:
+                    self._suspend_play_timer_for_wait()
+                    self._cancel_pending_frame_wait()
                 try:
                     if vm is not None:
                         vm._invalidate_stitch_cache()
@@ -2291,48 +2313,35 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
 
 
     def set_img_layout(self):
-
+        def pair(name, convert):
+            text = getattr(self, name).GetLineText(0)
+            try:
+                values = [convert(value) for value in text.split(',')]
+                if len(values) != 2 or not all(math.isfinite(value) for value in values):
+                    raise ValueError()
+            except (ValueError, TypeError, OverflowError):
+                raise ValueError(f'{name}: expected two comma-separated numbers; received {text!r}') from None
+            return values
         try:
-            row_col = self.row_col.GetLineText(0).split(',')
-            row_col = [int(x) for x in row_col]
-
-            row_col_one_img = self.row_col_one_img.GetLineText(0).split(',')
-            row_col_one_img = [int(x) for x in row_col_one_img]
+            row_col = pair('row_col', int)
+            row_col_one_img = pair('row_col_one_img', int)
 
             if row_col_one_img[0] == -1 and row_col_one_img[1] == -1:
                 row_col_one_img= [1,1]
                 row_col = self.ImgManager.layout_advice()
                 self.row_col.SetValue(str(row_col[0])+","+str(row_col[1]))
 
-            row_col_img_unit = self.row_col_img_unit.GetLineText(0).split(',')
-            row_col_img_unit = [int(x) for x in row_col_img_unit]
+            row_col_img_unit = pair('row_col_img_unit', int)
+            magnifer_row_col = pair('magnifer_row_col', int)
 
-            magnifer_row_col = self.magnifer_row_col.GetLineText(0).split(',')
-            magnifer_row_col = [int(x) for x in magnifer_row_col]
+            gap = normalize_gaps(self.gap.GetLineText(0))
 
-            gap = self.gap.GetLineText(0).split(',')
-            gap = [int(x) for x in gap]
-
-            show_scale = self.show_scale.GetLineText(0).split(',')
-            show_scale = [float(x) for x in show_scale]
-
-            output_scale = self.output_scale.GetLineText(0).split(',')
-            output_scale = [float(x) for x in output_scale]
-
-            img_resolution = self.img_resolution.GetLineText(0).split(',')
-            img_resolution = [int(x) for x in img_resolution]
-
-            magnifer_resolution = self.magnifer_resolution.GetLineText(
-                0).split(',')
-            magnifer_resolution = [int(x) for x in magnifer_resolution]
-
-            magnifier_show_scale = self.magnifier_show_scale.GetLineText(
-                0).split(',')
-            magnifier_show_scale = [float(x) for x in magnifier_show_scale]
-
-            magnifier_out_scale = self.magnifier_out_scale.GetLineText(
-                0).split(',')
-            magnifier_out_scale = [float(x) for x in magnifier_out_scale]
+            show_scale = pair('show_scale', float)
+            output_scale = pair('output_scale', float)
+            img_resolution = pair('img_resolution', int)
+            magnifer_resolution = pair('magnifer_resolution', int)
+            magnifier_show_scale = pair('magnifier_show_scale', float)
+            magnifier_out_scale = pair('magnifier_out_scale', float)
 
             if self.checkBox_auto_draw_color.Value:
                 # 10 colors built into the software
@@ -2356,8 +2365,7 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
 
             color = self.color_list
 
-            line_width = self.line_width.GetLineText(0).split(',')
-            line_width = [int(x) for x in line_width]
+            line_width = pair('line_width', int)
 
             title_setting = [self.title_auto.Value,                     # 0
                              self.title_show.Value,                     # 1
@@ -2371,7 +2379,7 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
                              self.font_paths,                           # 9
                              self.title_position.GetSelection(),        # 10
                              self.title_exif.Value,                     # 11
-                             self.title_show_rename.Value,              # 12
+                             self.rename.Value,              # 12
                              list(self.font_color.GetColour().Get())] # 13
 
             if title_setting[0]:
@@ -2379,9 +2387,9 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
                     self.ImgManager.type, self.shared_config.video_mode,
                     len(self.shared_config.real_video_path),
                     self.parallel_to_sequential.Value, self.parallel_sequential.Value)
-        except:
+        except Exception as error:
             self.SetStatusText_(
-                ["-1", "-1", "***Error: setting***", "-1"])
+                ["-1", "-1", f'Invalid layout settings: {error}', "-1"])
             return False
         else:
             params=[row_col,                                # 0
@@ -2431,6 +2439,8 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
             return params
 
     def show_img(self, preserve_text_value=False):
+        if len(self.ImgManager.layout_params) < 42:
+            return
         pending = getattr(self, '_pending_index_selection', None)
         if pending and pending['page'] != int(self.shared_config.batch_idx):
             self._pending_index_selection = None
@@ -2608,7 +2618,7 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
             return
         self._show_resource_tooltip()
         if error:
-            self.SetStatusText_(['-1', '-1', f'***{error}***', '-1'])
+            self._show_input_status(str(error),'Display error',persistent=True)
             self._resume_play_timer_after_wait()
             return
         self.image_pipeline.prepare_display(batch, self._deliver_image_frame)
@@ -2619,7 +2629,7 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
                 or batch != int(self.shared_config.batch_idx)):
             return
         if error:
-            self.SetStatusText_(['-1', '-1', f'***Load cache failed: {error}***', '-1'])
+            self._show_input_status(f'Load cache failed: {error}','Display error',persistent=True)
             return
         image, rgba = pixels
         for name, value in state.items():
@@ -2633,6 +2643,8 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
         if self.shared_config.is_playing:
             self.resource_monitor.frame_presented(batch, self.shared_config.play_direction)
         self._status_display_batch = batch
+        feedback=getattr(self,'_input_feedback',None)
+        if feedback and feedback[0].endswith('Display error'):self._input_feedback=None
         self._apply_pending_index_selection()
         self.update_status_bar_for_current_page()
         self._show_resource_tooltip()
@@ -2901,45 +2913,62 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
         except Exception:
             pass
 
+        viewport_backed=tiled and max(pil_img.size)>32767
+        if viewport_backed:
+            sizer=self.scrolledWindow_img.GetSizer()
+            if sizer is not None:
+                self._image_native_sizer=sizer
+                self.scrolledWindow_img.SetSizer(None,deleteOld=False)
+        elif self.scrolledWindow_img.GetSizer() is None:
+            self.scrolledWindow_img.SetSizer(self._image_native_sizer)
         self._set_placeholder_visible(False)
 
         previous=getattr(self,'img_last',None)
-        if previous and isinstance(previous,TiledImageCanvas)==tiled:
+        if (previous and isinstance(previous,TiledImageCanvas)==tiled
+                and getattr(previous,'viewport_backed',False)==viewport_backed):
             if tiled:previous.SetImage(pil_img)
             else:previous.SetBitmap(bmp)
         else:
             if previous:
                 if hasattr(self,'img_panel_sizer'):self.img_panel_sizer.Detach(previous)
                 previous.Destroy()
-            self.img_last = (TiledImageCanvas(self.img_panel,self.scrolledWindow_img,pil_img)
+            self.img_last = (TiledImageCanvas(self.scrolledWindow_img if viewport_backed else self.img_panel,self.scrolledWindow_img,pil_img)
                              if tiled else wx.StaticBitmap(self.img_panel,bitmap=bmp))
             size_changed = True  # 新控件必须走一次完整 layout
         self._ensure_img_bindings()
 
         if size_changed:
-            # 只在尺寸变化时才重建 sizer 和 layout
-            if not hasattr(self, "img_panel_sizer"):
-                self.img_panel_sizer = wx.BoxSizer(wx.VERTICAL)
-                self.img_panel.SetSizer(self.img_panel_sizer)
+            if viewport_backed:
+                self.img_panel.Hide()
+                if hasattr(self,'img_panel_sizer'):self.img_panel_sizer.Clear(False)
+                self.img_last.SetMinSize((1,1))
             else:
-                try:
-                    self.img_panel_sizer.Clear(False)
-                except Exception:
-                    pass
-            self.img_panel_sizer.Add(self.img_last, 0, wx.ALIGN_LEFT | wx.ALIGN_TOP, 0)
+                self.img_panel.Show()
+                # 只在尺寸变化时才重建 sizer 和 layout
+                if not hasattr(self, "img_panel_sizer"):
+                    self.img_panel_sizer = wx.BoxSizer(wx.VERTICAL)
+                    self.img_panel.SetSizer(self.img_panel_sizer)
+                else:
+                    try:
+                        self.img_panel_sizer.Clear(False)
+                    except Exception:
+                        pass
+                self.img_panel_sizer.Add(self.img_last, 0, wx.ALIGN_LEFT | wx.ALIGN_TOP, 0)
 
-            self.img_last.SetPosition((0, 0))
-            self.img_last.SetSize(logical_size)
-            self.img_last.SetMinSize(logical_size)
+                self.img_last.SetPosition((0, 0))
+                self.img_last.SetSize(logical_size)
+                self.img_last.SetMinSize(logical_size)
 
-            self.img_panel.SetPosition((0, 0))
-            self.img_panel.SetSize(logical_size)
-            self.img_panel.SetMinSize(logical_size)
+                self.img_panel.SetPosition((0, 0))
+                self.img_panel.SetSize(logical_size)
+                self.img_panel.SetMinSize(logical_size)
 
-            self.img_panel.Layout()
+                self.img_panel.Layout()
+
             self.scrolledWindow_img.Layout()
             self.scrolledWindow_img.SetVirtualSize(logical_size)
             self.scrolledWindow_img.Scroll(0, 0)
+            if viewport_backed:self.img_last._sync_viewport()
 
         self.position = [0, 0]
 
@@ -2999,7 +3028,11 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
                 max(50,self.Size.width-int(self.width_setting)),
                 max(50,self.Size.height-150+(50 if hidden else 0))))
             if hidden:self.m_splitter1.SetSashPosition(self.Size.width)
-            self.scrolledWindow_img.FitInside()
+            canvas=getattr(self,'img_last',None)
+            if isinstance(canvas,TiledImageCanvas) and canvas.viewport_backed:
+                # Its native window is only a viewport, not the virtual canvas.
+                self.scrolledWindow_img.SetVirtualSize(canvas.image.size)
+            else:self.scrolledWindow_img.FitInside()
             self.scrolledWindow_set.FitInside()
             self.Layout()
         finally:self._auto_layout_busy=False
@@ -3082,20 +3115,20 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
             self.title_down_up.SetLabel('Down')
 
     def title_rename_fc(self, event):
-        if hasattr(self.ImgManager, 'layout_params') and len(self.ImgManager.layout_params) > 17:
-            if len(self.ImgManager.layout_params[17]) > 12:
-                self.ImgManager.layout_params[17][12] = self.title_show_rename.Value
+        # Apply together with the other title settings on manual Refresh.
+        event.Skip()
+
+    def _sync_title_controls(self):
+        # SetValue during configuration restoration emits no checkbox event.
+        # This only updates editability; render settings still apply on Refresh.
+        enabled=not self.title_auto.GetValue()
+        for control in (self.title_down_up,self.title_show_parent,self.title_show_name,
+                        self.title_show_suffix,self.title_show_prefix,self.title_position,self.title_exif,
+                        self.rename,self.rename_edit_txt):
+            control.Enable(enabled)
 
     def title_auto_fc(self, event):
-        titles = [self.title_down_up, self.title_show_parent,
-                  self.title_show_name, self.title_show_suffix, self.title_show_prefix,
-                  self.title_position, self.title_exif, self.m_checkBox31, self.m_textCtrl16]
-        if self.title_auto.Value:
-            for title in titles:
-                title.Enabled = False
-        else:
-            for title in titles:
-                title.Enabled = True
+        self._sync_title_controls()
 
     def select_img_box_func(self, event):
         if self.select_img_box.Value:
@@ -3375,7 +3408,8 @@ def process_image(image, *, context):
                 self.m_staticText1.Show()
             else:
                 self.m_staticText1.Hide()
-            self.scrolledWindow_img.GetSizer().Layout()
+            sizer=self.scrolledWindow_img.GetSizer()
+            if sizer is not None:sizer.Layout()
             self.scrolledWindow_img.Layout()
             self._placeholder_visible = bool(visible)
         except Exception:
@@ -3393,20 +3427,26 @@ def process_image(image, *, context):
             return
         if getattr(self, '_img_bindings_target', None) is self.img_last:
             return
-        self.img_last.Bind(wx.EVT_LEFT_DOWN, self.img_left_click)
-        self.img_last.Bind(wx.EVT_LEFT_DCLICK, self.img_left_dclick)
-        self.img_last.Bind(wx.EVT_MOTION, self.img_left_move)
-        self.img_last.Bind(wx.EVT_LEFT_UP, self.img_left_release)
-        self.img_last.Bind(wx.EVT_RIGHT_DOWN, self.img_right_click)
-        self.img_last.Bind(wx.EVT_MOUSEWHEEL, self.img_wheel)
+        bind_mouse=(self.img_last.bind_image_mouse if isinstance(self.img_last,TiledImageCanvas)
+                    else self.img_last.Bind)
+        bind_mouse(wx.EVT_LEFT_DOWN, self.img_left_click)
+        bind_mouse(wx.EVT_LEFT_DCLICK, self.img_left_dclick)
+        bind_mouse(wx.EVT_MOTION, self.img_left_move)
+        bind_mouse(wx.EVT_LEFT_UP, self.img_left_release)
+        bind_mouse(wx.EVT_RIGHT_DOWN, self.img_right_click)
+        bind_mouse(wx.EVT_MOUSEWHEEL, self.img_wheel)
         self.img_last.Bind(wx.EVT_KEY_DOWN, self.key_down_detect)
         self.img_last.Bind(wx.EVT_KEY_UP, self.key_up_detect)
         self._img_bindings_target = self.img_last
 
     def disable_accel(self, event):
-        self.SetAcceleratorTable(wx.NullAcceleratorTable)
+        self._editing_accelerators = True
+        self.SetAcceleratorTable(self._editing_acceltbl)
+        self.update_hotkey_menu_labels()
         event.Skip()
 
     def enable_accel(self, event):
-        self.SetAcceleratorTable(self.acceltbl)
+        # Wait until focus has reached its destination: moving between two
+        # editors must never restore navigation shortcuts in the second one.
+        wx.CallAfter(self._sync_accelerator_focus)
         event.Skip()

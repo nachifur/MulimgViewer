@@ -61,7 +61,7 @@ class ReferenceAssetTests(unittest.TestCase):
                          2:str(ASSETS/'images/source_001'),3:str(ASSETS/'lists/images.txt')}
                 manager.init(targets[kind],type=kind)
                 manager.layout_params[0]=[1,2];manager.layout_params[1]=[1,1];manager.layout_params[2]=[1,1]
-                manager.layout_params[3]=[0]*8;manager.layout_params[4]=[1,1];manager.layout_params[5]=[1,1]
+                manager.layout_params[3]=[0]*10;manager.layout_params[4]=[1,1];manager.layout_params[5]=[1,1]
                 manager.layout_params[6]=[64,48];manager.layout_params[17][1]=False;manager.draw_points=[]
                 manager.set_count_per_action(2 if kind in (2,3) else 1);manager.set_action_count(0);manager.get_flist()
                 output=fixture.root/f'known_{kind}'
@@ -100,7 +100,8 @@ class ReferenceAssetTests(unittest.TestCase):
         manager.layout_params.append(1)  # Exact pixel oracle requires lossless algorithm caches.
         manager.init([str(p) for p in sorted((ASSETS/'images').iterdir())],type=1)
         manager.layout_params[0]=[1,2];manager.layout_params[1]=[1,1];manager.layout_params[2]=[1,1]
-        manager.layout_params[3]=[0]*8;manager.layout_params[4]=[1,1];manager.layout_params[5]=[1,1]
+        # The no-spacing oracle explicitly disables all five gap pairs.
+        manager.layout_params[3]=[0]*10;manager.layout_params[4]=[1,1];manager.layout_params[5]=[1,1]
         manager.layout_params[6]=[64,48];manager.layout_params[17][1]=False
         manager.draw_points=[];manager.set_count_per_action(1);manager.get_flist()
         root=fixture.root/'algorithms'

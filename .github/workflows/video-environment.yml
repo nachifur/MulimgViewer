@@ -1,0 +1,54 @@
+---
+name: Cross-platform video environment
+'on':
+  pull_request:
+    paths:
+      - environment.yml
+      - requirements.txt
+      - src/mulimgviewer/src/video_tools.py
+      - tools/check_video_tools.py
+      - auto_test_scripts/cases/test_video_tools.py
+      - .github/workflows/video-environment.yml
+  push:
+    branches: [master, main]
+    paths:
+      - environment.yml
+      - requirements.txt
+      - src/mulimgviewer/src/video_tools.py
+      - tools/check_video_tools.py
+      - auto_test_scripts/cases/test_video_tools.py
+      - .github/workflows/video-environment.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  video-environment:
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+    defaults:
+      run:
+        shell: bash -el {0}
+    env:
+      PYTHONUTF8: '1'
+      PYTHONIOENCODING: utf-8
+    steps:
+      - uses: actions/checkout@v7
+      - uses: conda-incubator/setup-miniconda@v4
+        with:
+          miniforge-version: latest
+          environment-file: environment.yml
+          activate-environment: mulimgviewer
+          auto-activate: false
+          channel-priority: strict
+      - name: Verify environment executables
+        run: python tools/check_video_tools.py
+      - name: Check native Python dependencies
+        run: python -c "import av, wx, numpy, PIL, psutil, reportlab"
+      - name: Test tool discovery without GUI
+        run: >-
+          python -m unittest discover -s auto_test_scripts/cases
+          -p test_video_tools.py -v

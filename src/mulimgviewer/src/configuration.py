@@ -9,11 +9,14 @@ from pathlib import Path
 
 import wx
 from .export_formats import ORDER, LEGACY_TO_CURRENT
+from .layout_gaps import normalize_gaps
 
 ALIASES = {'m_checkBox33': 'video_mode', 'row_col12': 'cache_frames',
            'row_col1': 'interval', 'row_col13': 'skip_frames',
-           'cache_multipliler': 'cache_multiplier', 'power_model': 'power_mode'}
-CONTROL_NAMES = {'m_checkBox31': 'title_show_rename', 'm_textCtrl16': 'title_rename_text',
+           'cache_multipliler': 'cache_multiplier', 'power_model': 'power_mode',
+           'm_checkBox31': 'title_show_rename', 'm_textCtrl16': 'title_rename_text',
+           'rename': 'title_show_rename', 'rename_edit_txt': 'title_rename_text'}
+CONTROL_NAMES = {'rename': 'title_show_rename', 'rename_edit_txt': 'title_rename_text',
                  'row_col13': 'skip_frames'}
 
 
@@ -101,6 +104,15 @@ def read_config(path):
     for old, new in ALIASES.items():
         if old in output and new not in output:
             output[new] = output[old]
+    if isinstance(output.get('gap'), str):
+        try:
+            output['gap'] = ','.join(map(str, normalize_gaps(output['gap'])))
+        except (ValueError, TypeError):
+            # Keep malformed user input editable; Refresh reports invalid settings.
+            pass
+    if output.get('magnifier_show_scale') == '-1.-1':
+        # Repair the known malformed spelling of the automatic-size sentinel.
+        output['magnifier_show_scale'] = '-1,-1'
     hotkeys=data.get('hotkeys')
     if isinstance(hotkeys,dict) and ('pause_save' in hotkeys or 'cancel_save' in hotkeys):
         hotkeys.pop('pause_save',None)

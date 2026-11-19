@@ -50,13 +50,12 @@ class VideoPlaybackMixin:
         """
         if getattr(self, "_is_closing", False):
             return
-        if not getattr(self.shared_config, "video_mode", False):
+        if not getattr(self.shared_config,'video_mode',False):
+            self._show_input_status()
             return
         try:
-            if not getattr(self.shared_config, "real_video_path", None):
-                self.SetStatusText_([
-                    "-1", "-1",
-                    "***Video mode: please select a video input***", "-1"])
+            if not getattr(self.shared_config,'real_video_path',None):
+                self._show_input_status()
                 return
 
             self.shared_config.batch_idx = 0
@@ -73,15 +72,20 @@ class VideoPlaybackMixin:
     def _capture_video_render_snapshot(self):
         """Capture wx controls on the GUI thread; workers use a private model."""
         vm = self.video_manager
-        if len(self.ImgManager.layout_params) <= 32:
-            self.show_img_init()
+        if len(self.ImgManager.layout_params) < 42:
+            if not self.show_img_init() or len(self.ImgManager.layout_params) < 42:
+                vm._render_snapshot = None
+                vm._render_snapshot_key = None
+                return False
         custom = bool(self.ImgManager.layout_params[32])
         key = (repr(self.ImgManager.layout_params), tuple(self.ImgManager.gap_color), repr(self.xy_magnifier), custom,
-               vm._cache_context_token(), hash(getattr(self.ImgManager, '_custom_algorithm_registry', None)))
+               vm._cache_context_token(), hash(getattr(self.ImgManager, '_custom_algorithm_registry', None)),
+               tuple(getattr(self.ImgManager,'_cache_original_paths',())),getattr(self.ImgManager,'_cache_input_mode',''))
         if vm._render_snapshot is None or key != getattr(vm, '_render_snapshot_key', None):
             vm._render_snapshot = (self.ImgManager.video_stitch_snapshot(),
                                    copy.deepcopy(self.xy_magnifier), custom)
             vm._render_snapshot_key = key
+        return True
 
 
     def _video_frame_ready(self, batch, token):
@@ -106,9 +110,17 @@ class VideoPlaybackMixin:
         token = vm._window_token
         key = (batch, path, token)
         if key == getattr(self, '_video_display_key', None):
+            # Returning to the painted page supersedes any intervening load.
+            vm._display_serial += 1
+            vm._display_delivery_pending = False
+            vm._display_key = None
+            if vm._display_future is not None:
+                vm._display_future.cancel()
             self._resume_play_timer_after_wait()
             return
-        if key == getattr(vm, '_display_key', None) and getattr(vm, '_display_delivery_pending', False):
+        if (key == getattr(vm, '_display_key', None)
+                and getattr(vm, '_display_delivery_pending', False)
+                and vm._display_future is not None and not vm._display_future.cancelled()):
             return
         vm._display_serial += 1
         serial = vm._display_serial
@@ -128,15 +140,15 @@ class VideoPlaybackMixin:
         owner_ref = weakref.ref(self)
 
         def done(completed):
-            if completed.cancelled():
-                return
             try:
-                result, error = completed.result(), None
+                result, error = (None, 'Display request cancelled') if completed.cancelled() else (completed.result(), None)
             except Exception as ex:
                 result, error = None, str(ex)
             def deliver():
                 if vm._display_future is completed:
                     vm._display_future = None
+                if serial == vm._display_serial:
+                    vm._display_delivery_pending = False
                 owner = owner_ref()
                 if (owner is None or getattr(owner, '_is_closing', False)
                         or not owner.shared_config.video_mode
@@ -379,13 +391,14 @@ class VideoPlaybackMixin:
     def _schedule_frame_wait_retry(self, target_batch: int, retry_ms: int = 80, attempt: int = 0):
         """短暂延迟后重新检查目标帧是否就绪，不改变 batch_idx，不跳帧"""
         self._cancel_pending_frame_wait()
-
-        # 等待上限: 约 10 秒仍拼不出来就放弃本次等待, 让播放继续/停下,
-        # 避免在拼接一直失败时陷入无限轮询。
-        max_attempts = max(1, int(10000 / max(1, retry_ms)))
+        generation=self._frame_wait_generation
 
         def _check():
+            if generation!=getattr(self,'_frame_wait_generation',None):
+                return
             self._pending_frame_wait_timer = None
+            if getattr(self, '_is_closing', False) or not self.shared_config.video_mode:
+                return
             if not getattr(self.shared_config, "is_playing", False):
                 # 播放已被用户暂停/停止: 清掉挂起标记, 免得下次播放时 timer 起不来
                 self._play_timer_suspended = False
@@ -398,17 +411,18 @@ class VideoPlaybackMixin:
             if self._video_cached_batch_path(target_batch) is not None:
                 # 目标帧终于就绪，恢复播放并展示
                 self.show_img()
-            elif attempt >= max_attempts:
-                # 等太久了: 恢复 timer, 由下一拍继续尝试, 不再原地卡住播放
-                self._resume_play_timer_after_wait()
             else:
-                # 仍未就绪，继续轮询等待（不跳帧）
-                self._schedule_frame_wait_retry(target_batch, retry_ms, attempt + 1)
+                # A giant canvas may legitimately take much longer than ten
+                # seconds. Advancing here keeps abandoning unfinished pages.
+                # Let ready/display callbacks resume playback after it paints.
+                delay = min(1000, max(1,retry_ms)*2) if attempt >= 125 else retry_ms
+                self._schedule_frame_wait_retry(target_batch, delay, attempt + 1)
 
         self._pending_frame_wait_timer = wx.CallLater(retry_ms, _check)
 
 
     def _cancel_pending_frame_wait(self):
+        self._frame_wait_generation=getattr(self,'_frame_wait_generation',0)+1
         t = getattr(self, "_pending_frame_wait_timer", None)
         if t is not None:
             try:
@@ -521,7 +535,7 @@ class VideoPlaybackMixin:
         if sequential_layout and not parallel_sources:
             count_per_action = row_col[0] * row_col[1] * one_img_product
         else:
-            count_per_action = one_img_product
+            count_per_action = one_img_product if self.parallel_sequential.Value or not parallel_sources else 1
 
         count_per_action = max(1, int(count_per_action))
         self.shared_config.count_per_action = count_per_action
@@ -536,14 +550,13 @@ class VideoPlaybackMixin:
         try:
             videos = read_video_file_list(path)
         except (OSError, ValueError, UnicodeError) as error:
-            self.SetStatusText_(['Input', '-1', f'Unable to read video list: {error}', '-1'])
+            self._show_input_status(f'Unable to read video list: {error}','Input error',path,persistent=True)
             return False
         if not videos:
-            self.SetStatusText_(['Input', '-1', 'No valid video files in this list', '-1'])
+            self._show_input_status('No valid video files in this list; turn off Video mode for image lists','Input error',path,persistent=True)
             return False
-        self.shared_config.real_video_path = videos
         self.shared_config.input_mode = 3
         self.shared_config.batch_idx = 0
         self.choice_input_mode.SetSelection(3)
         self._commit_video_settings()
-        return bool(self.video_manager.select_video(type=-1))
+        return bool(self.video_manager.select_video(type=-1,paths=videos))

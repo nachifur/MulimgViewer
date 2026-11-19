@@ -39,8 +39,8 @@ sys.path.insert(0, str(source.parent))
 from dependency_scheduler import prepared, gather, run_inline
 from viewer_state import SharedConfig
 from video_timeline import page_count, page_segments, raw_dependencies
-from video_paths import frame_filename, cache_extension
-from cache_layout import page_name, save_cache_image
+from video_paths import frame_filename, cache_extension, video_source_names
+from cache_layout import page_name, save_cache_image, write_page_catalog, remove_page_catalog
 from thread_optimizer import (AdaptiveThreadAllocator, optimize_thread_allocation,
                               available_memory_bytes, stitch_memory_limit, buffer_levels, buffer_priority, ThreadAllocation)
 from resource_monitor import run_video_process
@@ -132,6 +132,53 @@ class VideoCacheTests(unittest.TestCase):
         self.cfg.cache_save_format=1
         self.vm._save_frame(self.cfg.real_video_path[0],20,21,0,config=old)
         self.assertFalse(list(Path(self.cfg.video_path[0]).glob('*.jpeg')))
+
+    def test_rapid_next_retired_frames_are_not_reported_as_legacy_extract_failures(self):
+        vm=self.vm;vm._window_token='rapid-next';vm._raw_windows={0:(20,25)}
+        vm._worker_context.token='rapid-next'
+        original=vm._filename_converter;calls={};statuses=[]
+        def filename(index,*args):
+            calls[index]=calls.get(index,0)+1
+            if index==20 and calls[index]==2:vm._raw_windows={0:(40,45)}
+            return original(index,*args)
+        try:
+            with patch.object(vm,'_decode_incremental',return_value=False), \
+                    patch.object(vm,'_filename_converter',side_effect=filename), \
+                    patch.object(vm,'_set_video_status',side_effect=statuses.append), \
+                    patch.dict(vm._save_frame.__globals__,run_video_process=lambda *args,**kwargs:SimpleNamespace(returncode=0,stderr='',stdout='')):
+                vm._save_frame(self.cfg.real_video_path[0],20,24,0,max_retries=0,config=self.cfg)
+            self.assertFalse(statuses,statuses)
+        finally:del vm._worker_context.token
+
+    def test_native_partial_window_shift_does_not_disable_incremental_decoder(self):
+        vm=self.vm
+        if not vm._decoder_bank.available:self.skipTest('PyAV required')
+        vm._window_token='partial-next';vm._raw_windows={0:(20,25)}
+        vm._worker_context.token='partial-next'
+        scans=[]
+        def missing(*args):
+            scans.append(1)
+            if len(scans)==1:return list(range(20,25))
+            vm._raw_windows={0:(21,25)}
+            return [20]  # A concurrently cleaned prefix, not a codec failure.
+        try:
+            with patch.object(vm,'_list_missing_range',side_effect=missing), \
+                    patch.object(vm,'_publish_raw_ready'), \
+                    patch('video_decoder.DecoderSession.frames',return_value=iter(())):
+                self.assertTrue(vm._decode_incremental(self.cfg.real_video_path[0],20,24,0,self.cfg))
+            self.assertNotIn(self.cfg.real_video_path[0],vm._decoder_bank.disabled)
+        finally:del vm._worker_context.token
+
+    def test_genuine_active_frame_extract_failure_is_not_suppressed(self):
+        vm=self.vm;statuses=[]
+        with patch.object(vm,'_decode_incremental',return_value=False), \
+                patch.object(vm,'_set_video_status',side_effect=statuses.append), \
+                patch.dict(vm._save_frame.__globals__,run_video_process=lambda *args,**kwargs:SimpleNamespace(returncode=1,stderr='test codec failure',stdout='')):
+            vm._save_frame(self.cfg.real_video_path[0],20,24,0,max_retries=0,config=self.cfg)
+        self.assertEqual(len(statuses),1)
+        self.assertIn('Video extract failed',statuses[0])
+        self.assertIn('test codec failure',statuses[0])
+        self.assertIn('20',statuses[0])
 
     def test_long_container_without_frame_count_never_decodes_to_count_metadata(self):
         metadata = {'streams': [{'codec_type': 'video', 'width': 1280, 'height': 720,
@@ -309,8 +356,8 @@ class VideoCacheTests(unittest.TestCase):
         self.vm.init_video_frame_cache()
         a,b=map(Path,self.cfg.video_path)
         self.assertNotEqual(a,b)
-        self.assertEqual(a,Path('cache_frames/sources/video/source_001/frames'))
-        self.assertEqual(b,Path('cache_frames/sources/video/source_002/frames'))
+        self.assertEqual(a,Path('cache_frames/sources/frames/video/clip'))
+        self.assertEqual(b,Path('cache_frames/sources/frames/video/clip_002'))
 
     def test_raw_cleanup_preserves_custom_results_and_inflight_temporaries(self):
         self.vm.update_cache();self.settle()

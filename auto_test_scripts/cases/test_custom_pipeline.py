@@ -114,6 +114,7 @@ class ProcessingStageTests(unittest.TestCase):
         self.stage.cleanup_future.result(timeout=5);self.temp.cleanup()
     def manager(self,count=10,extra=None,source=SOURCE):
         manager=ImgManager();manager.layout_params=[None]*41+[1]
+        manager.path_list=[str(self.root)]
         manager.layout_params[32]=False;manager.layout_params[37]=0
         manager.layout_params[38]=True;manager.layout_params[39]='3,4'
         spec=dict(device='cpu',cacheable=True);spec.update(extra or {})
@@ -231,7 +232,7 @@ class ProcessingStageTests(unittest.TestCase):
         with self.prepare(manager) as results:
             output=Path(results[0][0])
             self.assertEqual(output.name,'input.png')
-            visible=self.stage.visible.root/'0'/'processed'/'source_001'/'frames'
+            visible=self.stage.visible.root/'0'/'processed'/'frames'/self.root.name
             self.assertTrue((visible/'input.png').is_file())
             info=json.loads((output.parents[2]/'cache_info.json').read_text(encoding='utf-8'))
             self.assertEqual(info['algorithm'],'0')
@@ -247,8 +248,8 @@ class ProcessingStageTests(unittest.TestCase):
         manager._cache_input_mode='Image File List'
         manager.video_fps_list=[29.97];manager.video_num_list=[1200];manager.skip=2
         with self.prepare(manager):
-            folder=self.stage.visible.root/'0'/'processed'/'source_001'
-            info=json.loads((folder/'source.json').read_text(encoding='utf-8'))
+            folder=self.stage.visible.root/'0'/'processed'
+            info=json.loads((folder/'json'/'meeting.json').read_text(encoding='utf-8'))
             self.assertEqual(info['source'],1)
             self.assertEqual(info['media'],'video')
             self.assertEqual(info['path'],str(Path('meeting.mp4').absolute()))
@@ -259,8 +260,8 @@ class ProcessingStageTests(unittest.TestCase):
             self.assertEqual(info['algorithm'],'0')
             self.assertEqual(info['algorithm_path'],str(Path('/plugin/0/main.py').absolute()))
             self.assertEqual(info['raw_frames_path'],str(self.source.parent))
-            self.assertEqual(info['processed_frames_path'],str(folder/'frames'))
-            self.assertTrue(info['source_catalog'].endswith(str(Path('sources/video/source_001/source.json'))))
+            self.assertEqual(info['processed_frames_path'],str(folder/'frames'/'meeting'))
+            self.assertTrue(info['source_catalog'].endswith(str(Path('sources/json/video/meeting.json'))))
             self.assertNotIn('outputs',info)  # Not a growing list of video frames.
 
     def test_source_descriptor_is_written_once_and_follows_shared_frame_cleanup(self):
@@ -268,11 +269,11 @@ class ProcessingStageTests(unittest.TestCase):
         import os
         replace=os.replace;writes=[]
         def record(source,target):
-            if Path(target).name=='source.json':writes.append(Path(target))
+            if Path(target).name==self.root.name+'.json':writes.append(Path(target))
             return replace(source,target)
         with patch('os.replace',side_effect=record):
             with self.prepare(manager,0):pass
-            manifest=self.stage.visible.root/'0'/'processed'/'source_001'/'source.json'
+            manifest=self.stage.visible.root/'0'/'processed'/'json'/(self.root.name+'.json')
             with self.prepare(manager,1):pass
             self.assertEqual(writes,[manifest])
             self.assertEqual(json.loads(manifest.read_text(encoding='utf-8'))['media'],'image')
@@ -285,7 +286,7 @@ class ProcessingStageTests(unittest.TestCase):
 
     def test_source_descriptor_updates_with_algorithm_cache_version(self):
         with self.prepare(self.manager(1)):pass
-        manifest=self.stage.visible.root/'0'/'processed'/'source_001'/'source.json'
+        manifest=self.stage.visible.root/'0'/'processed'/'json'/(self.root.name+'.json')
         self.assertEqual(json.loads(manifest.read_text(encoding='utf-8'))['cache_version'],'1')
         with self.prepare(self.manager(1,dict(cache_version='2'))):pass
         self.assertEqual(json.loads(manifest.read_text(encoding='utf-8'))['cache_version'],'2')
@@ -343,7 +344,7 @@ class ProcessingStageTests(unittest.TestCase):
         with self.prepare(manager,0) as result:first=result[0][0]
         with self.prepare(manager,1) as result:second=result[0][0]
         self.assertNotEqual(first,second)
-        path=self.stage.visible.root/'0'/'processed'/'source_001'/'frames'/'input.png'
+        path=self.stage.visible.root/'0'/'processed'/'frames'/self.root.name/'input.png'
         self.assertTrue(path.is_file())
         self.stage.set_window('image','sources',(1,2),1);self.stage._prune()
         self.assertTrue(path.is_file())

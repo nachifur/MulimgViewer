@@ -5,7 +5,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import patch, Mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'src'))
 import wx
@@ -53,6 +53,13 @@ class ConfigurationTests(unittest.TestCase):
         frame=self.frame();frame.apply_hotkeys({'pause_save':'F8','cancel_save':'ESC'})
         self.assertEqual(frame.hotkeys['pause_tasks'],'ESC')
         self.assertNotIn('F8',frame.hotkeys.values())
+
+    def test_saved_automatic_magnifier_scale_typo_is_repaired_on_load(self):
+        write_config(self.directory/'userdef_config.json',{'output':{'magnifier_show_scale':'-1.-1'}})
+        write_config(self.directory/'config_schema.json',{'roles_version':2})
+        frame=self.frame()
+        self.assertEqual(frame.magnifier_show_scale.GetValue(),'-1,-1')
+        self.assertEqual(self.read()['output']['magnifier_show_scale'],'-1,-1')
 
     def test_auto_cache_format_round_trips_without_changing_legacy_choices(self):
         frame=self.frame()
@@ -119,6 +126,16 @@ class ConfigurationTests(unittest.TestCase):
 
     def read(self, name='userdef_config.json'):
         return json.loads((self.directory / name).read_text(encoding='utf-8'))
+
+    def test_startup_status_explains_both_image_and_video_modes_without_touching_output(self):
+        write_config(self.directory/'config_schema.json',{'roles_version':2})
+        for video in (False,True):
+            write_config(self.directory/'session_config.json',{'output':{'video_mode':video,'choice_input_mode':1}})
+            frame=self.frame();bar=frame.m_statusBar1
+            self.assertEqual(bar.GetStatusText(0),('Video' if video else 'Image')+' | Ready')
+            self.assertIn('please select',bar.GetStatusText(2))
+            self.assertIn('Parallel auto',bar.GetStatusText(2))
+            self.assertEqual(bar.GetStatusText(3),'Output: not set')
 
     def test_first_launch_creates_both_files_from_gui(self):
         frame = self.frame()
@@ -221,6 +238,56 @@ class ConfigurationTests(unittest.TestCase):
         self.assertTrue(self.read()['output']['video_mode'])
         frame.save_configuration(None)
         self.assertEqual(self.read()['output']['cache_frames'], '5')
+
+    def test_title_auto_editability_tracks_startup_click_load_reset_and_restart(self):
+        write_config(self.directory/'config_schema.json',{'roles_version':2})
+        write_config(self.directory/'default_config.json',{'output':{'title_auto':True}})
+        write_config(self.directory/'userdef_config.json',{'output':{
+            'title_auto':False,'title_show_parent':True,'title_show_name':False,'title_position':2}})
+        frame=self.frame()
+        controls=(frame.title_down_up,frame.title_show_parent,frame.title_show_name,
+                  frame.title_show_suffix,frame.title_show_prefix,frame.title_position,frame.title_exif,
+                  frame.rename,frame.rename_edit_txt)
+        self.assertFalse(frame.title_auto.GetValue())
+        self.assertTrue(all(control.IsEnabled() for control in controls))
+        self.assertTrue(frame.title_show_parent.GetValue())
+        self.assertFalse(frame.title_show_name.GetValue())
+        self.assertEqual(frame.title_position.GetSelection(),2)
+        values=[control.GetSelection() if isinstance(control,wx.Choice) else control.GetValue() for control in controls]
+        for auto in (True,False,True):
+            frame.title_auto.SetValue(auto)
+            event=wx.CommandEvent(wx.EVT_CHECKBOX.typeId,frame.title_auto.GetId())
+            event.SetEventObject(frame.title_auto)
+            with patch.object(frame,'refresh') as refresh:
+                frame.title_auto.GetEventHandler().ProcessEvent(event)
+                refresh.assert_not_called()
+            self.assertTrue(all(control.IsEnabled()==(not auto) for control in controls))
+            self.assertEqual([control.GetSelection() if isinstance(control,wx.Choice) else control.GetValue() for control in controls],values)
+        frame.load_configuration(None)
+        self.assertFalse(frame.title_auto.GetValue())
+        self.assertTrue(all(control.IsEnabled() for control in controls))
+        frame.reset_configuration(None)
+        self.assertTrue(frame.title_auto.GetValue())
+        self.assertTrue(all(not control.IsEnabled() for control in controls))
+        frame.title_auto.SetValue(False)
+        frame._save_session_configuration()
+        restarted=self.frame()
+        self.assertFalse(restarted.title_auto.GetValue())
+        self.assertTrue(restarted.title_exif.IsEnabled())
+        self.assertTrue(restarted.title_position.IsEnabled())
+
+    def test_renamed_title_controls_restore_existing_config_and_round_trip(self):
+        write_config(self.directory/'default_config.json',{'output':{
+            'title_show_rename':True,'title_rename_text':'Saved title'}})
+        frame=self.frame()
+        self.assertTrue(frame.rename.GetValue())
+        self.assertEqual(frame.rename_edit_txt.GetValue(),'Saved title')
+        self.assertFalse(hasattr(frame,'m_checkBox31'))
+        self.assertFalse(hasattr(frame,'m_textCtrl16'))
+        frame.rename.SetValue(False);frame.rename_edit_txt.ChangeValue('New title')
+        frame.save_configuration(None);frame.load_configuration(None)
+        self.assertFalse(frame.rename.GetValue())
+        self.assertEqual(frame.rename_edit_txt.GetValue(),'New title')
 
     def test_corrupt_json_preserved_and_recovered_from_gui_defaults(self):
         self.directory.mkdir()
@@ -389,6 +456,46 @@ class ConfigurationTests(unittest.TestCase):
                 write_config(path, {'output': {'video_mode': True}})
         self.assertEqual(path.read_bytes(), original)
         self.assertFalse(list(self.directory.glob('*.tmp')))
+
+    def test_text_editing_disables_native_menu_keys_and_restores_image_navigation(self):
+        frame = self.frame()
+        with patch('wx.Window.FindFocus', return_value=frame.gap):
+            frame.apply_hotkeys(frame.get_default_hotkeys())
+        self.assertTrue(frame._editing_accelerators)
+        self.assertTrue(frame.GetAcceleratorTable().IsOk())
+        # Refresh/save/pause stay available while native cursor/delete keys
+        # belong to the editor, including menu-derived accelerators.
+        self.assertEqual(frame.menu_refresh.GetAccel().GetKeyCode(), ord('R'))
+        self.assertEqual(frame.menu_save.GetAccel().GetKeyCode(), ord('S'))
+        for menu in (frame.menu_left, frame.menu_right, frame.menu_up, frame.menu_down, frame.menu_delete_box):
+            self.assertIsNone(menu.GetAccel())
+        with patch('wx.Window.FindFocus', return_value=frame.scrolledWindow_img):
+            frame._sync_accelerator_focus()
+        self.assertFalse(frame._editing_accelerators)
+        self.assertTrue(frame.GetAcceleratorTable().IsOk())
+        self.assertEqual(frame.menu_left.GetAccel().GetKeyCode(), wx.WXK_LEFT)
+        self.assertEqual(frame.menu_right.GetAccel().GetKeyCode(), wx.WXK_RIGHT)
+
+    def test_switching_editors_and_reloading_hotkeys_keeps_editing_keys_available(self):
+        frame = self.frame()
+        event = Mock()
+        frame.disable_accel(event)
+        with patch('wx.CallAfter', side_effect=lambda handler: handler()), \
+                patch('wx.Window.FindFocus', return_value=frame.row_col):
+            frame.enable_accel(event)
+            frame.apply_hotkeys(dict(frame.hotkeys, move_left='ALT+LEFT'))
+        self.assertTrue(frame._editing_accelerators)
+        self.assertIsNone(frame.menu_left.GetAccel())
+        with patch('wx.Window.FindFocus', return_value=frame.scrolledWindow_img):
+            frame._sync_accelerator_focus()
+        self.assertIn('\tAlt+Left', frame.menu_left.GetItemLabel())
+        self.assertEqual(frame.menu_left.GetAccel().GetFlags(), wx.ACCEL_ALT)
+
+    def test_clicking_image_viewport_exits_editor_even_before_images_are_loaded(self):
+        frame = self.frame()
+        with patch.object(frame.scrolledWindow_img, 'SetFocus') as focus:
+            frame.img_left_click(Mock())
+        focus.assert_called_once_with()
 
 
 if __name__ == '__main__':

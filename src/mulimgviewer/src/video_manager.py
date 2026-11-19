@@ -14,7 +14,7 @@ from concurrent.futures import wait
 from .utils_img import ImgManager
 from .video_tools import resolve_video_tools
 from .video_timeline import page_count, page_segments, raw_dependencies
-from .video_paths import frame_filename, cache_extension
+from .video_paths import frame_filename, cache_extension, video_source_names
 from .resource_monitor import run_video_process
 from .pipeline_executor import PipelineWorkers
 from .stage_allocator import allocate_stages
@@ -22,7 +22,7 @@ from .admission_optimizer import AdaptiveAdmissionBudget
 from .video_decoder import DecoderBank
 from .video_memory import PixelCache, source_resolution, rgba_display
 from .custom_pipeline import current_only
-from .cache_layout import page_name, write_source_catalog, save_cache_image
+from .cache_layout import page_name, write_source_catalog, save_cache_image, write_page_catalog, remove_page_catalog
 from .custom_func.contract import active_cache_names
 from .playback_pacer import PlaybackPacer, ProductionJob, completion_estimates, refill_guard
 from .thread_optimizer import (AdaptiveThreadAllocator, optimize_thread_allocation,
@@ -214,13 +214,15 @@ class PerformanceMonitor:
 
 
 class VideoManager:
+    VIDEO_EXTENSIONS=('.mp4','.avi','.mov','.mkv','.webm','.m4v','.mpg','.mpeg','.ts','.mts','.m2ts','.wmv','.flv','.rm','.rmvb','.vob','.ogv','.3gp')
+
     def __init__(self, owner, shared_config=None, ImgManager=None):
         self._owner = weakref.ref(owner)
         self.shared_config = shared_config
         self.ImgManager = ImgManager
         self.cache_dir = Path("cache_frames")
         # 新增：磁盘缓存目录
-        self.disk_cache_dir = self.cache_dir / "composed"
+        self.disk_cache_dir = self.cache_dir / "composed" / "frames"
         self.disk_cache_dir.mkdir(parents=True, exist_ok=True)
         # 新增：图像模式磁盘缓存目录
         self.image_disk_cache_dir = self.disk_cache_dir
@@ -300,6 +302,7 @@ class VideoManager:
         try:
             cache_path = self._get_disk_cache_path(batch_idx)
             save_cache_image(pil_img,str(cache_path),cache_extension(self.shared_config))  # 快速压缩
+            write_page_catalog(cache_path,batch_idx,'video',(),pil_img.size)
             return str(cache_path)
         except Exception as ex:
             self._debug_video(f"[DiskCache] save failed batch={batch_idx} error={ex}")
@@ -315,6 +318,7 @@ class VideoManager:
                     idx = int(cache_file.stem.split('_')[1])-1
                     if idx < window_start or idx > window_end:
                         cache_file.unlink()
+                        remove_page_catalog(cache_file)
                         if 0 <= idx < len(self.shared_config.cache_img):
                             self.shared_config.cache_img[idx] = None
                 except Exception:
@@ -387,6 +391,9 @@ class VideoManager:
         self._pixel_cache.clear()
         self.shared_config.cache_img = []
         self._display_serial += 1
+        self._display_delivery_pending = False
+        self._display_key = None
+        if self._display_future is not None:self._display_future.cancel()
         self._render_snapshot = None
         self._batch_render_states.clear()
         self.perf_monitor = PerformanceMonitor()
@@ -483,11 +490,13 @@ class VideoManager:
         ui = self._ui()
         if ui:
             try:
-                values = ["-1", "-1", f"***{msg}***", "-1"]
-                if wx.IsMainThread():
-                    ui.SetStatusText_(values)
+                if hasattr(ui,'_show_input_status'):
+                    if wx.IsMainThread():ui._show_input_status(msg,'Error')
+                    else:wx.CallAfter(ui._show_input_status,msg,'Error')
                 else:
-                    wx.CallAfter(ui.SetStatusText_, values)
+                    values=["-1","-1",f"***{msg}***","-1"]
+                    if wx.IsMainThread():ui.SetStatusText_(values)
+                    else:wx.CallAfter(ui.SetStatusText_,values)
             except Exception:
                 pass
 
@@ -1344,9 +1353,9 @@ class VideoManager:
         video_paths = self.shared_config.real_video_path
         output_list = []
 
-        for source_index, video_path in enumerate(video_paths):
+        for name, video_path in zip(video_source_names(video_paths),video_paths):
             video_path = Path(video_path)
-            out_dir = self.cache_dir / "sources" / "video" / f"source_{source_index+1:03d}" / "frames"
+            out_dir = self.cache_dir / "sources" / "frames" / "video" / name
             out_dir.mkdir(parents=True, exist_ok=True)
             # Clean stale cache to avoid reading old frames when names/settings change
             try:
@@ -1384,7 +1393,8 @@ class VideoManager:
         ui = self._ui()
         if (ui is not None and hasattr(ui, '_capture_video_render_snapshot')
                 and self.shared_config.video_num_list and self.shared_config.video_fps_list):
-            ui._capture_video_render_snapshot()
+            if ui._capture_video_render_snapshot() is False:
+                return
         config = copy.copy(self.shared_config)
         for name in ('video_path', 'real_video_path', 'video_num_list', 'video_fps_list'):
             setattr(config, name, tuple(getattr(config, name)))
@@ -1538,7 +1548,10 @@ class VideoManager:
                 active_cache_names(self._render_snapshot[0]) if self._render_snapshot is not None else None)
             processing.request_prune()
         snapshot=getattr(self,'_render_snapshot',None)
-        catalog_key=(tuple(cfg.real_video_path),cfg.parallel_to_sequential,bool(snapshot and snapshot[0].layout_params[22]))
+        catalog_key=(tuple(cfg.real_video_path),tuple(cfg.video_path),tuple(cfg.video_fps_list),tuple(cfg.video_num_list),
+            cfg.skip_frames,cfg.cache_save_format,cfg.parallel_to_sequential,
+            bool(snapshot and snapshot[0].layout_params[22]),
+            tuple(getattr(snapshot[0],'_cache_original_paths',())) if snapshot else ())
         if snapshot is not None and catalog_key!=getattr(self,'_source_catalog_key',None):
             self._source_catalog_key=catalog_key
             write_source_catalog(snapshot[0],self.cache_dir,split_media=True)
@@ -1621,6 +1634,7 @@ class VideoManager:
                         remove = not window[0] <= idx <= window[1] or idx >= len(cache) or cache[idx] != str(path)
                     if remove:
                         path.unlink()
+                        remove_page_catalog(path)
                         with self._cache_guard:
                             if cache is self.shared_config.cache_img and idx < len(cache):
                                 cache[idx] = None
@@ -1685,12 +1699,12 @@ class VideoManager:
         if current():self._cleanup_source_folders(config.video_path,current)
 
     def _cleanup_source_folders(self, paths, valid=lambda:True):
-        source_root=self.cache_dir/'sources'/'video'
-        active={os.path.normcase(os.path.abspath(Path(p).parent)) for p in paths}
+        source_root=self.cache_dir/'sources'/'frames'/'video'
+        active={os.path.normcase(os.path.abspath(p)) for p in paths}
         if not source_root.exists():return
         for directory in source_root.iterdir():
             if os.path.normcase(os.path.abspath(directory)) in active:continue
-            if (directory/'frames').is_dir() and directory.resolve().parent==source_root.resolve():
+            if directory.is_dir() and directory.resolve().parent==source_root.resolve():
                 retired=self.cache_dir/f'__discard_source_{os.getpid()}_{time.time_ns()}'
                 if retired.resolve().parent!=self.cache_dir.resolve():continue
                 with self._cache_io_lock:
@@ -1991,12 +2005,16 @@ class VideoManager:
                         return
                 destination = self._get_disk_cache_path(batch,config)
                 os.replace(str(temporary), str(destination))
+                write_page_catalog(destination,batch,'video',state.get('flist',()),pil_img.size)
                 with self._cache_guard:
                     lo, hi = self._stitch_window
                     valid = token == self._window_token and lo <= batch <= hi
                     if valid:
                         pixels=pil_img if isinstance(pil_img,Image.Image) else self._pixel_cache.get(str(pil_img.path))
-                        if pixels is not None:self._pixel_cache.put(str(destination),pixels,priority=True)
+                        if __package__:from .disk_canvas import DiskCanvas
+                        else:from disk_canvas import DiskCanvas
+                        if pixels is not None and (not isinstance(pixels,DiskCanvas) or batch==self.shared_config.batch_idx):
+                            self._pixel_cache.put(str(destination),pixels,priority=True)
                         self.shared_config.cache_img[batch] = str(destination)
                         self._batch_render_states[batch] = state
                         for old_batch in list(self._batch_render_states):
@@ -2008,6 +2026,7 @@ class VideoManager:
                                                      time.perf_counter(), max(2,min(4,(int(config.cache_num)+1)//2)))
                 if not valid:
                     destination.unlink()
+                    remove_page_catalog(destination)
                     return
             ui = self._ui()
             if (ui is not None and hasattr(ui, '_video_buffer_changed')
@@ -2269,7 +2288,7 @@ class VideoManager:
 
     def _shared_cache_directories(self):
         """Stage-owned roots; raw-frame cleanup must never retire these."""
-        return (self.disk_cache_dir,self.image_disk_cache_dir,self.custom_disk_cache_dir,
+        return (self.cache_dir/'composed',self.disk_cache_dir,self.image_disk_cache_dir,self.custom_disk_cache_dir,
                 self.cache_dir/"sources",self.cache_dir/".work")
 
     def _cleanup_dead_directories(self):
@@ -2405,6 +2424,15 @@ class VideoManager:
             except OSError:
                 pass
 
+    def _active_raw_indices(self, video, indices, token, config):
+        """Revalidate disk observations after a seek/window cleanup can race them."""
+        with self._cache_guard:
+            if getattr(self,'_closed',False) or not self._raw_format_current(config):return []
+            if token is None:return list(indices)
+            if token!=self._window_token:return []
+            lo,hi=self._raw_windows.get(video,(0,0))
+            return [index for index in indices if lo<=index<hi]
+
     def _decode_incremental(self, path, first, last, vid, config):
         bank = self._decoder_bank
         if getattr(self,'_closed',False):
@@ -2414,7 +2442,7 @@ class VideoManager:
         token = getattr(self._worker_context, 'token', None)
         if token is not None and token != self._window_token:
             return True
-        missing = set(self._list_missing_range(vid, first, last, config))
+        missing = set(self._active_raw_indices(vid,self._list_missing_range(vid,first,last,config),token,config))
         if not missing:
             return True
         started = time.perf_counter()
@@ -2424,7 +2452,8 @@ class VideoManager:
         def cancelled():
             nonlocal abandoned
             if abandoned:return True
-            if getattr(self, '_closed', False) or (token is not None and token != self._window_token):
+            if (getattr(self,'_closed',False) or not self._raw_format_current(config)
+                    or (token is not None and token!=self._window_token)):
                 abandoned = True
                 return True
             lo, hi = self._raw_windows.get(vid, (first, last+1))
@@ -2465,8 +2494,10 @@ class VideoManager:
                 while pending:pending.popleft().result()
                 for local in sorted({index//k for index in missing}-published):
                     self._publish_raw_ready(vid, local, token, config)
+            if cancelled():return True
             lo, hi = self._raw_windows.get(vid, (first, last+1)) if token is not None else (first, last+1)
-            if not cancelled() and self._list_missing_range(vid, max(first,lo), min(last,hi-1), config):
+            missing_now=self._list_missing_range(vid,max(first,lo),min(last,hi-1),config)
+            if not cancelled() and self._active_raw_indices(vid,missing_now,token,config):
                 raise RuntimeError('Native decoder did not produce all requested ordinal frames')
             self.perf_monitor.record_extract(time.perf_counter()-started, len({i//k for i in missing}), vid,
                                             plan=getattr(self._worker_context, 'plan', None))
@@ -2515,7 +2546,7 @@ class VideoManager:
                         miss.append(idx)
                 except Exception:
                     miss.append(idx)
-            return miss
+            return self._active_raw_indices(video_idx,miss,token,config)
 
         def chunks(seq):
             if not seq: return []
@@ -2529,8 +2560,9 @@ class VideoManager:
         def extract_ranges(ranges, allow_fast_seek=True):
             nonlocal last_error
             for s, e in ranges:
-                if token is not None and token != self._window_token:
-                    return
+                active=self._active_raw_indices(video_idx,range(s,e+1),token,config)
+                if not active:continue
+                s,e=active[0],active[-1]
                 if fast_seek and allow_fast_seek:
                     fps = float(config.video_fps_list[video_idx])
                     suffix = f"{os.getpid()}_{threading.get_ident()}_{time.time_ns()}"
@@ -2696,11 +2728,11 @@ class VideoManager:
             extract_ranges(chunks(missing), allow_fast_seek=False)
             attempt += 1
 
-        missing = list_missing(frame_start, frame_end)
+        missing = self._active_raw_indices(video_idx,list_missing(frame_start,frame_end),token,config)
         if missing and self._raw_format_current(config) and (token is None or token == self._window_token):
-            detail = f"video={video_idx}, miss={missing[:5]}"
-            if last_error:
-                detail = f"{detail}, err={last_error}"
+            detail = f"video={video_idx}, source={video_path}, miss={missing[:5]}"
+            reason=last_error or 'FFmpeg completed without producing all requested active frames'
+            detail = f"{detail}, err={reason}"
             self._debug_video(f"[Extract] final failure {detail}")
             self._set_video_status(f"Video extract failed: {detail}")
 
@@ -2726,23 +2758,44 @@ class VideoManager:
                                              requested_batches, video_idx,
                                              plan=getattr(self._worker_context, 'plan', None))
 
+    def _input_validation_error(self, message, path=None):
+        self._set_video_status(message)
+        ui=self._ui()
+        if ui is not None and hasattr(ui,'_show_input_status'):
+            ui._show_input_status(message,'Input error',path,persistent=True)
+
+    def _validate_video_inputs(self, paths):
+        # Selection filters are only hints; manual paths may be image folders.
+        if not paths:return 'No video files selected; choose video files or turn off Video mode for images'
+        for path in paths:
+            try:valid=Path(path).is_file() and Path(path).suffix.lower() in self.VIDEO_EXTENSIONS
+            except (OSError,ValueError,TypeError):valid=False
+            if not valid:
+                return f'Not a supported video file: {path}. Turn off Video mode to open image directories'
+        return None
+
     def collect_video_paths(self, dlg, selection_type):
         '''Collect video file paths for different selection modes.'''
         video_paths = []
+        self._selection_cancelled=False
+        self._selection_input=None
         try:
             if dlg.ShowModal() != wx.ID_OK:
+                self._selection_cancelled=True
                 return video_paths
 
             if selection_type == 1:
                 selected_path = dlg.GetPath()
+                self._selection_input=selected_path
                 for root, dirs, files in os.walk(selected_path):
                     for file in files:
-                        if file.lower().endswith(('.mp4', '.avi', '.mov')):
+                        if file.lower().endswith(self.VIDEO_EXTENSIONS):
                             video_paths.append(os.path.join(root, file))
 
             elif selection_type == 0:
                 selected_path = dlg.GetPath()
-                if selected_path.lower().endswith(('.mp4', '.avi', '.mov')):
+                self._selection_input=selected_path
+                if selected_path.lower().endswith(self.VIDEO_EXTENSIONS):
                     video_paths.append(selected_path)
             elif selection_type == 2:
                 video_paths = dlg.GetPaths()
@@ -2750,27 +2803,35 @@ class VideoManager:
             dlg.Destroy()
         return video_paths
 
-    def select_video(self, type=0):
+    def select_video(self, type=0, paths=None):
         '''Shared initialization flow across selection modes.'''
-        self.flag = 0
-        self.shared_config.video_fps_list = []
-        self.shared_config.video_num_list = []
-        wildcard = "Video files (*.mp4;*.avi;*.mov)|*.mp4;*.avi;*.mov"
-        if type == 1:
-            dlg = wx.DirDialog(None, "Select folder containing videos", style=wx.DD_DEFAULT_STYLE)
-        elif type == 0:
-            dlg = wx.FileDialog(None, "Choose video file", "", "",
-                                wildcard, wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
-        if type == -1:
-            pass
-        else:
-            self.shared_config.real_video_path = self.collect_video_paths(dlg, type)
+        wildcard='Video files|'+';'.join('*'+suffix for suffix in self.VIDEO_EXTENSIONS)
+        if type==1:
+            dlg=wx.DirDialog(None,'Select folder containing videos',style=wx.DD_DEFAULT_STYLE)
+        elif type==0:
+            dlg=wx.FileDialog(None,'Choose video file','','',wildcard,wx.FD_OPEN|wx.FD_FILE_MUST_EXIST)
+        candidates=list(paths if paths is not None else self.shared_config.real_video_path) if type==-1 else self.collect_video_paths(dlg,type)
+        if type!=-1 and getattr(self,'_selection_cancelled',False):
+            ui=self._ui()
+            if ui is not None and hasattr(ui,'_show_input_status'):ui._show_input_status('Input selection cancelled','Cancelled')
+            return []
+        error=self._validate_video_inputs(candidates)
+        if error:
+            if type!=-1 and not candidates:
+                error='No supported video files found in the selected input. Turn off Video mode to open image directories'
+            self._input_validation_error(error,getattr(self,'_selection_input',None) if type!=-1 else str(candidates))
+            return []
         try:
             self._video_tools, self._video_tools_env = resolve_video_tools()
         except (OSError, ValueError) as ex:
-            self._set_video_status(f"Error: {ex}")
-            self.shared_config.video_path = []
+            self._input_validation_error(f"Error: {ex}")
             return []
+        self.flag=0
+        self.shared_config.real_video_path=candidates
+        self.shared_config.video_fps_list=[]
+        self.shared_config.video_num_list=[]
+        ui=self._ui()
+        if ui is not None and hasattr(ui,'_show_input_status'):ui._show_input_status('Loading videos','Loading',str(candidates))
         self.shared_config.status_input_mode = (3 if self.shared_config.input_mode == 3
                                                 else {0: 0, 1: 1, -1: 2}.get(type, 2))
         self._reset_for_new_selection()

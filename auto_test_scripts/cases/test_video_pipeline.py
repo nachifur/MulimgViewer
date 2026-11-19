@@ -444,12 +444,12 @@ class PixelMemoryTests(unittest.TestCase):
             self.assertGreaterEqual(output,100*64*36)
             self.assertLess(output,10_000_000)
 
-    def test_oversized_canvas_is_rejected_before_pixel_allocation(self):
+    def test_unmapped_canvas_above_reservation_is_rejected_before_pixel_allocation(self):
         from types import SimpleNamespace
         sys.path.insert(0,str(Path(__file__).resolve().parents[2]/'src'))
         from mulimgviewer.src.utils_img import ImgUtils
         tool = ImgUtils()
-        tool.manager = SimpleNamespace(_video_memory_budget=128*1024**2)
+        tool.manager = SimpleNamespace(_video_memory_budget=128*1024**2,_disk_backed_canvas=False)
         import numpy as np
         layouts = [[[1,1],[np.zeros((1,1)),np.zeros((1,1))],
                     [np.array([[3840]]),np.array([[2160]])],[3840,2160],None],

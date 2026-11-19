@@ -88,6 +88,28 @@ class ReferenceWorkflowTests(unittest.TestCase):
                             with Image.open(path) as image:
                                 self.assertEqual(image.format,'JPEG' if suffix=='.jpg' else 'PNG');image.verify()
 
+        # Exercise the context command after actually opening each input mode,
+        # including video lists whose frame paths are virtual before decoding.
+        selected=Path('select_image_menu').absolute();selected.mkdir()
+        frame.out_path_str=str(selected);frame.save_format.SetSelection(1)
+        frame.choice_output.SetSelection(6);frame.auto_save_all.SetValue(True)
+        x,y=map(int,frame.ImgManager.xy_grid[-1])
+        event=Mock();event.GetPosition.return_value=(x+1,y+1)
+        def choose(menu,*args):
+            item=menu.FindItemByPosition(4)
+            self.assertEqual(item.GetItemLabel(),'Select image')
+            command=wx.CommandEvent(wx.EVT_MENU.typeId,item.GetId())
+            command.SetEventObject(menu)
+            self.assertTrue(menu.ProcessEvent(command))
+        with patch.object(frame,'PopupMenu',side_effect=choose):frame.on_right_click(event)
+        self.fixture.pump_until(lambda:not frame._export_active and frame._export_future.done(),timeout=20)
+        self.assertEqual(frame._export_status,'Save: success')
+        result=selected/('video' if video else 'image')
+        picks=list((result/'algorithms/original/select_images').rglob('*.png'))
+        self.assertEqual(len(picks),2 if mode in (1,2) else 1)
+        self.assertFalse((result/'composed').exists())
+        self.assertFalse(list(result.rglob('stitch_images')))
+
 
 def case(video,mode):
     def run(self):self.workflow(video,mode)

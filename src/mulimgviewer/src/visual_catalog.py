@@ -39,6 +39,7 @@ class VisualCatalogMixin:
         self.algorithm_registry=getattr(manager,'_custom_algorithm_registry',()) or ()
         self.naming_manager=SimpleNamespace(path_list=tuple(manager.path_list),
             _status_source_index=getattr(manager,'_status_source_index',None),
+            video_mode=self.video,_cache_original_paths=tuple(config.real_video_path) if self.video else (),
             cache_save_format=manager_cache_format(manager))
         self.algorithm_root=Path(getattr(manager,'_algorithm_cache_root',Path('cache_frames')/'algorithms')).absolute()
         self.algorithm_search=' '.join(str(v) for entry in self.algorithm_registry for v in entry[:2]).casefold()

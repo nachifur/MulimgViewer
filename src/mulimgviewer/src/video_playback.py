@@ -515,14 +515,15 @@ class VideoPlaybackMixin:
         try:
             row_col_str = self.row_col.GetLineText(0)
             row_col = [int(x.strip()) for x in row_col_str.split(',') if x.strip()]
-            if len(row_col) != 2:
-                return None
+            if row_col==[-1,-1]:row_col=list(self.ImgManager.layout_advice())
+            if len(row_col)!=2 or any(value<=0 for value in row_col):return None
         except Exception:
             return None
 
         try:
             one_img_str = self.row_col_one_img.GetValue().replace('，', ',')
             r, c = [int(x.strip()) for x in one_img_str.split(',') if x.strip()]
+            if r<=0 or c<=0:return None
         except Exception:
             return None
 
@@ -548,7 +549,7 @@ class VideoPlaybackMixin:
 
     def _open_video_file_list(self, path):
         try:
-            videos = read_video_file_list(path)
+            videos = read_video_file_list(path,diagnose_empty=True)
         except (OSError, ValueError, UnicodeError) as error:
             self._show_input_status(f'Unable to read video list: {error}','Input error',path,persistent=True)
             return False

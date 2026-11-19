@@ -1,4 +1,5 @@
 """Background export owns immutable settings and an independent video decoder."""
+from .jpeg_policy import jpeg_quality, ffmpeg_jpeg_args
 import copy
 import hashlib
 import shutil
@@ -132,7 +133,7 @@ class ExportDecoder:
                             self.checkpoint()
                             if self.cancelled():raise CancelledError()
                             target=Path(config.video_path[video])/self._filename_converter(physical//step,video,config)
-                            save_cache_image(image,target,cache_extension(config))
+                            save_cache_image(image,target,cache_extension(config),jpeg_quality=jpeg_quality(config))
                             count+=1
                         finally:image.close()
                 finally:frames.close()
@@ -170,7 +171,7 @@ class ExportDecoder:
         command=[tools['ffmpeg'],'-nostdin','-hide_banner','-loglevel','error','-threads','1',
             '-i',str(path),'-vf',f'select={expression.replace(chr(44),chr(92)+chr(44))}',
             '-fps_mode','passthrough','-threads','1','-frames:v',str(last-first+1),'-start_number',str(first),
-            *(['-c:v','png','-pix_fmt','rgb24','-compression_level','1'] if extension=='png' else ['-q:v','2']),str(pattern)]
+            *(['-c:v','png','-pix_fmt','rgb24','-compression_level','1'] if extension=='png' else ffmpeg_jpeg_args(config)),str(pattern)]
         flags=getattr(subprocess,'CREATE_NO_WINDOW',0)
         with TemporaryFile() as errors:
             process=subprocess.Popen(command,stdout=subprocess.DEVNULL,stderr=errors,env=env,creationflags=flags)
@@ -269,12 +270,16 @@ def start_save(viewer,event=None,*,selection_only=False,selected_grid=None):
     # Export's clicked format can differ from the last refreshed playback policy.
     # Resolve auto against this immutable export snapshot before looking up caches.
     manager.layout_params[35]=viewer_format
+    quality=viewer.save_quality.GetValue() if hasattr(viewer,'save_quality') else jpeg_quality(manager)
+    if len(manager.layout_params)<=42:manager.layout_params.extend([None]*(43-len(manager.layout_params)))
+    manager.layout_params[42]=quality
     config=copy.copy(viewer.shared_config)
     for name in ('video_path','real_video_path','video_fps_list','video_num_list'):
         setattr(config,name,list(getattr(config,name)))
     manager.video_mode=bool(config.video_mode)
     if config.video_mode:manager.layout_params[11]=False
     config.cache_save_format=manager_cache_format(manager)
+    config.save_quality=quality
     # Reserve a bounded quarter for independent codecs; rendering gets the rest.
     decoder_budget=max(0,int(config.memory_budget or 0)//4) if config.video_mode and av is not None else 0
     if config.memory_budget is not None:config.memory_budget-=decoder_budget
@@ -284,10 +289,10 @@ def start_save(viewer,event=None,*,selection_only=False,selected_grid=None):
     token=vm._window_token
     def cached(index,video,target):
         if cancel.is_set():raise CancelledError()
-        if token!=vm._window_token:return False
+        if token!=vm._window_token or jpeg_quality(config)!=jpeg_quality(viewer.shared_config):return False
         try:
             with vm._raw_io_lock(video,config):
-                if token!=vm._window_token:return False
+                if token!=vm._window_token or jpeg_quality(config)!=jpeg_quality(viewer.shared_config):return False
                 source=Path(config.video_path[video])/frame_filename(index,config.video_fps_list[video],config.skip_frames+1,cache_extension(config))
                 if lossless_export(manager,viewer_format) :
                     from PIL import Image

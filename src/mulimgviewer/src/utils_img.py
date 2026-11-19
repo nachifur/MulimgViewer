@@ -661,7 +661,16 @@ class ImgUtils():
                     if foreground is not img:foreground.close()
             else:rgb_img=img.convert('RGB')
             new_path = os.path.splitext(png_path)[0] + '.jpg'
-            try:rgb_img.save(new_path, 'JPEG')
+            # Fine coloured titles need full chroma resolution, especially at
+            # small output scales. Pillow defaults to quality 75 with 4:2:0,
+            # which blurs colour across neighbouring text/background pixels.
+            from .jpeg_policy import jpeg_quality
+            # Selected source JPGs now need re-encoding for quality/4:4:4.
+            # Retain their injected titles and physical/colour metadata.
+            options={key:img.info[key] for key in ('exif','dpi') if img.info.get(key)}
+            if img.mode in ('RGB','RGBA') and img.info.get('icc_profile'):
+                options['icc_profile']=img.info['icc_profile']
+            try:rgb_img.save(new_path, 'JPEG', quality=jpeg_quality(getattr(self,'manager',self)), subsampling=0, **options)
             finally:rgb_img.close()
         else:
             new_path = os.path.splitext(png_path)[0] + '.pdf'

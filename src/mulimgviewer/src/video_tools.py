@@ -77,23 +77,30 @@ def resolve_video_tools():
     return tools, env
 
 
-def read_video_file_list(filename):
-    """Read TXT/CSV inputs, resolving relative video paths beside the list."""
+def read_video_file_list(filename, *, strict=False, diagnose_empty=False):
+    """Read TXT/CSV paths in row order, with optional invalid-cell diagnostics."""
     import csv
     source = Path(filename)
     with source.open('r', encoding='utf-8-sig', newline='') as stream:
-        if source.suffix.lower() == '.csv':
-            entries = [value for row in csv.reader(stream) for value in row]
-        else:
-            entries = stream.read().splitlines()
-    result = []
-    for value in entries:
-        value = value.strip().strip('"')
-        if not value:
-            continue
-        video = Path(value).expanduser()
-        if not video.is_absolute():
-            video = source.parent / video
-        if video.is_file() and video.suffix.lower() in ('.mp4', '.avi', '.mov'):
-            result.append(str(video.absolute()))
+        rows=csv.reader(stream) if source.suffix.lower()=='.csv' else ([line] for line in stream.read().splitlines())
+        entries=[(row,column,value) for row,values in enumerate(rows,1)
+                 for column,value in enumerate(values,1)]
+    result=[];issues=[]
+    for row,column,value in entries:
+        value=value.strip().strip('"')
+        if not value:continue
+        video=Path(value).expanduser()
+        if not video.is_absolute():video=source.parent/video
+        reason=None
+        try:
+            if not video.exists():reason='file not found'
+            elif not video.is_file():reason='expected a video file, found a directory'
+            elif video.suffix.lower() not in ('.mp4','.avi','.mov'):reason='unsupported video file extension'
+        except OSError as error:reason=f'cannot access file: {error}'
+        if reason is None:result.append(str(video.absolute()))
+        elif strict or diagnose_empty:issues.append(f'row {row}, column {column}: {reason}: {video}')
+    if issues and (strict or not result):
+        detail='; '.join(issues[:5])
+        if len(issues)>5:detail+=f'; {len(issues)-5} more invalid entries'
+        raise ValueError(f'Invalid video list: {detail}')
     return result

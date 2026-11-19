@@ -1,4 +1,5 @@
 """Video decoding, bounded caches, composition scheduling and performance metrics."""
+from .jpeg_policy import jpeg_quality, ffmpeg_jpeg_args, ffmpeg_jpeg_options
 import threading
 from pathlib import Path
 import ffmpeg, os, time, math, sys
@@ -301,7 +302,7 @@ class VideoManager:
             return None
         try:
             cache_path = self._get_disk_cache_path(batch_idx)
-            save_cache_image(pil_img,str(cache_path),cache_extension(self.shared_config))  # 快速压缩
+            save_cache_image(pil_img,str(cache_path),cache_extension(self.shared_config),jpeg_quality=jpeg_quality(self.shared_config))  # 快速压缩
             write_page_catalog(cache_path,batch_idx,'video',(),pil_img.size)
             return str(cache_path)
         except Exception as ex:
@@ -356,7 +357,7 @@ class VideoManager:
         return (
             video_path,
             video_num,
-            cache_extension(config),
+            cache_extension(config),jpeg_quality(config),
             int(getattr(config, "count_per_action", 1) or 1),
             bool(getattr(config, "parallel_to_sequential", False)),
             int(getattr(config, "skip_frames", 0) or 0),
@@ -507,7 +508,8 @@ class VideoManager:
         # Legacy extraction calls may have no window token. They still must
         # not publish an old encoding after the GUI changes cache format.
         return (tuple(config.video_path)!=tuple(self.shared_config.video_path)
-            or cache_extension(config)==cache_extension(self.shared_config))
+            or (cache_extension(config)==cache_extension(self.shared_config)
+                and jpeg_quality(config)==jpeg_quality(self.shared_config)))
 
     def _raw_io_lock(self, video_idx, config=None):
         config = self.shared_config if config is None else config
@@ -1429,6 +1431,33 @@ class VideoManager:
         future = getattr(self, '_cache_update_future', None)
         return future is not None and not future.done()
 
+    def _prepare_raw_quality(self,config):
+        if not self._raw_format_current(config):return False
+        policies=getattr(self,'_raw_quality_policies',None)
+        if policies is None:
+            policies={};self._raw_quality_policies=policies
+        if cache_extension(config)!='jpeg':return True
+        quality=jpeg_quality(config)
+        for vid,directory in enumerate(config.video_path):
+            if policies.get(directory,100)==quality:continue
+            while True:
+                if getattr(self,'_closed',False) or not self._raw_format_current(config):return False
+                with self._raw_io_lock(vid,config):
+                    paths=list(Path(directory).glob('*.jpeg'))
+                    with self._cache_guard:
+                        busy=any(getattr(self,'_raw_readers',{}).get(str(path),0) for path in paths)
+                    if not busy:
+                        # Old producers recheck quality before publication.
+                        # Wait outside locks while cancelled old pages release
+                        # their source leases; never delete a reader's input.
+                        for path in paths:
+                            try:path.unlink()
+                            except FileNotFoundError:pass
+                        policies[directory]=quality
+                        break
+                time.sleep(.01)
+        return self._raw_format_current(config)
+
     def _update_cache_worker(self, serial, cfg, generation):
         """Prioritize the inner window; batch-prefetch and retain the outer window.
 
@@ -1445,6 +1474,7 @@ class VideoManager:
             if ui is not None and hasattr(ui, '_rebuild_video_cache_and_show'):
                 wx.CallAfter(ui._rebuild_video_cache_and_show)
             return
+        if not self._prepare_raw_quality(cfg):return
         output, inputs = self._estimated_stitch_pixels()
         geometry = (int(self.shared_config.thread),self.shared_config.memory_budget,output,inputs)
         if geometry != getattr(self,'_admission_geometry',None):
@@ -1997,7 +2027,7 @@ class VideoManager:
             return
         temporary = self.disk_cache_dir / f"__tmp_batch_{batch}_{threading.get_ident()}_{time.time_ns()}.{cache_extension(config)}"
         try:
-            save_cache_image(pil_img,str(temporary),cache_extension(config))
+            save_cache_image(pil_img,str(temporary),cache_extension(config),jpeg_quality=jpeg_quality(config))
             with self._cache_io_lock:
                 with self._cache_guard:
                     lo, hi = self._stitch_window
@@ -2390,7 +2420,7 @@ class VideoManager:
                 if cache_extension(config)=='png':
                     image.save(output, format='PNG', compress_level=1)
                 else:
-                    image.save(output, format='JPEG', quality=90)
+                    image.save(output, format='JPEG', quality=jpeg_quality(config), subsampling=0)
             preview, preview_key = None, None
             target=self._preview_resize_target(vid,index,config,image)
             if target is not None and target[0]*target[1]*4 <= self._pixel_cache.limit:
@@ -2579,7 +2609,7 @@ class VideoManager:
                     cmd.extend([
                         "-fps_mode", "passthrough", "-frames:v", str(e - s + 1),
                         "-threads:v", "1",
-                        *(["-c:v","png","-pix_fmt","rgb24","-compression_level","1"] if cache_extension(config)=="png" else ["-q:v","6"]), "-start_number", str(s), "-y", tmp_tpl,
+                        *(["-c:v","png","-pix_fmt","rgb24","-compression_level","1"] if cache_extension(config)=="png" else ffmpeg_jpeg_args(config)), "-start_number", str(s), "-y", tmp_tpl,
                     ])
                     try:
                         cp = run_video_process(
@@ -2628,7 +2658,7 @@ class VideoManager:
                         if has_ffmpeg_input:
                             cmd = (
                                 stream
-                                .output(tmp_tpl, fps_mode='passthrough', vframes=e - s + 1, threads=1, **({'vcodec':'png','pix_fmt':'rgb24','compression_level':1} if cache_extension(config)=='png' else {'q:v':6}), start_number=s)
+                                .output(tmp_tpl, fps_mode='passthrough', vframes=e - s + 1, threads=1, **({'vcodec':'png','pix_fmt':'rgb24','compression_level':1} if cache_extension(config)=='png' else ffmpeg_jpeg_options(config)), start_number=s)
                                 .global_args('-threads', '1', '-hide_banner', '-loglevel', 'error')
                                 .overwrite_output()
                                 .compile(cmd=self._video_command('ffmpeg'))
@@ -2646,7 +2676,7 @@ class VideoManager:
                                 '-vf', 'select=' + sel.replace(',', r'\,'),
                                 '-fps_mode', 'passthrough', '-frames:v', str(e - s + 1),
                                 '-threads:v', '1',
-                                *(['-c:v','png','-pix_fmt','rgb24','-compression_level','1'] if cache_extension(config)=='png' else ['-q:v','6']), '-start_number', str(s), '-y', tmp_tpl,
+                                *(['-c:v','png','-pix_fmt','rgb24','-compression_level','1'] if cache_extension(config)=='png' else ffmpeg_jpeg_args(config)), '-start_number', str(s), '-y', tmp_tpl,
                             ]
                             cp = run_video_process(cmd, capture_output=True, encoding='utf-8', errors='replace', check=False,
                                                 **self._video_process_options())

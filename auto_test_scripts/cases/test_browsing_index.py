@@ -9,6 +9,36 @@ from mulimgviewer.src.video_timeline import page_count,page_segments,raw_depende
 from mulimgviewer.src.index_catalog import IndexCatalog
 
 
+class AutoLayoutAdviceTests(unittest.TestCase):
+    def test_image_layout_is_positive_bounded_and_keeps_existing_small_shapes(self):
+        from mulimgviewer.src.data import ImgData
+        for count,expected in ((0,[1,1]),(1,[1,1]),(2,[1,2]),(3,[2,2]),
+                (5,[2,3]),(24,[4,6]),(303,[3,50]),(10**12,[50,50])):
+            with self.subTest(count=count):
+                self.assertEqual(ImgData.layout_advice(SimpleNamespace(type=2,img_num=count)),expected)
+        self.assertEqual(ImgData.layout_advice(SimpleNamespace()),[1,1])
+
+    def test_long_videos_use_source_count_without_iterating_virtual_frames(self):
+        from mulimgviewer.src.data import ImgData
+        class NoFrames:
+            def __iter__(self):raise AssertionError('Automatic layout must not enumerate video frames')
+        for count,expected in ((1,[1,1]),(24,[4,6])):
+            for serial in (False,True):
+                manager=SimpleNamespace(type=1,video_mode=True,path_list=list(range(count)),
+                    parallel_to_sequential=serial,img_num=10**12,name_list=NoFrames())
+                self.assertEqual(ImgData.layout_advice(manager),expected)
+
+    def test_empty_parallel_sources_and_csv_shapes_do_not_create_zero_dimensions_or_aliases(self):
+        from mulimgviewer.src.data import ImgData
+        manager=SimpleNamespace(type=1,parallel_to_sequential=True,name_list=[[],['a','b','c']])
+        self.assertEqual(ImgData.layout_advice(manager),[2,2])
+        manager=SimpleNamespace(csv_flag=True,csv_row_col=[2,3])
+        shape=ImgData.layout_advice(manager);shape[0]=99
+        self.assertEqual(manager.csv_row_col,[2,3])
+        manager.csv_row_col=[0,0]
+        self.assertEqual(ImgData.layout_advice(manager),[1,1])
+
+
 class TimelineTests(unittest.TestCase):
     def test_long_video_frame_names_and_cross_video_pages_are_lazy(self):
         from unittest.mock import patch

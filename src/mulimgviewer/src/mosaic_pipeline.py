@@ -1,4 +1,5 @@
 """Cache each algorithm mosaic, then compose mosaics without rerendering tiles."""
+from .jpeg_policy import jpeg_quality
 import copy
 import hashlib
 import json
@@ -154,7 +155,7 @@ class MosaicPlan:
                 self.cache.request_prune()
                 entry['directory'].mkdir(parents=True)
                 path=entry['directory']/page_name(self.batch,cache_image_extension(self.manager))
-                with open(path,'wb') as stream:save_cache_image(manager.img,stream,cache_image_extension(self.manager),checkpoint=checkpoint)
+                with open(path,'wb') as stream:save_cache_image(manager.img,stream,cache_image_extension(self.manager),checkpoint=checkpoint,jpeg_quality=jpeg_quality(self.manager))
                 info=path.with_suffix('.json')
                 info.write_text(json.dumps(dict(algorithm=algorithm,page=self.batch+1,
                     inputs=list(self.paths)),ensure_ascii=False,indent=2),encoding='utf-8')

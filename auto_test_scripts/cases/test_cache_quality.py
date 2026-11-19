@@ -225,6 +225,110 @@ class CacheQualityTests(unittest.TestCase):
         for sample in samples:self.assertTrue(all(abs(a-b)<=5 for a,b in zip(sample,expected)),(sample,expected))
         self.assertTrue(all(abs(a-b)<=2 for a,b in zip(*samples)),samples)
 
+    def test_selected_jpeg_reencoding_keeps_injected_title_icc_and_dpi(self):
+        from PIL import ImageCms
+        from PIL.JpegImagePlugin import get_sampling
+        from mulimgviewer.src.export_controller import _write_export_file
+        m=self.manager;m.layout_params.append(80)
+        source=self.root/'source_with_title.jpg';target=self.root/'selected.jpg'
+        exif=Image.Exif();exif[37510]=b'ASCII\0\0\0Injected title'
+        profile=ImageCms.ImageCmsProfile(ImageCms.createProfile('sRGB')).tobytes()
+        with Image.new('RGB',(40,24),'red') as image:
+            image.save(source,'JPEG',quality=20,subsampling=2,exif=exif,icc_profile=profile,dpi=(240,240))
+        before=source.read_bytes()
+        _write_export_file(m,source,target,0)
+        self.assertEqual(source.read_bytes(),before)
+        with Image.open(target) as image:
+            self.assertEqual(get_sampling(image),0)
+            self.assertEqual(image.getexif()[37510],exif[37510])
+            self.assertEqual(image.info['icc_profile'],profile)
+            self.assertEqual(image.info['dpi'],(240,240))
+            self.assertEqual(image.size,(40,24))
+
+    def test_quality_controls_all_algorithm_cache_layers_and_export(self):
+        from PIL.JpegImagePlugin import get_sampling
+        m=self.manager
+        m.layout_params[41]=0;m.layout_params[35]=0;m.layout_params.append(25)
+        cache=CustomPipeline(self.root/'quality_cache');cache.mosaic_stage=MosaicStage(cache)
+        cache.configure(2,512*1024**2);cache.set_window('image','data',(0,0),0)
+        tables=[]
+        try:
+            for quality in (25,95):
+                m.layout_params[42]=quality
+                with cache.mosaic_stage.plan(m,m.flist,0,'image','data',m.draw_points,lambda:False) as plan:
+                    with cache.prepare(m,m.flist,0,'image','data',on_ready=plan.ready) as processed:
+                        for future in plan.dependencies(processed):future.result(timeout=10)
+                        paths=[Path(path) for group in processed.values() for path in group if cache.directory in Path(path).parents]
+                        paths.extend(Path(f.result()[0]) for f in plan.futures.values())
+                        self.assertTrue(paths)
+                        current=[]
+                        for path in paths:
+                            with Image.open(path) as image:
+                                self.assertEqual(get_sampling(image),0)
+                                current.append(sum(image.quantization[0]))
+                        tables.append(current)
+                output=self.root/f'quality_export_{quality}'
+                export_page(m,output,0,512*1024**2,1)
+                for path in output.rglob('*.jpg'):
+                    with Image.open(path) as image:
+                        self.assertEqual(get_sampling(image),0)
+                        self.assertEqual(sum(image.quantization[0]),current[0])
+            self.assertEqual(len(tables[0]),len(tables[1]))
+            for low,high in zip(*tables):self.assertGreater(low,high)
+        finally:
+            cache.close();cache.cleanup_future.result(timeout=10)
+
+    def test_small_coloured_titles_keep_full_chroma_in_jpeg_exports(self):
+        import numpy as np
+        from PIL.JpegImagePlugin import get_sampling
+        m=self.fixture.manager(1,False,False,'original')
+        m.layout_params[6]=[640,400]
+        m.layout_params[17][1]=True
+        m.layout_params[17][8]='18'
+        for path in m.flist:Image.new('RGB',(640,400),'white').save(path)
+        for scale in (1,.2):
+            m.layout_params[5]=[scale,scale]
+            for colour in ((230,20,40),(10,90,230),(20,160,40)):
+                with self.subTest(scale=scale,colour=colour):
+                    m.layout_params[17][13]=colour
+                    root=self.root/f'title_{scale}_{colour[0]}'
+                    m.layout_params[35]=1
+                    export_page(m,root/'png',0,512*1024**2,1)
+                    m.layout_params[35]=0
+                    export_page(m,root/'jpg',0,512*1024**2,1)
+                    with Image.open(root/'png/image/composed/page_000001.png') as image:
+                        reference=image.convert('RGB')
+                    with reference:
+                        legacy=root/'legacy.jpg';reference.save(legacy,'JPEG')
+                        expected=np.asarray(reference,dtype=float)
+                        coloured=expected.max(axis=2)-expected.min(axis=2)>30
+                        self.assertTrue(coloured.any(),'The fixture must contain coloured title pixels')
+                        with Image.open(legacy) as image:
+                            old_error=np.abs(np.asarray(image,dtype=float)-expected)[coloured].mean()
+                        with Image.open(root/'jpg/image/composed/page_000001.jpg') as image:
+                            self.assertEqual(get_sampling(image),0)
+                            self.assertEqual(image.size,reference.size)
+                            new_error=np.abs(np.asarray(image,dtype=float)-expected)[coloured].mean()
+                        self.assertLess(new_error,old_error*.5,(new_error,old_error))
+
+    def test_jpeg_export_rebuilds_lossy_mosaic_but_reuses_png(self):
+        from mulimgviewer.src.custom_func.contract import original_index
+        m=self.fixture.manager(1,False,False,'original')
+        m.layout_params[35]=0
+        index=original_index(m._custom_algorithm_registry)
+        export_page(m,self.root/'baseline',0,512*1024**2,1)
+        expected=(self.root/'baseline/image/composed/page_000001.jpg').read_bytes()
+        preview=self.root/'preview.jpeg'
+        with Image.new('RGB',(24,16),'magenta') as image:image.save(preview,'JPEG')
+        m._export_reused_mosaics={index:(str(preview),{})}
+        export_page(m,self.root/'rebuilt',0,512*1024**2,1)
+        self.assertEqual((self.root/'rebuilt/image/composed/page_000001.jpg').read_bytes(),expected)
+        preview=self.root/'preview.png'
+        with Image.new('RGBA',(24,16),'cyan') as image:image.save(preview,'PNG')
+        m._export_reused_mosaics={index:(str(preview),{})}
+        with patch.object(type(m),'stitch_images',side_effect=AssertionError('PNG mosaic should be reused')):
+            export_page(m,self.root/'reused',0,512*1024**2,1)
+
     def test_pdf_crops_and_selected_files_never_use_jpeg_embedding(self):
         m=self.manager;m.layout_params[35]=2
         export_page(m,self.root/'pdf',6,512*1024**2,1)

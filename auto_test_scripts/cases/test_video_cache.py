@@ -39,6 +39,7 @@ sys.path.insert(0, str(source.parent))
 from dependency_scheduler import prepared, gather, run_inline
 from viewer_state import SharedConfig
 from video_timeline import page_count, page_segments, raw_dependencies
+from jpeg_policy import jpeg_quality, ffmpeg_jpeg_args, ffmpeg_jpeg_options
 from video_paths import frame_filename, cache_extension, video_source_names
 from cache_layout import page_name, save_cache_image, write_page_catalog, remove_page_catalog
 from thread_optimizer import (AdaptiveThreadAllocator, optimize_thread_allocation,
@@ -265,6 +266,41 @@ class VideoCacheTests(unittest.TestCase):
         finally:
             release.set();waiter.join(4)
             del self.vm._worker_context.native_threads
+
+    def test_jpeg_native_and_ffmpeg_paths_use_quality_and_full_chroma(self):
+        for native in (True,False):
+            tables=[]
+            for quality in (20,95):
+                with self.subTest(native=native,quality=quality):
+                    for folder in self.cfg.video_path:
+                        for path in Path(folder).iterdir():path.unlink()
+                    self.cfg.save_quality=quality
+                    with patch.object(self.vm,'_decode_incremental',return_value=False) if not native else ExitStack():
+                        self.vm._save_frame(self.cfg.real_video_path[0],20,21,0,config=self.cfg)
+                    path=Path(self.cfg.video_path[0])/self.vm._filename_converter(20,0)
+                    with Image.open(path) as image:
+                        # FFmpeg may use identical non-unit MCU sampling factors
+                        # for all three channels: still full-resolution 4:4:4.
+                        factors=[(h,v) for _,h,v,_ in image.layer]
+                        self.assertEqual(len(factors),3)
+                        self.assertEqual(len(set(factors)),1)
+                        tables.append(sum(image.quantization[0]))
+            self.assertGreater(tables[0],tables[1])
+
+    def test_quality_change_invalidates_raw_files_and_rejects_old_producers(self):
+        path=Path(self.cfg.video_path[0])/'cached.jpeg';path.write_bytes(b'old')
+        old=copy.copy(self.cfg)
+        self.cfg.save_quality=70
+        self.assertNotEqual(self.vm._cache_context_token(old),self.vm._cache_context_token())
+        self.assertFalse(self.vm._raw_format_current(old))
+        self.assertTrue(self.vm._prepare_raw_quality(self.cfg))
+        self.assertFalse(path.exists())
+        path.write_bytes(b'new')
+        self.assertTrue(self.vm._prepare_raw_quality(self.cfg))
+        self.assertEqual(path.read_bytes(),b'new')
+        self.cfg.save_quality=100
+        self.assertTrue(self.vm._prepare_raw_quality(self.cfg))
+        self.assertFalse(path.exists())
 
     def test_png_native_and_ffmpeg_paths_write_real_lossless_png(self):
         self.cfg.cache_save_format=1

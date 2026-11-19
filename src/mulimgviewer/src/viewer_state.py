@@ -5,6 +5,7 @@ class SharedConfig:
     def __init__(self):
         '''Variables shared by MulimgViewer and VideoManager.'''
         self.cache_save_format = 0 # Resolved encoding: 0 JPG, 1 PNG (GUI auto is resolved on Refresh)
+        self.save_quality = 100 # JPG encoder quality; applied on Refresh
         self.cache_num = 2 #Number of caches
         self.cache_multiplier = 1 # Outer video cache radius / priority radius
         self.skip_frames = 0 #Number of frames to skip

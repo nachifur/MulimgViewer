@@ -40,7 +40,7 @@ def cache_image_extension(manager):
     return 'png' if manager_cache_format(manager)==1 else 'jpeg'
 
 
-def save_cache_image(image,path,extension,checkpoint=None,**png_options):
+def save_cache_image(image,path,extension,checkpoint=None,jpeg_quality=100,**png_options):
     """Encode with the captured cache policy; JPEG has no alpha channel."""
     if not isinstance(image,Image.Image):
         # CachedCanvas already has this policy's encoding; keep the link fast path.
@@ -85,7 +85,7 @@ def save_cache_image(image,path,extension,checkpoint=None,**png_options):
                             if rgba is not strip:rgba.close()
             else:converted=image.convert('RGB')
         if isinstance(converted,DiskCanvas):converted.flush(checkpoint)
-        (converted if converted is not None else image).save(path,format='JPEG',quality=90)
+        (converted if converted is not None else image).save(path,format='JPEG',quality=jpeg_quality,subsampling=0)
     finally:
         if converted is not None:converted.close()
 

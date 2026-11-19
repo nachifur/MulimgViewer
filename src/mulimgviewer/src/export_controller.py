@@ -54,10 +54,10 @@ def _write_export_file(work,source,target,formats):
     checkpoint()
     target=Path(target).with_suffix('.png' if formats==PNG else '.jpg' if formats==JPG else '.pdf')
     target.parent.mkdir(parents=True,exist_ok=True)
-    # Full-resolution data outputs have no layout/alpha transform. Reuse their
-    # encoded bytes when the requested format matches, avoiding recompression.
+    # PNG can reuse its lossless encoding. JPG must use the clicked quality
+    # and 4:4:4 policy even when its source is already a JPEG file.
     with Image.open(source) as image:
-        copy_encoded=(formats==PNG and image.format=='PNG') or (formats==JPG and image.format=='JPEG')
+        copy_encoded=(formats==PNG and image.format=='PNG')
         size=1024**2 if copy_encoded else max(1024**2,image.width*image.height*16)
         budget=getattr(work,'_export_file_budget',None)
         with budget.acquire(size,cancelled) if budget is not None else nullcontext():
@@ -163,6 +163,11 @@ def export_page(manager,root,output,memory=None,workers=1,defer_moves=False,sele
                             continue
                         # Stitch initialization also supplies output-scale crop geometry.
                         cached_mosaic=getattr(manager,'_export_reused_mosaics',{}).get(index)
+                        # A JPEG preview already baked compression artefacts into
+                        # its titles. Render these again from source/processed
+                        # tiles for final JPEG output; PNG mosaics remain reusable.
+                        if formats==JPG and cached_mosaic is not None and Path(cached_mosaic[0]).suffix.lower() in ('.jpg','.jpeg'):
+                            cached_mosaic=None
                         if bits&1 and cached_mosaic is not None:
                             work.stitch_img_init(1,copy.deepcopy(work.draw_points),flist=paths)
                             with Image.open(cached_mosaic[0]) as image:work.img=image.convert('RGBA')

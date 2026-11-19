@@ -127,6 +127,25 @@ class ConfigurationTests(unittest.TestCase):
     def read(self, name='userdef_config.json'):
         return json.loads((self.directory / name).read_text(encoding='utf-8'))
 
+    def test_jpeg_quality_is_discovered_saved_loaded_and_reset(self):
+        frame=self.frame()
+        self.assertEqual(frame.save_quality.GetValue(),100)
+        frame.save_quality.SetValue(67);frame.save_configuration(None)
+        self.assertEqual(self.read()['output']['save_quality'],67)
+        frame.save_quality.SetValue(12);frame.load_configuration(None)
+        self.assertEqual(frame.save_quality.GetValue(),67)
+        frame.reset_configuration(None)
+        self.assertEqual(frame.save_quality.GetValue(),100)
+
+    def test_auto_row_col_configuration_survives_startup_before_an_input_is_loaded(self):
+        write_config(self.directory/'config_schema.json',{'roles_version':2})
+        write_config(self.directory/'userdef_config.json',{'output':{'video_mode':True,'row_col':'-1,-1'}})
+        frame=self.frame()
+        self.assertEqual(frame.row_col.GetValue(),'-1,-1')
+        self.assertIn('Ready',frame.m_statusBar1.GetStatusText(0))
+        frame.save_configuration(None)
+        self.assertEqual(self.read()['output']['row_col'],'-1,-1')
+
     def test_startup_status_explains_both_image_and_video_modes_without_touching_output(self):
         write_config(self.directory/'config_schema.json',{'roles_version':2})
         for video in (False,True):

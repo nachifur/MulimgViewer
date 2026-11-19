@@ -3,6 +3,7 @@
 Only metadata is queued. User pixels exist while a task holds a resource permit;
 completed results are disk-backed JPG/PNG paths. Waiters never hold a pixel/CPU permit.
 """
+from .jpeg_policy import jpeg_quality
 import hashlib
 import json
 import re
@@ -342,7 +343,7 @@ class CustomPipeline:
         registry=manager._custom_algorithm_registry
         spec=specification(registry,index)
         signature,pixels=self._input_signature(paths) if inputs is None else inputs
-        version=(registry[index],signature,batch,cache_image_extension(manager))
+        version=(registry[index],signature,batch,cache_image_extension(manager),jpeg_quality(manager))
         if not spec['cacheable']:version+=(owner,repr(epoch),batch)
         digest=hashlib.sha256(repr(version).encode('utf-8')).hexdigest()
         size=max(32*1024**2,pixels*spec['working_set_bytes_per_pixel']+spec['working_set_bytes'])
@@ -487,7 +488,7 @@ class CustomPipeline:
                     if entry is None:
                         name=readable_name(registry[index][0],32)
                         entry=dict(directory=self.directory/f'result_{name}__page_{batch+1:06d}__{uuid.uuid4().hex[:12]}',users=set(),pins=0,
-                                   used=time.monotonic(),bytes=0,input_paths=paths,page=batch,cacheable=spec['cacheable'],algorithm=algorithm)
+                                   used=time.monotonic(),bytes=0,input_paths=paths,page=batch,cacheable=spec['cacheable'],algorithm=algorithm,jpeg_quality=jpeg_quality(manager))
                         self.entries[key]=entry;self.misses+=1
                         try:entry['future']=self._submit_process(manager,paths,index,spec,size,entry,owner,epoch,batch,cancelled)
                         except BaseException:
@@ -673,7 +674,7 @@ class CustomPipeline:
     def _write_output(self,entry,temporary,name,image,source_path,preview_size):
         (temporary/name).parent.mkdir(parents=True,exist_ok=True)
         with open(temporary/name,'wb') as stream:
-            save_cache_image(image,stream,Path(name).suffix.lstrip('.'),compress_type=zlib.Z_RLE)
+            save_cache_image(image,stream,Path(name).suffix.lstrip('.'),jpeg_quality=entry.get('jpeg_quality',100),compress_type=zlib.Z_RLE)
         pixel_cache=getattr(self,'pixel_cache',None)
         if pixel_cache is not None:
             pixel_cache.put_header(str(entry['directory']/name),image.size,image.mode,owner=source_path)

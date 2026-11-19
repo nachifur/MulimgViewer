@@ -169,21 +169,6 @@ class MulimgViewerGui ( wx.Frame ):
 
 		fgSizer3.Add( bSizer16, 1, wx.EXPAND, 5 )
 
-		bSizer162 = wx.BoxSizer( wx.HORIZONTAL )
-
-		self.m_staticText211 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"SaveFormat", wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.m_staticText211.Wrap( -1 )
-
-		bSizer162.Add( self.m_staticText211, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
-
-		save_formatChoices = [ u"jpg", u"png", u"pdf" ]
-		self.save_format = wx.Choice( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.Size( 90,-1 ), save_formatChoices, 0 )
-		self.save_format.SetSelection( 0 )
-		bSizer162.Add( self.save_format, 0, wx.ALL|wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL, 5 )
-
-
-		fgSizer3.Add( bSizer162, 1, wx.EXPAND, 5 )
-
 		bSizer15 = wx.BoxSizer( wx.HORIZONTAL )
 
 		self.m_staticText19 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"OutputMode", wx.DefaultPosition, wx.DefaultSize, 0 )
@@ -213,6 +198,26 @@ class MulimgViewerGui ( wx.Frame ):
 
 
 		fgSizer3.Add( bSizer23, 1, wx.EXPAND, 5 )
+
+		bSizer162 = wx.BoxSizer( wx.HORIZONTAL )
+
+		self.m_staticText211 = wx.StaticText( self.m_panel4, wx.ID_ANY, u"SaveFormat", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText211.Wrap( -1 )
+
+		bSizer162.Add( self.m_staticText211, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+
+		save_formatChoices = [ u"jpg", u"png", u"pdf" ]
+		self.save_format = wx.Choice( self.m_panel4, wx.ID_ANY, wx.DefaultPosition, wx.Size( 90,-1 ), save_formatChoices, 0 )
+		self.save_format.SetSelection( 0 )
+		bSizer162.Add( self.save_format, 0, wx.ALL|wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL, 5 )
+
+		self.save_quality = wx.Slider( self.m_panel4, wx.ID_ANY, 100, 0, 100, wx.DefaultPosition, wx.Size( 80,-1 ), wx.SL_HORIZONTAL )
+		self.save_quality.SetToolTip( u"JPG quality: 0-100. Higher values preserve more detail and use more disk space. Cache changes apply on Refresh; exports capture the value when Save is clicked. Controls JPG encoding only; PNG/PDF encoding is unchanged." )
+
+		bSizer162.Add( self.save_quality, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+
+
+		fgSizer3.Add( bSizer162, 1, wx.EXPAND, 5 )
 
 		bSizer21 = wx.BoxSizer( wx.HORIZONTAL )
 
@@ -246,7 +251,7 @@ class MulimgViewerGui ( wx.Frame ):
 		wSizer3.Add( self.auto_save_all, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
 		self.move_file = wx.CheckBox( self.m_panel4, wx.ID_ANY, u"MoveFile", wx.DefaultPosition, wx.DefaultSize, 0 )
-		wSizer3.Add( self.move_file, 0, wx.ALL, 5 )
+		wSizer3.Add( self.move_file, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
 
 		fgSizer3.Add( wSizer3, 1, wx.EXPAND, 5 )

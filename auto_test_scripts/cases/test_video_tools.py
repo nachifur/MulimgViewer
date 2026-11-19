@@ -17,6 +17,24 @@ from mulimgviewer.src.video_tools import resolve_video_tools
 
 
 class VideoToolTests(unittest.TestCase):
+    def test_strict_csv_import_preserves_rows_quotes_blanks_and_duplicate_entries(self):
+        from mulimgviewer.src.video_tools import read_video_file_list
+        (self.root/'a,b.mp4').write_bytes(b'video')
+        (self.root/'second.mov').write_bytes(b'video')
+        listing=self.root/'videos.csv'
+        listing.write_text('"a,b.mp4",second.mov\n,"a,b.mp4"\n',encoding='utf-8-sig')
+        self.assertEqual(read_video_file_list(listing,strict=True),[
+            str(self.root/'a,b.mp4'),str(self.root/'second.mov'),str(self.root/'a,b.mp4')])
+
+    def test_strict_csv_import_reports_exact_bad_cell_instead_of_skipping_it(self):
+        from mulimgviewer.src.video_tools import read_video_file_list
+        (self.root/'01.mp4').write_bytes(b'video')
+        listing=self.root/'videos.csv'
+        listing.write_text('01.mp4,1.mp4\n',encoding='utf-8')
+        with self.assertRaisesRegex(ValueError,'row 1, column 2: file not found'):
+            read_video_file_list(listing,strict=True)
+        self.assertEqual(read_video_file_list(listing),[str(self.root/'01.mp4')])
+
     def checker(self):
         return runpy.run_path(str(Path(__file__).resolve().parents[2]/'tools/check_video_tools.py'))['main']
 

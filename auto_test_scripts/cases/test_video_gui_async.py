@@ -467,6 +467,32 @@ class VideoGuiAsyncTests(unittest.TestCase):
         finally:
             release.set()
 
+    def test_jpeg_quality_applies_on_refresh_and_is_captured_in_snapshot(self):
+        frame=self.frame
+        frame.save_quality.SetValue(73)
+        self.assertEqual(frame.shared_config.save_quality,100)
+        frame.show_img_init()
+        self.assertEqual(frame.shared_config.save_quality,73)
+        self.assertEqual(frame.ImgManager.layout_params[42],73)
+        snapshot=frame.ImgManager.video_stitch_snapshot()
+        frame.save_quality.SetValue(25)
+        self.assertEqual(snapshot.layout_params[42],73)
+        self.assertEqual(frame.shared_config.save_quality,73)
+
+    def test_jpeg_quality_refresh_rebuilds_raw_video_frames(self):
+        from PIL.JpegImagePlugin import get_sampling
+        frame=self.frame;frame.cache_save_format.SetSelection(0)
+        tables=[]
+        for quality in (25,95):
+            frame.save_quality.SetValue(quality);frame.show_img_init()
+            self.warm_current_window()
+            cfg=frame.shared_config
+            path=Path(cfg.video_path[0])/frame.video_manager._filename_converter(20,0)
+            with Image.open(path) as image:
+                self.assertEqual(get_sampling(image),0)
+                tables.append(sum(image.quantization[0]))
+        self.assertGreater(tables[0],tables[1])
+
     def test_render_snapshot_does_not_share_mutable_layout(self):
         manager = self.frame.ImgManager
         snapshot = manager.video_stitch_snapshot()
@@ -3045,6 +3071,39 @@ class VideoGuiAsyncTests(unittest.TestCase):
         self.pump_until(lambda: getattr(self.frame, '_video_display_key', (None,))[0] == 26)
         self.assertEqual(self.frame.ImgManager._status_video_sources, ((0,78),(0,79),(1,0)))
 
+    def test_video_csv_input_loads_six_entries_in_csv_order(self):
+        folder=Path('csv-videos');folder.mkdir()
+        for number in range(1,7):shutil.copyfile('sample.mp4',folder/f'{number:02}.mp4')
+        listing=Path('videos.csv')
+        listing.write_text('csv-videos/01.mp4,csv-videos/03.mp4\n'
+            'csv-videos/02.mp4,csv-videos/04.mp4\n'
+            'csv-videos/06.mp4,csv-videos/05.mp4\n',encoding='utf-8')
+        self.frame.row_col.ChangeValue('3,2')
+        self.assertTrue(self.frame._open_video_file_list(str(listing)))
+        self.pump_until(self.video_page_ready)
+        self.assertEqual([Path(path).stem for path in self.frame.shared_config.real_video_path],
+                         ['01','03','02','04','06','05'])
+        self.assertEqual(len(self.frame.ImgManager._status_video_sources),6)
+        self.assertEqual(self.frame.shared_config.status_input_mode,3)
+
+    def test_video_csv_partial_valid_input_retains_legacy_skip_missing_behavior(self):
+        listing=Path('partial-videos.csv')
+        listing.write_text('sample.mp4,missing.mp4\n',encoding='utf-8')
+        self.assertTrue(self.frame._open_video_file_list(str(listing)))
+        self.pump_until(self.video_page_ready)
+        self.assertEqual(self.frame.shared_config.real_video_path,[str(Path('sample.mp4').absolute())])
+
+    def test_invalid_video_csv_keeps_current_input_and_shows_bad_cell(self):
+        self.warm_current_window()
+        before=list(self.frame.shared_config.real_video_path)
+        listing=Path('missing-video.csv');listing.write_text(',missing.mp4\n',encoding='utf-8')
+        self.assertFalse(self.frame._open_video_file_list(str(listing)))
+        self.assertEqual(self.frame.shared_config.real_video_path,before)
+        self.assertIn('Input error',self.frame.m_statusBar1.GetStatusText(0))
+        text=self.frame.m_statusBar1.GetStatusText(2)
+        self.assertIn('row 1, column 2',text)
+        self.assertIn('missing.mp4',text)
+
     def test_video_file_list_loads_videos_and_status_identifies_second_source(self):
         listing = Path('videos.txt')
         listing.write_text('sample.mp4\nsample.mp4\n', encoding='utf-8')
@@ -3310,7 +3369,8 @@ class VideoGuiAsyncTests(unittest.TestCase):
         frame.magnifier_show_scale.ChangeValue('-1,-1')
         vm.update_cache();frame.show_img()
         self.pump_until(self.video_page_ready)
-        self.assertEqual(len(frame.ImgManager.layout_params),42)
+        self.assertEqual(len(frame.ImgManager.layout_params),43)
+        self.assertEqual(frame.ImgManager.layout_params[42],frame.save_quality.GetValue())
 
     def test_disk_backed_video_magnifier_preserves_resolution_and_gui_handoff(self):
         from mulimgviewer.src.disk_canvas import DiskCanvas
@@ -3389,6 +3449,92 @@ class VideoGuiAsyncTests(unittest.TestCase):
             resume.assert_not_called();show.assert_not_called()
             self.assertTrue(frame._play_timer_suspended)
         cfg.is_playing=False
+
+    def test_auto_row_col_waits_for_valid_settings_and_video_count_uses_resolved_shape(self):
+        frame=self.frame;frame.row_col.ChangeValue('-1,-1')
+        old_gap=frame.gap.GetValue();frame.gap.ChangeValue('invalid')
+        self.assertFalse(frame.set_img_layout())
+        self.assertEqual(frame.row_col.GetValue(),'-1,-1')
+        frame.gap.ChangeValue(old_gap)
+        frame.parallel_to_sequential.SetValue(True);frame.row_col_one_img.ChangeValue('1,3')
+        self.assertEqual(frame._sync_video_count_per_action(),6)
+        self.assertEqual(frame.row_col.GetValue(),'-1,-1')
+        params=frame.set_img_layout()
+        self.assertEqual(params[0],[1,2])
+        self.assertEqual(frame.row_col.GetValue(),'1,2')
+        self.assertEqual(frame._sync_video_count_per_action(),6)
+        for value in ('0,1','-1,2','2,-1','-2,-2'):
+            frame.row_col.ChangeValue(value)
+            self.assertFalse(frame.set_img_layout())
+            self.assertIsNone(frame._sync_video_count_per_action())
+
+    def test_refresh_with_invalid_row_col_keeps_previous_layout_and_does_not_schedule_display(self):
+        frame=self.frame;frame._commit_video_settings();self.warm_current_window()
+        previous=frame.ImgManager.layout_params
+        frame.row_col.ChangeValue('-1,2')
+        with patch.object(frame.video_manager,'update_cache') as cache,patch.object(frame,'show_img') as display:
+            frame.refresh(None)
+        cache.assert_not_called();display.assert_not_called()
+        self.assertIs(frame.ImgManager.layout_params,previous)
+        self.assertIn('row_col',frame.m_statusBar1.GetStatusText(2))
+
+    def test_auto_row_col_renders_all_input_modes_orders_and_algorithm_layouts(self):
+        frame=self.frame;cfg=frame.shared_config
+        video_paths=list(cfg.video_path);real_paths=list(cfg.real_video_path)
+        folders=[Path('auto-layout-images')/name for name in ('a','b')]
+        for folder in folders:
+            folder.mkdir(parents=True)
+            for index in range(3):Image.new('RGB',(40,24),(index*30,80,100)).save(folder/f'{index}.png')
+        listing=Path('auto-layout-images.txt').absolute()
+        listing.write_text('\n'.join(str(path.absolute()) for path in (folders[0]/'0.png',folders[1]/'1.png',folders[0]/'2.png')),encoding='utf-8')
+        frame.cache_frames.ChangeValue('1');frame.cache_multiplier.ChangeValue('1')
+        cases=0
+        for video in (False,True):
+            for mode in range(4):
+                for serial,sequential in ((False,False),(False,True),(True,False),(True,True)):
+                    for algorithm in ('original','single','all'):
+                        with self.subTest(video=video,mode=mode,serial=serial,sequential=sequential,algorithm=algorithm):
+                            frame.video_mode.SetValue(video);cfg.video_mode=video
+                            frame.parallel_to_sequential.SetValue(serial);frame.parallel_sequential.SetValue(sequential)
+                            frame.row_col.ChangeValue('-1,-1');frame.row_col_one_img.ChangeValue('1,2')
+                            frame.row_col_img_unit.ChangeValue('1,1');frame.title_show.SetValue(False)
+                            frame.show_magnifer.SetValue(False);frame.show_original.SetValue(True)
+                            frame.show_custom_func.SetValue(algorithm=='single');frame.show_all_func.SetValue(algorithm=='all')
+                            frame.customfunc_choice.SetStringSelection('Gaussian Blur')
+                            frame.show_all_func_layout.ChangeValue('2,2')
+                            cfg.batch_idx=0;frame.slider_value.ChangeValue('1');cfg.status_input_mode=mode
+                            cfg.input_mode=2 if mode==0 else 3 if mode==3 else 1
+                            if video:
+                                count=1 if mode==0 else 2
+                                cfg.real_video_path=real_paths[:count];cfg.video_path=video_paths[:count]
+                                cfg.video_fps_list=[10.]*count;cfg.video_num_list=[3]*count
+                                # Real selection recreates directories removed when a source retires.
+                                for directory in cfg.video_path:Path(directory).mkdir(parents=True,exist_ok=True)
+                                frame.ImgManager.init(video_paths[0] if mode==0 else video_paths,
+                                    type=2 if mode==0 else 1,parallel_to_sequential=serial,
+                                    video_mode=True,video_fps_list=cfg.video_fps_list,video_num_list=cfg.video_num_list)
+                            else:
+                                kind=(2,0,1,3)[mode]
+                                target=(str(folders[0]),str(folders[0].parent),list(map(str,folders)),str(listing))[mode]
+                                frame.ImgManager.init(target,type=kind,parallel_to_sequential=serial and kind in (0,1))
+                            expected=frame.ImgManager.layout_advice()
+                            frame.refresh(None)
+                            if video:self.pump_until(self.video_page_ready)
+                            else:self.pump_until(lambda:frame.image_pipeline.displayed_key is not None)
+                            self.assertEqual(frame.row_col.GetValue(),','.join(map(str,expected)))
+                            self.assertEqual(frame.ImgManager.layout_params[0],expected)
+                            self.assertGreater(cfg.count_per_action,0)
+                            self.assertGreater(frame.ImgManager.img.width,0)
+                            self.assertGreater(frame.ImgManager.img.height,0)
+                            self.assertEqual(frame._status_display_batch,0)
+                            if video:
+                                self.pump_until(lambda:not frame.video_manager.cache_update_pending()
+                                    and not frame.video_manager._pending_extract
+                                    and not frame.video_manager._window_stitches)
+                                maintenance=frame.video_manager._cleanup_future
+                                if maintenance is not None:maintenance.result(timeout=5)
+                            cases+=1
+        self.assertEqual(cases,96)
 
     def test_layout_pair_validation_rejects_incomplete_and_nonfinite_values(self):
         frame=self.frame

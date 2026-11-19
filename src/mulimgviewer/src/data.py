@@ -1,10 +1,10 @@
 
 import csv
+import math
 from pathlib import Path
 
 import numpy as np
 
-from .utils import solve_factor
 from .status_info import ImageSourceIndex
 from .video_paths import FrameNames, manager_cache_format
 from .video_timeline import page_segments
@@ -204,40 +204,28 @@ class ImgData():
             self.img_count = self.count_per_action*self.action_count
 
     def layout_advice(self):
-        if self.csv_flag:
-            return self.csv_row_col
-        else:
-            if self.type == 0 or self.type == 1:
-                if self.parallel_to_sequential:
-                    num_all = len(self.name_list[0])
-                else:
-                    num_all = len(self.path_list)
-            else:
-                num_all = self.img_num
-
-            list_factor = solve_factor(num_all)
-
-            if len(list_factor) == 0:
-                row_col = [1, num_all]
-            else:
-                if len(list_factor) <= 1:
-                    num_all = num_all+1
-                    list_factor = solve_factor(num_all)
-                row = list_factor[int(len(list_factor)/2)-1]
-                row = int(row)
-                col = int(num_all/row)
-                if row < col:
-                    row_col = [row, col]
-                else:
-                    row_col = [col, row]
-
-            if row_col[0] >= 50:
-                row_col[0] = 50
-
-            if row_col[1] >= 50:
-                row_col[1] = 50
-
-            return row_col
+        """Positive, bounded layout advice using source metadata only."""
+        if getattr(self,'csv_flag',False):
+            # A CSV supplies its own shape. Never return its mutable list.
+            return [max(1,int(value)) for value in self.csv_row_col]
+        if getattr(self,'video_mode',False):
+            # Duration/frame counts must not turn one film into thousands of
+            # simultaneous cells. Frames per video have their own layout.
+            count=len(getattr(self,'path_list',()))
+        elif getattr(self,'type',None) in (0,1):
+            if getattr(self,'parallel_to_sequential',False):
+                count=next((len(names) for names in getattr(self,'name_list',()) if len(names)),1)
+            else:count=len(getattr(self,'path_list',()))
+        else:count=getattr(self,'img_num',0)
+        count=max(1,int(count))
+        if count>2500:return [50,50]  # Preserve the existing 50 x 50 limit.
+        if count<=2:return [1,count]
+        def factor(value):
+            return next((row for row in range(math.isqrt(value),1,-1) if value%row==0),1)
+        row=factor(count)
+        if row==1:  # Retain the original spare-cell rule for prime counts.
+            count+=1;row=factor(count)
+        return [min(50,row),min(50,count//row)]
 
     def get_flist(self):
         if self.video_mode:

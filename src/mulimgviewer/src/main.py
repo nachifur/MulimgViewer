@@ -1186,7 +1186,7 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
         #   以前 refresh() 直接读 shared_config, 而数值框只在"失去焦点"时才写回,
         #   所以用菜单/快捷键(Ctrl+R)刷新时, 刚改的 Cached Frames 会被静默丢弃。
         self._commit_video_settings()
-        self.show_img_init()
+        if self.show_img_init() is False:return
         if getattr(self.shared_config, "video_mode", False):
             self._last_refresh_batch = None
             vm = getattr(self, "video_manager", None)
@@ -2206,13 +2206,14 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
 
         layout_params = self.set_img_layout()
         if not layout_params:
-            return
+            return False
         self.ImgManager.gap_alpha=int(self.background_slider.GetValue())
         self.ImgManager.img_alpha=int(self.foreground_slider.GetValue())
         color=self.colourPicker_gap.GetColour()
         self.ImgManager.gap_color=(color.red,color.green,color.blue,self.ImgManager.gap_alpha)
         self.shared_config.cache_save_format=resolve_cache_format(layout_params[41],layout_params[35],layout_params[5])
         self.ImgManager.cache_save_format=layout_params[41]
+        self.shared_config.save_quality=layout_params[42]
         try:
             registry = capture_algorithms(get_available_algorithms())
         except (OSError, UnicodeError, ValueError, TypeError) as error:
@@ -2326,10 +2327,12 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
             row_col = pair('row_col', int)
             row_col_one_img = pair('row_col_one_img', int)
 
-            if row_col_one_img[0] == -1 and row_col_one_img[1] == -1:
-                row_col_one_img= [1,1]
-                row_col = self.ImgManager.layout_advice()
-                self.row_col.SetValue(str(row_col[0])+","+str(row_col[1]))
+            automatic_row_col=row_col==[-1,-1]
+            if automatic_row_col:row_col=list(self.ImgManager.layout_advice())
+            if len(row_col)!=2 or any(value<=0 for value in row_col):
+                raise ValueError('row_col: use two positive integers or -1,-1 for automatic layout')
+            if any(value<=0 for value in row_col_one_img):
+                raise ValueError('row_col_one_img: use two positive integers')
 
             row_col_img_unit = pair('row_col_img_unit', int)
             magnifer_row_col = pair('magnifer_row_col', int)
@@ -2392,6 +2395,7 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
                 ["-1", "-1", f'Invalid layout settings: {error}', "-1"])
             return False
         else:
+            if automatic_row_col:self.row_col.ChangeValue(','.join(map(str,row_col)))
             params=[row_col,                                # 0
                     row_col_one_img,                        # 1
                     row_col_img_unit,                       # 2
@@ -2433,7 +2437,8 @@ class MulimgViewer(NavigationMixin, StatusBarMixin, VideoPlaybackMixin, Configur
                     self.show_all_func.Value,               # 38
                     self.show_all_func_layout.Value,        # 39
                     self.func_layout_vertical.Value,        # 40
-                    self.cache_save_format.GetSelection()] # 41
+                    self.cache_save_format.GetSelection(), # 41
+                    self.save_quality.GetValue()] # 42
             if getattr(self,'_custom_settings_dirty',False) and len(self.ImgManager.layout_params)>40:
                 for index in (32,36,37,38,39,40):params[index]=self.ImgManager.layout_params[index]
             return params

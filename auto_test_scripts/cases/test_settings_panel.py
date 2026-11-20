@@ -22,6 +22,54 @@ class SettingsPanelTests(unittest.TestCase):
 
     def tearDown(self):self.fixture.tearDown()
 
+    def test_reset_defaults_match_fbp_with_only_common_groups_expanded(self):
+        f=self.frame
+        expanded={'input_settings_pane','performance_settings_pane','layout_settings_pane'}
+        expected={name:name not in expanded for name in f._settings_sections()}
+        self.assertEqual(f._gui_section_defaults,expected)
+        self.assertEqual(f._capture_settings_sections(),expected)
+        f.expand_settings_sections(None);f.reset_configuration(None)
+        self.assertEqual(f._capture_settings_sections(),expected)
+        restarted=self.fixture.frame()
+        self.assertEqual(restarted._capture_settings_sections(),expected)
+
+    def test_updated_fbp_fold_defaults_do_not_overwrite_user_or_session_preferences(self):
+        from mulimgviewer.src.configuration import write_config
+        f=self.frame;defaults=f._gui_section_defaults.copy()
+        for name in ('default_config.json','userdef_config.json','session_config.json'):
+            data=self.fixture.read(name)
+            data['settings_sections']={key:False for key in defaults}
+            write_config(self.fixture.directory/name,data)
+        f._configuration_files()
+        self.assertEqual(self.fixture.read('default_config.json')['settings_sections'],defaults)
+        for name in ('userdef_config.json','session_config.json'):
+            self.assertEqual(self.fixture.read(name)['settings_sections'],{key:False for key in defaults})
+        f.reset_configuration(None)
+        self.assertEqual(f._capture_settings_sections(),defaults)
+        self.assertTrue(all(not value for value in self.fixture.read()['settings_sections'].values()))
+
+    def test_new_gui_group_and_nested_option_are_synced_without_losing_old_values(self):
+        from mulimgviewer.gui.main_gui import MulimgViewerGui
+        f=self.frame;f.input_settings_pane.Collapse(True)
+        f.save_configuration(None);f._save_session_configuration()
+        original=MulimgViewerGui.__init__
+        def upgraded(owner,*args,**kwargs):
+            original(owner,*args,**kwargs)
+            owner.future_section=wx.CollapsiblePane(owner.scrolledWindow_set,label='Future group')
+            owner.future_section.Collapse(True)
+            owner.future_option=wx.CheckBox(owner.future_section.GetPane(),label='Future option')
+            owner.future_option.SetValue(True)
+            owner.scrolledWindow_set.GetSizer().Add(owner.future_section,0,wx.EXPAND)
+        with patch.object(MulimgViewerGui,'__init__',upgraded):upgraded_frame=self.fixture.frame()
+        self.assertTrue(upgraded_frame.future_section.IsCollapsed())
+        self.assertTrue(upgraded_frame.future_option.GetValue())
+        self.assertTrue(upgraded_frame.input_settings_pane.IsCollapsed())
+        for name in ('default_config.json','userdef_config.json','session_config.json'):
+            data=self.fixture.read(name)
+            self.assertTrue(data['settings_sections']['future_section'])
+            self.assertTrue(data['output']['future_option'])
+        self.assertFalse(self.fixture.read('default_config.json')['settings_sections']['input_settings_pane'])
+
     def test_section_states_survive_session_restart(self):
         f=self.frame
         expected={name:index%2==0 for index,name in enumerate(f._settings_sections())}
@@ -54,6 +102,58 @@ class SettingsPanelTests(unittest.TestCase):
         f._restore_settings_sections(None)
         self.assertEqual(f._capture_settings_sections(),f._gui_section_defaults)
 
+    def test_settings_action_buttons_fold_without_refresh_and_preserve_values(self):
+        f=self.frame;f.interval.ChangeValue('0.25')
+        with patch.object(f,'refresh') as refresh,patch.object(f,'show_img_init') as render:
+            for button,collapsed in ((f.settings_collapse_button,True),(f.settings_expand_button,False)):
+                event=wx.CommandEvent(wx.wxEVT_BUTTON,button.GetId());event.SetEventObject(button)
+                button.GetEventHandler().ProcessEvent(event)
+                self.assertTrue(all(section.IsCollapsed()==collapsed for section in f._settings_sections().values()))
+            refresh.assert_not_called();render.assert_not_called()
+        self.assertEqual(f.interval.GetValue(),'0.25')
+
+    def test_quality_labels_follow_saved_or_independent_value_without_applying(self):
+        f=self.frame;f.save_quality.SetValue(87);f.cache_jpg_quality.SetValue(72)
+        with patch.object(f,'refresh') as refresh:
+            f.cache_quality_follow_save.SetValue(True);f._sync_save_controls()
+            self.assertEqual(f.save_quality_value.GetLabel(),'87')
+            self.assertEqual(f.cache_quality_value.GetLabel(),'87')
+            f.cache_quality_follow_save.SetValue(False);f._sync_save_controls()
+            self.assertEqual(f.cache_quality_value.GetLabel(),'72')
+            f.save_quality.SetValue(91)
+            event=wx.CommandEvent(wx.wxEVT_SLIDER,f.save_quality.GetId());event.SetEventObject(f.save_quality)
+            f.save_quality.GetEventHandler().ProcessEvent(event)
+            self.assertEqual(f.save_quality_value.GetLabel(),'91')
+            refresh.assert_not_called()
+
+    def test_invalid_cache_edit_is_explained_before_refresh_without_changing_budget(self):
+        f=self.frame;before=f.shared_config.cache_num
+        f.cache_frames.ChangeValue('0.5')
+        event=wx.FocusEvent(wx.wxEVT_KILL_FOCUS,f.cache_frames.GetId());event.SetEventObject(f.cache_frames)
+        f._on_cache_field_blur(event)
+        self.assertIn('whole number',f.cache_frames.GetToolTip().GetTip())
+        self.assertEqual(f.shared_config.cache_num,before)
+        self.assertEqual(f.cache_frames.GetValue(),'0.5')
+        f.cache_frames.ChangeValue('3');f._on_cache_field_blur(event)
+        self.assertEqual(f.cache_frames.GetBackgroundColour(),f.cache_frames._cache_input_background)
+        self.assertEqual(f.shared_config.cache_num,before)
+
+    def test_save_content_labels_are_readable_and_keep_existing_indices(self):
+        f=self.frame
+        self.assertEqual(list(f.choice_output.GetItems()),['Stitch','Selected images','Stitch + selection',
+                         'Magnifiers','Stitch + zoom','Selection + zoom','Stitch + selection + zoom'])
+        for selection in range(7):
+            f.choice_output.SetSelection(selection);f.save_configuration(None)
+            f.choice_output.SetSelection((selection+1)%7);f.load_configuration(None)
+            self.assertEqual(f.choice_output.GetSelection(),selection)
+
+    def test_compact_sidebar_keeps_one_refresh_entry_and_short_title_label(self):
+        f=self.frame
+        self.assertFalse(hasattr(f,'settings_apply_button'))
+        self.assertEqual(f.title_down_up.GetLabel(),'Below')
+        self.assertIn('below',f.title_down_up.GetToolTip().GetTip())
+        self.assertLessEqual(f.ToDIP(f._automatic_sidebar_width()),300)
+
     def test_all_settings_are_inside_fbp_fold_sections(self):
         frame=self.frame
         panes=[child for child in frame.scrolledWindow_set.GetChildren() if isinstance(child,(SettingsSection,wx.CollapsiblePane))]
@@ -82,6 +182,7 @@ class SettingsPanelTests(unittest.TestCase):
         self.assertEqual(panes,[f.input_settings_pane,f.performance_settings_pane,f.layout_settings_pane,
             f.custom_settings_pane,f.magnifier_settings_pane,f.title_settings_pane,
             f.save_settings_pane,f.colour_settings_pane,f.configuration_settings_pane])
+        f.expand_settings_sections(None)
         for width in (280,320,420):
             with self.subTest(sidebar_width=width):
                 f.scrolledWindow_set.SetSize((width,700));f._layout_settings_sections()

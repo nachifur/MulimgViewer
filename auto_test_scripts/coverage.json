@@ -127,5 +127,13 @@
       "test_export_modes",
       "test_sidebar_layout"
     ]
+  },
+  "auxiliary_windows": {
+    "label": "About, parallel-source selection and virtual-list UI",
+    "modules": [
+      "test_auxiliary_windows",
+      "test_gui_contract",
+      "test_video_gui_async"
+    ]
   }
 }

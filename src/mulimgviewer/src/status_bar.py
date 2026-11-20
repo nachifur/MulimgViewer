@@ -8,11 +8,11 @@ class StatusBarMixin:
     def _init_status_bar(self):
         self._status_selected_grid = 0
         self._status_field_tooltips = [''] * 4
-        style = self.m_statusBar1.GetWindowStyleFlag() & ~(wx.STB_ELLIPSIZE_START | wx.STB_ELLIPSIZE_END)
-        self.m_statusBar1.SetWindowStyleFlag(style | wx.STB_ELLIPSIZE_MIDDLE)
-        self.m_statusBar1.Bind(wx.EVT_SIZE, self._on_status_bar_size)
-        self.m_statusBar1.Bind(wx.EVT_MOTION, self._on_status_bar_hover)
-        self.m_statusBar1.SetStatusText('Output: not set', 3)
+        style = self.main_status_bar.GetWindowStyleFlag() & ~(wx.STB_ELLIPSIZE_START | wx.STB_ELLIPSIZE_END)
+        self.main_status_bar.SetWindowStyleFlag(style | wx.STB_ELLIPSIZE_MIDDLE)
+        self.main_status_bar.Bind(wx.EVT_SIZE, self._on_status_bar_size)
+        self.main_status_bar.Bind(wx.EVT_MOTION, self._on_status_bar_hover)
+        self.main_status_bar.SetStatusText('Output: not set', 3)
         self._fit_status_fields()
 
     def _show_input_status(self, message=None, state='Ready', path=None, persistent=False):
@@ -31,7 +31,7 @@ class StatusBarMixin:
         self.SetStatusText_([action,selection,detail,'-1'])
 
     def _fit_status_fields(self):
-        bar = self.m_statusBar1
+        bar = self.main_status_bar
         width = bar.GetClientSize().width
         if width < 4:
             return
@@ -48,7 +48,7 @@ class StatusBarMixin:
         event.Skip()
 
     def _on_status_bar_hover(self, event):
-        bar = self.m_statusBar1
+        bar = self.main_status_bar
         for field in range(4):
             if bar.GetFieldRect(field).Contains(event.GetPosition()):
                 if field==0:
@@ -66,7 +66,7 @@ class StatusBarMixin:
         for field, text in enumerate(texts[:self.Status_number]):
             if text != '-1':
                 if field==3 and getattr(self,'_export_active',False):text=self._export_status
-                self.m_statusBar1.SetStatusText(str(text), field)
+                self.main_status_bar.SetStatusText(str(text), field)
                 if hasattr(self, '_status_field_tooltips'):
                     self._status_field_tooltips[field] = str(text)
         self._fit_status_fields()
@@ -96,7 +96,7 @@ class StatusBarMixin:
             f'{input_mode} | {info["source"]}' if info else input_mode,'-1'])
         if info:
             if info['timestamp'] and not feedback:
-                self.m_statusBar1.SetStatusText(f'{input_mode} | {info["source"]} | {info["timestamp"]}', 2)
+                self.main_status_bar.SetStatusText(f'{input_mode} | {info["source"]} | {info["timestamp"]}', 2)
             self._status_field_tooltips[1] = f'Page {batch+1}/{pages}\n{position}\n{info["detail"]}'
             if not feedback:self._status_field_tooltips[2] = f'{input_mode}\n{info["source"]}\n{info["detail"]}'
         self._fit_status_fields()

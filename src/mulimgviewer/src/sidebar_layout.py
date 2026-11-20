@@ -9,17 +9,17 @@ class SidebarLayoutMixin:
         self._sidebar_applying=False
         self._sidebar_layout_pending=False
         self._sidebar_preferred_dip=None
-        self.width_setting=self.FromDIP(280)
+        self.width_setting=self.FromDIP(260)
         self.width_setting_=self.width_setting
         self.split_changing=False
         self.SashPosition=0
         self.init_min_size()
-        self.m_splitter1.SetMinimumPaneSize(self.FromDIP(80))
-        self.m_splitter1.SetSashGravity(1.0)
-        self.m_splitter1.SetToolTip('Drag to resize settings; double-click to restore automatic width.')
-        self.m_splitter1.Bind(wx.EVT_SIZE,self._sidebar_size_changed)
-        self.m_splitter1.Bind(wx.EVT_SPLITTER_DCLICK,self._sidebar_reset_width)
-        self.m_splitter1.Bind(wx.EVT_MOUSE_CAPTURE_LOST,self._sidebar_capture_lost)
+        self.viewer_settings_splitter.SetMinimumPaneSize(self.FromDIP(80))
+        self.viewer_settings_splitter.SetSashGravity(1.0)
+        self.viewer_settings_splitter.SetToolTip('Drag to resize settings; double-click to restore automatic width.')
+        self.viewer_settings_splitter.Bind(wx.EVT_SIZE,self._sidebar_size_changed)
+        self.viewer_settings_splitter.Bind(wx.EVT_SPLITTER_DCLICK,self._sidebar_reset_width)
+        self.viewer_settings_splitter.Bind(wx.EVT_MOUSE_CAPTURE_LOST,self._sidebar_capture_lost)
         if hasattr(wx,'EVT_DPI_CHANGED'):self.Bind(wx.EVT_DPI_CHANGED,self._sidebar_size_changed)
         # A scrolled settings form must not determine the initial frame height.
         # Retain explicit FBP frame sizes; replace unusably narrow fitted sizes.
@@ -36,7 +36,7 @@ class SidebarLayoutMixin:
         self._apply_sidebar_width()
 
     def _sidebar_bounds(self):
-        available=max(1,self.m_splitter1.ClientSize.width-self.m_splitter1.GetSashSize())
+        available=max(1,self.viewer_settings_splitter.ClientSize.width-self.viewer_settings_splitter.GetSashSize())
         minimum=min(self.FromDIP(160),max(1,available//2))
         maximum=max(minimum,available-min(self.FromDIP(120),max(1,available//2)))
         return available,minimum,maximum
@@ -44,14 +44,14 @@ class SidebarLayoutMixin:
     def _automatic_sidebar_width(self):
         content=self.scrolledWindow_set.GetSizer().GetMinSize().width
         scrollbar=wx.SystemSettings.GetMetric(wx.SYS_VSCROLL_X,self.scrolledWindow_set)
-        preferred=max(self.FromDIP(280),content+max(0,scrollbar)+self.FromDIP(8))
+        preferred=max(self.FromDIP(260),content+max(0,scrollbar)+self.FromDIP(8))
         available,minimum,maximum=self._sidebar_bounds()
         return min(maximum,max(minimum,min(preferred,max(minimum,int(available*.45)))))
 
     def _apply_sidebar_width(self):
         if (not getattr(self,'_sidebar_ready',False) or self._sidebar_applying
                 or self.split_changing or getattr(self,'_is_closing',False)):return
-        splitter=self.m_splitter1
+        splitter=self.viewer_settings_splitter
         if splitter.ClientSize.width<=self.FromDIP(160):return
         self._sidebar_applying=True
         try:
@@ -123,7 +123,7 @@ class SidebarLayoutMixin:
         if self._sidebar_preferred_dip is not None:
             if not isinstance(state,dict):state={};data['window_state']=state
             state['sidebar_width_dip']=int(self._sidebar_preferred_dip)
-        elif isinstance(state,dict):state.pop('sidebar_width_dip',None)
+        elif isinstance(state,dict):state['sidebar_width_dip']=None
 
     def _restore_sidebar_width(self):
         self._sidebar_preferred_dip=None

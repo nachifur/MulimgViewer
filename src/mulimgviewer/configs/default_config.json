@@ -315,12 +315,12 @@
   "input_settings_pane": false,
   "performance_settings_pane": false,
   "layout_settings_pane": false,
-  "custom_settings_pane": false,
-  "magnifier_settings_pane": false,
-  "title_settings_pane": false,
-  "save_settings_pane": false,
-  "colour_settings_pane": false,
-  "configuration_settings_pane": false
+  "custom_settings_pane": true,
+  "magnifier_settings_pane": true,
+  "title_settings_pane": true,
+  "save_settings_pane": true,
+  "colour_settings_pane": true,
+  "configuration_settings_pane": true
  },
  "window_state": {
   "sidebar_width_dip": null

@@ -17,7 +17,7 @@ class SidebarLayoutTests(unittest.TestCase):
     def tearDown(self):self.fixture.tearDown()
 
     def drag(self,width):
-        f=self.frame;sp=f.m_splitter1
+        f=self.frame;sp=f.viewer_settings_splitter
         event=wx.SplitterEvent(wx.wxEVT_SPLITTER_SASH_POS_CHANGING,sp)
         event.SetSashPosition(sp.ClientSize.width-sp.GetSashSize()-width)
         f.split_sash_pos_changing(event)
@@ -47,8 +47,27 @@ class SidebarLayoutTests(unittest.TestCase):
         self.assertIsNone(f._sidebar_preferred_dip)
         self.assertEqual(f.width_setting,f._automatic_sidebar_width())
 
+    def test_hidden_toolbar_explicitly_hides_native_separators_and_restores_them(self):
+        f=self.frame
+        controls=f.playback_toolbar_panel.GetChildren()
+        separators=[f.input_toolbar_separator,f.save_toolbar_separator,f.view_toolbar_separator]
+        self.assertTrue(all(control.IsShown() for control in controls))
+        for _ in range(2):
+            f.hidden(None)
+            self.fixture.app.Yield(True)
+            self.assertFalse(f.playback_toolbar_panel.IsShown())
+            self.assertTrue(all(not control.IsShown() for control in controls))
+            self.assertTrue(all(not line.IsShown() for line in separators))
+            self.assertFalse(f.viewer_settings_splitter.IsSplit())
+            self.assertFalse(f.IsFrozen())
+            f.hidden(None)
+            self.fixture.app.Yield(True)
+            self.assertTrue(f.playback_toolbar_panel.IsShown())
+            self.assertTrue(all(control.IsShown() for control in controls))
+            self.assertTrue(f.viewer_settings_splitter.IsSplit())
+
     def test_initial_size_is_usable_and_dragging_has_no_xor_tracker(self):
-        f=self.frame;sp=f.m_splitter1
+        f=self.frame;sp=f.viewer_settings_splitter
         self.assertGreaterEqual(f.Size.width,f.FromDIP(600))
         self.assertTrue(sp.GetWindowStyleFlag() & wx.SP_LIVE_UPDATE)
         self.assertEqual(sp.GetSashGravity(),1.)
@@ -57,7 +76,7 @@ class SidebarLayoutTests(unittest.TestCase):
         self.assertEqual(sp.SashPosition+sp.GetSashSize()+f.width_setting,sp.ClientSize.width)
 
     def test_drag_uses_splitter_client_coordinates_and_never_relayouts_while_tracking(self):
-        f=self.frame;sp=f.m_splitter1
+        f=self.frame;sp=f.viewer_settings_splitter
         self.assertNotEqual(f.Size.width,sp.ClientSize.width)
         event=wx.SplitterEvent(wx.wxEVT_SPLITTER_SASH_POS_CHANGING,sp)
         event.SetSashPosition(sp.ClientSize.width-sp.GetSashSize()-350)
@@ -82,7 +101,7 @@ class SidebarLayoutTests(unittest.TestCase):
         self.assertEqual(f.width_setting,420)
 
     def test_proposed_drag_positions_are_clamped_to_usable_panes(self):
-        f=self.frame;sp=f.m_splitter1
+        f=self.frame;sp=f.viewer_settings_splitter
         available,minimum,maximum=f._sidebar_bounds()
         for position in (-10000,100000):
             event=wx.SplitterEvent(wx.wxEVT_SPLITTER_SASH_POS_CHANGING,sp)
@@ -95,13 +114,13 @@ class SidebarLayoutTests(unittest.TestCase):
         f=self.frame;self.drag(330)
         f.layout_settings_pane.Collapse(True)
         f.hidden(None)
-        self.assertFalse(f.m_splitter1.IsSplit())
+        self.assertFalse(f.viewer_settings_splitter.IsSplit())
         self.assertFalse(f.scrolledWindow_set.IsShown())
-        self.assertEqual(f.scrolledWindow_img.Size.width,f.m_splitter1.ClientSize.width)
+        self.assertEqual(f.scrolledWindow_img.Size.width,f.viewer_settings_splitter.ClientSize.width)
         self.assertEqual(f.width_setting,0)
         f.SetSize((1300,800));f.auto_layout(frame_resize=True)
         f.hidden(None)
-        self.assertTrue(f.m_splitter1.IsSplit())
+        self.assertTrue(f.viewer_settings_splitter.IsSplit())
         self.assertEqual(f.width_setting,330)
         self.assertTrue(f.layout_settings_pane.IsCollapsed())
 
@@ -113,18 +132,18 @@ class SidebarLayoutTests(unittest.TestCase):
         other=self.fixture.frame()
         self.assertEqual(other._sidebar_preferred_dip,f.ToDIP(340))
         self.assertEqual(other.width_setting,340)
-        self.assertTrue(other.m_splitter1.IsSplit())
+        self.assertTrue(other.viewer_settings_splitter.IsSplit())
 
     def test_double_click_resets_to_auto_without_unsplitting_and_persists_reset(self):
         f=self.frame;self.drag(360);f._save_session_configuration()
-        event=wx.SplitterEvent(wx.wxEVT_SPLITTER_DOUBLECLICKED,f.m_splitter1)
+        event=wx.SplitterEvent(wx.wxEVT_SPLITTER_DOUBLECLICKED,f.viewer_settings_splitter)
         f._sidebar_reset_width(event)
         self.assertIsNone(f._sidebar_preferred_dip)
-        self.assertTrue(f.m_splitter1.IsSplit())
+        self.assertTrue(f.viewer_settings_splitter.IsSplit())
         self.assertEqual(f.width_setting,f._automatic_sidebar_width())
         f._save_session_configuration()
         data=json.loads(f.output_config_path.read_text(encoding='utf-8'))
-        self.assertNotIn('sidebar_width_dip',data.get('window_state',{}))
+        self.assertIsNone(data.get('window_state',{}).get('sidebar_width_dip'))
 
     def test_stored_width_is_converted_to_current_dpi(self):
         f=self.frame;f.SetSize((1500,800));f.auto_layout(frame_resize=True)

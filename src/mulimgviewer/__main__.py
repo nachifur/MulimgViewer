@@ -146,7 +146,7 @@ class MainAPP(wx.App):
                 try:
                     self.frame[1].refresh_txt(paths_to_show)
                 except AttributeError:
-                    self.frame[1].m_richText1.Value = "\n".join(paths_to_show) + "\n"
+                    self.frame[1].paths_text.Value = "\n".join(paths_to_show) + "\n"
             # 关键：重建后立刻把 vm 注入新实例
             if getattr(self, "video_manager", None) is not None:
                 self.frame[1].set_video_manager(self.video_manager,self.shared_config)

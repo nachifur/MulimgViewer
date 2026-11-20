@@ -20,6 +20,8 @@ class SettingsSection(wx.Panel):
         if self._header is not None:return
         self._header=next(c for c in self.GetChildren() if isinstance(c,wx.Button))
         self._content=next(c for c in self.GetChildren() if isinstance(c,wx.Panel))
+        # The FBP body visibility is the default fold state.
+        self._collapsed=not self._content.IsShown()
         self._title=self._header.GetLabel()
         self.SetName(self._title.replace('&&','&'))
         font=self._header.GetFont();font.MakeBold();self._header.SetFont(font)
@@ -36,14 +38,14 @@ class SettingsSection(wx.Panel):
         return wx.Colour(*(round(a*(1-amount)+b*amount) for a,b in zip(base.Get()[:3],ink.Get()[:3])))
 
     def _style(self):
-        base=wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOW)
-        ink=wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOWTEXT)
-        border=(wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHT) if self._focused else self._blend(base,ink,.20))
+        base=wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DFACE)
+        ink=wx.SystemSettings.GetColour(wx.SYS_COLOUR_BTNTEXT)
+        border=(wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHT) if self._focused else self._blend(base,ink,.13))
         self.SetBackgroundColour(border)
         self._content.SetBackgroundColour(base)
         for child in self._content.GetChildren():
             if isinstance(child,(wx.StaticText,wx.CheckBox,wx.Slider)):child.SetBackgroundColour(base)
-        self._header.SetBackgroundColour(self._blend(base,ink,.10 if self._hover or self._focused else .06))
+        self._header.SetBackgroundColour(self._blend(base,ink,.055 if self._hover or self._focused else .025))
         self._header.SetForegroundColour(ink)
         self.Refresh(False);self._header.Refresh(False)
 
@@ -61,7 +63,9 @@ class SettingsSection(wx.Panel):
         self.Initialise()
         return self._title
 
-    def IsCollapsed(self):return self._collapsed
+    def IsCollapsed(self):
+        self.Initialise()
+        return self._collapsed
 
     def Collapse(self,collapse=True):
         self.Initialise()

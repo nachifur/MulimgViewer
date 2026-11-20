@@ -13,7 +13,7 @@ def main():
     parser.add_argument('--generator',default=shutil.which('wxformbuilder') or r'D:\Program Files\wxFormBuilder\wxFormBuilder.exe')
     parser.add_argument('--check',action='store_true')
     args=parser.parse_args()
-    for name in ('main_gui','index_table_gui'):
+    for name in ('main_gui','index_table_gui','about_gui','path_select_gui'):
         source=ROOT/'src/mulimgviewer/gui'/f'{name}.fbp'
         if args.check:
             with tempfile.TemporaryDirectory() as directory:

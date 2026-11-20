@@ -7,7 +7,7 @@ import xml.etree.ElementTree as ET
 GUI=Path(__file__).resolve().parents[2]/'src/mulimgviewer/gui'
 CONTROLS={'wxCollapsiblePane','wxButton','wxTextCtrl','wxChoice','wxSlider','wxCheckBox','wxColourPickerCtrl',
     'wxListCtrl','wxSplitterWindow','wxPanel','wxScrolledWindow','wxStaticText','wxToggleButton',
-    'wxSpinCtrl','wxSearchCtrl','wxStatusBar'}
+    'wxSpinCtrl','wxSearchCtrl','wxStatusBar','wxRichTextCtrl','wxHyperlinkCtrl'}
 
 
 def project(name):
@@ -15,8 +15,14 @@ def project(name):
 
 
 class GuiContractTests(unittest.TestCase):
+    def test_main_gui_uses_descriptive_control_and_sizer_names(self):
+        import re
+        for obj in ET.parse(project('main_gui')).findall('.//object'):
+            name=obj.findtext("property[@name='name']",'')
+            self.assertFalse(re.match(r'^(m_|(?:fg|b|g|w|sb)Sizer\d)',name),name)
+
     def test_panels_do_not_have_control_only_validator_properties(self):
-        for name in ('main_gui','index_table_gui'):
+        for name in ('main_gui','index_table_gui','about_gui','path_select_gui'):
             for panel in ET.parse(project(name)).findall(".//object[@class='wxPanel']"):
                 unsupported=[p.get('name') for p in panel.findall('property')
                              if p.get('name','').startswith('validator_')]
@@ -36,7 +42,7 @@ class GuiContractTests(unittest.TestCase):
                 self.assertEqual(result.returncode,0,result.stderr)
 
     def test_fbp_control_names_are_present_in_generated_modules(self):
-        for name in ('main_gui','index_table_gui'):
+        for name in ('main_gui','index_table_gui','about_gui','path_select_gui'):
             fbp=ET.parse(project(name))
             tree=ast.parse((GUI/(name+'.py')).read_text(encoding='utf-8-sig'))
             actual={node.attr for node in ast.walk(tree) if isinstance(node,ast.Attribute)
@@ -47,7 +53,7 @@ class GuiContractTests(unittest.TestCase):
                     with self.subTest(gui=name,control=prop.text):self.assertIn(prop.text,actual,'Regenerate GUI from FBP')
 
     def test_fbp_event_handlers_exist_in_generated_modules(self):
-        for name in ('main_gui','index_table_gui'):
+        for name in ('main_gui','index_table_gui','about_gui','path_select_gui'):
             fbp=ET.parse(project(name))
             tree=ast.parse((GUI/(name+'.py')).read_text(encoding='utf-8-sig'))
             methods={node.name for node in ast.walk(tree) if isinstance(node,ast.FunctionDef)}

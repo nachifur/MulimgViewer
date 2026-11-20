@@ -178,6 +178,10 @@ def synchronize(directory, gui_defaults, hotkeys, section_defaults=None):
     if 'save_format' in gui_defaults:fallback['save_format_order']=ORDER
     baseline = read_config(baseline_path)
     baseline = merge_missing(baseline, fallback)
+    if section_defaults is not None:
+        # Reset follows the current FBP; saved and session fold preferences
+        # remain independent and are only backfilled for newly added groups.
+        baseline['settings_sections']=copy.deepcopy(section_defaults)
     if 'save_format' in gui_defaults:
         baseline['output']['save_format']=gui_defaults['save_format']
         baseline['save_format_order']=ORDER

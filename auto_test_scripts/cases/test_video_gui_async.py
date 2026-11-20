@@ -1546,7 +1546,7 @@ class VideoGuiAsyncTests(unittest.TestCase):
             size,mode=manager._status_source_images[0]
             self.assertGreater(min(size),0)
             event=Mock()
-            bar=frame.m_statusBar1
+            bar=frame.main_status_bar
             event.GetPosition.return_value=bar.GetFieldRect(0).GetPosition()+wx.Point(1,1)
             with patch('PIL.Image.open',side_effect=AssertionError('Hover must not decode')):
                 frame._on_status_bar_hover(event)
@@ -1698,7 +1698,7 @@ class VideoGuiAsyncTests(unittest.TestCase):
             self.pump_until(lambda:not self.frame._export_active)
         self.assertTrue(encodings);self.assertTrue(all(value==1 for value in encodings))
         self.assertTrue(copied);self.assertFalse(any(copied))
-        self.assertIn('success',self.frame.m_statusBar1.GetStatusText(3))
+        self.assertIn('success',self.frame.main_status_bar.GetStatusText(3))
         pdfs=list(output.rglob('*.pdf'));self.assertTrue(pdfs)
         for path in pdfs:self.assertNotIn(b'/DCTDecode',path.read_bytes())
         self.assertEqual(self.frame.video_manager._window_token,old_token)
@@ -1764,7 +1764,7 @@ class VideoGuiAsyncTests(unittest.TestCase):
         self.pump_until(self.video_page_ready)
         self.frame.save_img(None)
         self.pump_until(lambda:not self.frame._export_active)
-        self.assertIn('success',self.frame.m_statusBar1.GetStatusText(3))
+        self.assertIn('success',self.frame.main_status_bar.GetStatusText(3))
         pdfs=list(output.rglob('*.pdf'));self.assertTrue(pdfs)
         for p in pdfs:self.assertNotIn(b'/DCTDecode',p.read_bytes(),str(p))
         self.frame.cache_save_format.SetSelection(0);self.frame.refresh(None)
@@ -1806,7 +1806,7 @@ class VideoGuiAsyncTests(unittest.TestCase):
         self.frame.save_img(None)
         self.frame.foreground_slider.SetValue(255);self.frame.refresh(None)
         self.pump_until(lambda:not self.frame._export_active)
-        self.assertIn('success',self.frame.m_statusBar1.GetStatusText(3))
+        self.assertIn('success',self.frame.main_status_bar.GetStatusText(3))
         with Image.open(output/'image/composed/page_000021.png') as image:
             self.assertIn(96,set(image.convert('RGBA').getchannel('A').getdata()))
 
@@ -1845,9 +1845,9 @@ class VideoGuiAsyncTests(unittest.TestCase):
             self.frame.save_format.SetSelection(selection);self.frame.choice_output.SetSelection(0)
             self.frame.save_img(None)
             self.pump_until(lambda:not self.frame._export_active)
-            self.assertIn('success',self.frame.m_statusBar1.GetStatusText(3))
+            self.assertIn('success',self.frame.main_status_bar.GetStatusText(3))
             path=output/'image/composed'/('page_000021'+suffix)
-            self.assertTrue(path.is_file(),self.frame.m_statusBar1.GetStatusText(3))
+            self.assertTrue(path.is_file(),self.frame.main_status_bar.GetStatusText(3))
             self.assertFalse([p for p in output.rglob('*') if p.suffix in ('.png','.jpg','.pdf') and p.suffix!=suffix])
 
     def test_auto_window_fit_is_manual_refresh_only_and_uses_new_image_size(self):
@@ -2114,10 +2114,10 @@ class VideoGuiAsyncTests(unittest.TestCase):
                 self.assertEqual(captured[0].ImgManager.layout_params[42],63)
                 self.assertTrue(captured[0].ImgManager.flist)
                 self.frame.SetStatusText_(['-1','-1','-1','Output: changed'])
-                self.assertIn('Saving',self.frame.m_statusBar1.GetStatusText(3))
+                self.assertIn('Saving',self.frame.main_status_bar.GetStatusText(3))
                 release.set()
                 self.pump_until(lambda:not self.frame._export_active)
-                self.assertEqual(self.frame.m_statusBar1.GetStatusText(3),'Save: success')
+                self.assertEqual(self.frame.main_status_bar.GetStatusText(3),'Save: success')
                 self.assertTrue(self.frame.save_butoon.IsEnabled())
         finally:release.set()
 
@@ -2136,7 +2136,7 @@ class VideoGuiAsyncTests(unittest.TestCase):
             self.frame.save_img(None);self.assertTrue(entered.wait(1))
             cancel_save(self.frame)
             self.pump_until(lambda:not self.frame._export_active)
-            self.assertEqual(self.frame.m_statusBar1.GetStatusText(3),'Save: cancelled')
+            self.assertEqual(self.frame.main_status_bar.GetStatusText(3),'Save: cancelled')
             self.assertFalse(list(output.rglob('*.png')))
 
     def test_window_close_waits_for_export_before_cache_removal_without_blocking_gui(self):
@@ -2346,7 +2346,7 @@ class VideoGuiAsyncTests(unittest.TestCase):
         self.frame.save_img(None)
         self.pump_until(lambda:not getattr(self.frame,'_export_active',False))
         root=output/'video'
-        self.assertTrue((root/'composed'/'page_000021.png').is_file(),self.frame.m_statusBar1.GetStatusText(3))
+        self.assertTrue((root/'composed'/'page_000021.png').is_file(),self.frame.main_status_bar.GetStatusText(3))
         self.assertTrue((root/'algorithms'/'original'/'stitch_images'/'page_000021.png').is_file())
         self.assertTrue((root/'sources'/'sample'/'source.json').is_file())
         selected=root/'algorithms'/'original'/'select_images'
@@ -2420,7 +2420,7 @@ class VideoGuiAsyncTests(unittest.TestCase):
         self.frame.save_format.SetSelection(1)
         self.frame.save_img(None)
         self.pump_until(lambda:not getattr(self.frame,'_export_active',False))
-        self.assertIn('success',self.frame.m_statusBar1.GetStatusText(3))
+        self.assertIn('success',self.frame.main_status_bar.GetStatusText(3))
         self.assertEqual(manager.action_count,original_action)
         self.assertEqual(self.frame.shared_config.video_path,original_paths)
         for page in (1,2):self.assertTrue((root/f'video/composed/page_{page:06d}.png').exists())
@@ -2431,7 +2431,7 @@ class VideoGuiAsyncTests(unittest.TestCase):
             self.frame.show_custom_func.SetValue(True)
             self.frame.on_show_custom_func_changed(None)
             self.frame._custom_settings_changed()  # Explicit application for this pipeline test.
-            self.pump_until(lambda:'test model failure' in self.frame.m_statusBar1.GetStatusText(2))
+            self.pump_until(lambda:'test model failure' in self.frame.main_status_bar.GetStatusText(2))
             self.assertTrue(self.frame.video_manager._raw_ready_batches)
 
     def test_ten_custom_algorithms_render_through_gui_with_one_blank_slot(self):
@@ -2512,17 +2512,17 @@ class VideoGuiAsyncTests(unittest.TestCase):
         with patch('os.listdir', side_effect=AssertionError('status scanned a folder')), \
                 patch.object(manager, 'get_flist', side_effect=AssertionError('status changed page')):
             self.frame.img_left_click(event)
-        text = self.frame.m_statusBar1.GetStatusText(1)
+        text = self.frame.main_status_bar.GetStatusText(1)
         self.assertIn('Image 21/80 | Folder 2/2', text)
-        self.assertIn('Parallel manual', self.frame.m_statusBar1.GetStatusText(2))
+        self.assertIn('Parallel manual', self.frame.main_status_bar.GetStatusText(2))
         self.assertIn(str(Path('images/b/020.png')), self.frame._status_field_tooltips[2])
         self.assertEqual(manager.action_count, page)
         snapshot = manager.video_stitch_snapshot()
         self.assertIs(snapshot._status_source_index, manager._status_source_index)
         for width in (600, 1200):
-            self.frame.m_statusBar1.SetClientSize((width, 24))
+            self.frame.main_status_bar.SetClientSize((width, 24))
             self.frame._fit_status_fields()
-            self.assertEqual(sum(self.frame._status_widths), self.frame.m_statusBar1.GetClientSize().width)
+            self.assertEqual(sum(self.frame._status_widths), self.frame.main_status_bar.GetClientSize().width)
             self.assertTrue(all(value > 0 for value in self.frame._status_widths))
 
     def test_visual_index_matches_actual_nested_layout_positions(self):
@@ -2612,7 +2612,7 @@ class VideoGuiAsyncTests(unittest.TestCase):
         for field in (self.frame.magnifier,self.frame.rotation,self.frame.flip,self.frame.select_img_box):
             field.SetValue(False)
         self.frame.img_left_click(event)
-        return tuple(self.frame.m_statusBar1.GetStatusText(i) for i in range(3))
+        return tuple(self.frame.main_status_bar.GetStatusText(i) for i in range(3))
 
     def test_selected_box_counter_appends_to_second_status_field_in_image_and_video(self):
         frame=self.frame
@@ -2634,20 +2634,20 @@ class VideoGuiAsyncTests(unittest.TestCase):
             x,y=frame.ImgManager.xy_grid[grid]
             event=Mock();event.GetPosition.return_value=(int(x)+14,int(y)+10)
             frame.img_left_click(event)
-            self.assertTrue(frame.m_statusBar1.GetStatusText(1).endswith(' | Box 1/2'))
+            self.assertTrue(frame.main_status_bar.GetStatusText(1).endswith(' | Box 1/2'))
             event.GetPosition.return_value=(int(x)+55,int(y)+34)
             frame.img_left_click(event)
             self.assertEqual(frame.box_id,1)
-            text=frame.m_statusBar1.GetStatusText(1)
+            text=frame.main_status_bar.GetStatusText(1)
             self.assertTrue(text.endswith(' | Box 2/2'),text)
             self.assertIn('Page ',text)
             self.assertIn('Video' if video else 'Folder',text)
             self.assertIn('Box 2/2',frame._status_field_tooltips[1])
             frame.update_status_bar_for_current_page()
-            self.assertEqual(frame.m_statusBar1.GetStatusText(1),text)
+            self.assertEqual(frame.main_status_bar.GetStatusText(1),text)
             frame.select_img_box.SetValue(False)
             frame.update_status_bar_for_current_page()
-            self.assertNotIn('Box ',frame.m_statusBar1.GetStatusText(1))
+            self.assertNotIn('Box ',frame.main_status_bar.GetStatusText(1))
 
     def test_select_image_context_menu_exports_clicked_algorithm_cell_in_image_and_video(self):
         from mulimgviewer.src.export_controller import source_slot
@@ -2709,7 +2709,7 @@ class VideoGuiAsyncTests(unittest.TestCase):
             frame.xy_magnifier=[]
             frame.img_left_click(event)  # Empty/stale box lists must not call argmin.
             self.assertEqual(frame.box_id,-1)
-            self.assertNotIn('Box ',frame.m_statusBar1.GetStatusText(1))
+            self.assertNotIn('Box ',frame.main_status_bar.GetStatusText(1))
 
     def test_image_file_list_button_and_context_select_export_only_clicked_entry(self):
         self._use_image_input();frame=self.frame
@@ -3016,7 +3016,7 @@ class VideoGuiAsyncTests(unittest.TestCase):
             index.jump_button.GetEventHandler().ProcessEvent(event)
             self.assertEqual(self.frame._status_display_batch,20)
             self.pump_until(lambda:self.frame._status_display_batch==40)
-            after=tuple(self.frame.m_statusBar1.GetStatusText(i) for i in range(3))
+            after=tuple(self.frame.main_status_bar.GetStatusText(i) for i in range(3))
             self.assertIn('Folder 2/2',after[1])
             self.assertEqual(after,self._click_main_source(1))
             index.locate_main_image(None)
@@ -3032,11 +3032,11 @@ class VideoGuiAsyncTests(unittest.TestCase):
             target=index.catalog.visual_page_start(35)+1
             index._select_index(target);index.jump_selected(None)
             self.pump_until(lambda:getattr(self.frame,'_video_display_key',(None,))[0]==35)
-            after=tuple(self.frame.m_statusBar1.GetStatusText(i) for i in range(3))
+            after=tuple(self.frame.main_status_bar.GetStatusText(i) for i in range(3))
             self.assertIn('Video 2/2',after[1])
             self.assertEqual(after,self._click_main_source(1))
             index._select_index(index.catalog.visual_page_start(35));index.jump_selected(None)
-            self.assertIn('Video 1/2',self.frame.m_statusBar1.GetStatusText(1))
+            self.assertIn('Video 1/2',self.frame.main_status_bar.GetStatusText(1))
             index.locate_main_image(None)
             self.assertEqual(index.index_table.GetFirstSelected(),index.catalog.visual_page_start(35))
         finally:
@@ -3125,8 +3125,8 @@ class VideoGuiAsyncTests(unittest.TestCase):
         listing=Path('missing-video.csv');listing.write_text(',missing.mp4\n',encoding='utf-8')
         self.assertFalse(self.frame._open_video_file_list(str(listing)))
         self.assertEqual(self.frame.shared_config.real_video_path,before)
-        self.assertIn('Input error',self.frame.m_statusBar1.GetStatusText(0))
-        text=self.frame.m_statusBar1.GetStatusText(2)
+        self.assertIn('Input error',self.frame.main_status_bar.GetStatusText(0))
+        text=self.frame.main_status_bar.GetStatusText(2)
         self.assertIn('row 1, column 2',text)
         self.assertIn('missing.mp4',text)
 
@@ -3138,8 +3138,8 @@ class VideoGuiAsyncTests(unittest.TestCase):
         manager = self.frame.ImgManager
         grid = list(manager.xy_grids_id_list).index(1)
         self.frame.update_status_bar_for_current_page(grid)
-        self.assertIn('Video 2/2', self.frame.m_statusBar1.GetStatusText(1))
-        self.assertIn('Image File List', self.frame.m_statusBar1.GetStatusText(2))
+        self.assertIn('Video 2/2', self.frame.main_status_bar.GetStatusText(1))
+        self.assertIn('Image File List', self.frame.main_status_bar.GetStatusText(2))
         self.assertTrue(self.frame.shared_config.video_mode)
         self.assertEqual(self.frame.shared_config.status_input_mode, 3)
 
@@ -3157,7 +3157,7 @@ class VideoGuiAsyncTests(unittest.TestCase):
         self.assertEqual(self.frame.ImgManager.title_setting[2:7],[False,True,True,True,False])
         self.assertEqual(len(self.frame.ImgManager.flist),2)
         self.frame.update_status_bar_for_current_page(0)
-        self.assertIn('Image File List',self.frame.m_statusBar1.GetStatusText(2))
+        self.assertIn('Image File List',self.frame.main_status_bar.GetStatusText(2))
 
     def test_invalid_image_list_keeps_previous_manager_and_input(self):
         self._use_image_input()
@@ -3210,11 +3210,11 @@ class VideoGuiAsyncTests(unittest.TestCase):
         # A new requested batch must not change the identity of pixels still on screen.
         self.frame.shared_config.batch_idx = 24
         self.frame.img_left_click(event)
-        text = self.frame.m_statusBar1.GetStatusText(1)
+        text = self.frame.main_status_bar.GetStatusText(1)
         self.assertIn('Page 21/80', text)
         self.assertIn('Frame 21/80 | Video 2/2', text)
-        self.assertIn('sample.mp4', self.frame.m_statusBar1.GetStatusText(2))
-        self.assertNotIn('cache_frames', self.frame.m_statusBar1.GetStatusText(2))
+        self.assertIn('sample.mp4', self.frame.main_status_bar.GetStatusText(2))
+        self.assertNotIn('cache_frames', self.frame.main_status_bar.GetStatusText(2))
         self.assertIn('00:00:02.000', self.frame._status_field_tooltips[1])
 
     def test_image_composition_and_cached_display_never_block_gui(self):
@@ -3502,7 +3502,7 @@ class VideoGuiAsyncTests(unittest.TestCase):
             frame.refresh(None)
         cache.assert_not_called();display.assert_not_called()
         self.assertIs(frame.ImgManager.layout_params,previous)
-        self.assertIn('row_col',frame.m_statusBar1.GetStatusText(2))
+        self.assertIn('row_col',frame.main_status_bar.GetStatusText(2))
 
     def test_auto_row_col_renders_all_input_modes_orders_and_algorithm_layouts(self):
         frame=self.frame;cfg=frame.shared_config
@@ -3589,27 +3589,66 @@ class VideoGuiAsyncTests(unittest.TestCase):
         self.warm_current_window();frame=self.frame;cfg=frame.shared_config
         folder=Path('image-only').absolute();folder.mkdir();Image.new('RGB',(16,12),'red').save(folder/'frame.png')
         before=(list(cfg.real_video_path),list(cfg.video_num_list),list(cfg.video_path),cfg.batch_idx)
-        output=frame.m_statusBar1.GetStatusText(3)
+        output=frame.main_status_bar.GetStatusText(3)
         frame.choice_input_mode.SetSelection(1)
         with patch.object(wx,'DirDialog') as dialog:
             dialog.return_value.ShowModal.return_value=wx.ID_OK
             dialog.return_value.GetPath.return_value=str(folder)
             frame.open_all_img(None)
         self.assertEqual((cfg.real_video_path,cfg.video_num_list,cfg.video_path,cfg.batch_idx),before)
-        self.assertIn('Input error',frame.m_statusBar1.GetStatusText(0))
-        self.assertIn('Video mode',frame.m_statusBar1.GetStatusText(2))
-        self.assertIn(str(folder),frame.m_statusBar1.GetStatusText(2))
+        self.assertIn('Input error',frame.main_status_bar.GetStatusText(0))
+        self.assertIn('Video mode',frame.main_status_bar.GetStatusText(2))
+        self.assertIn(str(folder),frame.main_status_bar.GetStatusText(2))
         frame.update_status_bar_for_current_page()
-        self.assertIn('Input error',frame.m_statusBar1.GetStatusText(0))
-        self.assertEqual(frame.m_statusBar1.GetStatusText(3),output)
+        self.assertIn('Input error',frame.main_status_bar.GetStatusText(0))
+        self.assertEqual(frame.main_status_bar.GetStatusText(3),output)
         videos=Path('valid-video').absolute();videos.mkdir();shutil.copyfile('sample.mp4',videos/'clip.mp4')
         with patch.object(wx,'DirDialog') as dialog:
             dialog.return_value.ShowModal.return_value=wx.ID_OK
             dialog.return_value.GetPath.return_value=str(videos)
             frame.open_all_img(None)
         self.pump_until(self.video_page_ready)
-        self.assertNotIn('error',frame.m_statusBar1.GetStatusText(0).lower())
+        self.assertNotIn('error',frame.main_status_bar.GetStatusText(0).lower())
         self.assertIsNone(frame._input_feedback)
+
+    def test_manual_image_selector_applies_ordered_folders_and_renders(self):
+        from mulimgviewer.src.path_select import PathSelectFrame,on_video_mode_change,_PATH_SELECT_STATE
+        frame=self.frame
+        previous=dict(_PATH_SELECT_STATE)
+        self.addCleanup(_PATH_SELECT_STATE.update,previous)
+        on_video_mode_change(False)
+        frame.shared_config.video_mode=False
+        paths=[]
+        for name,color in (('second','blue'),('first','red')):
+            folder=Path(name).absolute();folder.mkdir()
+            Image.new('RGB',(80,48),color).save(folder/'image.png')
+            paths.append(str(folder))
+        def apply_selection(kind,input_path=None):
+            return frame._open_image_input(input_path,1)
+        selector=PathSelectFrame(frame,apply_selection,lambda:0)
+        selector.refresh_txt(paths)
+        self.assertTrue(selector._finalize_and_return())
+        self.pump_until(lambda:frame.image_pipeline.displayed_key is not None)
+        self.assertEqual(frame.ImgManager.input_path,paths)
+        self.assertEqual(frame.choice_input_mode.GetSelection(),2)
+        self.assertFalse(frame.ImgManager.video_mode)
+
+    def test_manual_video_selector_applies_ordered_paths_and_renders(self):
+        from mulimgviewer.src.path_select import PathSelectFrame,on_video_mode_change,_PATH_SELECT_STATE
+        frame=self.frame;cfg=frame.shared_config
+        previous=_PATH_SELECT_STATE['video_mode']
+        self.addCleanup(on_video_mode_change,previous)
+        on_video_mode_change(True)
+        paths=[]
+        for name in ('second.mp4','first.mp4'):
+            shutil.copyfile('sample.mp4',name);paths.append(str(Path(name).absolute()))
+        selector=PathSelectFrame(frame,lambda *args,**kwargs:None,lambda:0,video_manager=frame.video_manager)
+        selector.set_video_manager(frame.video_manager,cfg)
+        selector.refresh_txt(paths)
+        self.assertTrue(selector._finalize_and_return())
+        self.pump_until(self.video_page_ready)
+        self.assertEqual(cfg.real_video_path,paths)
+        self.assertEqual(len(cfg.video_path),2)
 
     def test_manual_video_mode_rejects_image_directory_without_replacing_video_paths(self):
         from mulimgviewer.src.path_select import PathSelectFrame,on_video_mode_change,_PATH_SELECT_STATE
@@ -3622,19 +3661,21 @@ class VideoGuiAsyncTests(unittest.TestCase):
         on_video_mode_change(True)
         selector=PathSelectFrame(frame,lambda *args,**kwargs:None,lambda:0,video_manager=frame.video_manager)
         selector.set_video_manager(frame.video_manager,cfg)
-        selector.m_richText1.SetValue(str(directory))
-        selector._finalize_and_return()
+        selector.paths_text.SetValue(str(directory))
+        self.assertFalse(selector._finalize_and_return())
         self.app.Yield(True)
+        self.assertFalse(selector.IsBeingDeleted())
+        selector.Destroy()
         self.assertEqual(cfg.real_video_path,before)
-        self.assertIn('Input error',frame.m_statusBar1.GetStatusText(0))
-        self.assertIn('Not a supported video file',frame.m_statusBar1.GetStatusText(2))
+        self.assertIn('Input error',frame.main_status_bar.GetStatusText(0))
+        self.assertIn('Not a supported video file',frame.main_status_bar.GetStatusText(2))
 
     def test_image_open_reports_empty_and_corrupt_inputs_then_recovers(self):
         self._use_image_input();frame=self.frame
         frame.show_img()
         self.pump_until(lambda:frame.image_pipeline.displayed_key is not None)
         before=frame.ImgManager.input_path
-        output=frame.m_statusBar1.GetStatusText(3)
+        output=frame.main_status_bar.GetStatusText(3)
         empty=Path('empty-images').absolute();empty.mkdir()
         for mode in (0,1):
             frame.choice_input_mode.SetSelection(mode)
@@ -3642,8 +3683,8 @@ class VideoGuiAsyncTests(unittest.TestCase):
                 dialog.return_value.ShowModal.return_value=wx.ID_OK
                 dialog.return_value.GetPath.return_value=str(empty)
                 frame.open_all_img(None)
-            self.assertIn('Input error',frame.m_statusBar1.GetStatusText(0))
-            self.assertIn('image',frame.m_statusBar1.GetStatusText(2).lower())
+            self.assertIn('Input error',frame.main_status_bar.GetStatusText(0))
+            self.assertIn('image',frame.main_status_bar.GetStatusText(2).lower())
             self.assertEqual(frame.ImgManager.input_path,before)
         broken=Path('broken-images').absolute();broken.mkdir();(broken/'invalid.png').write_bytes(b'not an image')
         frame.choice_input_mode.SetSelection(0)
@@ -3651,16 +3692,16 @@ class VideoGuiAsyncTests(unittest.TestCase):
             dialog.return_value.ShowModal.return_value=wx.ID_OK
             dialog.return_value.GetPath.return_value=str(broken)
             frame.open_all_img(None)
-        self.pump_until(lambda:'error' in frame.m_statusBar1.GetStatusText(0).lower())
-        self.assertIn('image',frame.m_statusBar1.GetStatusText(2).lower())
-        self.assertEqual(frame.m_statusBar1.GetStatusText(3),output)
+        self.pump_until(lambda:'error' in frame.main_status_bar.GetStatusText(0).lower())
+        self.assertIn('image',frame.main_status_bar.GetStatusText(2).lower())
+        self.assertEqual(frame.main_status_bar.GetStatusText(3),output)
         with patch.object(wx,'DirDialog') as dialog:
             dialog.return_value.ShowModal.return_value=wx.ID_OK
             dialog.return_value.GetPath.return_value=str(Path('images/a').absolute())
             frame.open_all_img(None)
         self.pump_until(lambda:frame.image_pipeline.displayed_key is not None and frame._status_display_batch==0)
         self.assertIsNone(frame._input_feedback)
-        self.assertNotIn('error',frame.m_statusBar1.GetStatusText(0).lower())
+        self.assertNotIn('error',frame.main_status_bar.GetStatusText(0).lower())
 
     def test_manual_image_callback_reports_invalid_directory_and_can_load_valid_images(self):
         from types import SimpleNamespace
@@ -3670,8 +3711,8 @@ class VideoGuiAsyncTests(unittest.TestCase):
         app=SimpleNamespace(frame=[frame,Mock()],_last_manual_paths=[],
             _normalize_paths=lambda paths:list(paths or []),SetTopWindow=Mock())
         MainAPP.UpdateUI(app,0,input_path=[str(empty)],parallel_to_sequential=False)
-        self.assertIn('Input error',frame.m_statusBar1.GetStatusText(0))
-        self.assertIn('No supported image files',frame.m_statusBar1.GetStatusText(2))
+        self.assertIn('Input error',frame.main_status_bar.GetStatusText(0))
+        self.assertIn('No supported image files',frame.main_status_bar.GetStatusText(2))
         app.SetTopWindow.assert_called_with(frame)
         MainAPP.UpdateUI(app,0,input_path=[str(Path('images/a').absolute())],parallel_to_sequential=False)
         self.pump_until(lambda:frame.image_pipeline.displayed_key is not None and frame._status_display_batch==0)
@@ -3684,8 +3725,8 @@ class VideoGuiAsyncTests(unittest.TestCase):
         with patch.object(frame,'one_dir_mul_img',side_effect=OSError('test unreadable input')):
             self.assertFalse(frame.open_all_img(None))
         self.assertEqual(frame.shared_config.batch_idx,before)
-        self.assertIn('Input error',frame.m_statusBar1.GetStatusText(0))
-        self.assertIn('test unreadable input',frame.m_statusBar1.GetStatusText(2))
+        self.assertIn('Input error',frame.main_status_bar.GetStatusText(0))
+        self.assertIn('test unreadable input',frame.main_status_bar.GetStatusText(2))
 
     def test_image_directory_can_open_after_initial_cancellation(self):
         self.frame.shared_config.video_mode = False

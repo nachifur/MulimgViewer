@@ -142,7 +142,7 @@ class ConfigurationTests(unittest.TestCase):
         write_config(self.directory/'userdef_config.json',{'output':{'video_mode':True,'row_col':'-1,-1'}})
         frame=self.frame()
         self.assertEqual(frame.row_col.GetValue(),'-1,-1')
-        self.assertIn('Ready',frame.m_statusBar1.GetStatusText(0))
+        self.assertIn('Ready',frame.main_status_bar.GetStatusText(0))
         frame.save_configuration(None)
         self.assertEqual(self.read()['output']['row_col'],'-1,-1')
 
@@ -150,7 +150,7 @@ class ConfigurationTests(unittest.TestCase):
         write_config(self.directory/'config_schema.json',{'roles_version':2})
         for video in (False,True):
             write_config(self.directory/'session_config.json',{'output':{'video_mode':video,'choice_input_mode':1}})
-            frame=self.frame();bar=frame.m_statusBar1
+            frame=self.frame();bar=frame.main_status_bar
             self.assertEqual(bar.GetStatusText(0),('Video' if video else 'Image')+' | Ready')
             self.assertIn('please select',bar.GetStatusText(2))
             self.assertIn('Parallel auto',bar.GetStatusText(2))
@@ -203,7 +203,7 @@ class ConfigurationTests(unittest.TestCase):
             self.assertIn('video_mode', self.read(name)['output'])
         self.assertEqual(self.read('default_config.json')['output']['row_col'], '2,2')
         frame.save_configuration(None)
-        self.assertEqual(self.read()['window_state'], {'w': 900})
+        self.assertEqual(self.read()['window_state'], {'w': 900, 'sidebar_width_dip': None})
 
     def test_reset_uses_factory_values_and_persists_them(self):
         frame = self.frame()

@@ -108,7 +108,7 @@ class MulimgViewer(SidebarLayoutMixin, SettingsPanelMixin, NavigationMixin, Stat
         self.selected_img_id = 0
         self.position = [0, 0]
         self.Uint = self.scrolledWindow_img.GetScrollPixelsPerUnit()
-        self.Status_number = self.m_statusBar1.GetFieldsCount()
+        self.Status_number = self.main_status_bar.GetFieldsCount()
         self.img_size = [-1, -1]
         self.width = 1000
         self.height = 600
@@ -130,18 +130,9 @@ class MulimgViewer(SidebarLayoutMixin, SettingsPanelMixin, NavigationMixin, Stat
         self._init_status_bar()
         self.set_title_font()
         self.hidden_flag = 0
-        self.button_open_all.SetToolTip("open")
-        self.out_path_button.SetToolTip("out path")
-        self.save_butoon.SetToolTip("save")
-        self.left_arrow_button.SetToolTip("left arrow")
-        self.right_arrow_button.SetToolTip("right arrow")
-        self.refresh_button.SetToolTip("refresh")
-        self.save_config_button.SetToolTip("save_configuration")
         self.magnifier.SetToolTip("magnifier")
         self.rotation.SetToolTip("rotation")
         self.flip.SetToolTip("flip")
-        self.load_config_button.SetToolTip("load_configuration")
-        self.reset_config_button.SetToolTip("reset_configuration")
         self._initialize_sidebar_layout()
         self.play_timer = wx.Timer(self)
         self.Bind(wx.EVT_TIMER, self.on_play_timer, self.play_timer)
@@ -904,7 +895,7 @@ class MulimgViewer(SidebarLayoutMixin, SettingsPanelMixin, NavigationMixin, Stat
         try:
             if not self.show_img_init():
                 restore()
-                self._show_input_status(self.m_statusBar1.GetStatusText(2),'Input error',path,persistent=True)
+                self._show_input_status(self.main_status_bar.GetStatusText(2),'Input error',path,persistent=True)
                 return False
             self.ImgManager.set_action_count(0)
             self.show_img()
@@ -2528,7 +2519,7 @@ class MulimgViewer(SidebarLayoutMixin, SettingsPanelMixin, NavigationMixin, Stat
                     self._schedule_frame_wait()
 
             # 清除可能残留的 "frame batch" 文本（第1列）
-            self.m_statusBar1.SetStatusText("", 1)
+            self.main_status_bar.SetStatusText("", 1)
             return
 
         # ========== 图片模式：后台拼接、磁盘缓存、后台准备显示 ==========
@@ -3132,25 +3123,31 @@ class MulimgViewer(SidebarLayoutMixin, SettingsPanelMixin, NavigationMixin, Stat
         event.Skip()
 
     def hidden(self, event):
-        if self.hidden_flag == 0:
-            self.Sizer.Hide(self.m_panel1)
-            self.scrolledWindow_set.Sizer.ShowItems(False)
-
-            self.width_setting_ = self.width_setting
-            self.width_setting = 0
-
-            self.hidden_flag = 1
-        else:
-            self.Sizer.Show(self.m_panel1)
-            self.scrolledWindow_set.Sizer.ShowItems(True)
-
-            self.width_setting = self.width_setting_
-
-            self.hidden_flag = 0
-
-        # issue: You need to change the window size, then the scrollbar starts to display.
-        self.scrolledWindow_set.FitInside()
-        self.auto_layout(frame_resize=True)
+        self.Freeze()
+        try:
+            if self.hidden_flag == 0:
+                # Hide native separator windows explicitly before hiding their
+                # parent: some Windows themes leave their old pixels visible.
+                self.playback_toolbar_panel.GetSizer().ShowItems(False)
+                self.playback_toolbar_panel.Hide()
+                self.scrolledWindow_set.Sizer.ShowItems(False)
+                self.width_setting_ = self.width_setting
+                self.width_setting = 0
+                self.hidden_flag = 1
+            else:
+                self.playback_toolbar_panel.GetSizer().ShowItems(True)
+                self.playback_toolbar_panel.Show()
+                self.scrolledWindow_set.Sizer.ShowItems(True)
+                self.width_setting = self.width_setting_
+                self.hidden_flag = 0
+            self.scrolledWindow_set.FitInside()
+            self.auto_layout(frame_resize=True)
+        finally:
+            self.Thaw()
+        # Repaint the vacated toolbar and the expanded image viewport.
+        self.Refresh(True)
+        self.viewer_container_panel.Refresh(True)
+        self.scrolledWindow_img.Refresh(True)
 
     def _bind_settings_wheel_guard(self):
         # Controls that should handle the wheel event.
@@ -3385,15 +3382,15 @@ def process_image(image, *, context):
         self._img_panel_ready = True
 
     def _set_placeholder_visible(self, visible: bool):
-        if not hasattr(self, "m_staticText1") or not self.m_staticText1:
+        if not hasattr(self, "empty_view_hint") or not self.empty_view_hint:
             return
         if getattr(self, '_placeholder_visible', None) == bool(visible):
             return
         try:
             if visible:
-                self.m_staticText1.Show()
+                self.empty_view_hint.Show()
             else:
-                self.m_staticText1.Hide()
+                self.empty_view_hint.Hide()
             sizer=self.scrolledWindow_img.GetSizer()
             if sizer is not None:sizer.Layout()
             self.scrolledWindow_img.Layout()

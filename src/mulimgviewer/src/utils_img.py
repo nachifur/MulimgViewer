@@ -454,8 +454,9 @@ class ImgUtils():
                 width, height = layout[2]
                 target_width, target_height = layout[3]
 
-            xy_grids.append(self.get_xy_grid(
-                width, height, row, col, gap_x, gap_y, per_gap=per_gap[i]))
+            if not measure_only:
+                xy_grids.append(self.get_xy_grid(
+                    width, height, row, col, gap_x, gap_y, per_gap=per_gap[i]))
 
             i += 1
 
@@ -616,20 +617,11 @@ class ImgUtils():
                 size_edit = draw.multiline_textbbox((0,0),str_, font)
                 size_edit = np.array(size_edit)
                 size_edit = size_edit.reshape(-1, 2)
-                title_size[i*2+1, :] = size_edit[1,:]
+                title_size[2*i:2*i+2] = size_edit
                 split_num = split_num+1
                 if split_num > len(title):
                     break
             title_list[i] = str_
-        # re-calculate title size
-        title_size = []
-        for title in title_list:
-            title_size.append(draw.multiline_textbbox((0,0),title, font))
-        title_size = np.array(title_size)
-        title_size = title_size.reshape(-1, 2)
-        # final title list
-        title_list = title_list
-
         title_max_size = [standard_size,
                           (title_size[:, 1]).max()]
         return title_size, title_list, title_max_size
@@ -1724,7 +1716,7 @@ class ImgManager(ImgData):
             self._last_title_layout = None
             title_hook = self._title_capture_hook if self.collect_pdf_layers else None
             self.img, self.xy_grid, self.xy_grids_id_list = self.ImgF.layout_2d(
-                layout_list, self.gap_color, copy.deepcopy(self.img_list),
+                layout_list, self.gap_color, list(self.img_list),
                 self.img_preprocessing if self.show_original or self.show_crop else self.ImgF.identity_transformation,
                 img_preprocessing_sub, [self.img_vertical, self.one_img_vertical, self.img_unit_vertical],self.onetitle,
                 [self.title_init,self.title_preprocessing], title_hook=title_hook)
@@ -1975,6 +1967,7 @@ class ImgManager(ImgData):
 
                 title_list.append(title)
         else:
+            parents = self._video_source_parents() if self.title_setting[3] else {}
             for i, path_or_img in enumerate(self.img_list if is_show_all_func else self.flist):
                 if is_show_all_func:
                     if isinstance(path_or_img, Image.Image):
@@ -2006,7 +1999,7 @@ class ImgManager(ImgData):
                 if path.is_file() and path.suffix.lower() in self.format_group:
                     title = ""
                     if self.title_setting[3]:
-                        title = title + self.display_source_parent(path)
+                        title = title + self.display_source_parent(path, parents)
                     if self.title_setting[5]:
                         if self.title_setting[3]:
                             title = title + "/"
@@ -2050,19 +2043,19 @@ class ImgManager(ImgData):
         if self.custom_resolution:
             # custom image resolution
             width, height = self.img_resolution
-            img = img.resize((width, height), Image.BICUBIC)
+        elif self.img_stitch_mode == 2:
+            width = int(self.scale[0]*img.size[0])
+            height = int(self.scale[1]*img.size[1])
         else:
-            if self.img_stitch_mode == 2:
-                width = int(self.scale[0]*img.size[0])
-                height = int(self.scale[1]*img.size[1])
-                img = img.resize((width, height), Image.BICUBIC)
-            elif self.img_stitch_mode == 1:
-                width, height = self.img_resolution
-                (left, upper, right, lower) = (
-                    (img.size[0]-width)/2, (img.size[1]-height)/2, (img.size[0]-width)/2+width, (img.size[1]-height)/2+height)
-                img = img.crop((left, upper, right, lower))
-            elif self.img_stitch_mode == 0:
-                width, height = self.img_resolution
+            width, height = self.img_resolution
+        resize_tile = self.custom_resolution or self.img_stitch_mode != 1
+        if resize_tile and isinstance(img, LazyVideoImage):
+            img = img.render_tile((width, height), Image.BICUBIC)
+        elif (width, height) != img.size:
+            if not self.custom_resolution and self.img_stitch_mode == 1:
+                left, upper = (img.width-width)/2, (img.height-height)/2
+                img = img.crop((left, upper, left+width, upper+height))
+            else:
                 img = img.resize((width, height), Image.BICUBIC)
         img = self.ImgF.add_alpha(img, self.img_alpha)
 
@@ -2070,10 +2063,8 @@ class ImgManager(ImgData):
         if self.one_img:
             sub_img_width = int(width/self.layout_params[1][1])
             sub_img_height = int(height/self.layout_params[1][0])
-            img = np.array(img)
-            img = img[rowcol[0]*sub_img_height:(rowcol[0]+1)*sub_img_height,
-                      rowcol[1]*sub_img_width:(rowcol[1]+1)*sub_img_width, :]
-            img = Image.fromarray(np.uint8(img))
+            left, top = rowcol[1]*sub_img_width, rowcol[0]*sub_img_height
+            img = img.crop((left, top, left+sub_img_width, top+sub_img_height))
 
         if is_blank:
             img._is_blank = True
@@ -2194,37 +2185,20 @@ class ImgManager(ImgData):
             interp_ = Image.BICUBIC
         else:
             interp_ = Image.NEAREST
-        i = 0
-        k = 0
-        for img in img_list:
-            img_list[i] = img.resize(tuple(to_resize), interp_)
-            img_array = np.array(img_list[i])
-            color = color_list[k]
-            draw_colour = np.array(
-                [color.red, color.green, color.blue, color.alpha])
-
-            # magnifier image with box
-            show_box_in_crop = self.layout_params[15]
-            if show_box_in_crop:
-                x_left_up = [0, 0]
-                x_left_down = [0, img_list[i].size[1]]
-                x_right_up = [img_list[i].size[0], 0]
-                x_right_down = [img_list[i].size[0], img_list[i].size[1]]
-                img_array[x_left_up[1]:x_left_down[1], x_left_up[0]:x_left_up[0]+line_width, :] = np.ones_like(
-                    img_array[x_left_up[1]:x_left_down[1], x_left_up[0]:x_left_up[0]+line_width, :])*draw_colour
-                img_array[x_left_up[1]:x_left_up[1]+line_width, x_left_up[0]:x_right_up[0], :] = np.ones_like(
-                    img_array[x_left_up[1]:x_left_up[1]+line_width, x_left_up[0]:x_right_up[0], :])*draw_colour
-                img_array[x_right_up[1]:x_right_down[1], x_right_up[0]-line_width:x_right_up[0], :] = np.ones_like(
-                    img_array[x_right_up[1]:x_right_down[1], x_right_up[0]-line_width:x_right_up[0], :])*draw_colour
-                img_array[x_left_down[1]-line_width:x_left_down[1], x_left_up[0]:x_right_up[0], :] = np.ones_like(
-                    img_array[x_left_down[1]-line_width:x_left_down[1], x_left_up[0]:x_right_up[0], :])*draw_colour
-
-            img_list[i] = Image.fromarray(
-                img_array.astype('uint8')).convert('RGBA')
-            i += 1
-            k += 1
-            if k == len(color_list):
-                k = 0
+        for i, source in enumerate(img_list):
+            tile = source.resize(tuple(to_resize), interp_)
+            if tile.mode != 'RGBA':
+                tile = tile.convert('RGBA')
+            if self.layout_params[15] and line_width > 0:
+                color = color_list[i % len(color_list)]
+                rgba = (color.red, color.green, color.blue, color.alpha)
+                w, h = tile.size
+                # Paste replaces alpha as well as RGB, including translucent boxes.
+                tile.paste(rgba, (0, 0, w, min(h, line_width)))
+                tile.paste(rgba, (0, max(0, h-line_width), w, h))
+                tile.paste(rgba, (0, 0, min(w, line_width), h))
+                tile.paste(rgba, (max(0, w-line_width), 0, w, h))
+            img_list[i] = tile
 
         if img_mode:
             return img_list
@@ -2557,14 +2531,21 @@ class ImgManager(ImgData):
             return specification(registry,index).get('cache_name',registry[index][0])
         return get_available_algorithms()[index]
 
-    def display_source_parent(self,path):
-        originals=getattr(self,'_cache_original_paths',())
-        if getattr(self,'video_mode',False) and originals:
-            parent=os.path.normcase(os.path.abspath(Path(path).parent))
-            for index,frames in enumerate(self.path_list):
-                if parent==os.path.normcase(os.path.abspath(frames)) and index<len(originals):
-                    return Path(originals[index]).stem
-        return Path(path).parent.name
+    def _video_source_parents(self):
+        parents = {}
+        originals = getattr(self, '_cache_original_paths', ())
+        if getattr(self, 'video_mode', False) and originals:
+            for frames, source in zip(self.path_list, originals):
+                parents.setdefault(os.path.normcase(os.path.abspath(frames)), Path(source).stem)
+        return parents
+
+    def display_source_parent(self, path, parents=None):
+        if parents is None:
+            parents = self._video_source_parents()
+        parent = Path(path).parent
+        if parents:
+            return parents.get(os.path.normcase(os.path.abspath(parent)), parent.name)
+        return parent.name
 
     def get_stitch_name(self):
         return page_name(self.action_count)

@@ -63,13 +63,17 @@ class StatusBarMixin:
         event.Skip()
 
     def SetStatusText_(self, texts):
+        changed = False
         for field, text in enumerate(texts[:self.Status_number]):
             if text != '-1':
                 if field==3 and getattr(self,'_export_active',False):text=self._export_status
-                self.main_status_bar.SetStatusText(str(text), field)
+                if self.main_status_bar.GetStatusText(field) != str(text):
+                    self.main_status_bar.SetStatusText(str(text), field)
+                    changed = True
                 if hasattr(self, '_status_field_tooltips'):
                     self._status_field_tooltips[field] = str(text)
-        self._fit_status_fields()
+        if changed:
+            self._fit_status_fields()
 
     def update_status_bar_for_current_page(self, clicked_img_id=None):
         if clicked_img_id is not None:
@@ -91,12 +95,11 @@ class StatusBarMixin:
             if 0<=selected<total:
                 position+=f' | Box {selected+1}/{total}'
         feedback=getattr(self,'_input_feedback',None)
+        source = f'{input_mode} | {info["source"]}' if info else input_mode
+        if info and info['timestamp']:
+            source += f' | {info["timestamp"]}'
         self.SetStatusText_([feedback[0] if feedback else f'{mode} | {playback}',
-            f'Page {batch+1}/{pages} | {position}',feedback[1] if feedback else
-            f'{input_mode} | {info["source"]}' if info else input_mode,'-1'])
+            f'Page {batch+1}/{pages} | {position}',feedback[1] if feedback else source,'-1'])
         if info:
-            if info['timestamp'] and not feedback:
-                self.main_status_bar.SetStatusText(f'{input_mode} | {info["source"]} | {info["timestamp"]}', 2)
             self._status_field_tooltips[1] = f'Page {batch+1}/{pages}\n{position}\n{info["detail"]}'
             if not feedback:self._status_field_tooltips[2] = f'{input_mode}\n{info["source"]}\n{info["detail"]}'
-        self._fit_status_fields()

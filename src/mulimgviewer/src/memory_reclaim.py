@@ -1,4 +1,4 @@
-"""One-shot background reclamation after a user lowers the resource policy."""
+"""Background reclamation on policy downgrades and sustained idle RAM pressure."""
 import ctypes
 import gc
 import os
@@ -63,6 +63,8 @@ class MemoryReclaimer:
         self.serial = 0
         self.future = None
         self.last_result = None
+        self.idle_since = None
+        self.idle_reclaimed = False
 
     def cancel(self):
         with self.lock:
@@ -95,6 +97,31 @@ class MemoryReclaimer:
                     if serial == self.serial:
                         self.last_result = result
                 return result
+            self.future = self.executor.submit(reclaim)
+
+    def observe_idle_pressure(self, over_budget, idle, retire, now):
+        """One reclaim per sustained idle episode. Share the downgrade worker."""
+        eligible = over_budget and idle()
+        with self.lock:
+            if not eligible:
+                self.idle_since = None
+                self.idle_reclaimed = False
+                return
+            if self.idle_since is None:
+                self.idle_since = now
+            if (self.closed.is_set() or self.idle_reclaimed or now - self.idle_since < 10.
+                    or (self.future is not None and not self.future.done())):
+                return
+            serial = self.serial
+            def reclaim():
+                with self.lock:
+                    if serial != self.serial or self.closed.is_set():
+                        return
+                if idle():
+                    retire()
+                    if idle():
+                        return release_unused_memory(trim_working_set=True)
+            self.idle_reclaimed = True
             self.future = self.executor.submit(reclaim)
 
     def close(self):

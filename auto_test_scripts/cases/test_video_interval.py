@@ -27,6 +27,50 @@ class VideoIntervalTests(unittest.TestCase):
         dependency.set_result(True)
         self.assertAlmostEqual(self.vm._next_stitch_eta(51,11.),.1)
 
+    def test_first_page_eta_excludes_the_unpublished_tail_before_first_progress(self):
+        parent, dependency, target = Future(), Future(), Future()
+        parent.video_timing = dict(queued_at=0., first_local=50, last_local=59,
+                                   started_at=None, expected_seconds=10.)
+        dependency.video_parent = parent
+        dependency.video_local_batch = 51
+        target.video_dependencies = (dependency,)
+        target.video_timing = dict(queued_at=0., expected_seconds=.1)
+        self.vm._window_token = 'window'
+        self.vm._pending_extract = {(0, 50): parent}
+        self.vm._window_stitches = {('window', 51): target}
+        self.assertAlmostEqual(self.vm._next_stitch_eta(51, 0.), 2.1)
+
+    def test_queued_outer_work_does_not_delay_next_page_forecast(self):
+        outer, target = Future(), Future()
+        outer.video_timing = dict(queued_at=0., expected_seconds=30.)
+        target.video_timing = dict(queued_at=1., expected_seconds=.1)
+        self.vm._window_token = 'priority'
+        self.vm._window_stitches = {('priority', 90): outer, ('priority', 51): target}
+        self.assertAlmostEqual(self.vm._next_stitch_eta(51, 2.), .1)
+        outer.video_timing['started_at'] = 1.
+        self.assertAlmostEqual(self.vm._next_stitch_eta(51, 2.), 29.1)
+
+    def test_full_ready_buffer_uses_measured_supply_until_stock_runs_low(self):
+        from playback_pacer import PlaybackPacer
+        self.vm._window_token = 'stock'
+        self.vm._pacing_model_period = .1
+        pacer = self.vm._playback_pacer = PlaybackPacer()
+        context = self.vm._pacing_context()
+        pacer.request(context, [49, 50], (49, 60), 48, 1, 0.)
+        pacer.publish(context, 49, .1)
+        pacer.publish(context, 50, .2)
+        self.cfg.cache_num = 8
+        self.cfg.cache_img = [None] * 120
+        self.cfg.cache_img[51:59] = [True] * 8
+        with patch.object(self.vm, '_next_stitch_eta', return_value=9.) as estimate:
+            self.vm._refresh_playback_interval()
+            estimate.assert_not_called()
+            self.assertAlmostEqual(self.cfg.interval_recommend, .05)
+            self.cfg.batch_idx += 4
+            self.vm._refresh_playback_interval()
+            estimate.assert_called_once()
+            self.assertAlmostEqual(self.cfg.interval_recommend, 1.8)
+
     def test_custom_eta_uses_output_supply_instead_of_parent_wait_latency(self):
         from playback_pacer import PlaybackPacer
         self.vm._window_token='c'
@@ -44,6 +88,15 @@ class VideoIntervalTests(unittest.TestCase):
         raw=Future();raw.video_timing=dict(queued_at=0.,started_at=0.,expected_seconds=10.)
         target.video_dependencies=(raw,);self.vm._pending_extract={(0,53):raw}
         self.assertEqual(self.vm._next_stitch_eta(53,2.),8.)
+
+        # The original-only view uses the same dependency scheduler. Its
+        # page coordinator can be queued for far longer than actual rendering.
+        params[32] = False
+        self.vm._render_snapshot[0]._custom_algorithm_registry = ()
+        self.owner.image_pipeline = SimpleNamespace(processing=object())
+        self.assertEqual(self.vm._next_stitch_eta(53, 2.), 8.)
+        raw.set_result(True)
+        self.assertEqual(self.vm._next_stitch_eta(53, 2.), 1.)
 
     def test_full_output_and_low_raw_inventory_trigger_extraction_before_normal_evaluation(self):
         self.cfg.thread = 12
@@ -181,6 +234,24 @@ class VideoIntervalTests(unittest.TestCase):
             self.vm._apply_interval_recommendation(recommendation)
             self.assertEqual(self.cfg.interval, expected)
             self.assertEqual(self.cfg.manual_interval, 0.1)
+
+    def test_recent_work_sets_source_order_and_predicts_different_run_lengths(self):
+        monitor = self.vm.perf_monitor
+        monitor.record_extract(2., batches=4, video_idx=0)
+        monitor.record_extract(6., batches=4, video_idx=1)
+        self.assertEqual(monitor.extraction_order({0: [2, 3], 1: [2, 3]}), [1, 0])
+        self.assertAlmostEqual(monitor.extraction_estimate(1, 2), 3.)
+        self.assertAlmostEqual(monitor.extraction_estimate(1, 1), 1.5)
+
+    def test_measured_source_parallelism_accounts_for_a_slow_stream(self):
+        monitor = PerformanceMonitor()
+        streams = list(range(8))
+        for vid in streams[:-1]:
+            monitor.record_extract(.125, video_idx=vid)
+        self.assertEqual(monitor.source_parallelism(streams, 6), 6)
+        monitor.record_extract(1., video_idx=streams[-1])
+        self.assertEqual(monitor.source_parallelism(streams, 6), 2)
+        self.assertEqual(monitor.source_parallelism([7], 6), 6)
 
     def test_decoder_samples_are_weighted_by_output_batch_count(self):
         monitor = PerformanceMonitor()

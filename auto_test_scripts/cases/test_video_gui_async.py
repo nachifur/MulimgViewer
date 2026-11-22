@@ -144,9 +144,25 @@ class VideoGuiAsyncTests(unittest.TestCase):
     def warm_current_window(self):
         vm = self.frame.video_manager
         vm.update_cache()
-        self.pump_until(lambda: getattr(self.frame, '_video_display_key', (None,))[0] == 20
+        # This fixture starts on page 20 with neighbors on both sides.
+        # Refresh can repaint the same page with a new layout generation;
+        # the single-page first paint precedes the actual prefetch window.
+        self.pump_until(lambda: self.video_page_ready() and vm.shared_config.batch_idx == 20
+                        and vm._stitch_window[0] < 20 < vm._stitch_window[1]
                         and not vm.cache_update_pending() and not vm._pending_extract
                         and not vm._window_stitches)
+
+    def test_large_window_opens_after_first_bitmap_is_installed(self):
+        frame = self.frame
+        cfg, vm = frame.shared_config, frame.video_manager
+        cfg.cache_num, cfg.cache_multiplier = 8, 10
+        with patch.object(frame, '_request_video_display') as display:
+            vm.update_cache()
+            self.pump_until(lambda: display.called)
+            self.assertEqual(vm._stitch_window, (20, 20))
+            self.assertEqual(set(vm._batch_render_states), {20})
+        frame.show_img()
+        self.pump_until(lambda: self.video_page_ready() and vm._stitch_window == (0, 79))
 
     def test_custom_playback_prioritizes_forward_stock_before_unseen_past_pages(self):
         self.frame.show_all_func.SetValue(True);self.frame.show_img_init()
@@ -168,6 +184,24 @@ class VideoGuiAsyncTests(unittest.TestCase):
 
     def test_custom_streaming_start_and_reverse_produce_real_frames(self):
         self.frame.show_all_func.SetValue(True)
+        cfg=self.frame.shared_config;cfg.is_playing=True
+        with patch.object(self.frame,'_schedule_next_video_tick'):
+            self.frame.refresh(None);self.frame._seek_display_page(21)
+            self.pump_until(lambda:getattr(self.frame,'_status_display_batch',None)==20)
+            vm=self.frame.video_manager
+            self.assertTrue(vm.perf_monitor.extract_run_history)
+            self.assertGreater(vm._produced_pages,0)
+            self.assertTrue(all(batch>=20 for batch in vm._playback_pacer.pending))
+            cfg.play_direction=-1;vm.update_cache()
+            self.pump_until(lambda:vm._cached_batch_path(19,validate=False) is not None)
+            self.assertTrue(all(batch<=20 for batch in vm._playback_pacer.pending))
+            cfg.is_playing=False;self.frame.play_timer.Stop();vm.update_cache()
+            self.pump_until(lambda:not vm.cache_update_pending() and not vm._pending_extract and not vm._window_stitches)
+            radius=cfg.cache_num*cfg.cache_multiplier
+            self.assertEqual(sum(vm._cached_batch_path(batch,validate=False) is not None for batch in range(20-radius,21+radius)),2*radius+1)
+
+    def test_original_streaming_refills_reverse_stock_after_pause(self):
+        self.frame.show_all_func.SetValue(False)
         cfg=self.frame.shared_config;cfg.is_playing=True
         with patch.object(self.frame,'_schedule_next_video_tick'):
             self.frame.refresh(None);self.frame._seek_display_page(21)
@@ -614,6 +648,33 @@ class VideoGuiAsyncTests(unittest.TestCase):
         with patch('mulimgviewer.src.main.resource_budget', return_value=ResourceBudget(mode, budget, memory)):
             self.frame.on_power_mode_changed(None)
 
+    def test_paused_over_budget_releases_idle_accelerators_and_can_resume_from_disk(self):
+        self.warm_current_window()
+        frame = self.frame
+        vm = frame.video_manager
+        config = frame.shared_config
+        bitmap = frame.show_bmp_in_panel
+        pages = list(config.cache_img)
+        frame.resource_monitor.close()
+        frame.resource_monitor.thread.join(timeout=3)
+        config.memory_budget = 512 * 1024**2
+        vm._configure_video_memory()
+        rss = config.memory_budget + 256 * 1024**2
+        self.assertTrue(vm._pixel_cache.put('idle-test', Image.new('RGB', (32, 32))))
+        with patch.object(frame.resource_monitor, 'read_snapshot', return_value={'memory_now': rss}):
+            frame._check_idle_memory_pressure()
+            with frame.memory_reclaimer.lock:
+                frame.memory_reclaimer.idle_since -= 11.
+            frame._check_idle_memory_pressure()
+            frame.memory_reclaimer.future.result(timeout=5)
+        self.native_release.assert_called_with(trim_working_set=True)
+        self.assertEqual(vm._decoder_bank.idle_bytes, 0)
+        self.assertIsNone(vm._pixel_cache.get('idle-test'))
+        self.assertIs(frame.show_bmp_in_panel, bitmap)
+        self.assertTrue(all(Path(path).is_file() for path in pages if path))
+        frame._seek_display_page(22)
+        self.pump_until(lambda: getattr(frame, '_status_display_batch', None) == 21)
+
     def test_video_downgrade_reclaims_off_gui_and_preserves_cache_and_current_pixels(self):
         self.warm_current_window()
         self.frame.cache_multiplier.ChangeValue('3')
@@ -921,8 +982,8 @@ class VideoGuiAsyncTests(unittest.TestCase):
             self.frame.shared_config.cache_img[batch] = None
         entered, release = threading.Event(), threading.Event()
         calls = []
-        original = vm._run_window_stitch_impl
-        def compose(batch, sources, token, plan=None, **kwargs):
+        original = vm._publish_stitched_page
+        def compose(batch, sources, token, plan, *args):
             calls.append((batch, plan))
             # Borrowed CPU slots may legitimately start 23-25 before the
             # GUI changes quotas. Occupy all four permits so page 26 is
@@ -932,9 +993,9 @@ class VideoGuiAsyncTests(unittest.TestCase):
                     entered.set()
                 if not release.wait(5):
                     raise TimeoutError('GUI did not release current composition')
-            return original(batch, sources, token, plan, **kwargs)
+            return original(batch, sources, token, plan, *args)
         try:
-            with patch.object(vm, '_run_window_stitch_impl', compose):
+            with patch.object(vm, '_publish_stitched_page', compose):
                 vm.update_cache()
                 self.assertTrue(entered.wait(3))
                 vm._request_thread_plan(2, 2)

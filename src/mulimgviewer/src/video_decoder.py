@@ -270,6 +270,14 @@ class DecoderBank:
         self.idle_bytes = sum(s.bytes_hint for s in self.sessions.values()
                               if s.container is not None and s.users == 0)
 
+    def release_idle(self):
+        """Drop native codec buffers, retaining session seek anchors for resume."""
+        with self.lock:
+            for session in self.sessions.values():
+                if session.users == 0:
+                    session.close()
+            self.idle_bytes = 0
+
     def trim(self, paths=None):
         with self.lock:
             if paths is not None:

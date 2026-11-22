@@ -21,6 +21,7 @@ class ResourceMonitorTests(unittest.TestCase):
         result = self.monitor.snapshot(now=2)
         self.assertEqual(result['cpu'], 50.)
         self.assertEqual(result['memory'], 300.)
+        self.assertEqual(result['memory_now'], 400)
 
     def test_rolling_window_clips_partial_samples(self):
         self.monitor.record(0, 0, 0)

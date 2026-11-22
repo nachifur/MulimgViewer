@@ -24,11 +24,29 @@ def canonical_path(path):
     return Path(value)
 
 
+def open_rendered_canvas(path, expected_size=None):
+    """Open our encoder's output using dimensions retained by the render job."""
+    limit = Image.MAX_IMAGE_PIXELS
+    if expected_size is None or limit is None or expected_size[0]*expected_size[1] <= limit:
+        image = Image.open(path)
+    else:
+        # Only generated caches with independently known geometry reach this
+        # branch. Keep Pillow's process-wide guard for all source images.
+        from PIL import JpegImagePlugin, PngImagePlugin
+        reader = {'.jpeg': JpegImagePlugin.JpegImageFile, '.jpg': JpegImagePlugin.JpegImageFile,
+                  '.png': PngImagePlugin.PngImageFile}[Path(path).suffix.lower()]
+        image = reader(path)
+    if expected_size is not None and image.size != tuple(expected_size):
+        image.close()
+        raise ValueError('Cached canvas dimensions differ from its render job')
+    return image
+
+
 class CachedCanvas:
     """An already encoded canvas: final publication can link it without reencoding."""
-    def __init__(self,path):
+    def __init__(self,path,size):
         self.path=Path(path)
-        with Image.open(path) as image:self.size=image.size
+        self.size=tuple(size)
         self.width,self.height=self.size
     def save(self,path,**kwargs):
         try:os.link(self.path,path)
@@ -55,13 +73,14 @@ def save_cache_image(image,path,extension,checkpoint=None,jpeg_quality=100,**png
                 def flush(self):return original.flush()
                 def fileno(self):raise io.UnsupportedOperation('Use cancellable write chunks')
             path=Writer()
-    if isinstance(image,DiskCanvas):image.flush(checkpoint)
+    # The encoder reads the same mapping. Paging of temporary canvas pixels
+    # is managed by the OS and needs no synchronous writeback before encoding.
     if extension=='png':
         image.save(path,format='PNG',compress_level=1,**png_options)
         return
     converted=None
     try:
-        if image.mode!='RGB':
+        if image.mode not in ('RGB', 'RGBX'):
             if image.mode in ('RGBA','LA') or 'transparency' in image.info:
                 mapped=isinstance(image,DiskCanvas) or disk_backed(image.size)
                 converted=new_canvas('RGBX' if mapped else 'RGB',image.size,None if mapped else 'white',mapped=mapped)
@@ -84,7 +103,6 @@ def save_cache_image(image,path,extension,checkpoint=None,jpeg_quality=100,**png
                         finally:
                             if rgba is not strip:rgba.close()
             else:converted=image.convert('RGB')
-        if isinstance(converted,DiskCanvas):converted.flush(checkpoint)
         (converted if converted is not None else image).save(path,format='JPEG',quality=jpeg_quality,subsampling=0)
     finally:
         if converted is not None:converted.close()

@@ -78,6 +78,10 @@ class MulimgViewer(SidebarLayoutMixin, SettingsPanelMixin, NavigationMixin, Stat
         self.memory_reclaimer = MemoryReclaimer()
         owner_ref = weakref.ref(self)
         def metrics_ready():
+            owner = owner_ref()
+            if (owner is not None and hasattr(owner, 'resource_monitor')
+                    and not getattr(owner, '_is_closing', False)):
+                owner._check_idle_memory_pressure()
             def update():
                 owner = owner_ref()
                 if owner is not None and not getattr(owner, '_is_closing', False):
@@ -472,6 +476,39 @@ class MulimgViewer(SidebarLayoutMixin, SettingsPanelMixin, NavigationMixin, Stat
         else:
             self.memory_reclaimer.cancel()
 
+    def _check_idle_memory_pressure(self):
+        vm, pipeline = self.video_manager, self.image_pipeline
+        limit = self.shared_config.memory_budget
+        stats = self.resource_monitor.read_snapshot()
+        rss = stats.get('memory_now')
+
+        def idle():
+            if (self.shared_config.is_playing or getattr(self, '_is_closing', False)
+                    or getattr(self, '_export_active', False) or vm.cache_update_pending()):
+                return False
+            with vm._cache_guard:
+                if vm._pending_extract or vm._window_stitches or getattr(vm, '_display_delivery_pending', False):
+                    return False
+            group = getattr(vm, '_pipeline_workers', None)
+            if group is not None:
+                with group.lock:
+                    if any(group.handles) or group.downstream_active or group.coordinators:
+                        return False
+            with pipeline.lock:
+                return not (pipeline.running or pipeline.display_key is not None or pipeline._pump_queued)
+
+        def retire():
+            # A decoder lease and the displayed bitmap have their own owners.
+            # Only drop idle sessions and optional in-memory pixel references.
+            group = getattr(vm, '_pipeline_workers', None)
+            if group is not None:
+                group.trim_idle()
+            vm._decoder_bank.release_idle()
+            vm._pixel_cache.clear()
+
+        self.memory_reclaimer.observe_idle_pressure(
+            bool(limit and rss is not None and rss > limit), idle, retire, time.monotonic())
+
     def _request_memory_reclaim(self):
         """Wait for old work off-GUI, join retired pools, then return free RAM."""
         vm, pipeline = self.video_manager, self.image_pipeline
@@ -572,6 +609,9 @@ class MulimgViewer(SidebarLayoutMixin, SettingsPanelMixin, NavigationMixin, Stat
         else:
             usage = f'{memory / 1024**3:.2f} GiB' if memory >= 1024**3 else f'{memory / 1024**2:.0f} MiB'
             text += f'\nAverage (10s): CPU {cpu:.1f}% | RAM {usage}'
+            current = stats.get('memory_now')
+            if memory_budget and current is not None and max(current, memory) > memory_budget:
+                text += f' (now {current / 1024**3:.2f} GiB)'
         text += ('\nPlayback: paused' if not cfg.is_playing else
                  f'\nPlayback: {fps:.1f} FPS' if fps is not None else '\nPlayback: sampling...')
         if cfg.is_playing:
@@ -1125,7 +1165,8 @@ class MulimgViewer(SidebarLayoutMixin, SettingsPanelMixin, NavigationMixin, Stat
             self.show_img_init()
 
         self.show_img()
-        self.SetStatusText_(["Last", "-1", "-1", "-1"])
+        if not getattr(self, "_from_timer", False):
+            self.SetStatusText_(["Last", "-1", "-1", "-1"])
 
 
 
@@ -2458,7 +2499,8 @@ class MulimgViewer(SidebarLayoutMixin, SettingsPanelMixin, NavigationMixin, Stat
                     self._request_video_display(b, cache_entry)
 
                     # 更新状态栏（保留 FPS 计算逻辑，但不显示）
-                    self.SetStatusText_(["-1", "-1", "", "-1"])
+                    if not self.shared_config.is_playing:
+                        self.SetStatusText_(["-1", "-1", "", "-1"])
 
                     # 更新滑块
                     if hasattr(self, "slider_img") and self.slider_img:
@@ -3369,7 +3411,8 @@ def process_image(image, *, context):
             self.show_img_init()
 
         self.show_img()
-        self.SetStatusText_(["Next", "-1", "-1", "-1"])
+        if not getattr(self, "_from_timer", False):
+            self.SetStatusText_(["Next", "-1", "-1", "-1"])
 
     def _setup_img_panel(self):
         # Prevent white-background flicker during repaint

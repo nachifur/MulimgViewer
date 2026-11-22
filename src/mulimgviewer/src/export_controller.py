@@ -6,7 +6,7 @@ from tempfile import TemporaryDirectory
 from PIL import Image
 from concurrent.futures import CancelledError, ThreadPoolExecutor, wait
 from contextlib import nullcontext, ExitStack
-from .cache_layout import source_names, page_name, write_source_catalog
+from .cache_layout import source_names, page_name, write_source_catalog, open_rendered_canvas
 from .custom_func.contract import original_index, processing_indices, display_indices, display_grid
 from .custom_pipeline import CustomPipeline, WorkBudget, current_only
 from .export_formats import PNG, JPG
@@ -168,7 +168,7 @@ def export_page(manager,root,output,memory=None,workers=1,defer_moves=False,sele
                             cached_mosaic=None
                         if bits&1 and cached_mosaic is not None:
                             work.stitch_img_init(1,copy.deepcopy(work.draw_points),flist=paths)
-                            with Image.open(cached_mosaic[0]) as image:work.img=image.convert('RGBA')
+                            with open_rendered_canvas(cached_mosaic[0],cached_mosaic[1].get('_rendered_canvas_size')) as image:work.img=image.convert('RGBA')
                             work.pdf_title_layers=copy.deepcopy(cached_mosaic[1].get('pdf_title_layers',[]))
                         elif bits&1:
                             work.stitch_images(1,copy.deepcopy(work.draw_points),flist=paths)
@@ -233,7 +233,7 @@ def export_page(manager,root,output,memory=None,workers=1,defer_moves=False,sele
                         for slot,index in enumerate(visible):
                             row,col=(slot%rows,slot//rows) if (params[32] or params[38]) and params[40] else divmod(slot,cols)
                             x,y=col*(width+gap_x),row*(height+gap_y)
-                            with Image.open(mosaics[index][0]) as image:canvas.paste(image,(x,y))
+                            with open_rendered_canvas(*mosaics[index]) as image:canvas.paste(image,(x,y))
                             for title in states[index]:
                                 title=copy.deepcopy(title);title['x']+=x;title['y']+=y;titles.append(title)
                         manager.pdf_title_layers=titles

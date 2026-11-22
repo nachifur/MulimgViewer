@@ -748,6 +748,25 @@ class DecoderAccuracyTests(unittest.TestCase):
             thread.join(2)
             bank.close()
 
+    def test_idle_pressure_preserves_seek_index_and_active_lease(self):
+        bank = DecoderBank(64 * 1024**2)
+        try:
+            with bank.lease(self.path, 10., False, 96*64) as session:
+                list(session.frames(35, 45, 1, lambda: False))
+                bank.release_idle()
+                self.assertIsNotNone(session.container)
+            anchors = dict(session.anchors)
+            self.assertTrue(anchors)
+            bank.release_idle()
+            self.assertEqual(bank.idle_bytes, 0)
+            self.assertIsNone(session.container)
+            with bank.lease(self.path, 10., False, 96*64) as resumed:
+                self.assertIs(resumed, session)
+                self.assertEqual(dict(resumed.anchors), anchors)
+                self.assertEqual(len(list(resumed.frames(46, 46, 1, lambda: False))), 1)
+        finally:
+            bank.close()
+
     def test_context_eviction_keeps_exact_keyframe_index(self):
         bank = DecoderBank(1)
         with bank.lease(self.path,10.,False,96*64) as session:

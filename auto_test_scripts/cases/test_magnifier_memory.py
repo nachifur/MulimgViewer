@@ -21,6 +21,24 @@ from mulimgviewer.src.custom_pipeline import WorkBudget
 
 
 class MagnifierMemoryTests(unittest.TestCase):
+    def test_large_local_canvas_requires_matching_render_dimensions(self):
+        from mulimgviewer.src.cache_layout import open_rendered_canvas
+        import tempfile
+        with tempfile.TemporaryDirectory() as directory:
+            for fmt in ('jpeg', 'png'):
+                path = Path(directory)/('page_000001.'+fmt)
+                with Image.new('RGB', (32, 24), 'red') as tile:
+                    tile.save(path)
+                with patch.object(Image, 'MAX_IMAGE_PIXELS', 100):
+                    with self.assertRaises(Image.DecompressionBombError):
+                        Image.open(path)
+                    with open_rendered_canvas(path, (32, 24)) as decoded:
+                        decoded.load()
+                        self.assertEqual(decoded.size, (32, 24))
+                    with self.assertRaises(ValueError):
+                        open_rendered_canvas(path, (32, 23))
+                    self.assertEqual(Image.MAX_IMAGE_PIXELS, 100)
+
     def test_in_place_rectangles_match_legacy_pixels_without_canvas_arrays(self):
         image=Image.new('RGBA',(64,48),(4,5,6,100))
         expected=np.array(image)

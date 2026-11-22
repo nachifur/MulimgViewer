@@ -84,10 +84,13 @@ def disk_backed(size):
     return available is None or pixels*8+64*1024**2 > available*.8
 
 
-def render_lane(size,priority=lambda:0,cancelled=lambda:False):
+def render_lane(size,priority=lambda:0,cancelled=lambda:False, *, mapped=None):
     # Large disk-backed jobs run serially; do not create a window's worth of
     # multi-gigabyte temporary maps or competing full-disk writes at once.
-    return _large_render.acquire(priority,cancelled) if int(size[0])*int(size[1])*4>LARGE_CANVAS_BYTES else nullcontext()
+    # Memory-backed jobs with a measured working-set reservation are already
+    # admitted by WorkBudget. Serialize mapped or unbudgeted large jobs.
+    exclusive = mapped if mapped is not None else int(size[0])*int(size[1])*4 > LARGE_CANVAS_BYTES
+    return _large_render.acquire(priority,cancelled) if exclusive else nullcontext()
 
 
 def new_canvas(mode, size, color=None, *, directory=None, mapped=None):
@@ -153,8 +156,6 @@ def rgba_copy(source):
         for top in range(0, source.height, rows):
             with source.crop((0, top, source.width, min(source.height, top+rows))) as strip:
                 result.paste(strip, (0, top))
-        if isinstance(result, DiskCanvas):
-            result.flush()
         return result
     except BaseException:
         result.close()

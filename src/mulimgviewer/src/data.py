@@ -1,4 +1,7 @@
 
+from bisect import bisect_right
+from itertools import accumulate, chain, islice
+import os
 import csv
 import math
 from pathlib import Path
@@ -30,10 +33,8 @@ class ImgData():
                 self.img_num_list = self.video_num_list
                 self.img_num = sum(self.img_num_list)
             else:
-                list_ = []
-                for name_list in self.name_list:
-                    list_ = list_+name_list.tolist()
-                self.img_num = len(list_)
+                self._folder_ends = tuple(accumulate(map(len, self.name_list)))
+                self.img_num = self._folder_ends[-1] if self._folder_ends else 0
         else:
             if self.video_mode:
                 self.img_num_list = self.video_num_list
@@ -141,17 +142,16 @@ class ImgData():
         i = 0
         output = []
         for path_ in self.path_list:
-            no_check_list = [str(f.name)
-                             for f in Path(path_).iterdir()]
-            if len(no_check_list) > 100:
-                self.dataset_mode = True
-                output.append(no_check_list)
-            else:
-                self.dataset_mode = False
-                check_list = [str(f.name) for f in Path(path_).iterdir(
-                ) if f.is_file() and f.suffix.lower() in self.format_group]
-                check_list = np.sort(check_list)
-                output.append(check_list)
+            # DirEntry exposes the directory listing's file type on Windows
+            # and most Unix filesystems. Avoid allocating a Path per name.
+            with os.scandir(path_) as listing:
+                sample = list(islice(listing, 101))
+                self.dataset_mode = len(sample) > 100
+                if self.dataset_mode:
+                    output.append([entry.name for entry in chain(sample, listing)])
+                else:
+                    output.append(np.sort([entry.name for entry in sample
+                                           if entry.is_file() and Path(entry.name).suffix.lower() in self.format_group]))
             if not self.parallel_to_sequential:
                 if i == 0:
                     break
@@ -246,19 +246,18 @@ class ImgData():
             if self.type == 0 or self.type == 1:
                 # one_dir_mul_dir_auto, one_dir_mul_dir_manual
                 if self.parallel_to_sequential:
-                    flist_all = []
-                    for i in range(len(self.path_list)):
-                        flist_all = flist_all + \
-                            [str(Path(self.path_list[i])/self.name_list[i][k])
-                            for k in range(len(self.name_list[i]))]
-
-                    try:
-                        flist = [flist_all[k] for k in range(
-                            self.img_count, self.img_count+self.count_per_action)]
-                    except:
-                        flist = [flist_all[k]
-                                for k in range(self.img_count, self.img_num)]
-
+                    flist = []
+                    first = self.img_count
+                    stop = min(first + self.count_per_action, self.img_num)
+                    folder = bisect_right(self._folder_ends, first)
+                    while first < stop:
+                        base = self._folder_ends[folder - 1] if folder else 0
+                        end = min(stop, self._folder_ends[folder])
+                        directory = Path(self.path_list[folder])
+                        flist.extend(str(directory / name) for name in
+                                     self.name_list[folder][first-base:end-base])
+                        first = end
+                        folder += 1
                 else:
                     flist = []
                     for i in range(len(self.path_list)):

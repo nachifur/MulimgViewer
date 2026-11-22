@@ -12,12 +12,11 @@ from contextlib import contextmanager
 from pathlib import Path
 
 import numpy as np
-from PIL import Image
 from .video_paths import manager_cache_format
 from .layout_gaps import gap_pair
 from .video_memory import mosaic_working_bytes
 from .disk_canvas import disk_backed, render_lane, DiskCanvas
-from .cache_layout import page_name, component, CachedCanvas, cache_image_extension, save_cache_image
+from .cache_layout import page_name, component, CachedCanvas, cache_image_extension, save_cache_image, open_rendered_canvas
 from .custom_func.contract import specification, original_index, display_indices, display_grid, processing_indices
 
 
@@ -25,7 +24,10 @@ def mosaic_request_key(manager,index,inputs,points,batch):
     params=copy.deepcopy(manager.layout_params)
     if len(params)>41:params[41]=manager_cache_format(manager)
     params[32]=False;params[37]=0;params[38]=False;params[39]='1,1';params[40]=False;params[33]='';params[36]=False;params[35]=1
-    signature=[(str(path),Path(path).stat().st_size,Path(path).stat().st_mtime_ns) for path in inputs]
+    signature = []
+    for path in inputs:
+        info = os.stat(path)
+        signature.append((str(path), info.st_size, info.st_mtime_ns))
     key='mosaic:'+hashlib.sha256(repr((params,cache_quality(manager),tuple(manager.gap_color),int(getattr(manager,'img_alpha',255)),signature,points,batch,
         repr(getattr(manager,'exif_display_config',None)))).encode('utf-8')).hexdigest()
     algorithm='original' if index is None else specification(manager._custom_algorithm_registry,index).get(
@@ -33,6 +35,19 @@ def mosaic_request_key(manager,index,inputs,points,batch):
     # Distinguish an identity algorithm from original even when input paths match.
     key+=':'+algorithm
     return key,params,algorithm
+
+
+def _finish_reference_geometry(render, geometry):
+    """Settle geometry on early failure or after the deferred TIFF layout."""
+    if geometry.done():
+        return
+    try:
+        _, state = render.result()
+        resolution = tuple(state['img_resolution_origin'])
+    except BaseException as error:
+        geometry.set_exception(error)
+    else:
+        geometry.set_result(resolution)
 
 
 class MosaicStage:
@@ -67,6 +82,8 @@ class MosaicPlan:
         self.paths=tuple(self.paths or ())
         self.batch=batch;self.owner=owner;self.epoch=epoch;self.points=points;self.cancelled=cancelled
         self.entries=[];self.futures={};self.lock=threading.RLock();self.closed=False
+        # A reused reference future costs this page no new render work.
+        self.reference_work_seconds = 0.
         self.indices=display_indices(manager._custom_algorithm_registry,manager.layout_params)
         self.reference=original_index(manager._custom_algorithm_registry)
         if self.reference is None or specification(manager._custom_algorithm_registry,self.reference)['identity']:
@@ -99,22 +116,31 @@ class MosaicPlan:
                     cacheable=index is None or specification(self.manager._custom_algorithm_registry,index)['cacheable'],algorithm=algorithm)
                 self.cache.entries[key]=entry
                 try:
-                    dependencies=() if index==self.reference else (self.futures[self.reference],)
+                    if index == self.reference:
+                        entry['geometry'] = Future()
+                        dependencies = ()
+                    else:
+                        dependencies = (self.reference_geometry,)
                     entry['future']=self.cache.scheduler.submit(self.stage.pool,self._build,index,inputs,params,entry,algorithm,
                         dependencies=dependencies,priority=lambda:self.cache._image_priority(self.owner,self.batch))
+                    if index == self.reference:
+                        geometry = entry['geometry']
+                        entry['future'].add_done_callback(lambda done: _finish_reference_geometry(done, geometry))
                 except BaseException:
                     self.cache.entries.pop(key,None);raise
+            if index == self.reference:
+                self.reference_geometry = entry['geometry']
             entry['pins']+=1;entry['users'].add((self.owner,self.epoch,self.batch))
             entry['used']=time.monotonic();self.entries.append(entry)
             return entry['future']
 
     def _build(self,index,inputs,params,entry,algorithm):
         from .image_pipeline import RENDER_STATE
+        prepare_started = time.perf_counter()
         manager=self.manager.video_stitch_snapshot()
         manager.layout_params=params
         if index != self.reference:
-            reference=self.futures[self.reference].result()[1]
-            params[6]=list(reference['img_resolution_origin'])
+            params[6] = list(self.reference_geometry.result())
         manager._video_lazy_frames=True
         pixel_cache=getattr(self.cache,'pixel_cache',None)
         if pixel_cache is not None:manager._video_pixel_provider=pixel_cache.get
@@ -128,6 +154,10 @@ class MosaicPlan:
             prepared_layout=manager.stitch_img_init(0,copy.deepcopy(self.points),flist=self.paths)
             layout,subprocessing,show=prepared_layout
             if not show:raise RuntimeError(f'{algorithm}: empty mosaic layout')
+            if index == self.reference:
+                # Other algorithms only need the normalization geometry. Their
+                # own render admissions still enforce CPU and memory limits.
+                entry['geometry'].set_result(tuple(manager.img_resolution_origin))
             canvas_size,_,_=manager.ImgF.layout_2d(layout,manager.gap_color,[],manager.img_preprocessing,subprocessing,
                 [manager.img_vertical,manager.one_img_vertical,manager.img_unit_vertical],manager.onetitle,
                 [manager.title_init,manager.title_preprocessing],measure_only=True)
@@ -139,7 +169,9 @@ class MosaicPlan:
             # only resident scratch RAM: canvas pixels live in temporary maps.
             size=max(size,self.cache.budget.memory or size)
         def stale():return not self.cache.node_valid(self.owner,self.epoch,self.batch,algorithm)
-        with render_lane(canvas_size or (0,0),lambda:self.cache._image_priority(self.owner,self.batch),stale), self.cache.budget.acquire(size,stale,priority=1,resident_size=resident,
+        mapped = manager._disk_backed_canvas if self.cache.budget.memory is not None else None
+        preparation_seconds = time.perf_counter() - prepare_started
+        with render_lane(canvas_size or (0,0),lambda:self.cache._image_priority(self.owner,self.batch),stale,mapped=mapped), self.cache.budget.acquire(size,stale,priority=1,resident_size=resident,
                 order=lambda:self.cache._image_priority(self.owner,self.batch),
                 units=1/(1+len(processing_indices(self.manager._custom_algorithm_registry,self.manager.layout_params)))):
             started=time.perf_counter()
@@ -150,6 +182,7 @@ class MosaicPlan:
             flag=manager.stitch_images(0,copy.deepcopy(self.points),flist=self.paths,prepared_layout=prepared_layout)
             if flag!=0 or manager.img is None:raise RuntimeError(f'{algorithm}: mosaic failed')
             state={name:getattr(manager,name) for name in RENDER_STATE if hasattr(manager,name)}
+            state['_rendered_canvas_size'] = manager.img.size
             try:
                 checkpoint()
                 self.cache.request_prune()
@@ -174,8 +207,11 @@ class MosaicPlan:
                     if not isinstance(manager.img,DiskCanvas) or self.batch==current:
                         pixel_cache.put(str(path),manager.img,priority=True)
                     pixel_cache.put_header(str(path),manager.img.size,manager.img.mode)
+                render_seconds = time.perf_counter() - started
+                if index == self.reference:
+                    self.reference_work_seconds = preparation_seconds + render_seconds
                 with self.cache.lock:
-                    self.stage.completed+=1;self.stage.seconds+=time.perf_counter()-started
+                    self.stage.completed+=1;self.stage.seconds+=render_seconds
                 return str(path),state
             except BaseException:
                 self.cache.visible.remove(entry);self.cache._remove(entry['directory']);raise
@@ -210,15 +246,13 @@ class MosaicPlan:
             path,state=artifacts[indices[0]]
             state=copy.deepcopy(state)
             state['_status_source_images']=reference[1].get('_status_source_images',())
-            yield CachedCanvas(path),state
+            yield CachedCanvas(path,state['_rendered_canvas_size']),state
             return
         pixel_cache=getattr(self.cache,'pixel_cache',None)
         width=height=0
         for path,state in (artifacts.values() if artifacts else [reference]):
-            cached=(pixel_cache.get(path) or pixel_cache.get(('header',path))) if pixel_cache is not None else None
-            if cached is not None:width=max(width,cached.width);height=max(height,cached.height)
-            else:
-                with Image.open(path) as image:width=max(width,image.width);height=max(height,image.height)
+            w, h = state['_rendered_canvas_size']
+            width, height = max(width, w), max(height, h)
         # The final algorithm grid is a separate layout level: retain the
         # configured horizontal/vertical gaps between its cached mosaics.
         gap_x,gap_y=gap_pair(params[3], 'func')
@@ -245,7 +279,7 @@ class MosaicPlan:
                     cached=pixel_cache.get(path) if pixel_cache is not None else None
                     if cached is not None:canvas.paste(cached,(x,y))
                     else:
-                        with Image.open(path) as image:canvas.paste(image,(x,y))
+                        with open_rendered_canvas(path,current['_rendered_canvas_size']) as image:canvas.paste(image,(x,y))
                 for point,source_id in zip(current['xy_grid'],current['xy_grids_id_list']):
                     output_id=slot*base+int(source_id)
                     xy.append((float(point[0])+x,float(point[1])+y));ids.append(output_id)
@@ -261,4 +295,5 @@ class MosaicPlan:
                 _original_row_col=list(params[0]) if algorithm_grid else None,
                 _show_all_func_expanded_row_col=[params[0][0]*rows,params[0][1]*cols] if algorithm_grid else None,
                 _func_layout_vertical=bool(params[40]),pdf_title_layers=titles)
+            state['_rendered_canvas_size'] = canvas.size
             yield canvas,state

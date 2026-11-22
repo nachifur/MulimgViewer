@@ -41,7 +41,7 @@ from viewer_state import SharedConfig
 from video_timeline import page_count, page_segments, raw_dependencies
 from jpeg_policy import jpeg_quality, ffmpeg_jpeg_args, ffmpeg_jpeg_options
 from video_paths import frame_filename, cache_extension, video_source_names
-from cache_layout import page_name, save_cache_image, write_page_catalog, remove_page_catalog
+from cache_layout import open_rendered_canvas, page_name, save_cache_image, write_page_catalog, remove_page_catalog
 from thread_optimizer import (AdaptiveThreadAllocator, optimize_thread_allocation,
                               available_memory_bytes, stitch_memory_limit, buffer_levels, buffer_priority, ThreadAllocation)
 from resource_monitor import run_video_process
@@ -429,19 +429,21 @@ class VideoCacheTests(unittest.TestCase):
         with patch.object(self.vm, '_save_frame', wraps=self.vm._save_frame) as decode:
             self.vm.update_cache()
             self.assert_window(14, 26)
-            # Per video: current, inner left/right, outer left/right; not 13 starts.
-            self.assertEqual(decode.call_count, 10)
+            # Native prefetch merges inner and outer pages on each side.
+            # The FFmpeg fallback keeps separate inner and outer runs.
+            initial_runs = 6 if self.vm._decoder_bank.available else 10
+            self.assertEqual(decode.call_count, initial_runs)
             self.vm.update_cache()
             self.settle()
-            self.assertEqual(decode.call_count, 10)
+            self.assertEqual(decode.call_count, initial_runs)
             self.cfg.batch_idx = 23
             self.vm.update_cache()
             self.assert_window(14, 26)
-            self.assertEqual(decode.call_count, 10)
+            self.assertEqual(decode.call_count, initial_runs)
             self.cfg.batch_idx = 24
             self.vm.update_cache()
             self.assert_window(18, 30)
-            self.assertEqual(decode.call_count, 12)
+            self.assertEqual(decode.call_count, initial_runs + 2)
         self.cfg.batch_idx = 20
         self.cfg.cache_multiplier = 1
         self.vm.update_cache()
@@ -779,6 +781,16 @@ class VideoCacheTests(unittest.TestCase):
                 patch('test_video_cache.available_memory_bytes',return_value=64*mib):
             self.assertEqual(self.vm._planning_memory_budget(),int(256*mib*.9))
 
+    def test_native_scale_preview_charges_one_frame_in_pixel_cache(self):
+        image = Image.new('RGB', (80, 48))
+        size = 80*48*4
+        self.vm._pixel_cache.configure(size)
+        with patch.object(self.vm, '_preview_resize_target', return_value=image.size):
+            self.vm._store_decoded_frame(20, image, 0, self.cfg, None, 20, 20)
+        path = os.path.join(self.cfg.video_path[0], self.vm._filename_converter(20, 0))
+        self.assertIs(self.vm._pixel_cache.get(path), image)
+        self.assertEqual(self.vm._pixel_cache.bytes, size)
+
     def test_large_preview_reduction_preserves_full_resolution_lossless_cache(self):
         self.cfg.cache_save_format=1
         self.vm._pixel_cache.configure(8*1024**2)
@@ -796,6 +808,49 @@ class VideoCacheTests(unittest.TestCase):
         with Image.open(path) as cached:
             self.assertEqual(cached.size,image.size)
             self.assertEqual(cached.tobytes(),image.tobytes())
+
+    def test_parallel_header_probe_commits_in_order_and_preserves_failed_slots(self):
+        self.cfg.video_num_list = []
+        self.cfg.video_fps_list = []
+        self.cfg.skip_frames = 2
+        def probe(path):
+            if path == 'broken':
+                raise ValueError('bad header')
+            return (30., 10) if path == 'a' else (24., 5)
+        with patch.object(self.vm, '_get_meta', side_effect=probe) as get_meta, \
+                patch.object(self.vm, '_set_video_status') as status:
+            self.vm._load_selection_metadata(['a', 'broken', 'b', 'a'])
+        self.assertEqual(get_meta.call_count, 3)
+        self.assertEqual(self.cfg.video_fps_list, [30., 0., 24., 30.])
+        self.assertEqual(self.cfg.video_num_list, [4, 0, 2, 4])
+        status.assert_called_once()
+
+    def test_writer_and_decoder_overlap_across_single_frame_pages(self):
+        if not self.vm._decoder_bank.available:
+            self.skipTest('PyAV required')
+        from video_decoder import DecoderSession
+        path = self.cfg.real_video_path[0]
+        self.cfg.count_per_action = 1
+        self.vm._video_dimensions[path] = (1280, 720)
+        self.vm._worker_context.native_threads = 5
+        advanced = threading.Event()
+        frames = DecoderSession.frames
+        store = self.vm._store_decoded_frame
+        def observe(session, *args, **kwargs):
+            for index, image in frames(session, *args, **kwargs):
+                if index == 1:
+                    advanced.set()
+                yield index, image
+        def write(index, *args):
+            if index == 0 and not advanced.wait(3):
+                raise RuntimeError('Decoding stalled behind the first disk write')
+            return store(index, *args)
+        try:
+            with patch.object(DecoderSession, 'frames', observe), \
+                    patch.object(self.vm, '_store_decoded_frame', write):
+                self.assertTrue(self.vm._decode_incremental(path, 0, 4, 0, self.cfg))
+        finally:
+            del self.vm._worker_context.native_threads
 
     def test_foreground_frame_then_prefetch_keeps_same_native_decoder(self):
         if not self.vm._decoder_bank.available:self.skipTest('PyAV required')

@@ -86,6 +86,28 @@ class ReclaimCoordinatorTests(unittest.TestCase):
             self.assertEqual(self.reclaimer.future.result(timeout=3), dict(ok=True))
         self.assertEqual(order, ['retire', ('release', False)])
 
+    def test_only_sustained_idle_pressure_reclaims_once_until_rearmed(self):
+        idle, retire = Mock(return_value=True), Mock()
+        observe = self.reclaimer.observe_idle_pressure
+        with patch.object(memory, 'release_unused_memory') as release:
+            observe(True, idle, retire, 0.)
+            idle.return_value = False  # Playback, save or prefetch resumed.
+            observe(True, idle, retire, 9.)
+            idle.return_value = True
+            observe(True, idle, retire, 10.)
+            observe(True, idle, retire, 19.)
+            self.assertIsNone(self.reclaimer.future)
+            observe(True, idle, retire, 20.)
+            self.reclaimer.future.result(timeout=3)
+            observe(True, idle, retire, 60.)
+            retire.assert_called_once_with()
+            release.assert_called_once_with(trim_working_set=True)
+            observe(False, idle, retire, 61.)
+            observe(True, idle, retire, 62.)
+            observe(True, idle, retire, 72.)
+            self.reclaimer.future.result(timeout=3)
+            self.assertEqual(retire.call_count, 2)
+
     def test_upgrade_cancels_pending_reclamation(self):
         entered = threading.Event()
         def not_ready():

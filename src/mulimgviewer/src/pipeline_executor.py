@@ -27,6 +27,7 @@ class PipelineWorkers:
         self.memory_budget, self.active_bytes = None, 0
         self.costs = [1, 1]
         self.queues = [deque(), deque()]
+        self.playback_focus = None
         self.closed = [False, False]
         self.handles = [set(), set()]
         self.stages = (StageExecutor(self, 0), StageExecutor(self, 1))
@@ -115,13 +116,47 @@ class PipelineWorkers:
             if count<0:self._dispatch()
             return True
 
-    def submit(self, stage, fn, args, kwargs, resource_key=None, cpu_cost=1, coordinator=False):
+    def set_playback_focus(self, page, direction, inner, raw_horizon=None):
+        focus = (page, direction, inner, inner if raw_horizon is None else raw_horizon)
+        with self.lock:
+            if self.playback_focus != focus:
+                self.playback_focus = focus
+                for stage, queue in enumerate(self.queues):
+                    if len(queue) > 1:
+                        ordered = sorted(queue, key=lambda job: self._job_rank(stage, job))
+                        queue.clear()
+                        queue.extend(ordered)
+
+    def _job_rank(self, stage, job):
+        span = job[7]
+        if span is None or self.playback_focus is None:
+            return (0, 0)
+        page, direction, stitch_horizon, raw_horizon = self.playback_focus
+        inner = raw_horizon if stage == 0 else stitch_horizon
+        first, last = span
+        offset = first - page if first > page else min(0, last - page)
+        if not offset:
+            return (0, 0)
+        if direction * offset < 0:
+            return (3, abs(offset))
+        return (1 if abs(offset) <= inner else 2, abs(offset))
+
+    def submit(self, stage, fn, args, kwargs, resource_key=None, cpu_cost=1, coordinator=False, page_span=None):
         future = Future()
         with self.lock:
             if self.closed[stage]:
                 raise RuntimeError('Cannot schedule work after shutdown')
             self.handles[stage].add(future)
-            self.queues[stage].append((future, fn, args, kwargs, resource_key, max(1,int(cpu_cost)), coordinator))
+            job = (future, fn, args, kwargs, resource_key, max(1,int(cpu_cost)), coordinator, page_span)
+            queue = self.queues[stage]
+            rank = self._job_rank(stage, job)
+            # Most prefetch arrives in order. Only newly urgent work needs
+            # insertion ahead of existing jobs. Preserve ties within a stage.
+            if not queue or self._job_rank(stage, queue[-1]) <= rank:
+                queue.append(job)
+            else:
+                position = next(i for i, queued in enumerate(queue) if self._job_rank(stage, queued) > rank)
+                queue.insert(position, job)
             self._dispatch()
         return future
 
@@ -137,6 +172,7 @@ class PipelineWorkers:
         # All calls hold the lock. Never invoke user Future callbacks here.
         while self._cpu_used() < self.total_budget:
             chosen = None
+            best_rank = None
             # First honor stage reservations. Then lend otherwise idle CPU
             # permits to runnable work, but NEVER lend unaccounted memory.
             for borrow in (False, True):
@@ -166,9 +202,12 @@ class PipelineWorkers:
                             continue
                         key = (stage, job[4]) if job[4] is not None else None
                         if job[0].cancelled() or key is None or key not in self.keys:
-                            chosen = stage, index, key
+                            rank = self._job_rank(stage, job)
+                            if chosen is None or rank < best_rank:
+                                chosen = stage, index, key
+                                best_rank = rank
                             break
-                    if chosen is not None:
+                    if chosen is not None and best_rank == (0, 0):
                         break
                 if chosen is not None:
                     break
@@ -241,7 +280,7 @@ class PipelineWorkers:
             if any(self.active) or self.coordinators or self.downstream_active or any(self.queues) or any(self.closed):
                 return False
             old = self.pool
-            self.pool = ThreadPoolExecutor(max_workers=max(2, os.cpu_count() or 2), thread_name_prefix='video-work')
+            self.pool = ThreadPoolExecutor(max_workers=old._max_workers, thread_name_prefix='video-work')
         old.shutdown(wait=True)
         return True
 
@@ -278,7 +317,8 @@ class StageExecutor:
         resource_key = kwargs.pop('resource_key', None)
         cpu_cost = kwargs.pop('cpu_cost', 1)
         coordinator=kwargs.pop('coordinator',False)
-        return self.group.submit(self.stage, fn, args, kwargs, resource_key, cpu_cost,coordinator)
+        page_span = kwargs.pop('page_span', None)
+        return self.group.submit(self.stage, fn, args, kwargs, resource_key, cpu_cost, coordinator, page_span)
 
     def shutdown(self, wait=True, cancel_futures=False):
         self.group.shutdown(self.stage, wait, cancel_futures)

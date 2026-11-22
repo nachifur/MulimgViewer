@@ -132,9 +132,10 @@ class VideoPlaybackMixin:
         if self.shared_config.is_playing:
             self._suspend_play_timer_for_wait()
         gap_color = tuple(self.ImgManager.gap_color)
+        expected_size = vm._batch_render_states.get(batch, {}).get('_rendered_canvas_size')
         def prepare():
             started = time.perf_counter()
-            pixels = vm._prepare_video_image(path, gap_color)
+            pixels = vm._prepare_video_image(path, gap_color, expected_size)
             return pixels, time.perf_counter() - started
         future = vm._display_executor.submit(prepare)
         vm._display_future = future
@@ -181,7 +182,12 @@ class VideoPlaybackMixin:
                 owner._status_display_batch = batch
                 owner._apply_pending_index_selection()
                 owner.update_status_bar_for_current_page()
+                previous = getattr(owner, '_video_display_key', None)
                 owner._video_display_key = key
+                if previous is None or previous[-1] != token:
+                    # First bitmap for this input/layout is installed. Expand
+                    # its one-page startup window even when playback is paused.
+                    vm.update_cache()
                 vm._display_delivery_pending = False
                 vm.perf_monitor.record_display(load_cost + time.perf_counter() - paint_started)
                 if owner.shared_config.is_playing and vm.perf_monitor.push_render_event(
@@ -295,6 +301,10 @@ class VideoPlaybackMixin:
             vm.perf_monitor.reset_render_clock()
             vm.perf_monitor.render_history.clear()
             if self.shared_config.is_playing and self.shared_config.video_mode:
+                # Paused seeks include index building, codec startup and user
+                # idle time. Measure this playback run from its own requests.
+                vm._playback_pacer.reset()
+                vm.update_cache()
                 vm._admission_limit()
                 vm._admission_optimizer.restart_observation()
                 vm._initialize_thread_pools()

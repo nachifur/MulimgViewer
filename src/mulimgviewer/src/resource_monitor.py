@@ -185,6 +185,7 @@ class ResourceMonitor:
             frame_count = sum((end - max(start, cutoff)) / (end - start) for start, end in self.frames)
             return dict(cpu=min(100., cpu / elapsed / self.cpu_count * 100) if elapsed else None,
                         memory=rss / elapsed if elapsed else None,
+                        memory_now=samples[-1][3] if samples else None,
                         fps=frame_count / frame_time if frame_time else None,
                         seconds=elapsed, available=self.process is not None)
 

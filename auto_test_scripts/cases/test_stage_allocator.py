@@ -15,6 +15,51 @@ from mulimgviewer.src.pipeline_executor import PipelineWorkers
 
 
 class StageAllocatorTests(unittest.TestCase):
+    def test_queued_decoder_runs_follow_seek_and_reverse_without_preempting_codec(self):
+        group = PipelineWorkers(1, 1)
+        extract, stitch = group.stages
+        entered, release = threading.Event(), threading.Event()
+        order = []
+        try:
+            group.set_playback_focus(10, 1, 3)
+            active = extract.submit(lambda: (entered.set(), release.wait(5)), resource_key='source')
+            self.assertTrue(entered.wait(2))
+            pending = [extract.submit(order.append, span, page_span=span, resource_key='source')
+                       for span in [(11, 12), (32, 35), (30, 31), (27, 29)]]
+            group.set_playback_focus(30, -1, 3)
+            release.set()
+            active.result(timeout=3)
+            for future in pending:
+                future.result(timeout=3)
+            self.assertEqual(order, [(30, 31), (27, 29), (11, 12), (32, 35)])
+        finally:
+            release.set()
+            extract.shutdown()
+            stitch.shutdown()
+
+    def test_last_slot_prefers_the_stage_inside_its_own_lookahead(self):
+        for raw_horizon, expected in ((12, ['raw', 'stitch']), (3, ['stitch', 'raw'])):
+            with self.subTest(raw_horizon=raw_horizon):
+                group = PipelineWorkers(1, 1)
+                extract, stitch = group.stages
+                order = []
+                try:
+                    group.set_playback_focus(0, 1, 8, raw_horizon)
+                    self.assertTrue(group.reserve_downstream(2, 0))
+                    # Both have work. With a deep raw target, prioritise page
+                    # 10 over the speculative stitch on page 9. With a small
+                    # raw target, the finished page nearest playback wins.
+                    a = stitch.submit(order.append, 'stitch', page_span=(9, 9))
+                    b = extract.submit(order.append, 'raw', page_span=(10, 10))
+                    group.reserve_downstream(-1, 0)
+                    a.result(timeout=3)
+                    b.result(timeout=3)
+                    self.assertEqual(order, expected)
+                finally:
+                    group.reserve_downstream(-group.downstream_active, 0)
+                    extract.shutdown()
+                    stitch.shutdown()
+
     def test_integer_optimum_matches_exhaustive_search(self):
         randomizer=random.Random(9)
         for _ in range(30):

@@ -40,6 +40,23 @@ class AutoLayoutAdviceTests(unittest.TestCase):
 
 
 class TimelineTests(unittest.TestCase):
+    def test_serial_image_page_spans_empty_and_large_folders(self):
+        from mulimgviewer.src.utils_img import ImgManager
+        with tempfile.TemporaryDirectory() as folder:
+            sources = [Path(folder)/str(i) for i in range(3)]
+            for directory in sources:
+                directory.mkdir()
+            for i in range(101):
+                (sources[0]/f'{i:03}.jpg').touch()
+            (sources[2]/'last.png').touch()
+            manager = ImgManager()
+            manager.init(list(map(str, sources)), type=1, parallel_to_sequential=True)
+            manager.set_count_per_action(4)
+            manager.set_action_count(25)
+            self.assertEqual(manager.img_num, 102)
+            self.assertEqual(manager.get_flist(), [
+                str(sources[0]/manager.name_list[0][-1]), str(sources[2]/'last.png')])
+
     def test_long_video_frame_names_and_cross_video_pages_are_lazy(self):
         from unittest.mock import patch
         from mulimgviewer.src.utils_img import ImgManager

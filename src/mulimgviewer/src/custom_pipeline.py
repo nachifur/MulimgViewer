@@ -182,6 +182,7 @@ class CustomPipeline:
         # live in the metadata scheduler and never wait inside this pool.
         self.image_pool=self.pool  # One ready-work pool; parents now await via the scheduler.
         self.entries={};self.windows={};self.closed=False
+        self.video_focus = None
         self.history={};self.hits=self.misses=0
         self.peak_active=0
         self._pending_deletions=set()
@@ -204,9 +205,15 @@ class CustomPipeline:
     def configure(self, workers, memory, capacity=None, reservation=None):
         self.budget.configure(workers,memory,capacity,reservation)
 
-    def set_window(self, owner, epoch, window, current, active=None):
+    def set_window(self, owner, epoch, window, current, active=None, direction=None):
         # Metadata only: callable from the GUI without disk access.
         with self.lock:
+            if owner != 'video':
+                self.video_focus = None
+            elif direction is not None:
+                # Only the playback planner moves the queue focus. An older
+                # page coordinator can finish setting up after a seek.
+                self.video_focus = (epoch, current, direction)
             self.windows={owner:(epoch,tuple(window),current)}
             self.active_names=active
 
@@ -692,7 +699,14 @@ class CustomPipeline:
     def _image_priority(self,owner,batch):
         # Do not take the cache lock under the scheduler/budget locks.
         window=self.windows.get(owner)
-        return abs(batch-window[2]) if window is not None else float('inf')
+        if window is None:
+            return float('inf')
+        focus = self.video_focus if owner == 'video' else None
+        if focus is not None and focus[0] == window[0]:
+            offset = batch - focus[1]
+            behind = offset * focus[2] < 0
+            return abs(offset) + (window[1][1] - window[1][0] + 1 if behind else 0)
+        return abs(batch - window[2])
 
     def _process_one(self,manager,path,name,index,size,entry,temporary,preview_size,owner,epoch,batch,stale):
         getattr(manager,'_export_checkpoint',lambda:None)()

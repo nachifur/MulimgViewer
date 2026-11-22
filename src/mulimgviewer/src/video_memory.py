@@ -214,6 +214,13 @@ class LazyVideoImage:
             return preview.copy()
         return self._apply('resize', size, resample, **kwargs)
 
+    def render_tile(self, size, resample):
+        """Read-only input to the renderer, which creates its own RGBA tile."""
+        preview = self.provider(('preview', self.path, tuple(size), int(resample))) if self.provider else None
+        if preview is not None:
+            return preview
+        return self if tuple(size) == self.size else self._apply('resize', size, resample)
+
     def crop(self, *args, **kwargs):
         return self._apply('crop', *args, **kwargs)
 

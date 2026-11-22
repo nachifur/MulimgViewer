@@ -5,11 +5,25 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'src/mulimgviewer/src'))
 from thread_optimizer import AdaptiveThreadAllocator, buffer_levels, buffer_priority
-from test_video_cache import VideoManager, SharedConfig
+from test_video_cache import VideoManager, SharedConfig, PerformanceMonitor
 import threading
 
 
 class BufferPolicyTests(unittest.TestCase):
+    def test_raw_target_uses_directional_refill_time_and_available_space(self):
+        monitor = PerformanceMonitor()
+        def targets(period, direction=1, remaining=80):
+            output, raw = monitor.stage_buffer_levels(8, 80, remaining, period, direction)
+            return output.low, raw.low
+        self.assertEqual(targets(.1), (8, 4))
+        monitor.record_raw_refill(1, .15)
+        self.assertEqual(targets(.1), (8, 2))
+        monitor.record_raw_refill(-1, 1.2)
+        self.assertEqual(targets(.1, -1), (8, 12))
+        self.assertEqual(targets(.2, -1), (8, 6))
+        self.assertEqual(targets(.1, -1, remaining=3), (8, 3))
+        self.assertEqual(targets(.1, -1, remaining=0), (8, 0))
+
     def test_warning_half_radius_emergency_and_recovery(self):
         for radius, critical, recover in ((1, 1, 2), (2, 1, 3), (3, 2, 5), (4, 2, 6)):
             levels = buffer_levels(radius, 20, 1.)

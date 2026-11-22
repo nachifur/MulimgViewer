@@ -12,13 +12,12 @@ from contextlib import ExitStack
 from .dependency_scheduler import prepared, gather
 from .playback_pacer import PlaybackPacer
 
-from PIL import Image
 
 from .resource_policy import cache_window, composition_workers
 from .thread_optimizer import available_memory_bytes
 from .custom_pipeline import CustomPipeline, current_only
 from .mosaic_pipeline import MosaicStage
-from .cache_layout import page_name, write_source_catalog, cache_image_extension, save_cache_image, write_page_catalog, remove_page_catalog
+from .cache_layout import page_name, write_source_catalog, cache_image_extension, save_cache_image, write_page_catalog, remove_page_catalog, open_rendered_canvas
 from .custom_func.contract import active_cache_names
 from .video_memory import rgba_display
 
@@ -158,7 +157,7 @@ class ImagePipeline:
                         path = self.directory / page_name(batch,cache_image_extension(template))
                         os.replace(temporary, path)
                         self._published_files[path] = path.stat()
-                        write_page_catalog(path,batch,'image',state.get('flist',()))
+                        write_page_catalog(path,batch,'image',state.get('flist',()),state.get('_rendered_canvas_size'))
                     else:
                         Path(temporary).unlink(missing_ok=True)
                 except OSError as exc:
@@ -331,6 +330,7 @@ class ImagePipeline:
         if image is None:
             raise RuntimeError(f'Stitch failed: batch={batch}, flag={flag}')
         state = {name: getattr(manager, name) for name in RENDER_STATE if hasattr(manager, name)}
+        state['_rendered_canvas_size'] = image.size
         # Estimate decoded sources from composition geometry; do not reopen files.
         inputs = getattr(manager, 'img_resolution_origin', image.size)
         inputs = max(1, int(inputs[0])) * max(1, int(inputs[1])) * max(1, len(flist))
@@ -357,7 +357,7 @@ class ImagePipeline:
             if self.display_future is not None:
                 self.display_future.cancel()
         def prepare():
-            with Image.open(entry[0]) as source:
+            with open_rendered_canvas(entry[0],entry[1].get('_rendered_canvas_size')) as source:
                 return rgba_display(source)
         future = self.display.submit(prepare)
         self.display_future = future

@@ -700,10 +700,8 @@ msgid "第 2 步：生成并更新英文 PO 词条"
 msgstr "Step 2: Generate and update the English PO entries"
 
 #: ../../dev/dev.md:242
-msgid "在同一个 Python 环境安装文档工具，然后进入 `docs` 目录执行："
-msgstr ""
-"Install the documentation tools in the same Python environment, then enter the `docs`"
-" directory and run:"
+msgid "在项目根目录执行以下命令。先确认 Sphinx 成功生成 `docs/_build/gettext/dev/dev.pot`，再更新 PO。"
+msgstr "Run these commands from the repository root. Before updating the PO files, confirm that Sphinx generated `docs/_build/gettext/dev/dev.pot`."
 
 #: ../../dev/dev.md:251
 msgid ""
@@ -716,19 +714,16 @@ msgstr ""
 "review the English for new or changed content."
 
 #: ../../dev/dev.md:253
-msgid "使用 `_build` 保存生成文件，避免把构建产物当作文档源文件再次扫描。`python -m` 能确保构建命令使用当前激活的 Python 环境。"
-msgstr ""
-"Use `_build` for generated files so that build output is not scanned again as "
-"documentation source. `python -m` ensures that build commands use the currently "
-"activated Python environment."
+msgid "如果提示 `Invalid value for pot_dir`，先检查当前目录和上一步的 `gettext` 构建日志。`-p` 必须指向实际生成 `.pot` 的目录。如果上一步生成到了 `docs/build/gettext`，请把 `-p` 改为 `docs/build/gettext`，或者按上面的命令重新生成。"
+msgstr "If you see `Invalid value for pot_dir`, check your current directory and the previous `gettext` build log. `-p` must point to the directory containing the generated `.pot` files. If the previous command used `docs/build/gettext`, set `-p` to `docs/build/gettext` or regenerate the templates with the command above."
 
 #: ../../dev/dev.md:255
 msgid "第 3 步：填写对应的英文翻译"
 msgstr "Step 3: Fill in the corresponding English translations"
 
 #: ../../dev/dev.md:257
-msgid "保持在 `docs` 目录，编辑对应的 PO 文件："
-msgstr "Stay in the `docs` directory and edit the corresponding PO file:"
+msgid "在项目根目录编辑对应的 PO 文件。"
+msgstr "Edit the corresponding PO file from the repository root."
 
 #: ../../dev/dev.md:263
 msgid ""
@@ -756,13 +751,8 @@ msgstr ""
 "translation is complete."
 
 #: ../../dev/dev.md:279
-msgid ""
-"如果出现 `ModuleNotFoundError: No module named 'mulimgviewer'`，请先从项目根目录执行 `python -m pip "
-"install -e .`，再回到 `docs` 目录重新构建。"
-msgstr ""
-"If you encounter `ModuleNotFoundError: No module named 'mulimgviewer'`, first run "
-"`python -m pip install -e .` from the repository root, then return to `docs` and "
-"rebuild."
+msgid "如果出现 `ModuleNotFoundError: No module named 'mulimgviewer'`，在项目根目录执行 `python -m pip install -e .`，然后重新构建。"
+msgstr "If you see `ModuleNotFoundError: No module named 'mulimgviewer'`, run `python -m pip install -e .` from the repository root and rebuild."
 
 #: ../../dev/dev.md:281
 msgid "第 5 步：提交文档和对应翻译"

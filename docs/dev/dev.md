@@ -239,25 +239,24 @@ vim docs/dev/dev.md
 
 #### 第 2 步：生成并更新英文 PO 词条
 
-在同一个 Python 环境安装文档工具，然后进入 `docs` 目录执行：
+在项目根目录执行以下命令。先确认 Sphinx 成功生成 `docs/_build/gettext/dev/dev.pot`，再更新 PO。
 
 ```sh
 python -m pip install sphinx sphinx-intl myst-parser sphinxcontrib-eval
-cd docs
-python -m sphinx -b gettext . _build/gettext
-python -m sphinx_intl update -p _build/gettext -l en
+python -m sphinx -b gettext docs docs/_build/gettext
+python -m sphinx_intl update -p docs/_build/gettext -d docs/locale -l en
 ```
 
 这些命令会自动提取中文并更新 PO 词条，不会自动完成英文翻译。开发指南对应的文件是 `docs/locale/en/LC_MESSAGES/dev/dev.po`。已有翻译会保留，新增或修改的内容需要补充或核对英文。
 
-使用 `_build` 保存生成文件，避免把构建产物当作文档源文件再次扫描。`python -m` 能确保构建命令使用当前激活的 Python 环境。
+如果提示 `Invalid value for pot_dir`，先检查当前目录和上一步的 `gettext` 构建日志。`-p` 必须指向实际生成 `.pot` 的目录。如果上一步生成到了 `docs/build/gettext`，请把 `-p` 改为 `docs/build/gettext`，或者按上面的命令重新生成。
 
 #### 第 3 步：填写对应的英文翻译
 
-保持在 `docs` 目录，编辑对应的 PO 文件：
+在项目根目录编辑对应的 PO 文件。
 
 ```sh
-vim locale/en/LC_MESSAGES/dev/dev.po
+vim docs/locale/en/LC_MESSAGES/dev/dev.po
 ```
 
 保留 `msgid` 中的中文原文，在 `msgstr` 中填写英文。保留命令、文件路径、格式名称和参数名称；检查 Markdown 链接和代码标记。带 `fuzzy` 标记的词条需要人工确认，确认后移除该标记，否则构建时可能继续显示中文。
@@ -270,13 +269,13 @@ msgstr "Development regression testing and PR review"
 #### 第 4 步：构建并检查英文页面
 
 ```sh
-python -m sphinx_intl build -l en
-python -m sphinx -b html -D language=en . _build/html/en
+python -m sphinx_intl build -d docs/locale -l en
+python -m sphinx -b html -D language=en docs docs/_build/html/en
 ```
 
 打开 `docs/_build/html/en/dev/dev.html`，确认新增章节显示英文，操作步骤、命令和表格完整。检查构建日志中的错误及与本次修改相关的警告；生成 PO 成功不代表翻译已经完成。
 
-如果出现 `ModuleNotFoundError: No module named 'mulimgviewer'`，请先从项目根目录执行 `python -m pip install -e .`，再回到 `docs` 目录重新构建。
+如果出现 `ModuleNotFoundError: No module named 'mulimgviewer'`，在项目根目录执行 `python -m pip install -e .`，然后重新构建。
 
 #### 第 5 步：提交文档和对应翻译
 

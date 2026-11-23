@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: mulimgviewer 3.9.10\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-05-27 16:43+0800\n"
+"POT-Creation-Date: 2026-11-23 22:43+0800\n"
 "PO-Revision-Date: 2023-03-29 12:46+0800\n"
 "Last-Translator: nachifur <1476879092.com>\n"
 "Language-Team: nachifur <1476879092.com>\n"
@@ -389,12 +389,18 @@ msgstr ""
 
 #: ../../../README.md:133
 msgid ""
-"[![Star History Chart](https://api.star-"
-"history.com/svg?repos=nachifur/MulimgViewer&type=Date)](https://star-"
-"history.com/#nachifur/MulimgViewer&Date)"
+"[![Star History Chart](https://star-"
+"history.dera.page/svg?repos=nachifur/MulimgViewer&type=Date)](https"
+"://star-history.dera.page/#nachifur/MulimgViewer&Date)"
 msgstr ""
 
 #: ../../../README.md:133
 msgid "Star History Chart"
 msgstr ""
+
+#~ msgid ""
+#~ "[![Star History Chart](https://api.star-"
+#~ "history.com/svg?repos=nachifur/MulimgViewer&type=Date)](https"
+#~ "://star-history.com/#nachifur/MulimgViewer&Date)"
+#~ msgstr ""
 

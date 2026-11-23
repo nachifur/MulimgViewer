@@ -14,7 +14,7 @@ sys.path[:0]=[str(HOME),str(ROOT/'src')]
 from PIL import Image, ImageChops
 from support.fixture_recipe import pixel_hash, expected_pair, frame
 import test_export_modes as fixtures
-from mulimgviewer.src.export_async import ExportDecoder
+from mulimgviewer.src.export_controller import ExportDecoder
 from mulimgviewer.src.export_controller import export_page
 
 ASSETS=HOME/'assets'

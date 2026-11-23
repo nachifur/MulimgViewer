@@ -208,7 +208,7 @@ class SharedKernelBudgetTests(unittest.TestCase):
 
 class ImagePriorityTests(unittest.TestCase):
     def test_queued_jobs_follow_latest_position(self):
-        from mulimgviewer.src.custom_workers import ImageWorkers
+        from mulimgviewer.src.pipeline_executor import ImageWorkers
         pool=ImageWorkers(1)
         entered=threading.Event();release=threading.Event();order=[]
         current=[0]
@@ -225,7 +225,7 @@ class ImagePriorityTests(unittest.TestCase):
             release.set();pool.shutdown(wait=True,cancel_futures=True)
 
     def test_close_cancels_waiters_and_settles_running_future(self):
-        from mulimgviewer.src.custom_workers import ImageWorkers
+        from mulimgviewer.src.pipeline_executor import ImageWorkers
         pool=ImageWorkers(1)
         entered=threading.Event();release=threading.Event()
         try:

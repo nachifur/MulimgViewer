@@ -30,7 +30,7 @@ def percentile(values, fraction):
 
 def probe_manifest(folder):
     import psutil
-    from mulimgviewer.src.video_tools import resolve_video_tools
+    from mulimgviewer.src.video_source import resolve_video_tools
 
     tools, env = resolve_video_tools()
     videos = []
@@ -57,8 +57,8 @@ def worker(args):
     import psutil
     import wx
     from mulimgviewer.src.main import MulimgViewer
-    from mulimgviewer.src.resource_monitor import CHILD_CPU
-    from mulimgviewer.src.video_tools import resolve_video_tools
+    from mulimgviewer.src.resources import CHILD_CPU
+    from mulimgviewer.src.video_source import resolve_video_tools
 
     loaded=Path(sys.modules[MulimgViewer.__module__].__file__).resolve()
     expected=(ROOT/'src/mulimgviewer/src/main.py').resolve()
@@ -109,7 +109,7 @@ def worker(args):
     mosaic_profiles=[];profile_lock=threading.Lock()
     if getattr(args,'profile_mosaic',False):
         import cProfile
-        from mulimgviewer.src.mosaic_pipeline import MosaicPlan
+        from mulimgviewer.src.image_pipeline import MosaicPlan
         build=MosaicPlan._build
         def profiled_build(*a,**k):
             profile=cProfile.Profile()
@@ -400,17 +400,15 @@ def worker(args):
             stage_target=getattr(cfg,'stage_allocation_target',None)),
         source_hashes={name: hashlib.sha256((ROOT / name).read_bytes()).hexdigest() for name in (
             'src/mulimgviewer/src/main.py', 'src/mulimgviewer/src/video_manager.py',
-            'src/mulimgviewer/src/video_playback.py', 'src/mulimgviewer/src/viewer_state.py',
-            'src/mulimgviewer/src/configuration.py', 'src/mulimgviewer/src/configuration_controller.py',
-            'src/mulimgviewer/src/thread_optimizer.py',
-            'src/mulimgviewer/src/playback_pacer.py', 'src/mulimgviewer/src/utils_img.py',
-            'src/mulimgviewer/src/pipeline_executor.py', 'src/mulimgviewer/src/video_decoder.py',
-            'src/mulimgviewer/src/video_memory.py', 'src/mulimgviewer/src/admission_optimizer.py',
-            'src/mulimgviewer/src/custom_pipeline.py', 'src/mulimgviewer/src/mosaic_pipeline.py',
-            'src/mulimgviewer/src/dependency_scheduler.py', 'src/mulimgviewer/src/custom_workers.py',
-            'src/mulimgviewer/src/image_pipeline.py',
-            'src/mulimgviewer/src/cache_layout.py', 'src/mulimgviewer/src/render_metrics.py',
-            'src/mulimgviewer/src/resource_policy.py') if (ROOT/name).is_file()},
+            'src/mulimgviewer/src/playback_controls.py', 'src/mulimgviewer/src/data.py',
+            'src/mulimgviewer/src/configuration.py', 'src/mulimgviewer/src/playback_policy.py',
+            'src/mulimgviewer/src/utils_img.py', 'src/mulimgviewer/src/pipeline_executor.py',
+            'src/mulimgviewer/src/video_decoder.py', 'src/mulimgviewer/src/canvas.py',
+            'src/mulimgviewer/src/custom_pipeline.py', 'src/mulimgviewer/src/image_pipeline.py',
+            'src/mulimgviewer/src/cache_layout.py', 'src/mulimgviewer/src/render_layout.py',
+            'src/mulimgviewer/src/resources.py', 'src/mulimgviewer/src/video_source.py',
+            'src/mulimgviewer/src/image_encoding.py',
+        ) if (ROOT/name).is_file()},
         run_settings=dict(source_root=str(ROOT),loaded_main=str(loaded),config=getattr(args,'config',None),
                           parallel_to_sequential=cfg.parallel_to_sequential,
                           layout=viewer.row_col.GetValue(),unit=viewer.row_col_one_img.GetValue(),

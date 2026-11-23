@@ -139,7 +139,7 @@ class ProcessingStageTests(unittest.TestCase):
         self.assertGreater(self.stage.snapshot()['hits'],0)
 
     def test_preview_reuses_exact_pixels_without_redecoding_processed_png(self):
-        from mulimgviewer.src.video_memory import PixelCache,LazyVideoImage
+        from mulimgviewer.src.canvas import PixelCache,LazyVideoImage
         manager=self.manager(1)
         manager.layout_params[4]=[.5,.5];manager.layout_params[6]=[20,12]
         cache=self.stage.pixel_cache=PixelCache(4096)
@@ -200,7 +200,7 @@ class ProcessingStageTests(unittest.TestCase):
             first.result(timeout=2);second.result(timeout=2)
 
     def test_image_parent_and_children_share_a_single_worker_without_deadlock(self):
-        from mulimgviewer.src.custom_workers import ImageWorkers
+        from mulimgviewer.src.pipeline_executor import ImageWorkers
         self.stage.pool.shutdown(wait=True)
         self.stage.pool=self.stage.image_pool=ImageWorkers(1)
         manager=self.manager(2,extra=dict(api_version=2,processing_mode='image',max_concurrency=1),
@@ -493,13 +493,13 @@ class ProcessingStageTests(unittest.TestCase):
         self.assertFalse(self.stage._retired_entries)
 
     def test_late_algorithm_callback_cannot_pin_a_mosaic_after_plan_exit(self):
-        from mulimgviewer.src.mosaic_pipeline import MosaicStage
+        from mulimgviewer.src.image_pipeline import MosaicStage
         self.stage.mosaic_stage=MosaicStage(self.stage)
         def initialize(plan,stage,*args):
             plan.cache=stage.cache;plan.lock=threading.RLock();plan.closed=False
             plan.entries=[{'pins':1}];plan.futures={};plan.cancelled=lambda:False
             plan._request=Mock()
-        with patch('mulimgviewer.src.mosaic_pipeline.MosaicPlan.__init__',new=initialize):
+        with patch('mulimgviewer.src.image_pipeline.MosaicPlan.__init__',new=initialize):
             with self.stage.mosaic_stage.plan(None,[],0,'image','sources',[],lambda:False) as plan:
                 self.assertFalse(plan.closed)
         self.assertTrue(plan.closed)
@@ -508,7 +508,7 @@ class ProcessingStageTests(unittest.TestCase):
         plan._request.assert_not_called()
 
     def test_mosaic_ready_callback_cancellation_is_delivered_to_waiter(self):
-        from mulimgviewer.src.mosaic_pipeline import MosaicPlan
+        from mulimgviewer.src.image_pipeline import MosaicPlan
         plan=object.__new__(MosaicPlan)
         plan.lock=threading.RLock();plan.closed=False;plan.futures={}
         plan.cancelled=lambda:False;plan.cache=Mock(closed=False)

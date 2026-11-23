@@ -38,7 +38,7 @@ class ConfigurationTests(unittest.TestCase):
             return str(self.directory) if str(name) == 'configs' else get_resource_path(name)
         self.patch = patch('mulimgviewer.src.main.get_resource_path', side_effect=resources)
         self.patch.start()
-        self.config_patch = patch('mulimgviewer.src.configuration_controller.get_resource_path', side_effect=resources)
+        self.config_patch = patch('mulimgviewer.src.configuration.get_resource_path', side_effect=resources)
         self.config_patch.start()
 
     def test_old_save_shortcuts_migrate_to_single_escape_pause_action(self):

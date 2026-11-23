@@ -51,7 +51,7 @@ class VideoIntervalTests(unittest.TestCase):
         self.assertAlmostEqual(self.vm._next_stitch_eta(51, 2.), 29.1)
 
     def test_full_ready_buffer_uses_measured_supply_until_stock_runs_low(self):
-        from playback_pacer import PlaybackPacer
+        from playback_policy import PlaybackPacer
         self.vm._window_token = 'stock'
         self.vm._pacing_model_period = .1
         pacer = self.vm._playback_pacer = PlaybackPacer()
@@ -72,7 +72,7 @@ class VideoIntervalTests(unittest.TestCase):
             self.assertAlmostEqual(self.cfg.interval_recommend, 1.8)
 
     def test_custom_eta_uses_output_supply_instead_of_parent_wait_latency(self):
-        from playback_pacer import PlaybackPacer
+        from playback_policy import PlaybackPacer
         self.vm._window_token='c'
         self.cfg.play_direction=1
         params=[None]*41;params[32]=True;params[38]=False
@@ -206,7 +206,7 @@ class VideoIntervalTests(unittest.TestCase):
             self.assertEqual(solve.call_args.args[1][0],1.5)
 
     def test_four_stage_feedback_can_rebalance_when_raw_buffer_is_critical(self):
-        from thread_optimizer import ThreadAllocation
+        from playback_policy import ThreadAllocation
         self.cfg.thread=12;self.cfg.video_num_list=[1000]*24;self.cfg.cache_multiplier=3
         self.cfg.cache_img=[None]*120;self.cfg.cache_img[51:54]=[True]*3
         self.vm._extract_threads,self.vm._stitch_threads=2,10

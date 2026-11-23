@@ -14,9 +14,9 @@ import wx
 from PIL import Image
 from mulimgviewer.src.utils_img import ImgUtils
 from mulimgviewer.src.cache_layout import save_cache_image
-from mulimgviewer.src.video_memory import mosaic_working_bytes
-from mulimgviewer.src.video_memory import PixelCache, rgba_display
-from mulimgviewer.src.disk_canvas import new_canvas, DiskCanvas, rgba_copy, RenderLane, decode_jpeg_canvas
+from mulimgviewer.src.canvas import mosaic_working_bytes
+from mulimgviewer.src.canvas import PixelCache, rgba_display
+from mulimgviewer.src.canvas import new_canvas, DiskCanvas, rgba_copy, RenderLane, decode_jpeg_canvas
 from mulimgviewer.src.custom_pipeline import WorkBudget
 
 
@@ -103,17 +103,17 @@ class MagnifierMemoryTests(unittest.TestCase):
 
     def test_reservation_covers_rgba_rgb_and_tile_scratch_without_four_canvases(self):
         pixels=23090*17400;tile=3840*2160
-        with patch('mulimgviewer.src.disk_canvas.available_memory_bytes',return_value=1024**3):
+        with patch('mulimgviewer.src.canvas.available_memory_bytes',return_value=1024**3):
             charge=mosaic_working_bytes((23090,17400),tile)
         self.assertGreaterEqual(charge,tile*20)
         self.assertLess(charge,pixels*16)
         self.assertLess(charge,256*1024**2)
-        with patch('mulimgviewer.src.disk_canvas.available_memory_bytes',return_value=64*1024**3):
+        with patch('mulimgviewer.src.canvas.available_memory_bytes',return_value=64*1024**3):
             self.assertGreater(mosaic_working_bytes((23090,17400),tile),pixels*8)
 
     def test_writable_mapped_canvas_does_not_copy_on_paste_and_closes_its_file(self):
-        with patch('mulimgviewer.src.disk_canvas.LARGE_CANVAS_BYTES',0), \
-                patch('mulimgviewer.src.disk_canvas.available_memory_bytes',return_value=0):
+        with patch('mulimgviewer.src.canvas.LARGE_CANVAS_BYTES',0), \
+                patch('mulimgviewer.src.canvas.available_memory_bytes',return_value=0):
             image=new_canvas('RGBA',(16,12),(1,2,3,4))
             self.assertIsInstance(image,DiskCanvas)
             mapping,stream=image._disk_backing
@@ -127,8 +127,8 @@ class MagnifierMemoryTests(unittest.TestCase):
     def test_mapped_display_and_rgbx_encoder_match_normal_pixels(self):
         with Image.new('RGBA',(96,48),(23,81,179,107)) as source:
             expected=io.BytesIO();save_cache_image(source,expected,'jpeg')
-            with patch('mulimgviewer.src.disk_canvas.LARGE_CANVAS_BYTES',0), \
-                    patch('mulimgviewer.src.disk_canvas.available_memory_bytes',return_value=0):
+            with patch('mulimgviewer.src.canvas.LARGE_CANVAS_BYTES',0), \
+                    patch('mulimgviewer.src.canvas.available_memory_bytes',return_value=0):
                 display=rgba_copy(source)
                 try:
                     self.assertIsInstance(display,DiskCanvas)
@@ -138,8 +138,8 @@ class MagnifierMemoryTests(unittest.TestCase):
                 finally:display.close()
 
     def test_only_one_mapped_handoff_is_cached_and_gui_keeps_its_own_view(self):
-        with patch('mulimgviewer.src.disk_canvas.LARGE_CANVAS_BYTES',0), \
-                patch('mulimgviewer.src.disk_canvas.available_memory_bytes',return_value=0):
+        with patch('mulimgviewer.src.canvas.LARGE_CANVAS_BYTES',0), \
+                patch('mulimgviewer.src.canvas.available_memory_bytes',return_value=0):
             first=new_canvas('RGBA',(16,12),'red')
             second=new_canvas('RGBA',(16,12),'blue')
             try:
@@ -168,7 +168,7 @@ class MagnifierMemoryTests(unittest.TestCase):
 
     def test_giant_cached_decode_is_checked_before_loading_pixels(self):
         source=SimpleNamespace(size=(50000,50000),width=50000,height=50000,fp=object())
-        with patch('mulimgviewer.src.video_memory.available_memory_bytes',return_value=512*1024**2):
+        with patch('mulimgviewer.src.canvas.available_memory_bytes',return_value=512*1024**2):
             with self.assertRaisesRegex(MemoryError,'decode'):
                 rgba_display(source)
 
@@ -196,14 +196,14 @@ class MagnifierMemoryTests(unittest.TestCase):
         def allocate(*args,**kwargs):
             result=new_canvas(*args,**kwargs);allocated.append(result);return result
         with Image.open(io.BytesIO(encoded.getvalue()[:-100])) as source:
-            with patch('mulimgviewer.src.disk_canvas.new_canvas',side_effect=allocate):
+            with patch('mulimgviewer.src.canvas.new_canvas',side_effect=allocate):
                 with self.assertRaisesRegex(OSError,'truncated'):decode_jpeg_canvas(source)
             self.assertNotIn('load_prepare',source.__dict__)
         self.assertEqual(len(allocated),1)
         self.assertIsNone(allocated[0]._disk_backing)
 
     def test_disk_capacity_is_checked_before_mapping(self):
-        with patch('mulimgviewer.src.disk_canvas.shutil.disk_usage',return_value=SimpleNamespace(free=0)):
+        with patch('mulimgviewer.src.canvas.shutil.disk_usage',return_value=SimpleNamespace(free=0)):
             with self.assertRaises(OSError):new_canvas('RGBA',(16,12),mapped=True)
 
     def test_cancelled_cache_encoding_stops_without_modifying_pixels(self):

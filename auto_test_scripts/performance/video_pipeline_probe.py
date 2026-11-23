@@ -21,8 +21,8 @@ class PipelineProbe:
         self._wrap(Image.Image, 'save', lambda im,fp,*a,**k: 'save_'+str(k.get('format') or (a[0] if a else 'unknown')))
         self._wrap(Image.Image, 'resize', lambda *a,**k: 'resize')
         self._wrap(Image.Image, 'copy', lambda *a,**k: 'copy')
-        if (Path(sys.modules[type(vm).__module__].__file__).parent/'mosaic_pipeline.py').is_file():
-            from mulimgviewer.src.mosaic_pipeline import MosaicPlan
+        if (Path(sys.modules[type(vm).__module__].__file__).parent/'image_pipeline.py').is_file():
+            from mulimgviewer.src.image_pipeline import MosaicPlan
             self._wrap(MosaicPlan,'_build',lambda *a,**k:'algorithm_mosaic')
         from mulimgviewer.src.video_decoder import DecoderSession
         original=DecoderSession.frames

@@ -6,7 +6,7 @@ from types import SimpleNamespace
 from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'src'))
-from mulimgviewer.src.status_info import ImageSourceIndex, selection_info, status_widths, image_memory_tooltip, pixel_memory
+from mulimgviewer.src.status_bar import ImageSourceIndex, selection_info, status_widths, image_memory_tooltip, pixel_memory
 
 
 class StatusInfoTests(unittest.TestCase):
@@ -84,7 +84,7 @@ class StatusInfoTests(unittest.TestCase):
 
     def test_video_lists_support_relative_csv_paths_and_skip_missing_entries(self):
         import tempfile
-        from mulimgviewer.src.video_tools import read_video_file_list
+        from mulimgviewer.src.video_source import read_video_file_list
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             (root / 'a,b.mp4').write_bytes(b'fixture')

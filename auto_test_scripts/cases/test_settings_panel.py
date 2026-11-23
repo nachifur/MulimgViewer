@@ -5,7 +5,7 @@ from pathlib import Path
 from unittest.mock import patch
 sys.path.insert(0,str(Path(__file__).resolve().parents[2]/'src'))
 import wx
-from mulimgviewer.src.settings_section import SettingsSection
+from mulimgviewer.src.settings_panel import SettingsSection
 from PIL import Image
 import test_configuration as configuration_fixtures
 import test_export_modes as export_fixtures

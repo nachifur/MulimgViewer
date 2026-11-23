@@ -4,7 +4,7 @@ import unittest
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'src/mulimgviewer/src'))
-from thread_optimizer import AdaptiveThreadAllocator, buffer_levels, buffer_priority
+from playback_policy import AdaptiveThreadAllocator, buffer_levels, buffer_priority
 from test_video_cache import VideoManager, SharedConfig, PerformanceMonitor
 import threading
 

@@ -6,7 +6,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'src'))
-from mulimgviewer.src.resource_monitor import ResourceMonitor, ChildCpuTracker, CHILD_CPU, run_video_process, tracked_video_process
+from mulimgviewer.src.resources import ResourceMonitor, ChildCpuTracker, CHILD_CPU, run_video_process, tracked_video_process
 
 
 class ResourceMonitorTests(unittest.TestCase):
@@ -60,7 +60,7 @@ class ResourceMonitorTests(unittest.TestCase):
         tracker.completed = 3.
         tracker.active.add(object())
         with patch('sys.platform', 'win32'), \
-             patch('mulimgviewer.src.resource_monitor._windows_cpu_time', return_value=2.):
+             patch('mulimgviewer.src.resources._windows_cpu_time', return_value=2.):
             self.assertEqual(tracker.total([]), 5.)
 
     def test_fps_includes_time_waiting_for_next_frame(self):

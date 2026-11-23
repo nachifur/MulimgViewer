@@ -1,17 +1,22 @@
-"""Human-readable cache/export layout; identity stays in metadata, not names."""
+"""Cache naming, publication, and directory lifecycle."""
+import io
 import json
 import os
 import shutil
-import threading
-import uuid
 import stat
-import io
-from pathlib import Path
+import threading
+import time
+import uuid
 from PIL import Image
+from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
+
+
+# Cache paths and publication
 if __package__:
-    from .disk_canvas import new_canvas, disk_backed, DiskCanvas
+    from .canvas import new_canvas, disk_backed, DiskCanvas
 else:
-    from disk_canvas import new_canvas, disk_backed, DiskCanvas
+    from canvas import new_canvas, disk_backed, DiskCanvas
 
 
 def canonical_path(path):
@@ -54,7 +59,7 @@ class CachedCanvas:
 
 
 def cache_image_extension(manager):
-    from .video_paths import manager_cache_format
+    from .image_encoding import manager_cache_format
     return 'png' if manager_cache_format(manager)==1 else 'jpeg'
 
 
@@ -121,7 +126,7 @@ def component(name):
 
 
 def source_names(manager, paths, *, readable=False):
-    from .status_info import key
+    from .status_bar import key
     index=getattr(manager,'_status_source_index',None)
     folders={key(Path(p).absolute()):i for p,i in index.folders.items()} if index is not None else {
         key(Path(p).absolute()):i for i,p in enumerate(getattr(manager,'path_list',()))}
@@ -201,14 +206,14 @@ def source_record(manager, number, path):
 
 
 def source_folders(manager):
-    from .status_info import key
+    from .status_bar import key
     index=getattr(manager,'_status_source_index',None)
     return (index.folders if index is not None else
             {key(path):i for i,path in enumerate(getattr(manager,'path_list',()))})
 
 
 def source_directory_names(manager):
-    from .video_paths import video_source_names
+    from .video_source import video_source_names
     folders=source_folders(manager)
     video=bool(getattr(manager,'video_mode',False))
     originals=getattr(manager,'_cache_original_paths',())
@@ -382,3 +387,83 @@ class VisibleCache:
                 try:parent.rmdir()
                 except OSError:break
                 parent=parent.parent
+
+
+# Startup and shutdown cleanup
+def _cache_root(root):
+    """Expand parent aliases (including Windows 8.3 names), reject a linked root."""
+    requested=Path(root).absolute()
+    if requested.name!='cache_frames' or requested.is_symlink():
+        raise ValueError('Cache cleanup target must be the actual cache_frames directory')
+    # TEMP can be C:\Users\RUNNER~1 while resolve() spells runneradmin. Resolve
+    # only the parent first: resolving the root itself would hide a root link.
+    canonical=requested.parent.resolve()/requested.name
+    if canonical.is_symlink() or canonical.resolve()!=canonical:
+        raise ValueError('Cache cleanup target must be the actual cache_frames directory')
+    return canonical
+
+
+def clear_cache_on_startup(root):
+    """Remove stale layers synchronously BEFORE creating any cache producers.
+
+    Failure aborts startup rather than letting the new session reuse a partly
+    cleaned tree. Only the literal, non-linked cache_frames root is eligible.
+    """
+    import stat
+    root=_cache_root(root)
+    try:
+        info=root.lstat()
+    except FileNotFoundError:
+        return False
+    if not stat.S_ISDIR(info.st_mode):
+        raise ValueError('Startup cache_frames target is not a directory')
+    identity=(info.st_dev,info.st_ino)
+    print('[Cache] Clearing previous session cache...')
+    for attempt in range(4):
+        try:
+            info=root.lstat()
+            if root.resolve()!=root or (info.st_dev,info.st_ino)!=identity:
+                raise ValueError('Startup cache directory was replaced; refusing to delete its replacement')
+            shutil.rmtree(root)
+            print('[Cache] Previous session cache cleared')
+            return True
+        except OSError as error:
+            # rmtree can also report a missing child while the root survives.
+            # Only a missing root means startup cleanup is actually complete.
+            if isinstance(error,FileNotFoundError) and not root.exists():return True
+            if attempt==3:
+                raise RuntimeError(f'Cannot clear previous cache before startup: {root}: {error}') from error
+            time.sleep(.05*(attempt+1))
+
+
+def schedule_cache_removal(root,pools=(),futures=()):
+    root=_cache_root(root)
+    try:
+        info=root.stat();identity=(info.st_dev,info.st_ino)
+    except FileNotFoundError:identity=None
+
+    def finish():
+        for pool in pools:
+            if pool is not None:pool.shutdown(wait=True)
+        for future in futures:
+            if future is not None:future.result()
+        for attempt in range(4):
+            try:
+                info=root.stat()
+                if root.resolve()!=root or (identity is not None and (info.st_dev,info.st_ino)!=identity):
+                    raise ValueError('Cache directory was replaced; refusing to delete its replacement')
+                shutil.rmtree(root)
+                return
+            except FileNotFoundError:return
+            except OSError:
+                if attempt==3:raise
+                time.sleep(.05*(attempt+1))
+
+    executor=ThreadPoolExecutor(1,thread_name_prefix='cache-shutdown')
+    future=executor.submit(finish)
+    executor.shutdown(wait=False)
+    def report(completed):
+        error=completed.exception()
+        if error is not None:print(f'[Cache] Close-time cleanup failed: {error}')
+    future.add_done_callback(report)
+    return future

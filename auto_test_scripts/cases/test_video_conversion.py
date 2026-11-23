@@ -12,7 +12,7 @@ import numpy as np
 from PIL import Image
 sys.path.insert(0,str(Path(__file__).resolve().parents[2]/'src/mulimgviewer/src'))
 from video_decoder import DecoderSession,av
-from video_memory import PixelCache,LazyVideoImage
+from canvas import PixelCache,LazyVideoImage
 
 
 @unittest.skipUnless(av,'PyAV required')

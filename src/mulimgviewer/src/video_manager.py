@@ -1,5 +1,5 @@
 """Video decoding, bounded caches, composition scheduling and performance metrics."""
-from .jpeg_policy import jpeg_quality, ffmpeg_jpeg_args, ffmpeg_jpeg_options
+from .image_encoding import cache_extension, ffmpeg_jpeg_args, ffmpeg_jpeg_options, jpeg_quality
 import threading
 from pathlib import Path
 import ffmpeg, os, time, math, sys
@@ -13,27 +13,25 @@ import wx
 from PIL import Image
 from concurrent.futures import wait
 from .utils_img import ImgManager
-from .video_tools import resolve_video_tools
-from .video_timeline import page_count, page_segments, raw_dependencies
-from .video_paths import frame_filename, cache_extension, video_source_names
-from .resource_monitor import run_video_process
+from .video_source import resolve_video_tools
+from .video_source import frame_filename, page_count, page_segments, raw_dependencies, video_source_names
+from .resources import run_video_process
 from .pipeline_executor import PipelineWorkers
-from .stage_allocator import allocate_stages
-from .admission_optimizer import AdaptiveAdmissionBudget
 from .video_decoder import DecoderBank
-from .video_memory import PixelCache, source_resolution, rgba_display
+from .canvas import PixelCache, source_resolution, rgba_display
 from .custom_pipeline import current_only
 from .cache_layout import open_rendered_canvas, page_name, write_source_catalog, save_cache_image, write_page_catalog, remove_page_catalog
 from .custom_func.contract import active_cache_names
-from .playback_pacer import PlaybackPacer, ProductionJob, completion_estimates, refill_guard
-from .thread_optimizer import (AdaptiveThreadAllocator, optimize_thread_allocation,
+from .playback_policy import PlaybackPacer, ProductionJob, completion_estimates, refill_guard
+from .playback_policy import (AdaptiveAdmissionBudget, AdaptiveThreadAllocator, allocate_stages,
+                               optimize_thread_allocation,
                                available_memory_bytes, stitch_memory_limit,
                                buffer_levels, buffer_priority, ThreadAllocation)
 import json
 import shutil
 import copy
 from contextlib import ExitStack
-from .dependency_scheduler import prepared, gather, run_inline
+from .pipeline_executor import prepared, gather, run_inline
 
 
 class PerformanceMonitor:
@@ -2255,8 +2253,8 @@ class VideoManager:
                     valid = token == self._window_token and lo <= batch <= hi
                     if valid:
                         pixels=pil_img if isinstance(pil_img,Image.Image) else self._pixel_cache.get(str(pil_img.path))
-                        if __package__:from .disk_canvas import DiskCanvas
-                        else:from disk_canvas import DiskCanvas
+                        if __package__:from .canvas import DiskCanvas
+                        else:from canvas import DiskCanvas
                         if pixels is not None and (not isinstance(pixels,DiskCanvas) or batch==self.shared_config.batch_idx):
                             self._pixel_cache.put(str(destination),pixels,priority=True)
                         self.shared_config.cache_img[batch] = str(destination)

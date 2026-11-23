@@ -4,7 +4,7 @@ import unittest
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'src/mulimgviewer/src'))
-from playback_pacer import PlaybackPacer, ProductionJob, completion_estimates, refill_guard
+from playback_policy import PlaybackPacer, ProductionJob, completion_estimates, refill_guard
 
 
 class PacerTests(unittest.TestCase):

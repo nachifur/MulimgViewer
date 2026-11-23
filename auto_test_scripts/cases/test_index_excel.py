@@ -8,8 +8,8 @@ from pathlib import Path
 from types import SimpleNamespace
 from concurrent.futures import CancelledError
 sys.path.insert(0,str(Path(__file__).resolve().parents[2]/'src'))
-from mulimgviewer.src.index_excel import write_index_xlsx
-from mulimgviewer.src.index_columns import view_columns, export_filename
+from mulimgviewer.src.index_table import write_index_xlsx
+from mulimgviewer.src.index_table import view_columns, export_filename
 import test_browsing_index as index_fixtures
 
 NS={'m':'http://schemas.openxmlformats.org/spreadsheetml/2006/main'}
@@ -57,7 +57,7 @@ class ExcelIndexTests(unittest.TestCase):
 
     def test_algorithm_columns_export_the_processed_path_and_plugin_entry(self):
         import json
-        from mulimgviewer.src.index_catalog import IndexCatalog
+        from mulimgviewer.src.index_table import IndexCatalog
         layout=[None]*41
         layout[0]=[1,2];layout[1]=[1,1];layout[22]=False
         layout[24]=layout[25]=False;layout[32]=True;layout[36]=True;layout[37]=0

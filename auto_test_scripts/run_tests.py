@@ -45,7 +45,7 @@ def revision():
 def preflight(env):
     for name in ('wx', 'PIL', 'numpy', 'ffmpeg', 'av', 'psutil', 'piexif', 'imageio', 'requests', 'reportlab', 'xlsxwriter'):
         importlib.import_module(name)
-    from mulimgviewer.src.video_tools import resolve_video_tools
+    from mulimgviewer.src.video_source import resolve_video_tools
     commands, tool_env = resolve_video_tools()
     env.update(tool_env)
     env['PATH'] = os.pathsep.join(dict.fromkeys(str(Path(path).parent) for path in commands.values()))+os.pathsep+env.get('PATH', '')

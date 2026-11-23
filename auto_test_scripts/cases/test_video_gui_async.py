@@ -18,9 +18,9 @@ import wx
 from PIL import Image
 from mulimgviewer.src.main import MulimgViewer
 from mulimgviewer.src.utils_img import ImgManager
-from mulimgviewer.src.resource_policy import ResourceBudget
-from mulimgviewer.src.video_tools import resolve_video_tools
-from mulimgviewer.src.layout_gaps import gap_pair
+from mulimgviewer.src.resources import ResourceBudget
+from mulimgviewer.src.video_source import resolve_video_tools
+from mulimgviewer.src.render_layout import gap_pair
 
 
 class HiddenViewer(MulimgViewer):
@@ -47,7 +47,7 @@ class VideoGuiAsyncTests(unittest.TestCase):
         cls.app = wx.App.Get() or wx.App(False)
 
     def setUp(self):
-        self.reclaim_native = patch('mulimgviewer.src.memory_reclaim.release_unused_memory', return_value={})
+        self.reclaim_native = patch('mulimgviewer.src.resources.release_unused_memory', return_value={})
         self.native_release = self.reclaim_native.start()
         self.addCleanup(self.reclaim_native.stop)
         self.previous = os.getcwd()
@@ -79,7 +79,7 @@ class VideoGuiAsyncTests(unittest.TestCase):
         self.frame.video_manager._mark_batch_processed = lambda: None
 
     def tearDown(self):
-        from mulimgviewer.src.export_async import cancel_save
+        from mulimgviewer.src.export_controller import cancel_save
         cancel_save(self.frame)
         pool=getattr(self.frame,'_export_pool',None)
         if pool is not None:pool.shutdown(wait=True,cancel_futures=True)
@@ -1066,7 +1066,7 @@ class VideoGuiAsyncTests(unittest.TestCase):
             cfg.video_mode, cfg.is_playing = old_mode, old_playing
 
     def test_power_tooltip_second_line_counts_actual_save_work_and_hides_finished_work(self):
-        from mulimgviewer.src.export_async import ExportControl
+        from mulimgviewer.src.export_controller import ExportControl
         from mulimgviewer.src.custom_pipeline import WorkBudget
         control=ExportControl(threading.Event());budget=WorkBudget();budget.configure(2,1024)
         control.set_budget(budget)
@@ -1085,7 +1085,7 @@ class VideoGuiAsyncTests(unittest.TestCase):
         finally:self.frame._export_active=False
 
     def test_paused_save_work_is_excluded_from_active_count(self):
-        from mulimgviewer.src.export_async import ExportControl
+        from mulimgviewer.src.export_controller import ExportControl
         control=ExportControl(threading.Event());entered=threading.Event();finished=threading.Event()
         control.toggle();control.on_paused=entered.set
         def work():
@@ -1101,7 +1101,7 @@ class VideoGuiAsyncTests(unittest.TestCase):
             control.cancel.set();control.ready.set();thread.join(timeout=2)
 
     def test_paused_decoder_holding_memory_is_not_reported_as_active_save_work(self):
-        from mulimgviewer.src.export_async import ExportControl
+        from mulimgviewer.src.export_controller import ExportControl
         from mulimgviewer.src.custom_pipeline import WorkBudget
         control=ExportControl(threading.Event());budget=WorkBudget();budget.configure(1,1024)
         control.set_budget(budget);entered=threading.Event();control.toggle();control.on_paused=entered.set
@@ -1464,7 +1464,7 @@ class VideoGuiAsyncTests(unittest.TestCase):
         self.assertTrue(Path(self.frame.shared_config.cache_img[self.frame.shared_config.batch_idx]).is_file())
 
     def test_native_bitmap_access_failure_falls_back_to_tiles_without_losing_geometry(self):
-        from mulimgviewer.src.display_canvas import TiledImageCanvas
+        from mulimgviewer.src.canvas import TiledImageCanvas
         image=Image.new('RGBA',(160,96),(20,40,60,128))
         with patch.object(wx.Bitmap,'FromBufferRGBA',side_effect=RuntimeError('Failed to gain raw access to bitmap data.')):
             self.frame.display_bitmap(False,image,prepared_rgba=image.tobytes())
@@ -1481,8 +1481,8 @@ class VideoGuiAsyncTests(unittest.TestCase):
         self.assertIs(self.frame._img_bindings_target,self.frame.img_last)
 
     def test_large_display_skips_full_native_bitmap_and_bounds_native_tile_cache(self):
-        from mulimgviewer.src.display_canvas import TiledImageCanvas
-        from mulimgviewer.src.video_memory import rgba_display
+        from mulimgviewer.src.canvas import TiledImageCanvas
+        from mulimgviewer.src.canvas import rgba_display
         source=Image.new('RGBA',(9000,80),(20,40,60,255))
         image,data=rgba_display(source)
         source.close()
@@ -1498,7 +1498,7 @@ class VideoGuiAsyncTests(unittest.TestCase):
         self.assertLessEqual(len(canvas.tiles),2)
 
     def test_tiled_canvas_scroll_paints_only_visible_full_resolution_tiles(self):
-        from mulimgviewer.src.display_canvas import TiledImageCanvas
+        from mulimgviewer.src.canvas import TiledImageCanvas
         window=wx.Frame(None,size=(320,180))
         viewport=wx.ScrolledWindow(window)
         viewport.SetScrollRate(1,1)
@@ -1517,7 +1517,7 @@ class VideoGuiAsyncTests(unittest.TestCase):
 
 
     def test_viewport_canvas_paints_beyond_native_window_limit_and_preserves_mouse_coordinates(self):
-        from mulimgviewer.src.display_canvas import TiledImageCanvas
+        from mulimgviewer.src.canvas import TiledImageCanvas
         window=wx.Frame(None,size=(320,180))
         viewport=wx.ScrolledWindow(window);viewport.SetScrollRate(1,1)
         source=Image.new('RGBA',(49232,80),(20,40,60,255))
@@ -1541,7 +1541,7 @@ class VideoGuiAsyncTests(unittest.TestCase):
             window.Destroy();self.app.Yield(True);source.close()
 
     def test_main_switches_between_viewport_and_regular_image_without_clipping(self):
-        from mulimgviewer.src.display_canvas import TiledImageCanvas
+        from mulimgviewer.src.canvas import TiledImageCanvas
         with Image.new('RGBA',(49232,80),'red') as image:
             self.frame.display_bitmap(False,image)
             canvas=self.frame.img_last
@@ -1618,7 +1618,7 @@ class VideoGuiAsyncTests(unittest.TestCase):
             event.Skip.assert_called_once()
 
     def test_two_row_canvas_hides_original_and_keeps_hidden_algorithms_idle(self):
-        from mulimgviewer.src.index_catalog import IndexCatalog
+        from mulimgviewer.src.index_table import IndexCatalog
         from mulimgviewer.src.custom_func.contract import processing_indices
         for video in (True,False):
             if not video:self._use_image_input()
@@ -1719,7 +1719,7 @@ class VideoGuiAsyncTests(unittest.TestCase):
             self.frame.refresh(None)
 
     def test_index_rejects_stale_algorithm_layout_and_labels_each_pane(self):
-        from mulimgviewer.src.index_catalog import IndexCatalog
+        from mulimgviewer.src.index_table import IndexCatalog
         self._use_image_input()
         before=self.frame._index_context()
         self.frame.show_all_func.SetValue(True)
@@ -1744,7 +1744,7 @@ class VideoGuiAsyncTests(unittest.TestCase):
         self.frame.save_format.SetSelection(2)  # Export must resolve this clicked snapshot, even before Refresh.
         output=Path('auto_lossless_export').absolute();output.mkdir()
         self.frame.out_path_str=str(output);self.frame.choice_output.SetSelection(0)
-        from mulimgviewer.src.export_async import ExportDecoder
+        from mulimgviewer.src.export_controller import ExportDecoder
         original=ExportDecoder._save_frame;encodings=[];copied=[]
         def save_frame(decoder,path,first,last,video,config=None):
             encodings.append(config.cache_save_format)
@@ -2022,7 +2022,7 @@ class VideoGuiAsyncTests(unittest.TestCase):
             self.frame.GetEventHandler().ProcessEvent(event)
         self.assertEqual(self.frame.parse_hotkey(self.frame.hotkeys['pause_tasks']),(wx.ACCEL_NORMAL,wx.WXK_ESCAPE))
         try:
-            with patch('mulimgviewer.src.export_async.save_viewer',side_effect=save):
+            with patch('mulimgviewer.src.export_controller.save_viewer',side_effect=save):
                 self.frame.save_img(None);self.assertTrue(entered.wait(1))
                 # The frame hook still works when text editing disables accelerators.
                 self.frame.SetAcceleratorTable(wx.NullAcceleratorTable)
@@ -2044,6 +2044,46 @@ class VideoGuiAsyncTests(unittest.TestCase):
                 self.assertEqual(completed,[True])
                 self.assertEqual(self.frame._export_status,'Save: success')
         finally:release.set()
+
+    def _check_play_direction_follows_navigation_buttons(self):
+        frame = self.frame
+        config = frame.shared_config
+        frame.interval.ChangeValue('1')
+
+        def click(button):
+            event = wx.CommandEvent(wx.EVT_BUTTON.typeId, button.GetId())
+            event.SetEventObject(button)
+            self.assertTrue(button.GetEventHandler().ProcessEvent(event))
+
+        def current_page_ready():
+            if config.video_mode:
+                return self.video_page_ready()
+            key = frame.image_pipeline.displayed_key
+            return key is not None and key[1] == config.batch_idx
+
+        for button, direction in ((frame.left_arrow_button, -1), (frame.right_arrow_button, 1)):
+            with self.subTest(direction=direction):
+                page = config.batch_idx
+                click(button)
+                self.assertEqual(config.batch_idx, page + direction)
+                self.pump_until(current_page_ready)
+                click(frame.play)
+                try:
+                    self.assertTrue(config.is_playing)
+                    self.assertEqual(config.play_direction, direction)
+                    frame.on_play_timer(None)
+                    self.assertEqual(config.batch_idx, page + 2 * direction)
+                finally:
+                    if config.is_playing:
+                        click(frame.play)
+
+    def test_video_play_direction_follows_navigation_buttons(self):
+        self.warm_current_window()
+        self._check_play_direction_follows_navigation_buttons()
+
+    def test_image_play_direction_follows_navigation_buttons(self):
+        self._use_image_input()
+        self._check_play_direction_follows_navigation_buttons()
 
     def test_esc_pauses_video_and_play_button_resumes_from_current_page(self):
         from types import SimpleNamespace
@@ -2074,7 +2114,7 @@ class VideoGuiAsyncTests(unittest.TestCase):
             entered.set();release.wait(5);job._export_checkpoint()
             job.SetStatusText_(['Save','-1','Save success!','-1'])
         try:
-            with patch('mulimgviewer.src.export_async.save_viewer',side_effect=save):
+            with patch('mulimgviewer.src.export_controller.save_viewer',side_effect=save):
                 self.frame.save_img(None);self.assertTrue(entered.wait(1))
                 self.frame.pause_tasks(None);release.set()
                 self.pump_until(lambda:self.frame._export_status=='Save: paused')
@@ -2091,13 +2131,13 @@ class VideoGuiAsyncTests(unittest.TestCase):
         finally:release.set()
 
     def test_cancelling_paused_export_wakes_waiters(self):
-        from mulimgviewer.src.export_async import toggle_save_pause
+        from mulimgviewer.src.export_controller import toggle_save_pause
         output=Path('paused_cancel').absolute();output.mkdir();self.frame.out_path_str=str(output)
         entered=threading.Event();release=threading.Event()
         def save(job,**kwargs):
             entered.set();release.wait(5);job._export_checkpoint()
         try:
-            with patch('mulimgviewer.src.export_async.save_viewer',side_effect=save):
+            with patch('mulimgviewer.src.export_controller.save_viewer',side_effect=save):
                 self.frame.save_img(None);self.assertTrue(entered.wait(1))
                 toggle_save_pause(self.frame);release.set()
                 self.pump_until(lambda:self.frame._export_status=='Save: paused')
@@ -2157,7 +2197,7 @@ class VideoGuiAsyncTests(unittest.TestCase):
             job._export_progress(.5)
             job.SetStatusText_(['Save','-1','Save success!','-1'])
         try:
-            with patch('mulimgviewer.src.export_async.save_viewer',side_effect=save):
+            with patch('mulimgviewer.src.export_controller.save_viewer',side_effect=save):
                 self.frame.save_img(None)
                 self.assertTrue(entered.wait(1))
                 future=self.frame._export_future
@@ -2184,7 +2224,7 @@ class VideoGuiAsyncTests(unittest.TestCase):
 
     def test_background_save_cancels_without_success_when_closing(self):
         from concurrent.futures import CancelledError
-        from mulimgviewer.src.export_async import cancel_save
+        from mulimgviewer.src.export_controller import cancel_save
         self._use_image_input();self.frame.show_img()
         self.pump_until(lambda:self.frame.image_pipeline.displayed_key is not None)
         output=Path('cancel_output').absolute();output.mkdir();self.frame.out_path_str=str(output)
@@ -2193,7 +2233,7 @@ class VideoGuiAsyncTests(unittest.TestCase):
             entered.set()
             while not job._export_cancelled():time.sleep(.005)
             raise CancelledError()
-        with patch('mulimgviewer.src.export_async.save_viewer',side_effect=save):
+        with patch('mulimgviewer.src.export_controller.save_viewer',side_effect=save):
             self.frame.save_img(None);self.assertTrue(entered.wait(1))
             cancel_save(self.frame)
             self.pump_until(lambda:not self.frame._export_active)
@@ -2208,7 +2248,7 @@ class VideoGuiAsyncTests(unittest.TestCase):
         def save(job,**kwargs):
             entered.set();release.wait(5);raise CancelledError()
         try:
-            with patch('mulimgviewer.src.export_async.save_viewer',side_effect=save):
+            with patch('mulimgviewer.src.export_controller.save_viewer',side_effect=save):
                 self.frame.save_img(None);self.assertTrue(entered.wait(1))
                 root=self.frame.video_manager.cache_dir
                 with patch.object(self.frame,'Destroy'),patch('wx.Exit'),patch.object(self.frame,'_save_session_configuration'),patch.object(self.frame,'_save_window_state'):
@@ -2313,7 +2353,7 @@ class VideoGuiAsyncTests(unittest.TestCase):
                 self.assertEqual(self.frame._last_display_logical_size,image.size)
 
     def test_single_algorithm_grid_leaves_unused_panes_blank_in_images_and_video(self):
-        from mulimgviewer.src.index_catalog import IndexCatalog
+        from mulimgviewer.src.index_table import IndexCatalog
         for video in (True,False):
             if not video:self._use_image_input()
             self.frame.show_original_panel.SetValue(True)
@@ -2415,7 +2455,7 @@ class VideoGuiAsyncTests(unittest.TestCase):
 
     def test_bulk_export_decoder_reuses_session_and_matches_exact_ffmpeg_frames(self):
         import copy
-        from mulimgviewer.src.export_async import ExportDecoder
+        from mulimgviewer.src.export_controller import ExportDecoder
         from mulimgviewer.src.video_decoder import av
         if av is None:self.skipTest('Optional PyAV is unavailable')
         from types import SimpleNamespace
@@ -2513,7 +2553,7 @@ class VideoGuiAsyncTests(unittest.TestCase):
         self.assertEqual(len(manager._blank_img_ids),2)
         self.assertEqual(set(manager._status_source_slots),{-1,0,1})
         self.assertGreaterEqual(self.frame.image_pipeline.processing.snapshot()['misses'],10)
-        from mulimgviewer.src.index_catalog import IndexCatalog
+        from mulimgviewer.src.index_table import IndexCatalog
         catalog=IndexCatalog(manager,self.frame.shared_config)
         first=catalog.visual_page_start(20);last=catalog.visual_page_start(21)
         entries=[catalog.visual_entry(index) for index in range(first,last)]
@@ -2587,7 +2627,7 @@ class VideoGuiAsyncTests(unittest.TestCase):
             self.assertTrue(all(value > 0 for value in self.frame._status_widths))
 
     def test_visual_index_matches_actual_nested_layout_positions(self):
-        from mulimgviewer.src.index_catalog import IndexCatalog
+        from mulimgviewer.src.index_table import IndexCatalog
         self._use_image_input()
         for sequential,vertical0,vertical1 in ((False,False,False),(True,False,False),
                                              (True,True,False),(True,False,True),(True,True,True)):
@@ -2612,7 +2652,7 @@ class VideoGuiAsyncTests(unittest.TestCase):
             self.assertEqual(actual,expected,(sequential,vertical0,vertical1))
 
     def test_video_visual_index_matches_actual_frame_paths_with_serial_switch(self):
-        from mulimgviewer.src.index_catalog import IndexCatalog
+        from mulimgviewer.src.index_table import IndexCatalog
         cfg=self.frame.shared_config
         for serial,outer,batch in ((False,'2,2',5),(True,'2,3',3)):
             self.frame.parallel_to_sequential.SetValue(serial)
@@ -3205,7 +3245,7 @@ class VideoGuiAsyncTests(unittest.TestCase):
         self.assertEqual(self.frame.shared_config.status_input_mode, 3)
 
     def test_image_file_list_renders_titles_and_preserves_loaded_input_label(self):
-        from mulimgviewer.src.index_catalog import IndexCatalog
+        from mulimgviewer.src.index_table import IndexCatalog
         self._use_image_input()
         listing=Path('images.txt')
         listing.write_text('"images/a/000.png"\n images/b/001.png \n',encoding='utf-8-sig')
@@ -3246,7 +3286,7 @@ class VideoGuiAsyncTests(unittest.TestCase):
         self.assertEqual(manager.path_list,[str(Path('images/b/001.png').absolute()),
                                             str(Path('images/a/002.png').absolute())])
     def test_video_file_list_auto_title_fields_match_folder_route_in_all_orders(self):
-        from mulimgviewer.src.display_modes import auto_title_fields
+        from mulimgviewer.src.data import auto_title_fields
         listing=Path('videos.txt');listing.write_text('sample.mp4\nsample.mp4\n',encoding='utf-8')
         self.frame.title_auto.SetValue(True)
         self.assertTrue(self.frame._open_video_file_list(listing))
@@ -3340,7 +3380,7 @@ class VideoGuiAsyncTests(unittest.TestCase):
         (target / 'config_schema.json').write_text('{"roles_version": 2}', encoding='utf-8')
         configuration['output'].update(power_mode=4, cache_frames='3', cache_multiplier='2')
         path.write_text(json.dumps(configuration), encoding='utf-8')
-        with patch('mulimgviewer.src.configuration_controller.get_resource_path', return_value=str(target)):
+        with patch('mulimgviewer.src.configuration.get_resource_path', return_value=str(target)):
             MulimgViewer.load_configuration(self.frame, None)
             self.assertEqual(self.frame.shared_config.power_mode, 4)
             self.assertEqual(self.frame.shared_config.cache_num, 3)
@@ -3460,12 +3500,12 @@ class VideoGuiAsyncTests(unittest.TestCase):
         self.assertEqual(frame.ImgManager.layout_params[42],frame.save_quality.GetValue())
 
     def test_disk_backed_video_magnifier_preserves_resolution_and_gui_handoff(self):
-        from mulimgviewer.src.disk_canvas import DiskCanvas
+        from mulimgviewer.src.canvas import DiskCanvas
         frame=self.frame
         frame.show_scale.ChangeValue('1,1');frame.show_original.SetValue(True)
         frame.row_col_img_unit.ChangeValue('3,1');frame.title_show.SetValue(False)
-        with patch('mulimgviewer.src.disk_canvas.LARGE_CANVAS_BYTES',0), \
-                patch('mulimgviewer.src.disk_canvas.available_memory_bytes',return_value=0):
+        with patch('mulimgviewer.src.canvas.LARGE_CANVAS_BYTES',0), \
+                patch('mulimgviewer.src.canvas.available_memory_bytes',return_value=0):
             frame.refresh(None);self.pump_until(self.video_page_ready)
             self.assertIsInstance(frame.ImgManager.img,DiskCanvas)
             old_size=frame.ImgManager.img.size;old_key=frame._video_display_key

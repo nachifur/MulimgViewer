@@ -92,10 +92,10 @@ def main(images, path, names):
             manager.layout_params=[None]*41
             manager.layout_params[32]=True;manager.layout_params[38]=False
             manager._custom_memory_budget=1000
-            with patch('mulimgviewer.src.thread_optimizer.available_memory_bytes',return_value=1000), \
+            with patch('mulimgviewer.src.playback_policy.available_memory_bytes',return_value=1000), \
                     self.assertRaisesRegex(MemoryError,'system memory'):
                 runtime.check_processing_budget(manager,[str(image)])
-            with patch('mulimgviewer.src.thread_optimizer.available_memory_bytes',return_value=1000000):
+            with patch('mulimgviewer.src.playback_policy.available_memory_bytes',return_value=1000000):
                 runtime.check_processing_budget(manager,[str(image)])
 
     def test_processed_disk_results_do_not_repeat_legacy_full_batch_memory_charge(self):

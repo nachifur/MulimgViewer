@@ -9,7 +9,7 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from unittest.mock import patch
 sys.path.insert(0,str(Path(__file__).resolve().parents[2]/'src'))
-from mulimgviewer.src.stage_allocator import allocate_stages
+from mulimgviewer.src.playback_policy import allocate_stages
 from mulimgviewer.src.custom_pipeline import WorkBudget
 from mulimgviewer.src.pipeline_executor import PipelineWorkers
 
@@ -88,7 +88,7 @@ class StageAllocatorTests(unittest.TestCase):
         self.assertEqual(sum(small.targets),1)
 
     def test_serial_algorithm_does_not_occupy_other_algorithms_workers(self):
-        from mulimgviewer.src.custom_workers import ImageWorkers
+        from mulimgviewer.src.pipeline_executor import ImageWorkers
         pool=ImageWorkers(2);entered=threading.Event();release=threading.Event();other=threading.Event()
         try:
             first=pool.submit(lambda:(entered.set(),release.wait(3)),resource_key='A',max_concurrency=1)

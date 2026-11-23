@@ -12,7 +12,7 @@ from PIL import Image
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'src'))
 from mulimgviewer.src.image_pipeline import ImagePipeline
-from mulimgviewer.src.resource_policy import resource_budget, cache_window, composition_workers, positive_cache_integer
+from mulimgviewer.src.resources import resource_budget, cache_window, composition_workers, positive_cache_integer
 
 
 class PolicyTests(unittest.TestCase):

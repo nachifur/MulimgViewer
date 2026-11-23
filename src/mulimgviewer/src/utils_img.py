@@ -16,19 +16,18 @@ import traceback
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfgen import canvas
-from .export_formats import JPG, PNG, PDF
+from .image_encoding import JPG, PNG, PDF
 from reportlab.pdfbase import pdfmetrics
 
-from .video_memory import LazyVideoImage, source_resolution
+from .canvas import LazyVideoImage, disk_backed, new_canvas, source_resolution
 from .data import ImgData
 from .utils import rgb2hex
 from .custom_func.main import get_available_algorithms
 from .custom_func.runtime import render_context, state as processing_state
 from .custom_func.contract import specification, processing_indices, display_indices, display_grid, original_index
 from .cache_layout import page_name, source_names, write_source_catalog
-from .render_metrics import MeasuredFont
-from .layout_gaps import gap_pair
-from .disk_canvas import new_canvas, disk_backed
+from .render_layout import MeasuredFont
+from .render_layout import gap_pair
 
 class ImgUtils():
     """The set of functional programming modules"""
@@ -635,7 +634,7 @@ class ImgUtils():
         return img
 
     def save_img_diff_format(self, png_path,img,save_format=0,use_vector_titles=True):
-        from .export_encoding import png_level,pdf_raster
+        from .image_encoding import png_level, pdf_raster
         settings=getattr(self,'manager',None)
         if save_format == PNG:
             # Changing PNG compression must not discard source metadata.
@@ -666,7 +665,7 @@ class ImgUtils():
             # Fine coloured titles need full chroma resolution, especially at
             # small output scales. Pillow defaults to quality 75 with 4:2:0,
             # which blurs colour across neighbouring text/background pixels.
-            from .jpeg_policy import jpeg_quality
+            from .image_encoding import jpeg_quality
             # Selected source JPGs now need re-encoding for quality/4:4:4.
             # Retain their injected titles and physical/colour metadata.
             options={key:img.info[key] for key in ('exif','dpi') if img.info.get(key)}
@@ -802,7 +801,7 @@ class ImgManager(ImgData):
 
         width, height = base_img.size
         pdf_canvas = canvas.Canvas(str(pdf_path), pagesize=(width, height))
-        from .export_encoding import pdf_raster
+        from .image_encoding import pdf_raster
         with pdf_raster(base_img,self) as img_reader:
             pdf_canvas.drawImage(img_reader, 0, 0, width=width, height=height, mask='auto')
 

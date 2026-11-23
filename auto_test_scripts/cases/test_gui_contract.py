@@ -36,7 +36,7 @@ class GuiContractTests(unittest.TestCase):
             with self.subTest(package=package):
                 code=(f'import sys; sys.path.insert(0,{str(base)!r}); '
                       f'from {package}.gui.main_gui import MulimgViewerGui; '
-                      f'from {package}.src.settings_section import SettingsSection')
+                      f'from {package}.src.settings_panel import SettingsSection')
                 result=subprocess.run([sys.executable,'-I','-c',code],cwd=root,
                                       capture_output=True,text=True,timeout=30)
                 self.assertEqual(result.returncode,0,result.stderr)

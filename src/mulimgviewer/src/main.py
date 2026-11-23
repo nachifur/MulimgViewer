@@ -10,39 +10,32 @@ from PIL import Image
 from ..gui.main_gui import MulimgViewerGui
 from .. import __version__ as VERSION
 from .about import About
-from .index_table import IndexTable
-from .index_catalog import IndexCatalog
-from .display_modes import auto_title_fields
-from .display_modes import loaded_input_mode
-from .layout_gaps import normalize_gaps
+from .index_table import IndexCatalog, IndexTable
+from .render_layout import normalize_gaps
 from .custom_func.main import get_available_algorithms
 from .custom_func.runtime import capture_algorithms, compiled_source, AlgorithmSession
 from .utils import MyTestEvent, get_resource_path
 from .utils_img import ImgManager
-from .display_canvas import TiledImageCanvas
-from .video_memory import tiled_display
-from .resource_policy import resource_budget, positive_cache_integer
+from .canvas import TiledImageCanvas, tiled_display
+from .resources import resource_budget, positive_cache_integer
 from .image_pipeline import ImagePipeline
-from .video_paths import resolve_cache_format
-from .memory_reclaim import MemoryReclaimer
-from .resource_monitor import ResourceMonitor
-from .cache_shutdown import clear_cache_on_startup
-from .thread_optimizer import AdaptiveThreadAllocator, available_memory_bytes
+from .image_encoding import capture_export_encoding, resolve_cache_format
+from .resources import MemoryReclaimer
+from .resources import ResourceMonitor
+from .cache_layout import clear_cache_on_startup
+from .playback_policy import AdaptiveThreadAllocator, available_memory_bytes
 import shutil
 import copy
 from PIL import ImageFont
 
 
 # Public class imports remain available for existing callers of src.main.
-from .viewer_state import SharedConfig
+from .data import SharedConfig, auto_title_fields, loaded_input_mode
 from .video_manager import VideoManager, PerformanceMonitor
-from .video_playback import VideoPlaybackMixin
+from .playback_controls import NavigationMixin, VideoPlaybackMixin
 from .status_bar import StatusBarMixin
-from .navigation import NavigationMixin
-from .configuration_controller import ConfigurationMixin
+from .configuration import ConfigurationMixin
 from .settings_panel import SettingsPanelMixin
-from .sidebar_layout import SidebarLayoutMixin
-from .export_encoding import capture_export_encoding
 
 
 try:
@@ -51,7 +44,7 @@ except ImportError:
     winreg = None
 
 
-class MulimgViewer(SidebarLayoutMixin, SettingsPanelMixin, NavigationMixin, StatusBarMixin, VideoPlaybackMixin, ConfigurationMixin, MulimgViewerGui):
+class MulimgViewer(SettingsPanelMixin, NavigationMixin, StatusBarMixin, VideoPlaybackMixin, ConfigurationMixin, MulimgViewerGui):
     """Compose generated widgets with playback/configuration event handlers.
 
     Mixins precede the generated GUI so Bind calls resolve concrete handlers,
@@ -1019,7 +1012,7 @@ class MulimgViewer(SidebarLayoutMixin, SettingsPanelMixin, NavigationMixin, Stat
         if self._is_closing:
             return
         self._is_closing = True
-        from .export_async import cancel_save
+        from .export_controller import cancel_save
         cancel_save(self)
         try:
             self._save_session_configuration()
@@ -1067,7 +1060,7 @@ class MulimgViewer(SidebarLayoutMixin, SettingsPanelMixin, NavigationMixin, Stat
         pipeline=self.image_pipeline
         vm=self.video_manager
         if pipeline.closed and getattr(vm,'_closed',False):
-            from .cache_shutdown import schedule_cache_removal
+            from .cache_layout import schedule_cache_removal
             root=Path(vm.cache_dir).absolute()
             if root!=pipeline.cache_root.absolute():
                 raise ValueError('Image and video cache roots differ; refusing recursive cleanup')
@@ -1111,16 +1104,10 @@ class MulimgViewer(SidebarLayoutMixin, SettingsPanelMixin, NavigationMixin, Stat
 
     #b5
     def last_img(self, event):
-        if self.shared_config.video_mode and self.shared_config.is_playing and not getattr(self, "_from_timer", False):
+        if not getattr(self, "_from_timer", False):
             self.shared_config.play_direction = -1
-            self.last_direction = self.shared_config.play_direction
-            return
-        if (not self.shared_config.video_mode and
-                self.shared_config.is_playing and
-                not getattr(self, "_from_timer", False)):
-            self.shared_config.play_direction = -1
-            self.last_direction = -1
-            return
+            if self.shared_config.is_playing:
+                return
 
         if self.shared_config.batch_idx <= 0:
             if getattr(self.shared_config, "is_playing", False):
@@ -1133,14 +1120,9 @@ class MulimgViewer(SidebarLayoutMixin, SettingsPanelMixin, NavigationMixin, Stat
                     self.right_arrow_button1.SetLabel("▶")
                 except Exception:
                     pass
-                self.shared_config.play_direction = 1
-                self.last_direction = 1
             return
 
         if self.shared_config.video_mode:
-            if self.shared_config.is_playing:
-                self.shared_config.play_direction = -1
-                self.last_direction = self.shared_config.play_direction
             if self.shared_config.batch_idx > 0:
                 self.shared_config.batch_idx -= 1
 
@@ -1152,9 +1134,6 @@ class MulimgViewer(SidebarLayoutMixin, SettingsPanelMixin, NavigationMixin, Stat
                 self.ImgManager.subtract()
             self.shared_config.batch_idx = max(0, self.shared_config.batch_idx)
         else:
-            if self.shared_config.is_playing:
-                self.shared_config.play_direction = -1
-                self.last_direction = -1
             if self.shared_config.batch_idx > 0:
                 self.shared_config.batch_idx -= 1
             if self.ImgManager.img_count != 0:
@@ -1182,7 +1161,7 @@ class MulimgViewer(SidebarLayoutMixin, SettingsPanelMixin, NavigationMixin, Stat
         event.Skip()
 
     def pause_tasks(self,event):
-        from .export_async import toggle_save_pause
+        from .export_controller import toggle_save_pause
         control=getattr(self,'_export_control',None)
         if (getattr(self,'_export_active',False) and control is not None
                 and not control.paused and not control.cancel.is_set()):
@@ -1191,11 +1170,11 @@ class MulimgViewer(SidebarLayoutMixin, SettingsPanelMixin, NavigationMixin, Stat
             self.toggle_play(None)
 
     def cancel_save_task(self,event):
-        from .export_async import cancel_current_save
+        from .export_controller import cancel_current_save
         cancel_current_save(self,event)
 
     def save_img(self, event):
-        from .export_async import start_save
+        from .export_controller import start_save
         start_save(self,event)
 
     def refresh(self, event):
@@ -1836,7 +1815,7 @@ class MulimgViewer(SidebarLayoutMixin, SettingsPanelMixin, NavigationMixin, Stat
         def save_selected_column(evt):
             x, y = event.GetPosition()
             grid = self._select_image_at_point(x,y)
-            from .export_async import start_save
+            from .export_controller import start_save
             start_save(self, evt, selection_only=True, selected_grid=grid)
         menu.Bind(wx.EVT_MENU, save_selected_column, id=save_column_id)
 
@@ -3363,16 +3342,10 @@ def process_image(image, *, context):
 
     #b3 修改1：next_img 和 last_img —— timer 播放时跳过 show_img_init    b5
     def next_img(self, event):
-        if self.shared_config.video_mode and self.shared_config.is_playing and not getattr(self, "_from_timer", False):
+        if not getattr(self, "_from_timer", False):
             self.shared_config.play_direction = 1
-            self.last_direction = self.shared_config.play_direction
-            return
-        if (not self.shared_config.video_mode and
-                self.shared_config.is_playing and
-                not getattr(self, "_from_timer", False)):
-            self.shared_config.play_direction = 1
-            self.last_direction = 1
-            return
+            if self.shared_config.is_playing:
+                return
 
         max_batch_idx = self.ImgManager.max_action_num - 1
         if self.shared_config.batch_idx >= max_batch_idx:
@@ -3386,14 +3359,9 @@ def process_image(image, *, context):
                     self.right_arrow_button1.SetLabel("▶")
                 except Exception:
                     pass
-                self.shared_config.play_direction = 1
-                self.last_direction = 1
             return
 
         if self.shared_config.video_mode:
-            if self.shared_config.is_playing:
-                self.shared_config.play_direction = 1
-            self.last_direction = self.shared_config.play_direction
             if self.shared_config.batch_idx < int(self.ImgManager.img_num) - 1:
                 self.shared_config.batch_idx += 1
 

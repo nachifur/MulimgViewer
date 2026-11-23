@@ -5,10 +5,10 @@ import unittest
 from pathlib import Path
 from types import SimpleNamespace
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]/'src'))
-from mulimgviewer.src.index_catalog import IndexCatalog
-from mulimgviewer.src.display_modes import loaded_input_mode, auto_title_fields
+from mulimgviewer.src.index_table import IndexCatalog
+from mulimgviewer.src.data import loaded_input_mode, auto_title_fields
 from mulimgviewer.src.utils_img import ImgManager
-from mulimgviewer.src.index_excel import write_index_xlsx
+from mulimgviewer.src.index_table import write_index_xlsx
 from test_index_excel import sheets
 
 

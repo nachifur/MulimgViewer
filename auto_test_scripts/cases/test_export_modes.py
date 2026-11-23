@@ -11,7 +11,7 @@ from PIL import Image
 from mulimgviewer.src.utils_img import ImgManager
 from mulimgviewer.src.custom_func.runtime import capture_algorithms,AlgorithmSession
 from mulimgviewer.src.export_controller import export_page, selection_slots, source_slot
-from mulimgviewer.src.layout_gaps import gap_pair
+from mulimgviewer.src.render_layout import gap_pair
 
 
 class ExportModesTests(unittest.TestCase):
@@ -111,7 +111,7 @@ class ExportModesTests(unittest.TestCase):
         from concurrent.futures import TimeoutError
         from unittest.mock import patch
         from mulimgviewer.src.custom_pipeline import CustomPipeline
-        from mulimgviewer.src.custom_workers import ImageWorkers
+        from mulimgviewer.src.pipeline_executor import ImageWorkers
         pool=ImageWorkers(2);stage=CustomPipeline(self.root/'shared_cleanup',pool=pool)
         release=threading.Event();started=threading.Event()
         def kernel():

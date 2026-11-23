@@ -13,7 +13,7 @@ from PIL import Image, ImageDraw, ImageFont
 from mulimgviewer.src.cache_layout import VisibleCache, source_names, page_name
 from mulimgviewer.src.custom_func.contract import processing_indices, display_indices, display_grid
 from mulimgviewer.src.custom_pipeline import WorkBudget
-from mulimgviewer.src.video_memory import LazyVideoImage, PixelCache, source_resolution
+from mulimgviewer.src.canvas import LazyVideoImage, PixelCache, source_resolution
 
 
 class CacheLayoutTests(unittest.TestCase):
@@ -35,7 +35,7 @@ class CacheLayoutTests(unittest.TestCase):
             self.assertFalse(target.exists())
 
     def test_video_cache_names_are_readable_and_collision_safe(self):
-        from mulimgviewer.src.video_paths import video_source_names
+        from mulimgviewer.src.video_source import video_source_names
         paths=['one/01.mp4','two/01.mp4','three/01_002.mov','four/01.MOV','CON.mp4']
         names=video_source_names(paths)
         self.assertEqual(names,['01','01_002','01_002_002','01_003','_CON'])
@@ -98,8 +98,8 @@ class CacheLayoutTests(unittest.TestCase):
                 self.assertEqual(image.tobytes(),original)
 
     def test_shared_text_metrics_preserve_multiline_pixels_and_remain_bounded(self):
-        from mulimgviewer.src import render_metrics
-        from mulimgviewer.src.render_metrics import MeasuredFont, _metrics, _limit
+        from mulimgviewer.src import render_layout as render_metrics
+        from mulimgviewer.src.render_layout import MeasuredFont, _metrics, _limit
         try:font=ImageFont.truetype('arial.ttf',20)
         except OSError:font=ImageFont.truetype('DejaVuSans.ttf',20)
         cached=MeasuredFont.wrap(font)

@@ -11,7 +11,7 @@ from support.fixture_recipe import WIDTH, HEIGHT, FPS, frame, expected_pair, pix
 
 
 def main():
-    from mulimgviewer.src.video_tools import resolve_video_tools
+    from mulimgviewer.src.video_source import resolve_video_tools
     tools,env=resolve_video_tools()
     root=HOME/'assets';root.mkdir(exist_ok=True)
     manifest=dict(version=1,size=[WIDTH,HEIGHT],fps=FPS,images={},videos={},goldens={})

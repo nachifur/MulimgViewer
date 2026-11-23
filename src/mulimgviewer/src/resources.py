@@ -1,14 +1,79 @@
-"""Background, mode-local rolling resource measurements; no GUI access."""
+"""CPU and memory budgets, usage measurements, and idle reclamation."""
+from __future__ import annotations
+
 import ctypes
+import gc
+import math
 import os
 import subprocess
 import sys
 import threading
 import time
 from collections import deque
+from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
+from decimal import Decimal, InvalidOperation
 from functools import lru_cache
+from typing import NamedTuple
 
+if __package__:
+    from .playback_policy import available_memory_bytes
+else:
+    from playback_policy import available_memory_bytes
+
+
+# Budgets and cache windows
+class ResourceBudget(NamedTuple):
+    mode: int
+    workers: int
+    memory: int | None
+
+
+def positive_cache_integer(raw):
+    """Validate before conversion: 0.5 must never silently become 0 or 1."""
+    try:
+        value = Decimal(str(raw).strip())
+        if not value.is_finite() or value < 1 or value > sys.maxsize or value != value.to_integral_value():
+            raise ValueError('Enter an integer greater than or equal to 1')
+        return int(value)
+    except (InvalidOperation, TypeError, ValueError, OverflowError) as ex:
+        raise ValueError('Enter an integer greater than or equal to 1') from ex
+
+
+def resource_budget(mode, video=False, cpus=None, available=None):
+    """Soft worker/RAM ceilings, not an OS CPU percentage or memory quota.
+
+    One-core machines still need two video pipeline lanes; their work shares
+    the CPU. Memory is sampled at policy changes, rather than per GUI paint.
+    """
+    mode = max(1, min(4, int(mode)))
+    cpu_fraction, memory_fraction = ((.25, .15), (.5, .30), (.75, .50), (1., .75))[mode - 1]
+    cpus = max(1, int(cpus or os.cpu_count() or 1))
+    available = available_memory_bytes() if available is None else available
+    return ResourceBudget(mode, max(2 if video else 1, math.floor(cpus * cpu_fraction)),
+                          int(available * memory_fraction) if available is not None else None)
+
+
+def cache_window(batch, total, radius, multiplier, previous=None):
+    """Retain an anchored outer window until within one inner radius of an edge."""
+    radius, multiplier = max(1, int(radius)), max(1, int(multiplier))
+    end = max(0, int(total) - 1)
+    batch = max(0, min(end, int(batch)))
+    if previous is not None and multiplier >= 2:
+        lo, hi = previous
+        if (lo <= batch <= hi and (lo == 0 or batch - lo > radius)
+                and (hi == end or hi - batch > radius)):
+            return previous
+    return max(0, batch - radius * multiplier), min(end, batch + radius * multiplier)
+
+
+def composition_workers(budget, memory, output_pixels=0, input_pixels=0):
+    """All image lanes compose; cap simultaneous working sets by the RAM budget."""
+    working = max(64 * 1024 ** 2, 16 * output_pixels + 9 * input_pixels)
+    return max(1, min(int(budget), int(memory) // working if memory is not None else int(budget)))
+
+
+# Usage sampling and subprocess accounting
 try:
     import psutil
 except ImportError:
@@ -219,3 +284,127 @@ class ResourceMonitor:
 
     def close(self):
         self.stopped.set()
+
+
+# Memory reclamation
+def release_unused_memory(trim_working_set=False):
+    """Collect unused objects and ask the native allocator to return free pages.
+
+    Windows working-set trimming also evicts live pages, so reserve it for an
+    idle, paused viewer. This never deletes cache files or closes live images.
+    Native calls are best effort; freed Python objects need not reduce RSS by
+    their full size because allocator arenas can still contain live objects.
+    """
+    collected = gc.collect()
+    heap_released = working_set_trimmed = False
+    if os.name == 'nt':
+        try:
+            runtime = ctypes.CDLL('ucrtbase')
+            runtime._heapmin.restype = ctypes.c_int
+            heap_released = runtime._heapmin() == 0
+        except (AttributeError, OSError):
+            pass
+        if trim_working_set:
+            try:
+                kernel = ctypes.WinDLL('kernel32', use_last_error=True)
+                psapi = ctypes.WinDLL('psapi', use_last_error=True)
+                kernel.GetCurrentProcess.restype = ctypes.c_void_p
+                psapi.EmptyWorkingSet.argtypes = [ctypes.c_void_p]
+                psapi.EmptyWorkingSet.restype = ctypes.c_int
+                working_set_trimmed = bool(psapi.EmptyWorkingSet(kernel.GetCurrentProcess()))
+            except (AttributeError, OSError):
+                pass
+    elif sys.platform == 'darwin':
+        try:
+            runtime = ctypes.CDLL(None)
+            runtime.malloc_zone_pressure_relief.argtypes = [ctypes.c_void_p, ctypes.c_size_t]
+            runtime.malloc_zone_pressure_relief.restype = ctypes.c_size_t
+            heap_released = bool(runtime.malloc_zone_pressure_relief(None, 0))
+        except (AttributeError, OSError):
+            pass
+    elif sys.platform.startswith('linux'):
+        try:
+            runtime = ctypes.CDLL(None)
+            runtime.malloc_trim.argtypes = [ctypes.c_size_t]
+            runtime.malloc_trim.restype = ctypes.c_int
+            heap_released = bool(runtime.malloc_trim(0))
+        except (AttributeError, OSError):
+            pass
+    return dict(collected=collected, heap_released=heap_released,
+                working_set_trimmed=working_set_trimmed)
+
+
+class MemoryReclaimer:
+    """Coalesce policy changes; never wait or invoke GC on the GUI thread."""
+    def __init__(self):
+        self.executor = ThreadPoolExecutor(1, thread_name_prefix='memory-reclaim')
+        self.lock = threading.RLock()
+        self.closed = threading.Event()
+        self.serial = 0
+        self.future = None
+        self.last_result = None
+        self.idle_since = None
+        self.idle_reclaimed = False
+
+    def cancel(self):
+        with self.lock:
+            self.serial += 1
+
+    def request(self, ready, retire, allow_working_set_trim):
+        with self.lock:
+            if self.closed.is_set():
+                return
+            self.serial += 1
+            serial = self.serial
+            if self.future is not None:
+                self.future.cancel()
+            def reclaim():
+                while not self.closed.is_set():
+                    with self.lock:
+                        if serial != self.serial:
+                            return
+                    if ready():
+                        break
+                    self.closed.wait(.05)
+                if self.closed.is_set():
+                    return
+                retire()  # Join drained old pools and drop completed results.
+                with self.lock:
+                    if self.closed.is_set() or serial != self.serial:
+                        return
+                result = release_unused_memory(allow_working_set_trim())
+                with self.lock:
+                    if serial == self.serial:
+                        self.last_result = result
+                return result
+            self.future = self.executor.submit(reclaim)
+
+    def observe_idle_pressure(self, over_budget, idle, retire, now):
+        """One reclaim per sustained idle episode. Share the downgrade worker."""
+        eligible = over_budget and idle()
+        with self.lock:
+            if not eligible:
+                self.idle_since = None
+                self.idle_reclaimed = False
+                return
+            if self.idle_since is None:
+                self.idle_since = now
+            if (self.closed.is_set() or self.idle_reclaimed or now - self.idle_since < 10.
+                    or (self.future is not None and not self.future.done())):
+                return
+            serial = self.serial
+            def reclaim():
+                with self.lock:
+                    if serial != self.serial or self.closed.is_set():
+                        return
+                if idle():
+                    retire()
+                    if idle():
+                        return release_unused_memory(trim_working_set=True)
+            self.idle_reclaimed = True
+            self.future = self.executor.submit(reclaim)
+
+    def close(self):
+        self.closed.set()
+        self.cancel()
+        self.executor.shutdown(wait=False)

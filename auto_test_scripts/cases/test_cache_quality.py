@@ -8,9 +8,9 @@ sys.path.insert(0,str(Path(__file__).resolve().parents[2]/'src'))
 from PIL import Image
 import test_export_modes as fixtures
 from mulimgviewer.src.custom_pipeline import CustomPipeline
-from mulimgviewer.src.mosaic_pipeline import MosaicStage
+from mulimgviewer.src.image_pipeline import MosaicStage
 from mulimgviewer.src.export_controller import export_page
-from mulimgviewer.src.video_paths import lossless_export
+from mulimgviewer.src.image_encoding import lossless_export
 
 
 class CacheQualityTests(unittest.TestCase):
@@ -89,8 +89,8 @@ class CacheQualityTests(unittest.TestCase):
                     self.assertEqual(lossless_export(m),cache in (1,2) and fmt!=0 and min(scale)>=1)
 
     def test_auto_resolves_both_axes_and_invalidates_lossy_algorithm_and_mosaic_results(self):
-        from mulimgviewer.src.video_paths import manager_cache_format,resolve_cache_format
-        from mulimgviewer.src.mosaic_pipeline import mosaic_request_key
+        from mulimgviewer.src.image_encoding import manager_cache_format,resolve_cache_format
+        from mulimgviewer.src.image_pipeline import mosaic_request_key
         m=self.manager;m.layout_params[41]=2
         for fmt in (0,1,2):
             for scale in ([1,1],[2,1],[1,2],[.5,1],[1,.5],[.5,.5]):

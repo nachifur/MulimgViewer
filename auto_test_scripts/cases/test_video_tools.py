@@ -13,12 +13,12 @@ from pathlib import Path
 from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'src'))
-from mulimgviewer.src.video_tools import resolve_video_tools
+from mulimgviewer.src.video_source import resolve_video_tools
 
 
 class VideoToolTests(unittest.TestCase):
     def test_strict_csv_import_preserves_rows_quotes_blanks_and_duplicate_entries(self):
-        from mulimgviewer.src.video_tools import read_video_file_list
+        from mulimgviewer.src.video_source import read_video_file_list
         (self.root/'a,b.mp4').write_bytes(b'video')
         (self.root/'second.mov').write_bytes(b'video')
         listing=self.root/'videos.csv'
@@ -27,7 +27,7 @@ class VideoToolTests(unittest.TestCase):
             str(self.root/'a,b.mp4'),str(self.root/'second.mov'),str(self.root/'a,b.mp4')])
 
     def test_strict_csv_import_reports_exact_bad_cell_instead_of_skipping_it(self):
-        from mulimgviewer.src.video_tools import read_video_file_list
+        from mulimgviewer.src.video_source import read_video_file_list
         (self.root/'01.mp4').write_bytes(b'video')
         listing=self.root/'videos.csv'
         listing.write_text('01.mp4,1.mp4\n',encoding='utf-8')
@@ -66,7 +66,7 @@ class VideoToolTests(unittest.TestCase):
         other=self.root/'other'
         for name in expected:self.command(other,name)
         with patch('sys.prefix',str(self.prefix)),self.environment(str(other)), \
-                patch('mulimgviewer.src.video_tools.application_video_tools_dir',return_value=other):
+                patch('mulimgviewer.src.video_source.application_video_tools_dir',return_value=other):
             tools,_=resolve_video_tools()
         self.assertEqual(tools,expected)
 
@@ -87,7 +87,7 @@ class VideoToolTests(unittest.TestCase):
                 def which(command):
                     return str(Path(command).resolve()) if os.path.isabs(command) and str(Path(command).resolve()) in available else None
                 with patch('sys.platform',platform),patch('sys.prefix',str(self.prefix)),self.environment(), \
-                        patch('mulimgviewer.src.video_tools.shutil.which',side_effect=which):
+                        patch('mulimgviewer.src.video_source.shutil.which',side_effect=which):
                     tools,_=resolve_video_tools()
                 self.assertEqual(tools,expected)
 
@@ -102,7 +102,7 @@ class VideoToolTests(unittest.TestCase):
         directory=self.root/'application/tools/ffmpeg/bin'
         expected={name:self.command(directory,name) for name in ('ffmpeg','ffprobe')}
         with patch('sys.prefix',str(self.prefix)),self.environment(), \
-                patch('mulimgviewer.src.video_tools.application_video_tools_dir',return_value=directory):
+                patch('mulimgviewer.src.video_source.application_video_tools_dir',return_value=directory):
             tools,env=resolve_video_tools()
             self.assertEqual(tools,expected)
             self.assertEqual(os.environ['PATH'],'')
@@ -126,7 +126,7 @@ class VideoToolTests(unittest.TestCase):
                 except ValueError:
                     return None
             return real_which(command)
-        lookup = patch('mulimgviewer.src.video_tools.shutil.which', side_effect=local_which)
+        lookup = patch('mulimgviewer.src.video_source.shutil.which', side_effect=local_which)
         lookup.start()
         self.addCleanup(lookup.stop)
 

@@ -8,7 +8,7 @@ from concurrent.futures import Future,ThreadPoolExecutor
 from pathlib import Path
 from unittest.mock import patch
 sys.path.insert(0,str(Path(__file__).resolve().parents[2]/'src'))
-from mulimgviewer.src.dependency_scheduler import DependencyScheduler,gather
+from mulimgviewer.src.pipeline_executor import DependencyScheduler,gather
 from mulimgviewer.src.pipeline_executor import PipelineWorkers
 
 
@@ -78,7 +78,7 @@ class DependencyTests(unittest.TestCase):
             import sys,time
             from concurrent.futures import ThreadPoolExecutor
             sys.path.insert(0,'src')
-            from mulimgviewer.src.dependency_scheduler import DependencyScheduler
+            from mulimgviewer.src.pipeline_executor import DependencyScheduler
             scheduler=DependencyScheduler()
             pool=ThreadPoolExecutor(1)
             dependency=pool.submit(lambda:time.sleep(.05))

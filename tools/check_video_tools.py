@@ -4,7 +4,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'src'))
-from mulimgviewer.src.video_tools import resolve_video_tools
+from mulimgviewer.src.video_source import resolve_video_tools
 
 
 def main():

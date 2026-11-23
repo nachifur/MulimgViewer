@@ -7,7 +7,7 @@
 ## PLEASE DO *NOT* EDIT THIS FILE!
 ###########################################################################
 
-from ..src.settings_section import SettingsSection
+from ..src.settings_panel import SettingsSection
 import wx
 import wx.xrc
 

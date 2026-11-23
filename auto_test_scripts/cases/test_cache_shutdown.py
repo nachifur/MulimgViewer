@@ -7,7 +7,7 @@ import threading
 import unittest
 from unittest.mock import patch
 sys.path.insert(0,str(Path(__file__).resolve().parents[2]/'src'))
-from mulimgviewer.src.cache_shutdown import schedule_cache_removal, clear_cache_on_startup
+from mulimgviewer.src.cache_layout import schedule_cache_removal, clear_cache_on_startup
 
 
 class ShutdownTests(unittest.TestCase):
@@ -112,7 +112,7 @@ class StartupTests(unittest.TestCase):
                 calls.append(path)
                 if len(calls)==1:raise PermissionError('transient sharing failure')
                 remove(path)
-            with patch('mulimgviewer.src.cache_shutdown.shutil.rmtree',side_effect=removing),patch('mulimgviewer.src.cache_shutdown.time.sleep'):
+            with patch('mulimgviewer.src.cache_layout.shutil.rmtree',side_effect=removing),patch('mulimgviewer.src.cache_layout.time.sleep'):
                 self.assertTrue(clear_cache_on_startup(root))
             self.assertEqual(len(calls),2)
 
@@ -127,7 +127,7 @@ class StartupTests(unittest.TestCase):
                 count.append(path)
                 if len(count)==1:raise FileNotFoundError('a child disappeared')
                 remove(path)
-            with patch('mulimgviewer.src.cache_shutdown.shutil.rmtree',side_effect=removing),patch('mulimgviewer.src.cache_shutdown.time.sleep'):
+            with patch('mulimgviewer.src.cache_layout.shutil.rmtree',side_effect=removing),patch('mulimgviewer.src.cache_layout.time.sleep'):
                 self.assertTrue(clear_cache_on_startup(root))
             self.assertFalse(root.exists())
             self.assertEqual(len(count),2)
@@ -139,7 +139,7 @@ class StartupTests(unittest.TestCase):
                 root.rename(Path(directory)/'old_cache')
                 root.mkdir();(root/'new.png').write_bytes(b'new session')
                 raise PermissionError('transient failure')
-            with patch('mulimgviewer.src.cache_shutdown.shutil.rmtree',side_effect=replacing),patch('mulimgviewer.src.cache_shutdown.time.sleep'):
+            with patch('mulimgviewer.src.cache_layout.shutil.rmtree',side_effect=replacing),patch('mulimgviewer.src.cache_layout.time.sleep'):
                 with self.assertRaisesRegex(ValueError,'was replaced'):
                     clear_cache_on_startup(root)
             self.assertEqual((root/'new.png').read_bytes(),b'new session')
@@ -147,7 +147,7 @@ class StartupTests(unittest.TestCase):
     def test_startup_aborts_if_cleanup_cannot_complete(self):
         with tempfile.TemporaryDirectory() as directory:
             root=Path(directory)/'cache_frames';root.mkdir()
-            with patch('mulimgviewer.src.cache_shutdown.shutil.rmtree',side_effect=PermissionError('in use')),patch('mulimgviewer.src.cache_shutdown.time.sleep'):
+            with patch('mulimgviewer.src.cache_layout.shutil.rmtree',side_effect=PermissionError('in use')),patch('mulimgviewer.src.cache_layout.time.sleep'):
                 with self.assertRaisesRegex(RuntimeError,'Cannot clear previous cache'):
                     clear_cache_on_startup(root)
             self.assertTrue(root.exists())
@@ -169,7 +169,7 @@ class StartupTests(unittest.TestCase):
             actual=Path.is_symlink
             def is_link(path):return path==root or actual(path)
             with self.subTest(link_kind=link_kind),patch.object(Path,'is_symlink',is_link),\
-                 patch('mulimgviewer.src.cache_shutdown.shutil.rmtree') as remove:
+                 patch('mulimgviewer.src.cache_layout.shutil.rmtree') as remove:
                 with self.assertRaises(ValueError):clear_cache_on_startup(root)
                 remove.assert_not_called()
             self.assertEqual(original.read_bytes(),b'original')

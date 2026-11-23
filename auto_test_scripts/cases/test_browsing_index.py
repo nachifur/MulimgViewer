@@ -5,8 +5,8 @@ import tempfile
 from pathlib import Path
 from types import SimpleNamespace
 sys.path.insert(0,str(Path(__file__).resolve().parents[2]/'src'))
-from mulimgviewer.src.video_timeline import page_count,page_segments,raw_dependencies
-from mulimgviewer.src.index_catalog import IndexCatalog
+from mulimgviewer.src.video_source import page_count,page_segments,raw_dependencies
+from mulimgviewer.src.index_table import IndexCatalog
 
 
 class AutoLayoutAdviceTests(unittest.TestCase):
@@ -60,7 +60,7 @@ class TimelineTests(unittest.TestCase):
     def test_long_video_frame_names_and_cross_video_pages_are_lazy(self):
         from unittest.mock import patch
         from mulimgviewer.src.utils_img import ImgManager
-        from mulimgviewer.src.video_paths import FrameNames, frame_filename
+        from mulimgviewer.src.video_source import FrameNames, frame_filename
         counts = [10**9+1, 10**9+2]
         with tempfile.TemporaryDirectory() as directory:
             paths = [Path(directory)/str(index) for index in (0,1)]
@@ -70,7 +70,7 @@ class TimelineTests(unittest.TestCase):
                          parallel_to_sequential=True, video_fps_list=[24.,30.], video_num_list=counts)
             manager.set_count_per_action(3)
             manager.set_action_count(counts[0]//3)
-            with patch('mulimgviewer.src.video_paths.frame_filename', wraps=frame_filename) as names:
+            with patch('mulimgviewer.src.video_source.frame_filename', wraps=frame_filename) as names:
                 files = manager.get_flist()
                 self.assertEqual(names.call_count, 3)
             expected = [str(paths[0]/frame_filename(counts[0]-2,24.)),
@@ -131,7 +131,7 @@ class TimelineTests(unittest.TestCase):
                     self.assertTrue(model.row(1,0)[4])
 
     def test_visual_order_interleaves_nested_rows_and_virtual_paths(self):
-        from mulimgviewer.src.visual_catalog import visual_cells
+        from mulimgviewer.src.index_table import visual_cells
         order=list(visual_cells((1,2),(2,2)))
         self.assertEqual([slot for y,x,slot in order],[0,1,4,5,2,3,6,7])
         model=self.model()

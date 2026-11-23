@@ -7,7 +7,7 @@ from pathlib import Path
 from unittest.mock import Mock, patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'src'))
-from mulimgviewer.src import memory_reclaim as memory
+from mulimgviewer.src import resources as memory
 
 
 class NativeReleaseTests(unittest.TestCase):

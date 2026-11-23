@@ -3,7 +3,7 @@
 Only metadata is queued. User pixels exist while a task holds a resource permit;
 completed results are disk-backed JPG/PNG paths. Waiters never hold a pixel/CPU permit.
 """
-from .jpeg_policy import cache_quality
+from .image_encoding import cache_quality
 import hashlib
 import json
 import re
@@ -23,11 +23,10 @@ from PIL import Image
 from .custom_func.contract import specification, processing_indices, display_grid, display_indices
 from .custom_func.runtime import state, execution_lock
 from .cache_layout import VisibleCache, processed_names, component, source_record, cache_image_extension, save_cache_image
-from .custom_workers import ImageWorkers
-from .stage_allocator import allocate_stages
-from .dependency_scheduler import DependencyScheduler, gather, prepared, run_inline
-from .thread_optimizer import available_memory_bytes
-from .video_memory import mosaic_working_bytes
+from .pipeline_executor import ImageWorkers
+from .playback_policy import allocate_stages, available_memory_bytes
+from .pipeline_executor import DependencyScheduler, gather, prepared, run_inline
+from .canvas import mosaic_working_bytes
 
 
 def readable_name(value, limit):
@@ -380,7 +379,7 @@ class CustomPipeline:
             # A preview mosaic is an export mosaic only when BOTH scales
             # match. Use the production render key, not its public filename.
             if list(manager.layout_params[4])==list(manager.layout_params[5]):
-                from .mosaic_pipeline import mosaic_request_key
+                from .image_pipeline import mosaic_request_key
                 from .custom_func.contract import original_index,display_indices
                 original=original_index(manager._custom_algorithm_registry)
                 mosaics={}
@@ -674,7 +673,7 @@ class CustomPipeline:
         params=manager.layout_params
         if getattr(self,'pixel_cache',None) is None or not sizes or len(params)<=6 or not params[4] or not params[6]:
             return None
-        from .video_memory import source_resolution
+        from .canvas import source_resolution
         resolution=source_resolution(sizes,params[6],getattr(manager,'img_stitch_mode',0))
         return tuple(max(1,int(value*scale)) for value,scale in zip(resolution,params[4]))
 

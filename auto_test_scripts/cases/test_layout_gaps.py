@@ -9,7 +9,7 @@ from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'src'))
 from PIL import Image
-from mulimgviewer.src.layout_gaps import GROUPS, gap_pair, normalize_gaps
+from mulimgviewer.src.render_layout import GROUPS, gap_pair, normalize_gaps
 from mulimgviewer.src.configuration import read_config
 from mulimgviewer.src.utils_img import ImgManager
 

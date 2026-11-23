@@ -1900,7 +1900,7 @@
                             <property name="resize">Resizable</property>
                             <property name="show">1</property>
                             <property name="size">-1,-1</property>
-                            <property name="subclass">SettingsSection; ..src.settings_section; </property>
+                            <property name="subclass">SettingsSection; ..src.settings_panel; </property>
                             <property name="toolbar_pane">0</property>
                             <property name="tooltip"></property>
                             <property name="window_extra_style"></property>
@@ -2573,7 +2573,7 @@
                             <property name="resize">Resizable</property>
                             <property name="show">1</property>
                             <property name="size">-1,-1</property>
-                            <property name="subclass">SettingsSection; ..src.settings_section; </property>
+                            <property name="subclass">SettingsSection; ..src.settings_panel; </property>
                             <property name="toolbar_pane">0</property>
                             <property name="tooltip"></property>
                             <property name="window_extra_style"></property>
@@ -3586,7 +3586,7 @@
                             <property name="resize">Resizable</property>
                             <property name="show">1</property>
                             <property name="size">-1,-1</property>
-                            <property name="subclass">SettingsSection; ..src.settings_section; </property>
+                            <property name="subclass">SettingsSection; ..src.settings_panel; </property>
                             <property name="toolbar_pane">0</property>
                             <property name="tooltip"></property>
                             <property name="window_extra_style"></property>
@@ -6352,7 +6352,7 @@
                             <property name="resize">Resizable</property>
                             <property name="show">1</property>
                             <property name="size">-1,-1</property>
-                            <property name="subclass">SettingsSection; ..src.settings_section; </property>
+                            <property name="subclass">SettingsSection; ..src.settings_panel; </property>
                             <property name="toolbar_pane">0</property>
                             <property name="tooltip"></property>
                             <property name="window_extra_style"></property>
@@ -7045,7 +7045,7 @@
                             <property name="resize">Resizable</property>
                             <property name="show">1</property>
                             <property name="size">-1,-1</property>
-                            <property name="subclass">SettingsSection; ..src.settings_section; </property>
+                            <property name="subclass">SettingsSection; ..src.settings_panel; </property>
                             <property name="toolbar_pane">0</property>
                             <property name="tooltip"></property>
                             <property name="window_extra_style"></property>
@@ -7843,7 +7843,7 @@
                             <property name="resize">Resizable</property>
                             <property name="show">1</property>
                             <property name="size">-1,-1</property>
-                            <property name="subclass">SettingsSection; ..src.settings_section; </property>
+                            <property name="subclass">SettingsSection; ..src.settings_panel; </property>
                             <property name="toolbar_pane">0</property>
                             <property name="tooltip"></property>
                             <property name="window_extra_style"></property>
@@ -9061,7 +9061,7 @@
                             <property name="resize">Resizable</property>
                             <property name="show">1</property>
                             <property name="size">-1,-1</property>
-                            <property name="subclass">SettingsSection; ..src.settings_section; </property>
+                            <property name="subclass">SettingsSection; ..src.settings_panel; </property>
                             <property name="toolbar_pane">0</property>
                             <property name="tooltip"></property>
                             <property name="window_extra_style"></property>
@@ -10614,7 +10614,7 @@
                             <property name="resize">Resizable</property>
                             <property name="show">1</property>
                             <property name="size">-1,-1</property>
-                            <property name="subclass">SettingsSection; ..src.settings_section; </property>
+                            <property name="subclass">SettingsSection; ..src.settings_panel; </property>
                             <property name="toolbar_pane">0</property>
                             <property name="tooltip"></property>
                             <property name="window_extra_style"></property>
@@ -11588,7 +11588,7 @@
                             <property name="resize">Resizable</property>
                             <property name="show">1</property>
                             <property name="size">-1,-1</property>
-                            <property name="subclass">SettingsSection; ..src.settings_section; </property>
+                            <property name="subclass">SettingsSection; ..src.settings_panel; </property>
                             <property name="toolbar_pane">0</property>
                             <property name="tooltip"></property>
                             <property name="window_extra_style"></property>

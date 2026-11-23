@@ -17,10 +17,9 @@ from fractions import Fraction
 from PIL import Image
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]/'src/mulimgviewer/src'))
 from pipeline_executor import PipelineWorkers
-from video_memory import PixelCache, LazyVideoImage
+from canvas import PixelCache, LazyVideoImage
 from video_decoder import DecoderBank, DecoderSession, av
-from video_seek_index import PacketKeyframeIndex
-from video_index_store import VideoIndexStore, index_cache_directory
+from video_decoder import PacketKeyframeIndex, VideoIndexStore, index_cache_directory
 
 
 class WorkerBudgetTests(unittest.TestCase):
@@ -300,7 +299,7 @@ class PacketSeekIndexTests(unittest.TestCase):
         index.close()
 
     def test_cancelling_a_silent_native_probe_reaps_child_and_pipe_reader(self):
-        from video_seek_index import tracked_video_process
+        from video_decoder import tracked_video_process
         index,_=self.make_index(2000)
         index.probe_time_base=Fraction(1,1000)
         entered,stop=threading.Event(),threading.Event()
@@ -311,7 +310,7 @@ class PacketSeekIndexTests(unittest.TestCase):
                 children.append(child);entered.set()
                 yield child
         from concurrent.futures import ThreadPoolExecutor
-        with patch('video_seek_index.tracked_video_process',silent), ThreadPoolExecutor(1) as pool:
+        with patch('video_decoder.tracked_video_process',silent), ThreadPoolExecutor(1) as pool:
             job=pool.submit(index.ensure,300,stop.is_set)
             try:
                 self.assertTrue(entered.wait(3))
@@ -355,10 +354,10 @@ class PacketSeekIndexTests(unittest.TestCase):
 class PersistentSeekIndexTests(unittest.TestCase):
     def test_platform_cache_paths_respect_standard_locations_and_override(self):
         home=Path(tempfile.gettempdir())/'index-home'
-        with patch.dict(os.environ,{},clear=True),patch('video_index_store.Path.home',return_value=home):
+        with patch.dict(os.environ,{},clear=True),patch('video_decoder.Path.home',return_value=home):
             for platform,expected in (('win32',home/'AppData'/'Local'),
                                       ('darwin',home/'Library'/'Caches'),('linux',home/'.cache')):
-                with patch('video_index_store.sys.platform',platform):
+                with patch('video_decoder.sys.platform',platform):
                     self.assertEqual(index_cache_directory(),expected/'MulimgViewer'/'video_indexes')
             os.environ['MULIMGVIEWER_INDEX_CACHE']=str(home/'override')
             self.assertEqual(index_cache_directory(),home/'override')
@@ -658,7 +657,7 @@ class DecoderAccuracyTests(unittest.TestCase):
         finally:decoder.close()
 
     def test_mp4_table_parser_matches_packet_ordinals_and_rejects_truncated_boxes(self):
-        from video_mp4_index import mp4_keyframes
+        from video_decoder import mp4_keyframes
         with av.open(self.path) as container:time_base=container.streams.video[0].time_base
         baseline=PacketKeyframeIndex(self.path,av.open)
         try:
@@ -671,7 +670,7 @@ class DecoderAccuracyTests(unittest.TestCase):
             self.assertIsNone(mp4_keyframes(str(path),av.open,time_base,65))
 
     def test_fragmented_mp4_falls_back_to_exact_packet_indexing(self):
-        from video_mp4_index import mp4_keyframes
+        from video_decoder import mp4_keyframes
         path=str(Path(self.temp.name)/'fragmented.mp4')
         subprocess.run(['ffmpeg','-v','error','-i',self.path,'-c','copy',
             '-movflags','frag_keyframe+empty_moov','-y',path],check=True,capture_output=True)

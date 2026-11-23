@@ -3,7 +3,7 @@ import sys
 import unittest
 from pathlib import Path
 sys.path.insert(0,str(Path(__file__).resolve().parents[2]/'src/mulimgviewer/src'))
-from admission_optimizer import AdaptiveAdmissionBudget
+from playback_policy import AdaptiveAdmissionBudget
 
 
 class AdmissionTests(unittest.TestCase):

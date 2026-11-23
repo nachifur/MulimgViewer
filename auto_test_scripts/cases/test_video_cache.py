@@ -36,21 +36,22 @@ from PIL import Image
 # Load the actual classes without importing the GUI/application startup tree.
 source = Path(__file__).resolve().parents[2] / 'src/mulimgviewer/src/video_manager.py'
 sys.path.insert(0, str(source.parent))
-from dependency_scheduler import prepared, gather, run_inline
-from viewer_state import SharedConfig
-from video_timeline import page_count, page_segments, raw_dependencies
-from jpeg_policy import jpeg_quality, ffmpeg_jpeg_args, ffmpeg_jpeg_options
-from video_paths import frame_filename, cache_extension, video_source_names
+from pipeline_executor import prepared, gather, run_inline
+from mulimgviewer.src.data import SharedConfig
+from video_source import page_count, page_segments, raw_dependencies
+from image_encoding import jpeg_quality, ffmpeg_jpeg_args, ffmpeg_jpeg_options
+from video_source import frame_filename, video_source_names
+from image_encoding import cache_extension
 from cache_layout import open_rendered_canvas, page_name, save_cache_image, write_page_catalog, remove_page_catalog
-from thread_optimizer import (AdaptiveThreadAllocator, optimize_thread_allocation,
+from playback_policy import (AdaptiveThreadAllocator, optimize_thread_allocation,
                               available_memory_bytes, stitch_memory_limit, buffer_levels, buffer_priority, ThreadAllocation)
-from resource_monitor import run_video_process
-from stage_allocator import allocate_stages
+from resources import run_video_process
+from playback_policy import allocate_stages
 from pipeline_executor import PipelineWorkers
-from admission_optimizer import AdaptiveAdmissionBudget
+from playback_policy import AdaptiveAdmissionBudget
 from video_decoder import DecoderBank
-from video_memory import PixelCache, source_resolution, rgba_display
-from playback_pacer import PlaybackPacer, ProductionJob, completion_estimates, refill_guard
+from canvas import PixelCache, source_resolution, rgba_display
+from playback_policy import PlaybackPacer, ProductionJob, completion_estimates, refill_guard
 tree = ast.parse(source.read_text(encoding='utf-8'))
 classes = [node for node in tree.body if isinstance(node, ast.ClassDef)
            and node.name in ('PerformanceMonitor', 'VideoManager')]
@@ -544,7 +545,7 @@ class VideoCacheTests(unittest.TestCase):
         self.assertTrue(prepared.readonly,'Display pixels should share their immutable RGBA buffer')
 
     def test_rgba_display_shares_one_buffer_preserves_alpha_and_keeps_cached_pixels_immutable(self):
-        from video_memory import rgba_display
+        from canvas import rgba_display
         for mode,color in (('RGB',(40,80,120)),('RGBA',(40,80,120,42)),('L',50),('I;16',1000)):
             with self.subTest(mode=mode):
                 source=Image.new(mode,(8,6),color)

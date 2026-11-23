@@ -9,7 +9,7 @@ import sys
 
 ROOT=Path(__file__).resolve().parents[2]
 sys.path.insert(0,str(ROOT/'src'))
-from mulimgviewer.src.video_tools import resolve_video_tools
+from mulimgviewer.src.video_source import resolve_video_tools
 
 
 def main():

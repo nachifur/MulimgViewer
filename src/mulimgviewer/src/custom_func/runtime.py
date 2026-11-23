@@ -40,7 +40,7 @@ def check_processing_budget(manager, flist):
             pixels += image.width*image.height
     estimate=pixels*(16+4*copies)
     if estimate>budget or estimate>=32*1024**2:
-        from ..thread_optimizer import available_memory_bytes
+        from ..playback_policy import available_memory_bytes
         available=available_memory_bytes()
         if (available is None and estimate>budget) or (available is not None and estimate>available*.85):
             raise MemoryError('Not enough available system memory for custom processing')

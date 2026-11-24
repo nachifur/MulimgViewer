@@ -16,15 +16,13 @@
 
 # MulimgViewer
 
-**注意：目前最新代码存在大量bug，如需体验新功能，请使用这个版本的代码：https://github.com/nachifur/MulimgViewer/tree/0d6e6a5570eeb6076342590078516de212cb3375**
-
-Doc: [**English Doc**](https://mulimgviewer.readthedocs.io/en/latest/) | [**完整官网文档**](https://mulimgviewer.readthedocs.io) | [**Wiki**](https://github.com/nachifur/MulimgViewer/wiki)
+Doc: [**English Doc**](https://mulimgviewer.readthedocs.io/en/) | [**完整官网文档**](https://mulimgviewer.readthedocs.io/zh-cn/) | [**Wiki**](https://github.com/nachifur/MulimgViewer/wiki)
 
 
 
 Mirror: [**国内gitee镜像项目**](https://gitee.com/nachifur/MulimgViewer) | [**果壳OpenCas镜像项目**](https://github.com/opencas/MulimgViewer)
 
-Link: [**快速入门**](https://mulimgviewer.readthedocs.io/zh_CN/latest/resources/usage.html) | [**下载和安装**](https://mulimgviewer.readthedocs.io/zh_CN/latest/resources/install.html)
+Link: [**快速入门**](https://mulimgviewer.readthedocs.io/zh-cn/resources/usage.html) | [**下载和安装**](https://mulimgviewer.readthedocs.io/zh-cn/resources/install.html)
 
 如果有一些超链接失效，请通过[issue](https://github.com/nachifur/MulimgViewer/issues/new/choose)反馈。
 

@@ -7,8 +7,9 @@ build:
   tools:
     python: "3"
   jobs:
-    post_system_dependencies:
-      - sed -i /wxpython/d requirements.txt
+    post_install:
+      # docs/conf.py reads the package version and favicon; neither needs the GUI.
+      - python -m pip install --no-deps .
 
 sphinx:
   configuration: docs/conf.py

@@ -1,114 +1,47 @@
-# MulimgViewer开发指南
+# 开发指南
 
-## 加入我们吧！
-**初衷**：目前的市面上的图像浏览器不能同时显示多张图像。2020.8.10诞生的MulimgViewer，希望可以让大家方便地进行多张图像的显示和比较。恍惚一世，希望能在这个世界留下痕迹。
+从项目根目录按[安装与自检](../resources/install.md)创建环境。修改前先用仓库的微型素材跑通目标操作；修改后用相同输入比较显示、缓存和导出结果。
 
-**定位**：MulimgViewer，即multi-image viewer。该软件**核心功能**是：多张图像并行显示、比较。
+## 从功能找到入口
 
-**目标**：期待MulimgViewer走向世界的每一个角落。
+下表中的实现文件位于 `src/mulimgviewer/src/`，界面定义位于同级的 `gui/`。
 
-**开发**：每个人都希望定制自己的MulimgViewer，但一个包含各种各样功能的软件也许不是大家喜欢的。开发一些受众较广的功能，这会帮助到更多的人，这是我们期望的。另外，进一步完善扩展核心功能也是需要的。
+| 要修改的行为 | 从这里读起 |
+| --- | --- |
+| 主窗口、打开来源、按钮和绘图交互 | `main.py`；图像来源与索引数据见 `data.py` |
+| 拆帧、长视频寻帧、视频缓存调度 | `video_source.py`、`video_decoder.py`、`video_manager.py` |
+| 图像异步显示、播放节奏、任务预算 | `image_pipeline.py`、`playback_controls.py`、`playback_policy.py`、`pipeline_executor.py` |
+| 算法执行、布局、缓存路径 | `custom_pipeline.py`、`render_layout.py`、`cache_layout.py` |
+| 后台保存与编码 | `export_controller.py`、`image_encoding.py` |
+| 配置、右侧设置栏、状态栏和索引表 | `configuration.py`、`settings_panel.py`、`status_bar.py`、`index_table.py` |
 
-**如何参与开发？**
-我们真诚地感谢您加入MulimgViewer的开发。
+### 修改 GUI
 
-参与做出贡献的途径：（由易到难）
-1. 项目的宣传。如：QQ、微信、知乎文章、CSDN博客、公众号等。
-2. readme的优化。如：提升readme的易读性、完善某一功能的介绍。
-3. ubuntu和ios等平台的打包。（该功能目前由@wzy负责）
-4. pip安装途径的支持和维护。（该功能目前由@wzy负责）
-5. 通过issue反馈bug，并提交commit解决这个bug。
-6. 已有功能的改进。如：运行速度的优化、版本更新提示。
-7. 新功能的开发。
-8. 架构的优化。
-9. 我们期待每个用户任意的改进意见！
+1. 用 wxFormBuilder 打开对应的 `.fbp`，例如 `src/mulimgviewer/gui/main_gui.fbp`，修改控件和事件绑定。
+2. 运行 `python tools/generate_gui.py` 重新生成界面。若生成器不在 PATH，在命令末尾加 `--generator "可执行文件的完整路径"`。用 `--check` 检查生成文件与定义是否匹配。
+3. 在实现层连接回调。布局参数沿用“修改多项后手动刷新”的交互；后台任务使用应用后的设置，保存使用点击时的参数。新增设置需检查加载、保存、重置和旧配置兼容。
+4. 打开主窗口实际操作一次，覆盖图像和视频两条入口，再执行对应测试。
 
-新功能的开发：
-1. 假如您有任何好的idea，在github上提一个issue。
-2. 在这个issue中，我们可以讨论具体功能的实现细节。也可以在qq上交流，最后把讨论的结果记录到issue中。
-3. 正常的开发流程：fork到自己本地->新建一个分支->实现功能->自行调试成功->合并到主分支。
-4. 如果您希望深度地、持续地参与到项目的开发中，可以邮件(liujiawei18@mails.ucas.ac.cn)联系我。我会邀请您开发此软件，您可以获得直接访问该项目的权限，这有利于快速及时地更新主分支。
+### 添加图像处理算法
 
-## 文件说明
-项目框架：
-```
-MulimgViewer/src/mulimgviewer/
-    * font/using                    # 7. Store preset fonts for use in displaying titles.
-    * gui
-        - about_gui.fbp
-        - about_gui.py
-        - index_table_gui.fbp
-        - index_table_gui.py
-        - main_gui.fbp              # 4. Using wxFormBuilder can modify the GUI interface and generate the corresponding main_gui.py file.
-        - main_gui.py               # 3. The GUI of main.py
-        - path_select_gui.fbp
-        - path_select_gui.py
-    * images
-    * src
-        * custom_func
-            - main.py               # 11. Interface for User-customized Image Processing Functions.
-        - main.py                   # 2. Main file, implementing the main logic functionality (callback functions).
-        - data.py                   # 5. Load data.
-        - utils_img.py              # 6. Image processing functions.
-        - path_select.py            # 8. Choose the path in "Parallel manual" mode.
-        - about.py                  # 9. Help.
-        - index_table.py            # 10. Text List of images
-        - utils.py                  # 11. Other Functions
-    - __main__.py.py                # 1. Start
+在 `src/mulimgviewer/src/custom_func/<算法名>/main.py` 中实现单图核函数。例如内置的 Gaussian Blur：
 
-```
-## 开发流程
-### GUI的创建
-GUI使用[wxFormBuilder](https://github.com/wxFormBuilder/wxFormBuilder)创建。wxFormBuilder的安装：
-1. window平台可以直接下载[exe](https://github.com/wxFormBuilder/wxFormBuilder/releases)。
-2. linux平台可以下载`.deb`，或者使用`.flatpak`。
-3. ubuntu18.04下的安装，可以见[参考](https://nachifur.blog.csdn.net/article/details/107702485).
-4. 目前MulimgViewer使用的wxFormBuilder版本为：v3.10.1。大家也可以使用最新的版本。
+```python
+from PIL import ImageFilter
 
-### 编写实现GUI的回调函数
-为了分离GUI和功能实现，对于`MulimgViewer/src/mulimgviewer/gui`路径下的文件，不建议手动直接修改。具体的操作如下：
-1. wxFormBuilder创建GUI文件`MulimgViewer/src/mulimgviewer/gui/main.fbp`。
-2. 使用自动生成代码，生成`MulimgViewer/src/mulimgviewer/gui/main_gui.py`。只需在wxFormBuilder的GUI中，点击代码生成按钮即可生成`.py`。
+THREAD_SAFE = True
 
-![f19](https://user-images.githubusercontent.com/32936898/224470780-2f663d08-5a64-4f56-9d86-a350fbe90f81.jpg)
-
-3. 修改`MulimgViewer/src/mulimgviewer/src/main.py`实现回调函数。
-
-事实上，wxFormBuilder生成的python的GUI代码是wxpython。更多关于回调函数、事件等可见:
-* [wxpython doc](https://docs.wxpython.org/index.html)
-* [wxpython 自定义事件、线程安全、多线程交互、版本更新](https://nachifur.blog.csdn.net/article/details/124809333)
-
-### 跨平台的支持
-MulimgViewer的所有功能均采用python编写，这保证了跨平台的使用。但是windows和linux的路径是有区别的。**直接使用`D:\ncfey\Desktop\`，是非常糟糕的**，这会破坏跨平台。因为我们**强烈建议**使用：
-```
-from pathlib import Path
-```
-[pathlib使用说明](https://zhuanlan.zhihu.com/p/13978333)
-
-### 跨平台运行环境与视频依赖
-
-推荐使用项目根目录的 `environment.yml` 创建环境。Windows、Linux 和 macOS 共用此文件；Conda 从 conda-forge 安装对应平台的 FFmpeg、wxPython 和其他原生依赖，pip 复用项目的 `requirements.txt` 安装 Python 依赖。环境文件不包含个人绝对路径或某个平台的构建编号。
-
-在项目根目录执行以下命令。若已有同名环境，可用 `conda env create -n mulimgviewer-new -f environment.yml` 创建新环境；不要为了安装视频工具而覆盖已有环境。
-
-```sh
-conda env create -f environment.yml
-conda activate mulimgviewer
-python tools/check_video_tools.py
-python MulimgViewer.py
+def process_image(image, *, context):
+    return image.filter(ImageFilter.GaussianBlur(radius=2))
 ```
 
-macOS 的 Conda wxPython 可能需要框架启动器：在该环境安装 `conda install -c conda-forge python.app`，然后使用 `pythonw MulimgViewer.py` 启动 GUI。工具检测脚本仍使用 `python`。参见 [wxPython 官方说明](https://www.wxpython.org/pages/downloads/)。
+输入和返回值均为 Pillow 图像，缓存与导出由框架负责。只有可安全并发调用的算法才声明 `THREAD_SAFE = True`。需要复用模型时，用 `setup()` 返回上下文，处理函数从 `context` 取得模型；框架在算法会话内复用它。批处理实现 `process_batch(images, *, context)`，输出与输入数量、顺序一致。设备、批量和释放接口可参照仓库的 `examples/custom_func/GPU Sharpen/`。
 
-只需为已有环境补装视频工具时，执行 `conda install -n mulimgviewer -c conda-forge ffmpeg`，并使用该环境的 Python 运行 `tools/check_video_tools.py`。此脚本会输出实际解释器和两个工具的路径、执行版本检查，失败时以非零状态退出；`ffmpeg-python` 是调用封装，不能代替 FFmpeg 和 FFprobe 可执行程序。
+调试时先用 **Selected** 验证单算法，再用 **All algorithms** 对照。源帧就绪后，后台可处理各算法，生成各自的拼接，再合成最终页面。检查布局变化、快速跳页和关闭窗口时过期结果的处理；只测单个函数的耗时不能说明整页播放性能。
 
-工具查找顺序为：`FFMPEG_BINARY` / `FFPROBE_BINARY` 显式设置、当前 Python 环境、系统 PATH、平台常见目录、可选的 `tools/ffmpeg/bin`、当前环境登记的同版本 Conda 包缓存。Windows 使用 `.exe` 与 `Library/bin`；Linux/macOS 使用无扩展名程序与 `bin`。过期的 `CONDA_PREFIX` 不会覆盖实际运行的解释器。程序只为子进程构造依赖搜索路径，不修改系统 PATH，不自动安装或下载软件。
+## 性能与回归
 
-`tools/ffmpeg/bin` 只是便携部署的可选兜底，不是运行所必需的目录，也不能把 Windows 的 `.exe` 分发给 Linux/macOS 使用。该目录中的本机二进制已加入 Git 忽略规则。Conda 安装和环境管理方式参见 [conda-forge FFmpeg](https://anaconda.org/channels/conda-forge/packages/ffmpeg) 和 [Conda 环境文档](https://docs.conda.io/projects/conda/en/stable/user-guide/tasks/manage-environments.html)。
-
-如果包记录显示 FFmpeg 已安装，但文件缺失，可执行 `conda install -n mulimgviewer -c conda-forge --force-reinstall ffmpeg` 后重新检测。若文件再次消失或启动被拒绝，需要检查本机的文件删除、隔离或权限原因；仅重新配置 PATH 无法修复缺失的程序。
-
-`.github/workflows/video-environment.yml` 在 Windows、Linux、macOS 上从该环境文件安装依赖，检查 FFmpeg/FFprobe 能否启动、原生 Python 依赖能否导入，并执行不依赖 GUI 的工具查找测试。这些检查不等同于三平台完整 GUI 回归；完整功能回归仍使用下面的入口执行。
+做性能对比时固定来源、布局、显示比例、算法和缓存窗口，分别记录冷启动首屏、深处跳转首屏、稳定播放与供给 FPS、CPU 和内存。记录性能模式、操作系统和处理器，区分首次构建与已经命中缓存的结果。工具和用法可从 `python auto_test_scripts/performance/benchmark_video_playback.py --help` 开始。
 
 ### 开发回归测试与 PR 审查
 
@@ -224,100 +157,22 @@ python auto_test_scripts/run_tests.py --failed "$reportPath/report.json"
 
 目前 CI 工作流配置为 Windows。Linux/macOS、实际 GPU 驱动与硬件、系统对话框外观及长时间运行仍应根据修改范围补充验证。详细案例和维护规则见 `auto_test_scripts/README.md`。
 
-### Readme | Translation
-* 当您提出一个issue，或者决定参与该项目的开发，可以添加到[todo.md](https://github.com/nachifur/MulimgViewer/blob/master/docs/misc/todo.md).
-* 当您完成一个功能的时候，可以在issue中添加该功能的`md`说明。在下一个版本release的时候，我们会更新`docs`（仅包含最新release版本的功能介绍）。
-* 当您完成一个功能的时候，可以添加到[acknowledgements.md](https://github.com/nachifur/MulimgViewer/blob/master/docs/misc/acknowledgements.md).
+## 构建文档与维护翻译
 
-#### 第 1 步：修改中文源文档
-
-从项目根目录编辑需要更新的 Markdown 文件，例如 `docs/dev/dev.md`。中文源文档是维护入口；英文版本通过 Sphinx 的语言目录生成，不需要再维护一份独立的英文 Markdown 副本。
+在仓库根目录执行以下命令，浏览器打开 `docs/_build/html/zh-cn/index.html`。要更新英文目录，先成功生成 POT，再运行翻译更新。
 
 ```sh
-vim docs/dev/dev.md
-```
-
-#### 第 2 步：生成并更新英文 PO 词条
-
-在项目根目录执行以下命令。先确认 Sphinx 成功生成 `docs/_build/gettext/dev/dev.pot`，再更新 PO。
-
-```sh
-python -m pip install sphinx sphinx-intl myst-parser sphinxcontrib-eval
+python -m pip install -r docs/requirements.txt sphinx-intl
+python -m sphinx -b html docs docs/_build/html/zh-cn
 python -m sphinx -b gettext docs docs/_build/gettext
 python -m sphinx_intl update -p docs/_build/gettext -d docs/locale -l en
 ```
 
-这些命令会自动提取中文并更新 PO 词条，不会自动完成英文翻译。开发指南对应的文件是 `docs/locale/en/LC_MESSAGES/dev/dev.po`。已有翻译会保留，新增或修改的内容需要补充或核对英文。
-
-如果提示 `Invalid value for pot_dir`，先检查当前目录和上一步的 `gettext` 构建日志。`-p` 必须指向实际生成 `.pot` 的目录。如果上一步生成到了 `docs/build/gettext`，请把 `-p` 改为 `docs/build/gettext`，或者按上面的命令重新生成。
-
-#### 第 3 步：填写对应的英文翻译
-
-在项目根目录编辑对应的 PO 文件。
-
-```sh
-vim docs/locale/en/LC_MESSAGES/dev/dev.po
-```
-
-保留 `msgid` 中的中文原文，在 `msgstr` 中填写英文。保留命令、文件路径、格式名称和参数名称；检查 Markdown 链接和代码标记。带 `fuzzy` 标记的词条需要人工确认，确认后移除该标记，否则构建时可能继续显示中文。
-
-```po
-msgid "开发回归测试与 PR 审查"
-msgstr "Development regression testing and PR review"
-```
-
-#### 第 4 步：构建并检查英文页面
+在 `docs/locale/en/LC_MESSAGES/` 对应的 PO 文件填写或核对 `msgstr`，移除已确认条目的 fuzzy 标记。保持命令、路径和链接可用，随后运行：
 
 ```sh
 python -m sphinx_intl build -d docs/locale -l en
 python -m sphinx -b html -D language=en docs docs/_build/html/en
 ```
 
-打开 `docs/_build/html/en/dev/dev.html`，确认新增章节显示英文，操作步骤、命令和表格完整。检查构建日志中的错误及与本次修改相关的警告；生成 PO 成功不代表翻译已经完成。
-
-如果出现 `ModuleNotFoundError: No module named 'mulimgviewer'`，在项目根目录执行 `python -m pip install -e .`，然后重新构建。
-
-#### 第 5 步：提交文档和对应翻译
-
-把修改后的 Markdown 与对应 PO 文件一起提交，例如 `docs/dev/dev.md` 和 `docs/locale/en/LC_MESSAGES/dev/dev.po`。检查暂存差异，保留无关文档的既有翻译；不要提交 `_build`、生成的 MO 文件或本地测试日志。
-
-
-## Release
-我们的下一个release版本的计划可见[projects](https://github.com/nachifur/MulimgViewer/projects)。
-
-### window的打包
-1. 安装：
-```
-pip install wxpython pillow pytest-shutil numpy requests
-```
-2. Windows打包
-```
-cd MulimgViewer
-```
-便携版：
-```
-pyinstaller -F -w -i ./src/mulimgviewer/mulimgviewer.png --add-data "./src/mulimgviewer/mulimgviewer.png;./src/mulimgviewer/" --add-data "./src/mulimgviewer/font/using;./src/mulimgviewer/font/using" --add-data "./src/mulimgviewer/images/flip_cursor.png;./src/mulimgviewer/images/" MulimgViewer.py
-```
-安装版：
-* 打包成一个文件夹：
-```
-pyinstaller -D -w -i ./src/mulimgviewer/mulimgviewer.png --add-data "./src/mulimgviewer/mulimgviewer.png;./src/mulimgviewer/" --add-data "./src/mulimgviewer/font/using;./src/mulimgviewer/font/using" --add-data "./src/mulimgviewer/images/flip_cursor.png;./src/mulimgviewer/images/" MulimgViewer.py
-```
-* 使用createinstall打包成可安装的`.exe`。[createinstall使用](https://blog.csdn.net/qq_41811438/article/details/103092610)
-
-
-### linux/ios/arm等平台的打包
-感谢@wzy。打包目前由@wzy主要负责。
-
-### 命名
-```
-MulimgViewer_3.9.3_win10_amd64_Portable.exe
-MulimgViewer_3.9.3_win10_amd64_Setup.exe
-MulimgViewer_3.9.3_ubuntu_amd64.deb
-MulimgViewer_3.9.3_ios_amd64.ipa
-```
-
-### 镜像维护
-我们目前支持以下两个镜像，release版本需要推送到这两个站点：
-* [**国内gitee镜像项目**](https://gitee.com/nachifur/MulimgViewer)
-* [**果壳OpenCas镜像项目**](https://github.com/opencas/MulimgViewer)
+Read the Docs 从每个 Git 分支或标签各自的 `.readthedocs.yaml` 构建。当前配置安装文档依赖，并以 `--no-deps` 安装本项目取得版本和图标；无需编译 wxPython。归档时在目标提交打标签，构建并核对页面后再切换默认版本。

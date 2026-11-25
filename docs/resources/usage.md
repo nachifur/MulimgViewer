@@ -1,249 +1,84 @@
-# 使用说明
+# 图像与视频浏览
 
-## 快捷栏
+## 第一次并排播放两段视频
 
-![Shortcut_bar](https://user-images.githubusercontent.com/32936898/224470802-9336ba25-2cc6-49f5-9468-058281b02ff4.jpg)
+每个分组的控件位置、输入格式和示例见[右侧设置栏](settings.md)。下图保留主窗口、右侧设置和底部页码，方便逐项对照。
 
-## 操作流程
+1. 展开右侧 **Input & Playback**，勾选 **Video mode**。在工具栏选择 **Parallel auto**。
+2. 在 **Layout & Display** 将 **Page** 设为 `1,2`（一行两列），**Per source** 设为 `1,1`。在 **Input & Playback** 取消 **Multiple frames per source** 和 **Play sources sequentially**。
+3. 点击工具栏的文件夹，选择仓库中的 `docs/media/example-videos`。按 **Ctrl+R** 应用布局。左格为猫咪（Cat.mp4），右格为海上日落（Sunset.mp4）。在线阅读时可下载 {download}`Cat.mp4 <../media/example-videos/Cat.mp4>` 和 {download}`Sunset.mp4 <../media/example-videos/Sunset.mp4>`，放入同一空目录后打开。
+4. 点 **>** 后点 **▶** 向前播放；点 **<** 后再点 **▶** 则向后播放。按 **Esc** 暂停。页码从 1 开始，可用滑块跳转。修改多个布局或算法参数后，统一刷新即可。
 
-测试图像下载地址：
-[test_img.zip](https://github.com/nachifur/MulimgViewer/files/10948418/test_img.zip)
+![并行播放示例：每一页保留左右两个来源，同时更新帧](../media/parallel-playback.gif)
 
-**注意：本软件不支持自动刷新，修改布局参数之后，需要手动刷新（`Ctrl+R`）。**
+要复现动图的尺寸，在 **Layout & Display** 将 **Display scale** 设为 `1,1`（两个演示片段均为 416 × 416），**Gaps (X,Y for each level)** 填 `8,8,6,6,0,0,0,0,0,0`，勾选 **Image**、**Title** 和 **Fit window to image**，取消 **Magnifier**，在 **Titles** 保留 **Auto title**，再按 **Ctrl+R**。画布中应出现 Cat、Sunset 两个标题；较矮的窗口可滚动右栏查看其余参数。动图逐页展示前五页，帧间停留时间用于阅读。
 
-![Quick_start](https://user-images.githubusercontent.com/32936898/224470801-9bc4c1eb-1e9c-40bd-9382-313916331e5e.jpg)
+图像模式也能这样比较。取消 **Video mode**，用 **Parallel auto** 打开 `auto_test_scripts/assets/images`（选择两个来源文件夹的上一级）。演示素材很短，适合练习操作；观察长期播放速度请换用自己的长视频。
 
-1. 在`Layout`中**填写布局参数**：`Row`（一行有几张图片）, `NumPerImg`（一个图片由几个子图片组成）, `Col`（一列有几个图片）。
-2. 选择**输入模式**
+## 选对输入和布局
 
-    2.1. Sequential: 一个文件夹多张图片。(`test_input/01`)
+| 工具栏模式 | 图像输入 | 视频输入 | 适用场景 |
+| --- | --- | --- | --- |
+| Sequential | 单个图像目录 | 单个视频文件 | 浏览一组照片或检查一个视频 |
+| Parallel auto | 含多个来源子目录的父目录 | 含多个视频的目录 | 同一位置对照；图像来源宜使用对应文件名 |
+| Parallel manual | 逐个选择来源目录 | 逐个选择视频 | 只比较部分来源或调整来源顺序 |
+| Image/Video File List | 指定图片清单 | 指定视频清单 | 重现固定输入。可从仓库的 `auto_test_scripts/assets/lists/` 打开 TXT 示例，相对路径以清单所在目录为基准；也支持 CSV |
 
-    2.2. Parallel auto: 一个文件夹多个子文件夹。一个文件夹下有n个子文件夹，子文件夹中为图片。 (`test_input/`)
+**Page** 控制每页的行列，`-1,-1` 请求自动布局。**Multiple frames per source** 可在每个来源内连续显示多项，例如 **Per source** 为 `1,3` 时横排三个位置；**Play sources sequentially** 把来源串起来依次浏览。后者也改变挑图范围。
 
-    2.3. Parallel manual: 手动选择多个子文件夹。(`test_input//01`+`test_input//02`)
+![打开相同两段视频，依次切换并排单帧、每路连续三帧、按来源顺序播放](../media/source-order.gif)
 
-    2.4. Image file list： 从文件导入图片列表文件。([Examples file](https://github.com/nachifur/MulimgViewer/tree/master/examples/input))
+动图中三次设置均使用 **Parallel auto** 和同一个视频目录，每次改完按 **Ctrl+R**：
 
-3. 打开文件夹，导入路径
-4. 这时图片显示在面板，可以使用`>`查看下一张，`<`查看上一张图片
-5. `Input/OutPut`->OutputMode, 选择输出模式
-6. `File->Select output path`, **选择输出的路径**。
-7. 点击保存💾️
+| 画面 | Input & Playback 勾选项（Video mode 始终开启） | Page | Per source | Display scale |
+| --- | --- | --- | --- | --- |
+| 两路各一帧 | 两个来源顺序选项均关闭 | `1,2` | `1,1` | `1,1` |
+| 两路各三帧 | Multiple frames per source | `1,2` | `1,3` | `0.35,0.35` |
+| 按来源逐帧看 | Play sources sequentially | `1,1` | `1,1` | `1,1` |
 
+**Layout & Display** 从外到内依次有算法、页面、单来源、图像单元和放大区五层网格。**Gaps (X,Y for each level)** 中每两个数字分别控制一层的水平、垂直间距，顺序是 Algorithms、Page、Per source、Image unit、Magnifiers。要拉开两种算法的拼接图，改第一对。显示比例 **Display scale** 与保存比例分别设置；处理大图时可先缩小预览。勾选 **Fit window to image** 后刷新，可按画布调整窗口。
 
-## 快捷键
-1. 输入路径：
+## 放大同一区域、比较算法
 
-    Sequential: Ctrl+E
+复现下图：取消 **Video mode**，用 **Parallel auto** 打开仓库的 `docs/media/example-images`。其中两个子目录各有一张 200 × 200 图片。在线阅读时也可下载 {download}`来源 01 <../media/example-images/01/00.png>` 和 {download}`来源 02 <../media/example-images/02/00.png>`，分别存为 `example-images/01/00.png` 与 `example-images/02/00.png`。将 **Page** 设为 `1,2`、**Image unit** 设为 `3,1`、**Display scale** 设为 `1,1`，勾选 **Image**、**Title** 和 **Fit window to image**，保留 **Auto title**，按 **Ctrl+R**。两项的标题分别为来源目录名 01 和 02。
 
-    Parallel auto: Ctrl+A
+1. 勾选 **Layout & Display → Magnifier**，按 **Ctrl+R**。打开放大工具，在一张图上拖出矩形框。开启图像和放大图显示，即可在其他来源对照同一区域。**Magnifier & Boxes** 可设置框的位置、线宽及框线是否显示。
+2. 要微调，勾选 **Magnifier & Boxes → Select individual box**，单击已有框后用方向键移动。第二栏状态信息显示当前框编号和框数；按 Delete 删除选中的框。结束后退出选框模式再画新框。
+3. 在 **Custom Functions** 选择 **Image Darkening**，勾 **Selected**，保留 **Show original panel**。把 **Algorithms** 设为 `2,1` 后刷新，原图和处理结果上下对照。选择 **All algorithms** 可同时比较多个算法；网格容量决定能显示多少面板，空位使用间隙颜色。
 
-    Parallel manual: Ctrl+M
+![同一输入从原图到双来源放大，再到原图与算法结果对照](../media/inspect-details.gif)
 
-    Image file list: Ctrl+F
+在 **Titles** 关闭 **Auto title** 后，可组合父目录、文件名、前后缀等字段。颜色在 **Colour & Transparency** 中设置。要改一张图的标题，填写重命名文本，在目标图的右键菜单注入文本，再勾选 **Rename**。
 
-2. 输出路径：Ctrl+O
-3. 下一张：Ctrl+N
-4. 上一张Ctrl+L
-5. 保存：Ctrl+S
-6. 刷新：Ctrl+R (或者鼠标右键。ps：鼠标右键具有功能复用：默认是：刷新；放大模式：新增框；选中Box:SelectBox：移动框)
-7. 隐藏工具栏：Ctrl+H
-8. 使用键盘的上下左右，可以移动图像面板里的图像。
+## 找到某一张图
 
-## 功能介绍
+单击图像可在状态栏查看当前项、来源路径和视频时间。打开 **Index table**，用 **Visual items** 按画面上的位置查找，**Pages** 查页，**Sources** 查原始来源。可由主窗口选中项定位到表格，也可双击表格行跳回对应页。路径详情支持复制；尚未拆出的帧可先有预期路径，等缓存就绪后文件才存在。需要离线核对时，可导出当前视图的 Excel 表格。
 
-### 输入模式
+## 播放卡顿时看什么
 
-`Sequential`是**串行浏览**模式，一个文件夹下有不同的图片，命名不同，用于图片的拼接。
+把鼠标放在 **Performance & Cache → Power mode** 上，对比实际播放 FPS 与供给 FPS（后台产出可显示页面的速度）。每秒显示一页可以同时更新多路视频，不能把页率乘以来源数当作单路帧率。
 
-`Parallel auto`和`Parallel manual`是**并行浏览**模式（子文件夹的名称不一样），需要确保各子文件夹下面的图片命名相同，用于不同图片的对比。
+| 现象 | 可先调整 |
+| --- | --- |
+| 播放均匀，但比预期慢 | 查看 **Interval (s)**。手动设定是切换间隔的下限，例如 1 秒最多约每秒翻一页；需要更快时先减小它 |
+| 跳转后首屏慢，随后恢复 | 跳到长视频深处需要寻帧并准备当前页；先用较小预览比例，比较各来源的分辨率和编码 |
+| 供给持续跟不上 | 从 Balanced 切到 Performance 或 Maximum；如果仍受限，减小预览尺寸、可见算法数或每页图像数 |
+| 大体流畅，偶尔等下一页 | **Cache frames** 控制近区，乘以 **Cache multiplier** 得到外层范围。适当增大可利用空闲资源提前准备，代价是更多磁盘读写和空间 |
 
-`Image File List`是**自定义模式**，从txt, csv文件导入图片列表。支持csv文件多行多列显示。
+Eco、Balanced、Performance、Maximum 提供不同的 CPU 和内存预算。持续速度还取决于解码、算法、拼接和磁盘。缓存会随浏览位置更新；需要长期保留的结果请导出。
 
-如果需要自动排布，`NumPerImg`设为-1。
+## 挑图和导出
 
-<img width="250" height="150" src="https://user-images.githubusercontent.com/32936898/224470713-cf8d136d-f36c-4b57-8e0e-cc3545bd6650.jpg"/>
+在 **Save Settings** 选择输出目录、输出模式、格式和比例。点击工具栏保存图标或 **Ctrl+S** 后，后台按点击时的设置生成文件，右侧状态栏显示进度。
 
-###  输出模式
+| 输出选项 | 得到什么 |
+| --- | --- |
+| Stitch | 最终画面在 `composed`，各算法的拼接图在 `algorithms/<算法>/stitch_images` |
+| Selected images | 选择结果在各算法的 `select_images` 中，按来源归档 |
+| Magnifiers | 输出放大区域和带框图。组合模式下，没有框会跳过这一项，其他已选输出照常保存 |
 
-Stitch: 将拼接的图像保存到*stitch_images*目录下
+**挑选规则。** 单击确定位置，再保存 **Selected images**；右键 **Select image** 是该操作的快捷方式。Parallel auto/manual 会从各来源选同一位置，在 Multiple frames per source 下会保留点中的来源内偏移。Sequential、File List 和 Play sources sequentially 只挑当前项；显示算法时也可输出相应处理结果。图像模式的移动选项会移动源文件，首次尝试建议使用副本；视频模式不会移动源视频。
 
-Select: 分别保存当前浏览的图像到不同的文件夹，默认为copy模式，选中`MoveFile`为剪切模式。（推荐的输入模式为`Parallel auto`或`Parallel manual`，关闭`Parallel+Sequential`和`Parallel->Sequential`）
+**画质。** JPG 可调质量，采用 4:4:4 色度采样；PNG 的压缩级别影响耗时和文件大小；PDF 可选 Lossless 或 Compact (JPG)。保留视频解码所得细节时，选择 PNG 缓存、输出比例 `1,1`，导出 PNG 或 Lossless PDF。这样可以避免额外的 JPG 编码；视频源本身的压缩损失仍存在。缓存选 **auto** 时，PNG/PDF 且两个输出比例均至少为 1 会用 PNG，否则用 JPG。修改缓存格式后手动刷新。
 
-Magnifer: 单独保存放大图像，方便用户的后期处理。
-
-<img width="250" height="200" src="https://user-images.githubusercontent.com/32936898/224470715-7e22c443-210c-4e6f-9e77-dd10bd573f24.jpg"/>
-
-### 图像排列自动化
-
-默认：`NumPerImg` = -1，这时为程序**自动布局模式**。`NumPerImg` 的意思是几张图像合成一个图像。
-
-当`NumPerImg` = 1或者>1，图像布局为**手动模式**，这时可以调整 `Row` 和 `Col`。
-
-### 并行模式下的串行显示
-
-在`Parallel auto`和`Parallel manual`模式下，可以并行显示多个文件夹。
-
-**Parallel+Sequential：**
-
-选中`Parallel+Sequential`，在并行显示的同时，可以串行浏览每个文件夹中的前n张图片，n可由`NumPerImg`设定。例如：`Row=5` ,`NumPerImg=4`, `Col=1`, 一次分别读取5个并行目录的4张图片，共20张。`Vertical`可以调整串行方向。修改`Row`和`Col`, 可以控制并行文件夹的二维排布。
-
-![Parallel_Sequential](https://user-images.githubusercontent.com/32936898/224482764-d5e1335d-647d-480b-ae69-2596eeff3941.jpg)
-
-**Parallel->Sequential：** 将多个文件夹的所有图片，拼接成一个图片列表进行串行显示。
-
-在`Parallel+Sequential`模式下，各个子文件夹下的文件名称需要一样。在`Parallel->Sequential`模式下，则不需要。
-
-### 自动保存
-
-勾选自动保存`AutoSaveAll`，点击保存💾️，实现批量化操作。
-
-### 图像尺寸归一化
-
-Fill: 图像尺寸为一组图像中的最大尺寸，填充模式(保持原始像素分辨率)
-
-Crop: 图像尺寸为一组图像中的最小尺寸，裁剪模式(保持原始像素分辨率)
-
-Resize: 图像尺寸为一组图像中的平均尺寸，缩放模式(不保持原始像素分辨率)
-
-<img width="250" height="150" src="https://user-images.githubusercontent.com/32936898/224470716-6bd324c8-5aea-4019-812e-99b8d920be88.jpg"/>
-
-### 图像间隔
-
-![f12](https://user-images.githubusercontent.com/32936898/224470762-099c5217-8e8a-4f08-8257-e9b9f8d0a70c.jpg)
-
-### 图像填充
-
-支持多种颜色填充。支持背景填充**透明**。**同时支持前景透明度调节**。
-
-### 并行手动模式支持路径导入保存
-
-<img width="250" height="200" src="https://user-images.githubusercontent.com/32936898/224470718-ded4393f-1910-49eb-9431-cc78a32f88ef.jpg"/>
-
-### 显示、输出尺寸独立
-
-此功能可以保证显示的scale与输出独立。
-
-**应用场景**：
-1. 同时浏览显示100张图像，屏幕放不下，使用`Scale:Show`缩放即可
-2. 100张拼接造成的保存图片很大，使用`Scale:Out`可以方便控制文件大小
-
-### 并行放大
-**操作**:
-
-1. 点击放大按钮`🔍️`
-
-<img width="50" height="50" src="https://user-images.githubusercontent.com/32936898/224470719-89b1607c-c8be-424b-8e14-649db8260960.jpg"/>
-
-2. 鼠标变为十字光标，在任意图片位置划框
-3. 选择放大区域：按住鼠标左键，移动鼠标，释放鼠标左键，显示放大结果
-4. 新增放大框：鼠标右键，实现多框放大
-
-**Tip**:
-
-1. 开启`🔍️KeepSize`，即可获得与原始图片长宽比一样的放大结果。
-2. `🔍️Scale`，默认为`-1,1`，自动设置scale。
-3. 可以选中`Vertical`,`Crtl+R`刷新显示，放大图像放置在原图的右侧。
-4. `🔍️Scale`，支持自定义倍数放大，最大不超过原图尺寸。例如：`3,3`，长宽3倍的放大。
-5. `Box:Width`设为`2,3`。原图中的线宽是2，放大图中的线宽是3。
-6. `Box:Width`设为`0,0`，即可隐藏框。
-7. `Box:Width`单位为pixel，在所有缩放下线宽保持不变。如果在`Scale:Show`为`0.1,0.1`，`Scale:Out`为`1,1`时，显示的框的宽度合适，那么输出框的宽度可能相比图片尺寸偏小。
-8. 点击放大按钮`🔍️`之后，鼠标单击图片选中，然后使用`ctrl`+鼠标滚轮全局缩放图像。
-9. 鼠标滚轮缩放功能，使用缩放因子控制。每次手动设置`Scale:Show`为`1,1`，缩放因子清零，界面刷新。
-
-**移动box**:
-
-（注意：开启`Box:SelectBox`后，使用鼠标左键不能划框）
-1. 选中`Box:SelectBox`
-2. 鼠标左键单击，选中已有的放大框
-3. 然后使用键盘上下左右(或者鼠标滚轮)，微调放大框(按`shift`键可以改变速度)。使用鼠标右键，快速移动放大框。
-4. 关闭`Box:SelectBox`。
-
-**清除放大框**：
-
-方法1：
-1. 选中`Box:SelectBox`，键盘`Del`，删除特定`box`
-2. 关闭`Box:SelectBox`，键盘`Del`，删除所有`box`
-
-方法2：
-1. 关闭`Box:SelectBox`
-2. 鼠标左键双击图片
-3. `Ctrl+R`刷新显示。
-
-**手动修改放大框的颜色**：
-
-1. 选中`Box:SelectBox`
-2. 在原图片上，鼠标左键选中某个框
-3. 鼠标左键单击`Color/transparency:Draw`，选择颜色
-
-**不显示box/框**：
-
-1. 不选中`Box:InBox`，去掉原始图片上的框
-2. 不选中`Box:In🔍️`，去掉放大图片上的框
-3. 不选中`ShowImg`，不显示原始图片
-4. 不选中`Show🔍️`，不显示放大图片
-
-### 窗口大小自动化调节
-
-开启`AutoWinSize`，即可实现窗口自动大小调节。
-
-### 浏览图片，精确定位
-**粗定位：** 移动slider。
-
-**精确定位：**
-
-<img width="100" height="50" src="https://user-images.githubusercontent.com/32936898/224470766-74505f1c-ed5c-4b37-913e-87a682f965b2.jpg"/>
-
-1. `Help`->`Index table`
-2. 查看图片显示序号
-3. 输入序号，回车
-
-### 标题
-**标题**
-
-1. 关闭`Title:Auto`之后，可以进行自定义显示标题
-2. 在`Sequential`输入模式下，文件名为`01_DSC.jpg`，不选中`Prefix`和`Suffix`，文件显示为`DSC`。使用数字可以对图片文件进行排序。
-
-**字体**
-
-1. 建议使用安装版`_Setup.exe`
-2. 将字体`1_Calibri-Light.ttf`复制到安装目录`C:\Program Files (x86)\MulimgViewer\font\using`下
-3. `1_Calibri-Light.ttf`中的数字越小，GUI中的字体排序靠前
-
-## 注意事项以及使用技巧
-
-### 并行模式
-
-1. 使用多图浏览模式（Parallel manual和Parallel auto），对比的文件夹里面的图像命名需要一样！
-2. 子文件夹的命名。如果是0,1,2...10,11，需要改为00,01,02,...10,11。因为排序时会变为：0,1,10,11,2...
-
-文件重命名工具推荐：
-
-win10: [uTools](https://u.tools/)
-
-Ubuntu:
-
-1. purrr.
-
-`sudo apt install purrr`
-
-2. Thunar - Bulk Rename Files.
-
-`sudo apt install thunar`
-
-3. 懂正则表达式的用户可以试试
-[perl-rename](https://unix.stackexchange.com/questions/730894/what-are-the-different-versions-of-the-rename-command-how-do-i-use-the-perl-ver)。
-
-4. find
-
-```
-find /path/to/folder -type f > ./filelist.txt
-```
-
-
-
-### 多图拼接，超大像素图片，窗口大小问题
-
-1. 关闭`AutoWinSize`，最大化窗口
-2. 调节`Scale:Show`，`0.2,0.2`缩小，`2,2`放大
-3. 更改`TruthResolution`,将所有照片resize到同一尺寸，**对于浏览及其友好**
+**批量保存。** 勾选 **Save all pages**后点击保存，**Esc** 暂停，重新点击保存继续。如果改变了保存参数，再次保存会从头开始。在 **Configuration** 中 **Save / Load** 可保存、取回一套配置；**Reset** 恢复默认设置。正常关闭窗口会记住最后使用的参数。

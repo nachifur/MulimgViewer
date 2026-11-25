@@ -1127,9 +1127,13 @@ class ImgManager(ImgData):
                                           else image._original_id for image in final_images)
         return final_images
 
+    def _exif_settings_file(self):
+        directory = Path(__file__).parent.parent / "configs"
+        session = Path(getattr(self, "exif_config_path", directory / "session_config.json"))
+        return session if session.is_file() else directory / "default_config.json"
+
     def load_exif_display_config(self, force_reload=False):
-        config_path = Path(getattr(self, "exif_config_path",
-                                  Path(__file__).parent.parent / "configs" / "session_config.json"))
+        config_path = self._exif_settings_file()
         if force_reload or not hasattr(self, 'exif_display_config'):
             try:
                 with open(config_path, 'r', encoding='utf-8') as f:
@@ -1153,11 +1157,7 @@ class ImgManager(ImgData):
     def load_full_mappings(self):
         if self._full_mappings is not None:
             return self._full_mappings
-        config_path = Path(getattr(self, "exif_config_path",
-                                  Path(__file__).parent.parent / "configs" / "session_config.json"))
-        if not config_path.exists():
-            self._full_mappings = {"0th": {}, "Exif": {}, "GPS": {}, "1st": {}}
-            return self._full_mappings
+        config_path = self._exif_settings_file()
         try:
             with open(config_path, 'r', encoding='utf-8') as f:
                 full_config = json.load(f)

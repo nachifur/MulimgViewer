@@ -1,5 +1,5 @@
 #!/usr/bin/env -S pip install -r
 
-sphinx
 myst-parser
+sphinx
 sphinxcontrib-eval

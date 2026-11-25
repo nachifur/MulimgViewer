@@ -8,7 +8,7 @@ build:
     python: "3"
   jobs:
     post_install:
-      # docs/conf.py reads the package version and favicon; neither needs the GUI.
+      # docs/conf.py needs package metadata but no GUI dependencies.
       - python -m pip install --no-deps .
 
 sphinx:

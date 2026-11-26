@@ -1,5 +1,15 @@
 # 安装与自检
 
+## 使用桌面离线包
+
+先在 [GitHub Releases](https://github.com/nachifur/MulimgViewer/releases) 核对目标版本的附件。开发者也可以从 **Desktop packages** 工作流取得对应提交的构建产物。选择与系统和处理器匹配的包；只有源码附件时，请按下节安装。
+
+将压缩包完整解压到自己的可写目录。Windows 双击 `MulimgViewer.cmd`；macOS 双击 `MulimgViewer.command`；Linux 在图形桌面的终端执行 `./MulimgViewer.command`。首次启动会修正运行环境路径。要换位置，请从原压缩包重新解压。
+
+离线包自带 Python、wxPython、FFmpeg 和 FFprobe。要复查包内环境，在解压目录运行启动脚本并追加 `--self-check`（Windows PowerShell 用 `.\MulimgViewer.cmd --self-check`）。自检会短暂打开窗口，并测试图像、视频、内置算法、PDF 和 Excel。
+
+如果下载的是精简压缩格式 `.tar.xz`，可在空目录中执行 `tar -xf 软件包路径` 解压，之后使用相同的启动脚本。
+
 ## 运行当前源码版
 
 以下命令适用于 Windows、Linux 和 macOS。先安装 Git 和 Conda，在终端（Windows 可用 Anaconda Prompt）执行：
@@ -14,8 +24,6 @@ python MulimgViewer.py
 ```
 
 已有仓库时，从项目根目录的第三条命令开始；已有可用环境时，从激活环境开始。`environment.yml` 指定 Python 3.11，由 conda-forge 安装 wxPython、FFmpeg 和 PyAV。以后启动只需激活同一环境，在仓库根目录执行最后一条命令。
-
-**Windows 安装包**可在 [GitHub Releases](https://github.com/nachifur/MulimgViewer/releases) 按版本下载。如果要使用本手册演示的并行视频、自定义算法和后台导出，请先核对安装包版本。使用源码可与当前手册保持一致。
 
 ## 验证安装
 

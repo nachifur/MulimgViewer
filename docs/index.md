@@ -1,13 +1,38 @@
+---
+hide-toc: true
+---
+
 # MulimgViewer 中文手册
 
-把多个来源的同一位置排在一页上，可以逐帧比较视频、放大同一区域，也可以并排查看算法处理前后的差异。这里介绍当前源码版，已发布的安装包请对照相应版本的手册。
+````{container} product-hero
 
-![两个视频来源随页码一起切换的示例](media/parallel-playback.gif)
+```{container} manual-intro
+**并行浏览，逐帧对比。**
 
-**第一次使用**可以先完成[安装与自检](resources/install.md)，再用随手册提供的猫咪和海上日落片段跟做[并行播放示例](resources/usage.md)。要添加处理算法或提交代码，请看[开发指南](dev/dev.md)。
+在同一页对齐多个图像或视频来源，同步放大细节，将原图与算法结果一起导出。
+
+[安装与自检](resources/install.md) [运行双视频示例](resources/usage.md)
+```
+
+```{figure} media/layout-window.png
+:alt: 猫咪和海上日落并排显示，右侧展开布局参数。
+:figclass: manual-figure
+
+同一页上的两路视频。右侧的 Page 设为一行两列，Display scale 保持 1,1。
+```
+````
+
+```{container} manual-guides
+- [浏览与导出](resources/usage.md) 选择来源、对比细节和保存结果
+- [右侧设置栏](resources/settings.md) 按界面分组查找参数与实例
+- [开发指南](dev/dev.md) 添加算法、运行回归测试和提交修改
+```
+
+本手册对应当前源码版。使用已发布的安装包时，请选择对应版本的文档。
 
 ```{toctree}
 :maxdepth: 2
+:hidden:
 :caption: 使用与开发
 
 resources/install

@@ -1,0 +1,56 @@
+name: Compare desktop packages
+on: workflow_dispatch
+permissions:
+  contents: read
+jobs:
+  compare:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-2022, ubuntu-22.04, ubuntu-22.04-arm, macos-15-intel, macos-15]
+        backend: [conda, pyinstaller]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 100
+    defaults:
+      run:
+        shell: bash -el {0}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: conda-incubator/setup-miniconda@v4
+        with:
+          miniforge-version: latest
+          environment-file: environment.yml
+          activate-environment: mulimgviewer
+          channel-priority: strict
+      - run: conda install -y -c conda-forge conda-pack
+      - if: matrix.backend == 'pyinstaller'
+        run: |
+          conda install -y -c conda-forge pip
+          python -m pip install PyInstaller==6.22.3
+      - if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb xauth
+      - name: Build, extract and test
+        run: |
+          prefix=()
+          if [[ "$RUNNER_OS" == "Linux" ]]; then prefix=(xvfb-run -a); fi
+          if [[ "${{ matrix.backend }}" == "conda" ]]; then
+            "${prefix[@]}" python tools/package_desktop.py --compact
+          else
+            "${prefix[@]}" python tools/packaging/compare_pyinstaller.py
+          fi
+      - name: Record verified download size
+        run: |
+          python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import pathlib
+          archive, = pathlib.Path("dist").glob("*/*.tar.xz")
+          size = archive.stat().st_size
+          print(f"`{archive.name}` passed the extracted GUI and media checks. Download: **{size / 2**20:.2f} MiB** ({size:,} bytes).")
+          PY
+      - uses: actions/upload-artifact@v7
+        with:
+          name: ${{ matrix.os }}-${{ matrix.backend }}
+          path: dist/*/*.tar.xz
+          if-no-files-found: error
+          compression-level: 0

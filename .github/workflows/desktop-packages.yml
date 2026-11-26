@@ -1,0 +1,43 @@
+name: Desktop packages
+on:
+  workflow_dispatch:
+    inputs:
+      compact:
+        description: Use a smaller tar.xz download on every platform
+        type: boolean
+        default: false
+permissions:
+  contents: read
+jobs:
+  package:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-2022, ubuntu-22.04, ubuntu-22.04-arm, macos-15-intel, macos-15]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 90
+    defaults:
+      run:
+        shell: bash -el {0}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: conda-incubator/setup-miniconda@v4
+        with:
+          miniforge-version: latest
+          activate-environment: builder
+          channels: conda-forge
+          channel-priority: strict
+      - run: conda install -y -c conda-forge python=3.11 conda-pack
+      - if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb xauth
+          xvfb-run -a python tools/package_desktop.py ${{ inputs.compact && '--compact' || '' }}
+      - if: runner.os != 'Linux'
+        run: python tools/package_desktop.py ${{ inputs.compact && '--compact' || '' }}
+      - uses: actions/upload-artifact@v7
+        with:
+          name: MulimgViewer-${{ matrix.os }}
+          path: dist/desktop/MulimgViewer-*
+          if-no-files-found: error
+          compression-level: 0

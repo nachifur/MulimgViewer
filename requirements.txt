@@ -7,8 +7,7 @@ piexif
 Pillow
 psutil>=5.9
 
-# tests (optional)
-pytest-shutil
+reportlab
 requests
 wxPython
 XlsxWriter>=3.1,<4

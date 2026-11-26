@@ -1,0 +1,133 @@
+/* Reading measure and type for mixed Chinese, English and parameter values. */
+body {
+  --font-stack: Inter, "Segoe UI", "PingFang SC", "Microsoft YaHei",
+    "Noto Sans CJK SC", system-ui, sans-serif;
+  --font-stack--monospace: "IBM Plex Mono", "Cascadia Code", "SFMono-Regular",
+    Consolas, "Liberation Mono", monospace;
+  --manual-display-font: Bahnschrift, "Space Grotesk", "Avenir Next", var(--font-stack);
+  font-family: var(--font-stack);
+}
+
+article[role="main"] { line-height: 1.8; }
+article h1, article h2, article h3 {
+  font-family: var(--manual-display-font);
+  font-weight: 650;
+  line-height: 1.35;
+  text-wrap: balance;
+}
+article h1 { font-size: clamp(1.85rem, 3vw, 2.8rem); letter-spacing: -.025em; }
+article :is(code, kbd, pre) { font-family: var(--font-stack--monospace); }
+article table { font-variant-numeric: tabular-nums; }
+article h2 {
+  margin-top: 2.4rem;
+  padding-top: .8rem;
+  border-top: 1px solid var(--color-background-border);
+}
+
+.sidebar-brand-text {
+  font-family: var(--manual-display-font);
+  font-weight: 650;
+  letter-spacing: -.025em;
+}
+.sidebar-brand img.sidebar-logo {
+  width: 2.5rem;
+  height: 2.5rem;
+}
+
+@media (min-width: 69rem) {
+  .content:has(.product-hero) { width: min(68rem, calc(100vw - 25rem)); }
+}
+article .product-hero.container {
+  display: grid;
+  grid-template-columns: minmax(0, .9fr) minmax(0, 1.35fr);
+  align-items: center;
+  gap: clamp(1rem, 2vw, 2rem);
+  margin-block: 1.5rem;
+  padding-block: clamp(1.3rem, 3vw, 3rem);
+  padding-inline: clamp(1.3rem, 2.5vw, 2.5rem);
+  color: #eef6ff;
+  border: 1px solid #364a75;
+  border-radius: 1rem;
+  background-color: #0c162c;
+  background-image: linear-gradient(#92c7ff0c 1px, transparent 1px),
+    linear-gradient(90deg, #92c7ff0c 1px, transparent 1px),
+    radial-gradient(ellipse at 85% 5%, #32336d, transparent 60%),
+    radial-gradient(ellipse at 15% 110%, #10435a, transparent 55%);
+  background-size: 28px 28px, 28px 28px, auto, auto;
+}
+.manual-intro p:first-child {
+  font-family: var(--manual-display-font);
+  margin: 0;
+  font-size: clamp(2rem, 3.6vw, 3.75rem);
+  letter-spacing: -.02em;
+  line-height: 1.22;
+  text-wrap: balance;
+}
+.manual-intro p:nth-child(2) { color: #c3d4ec; }
+.manual-intro p:last-child { display: flex; flex-wrap: wrap; gap: .65rem; margin-bottom: 0; }
+.manual-intro a {
+  padding: .48rem .85rem;
+  border: 1px solid #697da0;
+  border-radius: .35rem;
+  color: #ecf5ff;
+  background: #182640;
+  text-decoration: none;
+  font-weight: 650;
+}
+.manual-intro a:first-child { background: #8ce4ff; color: #0d2237; border-color: #8ce4ff; }
+.manual-intro a:hover { text-decoration: underline; }
+.manual-intro a:focus-visible { outline-color: white; }
+article img[src*="_images/"] {
+  box-sizing: border-box;
+  max-width: 100%;
+  height: auto;
+  border: 1px solid var(--color-background-border);
+  border-radius: .45rem;
+}
+.manual-figure {
+  margin: 0;
+  min-width: 0;
+}
+.manual-figure figcaption {
+  text-align: start;
+  color: #e0edff;
+  font-size: .9rem;
+  line-height: 1.6;
+}
+.manual-figure figcaption p { margin: .55rem 0 0; }
+.manual-guides ul {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+  gap: .7rem;
+  list-style: none;
+  padding: 0;
+  margin: 1.4rem 0;
+}
+.manual-guides li {
+  border: 1px solid var(--color-background-border);
+  border-top: 2px solid var(--color-brand-primary);
+  border-radius: .35rem;
+  padding: .8rem 1rem;
+  font-size: .92rem;
+}
+.manual-guides li p { margin: 0; }
+.manual-guides li:hover, .manual-guides li:focus-within { border-color: var(--color-brand-primary); }
+.manual-guides li:nth-child(2) { border-top-color: #2287bd; }
+.manual-guides li:nth-child(3) { border-top-color: #7962cf; }
+.manual-guides a { display: block; font-size: 1.08rem; font-weight: 650; }
+article table.docutils th { text-align: start; }
+article table.docutils thead { box-shadow: inset 0 -2px var(--color-brand-primary); }
+article h2 { border-image: linear-gradient(90deg, var(--color-brand-primary), var(--color-background-border) 30%) 1; }
+article a:focus-visible { outline: 2px solid var(--color-brand-primary); outline-offset: 3px; }
+
+@media (max-width: 68rem) {
+  article .product-hero.container { grid-template-columns: 1fr; }
+}
+
+@media print {
+  article .product-hero.container { display: block; background: none; color: black; border: none; padding: 0; }
+  .manual-intro p:nth-child(2) { color: black; }
+  .manual-figure { background: none; padding: 0; }
+  .manual-figure figcaption { color: black; }
+  .manual-guides li { break-inside: avoid; }
+}

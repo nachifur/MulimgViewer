@@ -1,72 +1,173 @@
-# SOME DESCRIPTIVE TITLE.
-# Copyright (C) 2023
-# This file is distributed under the same license as the mulimgviewer
-# package.
-# nachifur <1476879092.com>, 2023.
-#
-#, fuzzy
+# English translation of the MulimgViewer manual.
 msgid ""
 msgstr ""
-"Project-Id-Version: mulimgviewer 3.9.10\n"
+"Project-Id-Version: MulimgViewer 3.9.7\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-03-29 12:46+0800\n"
-"PO-Revision-Date: 2023-03-29 12:46+0800\n"
-"Last-Translator: nachifur <1476879092.com>\n"
-"Language-Team: nachifur <1476879092.com>\n"
+"POT-Creation-Date: 2026-11-25 22:28+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: MulimgViewer contributors\n"
+"Language: en\n"
+"Language-Team: English\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.11.0\n"
+"Generated-By: Babel 2.15.0\n"
 
 #: ../../misc/todo.md:1
-msgid "未来增强功能"
-msgstr "Future enhancements"
+msgid "待办与社区反馈"
+msgstr "Roadmap and community feedback"
 
 #: ../../misc/todo.md:3
-msgid "感谢各位提供意见！大家可以在 issues 中发表意见，采用的会致谢大家！如果大家希望可以和我一起合作开发，请联系我！"
-msgstr "Thanks for your comments ([open an new issue](https://github.com/nachifur/MulimgViewer/issues))! Leave your suggestions, ideas and feedback in the issues, and I will try to implement the most useful ones! If you are interested in fully immersing yourself and contributing to the development of this project, kindly reach out to me (email: liujiawei18@mails.ucas.ac.cn)!"
+msgid ""
+"以下整理自 2026-11-25 核对的公开议题。功能建议仍在讨论，排期和进展以 [GitHub "
+"开放议题](https://github.com/nachifur/MulimgViewer/issues?q=is%3Aissue+is%3Aopen) 为准。"
+msgstr ""
+"These public issues were reviewed on 25 November 2026. Proposals are under discussion. Follow the"
+" [open GitHub issues](https://github.com/nachifur/MulimgViewer/issues?q=is%3Aissue+is%3Aopen) for"
+" scheduling and progress."
 
 #: ../../misc/todo.md:5
-msgid "[x] 增加精确定位（目前已经有 slider）"
-msgstr "Add precise positioning (currently there is a slider)"
+msgid "待评估的功能建议"
+msgstr "Feature proposals"
 
-#: ../../misc/todo.md:6
-msgid "[x] 增加图片索引查看，方便进行精确定位"
-msgstr "Add image index view to facilitate precise positioning"
+#: ../../misc/todo.md
+msgid "用户希望完成的操作"
+msgstr "What users want to do"
 
-#: ../../misc/todo.md:7
-msgid "[x] 并行的局部放大功能（用于论文中的对比实验图片**急需！**）"
-msgstr "Parallel partial zoom function (used for contrast experiment pictures in the paper **needed urgently!**)"
+#: ../../misc/todo.md
+msgid "相关讨论"
+msgstr "Discussion"
 
-#: ../../misc/todo.md:8
-msgid "[x] 输入方式，新增：路径文件的导入和存储（@nothingeasy 提供改进意见）"
-msgstr "Input method, new: import and storage of path files (@nothingeasy provides suggestions for improvement)"
+#: ../../misc/todo.md
+msgid "收藏一组输入路径，从最近访问记录重新打开，或恢复上次的浏览会话"
+msgstr "Bookmark a group of input paths, reopen recent sources, or restore a browsing session."
 
-#: ../../misc/todo.md:9
-msgid "[x] 增加删除功能（完善筛选功能）"
-msgstr "Add delete function (perfect filter function)"
+#: ../../misc/todo.md
+msgid "[#216 路径组与会话恢复](https://github.com/nachifur/MulimgViewer/issues/216)"
+msgstr "[#216 Path groups and session restore](https://github.com/nachifur/MulimgViewer/issues/216)"
 
-#: ../../misc/todo.md:10
-msgid "[x] 保存带框的原始图像（@JuZiSYJ 提供改进意见）"
-msgstr "Save the original framed image (@JuZiSYJ provides suggestions for improvement)"
+#: ../../misc/todo.md
+msgid "在界面中更方便地管理自定义函数"
+msgstr "Manage custom functions more easily from the interface."
 
-#: ../../misc/todo.md:11
-msgid "[x] 拼图过程中，点击可旋转图片"
-msgstr "Each image can be rotated after clicking"
+#: ../../misc/todo.md
+msgid "[#217 函数管理](https://github.com/nachifur/MulimgViewer/issues/217)"
+msgstr "[#217 Function management](https://github.com/nachifur/MulimgViewer/issues/217)"
 
-#: ../../misc/todo.md:12
-msgid "[x] 多框放大功能（@JuZiSYJ 提供改进意见）"
-msgstr "Add multi-box zoom function (@JuZiSYJ provides suggestions for improvement)"
+#: ../../misc/todo.md
+msgid "为放大区域选择虚线边框"
+msgstr "Use a dashed outline for magnifier boxes."
 
-#: ../../misc/todo.md:13
-msgid "[x] 去除放大图像的 box（@stefanklut 提供改进意见）"
-msgstr "Remove the box of cropped images (@stefanklut provides suggestions for improvement)"
+#: ../../misc/todo.md
+msgid "[#215 放大框线型](https://github.com/nachifur/MulimgViewer/issues/215)"
+msgstr "[#215 Box line styles](https://github.com/nachifur/MulimgViewer/issues/215)"
 
-#: ../../misc/todo.md:14
-msgid "[x] 高清图像的对比，放大图像 1:1 输出（@Faberman 提供改进意见）"
-msgstr "Comparison of high-definition images, and 1:1 output of enlarged images (@Faberman provides suggestions for improvement)"
+#: ../../misc/todo.md
+msgid "以项目为入口组织多个工作任务，并改进导出界面"
+msgstr "Organize several tasks into projects and improve the export interface."
+
+#: ../../misc/todo.md
+msgid ""
+"[#206 多项目工作流](https://github.com/nachifur/MulimgViewer/issues/206)、[#205 "
+"导出界面](https://github.com/nachifur/MulimgViewer/issues/205)"
+msgstr ""
+"[#206 Multi-project workflows](https://github.com/nachifur/MulimgViewer/issues/206), [#205 Export"
+" interface](https://github.com/nachifur/MulimgViewer/issues/205)"
+
+#: ../../misc/todo.md
+msgid "在浏览器中使用查看器，或扩展音频处理能力"
+msgstr "Use the viewer in a browser or extend it to process audio."
+
+#: ../../misc/todo.md
+msgid ""
+"[#207 Web 界面](https://github.com/nachifur/MulimgViewer/issues/207)、[#162 "
+"音频处理](https://github.com/nachifur/MulimgViewer/issues/162)"
+msgstr ""
+"[#207 Web interface](https://github.com/nachifur/MulimgViewer/issues/207), [#162 Audio "
+"processing](https://github.com/nachifur/MulimgViewer/issues/162)"
 
 #: ../../misc/todo.md:15
+msgid "使用反馈与已有功能"
+msgstr "Usage feedback and existing features"
+
+#: ../../misc/todo.md:17
+msgid ""
+"Ubuntu 下的滚轮缩放和图像拖动有单独的反馈帖。补充反馈时请附系统版本、输入模式和具体鼠标操作。[#87 Ubuntu "
+"缩放](https://github.com/nachifur/MulimgViewer/issues/87)、[#115 "
+"拖动图片](https://github.com/nachifur/MulimgViewer/issues/115)"
+msgstr ""
+"Mouse-wheel zoom on Ubuntu and image dragging have separate threads. Include your OS version, "
+"input mode, and exact mouse actions when reporting issues. [#87 Zoom on "
+"Ubuntu](https://github.com/nachifur/MulimgViewer/issues/87), [#115 Dragging "
+"images](https://github.com/nachifur/MulimgViewer/issues/115)"
+
+#: ../../misc/todo.md:18
+msgid ""
+"视频导入、自动播放与多视频并排对比已有操作示例。可先依照手册打开两段视频，再在原议题补充仍有困难的场景。[操作示例](../resources/usage.md)、[#53 "
+"视频并行对比](https://github.com/nachifur/MulimgViewer/issues/53)"
+msgstr ""
+"The manual covers video import, autoplay, and side-by-side comparison. Try the two-video "
+"walkthrough and describe any remaining difficulties in the issue. "
+"[Walkthrough](../resources/usage.md), [#53 Parallel video "
+"comparison](https://github.com/nachifur/MulimgViewer/issues/53)"
+
+#: ../../misc/todo.md:19
+msgid ""
+"中文界面需求和项目合作分别在对应议题讨论。[#55 中文界面](https://github.com/nachifur/MulimgViewer/issues/55)、[#7 "
+"招募合作者](https://github.com/nachifur/MulimgViewer/issues/7)、[#222 "
+"合作](https://github.com/nachifur/MulimgViewer/issues/222)"
+msgstr ""
+"For a Chinese interface or opportunities to collaborate, see the corresponding discussions. [#55 "
+"Chinese interface](https://github.com/nachifur/MulimgViewer/issues/55), [#7 Seeking "
+"collaborators](https://github.com/nachifur/MulimgViewer/issues/7), [#222 "
+"Collaboration](https://github.com/nachifur/MulimgViewer/issues/222)"
+
+#: ../../misc/todo.md:21
+msgid "已完成的早期建议"
+msgstr "Completed community suggestions"
+
+#: ../../misc/todo.md:23
+msgid "[x] 增加精确定位（目前已经有 slider）"
+msgstr "[x] Navigate to a precise position with the slider."
+
+#: ../../misc/todo.md:24
+msgid "[x] 增加图片索引查看，方便进行精确定位"
+msgstr "[x] Locate individual images in the index."
+
+#: ../../misc/todo.md:25
+msgid "[x] 并行的局部放大功能（用于论文中的对比实验图片**急需！**）"
+msgstr "[x] Magnify matching regions across images for side-by-side comparisons in papers."
+
+#: ../../misc/todo.md:26
+msgid "[x] 输入方式，新增：路径文件的导入和存储（@nothingeasy 提供改进意见）"
+msgstr "[x] Import and save input path lists (suggested by @nothingeasy)."
+
+#: ../../misc/todo.md:27
+msgid "[x] 增加删除功能（完善筛选功能）"
+msgstr "[x] Delete images during selection."
+
+#: ../../misc/todo.md:28
+msgid "[x] 保存带框的原始图像（@JuZiSYJ 提供改进意见）"
+msgstr "[x] Save original images with boxes (suggested by @JuZiSYJ)."
+
+#: ../../misc/todo.md:29
+msgid "[x] 拼图过程中，点击可旋转图片"
+msgstr "[x] Rotate an image by clicking during stitching."
+
+#: ../../misc/todo.md:30
+msgid "[x] 多框放大功能（@JuZiSYJ 提供改进意见）"
+msgstr "[x] Magnify multiple boxes (suggested by @JuZiSYJ)."
+
+#: ../../misc/todo.md:31
+msgid "[x] 去除放大图像的 box（@stefanklut 提供改进意见）"
+msgstr "[x] Hide outlines on magnified images (suggested by @stefanklut)."
+
+#: ../../misc/todo.md:32
+msgid "[x] 高清图像的对比，放大图像 1:1 输出（@Faberman 提供改进意见）"
+msgstr "[x] Compare high-resolution images and export magnified regions at 1:1 (suggested by @Faberman)."
+
+#: ../../misc/todo.md:33
 msgid "[x] 为图像添加 title（@Faberman 提供改进意见）"
-msgstr "Add title for each image (@Faberman provides suggestions for improvement)"
+msgstr "[x] Add image titles (suggested by @Faberman)."
 

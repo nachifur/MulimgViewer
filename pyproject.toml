@@ -63,11 +63,12 @@ Source = "https://github.com/nachifur/mulimgviewer"
 mulimgviewer = "mulimgviewer.__main__:main"
 
 [tool.setuptools.package-data]
-mulimgviewer = ["*.png", "font/using/*", "src/custom_func/*/main.py", "src/custom_func/*/plugin.json"]
+mulimgviewer = ["*.png", "*.svg", "configs/default_config.json", "configs/config_schema.json", "configs/userdef_config.json", "images/*.png", "font/using/*", "src/custom_func/*/main.py", "src/custom_func/*/plugin.json"]
 
 [tool.setuptools.data-files]
 "share/applications" = ["assets/desktop/mulimgviewer.desktop"]
 "share/icons/hicolor/256x256/apps" = ["src/mulimgviewer/mulimgviewer.png"]
+"share/icons/hicolor/scalable/apps" = ["src/mulimgviewer/mulimgviewer.svg"]
 
 [tool.setuptools.dynamic.dependencies]
 file = "requirements.txt"

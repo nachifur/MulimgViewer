@@ -369,15 +369,6 @@ msgstr ""
 "**Output scale** controls the main image and **Zoom output scale** controls magnifiers. Use `1,1`"
 " to keep the configured dimensions. Click Save on the toolbar to export."
 
-#: ../../resources/settings.md:70
-msgid ""
-"勾 **Save all pages** 后保存整批，按 **Esc** 暂停，再点保存继续。**Move files** "
-"用于移动挑中的源图，视频模式禁用。组合输出没有放大框时会跳过放大项，仍会保存勾选的拼接或挑图结果。"
-msgstr ""
-"Enable **Save all pages** for a batch. Press **Esc** to pause and click Save again to resume. "
-"**Move files** moves selected source images and is disabled for videos. If a combined export has "
-"no magnifier boxes, it skips magnifiers and still saves the requested stitches or selections."
-
 #: ../../resources/settings.md:72
 msgid "Colour & Transparency｜颜色和透明度"
 msgstr "Colour & Transparency — colours and opacity"
@@ -455,3 +446,8 @@ msgstr ""
 "A normal restart restores the last session’s settings. **Save** here stores a configuration. The "
 "disk icon on the toolbar exports images."
 
+msgid "勾 **Save all pages** 后保存整批，按 **Esc** 暂停，再点保存继续。如果修改了导出参数，再次保存会从头开始。**Move files** 只适用于图像模式。组合输出没有放大框时会跳过放大项，仍会保存勾选的拼接或挑图结果。"
+msgstr "Enable **Save all pages** to export the batch. Press **Esc** to pause and click Save again to resume. Changing export settings restarts the batch. **Move files** applies to images only. In a combined export with no zoom boxes, the stitch and selection still run."
+
+msgid "要保留视频解码得到的细节，使用 **png** 缓存，**Output scale** 设为 `1,1`，导出 PNG 或 Lossless PDF。修改缓存格式后按 **Ctrl+R**。`auto` 在导出 PNG/PDF 且水平、垂直输出比例均至少为 1 时选 PNG，其余情况可用 JPG。缩小预览时仍可单独设置导出比例。"
+msgstr "To preserve decoded video detail, use **png** caching, set **Output scale** to `1,1`, and export PNG or Lossless PDF. Press **Ctrl+R** after changing the cache format. With `auto`, PNG/PDF exports use PNG caching when both horizontal and vertical output scales are at least 1. Other settings allow JPG. You can choose the export scale independently of the preview."

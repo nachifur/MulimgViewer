@@ -14,6 +14,12 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.15.0\n"
 
+msgid "导出的拼接 PNG 如下。上排对照整图，下排对照同一个窗框；图中保留了来源标题和取样框。"
+msgstr "The exported stitch is shown below. Compare the full images above and the same window detail below. Titles and sampling boxes are included."
+
+msgid "![拼接输出 PNG：左列原图、右列 Gaussian Blur，下排为两列各自的放大细节](../media/paper-comparison.png)"
+msgstr "![Exported PNG: original on the left, Gaussian Blur on the right, corresponding detail crops below](../media/paper-comparison.png)"
+
 #: ../../resources/usage.md:1
 msgid "图像与视频浏览"
 msgstr "Browse images and videos"
@@ -21,12 +27,6 @@ msgstr "Browse images and videos"
 #: ../../resources/usage.md:3
 msgid "第一次并排播放两段视频"
 msgstr "Play two videos side by side"
-
-#: ../../resources/usage.md:5
-msgid "每个分组的控件位置、输入格式和示例见[右侧设置栏](settings.md)。下图保留主窗口、右侧设置和底部页码，方便逐项对照。"
-msgstr ""
-"The [settings sidebar guide](settings.md) shows where to find each control, what to enter, and "
-"how it looks. The examples show the complete window, including the settings and page counter."
 
 #: ../../resources/usage.md:7
 msgid "展开右侧 **Input & Playback**，勾选 **Video mode**。在工具栏选择 **Parallel auto**。"
@@ -42,15 +42,8 @@ msgstr ""
 "sequentially**."
 
 #: ../../resources/usage.md:9
-msgid ""
-"点击工具栏的文件夹，选择仓库中的 `docs/media/example-videos`。按 **Ctrl+R** "
-"应用布局。左格为猫咪（Cat.mp4），右格为海上日落（Sunset.mp4）。在线阅读时可下载 {download}`Cat.mp4 <../media/example-"
-"videos/Cat.mp4>` 和 {download}`Sunset.mp4 <../media/example-videos/Sunset.mp4>`，放入同一空目录后打开。"
-msgstr ""
-"Click the toolbar folder and open `docs/media/example-videos` in the repository. Press **Ctrl+R**"
-" to apply the layout. Cat.mp4 appears on the left and Sunset.mp4 on the right. If reading online,"
-" download {download}`Cat.mp4 <../media/example-videos/Cat.mp4>` and {download}`Sunset.mp4 "
-"<../media/example-videos/Sunset.mp4>` into one empty folder and open it."
+msgid "点击工具栏的文件夹，选择仓库中的 `docs/media/example-videos`。按 **Ctrl+R** 应用布局。左格为猫咪（Cat.mp4），右格为海上日落（Sunset.mp4）。在线阅读时可下载 [Cat.mp4](../media/example-videos/Cat.mp4) 和 [Sunset.mp4](../media/example-videos/Sunset.mp4)，放入同一空目录后打开。"
+msgstr "Click the toolbar folder and open `docs/media/example-videos` in the repository. Press **Ctrl+R** to apply the layout. Cat.mp4 appears on the left and Sunset.mp4 on the right. If reading online, download [Cat.mp4](../media/example-videos/Cat.mp4) and [Sunset.mp4](../media/example-videos/Sunset.mp4) into one empty folder and open it."
 
 #: ../../resources/usage.md:10
 msgid "点 **>** 后点 **▶** 向前播放；点 **<** 后再点 **▶** 则向后播放。按 **Esc** 暂停。页码从 1 开始，可用滑块跳转。修改多个布局或算法参数后，统一刷新即可。"
@@ -79,15 +72,6 @@ msgstr ""
 "**Title**, and **Fit window to image**, clear **Magnifier**, leave **Titles → Auto title** "
 "enabled, and press **Ctrl+R**. The titles should read Cat and Sunset. Scroll the sidebar in a "
 "shorter window. The animation pauses on each of the first five pages for readability."
-
-#: ../../resources/usage.md:16
-msgid ""
-"图像模式也能这样比较。取消 **Video mode**，用 **Parallel auto** 打开 "
-"`auto_test_scripts/assets/images`（选择两个来源文件夹的上一级）。演示素材很短，适合练习操作；观察长期播放速度请换用自己的长视频。"
-msgstr ""
-"To compare images, clear **Video mode** and open `auto_test_scripts/assets/images` with "
-"**Parallel auto**. Choose the parent of the two source folders. The sample clips are short for "
-"practice. Use longer videos to measure sustained playback."
 
 #: ../../resources/usage.md:18
 msgid "选对输入和布局"
@@ -185,174 +169,13 @@ msgstr ""
 "source** set to `1,3`. **Play sources sequentially** plays one source after another and also "
 "changes which images are selected for export."
 
-#: ../../resources/usage.md:29
-msgid "![打开相同两段视频，依次切换并排单帧、每路连续三帧、按来源顺序播放](../media/source-order.gif)"
-msgstr ""
-"![The same two videos shown one frame per source, three per source, and one source at a "
-"time](../media/source-order.gif)"
-
-#: ../../resources/usage.md:29
-msgid "打开相同两段视频，依次切换并排单帧、每路连续三帧、按来源顺序播放"
-msgstr "The same two videos shown one frame per source, three per source, and one source at a time"
-
-#: ../../resources/usage.md:31
-msgid "动图中三次设置均使用 **Parallel auto** 和同一个视频目录，每次改完按 **Ctrl+R**："
-msgstr "All three examples use **Parallel auto** and the same folder. Press **Ctrl+R** after each change."
-
-#: ../../resources/usage.md
-msgid "画面"
-msgstr "View"
-
-#: ../../resources/usage.md
-msgid "Input & Playback 勾选项（Video mode 始终开启）"
-msgstr "Input & Playback options (keep Video mode enabled)"
-
-#: ../../resources/usage.md
-msgid "Page"
-msgstr ""
-
-#: ../../resources/usage.md
-msgid "Per source"
-msgstr ""
-
-#: ../../resources/usage.md
-msgid "Display scale"
-msgstr ""
-
-#: ../../resources/usage.md
-msgid "两路各一帧"
-msgstr "One frame from each video"
-
-#: ../../resources/usage.md
-msgid "两个来源顺序选项均关闭"
-msgstr "Clear both source-order options"
-
-#: ../../resources/usage.md
-msgid "`1,2`"
-msgstr ""
-
-#: ../../resources/usage.md
-msgid "`1,1`"
-msgstr ""
-
-#: ../../resources/usage.md
-msgid "两路各三帧"
-msgstr "Three frames from each video"
-
-#: ../../resources/usage.md
-msgid "Multiple frames per source"
-msgstr ""
-
-#: ../../resources/usage.md
-msgid "`1,3`"
-msgstr ""
-
-#: ../../resources/usage.md
-msgid "`0.35,0.35`"
-msgstr ""
-
-#: ../../resources/usage.md
-msgid "按来源逐帧看"
-msgstr "Advance through one source at a time"
-
-#: ../../resources/usage.md
-msgid "Play sources sequentially"
-msgstr ""
-
-#: ../../resources/usage.md:39
-msgid ""
-"**Layout & Display** 从外到内依次有算法、页面、单来源、图像单元和放大区五层网格。**Gaps (X,Y for each level)** "
-"中每两个数字分别控制一层的水平、垂直间距，顺序是 Algorithms、Page、Per source、Image unit、Magnifiers。要拉开两种算法的拼接图，改第一对。显示比例 "
-"**Display scale** 与保存比例分别设置；处理大图时可先缩小预览。勾选 **Fit window to image** 后刷新，可按画布调整窗口。"
-msgstr ""
-"**Layout & Display** has five nested grids, from outside in: Algorithms, Page, Per source, Image "
-"unit, and Magnifiers. Each pair in **Gaps (X,Y for each level)** sets horizontal and vertical "
-"spacing for one grid in that order. Change the first pair to separate algorithm panels. **Display"
-" scale** is independent of export scale, so you can reduce the preview size for large images. "
-"Enable **Fit window to image** and refresh to fit the canvas."
-
-#: ../../resources/usage.md:41
-msgid "放大同一区域、比较算法"
-msgstr "Magnify matching regions and compare algorithms"
-
 #: ../../resources/usage.md:43
-msgid ""
-"复现下图：取消 **Video mode**，用 **Parallel auto** 打开仓库的 `docs/media/example-images`。其中两个子目录各有一张 200 × "
-"200 图片。在线阅读时也可下载 {download}`来源 01 <../media/example-images/01/00.png>` 和 {download}`来源 02 "
-"<../media/example-images/02/00.png>`，分别存为 `example-images/01/00.png` 与 `example-"
-"images/02/00.png`。将 **Page** 设为 `1,2`、**Image unit** 设为 `3,1`、**Display scale** 设为 `1,1`，勾选 "
-"**Image**、**Title** 和 **Fit window to image**，保留 **Auto title**，按 **Ctrl+R**。两项的标题分别为来源目录名 01 和 "
-"02。"
-msgstr ""
-"To reproduce the example, clear **Video mode** and use **Parallel auto** to open `docs/media"
-"/example-images`. Each subfolder contains one 200 × 200 image. Online readers can download "
-"{download}`source 01 <../media/example-images/01/00.png>` and {download}`source 02 <../media"
-"/example-images/02/00.png>` and save them as `example-images/01/00.png` and `example-"
-"images/02/00.png`. Set **Page** to `1,2`, **Image unit** to `3,1`, and **Display scale** to "
-"`1,1`. Enable **Image**, **Title**, and **Fit window to image**, keep **Auto title** enabled, and"
-" press **Ctrl+R**. The titles show the source folders, 01 and 02."
-
-#: ../../resources/usage.md:45
-msgid ""
-"勾选 **Layout & Display → Magnifier**，按 "
-"**Ctrl+R**。打开放大工具，在一张图上拖出矩形框。开启图像和放大图显示，即可在其他来源对照同一区域。**Magnifier & Boxes** 可设置框的位置、线宽及框线是否显示。"
-msgstr ""
-"Enable **Layout & Display → Magnifier** and press **Ctrl+R**. Activate the magnifier tool and "
-"drag a rectangle on one image. Show both the image and magnifier to compare the same region "
-"across sources. **Magnifier & Boxes** controls placement, line width, and outline visibility."
-
-#: ../../resources/usage.md:46
-msgid ""
-"要微调，勾选 **Magnifier & Boxes → Select individual box**，单击已有框后用方向键移动。第二栏状态信息显示当前框编号和框数；按 Delete "
-"删除选中的框。结束后退出选框模式再画新框。"
-msgstr ""
-"To fine-tune a box, enable **Magnifier & Boxes → Select individual box**, click it, and use the "
-"arrow keys. The second status field shows the selected box number and total. Press Delete to "
-"remove it. Leave box-selection mode before drawing another box."
-
-#: ../../resources/usage.md:47
-msgid ""
-"在 **Custom Functions** 选择 **Image Darkening**，勾 **Selected**，保留 **Show original panel**。把 "
-"**Algorithms** 设为 `2,1` 后刷新，原图和处理结果上下对照。选择 **All algorithms** 可同时比较多个算法；网格容量决定能显示多少面板，空位使用间隙颜色。"
-msgstr ""
-"Under **Custom Functions**, choose **Image Darkening**, enable **Selected**, and keep **Show "
-"original panel** enabled. Set **Algorithms** to `2,1` and refresh to stack the original above its"
-" result. **All algorithms** compares multiple algorithms. Grid capacity determines how many "
-"panels appear, and empty cells use the gap colour."
-
-#: ../../resources/usage.md:49
-msgid "![同一输入从原图到双来源放大，再到原图与算法结果对照](../media/inspect-details.gif)"
-msgstr ""
-"![Original inputs, magnified details across sources, and an algorithm comparison](../media"
-"/inspect-details.gif)"
-
-#: ../../resources/usage.md:49
-msgid "同一输入从原图到双来源放大，再到原图与算法结果对照"
-msgstr "Original inputs, magnified details across sources, and an algorithm comparison"
-
-#: ../../resources/usage.md:51
-msgid ""
-"在 **Titles** 关闭 **Auto title** 后，可组合父目录、文件名、前后缀等字段。颜色在 **Colour & Transparency** "
-"中设置。要改一张图的标题，填写重命名文本，在目标图的右键菜单注入文本，再勾选 **Rename**。"
-msgstr ""
-"Clear **Auto title** in **Titles** to combine the parent folder, name, prefix, and suffix. Set "
-"colours in **Colour & Transparency**. To change one image title, enter the replacement text, "
-"inject it from the target image’s context menu, and enable **Rename**."
+msgid "复现下图：取消 **Video mode**，用 **Parallel auto** 打开仓库的 `docs/media/example-images`。其中两个子目录各有一张 200 × 200 图片。在线阅读时也可下载 [来源 01](../media/example-images/01/00.png) 和 [来源 02](../media/example-images/02/00.png)，分别存为 `example-images/01/00.png` 与 `example-images/02/00.png`。将 **Page** 设为 `1,2`、**Image unit** 设为 `3,1`、**Display scale** 设为 `1,1`，勾选 **Image**、**Title** 和 **Fit window to image**，保留 **Auto title**，按 **Ctrl+R**。两项的标题分别为来源目录名 01 和 02。"
+msgstr "To reproduce the example, clear **Video mode** and use **Parallel auto** to open `docs/media/example-images`. Each subfolder contains one 200 × 200 image. Online readers can download [source 01](../media/example-images/01/00.png) and [source 02](../media/example-images/02/00.png) and save them as `example-images/01/00.png` and `example-images/02/00.png`. Set **Page** to `1,2`, **Image unit** to `3,1`, and **Display scale** to `1,1`. Enable **Image**, **Title**, and **Fit window to image**, keep **Auto title** enabled, and press **Ctrl+R**. The titles show the source folders, 01 and 02."
 
 #: ../../resources/usage.md:53
 msgid "找到某一张图"
 msgstr "Find a particular image"
-
-#: ../../resources/usage.md:55
-msgid ""
-"单击图像可在状态栏查看当前项、来源路径和视频时间。打开 **Index table**，用 **Visual items** 按画面上的位置查找，**Pages** 查页，**Sources**"
-" 查原始来源。可由主窗口选中项定位到表格，也可双击表格行跳回对应页。路径详情支持复制；尚未拆出的帧可先有预期路径，等缓存就绪后文件才存在。需要离线核对时，可导出当前视图的 Excel 表格。"
-msgstr ""
-"Click an image to see its position, source path, and video time in the status bar. Open **Index "
-"table** and choose **Visual items** to search by on-screen position, **Pages** for pages, or "
-"**Sources** for originals. Locate the main window’s selection in the table, or double-click a row"
-" to jump back to its page. You can copy path details. A frame’s expected path may appear before "
-"extraction creates the file. Export the current view to Excel for offline inspection."
 
 #: ../../resources/usage.md:57
 msgid "播放卡顿时看什么"
@@ -482,26 +305,80 @@ msgstr ""
 "exported. Move files moves original image files, so try it on copies first. Source videos stay in"
 " place."
 
-#: ../../resources/usage.md:82
-msgid ""
-"**画质。** JPG 可调质量，采用 4:4:4 色度采样；PNG 的压缩级别影响耗时和文件大小；PDF 可选 Lossless 或 Compact (JPG)。保留视频解码所得细节时，选择 "
-"PNG 缓存、输出比例 `1,1`，导出 PNG 或 Lossless PDF。这样可以避免额外的 JPG 编码；视频源本身的压缩损失仍存在。缓存选 **auto** 时，PNG/PDF "
-"且两个输出比例均至少为 1 会用 PNG，否则用 JPG。修改缓存格式后手动刷新。"
-msgstr ""
-"**Quality.** JPG offers adjustable quality with 4:4:4 chroma sampling. PNG compression changes "
-"encoding time and file size. PDF offers Lossless or Compact (JPG). To retain decoded video "
-"detail, use PNG caching, output scale `1,1`, and PNG or Lossless PDF export. This avoids "
-"additional JPEG encoding. Compression losses already present in the video remain. With `auto` "
-"caching, PNG/PDF export uses PNG when both output scale factors are at least 1. Other "
-"combinations use JPG. Refresh after changing the cache format."
+msgid "在同一页比较连续帧"
+msgstr "Compare consecutive frames on one page"
 
-#: ../../resources/usage.md:84
-msgid ""
-"**批量保存。** 勾选 **Save all pages**后点击保存，**Esc** 暂停，重新点击保存继续。如果改变了保存参数，再次保存会从头开始。在 **Configuration** "
-"中 **Save / Load** 可保存、取回一套配置；**Reset** 恢复默认设置。正常关闭窗口会记住最后使用的参数。"
-msgstr ""
-"**Batch saving.** Enable **Save all pages** and click Save. Press **Esc** to pause and click Save"
-" again to resume. Changing export settings restarts the batch. **Configuration → Save / Load** "
-"stores and retrieves a settings snapshot. **Reset** restores defaults. Closing the window "
-"normally preserves the last-used settings."
+msgid "继续使用 Cat 和 Sunset。勾选 **Multiple frames per source**，关闭 **Play sources sequentially**。保持 **Page** 为 `1,2`，将 **Per source** 设为 `1,3`、**Display scale** 设为 `0.35,0.35`、**Skip frames** 设为 `0`。按 **Ctrl+R** 后翻页。左边三格来自 Cat，右边三格来自 Sunset，每组三个帧号连续。"
+msgstr "With Cat and Sunset open, enable **Multiple frames per source** and clear **Play sources sequentially**. Keep **Page** at `1,2`, set **Per source** to `1,3`, **Display scale** to `0.35,0.35` and **Skip frames** to `0`. Press **Ctrl+R** and advance a page. The left three frames belong to Cat and the right three to Sunset. Frame numbers are consecutive within each group."
 
+msgid "开启每路多帧、修改行列并翻页"
+msgstr "Enable multiple frames per source, change the grid and advance a page"
+
+msgid "给两个来源放大同一处细节"
+msgstr "Magnify the same detail in two sources"
+
+msgid "开启 **Layout & Display → Magnifier** 后刷新，点工具栏放大镜。在左图建筑外墙上按住鼠标拖出矩形并松开。两张图会同时出现框，下方各显示来自自己来源的局部。"
+msgstr "Enable **Layout & Display → Magnifier**, refresh, and click the toolbar magnifier. Drag a rectangle over the facade in the left image and release. Each image shows a box and its own detail view underneath."
+
+msgid "在左图建筑外墙上画框，松开后两个来源同时显示各自框内的细节"
+msgstr "Box the facade in the left image and release to see the corresponding detail from each source"
+
+msgid "用 **Parallel auto** 打开上例的 `example-images`，将 **Page** 设为 `1,2`。两张照片都叫 `00.png`。单击右图，按 **F2** 打开索引表，在 **Visual items** 中点击 **Go to current ID**。选中的应是 ID 2（第 1 页、第 1 行、第 2 列），**Original source** 末尾应为 `02/00.png`。点击 **Copy original source** 可复制路径。"
+msgstr "Open the same `example-images` in **Parallel auto** with **Page** set to `1,2`. Both photos are named `00.png`. Click the right photo, press **F2**, and click **Go to current ID** in **Visual items**. ID 2 should be selected (page 1, row 1, column 2), and **Original source** should end in `02/00.png`. Click **Copy original source** to copy the path."
+
+msgid "从主窗口右图定位到索引表中的来源 02"
+msgstr "Locate source 02 in the index from the right photo in the main window"
+
+msgid "双击索引行可跳回对应页。要按页或按来源查找，切换到 **Pages** 或 **Sources**。视频帧路径可能先于文件生成；可将当前视图导出为 Excel。"
+msgstr "Double-click a row to return to its page. Switch to **Pages** or **Sources** to search by page or source. A video frame path may be listed before the file exists. Export the current view to Excel for offline inspection."
+
+msgid "**跟做一次并行挑图。** 用 **Parallel auto** 打开 `example-images`，关闭 **Play sources sequentially** 和 **Move files**。选择空输出目录，**Content** 选 **Selected images**，**Format** 选 **png**。点右图后按 **Ctrl+S**。等右下角提示保存成功，再用 **Parallel auto** 打开输出中的 `image/algorithms/original/select_images`。应同时看到来自 01 和 02 的照片。"
+msgstr "**Try selecting a pair.** Open `example-images` in **Parallel auto** and clear **Play sources sequentially** and **Move files**. Choose an empty output folder, **Selected images** under **Content**, and **png** under **Format**. Click the right photo and press **Ctrl+S**. After the lower-right status field confirms success, open `image/algorithms/original/select_images` from the output in **Parallel auto**. Both the 01 and the 02 photo should appear."
+
+msgid "保存一个位置，再打开输出目录核对两个来源"
+msgstr "Save one position and reopen the output to verify both sources"
+
+msgid "导出画质和暂停批量保存见{ref}`保存设置 <export-settings>`。"
+msgstr "See {ref}`Save Settings <export-settings>` for export quality and pausing a batch."
+
+msgid "用同一张原图检查算法效果"
+msgstr "Inspect an algorithm using one original image"
+
+msgid "取消 **Video mode**，用 **Sequential** 打开 `example-images/01`。选择 **Gaussian Blur**，勾选 **Selected** 和 **Show original panel**。将 **Algorithms** 设为 `1,2`、**Page** 设为 `1,1`，刷新。左右两格现在来自同一张街景照片。开启 **Magnifier** 并刷新，在窗框上取样，比较左侧原图的细线和右侧平滑后的边缘。录屏最后选择 **Stitch** 和 **png**，指定输出目录，按 **Ctrl+S** 导出。"
+msgstr "Clear **Video mode** and open `example-images/01` in **Sequential**. Choose **Gaussian Blur**, enable **Selected** and **Show original panel**, set **Algorithms** to `1,2` and **Page** to `1,1`, then refresh. Both cells now use the same street photo. Enable **Magnifier**, refresh, and box a window frame to compare the fine lines on the left with the smoother edges on the right. The recording ends by choosing **Stitch** and **png**, setting an output folder and pressing **Ctrl+S**."
+
+msgid "将同一张照片的原图与模糊结果并排，放大窗框并导出"
+msgstr "Compare the original and blurred photo, magnify the window and export"
+
+msgid "在一页对齐算法、来源、时间和局部细节"
+msgstr "Align algorithms, sources, time and detail on one page"
+
+msgid "用 **Video mode → Parallel auto** 打开 Cat 和 Sunset，勾选 **Multiple frames per source**。在 **Layout & Display** 从上到下将 **Algorithms、Page、Per source、Image unit、Magnifiers** 设为 `2,1`、`1,2`、`1,2`、`3,1`、`1,2`。勾选 **Image、Magnifier、Title**，将 **Display scale** 设为 `0.3,0.3` 后刷新。在猫咪图上拖出第一个放大框，再到另一处右键选 **Create zoom box here**。选中 **Gaussian Blur**，勾选 **Selected** 和 **Show original panel** 后刷新。"
+msgstr "Open Cat and Sunset in **Video mode → Parallel auto** and enable **Multiple frames per source**. In **Layout & Display**, set **Algorithms, Page, Per source, Image unit, Magnifiers** to `2,1`, `1,2`, `1,2`, `3,1` and `1,2` respectively. Enable **Image, Magnifier, Title**, set **Display scale** to `0.3,0.3` and refresh. Drag the first magnifier box over the cat, then right-click another detail and choose **Create zoom box here**. Choose **Gaussian Blur**, enable **Selected** and **Show original panel**, and refresh."
+
+msgid "依次加入连续帧、两个取样框和第二个算法面板"
+msgstr "Add consecutive frames, two sample boxes and a second algorithm panel"
+
+msgid "核对最后的画面：上下比较处理前后，每排左边是 Cat，右边是 Sunset。每个来源有两帧，每帧下方并列两个局部。这样一页共有 8 个整帧视图和 16 个局部视图；翻页后，同一位置仍可对应比较。"
+msgstr "In the final layout, compare original and processed views vertically. Each row has Cat on the left and Sunset on the right, with two frames per source and two details below each frame. That gives eight full-frame views and sixteen details. The positions remain consistent as you advance."
+
+msgid "录屏保留窗口标题栏、工具栏、设置区和状态栏。首次跟做时，若已有自己的配置，可在 **Configuration** 点 **Save** 留一份快照，再点 **Reset** 从默认布局开始；结束后点 **Load** 取回。开启 **Fit window to image** 和 **Title**，保留 **Auto title**。每个案例给出输入模式和需改的参数，改完按 **Ctrl+R**。控件位置见[设置栏参考](settings.md)。"
+msgstr "The recordings include the title bar, toolbar, settings and status bar. To follow from the defaults, save your current settings with **Configuration → Save**, then click **Reset**. Use **Load** afterwards to restore the snapshot. Enable **Fit window to image** and **Title** and keep **Auto title** enabled. Each example gives its input mode and settings. Press **Ctrl+R** after editing. See the [settings reference](settings.md) for control locations."
+
+msgid "![开启每路多帧、修改行列并翻页](../media/walkthrough-frames.gif)"
+msgstr "![Enable multiple frames per source, change the grid and advance a page](../media/walkthrough-frames.gif)"
+
+msgid "![在左图建筑外墙上画框，松开后两个来源同时显示各自框内的细节](../media/walkthrough-magnifier.gif)"
+msgstr "![Box the facade in the left image and release to see the corresponding detail from each source](../media/walkthrough-magnifier.gif)"
+
+msgid "![从主窗口右图定位到索引表中的来源 02](../media/walkthrough-index.gif)"
+msgstr "![Locate source 02 in the index from the right photo in the main window](../media/walkthrough-index.gif)"
+
+msgid "![保存一个位置，再打开输出目录核对两个来源](../media/walkthrough-selection.gif)"
+msgstr "![Save one position and reopen the output to verify both sources](../media/walkthrough-selection.gif)"
+
+msgid "![将同一张照片的原图与模糊结果并排，放大窗框并导出](../media/walkthrough-algorithm.gif)"
+msgstr "![Compare the original and blurred photo, magnify the window and export](../media/walkthrough-algorithm.gif)"
+
+msgid "![依次加入连续帧、两个取样框和第二个算法面板](../media/walkthrough-grid.gif)"
+msgstr "![Add consecutive frames, two sample boxes and a second algorithm panel](../media/walkthrough-grid.gif)"

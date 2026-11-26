@@ -2,11 +2,11 @@ r"""Configure the Sphinx documentation builder.
 
 https://www.sphinx-doc.org/en/master/usage/configuration.html
 """
-try:
-    from mulimgviewer import __version__ as version  # type: ignore
+from pathlib import Path
+from runpy import run_path
 
-except ImportError:
-    version = "3.9.7"
+version = run_path(str(Path(__file__).resolve().parents[1] /
+                       "src/mulimgviewer/release_version.py"))["__version__"]
 
 __all__ = ["version", "author", "copyright", "project", "html_favicon"]
 
@@ -37,7 +37,6 @@ extensions = [
     "sphinx.ext.viewcode",
     "sphinx.ext.githubpages",
     "myst_parser",
-    "sphinxcontrib.eval",
 ]
 
 myst_heading_anchors = 3
@@ -55,11 +54,16 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 # -- Options for HTML output -------------------------------------------------
 
 html_theme = "furo"
-html_title = project
+# The working tree already documents v4 features while the release is still 3.9.7.
+preview_manual = version == "3.9.7"
+html_title = f"{project} · {'Preview' if preview_manual else version}"
+if preview_manual:
+    tags.add("preview_manual")
 html_logo = "../src/mulimgviewer/mulimgviewer.svg"
 html_favicon = "../src/mulimgviewer/mulimgviewer.png"
 html_static_path = ["_static"]
 html_css_files = ["manual.css"]
+html_js_files = [("highlights.js", {"defer": "defer"})]
 sidebar_colors = {
     "color-sidebar-background": "#101a35",
     "color-sidebar-background-border": "#29395b",

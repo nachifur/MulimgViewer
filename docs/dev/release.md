@@ -1,0 +1,64 @@
+# 新版本构建与发布
+
+以下以 `4.0.0` 为例。准备 README、构建 Python 包和验证文档都可以在打标签前完成。推送 `v4.0.0` 标签才会触发正式发布。如果只需要在本机生成可分发的桌面程序，可直接按{ref}`桌面离线包教程 <desktop-bundle>`操作。
+
+## 准备构建环境
+
+按[下载与安装](../resources/install.md)创建应用环境，确认能启动 GUI，且 `ffmpeg` 和 `ffprobe` 可用。在仓库根目录执行以下命令，取得已有标签并安装回归测试、文档和 Python 打包工具。
+
+```sh
+conda activate mulimgviewer
+git fetch origin --tags
+python -m pip install build -r docs/requirements.txt -r auto_test_scripts/requirements.txt
+```
+
+## 准备版本内容
+
+在 `src/mulimgviewer/release_version.py` 将 `__version__` 设为 `"4.0.0"`。版本号使用三段数字；前缀 `v` 只写在 Git 标签中。
+
+平时将变更说明写在 `CHANGELOG.md` 的 `## 未发布` 下。发布时只需在上述版本文件中填写一次版本号。`--prepare` 会将待发布说明归入该版本，并生成对应的 README。检查模板里的示例与配图后执行以下命令。
+
+```sh
+python tools/release.py --prepare
+git diff -- README.md CHANGELOG.md src/mulimgviewer/release_version.py
+```
+
+版本为 3.9.7 时保留原 README。从 4.0.0 起，脚本会用模板生成根目录的 `README.md`。修改新版介绍时编辑模板，再重新生成。
+
+## 检查是否可以提交
+
+```sh
+python tools/release.py --full
+```
+
+在无显示器的 Linux 构建机上，安装 Xvfb 和 xauth 后运行 `xvfb-run -a python tools/release.py --full`。检查使用当前 Python 运行 GUI 回归测试。单独安装了 Sphinx 时，可用 `SPHINX_PYTHON` 指定文档环境的 Python 可执行文件。
+
+依次检查本地标签是否已占用、中英文文档能否严格构建、全量回归是否通过，再生成 wheel 和源码包并核对版本。看到 `Local checks passed for v4.0.0` 后，打开以下结果核对。
+
+- 中文和英文手册分别在 `docs/_build/release-zh_CN/index.html` 和 `docs/_build/release-en/index.html`。
+
+- `auto_test_scripts/reports/latest.json` 指向本次回归报告目录。打开其中的 `report.html` 查看失败、跳过及运行环境。
+
+- `build/release-4.0.0/dist/` 包含供 Python 安装的 `.whl` 和源码 `.tar.gz`。需要双击启动的用户请使用下一步的桌面离线包。
+
+如果提示 README 过期，重新运行 `--prepare`；如果提示同名标签已存在，先核对版本号。文档或测试失败时，按输出定位问题，修复后重新执行 `--full`。
+
+## 验证将要分发的提交
+
+将版本文件、模板、生成的 README、发布说明和对应源码一起提交。推送待发布分支，核对该提交的 CI 和回归报告。需要分发离线包时，在 **Actions → Desktop packages → Run workflow** 选该分支，核对运行记录的提交 SHA，再下载各平台产物。
+
+按{ref}`桌面离线包教程 <desktop-bundle>`核对目标平台和架构，解开下载的归档。在每个目标系统实际启动该包，用[示例视频](../resources/usage.md)检查并排播放，导出后重新打开结果，再将这份产物作为发布附件。
+
+## 打标签并核对发布结果
+
+以下命令会触发正式发布。先用 `git rev-parse HEAD` 确认当前提交就是通过 CI 并用于打包的提交；如果经过合并或变基后 SHA 改变，应核对最终提交的检查结果。
+
+```sh
+git rev-parse HEAD
+git tag -a $(python tools/release.py --print-tag) -m "MulimgViewer release"
+git push origin "refs/tags/$(python tools/release.py --print-tag)"
+```
+
+在 GitHub Actions 核对标签对应的构建和发布任务。三个系统的 Python 构建成功后，工作流从 CHANGELOG 提取说明，将 Python 分发包上传至 GitHub Release 和 PyPI。维护者需在仓库配置有效的 `PYPI_API_TOKEN`。桌面离线归档由独立工作流生成；在同一 Release 的附件中上传已验收的归档。
+
+README 的功能链接直接打开同一次提交中的手册章节。中文和英文在线手册入口跟随 Read the Docs 项目设置的默认版本。发布后核对两个语言项目的新标签构建，确认可访问后再按需切换默认版本。

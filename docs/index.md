@@ -4,6 +4,8 @@ hide-toc: true
 
 # MulimgViewer 中文手册
 
+`````{container} manual-highlights
+
 ````{container} product-hero
 
 ```{container} manual-intro
@@ -11,33 +13,86 @@ hide-toc: true
 
 在同一页对齐多个图像或视频来源，同步放大细节，将原图与算法结果一起导出。
 
-[安装与自检](resources/install.md) [运行双视频示例](resources/usage.md)
+[运行双视频示例](resources/usage.md)
 ```
 
-```{figure} media/layout-window.png
-:alt: 猫咪和海上日落并排显示，右侧展开布局参数。
+```{figure} media/parallel-playback.gif
+:alt: Cat 和 Sunset 并排翻页，右侧展开 Input & Playback。
 :figclass: manual-figure
 
-同一页上的两路视频。右侧的 Page 设为一行两列，Display scale 保持 1,1。
+左格是 Cat，右格是 Sunset。单击下一页，两路同时前进一帧。
 ```
 ````
 
-```{container} manual-guides
-- [浏览与导出](resources/usage.md) 选择来源、对比细节和保存结果
-- [右侧设置栏](resources/settings.md) 按界面分组查找参数与实例
-- [开发指南](dev/dev.md) 添加算法、运行回归测试和提交修改
+````{container} product-hero
+
+```{container} manual-intro
+**十张超 4K 图，只比同一处细节。**
+
+在鸟头上画一次框，隐藏原图。十张 4608 × 2592 图像的同一块 160 × 160 像素区域并排铺开，沿鸟喙就能比较不同插值的边缘。
+
+{ref}`跟做 1:1 对比 <native-detail>` [下载无损 PNG](media/sr-detail-native.png)
 ```
 
-本手册对应当前源码版。使用已发布的安装包时，请选择对应版本的文档。
+```{figure} media/walkthrough-sr-detail.gif
+:alt: 在完整窗口内框选鸟头，切换到只显示十个原尺寸局部。
+:figclass: manual-figure
+
+跟随录屏设置放大框，再下载最终画布的 PNG，按 100% 查看边缘细节。
+```
+````
+
+````{container} product-hero
+
+```{container} manual-intro
+**点一个位置，挑出一组样本。**
+
+A、B 两个来源各占一行，每行显示三张。点中 B 行的第二张并保存，A 行的第二张也会一起导出。
+
+{ref}`跟做并行挑图 <multi-source-picks>`
+```
+
+```{figure} media/walkthrough-parallel-picks.gif
+:alt: 两行三列显示 A、B 的图像，点中下排中间一张，保存后重新打开两个来源的结果。
+:figclass: manual-figure
+
+Per source 设为 1,3。点中 B/02.png，按 Ctrl+S，再打开输出目录核对两张 02.png。
+```
+````
+`````
+
+```{container} manual-guides
+- [下载与安装](resources/install.md) 选择系统对应的桌面包，或从源码安装
+- [界面与快捷键](resources/interface.md) 从图标或菜单名查操作
+- [右侧设置栏](resources/settings.md) 按分组查参数和生效方式
+- [使用技巧](resources/large-images.md) 核对来源、视频时间与原尺寸细节
+```
+
+```{only} preview_manual
+本页演示开发版功能。正在使用 3.9.7？请查看 [3.9.7 中文手册](https://mulimgviewer.readthedocs.io/zh-cn/docs-v3.9.7-r1/)。
+```
+
+```{only} not preview_manual
+当前手册版本为 {sub-ref}`release`。[查看 3.9.7 中文手册](https://mulimgviewer.readthedocs.io/zh-cn/docs-v3.9.7-r1/)。
+```
 
 ```{toctree}
 :maxdepth: 2
 :hidden:
-:caption: 用户指南
+:caption: 安装与上手
 
 resources/install
 resources/usage
+```
+
+```{toctree}
+:maxdepth: 2
+:hidden:
+:caption: 操作参考
+
+resources/interface
 resources/settings
+resources/large-images
 ```
 
 ```{toctree}
@@ -45,6 +100,7 @@ resources/settings
 :caption: 开发与贡献
 
 dev/dev
+dev/release
 misc/todo
 ```
 

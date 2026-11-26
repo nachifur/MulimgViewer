@@ -18,16 +18,6 @@
 - 视频导入、自动播放与多视频并排对比已有操作示例。可先依照手册打开两段视频，再在原议题补充仍有困难的场景。[操作示例](../resources/usage.md)、[#53 视频并行对比](https://github.com/nachifur/MulimgViewer/issues/53)
 - 中文界面需求和项目合作分别在对应议题讨论。[#55 中文界面](https://github.com/nachifur/MulimgViewer/issues/55)、[#7 招募合作者](https://github.com/nachifur/MulimgViewer/issues/7)、[#222 合作](https://github.com/nachifur/MulimgViewer/issues/222)
 
-## 已完成的早期建议
+## 查找已实现的功能
 
-- [x] 增加精确定位（目前已经有 slider）
-- [x] 增加图片索引查看，方便进行精确定位
-- [x] 并行的局部放大功能（用于论文中的对比实验图片**急需！**）
-- [x] 输入方式，新增：路径文件的导入和存储（@nothingeasy 提供改进意见）
-- [x] 增加删除功能（完善筛选功能）
-- [x] 保存带框的原始图像（@JuZiSYJ 提供改进意见）
-- [x] 拼图过程中，点击可旋转图片
-- [x] 多框放大功能（@JuZiSYJ 提供改进意见）
-- [x] 去除放大图像的 box（@stefanklut 提供改进意见）
-- [x] 高清图像的对比，放大图像 1:1 输出（@Faberman 提供改进意见）
-- [x] 为图像添加 title（@Faberman 提供改进意见）
+定位图片、同步放大和成组挑图见[操作录屏](../resources/usage.md)。框线、标题和导出比例见[设置栏参考](../resources/settings.md)。历次变化见[更新记录](changelog.md)，早期建议的贡献者见[致谢](acknowledgements.md)。

@@ -1,6 +1,6 @@
 # 开发指南
 
-从项目根目录按[安装与自检](../resources/install.md)创建环境。修改前先用仓库的微型素材跑通目标操作；修改后用相同输入比较显示、缓存和导出结果。
+从项目根目录按[下载与安装](../resources/install.md)创建环境。修改前先用仓库的微型素材跑通目标操作；修改后用相同输入比较显示、缓存和导出结果。
 
 ## 从功能找到入口
 
@@ -157,6 +157,7 @@ python auto_test_scripts/run_tests.py --failed "$reportPath/report.json"
 
 目前 CI 工作流配置为 Windows。Linux/macOS、实际 GPU 驱动与硬件、系统对话框外观及长时间运行仍应根据修改范围补充验证。详细案例和维护规则见 `auto_test_scripts/README.md`。
 
+(desktop-bundle)=
 ## 构建桌面离线包
 
 **一次构建多个平台。** 在 GitHub 仓库进入 **Actions → Desktop packages → Run workflow**，选择分支并运行。矩阵分别在 Windows x64、Linux x64/ARM64、macOS Intel/Apple Silicon 上构建。每项通过解压自检后才上传自己的 artifact；在运行详情页下载，解开 GitHub 外层 ZIP 即可取得实际软件包。此操作只生成候选包，发布版本时再选择附件。
@@ -169,7 +170,7 @@ conda activate mulimg-builder
 python tools/package_desktop.py --compact
 ```
 
-三个平台都在 `dist/desktop/` 生成带有系统和架构名称的 `.tar.xz`。省略 `--compact` 时，Windows 使用 ZIP，Linux 和 macOS 使用 tar.gz。解压后按[安装与自检](../resources/install.md)启动。macOS 产物未经签名和公证，Linux 需要兼容的系统库和图形会话。
+三个平台都在 `dist/desktop/` 生成带有系统和架构名称的 `.tar.xz`。省略 `--compact` 时，Windows 使用 ZIP，Linux 和 macOS 使用 tar.gz。解压后按[下载与安装](../resources/install.md)启动。macOS 产物未经签名和公证，Linux 需要兼容的系统库和图形会话。
 
 **构建与验收。** 脚本按照 `environment.yml` 创建临时 Conda 环境，禁用个人默认加装包，并在临时环境中安装 PyInstaller。PyInstaller 以目录模式收集依赖，脚本显式加入 FFmpeg、FFprobe、内置算法和资源，解压自检通过后才输出归档。
 
@@ -197,4 +198,8 @@ python -m sphinx_intl build -d docs/locale -l en
 python -m sphinx -b html -D language=en docs docs/_build/html/en
 ```
 
-Read the Docs 从每个 Git 分支或标签各自的 `.readthedocs.yaml` 构建。当前配置安装文档依赖，并以 `--no-deps` 安装本项目取得版本和图标；无需编译 wxPython。归档时在目标提交打标签，构建并核对页面后再切换默认版本。
+Read the Docs 使用各分支或标签中的 `.readthedocs.yaml`。构建只安装文档依赖，从检出的源码读取版本号和图标。
+
+## 准备发布版本
+
+维护者请按[新版本构建与发布](release.md)准备发布提交、验证安装包并推送正式标签。

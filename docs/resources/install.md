@@ -1,8 +1,12 @@
-# 安装与自检
+# 下载与安装
 
-## 使用桌面离线包
+## 下载适合当前系统的桌面包
 
-先在 [GitHub Releases](https://github.com/nachifur/MulimgViewer/releases) 核对目标版本的附件。开发者也可以从 **Desktop packages** 工作流取得对应提交的构建产物。选择与系统和处理器匹配的包；只有源码附件时，请按下节安装。
+[打开 GitHub Releases 下载软件](https://github.com/nachifur/MulimgViewer/releases)。
+
+在发布页打开对应版本的 **Assets**。Windows 选 Windows 包，macOS 注意区分 Apple 芯片与 Intel，Linux 选择与处理器架构一致的包。如果该版本只提供 **Source code**，请使用下方的源码安装步骤。
+
+## 解压并启动
 
 完整解压软件包并进入 MulimgViewer 目录。Windows 双击 `MulimgViewer.exe`，Linux 和 macOS 在图形桌面的终端执行 `./MulimgViewer`。移动软件时请保留整个目录，包括其中的依赖文件。
 
@@ -31,7 +35,9 @@ python MulimgViewer.py
 | --- | --- | --- |
 | 图形界面 | 启动程序，选择 Sequential，打开 `auto_test_scripts/assets/images/source_001` | 能显示图像并翻页 |
 | 视频工具 | 运行 `python tools/check_video_tools.py` | 列出当前解释器、FFmpeg 和 FFprobe 的路径，两个程序均可执行 |
-| 多视频播放 | 勾选 Video mode，用 Parallel auto 打开 `docs/media/example-videos`，页面网格设为 `1,2` 后刷新 | 两个视频来源并排显示，播放时一起更新 |
+| 多视频播放 | 按[双视频示例](usage.md)打开 Cat 和 Sunset，翻到下一页 | 两个标题仍在各自画面下，两路视频同时前进 |
+
+![双视频自检的预期画面：左侧 Cat，右侧 Sunset，右栏已开启 Video mode](../media/input-window.png)
 
 如果提示找不到 FFmpeg 或 FFprobe，在当前环境执行 `conda install -c conda-forge ffmpeg`，再运行检测脚本。在 IDE 中调试时，选择检测脚本输出的同一个 Python 解释器。使用自行安装的工具时，可用环境变量 `FFMPEG_BINARY`、`FFPROBE_BINARY` 分别指定两个可执行文件的完整路径。
 

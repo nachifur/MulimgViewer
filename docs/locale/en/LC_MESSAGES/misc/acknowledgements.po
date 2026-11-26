@@ -18,59 +18,29 @@ msgstr ""
 msgid "致谢"
 msgstr "Acknowledgements"
 
-#: ../../misc/acknowledgements.md:3
-msgid "Everyone in the QQ group;"
-msgstr ""
+msgid "感谢 QQ 交流群里提供使用反馈的每一位成员，也感谢以下贡献者。"
+msgstr "Thank you to everyone in the QQ group who shared feedback, and to the following contributors."
 
-#: ../../misc/acknowledgements.md:4
-msgid "nothingeasy:改进意见-(输入方式，新增：路径文件的导入和存储);"
-msgstr "nothingeasy suggested importing and saving input path lists."
+msgid "nothingeasy — 输入路径清单的导入与保存建议。"
+msgstr "nothingeasy — Suggested importing and saving lists of input paths."
 
-#: ../../misc/acknowledgements.md:5
-msgid "JuZiSYJ:改进意见-(保存带框的原始图像+并行放大);"
-msgstr "JuZiSYJ suggested saving boxed originals and magnifying regions across sources."
+msgid "JuZiSYJ — 同步放大与带框原图导出建议。"
+msgstr "JuZiSYJ — Suggested synchronized magnification and exporting originals with boxes."
 
-#: ../../misc/acknowledgements.md:6
-msgid "ymingsu:实现文档导入功能"
-msgstr "ymingsu implemented file-list import."
+msgid "ymingsu — 实现文件清单导入。"
+msgstr "ymingsu — Implemented file-list import."
 
-#: ../../misc/acknowledgements.md:7
-msgid "Faberman:"
-msgstr ""
+msgid "Faberman — 建议增加图像标题和放大图 1:1 输出，翻译并润色英文 README。"
+msgstr "Faberman — Suggested image titles and 1:1 magnifier export, and translated and edited the English README."
 
-#: ../../misc/acknowledgements.md:8
-msgid "改进意见-(为图像添加titile+放大图像1:1输出);"
-msgstr "Suggested image titles and 1:1 export for magnified images."
+msgid "stefanklut — 建议支持隐藏放大图边框。"
+msgstr "stefanklut — Suggested an option to hide magnifier borders."
 
-#: ../../misc/acknowledgements.md:9
-msgid "翻译和润色英文版readme"
-msgstr "Translated and edited the English README."
+msgid "FunkyKoki — 提出局部显示图像和放大图排布建议。"
+msgstr "FunkyKoki — Suggested partial image views and additional magnifier layouts."
 
-#: ../../misc/acknowledgements.md:10
-msgid "stefanklut:改进意见-(不显示放大图像的边界框);"
-msgstr "stefanklut suggested hiding outlines on magnified views."
+msgid "wwhio — 放大框颜色设置。"
+msgstr "wwhio — Contributed zoom-box colour settings."
 
-#: ../../misc/acknowledgements.md:11
-msgid "FunkyKoki:改进意见-(显示一半的图像+新增放大图像排布方式)."
-msgstr "FunkyKoki suggested displaying half of an image and adding magnifier layouts."
-
-#: ../../misc/acknowledgements.md:12
-msgid "wwhio:设置box的颜色"
-msgstr "wwhio added configurable box colours."
-
-#: ../../misc/acknowledgements.md:13
-msgid "wzy:"
-msgstr ""
-
-#: ../../misc/acknowledgements.md:14
-msgid "为MulimgViewer带来了CI/CD等先进的开发流程"
-msgstr "Introduced development workflows including CI/CD."
-
-#: ../../misc/acknowledgements.md:15
-msgid "构建了readthedocs网页，并支持多语言"
-msgstr "Set up Read the Docs with multilingual support."
-
-#: ../../misc/acknowledgements.md:16
-msgid "支持`pip install MulimgViewer`"
-msgstr "Enabled installation with `pip install MulimgViewer`."
-
+msgid "wzy — 引入 CI/CD，搭建多语言 Read the Docs 网站，支持通过 pip 安装。"
+msgstr "wzy — Introduced CI/CD, set up multilingual Read the Docs hosting and enabled pip installation."

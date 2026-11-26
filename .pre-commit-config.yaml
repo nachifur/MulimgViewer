@@ -2,6 +2,15 @@
 exclude: ^src/.*/gui/.*\.py$
 
 repos:
+  - repo: local
+    hooks:
+      - id: release-readme
+        name: Synchronize release README
+        entry: python tools/release.py --prepare
+        language: python
+        pass_filenames: false
+        files: >-
+          ^(src/mulimgviewer/release_version.py|README(-v4)?.md|CHANGELOG.md)$
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
     hooks:

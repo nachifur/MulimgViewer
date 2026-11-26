@@ -18,10 +18,6 @@ msgstr ""
 msgid "更新记录"
 msgstr "Changelog"
 
-#: ../../misc/changelog.md:3
-msgid "未发布（v3.9.7 之后的变化）"
-msgstr "Unreleased changes since v3.9.7"
-
 #: ../../misc/changelog.md:5
 msgid "**多路视频浏览**。支持从目录或文件清单载入视频，并排查看同一帧。跳转到长视频中段时优先准备当前页，后台沿播放方向预取后续页面。"
 msgstr ""
@@ -108,3 +104,5 @@ msgstr "Improved the layout of the main window."
 msgid "修复了带透明通道的图像（RGBA）显示异常的问题。"
 msgstr "Fixed a display issue affecting images with an alpha channel (RGBA)."
 
+msgid "未发布"
+msgstr "Unreleased"

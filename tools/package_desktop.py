@@ -15,6 +15,13 @@ MAC = sys.platform == "darwin"
 LAUNCHER = "MulimgViewer.cmd" if WINDOWS else "MulimgViewer.command"
 
 
+def report_archive(path):
+    path = path.resolve()
+    print(f"Verified desktop package ({path.stat().st_size / 2**20:.2f} MiB)\n"
+          f"Path: {path}\n"
+          f"Link: {path.as_uri()}", flush=True)
+
+
 def stage(prefix):
     app = prefix / "viewer"
     app.mkdir()
@@ -76,7 +83,7 @@ def pack_and_verify(prefix, work, output, compact=False):
     subprocess.run([*cmd, "--self-check"], cwd=extracted, env=clean, check=True, timeout=180)
     output.mkdir(parents=True, exist_ok=True)
     archive.replace(output / archive.name)
-    print(f"Verified: {output / archive.name} ({(output / archive.name).stat().st_size / 2**20:.1f} MiB)")
+    report_archive(output / archive.name)
 
 
 def main():

@@ -45,6 +45,15 @@ class StatusInfoTests(unittest.TestCase):
                 self.assertEqual(info['position'], expected)
                 self.assertEqual(info['source'], str(Path(displayed[1]).absolute()))
 
+    def test_export_names_keep_source_spelling_with_case_insensitive_lookup(self):
+        from mulimgviewer.src.cache_layout import source_names
+        files = ['SourceA/02.png', 'B/02.png']
+        with patch('mulimgviewer.src.status_bar.key', side_effect=lambda p: str(Path(p)).lower()):
+            for mode, paths in [(1, ['SourceA', 'B']), (3, files)]:
+                with self.subTest(mode=mode):
+                    model = self.image(mode, paths, ['02.png'], files)
+                    self.assertEqual(source_names(model, files, readable=True), files)
+
     def test_flattened_parallel_and_different_folder_lengths(self):
         model = self.image(1, ['b', 'a'], [['1.png'], ['9.png', '7.png']], ['a/7.png', 'b/1.png'], True)
         self.assertEqual(selection_info(model, SimpleNamespace(video_mode=False), 1)['position'],

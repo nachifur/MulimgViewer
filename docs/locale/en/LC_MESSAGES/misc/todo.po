@@ -123,51 +123,8 @@ msgstr ""
 "collaborators](https://github.com/nachifur/MulimgViewer/issues/7), [#222 "
 "Collaboration](https://github.com/nachifur/MulimgViewer/issues/222)"
 
-#: ../../misc/todo.md:21
-msgid "已完成的早期建议"
-msgstr "Completed community suggestions"
+msgid "查找已实现的功能"
+msgstr "Find features already available"
 
-#: ../../misc/todo.md:23
-msgid "[x] 增加精确定位（目前已经有 slider）"
-msgstr "[x] Navigate to a precise position with the slider."
-
-#: ../../misc/todo.md:24
-msgid "[x] 增加图片索引查看，方便进行精确定位"
-msgstr "[x] Locate individual images in the index."
-
-#: ../../misc/todo.md:25
-msgid "[x] 并行的局部放大功能（用于论文中的对比实验图片**急需！**）"
-msgstr "[x] Magnify matching regions across images for side-by-side comparisons in papers."
-
-#: ../../misc/todo.md:26
-msgid "[x] 输入方式，新增：路径文件的导入和存储（@nothingeasy 提供改进意见）"
-msgstr "[x] Import and save input path lists (suggested by @nothingeasy)."
-
-#: ../../misc/todo.md:27
-msgid "[x] 增加删除功能（完善筛选功能）"
-msgstr "[x] Delete images during selection."
-
-#: ../../misc/todo.md:28
-msgid "[x] 保存带框的原始图像（@JuZiSYJ 提供改进意见）"
-msgstr "[x] Save original images with boxes (suggested by @JuZiSYJ)."
-
-#: ../../misc/todo.md:29
-msgid "[x] 拼图过程中，点击可旋转图片"
-msgstr "[x] Rotate an image by clicking during stitching."
-
-#: ../../misc/todo.md:30
-msgid "[x] 多框放大功能（@JuZiSYJ 提供改进意见）"
-msgstr "[x] Magnify multiple boxes (suggested by @JuZiSYJ)."
-
-#: ../../misc/todo.md:31
-msgid "[x] 去除放大图像的 box（@stefanklut 提供改进意见）"
-msgstr "[x] Hide outlines on magnified images (suggested by @stefanklut)."
-
-#: ../../misc/todo.md:32
-msgid "[x] 高清图像的对比，放大图像 1:1 输出（@Faberman 提供改进意见）"
-msgstr "[x] Compare high-resolution images and export magnified regions at 1:1 (suggested by @Faberman)."
-
-#: ../../misc/todo.md:33
-msgid "[x] 为图像添加 title（@Faberman 提供改进意见）"
-msgstr "[x] Add image titles (suggested by @Faberman)."
-
+msgid "定位图片、同步放大和成组挑图见[操作录屏](../resources/usage.md)。框线、标题和导出比例见[设置栏参考](../resources/settings.md)。历次变化见[更新记录](changelog.md)，早期建议的贡献者见[致谢](acknowledgements.md)。"
+msgstr "See the [recorded workflows](../resources/usage.md) for locating an image, magnifying a region and selecting a group. Box outlines, titles and export scale are documented in the [settings reference](../resources/settings.md). See the [changelog](changelog.md) for release history and the [credits](acknowledgements.md) for early contributions."

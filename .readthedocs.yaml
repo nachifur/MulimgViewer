@@ -6,10 +6,6 @@ build:
   os: ubuntu-22.04
   tools:
     python: "3"
-  jobs:
-    post_install:
-      # docs/conf.py needs package metadata but no GUI dependencies.
-      - python -m pip install --no-deps .
 
 sphinx:
   configuration: docs/conf.py

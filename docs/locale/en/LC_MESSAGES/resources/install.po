@@ -14,13 +14,16 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.15.0\n"
 
+msgid "![双视频自检的预期画面：左侧 Cat，右侧 Sunset，右栏已开启 Video mode](../media/input-window.png)"
+msgstr "![Expected video check: Cat on the left, Sunset on the right, and Video mode enabled in the sidebar](../media/input-window.png)"
+
 #: ../../resources/install.md:1
-msgid "安装与自检"
-msgstr "Install and verify"
+msgid "下载与安装"
+msgstr "Download and install"
 
 #: ../../resources/install.md:3
-msgid "使用桌面离线包"
-msgstr "Use an offline desktop bundle"
+msgid "下载适合当前系统的桌面包"
+msgstr "Download a desktop bundle for your system"
 
 #: ../../resources/install.md:5
 msgid ""
@@ -107,16 +110,6 @@ msgstr "The script lists the active interpreter and the paths to FFmpeg and FFpr
 msgid "多视频播放"
 msgstr "Parallel video playback"
 
-#: ../../resources/install.md
-msgid "勾选 Video mode，用 Parallel auto 打开 `docs/media/example-videos`，页面网格设为 `1,2` 后刷新"
-msgstr ""
-"Enable Video mode, open `docs/media/example-videos` with Parallel auto, set the page grid to "
-"`1,2`, and refresh."
-
-#: ../../resources/install.md
-msgid "两个视频来源并排显示，播放时一起更新"
-msgstr "The two videos appear side by side and advance together."
-
 #: ../../resources/install.md:34
 msgid ""
 "如果提示找不到 FFmpeg 或 FFprobe，在当前环境执行 `conda install -c conda-forge ffmpeg`，再运行检测脚本。在 IDE "
@@ -137,3 +130,17 @@ msgstr ""
 "install it with `conda install -c conda-forge python.app` and launch with `pythonw "
 "MulimgViewer.py`."
 
+msgid "按[双视频示例](usage.md)打开 Cat 和 Sunset，翻到下一页"
+msgstr "Open Cat and Sunset as shown in the [two-video walkthrough](usage.md) and advance one page"
+
+msgid "两个标题仍在各自画面下，两路视频同时前进"
+msgstr "Both clips advance while each title stays under its own video"
+
+msgid "在发布页打开对应版本的 **Assets**。Windows 选 Windows 包，macOS 注意区分 Apple 芯片与 Intel，Linux 选择与处理器架构一致的包。如果该版本只提供 **Source code**，请使用下方的源码安装步骤。"
+msgstr "Open **Assets** for the desired release. On Windows, choose the Windows bundle. On macOS, match Apple silicon or Intel. On Linux, match your processor architecture. If the release only lists **Source code**, use the source installation steps below."
+
+msgid "解压并启动"
+msgstr "Extract and launch"
+
+msgid "[打开 GitHub Releases 下载软件](https://github.com/nachifur/MulimgViewer/releases)。"
+msgstr "[Download MulimgViewer from GitHub Releases](https://github.com/nachifur/MulimgViewer/releases)."

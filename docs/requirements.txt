@@ -3,4 +3,3 @@
 furo==2024.8.6
 myst-parser
 sphinx
-sphinxcontrib-eval

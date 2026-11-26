@@ -10,7 +10,7 @@ import tempfile
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from package_desktop import ROOT, stage
+from package_desktop import ROOT, report_archive, stage
 
 
 def video_binaries():
@@ -89,7 +89,7 @@ def main():
             staged = Path(staging) / archive.name
             shutil.copyfile(archive, staged)
             staged.replace(output / archive.name)
-        print(f"Verified {output / archive.name}", flush=True)
+        report_archive(output / archive.name)
 
 
 if __name__ == "__main__":

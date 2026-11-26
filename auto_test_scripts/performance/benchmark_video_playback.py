@@ -34,7 +34,9 @@ def probe_manifest(folder):
 
     tools, env = resolve_video_tools()
     videos = []
-    for path in sorted(folder.glob('*.mp4'), key=lambda p: int(p.stem) if p.stem.isdigit() else p.stem):
+    inputs = (p for p in folder.iterdir() if p.is_file() and p.suffix.lower() == '.mp4')
+    for path in sorted(inputs, key=lambda p: (
+            not p.stem.isdecimal(), int(p.stem) if p.stem.isdecimal() else p.stem.casefold(), p.name)):
         probe = json.loads(subprocess.check_output([tools['ffprobe'], '-v', 'error',
             '-select_streams', 'v:0', '-show_entries',
             'stream=codec_name,width,height,avg_frame_rate,nb_frames,duration', '-of', 'json', str(path)], env=env))

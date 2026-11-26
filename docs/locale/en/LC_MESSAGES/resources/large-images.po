@@ -1,0 +1,92 @@
+# English translation of the large-image workflow.
+msgid ""
+msgstr ""
+"Language: en\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "使用技巧"
+msgstr "Practical tips"
+
+msgid "已经能打开来源、调整布局后，可以用下面的方法排查对错图、取错帧、看不清细节等问题。首次操作可跟着[浏览录屏](usage.md)练习；查控件名称和取值请看[右侧设置栏](settings.md)。"
+msgstr "Use these tips when a comparison shows the wrong file, the wrong moment or too little detail. For a first run, follow the [recorded workflows](usage.md). Look up individual controls in the [settings reference](settings.md)."
+
+msgid "先确认比的是同一个样本"
+msgstr "Check that the samples really match"
+
+msgid "**某个方法少了一张图。** 并排比较目录时，第一个来源提供文件名清单。若参考目录有 `bird.png`，就去每个方法目录核对是否也有 `bird.png`，包括大小写和扩展名。某个方法独有的文件不会自动成为新的一页。把样本最完整的目录放在第一位，开始前先核对一组已知结果。"
+msgstr "**One method is missing an image.** For side-by-side image folders, the first source supplies the filenames. If the reference contains `bird.png`, check for that exact name, case and extension in each method folder. A file found only in another folder does not create a page. Put the most complete reference first and verify a known sample before reviewing the set."
+
+msgid "**方法顺序与预期不同。** Parallel auto 按来源目录名作文本排序，`1, 10, 2` 就会依次相邻。长期使用的数据集可以统一为 `01, 02, …, 10`；只想临时交换两列时，用 Parallel manual 按所需顺序添加目录即可。"
+msgstr "**Methods appear out of order.** Parallel auto sorts source folder names as text, putting `10` immediately after `1` and before `2`. Use `01, 02, …, 10` for a permanent dataset. For a one-off comparison, add folders in your preferred order in Parallel manual."
+
+msgid "**把样本顺序交给同事复查。** 在数据目录旁保存一份 UTF-8 TXT，按检查顺序每行写一个相对文件路径，如 `01-Reference/bird.png`。用 **Image/Video File List** 打开它。把清单和数据目录一起移动并保留相对位置，在另一台电脑上仍能找到同一批文件。"
+msgstr "**Share a review order.** Save a UTF-8 TXT beside the data folders, with one relative file path per line in review order, such as `01-Reference/bird.png`. Open it with **Image/Video File List**. Move the list and data together, preserving their relative locations, so a colleague can reopen the same files on another computer."
+
+msgid "每个来源同页显示三张时，怎样并行挑出第二张？"
+msgstr "How do I pick the second image from each source when three are visible?"
+
+msgid "以 A、B 两个目录各有 01.png、02.png、03.png 为例。选择 **Parallel auto** 或 **Parallel manual**，勾选 **Multiple frames per source**，关闭 **Play sources sequentially**。在布局中设 **Page** 为 `2,1`、**Per source** 为 `1,3`，按 **Ctrl+R**，每个来源会并排显示三张。"
+msgstr "Suppose folders A and B each contain 01.png, 02.png and 03.png. Choose **Parallel auto** or **Parallel manual**, enable **Multiple frames per source**, and clear **Play sources sequentially**. Set **Page** to `2,1` and **Per source** to `1,3`, then press **Ctrl+R** to see three images side by side for each source."
+
+msgid "右键 B 的第二张，选择 **Select image**，即可将 A、B 各自的 02.png 一起挑出。也可以将保存内容设为 **Selected images**、关闭整批保存，左键点中 B 的第二张后按 **Ctrl+S**。末页某个来源若缺少这个位置，只保存其他来源中对应的图像。"
+msgstr "Right-click the second image from B and choose **Select image** to pick 02.png from both A and B. Alternatively, choose **Selected images** as the save content, turn off saving all pages, left-click the second image from B and press **Ctrl+S**. On a partial last page, only sources with an image at that position contribute a file."
+
+msgid "多路视频同页，怎样核对是否同一时刻？"
+msgstr "Check whether two clips show the same moment"
+
+msgid "暂停后依次单击两路画面，查看状态栏各自的视频路径和时间。软件按采样帧的位置并排：当 **Skip frames** 为 `0` 时，从头计数的第 31 帧，在 30 FPS 视频中约为 1 秒，在 60 FPS 视频中约为 0.5 秒。即使帧率相同，两段视频的拍摄起点也可能不同。要比较同一事件，先用一个两路都能认出的动作核对起点；需要整段同步时，先把素材对齐到相同起点和帧率。"
+msgstr "Pause, click each clip in turn and check its path and time in the status bar. The viewer aligns sampled frame positions: with **Skip frames** at `0`, frame 31 is about one second into a 30 FPS clip but half a second into a 60 FPS clip. Even clips with identical frame rates can start at different moments. Check a recognizable action in both clips first. For a synchronized comparison throughout, prepare clips with matching start times and frame rates."
+
+msgid "比较多个细节时，保持取样面积一致"
+msgstr "Keep detail samples the same size"
+
+msgid "开启工具栏放大镜，先拖出第一个框定下宽高。要同时看第二处纹理，在该处右键选 **Create zoom box here**，新框会沿用第一个框的大小。再次左键拖框会重新开始一组取样。如果想保留已有位置，就用右键追加，并把 **Magnifiers** 网格设为能容纳所有框。"
+msgstr "Enable the toolbar magnifier and drag the first box to set its width and height. To compare a second texture, right-click it and choose **Create zoom box here**. The new box uses the first box’s size. Dragging again with the left button starts a fresh set. To keep existing samples, append with the context menu and give the **Magnifiers** grid room for all boxes."
+
+msgid "看不全画布时，先决定是否需要保留像素"
+msgstr "Make room without sacrificing detail"
+
+msgid "**画布只差一点就能放下。** 按 **Ctrl+H** 暂时收起工具栏和右侧设置区，再按一次恢复。要以原尺寸巡看更大的画布，取消 **Select individual box**，让焦点回到图像区，再用方向键平移。焦点在参数编辑框时，左右键会移动文本光标。"
+msgstr "**The canvas almost fits.** Press **Ctrl+H** to hide the toolbar and settings sidebar, and press it again to restore them. To pan a larger canvas at its current scale, clear **Select individual box**, return focus to the image area and use the arrow keys. In a settings text field, Left and Right move the text cursor."
+
+msgid "**估算一页的像素开销。** 单击一个来源，将鼠标移到状态栏第一栏，可分别查看原图和最终拼接图的分辨率与像素内存估算。磁盘上很小的 JPG 解码后也可能很大：一张 4608 × 2592 的 RGB 图，仅像素就约占 34 MiB。若只关心纹理，可用下例只显示局部，减少最终画布面积；解码、算法和界面副本仍会占用额外内存。"
+msgstr "**Estimate the pixel cost of a page.** Select a source and hover over the first status field to see the dimensions and estimated pixel memory of the original and the final stitch. Even a small JPEG on disk can decode to a large image: the RGB pixels of a 4608 × 2592 image alone take about 34 MiB. If you only need texture detail, the example below reduces the final canvas area by showing crops. Decoding, processing and GUI copies still need additional memory."
+
+msgid "用十张超 4K 图像比较同一处原尺寸细节"
+msgstr "Compare a native-resolution detail across ten images larger than 4K"
+
+msgid "想判断超分辨率结果是否保留羽毛纹理，先用全图找到鸟头，再让十个来源只显示鸟头的同一小块。这样既能看到原始像素，又能在一个窗口里读完两行五列。"
+msgstr "To inspect feather detail, locate the bird’s head in the overview, then show only that region from each of ten sources. A two-by-five grid fits the native-resolution crops in one window."
+
+msgid "录屏使用一张鸟类照片作为参考。第一格是参考图，其余九格是将同一张图分别缩小 2、3、4 倍，再用 Nearest、Bicubic、Lanczos 放回原尺寸的结果。十个输入均为 **4608 × 2592**。这些插值基线用来演示查看方法；对比自己的超分辨率模型时，换成各模型对同一输入的输出，并先确认尺寸和坐标已对齐。"
+msgstr "The recording uses a bird photograph as its reference. The first cell is the reference; the other nine show 2×, 3× and 4× downsampling followed by nearest-neighbour, bicubic or Lanczos upsampling. All ten inputs are **4608 × 2592**. These interpolation baselines demonstrate the workflow. For a model comparison, substitute model outputs for the same input and check that image dimensions and coordinates align."
+
+msgid "准备十个对应来源"
+msgstr "Prepare ten matching sources"
+
+msgid "已有十组结果时，每个方法用一个子目录，同一张图在各目录中使用相同的文件名和扩展名。例如 `01-Reference/bird.png` 与 `02-2x-Nearest/bird.png`。打开时选择它们共同的父目录。"
+msgstr "Put each method in its own folder and use the same filename and extension for corresponding images, for example `01-Reference/bird.png` and `02-2x-Nearest/bird.png`. Open their common parent directory."
+
+msgid "要自己生成演示数据，在已安装 MulimgViewer 的 Python 环境下载 [示例生成脚本](../media/make_sr_example.py)，选一张至少 4608 × 2592 的横向照片，运行下面的命令。脚本裁出中心区域并生成十张 PNG；输出目录须为新目录。"
+msgstr "To generate the demonstration data, download the [sample generator](../media/make_sr_example.py) and run the following command in the MulimgViewer Python environment with a landscape photograph at least 4608 × 2592. The script crops the centre and creates ten PNGs. Supply a new output directory."
+
+msgid "先定位，再切换到 1:1"
+msgstr "Locate the detail, then switch to 1:1"
+
+msgid "取消 **Video mode**，选择 **Parallel auto**。关闭 **Multiple frames per source** 与 **Play sources sequentially**。在 **Layout & Display** 勾选 **Image、Title、Fit window to image**，保持 **Auto title**。设 **Page** 为 `2,5`、**Per source** 为 `1,1`、**Image unit** 为 `2,1`、**Image size** 为 `-1,-1`。先把 **Display scale** 设为 `0.05,0.05`，打开父目录并按 **Ctrl+R**，确认十个来源的位置。"
+msgstr "Clear **Video mode**, choose **Parallel auto**, and clear **Multiple frames per source** and **Play sources sequentially**. Enable **Image, Title, Fit window to image**, keeping **Auto title** enabled. Set **Page** to `2,5`, **Per source** to `1,1`, **Image unit** to `2,1` and **Image size** to `-1,-1`. Start with **Display scale** at `0.05,0.05`, open the parent directory and press **Ctrl+R** to see all ten sources."
+
+msgid "勾选 **Magnifier** 后刷新，点击工具栏放大镜。在第一格鸟头的边缘拖出一个小框；录屏中的框在缩略图上约为 8 × 8 像素。先确认各来源的取样位置，再隐藏全图。"
+msgstr "Enable **Magnifier**, refresh and click the toolbar magnifier. Drag a small box across the edge of the bird’s head in the first cell. The box in the recording spans about 8 × 8 thumbnail pixels. Check its location across sources before hiding the overview."
+
+msgid "取消 **Image**，保留 **Magnifier** 和 **Title**。将 **Display scale** 和 **Zoom scale** 都设为 `1,1`，**Zoom size** 保持 `-1,-1`，一次按 **Ctrl+R** 应用。此时每格只显示同一位置的局部和来源标题。这里的 1:1 指源图像素与拼接画布像素一一对应；网页中的录屏会随浏览器窗口缩放。"
+msgstr "Clear **Image** and keep **Magnifier** and **Title** enabled. Set both **Display scale** and **Zoom scale** to `1,1`, leave **Zoom size** at `-1,-1`, then apply all changes with **Ctrl+R**. Each cell now shows only the corresponding crop and its source title. Here 1:1 means one source pixel per canvas pixel. The browser may scale the recording to fit."
+
+msgid "![完整窗口演示：在十张图的缩略图上选取鸟头，再隐藏原图，按原尺寸比较十个局部](../media/walkthrough-sr-detail.gif)"
+msgstr "![Full window: select a detail in the overview and hide the originals to compare ten native-resolution crops](../media/walkthrough-sr-detail.gif)"
+
+msgid "录屏中的框对应源图的 160 × 160 像素区域。GIF 会量化颜色；要检查实际像素，请下载 [无损结果 PNG](../media/sr-detail-native.png)，按 100% 查看。第二格和第八格分别使用 2 倍与 4 倍最近邻插值，可以沿鸟喙斜边直接比较块状边缘。"
+msgstr "The box covers a 160 × 160 region in each source. GIF quantizes colours. To inspect the actual pixels, download the [lossless PNG result](../media/sr-detail-native.png) and view it at 100%. Cells 2 and 8 use 2× and 4× nearest-neighbour interpolation; compare the block edges along the diagonal beak."
+
+msgid "[下载录屏中的六张样图（ZIP）](../media/parallel-picks.zip)。解压后，用 **Parallel auto** 打开包含 A、B 的 `parallel-picks` 目录。"
+msgstr "[Download the six sample images (ZIP)](../media/parallel-picks.zip). Extract the archive and open the `parallel-picks` folder containing A and B in **Parallel auto**."

@@ -3,11 +3,9 @@ r"""Provide ``__version__`` for
 """
 import os
 
-try:
-    from ._version import __version__, __version_tuple__  # type: ignore
-except ImportError:
-    __version__ = "rolling"
-    __version_tuple__ = (0, 0, 0, __version__, "")
+from .release_version import __version__
+
+__version_tuple__ = tuple(map(int, __version__.split(".")))
 
 __all__ = ["__version__", "__version_tuple__", "html_favicon"]
 

@@ -5,7 +5,9 @@ name: Cross-platform video environment
     paths:
       - environment.yml
       - requirements.txt
-      - src/mulimgviewer/src/video_tools.py
+      - src/mulimgviewer/src/video_source.py
+      - tools/package_desktop.py
+      - auto_test_scripts/cases/test_reporting.py
       - tools/check_video_tools.py
       - auto_test_scripts/cases/test_video_tools.py
       - .github/workflows/video-environment.yml
@@ -14,7 +16,9 @@ name: Cross-platform video environment
     paths:
       - environment.yml
       - requirements.txt
-      - src/mulimgviewer/src/video_tools.py
+      - src/mulimgviewer/src/video_source.py
+      - tools/package_desktop.py
+      - auto_test_scripts/cases/test_reporting.py
       - tools/check_video_tools.py
       - auto_test_scripts/cases/test_video_tools.py
       - .github/workflows/video-environment.yml
@@ -52,3 +56,7 @@ jobs:
         run: >-
           python -m unittest discover -s auto_test_scripts/cases
           -p test_video_tools.py -v
+      - name: Open the reported local archive link
+        run: >-
+          python -m unittest discover -s auto_test_scripts/cases
+          -p test_reporting.py -k package_link -v

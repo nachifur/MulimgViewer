@@ -19,9 +19,9 @@ msgid "开发指南"
 msgstr "Developer guide"
 
 #: ../../dev/dev.md:3
-msgid "从项目根目录按[安装与自检](../resources/install.md)创建环境。修改前先用仓库的微型素材跑通目标操作；修改后用相同输入比较显示、缓存和导出结果。"
+msgid "从项目根目录按[下载与安装](../resources/install.md)创建环境。修改前先用仓库的微型素材跑通目标操作；修改后用相同输入比较显示、缓存和导出结果。"
 msgstr ""
-"From the repository root, follow [Install and verify](../resources/install.md) to create an "
+"From the repository root, follow [Download and install](../resources/install.md) to create an "
 "environment. Reproduce the operation with the small bundled fixtures before editing. Afterward, "
 "repeat it with the same inputs and compare the display, cache, and exported files."
 
@@ -470,7 +470,7 @@ msgstr ""
 "dependencies and enough disk space for the runtime, archive, and extracted copy."
 
 #: ../../dev/dev.md:172
-msgid "三个平台都在 `dist/desktop/` 生成带有系统和架构名称的 `.tar.xz`。省略 `--compact` 时，Windows 使用 ZIP，Linux 和 macOS 使用 tar.gz。解压后按[安装与自检](../resources/install.md)启动。macOS 产物未经签名和公证，Linux 需要兼容的系统库和图形会话。"
+msgid "三个平台都在 `dist/desktop/` 生成带有系统和架构名称的 `.tar.xz`。省略 `--compact` 时，Windows 使用 ZIP，Linux 和 macOS 使用 tar.gz。解压后按[下载与安装](../resources/install.md)启动。macOS 产物未经签名和公证，Linux 需要兼容的系统库和图形会话。"
 msgstr "All three platforms write a `.tar.xz` named for the OS and architecture under `dist/desktop/`. Omitting `--compact` selects ZIP on Windows and tar.gz on Linux and macOS. After extraction, follow [Installation and verification](../resources/install.md). The macOS binary is unsigned and unnotarized. Linux requires compatible system libraries and a graphical session."
 
 #: ../../dev/dev.md:174
@@ -508,12 +508,11 @@ msgstr ""
 "run:"
 
 #: ../../dev/dev.md:194
-msgid ""
-"Read the Docs 从每个 Git 分支或标签各自的 `.readthedocs.yaml` 构建。当前配置安装文档依赖，并以 `--no-deps` 安装本项目取得版本和图标；无需编译"
-" wxPython。归档时在目标提交打标签，构建并核对页面后再切换默认版本。"
-msgstr ""
-"Read the Docs builds each branch or tag using its own `.readthedocs.yaml`. The current "
-"configuration installs documentation dependencies and the project with `--no-deps` for its "
-"version and icon, avoiding a wxPython build. To archive a version, tag the intended commit, build"
-" it, and verify the pages before switching the default."
+msgid "Read the Docs 使用各分支或标签中的 `.readthedocs.yaml`。构建只安装文档依赖，从检出的源码读取版本号和图标。"
+msgstr "Read the Docs uses the configuration from each branch or tag. It installs the documentation dependencies and reads the version and icon directly from the checkout."
 
+msgid "准备发布版本"
+msgstr "Prepare a release"
+
+msgid "维护者请按[新版本构建与发布](release.md)准备发布提交、验证安装包并推送正式标签。"
+msgstr "See [Build and publish a release](release.md) to prepare the release commit, verify packages and push the release tag."

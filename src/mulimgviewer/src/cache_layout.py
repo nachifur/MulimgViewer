@@ -206,10 +206,9 @@ def source_record(manager, number, path):
 
 
 def source_folders(manager):
-    from .status_bar import key
     index=getattr(manager,'_status_source_index',None)
-    return (index.folders if index is not None else
-            {key(path):i for i,path in enumerate(getattr(manager,'path_list',()))})
+    return (index.source_folders if index is not None else
+            {Path(path):i for i,path in enumerate(getattr(manager,'path_list',()))})
 
 
 def source_directory_names(manager):

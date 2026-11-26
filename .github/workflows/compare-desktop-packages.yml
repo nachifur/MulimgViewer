@@ -1,5 +1,6 @@
+---
 name: Compare desktop packages
-on: workflow_dispatch
+"on": workflow_dispatch
 permissions:
   contents: read
 jobs:
@@ -7,7 +8,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-2022, ubuntu-22.04, ubuntu-22.04-arm, macos-15-intel, macos-15]
+        os:
+          - windows-2022
+          - ubuntu-22.04
+          - ubuntu-22.04-arm
+          - macos-15-intel
+          - macos-15
         backend: [conda, pyinstaller]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 100
@@ -31,14 +37,18 @@ jobs:
         run: |
           prefix=()
           if [[ "$RUNNER_OS" == "Linux" ]]; then prefix=(xvfb-run -a); fi
-          "${prefix[@]}" python tools/package_desktop.py --compact --backend "${{ matrix.backend }}"
+          "${prefix[@]}" python tools/package_desktop.py --compact \
+            --backend "${{ matrix.backend }}"
       - name: Record verified download size
         run: |
           python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
           import pathlib
           archive, = pathlib.Path("dist").glob("*/*.tar.xz")
           size = archive.stat().st_size
-          print(f"`{archive.name}` passed the extracted GUI and media checks. Download: **{size / 2**20:.2f} MiB** ({size:,} bytes).")
+          print(
+              f"`{archive.name}` passed the extracted GUI and media checks. "
+              f"Download: **{size / 2**20:.2f} MiB** ({size:,} bytes)."
+          )
           PY
       - uses: actions/upload-artifact@v7
         with:

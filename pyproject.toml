@@ -79,8 +79,8 @@ file = "requirements/dev.txt"
 [tool.setuptools.dynamic.optional-dependencies.update]
 file = "requirements/update.txt"
 
-[tool.setuptools_scm]
-write_to = "src/mulimgviewer/_version.py"
+[tool.setuptools.dynamic.version]
+attr = "mulimgviewer.release_version.__version__"
 
 [tool.setuptools-generate]
 write-to = "src/mulimgviewer/_metainfo.py"

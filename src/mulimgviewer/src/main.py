@@ -767,14 +767,13 @@ class MulimgViewer(SettingsPanelMixin, NavigationMixin, StatusBarMixin, VideoPla
             # make request to be an optional depend
             import requests
 
-            resp = requests.get(url)
+            resp = requests.get(url, timeout=5)
             resp.encoding = 'UTF-8'
             if resp.status_code == 200:
                 output = resp.json()
-                # version is "rolling" means that it is run from source code
-                if self.version == output["tag_name"] or self.version == "rolling":
-                    pass
-                else:
+                published = output["tag_name"].lstrip("v").split(".")
+                if (len(published) == 3 and all(part.isdecimal() for part in published)
+                        and tuple(map(int, published)) > tuple(map(int, self.version.split(".")))):
                     evt = MyTestEvent(self.myEVT_MY_TEST)
                     evt.SetEventArgs(output["tag_name"])
                     wx.PostEvent(self, evt)
@@ -833,7 +832,7 @@ class MulimgViewer(SettingsPanelMixin, NavigationMixin, StatusBarMixin, VideoPla
         sys_platform = platform.system()
         font_items = []
         if sys_platform.find("Windows") >= 0 and winreg is not None:
-            font_dir = Path(r"C:\Windows\Fonts")
+            font_dir = Path(os.environ.get("SystemRoot", r"C:\Windows")) / "Fonts"
             font_enum = wx.FontEnumerator()
             font_names = sorted(set(font_enum.GetFacenames()), key=str.lower)
             registry_fonts = {}
@@ -886,16 +885,15 @@ class MulimgViewer(SettingsPanelMixin, NavigationMixin, StatusBarMixin, VideoPla
             return
         font_path = Path("font") / "using"
         font_path = Path(get_resource_path(str(font_path)))
-        files_name = [f.stem for f in font_path.iterdir()]
-        files_name = np.sort(np.array(files_name)).tolist()
-        for file_name in files_name:
-            file_name = file_name.split("_", 1)[1]
-            file_name = file_name.replace("-", " ")
-            self.title_font.Append(file_name)
-        if files_name:
+        fonts = sorted(f for f in font_path.iterdir()
+                       if f.is_file() and f.suffix.lower() in {".ttf", ".otf", ".ttc"})
+        self.font_paths = [str(f) for f in fonts]
+        for font in fonts:
+            prefix, _, name = font.stem.partition("_")
+            label = name if prefix.isdecimal() and name else font.stem
+            self.title_font.Append(label.replace("-", " "))
+        if fonts:
             self.title_font.SetSelection(0)
-        font_paths = [str(f) for f in font_path.iterdir()]
-        self.font_paths = np.sort(np.array(font_paths)).tolist()
 
     def frame_resize(self, event):
         if not self.IsMaximized() and not self.IsIconized():
@@ -1408,10 +1406,15 @@ class MulimgViewer(SettingsPanelMixin, NavigationMixin, StatusBarMixin, VideoPla
                             wildcard, wx.FD_DEFAULT_STYLE | wx.FD_FILE_MUST_EXIST)
 
         if dlg.ShowModal() == wx.ID_OK:
-            with open(dlg.GetPath(), "r") as f:
-                input_path = f.read().split('\n')
+            listing = Path(dlg.GetPath())
+            try:
+                contents = listing.read_text(encoding="utf-8-sig")
+            except UnicodeDecodeError:
+                # Older lists were written using the local system encoding.
+                contents = listing.read_text()
+            input_path = [line for line in contents.splitlines() if line.strip()]
             self.ImgManager.init(
-                input_path[0:-1], type=1, parallel_to_sequential=self.parallel_to_sequential.Value)
+                input_path, type=1, parallel_to_sequential=self.parallel_to_sequential.Value)
             self.show_img_init()
             self.ImgManager.set_action_count(0)
             self.show_img()
@@ -1424,7 +1427,7 @@ class MulimgViewer(SettingsPanelMixin, NavigationMixin, StatusBarMixin, VideoPla
         else:
             try:
                 np.savetxt(Path(self.out_path_str)/"input_flist_parallel_manual.txt",
-                           self.ImgManager.input_path, fmt='%s')
+                           self.ImgManager.input_path, fmt='%s', encoding='utf-8')
             except:
                 self.SetStatusText_(
                     ["-1", "-1", "***Error: First, need to select parallel manual***", "-1"])

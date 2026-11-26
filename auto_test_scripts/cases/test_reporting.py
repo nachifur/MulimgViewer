@@ -3,10 +3,12 @@ import io
 import json
 import os
 from pathlib import Path
+import runpy
 import subprocess
 import sys
 import tempfile
 import unittest
+from urllib.request import urlopen
 from unittest.mock import patch
 import xml.etree.ElementTree as ET
 
@@ -17,6 +19,20 @@ import run_tests
 
 
 class ReportingTests(unittest.TestCase):
+    def test_package_link_opens_native_archive_with_special_characters(self):
+        report_archive = runpy.run_path(str(HOME.parent / 'tools/package_desktop.py'))['report_archive']
+        with tempfile.TemporaryDirectory() as directory:
+            archive = Path(directory) / '发布 #1%.tar.xz'
+            archive.write_bytes(b'archive')
+            output = io.StringIO()
+            with patch('sys.stdout', output):
+                report_archive(archive)
+            _, path, link = output.getvalue().splitlines()
+            self.assertEqual(path, 'Path: ' + str(archive.resolve()))
+            self.assertTrue(link.startswith('Link: file://'))
+            with urlopen(link[len('Link: '):]) as stream:
+                self.assertEqual(stream.read(), b'archive')
+
     def test_console_summary_includes_case_id_and_exception_reason(self):
         module=dict(name='probe',status='failed',cases=[dict(id='probe.test_case',status='error',
             details='Traceback (most recent call last):\nValueError: short-path probe')])

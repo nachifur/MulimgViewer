@@ -14,6 +14,7 @@ class ImageSourceIndex:
     """Read-only dataset metadata, shared by render snapshots without copying."""
     def __init__(self, manager):
         self.folders, self.names, self.files = {}, {}, {}
+        self.source_folders = {}  # Original spelling for exported paths and metadata.
         self.file_paths = manager.path_list
         paths = list(manager.path_list)
         names = manager.name_list
@@ -22,12 +23,14 @@ class ImageSourceIndex:
                 folder = key(Path(path).parent)
                 if folder not in self.folders:
                     self.folders[folder] = len(self.folders)
+                    self.source_folders[Path(path).parent] = self.folders[folder]
                 self.files.setdefault(key(path), offset)
             self.total = len(paths)
         else:
             common = None
             for offset, path in enumerate(paths):
                 self.folders[key(path)] = offset
+                self.source_folders[Path(path)] = offset
                 if manager.parallel_to_sequential:
                     values = names[offset]
                     index = {str(name): i for i, name in enumerate(values)}

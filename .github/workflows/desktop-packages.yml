@@ -1,5 +1,6 @@
+---
 name: Desktop packages
-on:
+"on":
   workflow_dispatch:
     inputs:
       compact:
@@ -13,7 +14,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-2022, ubuntu-22.04, ubuntu-22.04-arm, macos-15-intel, macos-15]
+        os:
+          - windows-2022
+          - ubuntu-22.04
+          - ubuntu-22.04-arm
+          - macos-15-intel
+          - macos-15
     runs-on: ${{ matrix.os }}
     timeout-minutes: 90
     defaults:
@@ -32,9 +38,12 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y xvfb xauth
-          xvfb-run -a python tools/package_desktop.py ${{ inputs.compact && '--compact' || '' }}
+          xvfb-run -a python tools/package_desktop.py \
+            ${{ inputs.compact && '--compact' || '' }}
       - if: runner.os != 'Linux'
-        run: python tools/package_desktop.py ${{ inputs.compact && '--compact' || '' }}
+        run: >-
+          python tools/package_desktop.py
+          ${{ inputs.compact && '--compact' || '' }}
       - uses: actions/upload-artifact@v7
         with:
           name: MulimgViewer-${{ matrix.os }}

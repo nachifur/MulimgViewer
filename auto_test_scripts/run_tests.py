@@ -47,8 +47,8 @@ def preflight(env):
         importlib.import_module(name)
     from mulimgviewer.src.video_source import resolve_video_tools
     commands, tool_env = resolve_video_tools()
-    env.update(tool_env)
-    env['PATH'] = os.pathsep.join(dict.fromkeys(str(Path(path).parent) for path in commands.values()))+os.pathsep+env.get('PATH', '')
+    # Keep the worker's PYTHONPATH and UTF-8 settings when adding video tools.
+    env['PATH'] = tool_env['PATH']
     for path in commands.values():subprocess.run([path, '-version'], check=True, capture_output=True, env=env)
     if platform.system()=='Linux' and not (env.get('DISPLAY') or env.get('WAYLAND_DISPLAY')):
         raise RuntimeError('GUI tests require a display. On headless Linux run: xvfb-run -a python auto_test_scripts/run_tests.py')

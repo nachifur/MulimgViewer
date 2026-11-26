@@ -161,21 +161,21 @@ python auto_test_scripts/run_tests.py --failed "$reportPath/report.json"
 
 **一次构建多个平台。** 在 GitHub 仓库进入 **Actions → Desktop packages → Run workflow**，选择分支并运行。矩阵分别在 Windows x64、Linux x64/ARM64、macOS Intel/Apple Silicon 上构建。每项通过解压自检后才上传自己的 artifact；在运行详情页下载，解开 GitHub 外层 ZIP 即可取得实际软件包。此操作只生成候选包，发布版本时再选择附件。
 
-**本机打包。** 在目标系统的 Git 工作副本根目录运行以下命令。Linux 需要图形桌面；无显示器时安装 Xvfb 和 xauth，并将最后一行换成 `xvfb-run -a python tools/package_desktop.py`。构建时需要联网获取依赖，并预留运行环境、压缩包和解压副本的空间。
+**本机打包。** 在目标系统的 Git 工作副本根目录运行以下命令。Linux 需要图形桌面；无显示器时安装 Xvfb 和 xauth，并将最后一行换成 `xvfb-run -a python tools/package_desktop.py --compact`。构建时需要联网获取依赖，并预留运行环境、压缩包和解压副本的空间。
 
 ```sh
-conda create -y -n mulimg-builder -c conda-forge python=3.11 conda-pack
+conda create -y -n mulimg-builder -c conda-forge python=3.11
 conda activate mulimg-builder
-python tools/package_desktop.py
+python tools/package_desktop.py --compact
 ```
 
-Windows 产物是 ZIP；Linux 和 macOS 产物是保留可执行权限及符号链接的 tar.gz。产物位于 `dist/desktop/`，名称包含系统和 CPU 架构。macOS 包以 `.command` 启动，未签名或公证；用于公开分发前应在目标系统检查其安全策略。Linux 目标机需要兼容的系统库和图形会话。
+三个平台都在 `dist/desktop/` 生成带有系统和架构名称的 `.tar.xz`。省略 `--compact` 时，Windows 使用 ZIP，Linux 和 macOS 使用 tar.gz。解压后按[安装与自检](../resources/install.md)启动。macOS 产物未经签名和公证，Linux 需要兼容的系统库和图形会话。
 
-**体积与验收。** 脚本从 `environment.yml` 新建运行环境，只复制 Git 已跟踪的程序代码、内置算法和资源，跳过会话配置、测试素材和 Python 字节码。请先将新算法文件加入 Git。可选 GPU 插件需要的框架由使用者按设备安装。检查新包时，除了自动自检，还应在干净的目标机器上打开两个视频、导出一页结果并重新打开，记录系统、架构和压缩包大小。
+**构建与验收。** 脚本按照 `environment.yml` 创建临时 Conda 环境，禁用个人默认加装包，并在临时环境中安装 PyInstaller。PyInstaller 以目录模式收集依赖，脚本显式加入 FFmpeg、FFprobe、内置算法和资源，解压自检通过后才输出归档。
 
-打包脚本在临时目录中创建独立环境，禁用 Conda 配置里的默认加装包，也关闭随 Python 自动安装 pip 的选项。Conda 仍会安装运行库所声明的间接依赖。归档时跳过原生 SDK 的头文件、静态链接库和 Windows 调试符号；保留运行时加载的动态库、视频编解码器、字体和算法。
+新增内置算法时，请将源文件和资源加入 Git。动态导入的算法依赖需加入构建环境并确认 PyInstaller 已收集。发布前请在干净的目标机器上打开两段视频、运行实际算法、导出并重新打开结果。
 
-若优先减小下载体积，在打包命令末尾加 `--compact`，即可将相同运行文件压缩成一个 `.tar.xz`。这种模式使用更多构建时间和临时磁盘空间，同样在解压后运行自检。三个系统都可在空目录执行 `tar -xf 软件包路径`，然后运行对应的启动脚本。
+紧凑压缩保留相同的运行文件，以更多构建时间和临时磁盘空间换取更小的下载体积。
 
 比较打包器时，在 **Actions → Compare desktop packages** 对同一提交运行对照。每个原生平台分别生成 Conda 与 PyInstaller 目录版的 `.tar.xz`，用解压后的程序检查窗口、视频、内置算法和导出。任务摘要记录通过验证的下载字节数。请在相同系统及处理器架构下比较，并用实际要分发的自定义算法再试一次。
 

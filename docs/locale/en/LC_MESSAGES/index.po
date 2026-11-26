@@ -15,12 +15,16 @@ msgstr ""
 "Generated-By: Babel 2.15.0\n"
 
 #: ../../index.md:33
-msgid "使用与开发"
-msgstr "User and developer guides"
+msgid "用户指南"
+msgstr "User guide"
 
-#: ../../index.md:44
-msgid "项目记录"
-msgstr "Project notes"
+#: ../../index.md:43
+msgid "开发与贡献"
+msgstr "Development and contributions"
+
+#: ../../index.md:51
+msgid "版本与致谢"
+msgstr "Releases and credits"
 
 #: ../../index.md:5
 msgid "MulimgViewer 中文手册"

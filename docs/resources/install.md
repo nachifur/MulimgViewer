@@ -4,11 +4,11 @@
 
 先在 [GitHub Releases](https://github.com/nachifur/MulimgViewer/releases) 核对目标版本的附件。开发者也可以从 **Desktop packages** 工作流取得对应提交的构建产物。选择与系统和处理器匹配的包；只有源码附件时，请按下节安装。
 
-将压缩包完整解压到自己的可写目录。Windows 双击 `MulimgViewer.cmd`；macOS 双击 `MulimgViewer.command`；Linux 在图形桌面的终端执行 `./MulimgViewer.command`。首次启动会修正运行环境路径。要换位置，请从原压缩包重新解压。
+完整解压软件包并进入 MulimgViewer 目录。Windows 双击 `MulimgViewer.exe`，Linux 和 macOS 在图形桌面的终端执行 `./MulimgViewer`。移动软件时请保留整个目录，包括其中的依赖文件。
 
-离线包自带 Python、wxPython、FFmpeg 和 FFprobe。要复查包内环境，在解压目录运行启动脚本并追加 `--self-check`（Windows PowerShell 用 `.\MulimgViewer.cmd --self-check`）。自检会短暂打开窗口，并测试图像、视频、内置算法、PDF 和 Excel。
+离线包自带 Python、wxPython、FFmpeg 和 FFprobe。可在该目录下运行 `.\MulimgViewer.exe --self-check`（Windows PowerShell）或 `./MulimgViewer --self-check`（Linux、macOS）验证窗口、视频解码、内置算法以及 PNG、PDF 和 Excel 导出。
 
-如果下载的是精简压缩格式 `.tar.xz`，可在空目录中执行 `tar -xf 软件包路径` 解压，之后使用相同的启动脚本。
+对于 `.tar.xz` 包，在空目录中执行 `tar -xf 软件包路径` 即可解压。
 
 ## 运行当前源码版
 

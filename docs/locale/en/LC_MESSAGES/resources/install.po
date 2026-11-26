@@ -33,31 +33,19 @@ msgstr ""
 "system and processor. If only source archives are available, follow the next section."
 
 #: ../../resources/install.md:7
-msgid ""
-"将压缩包完整解压到自己的可写目录。Windows 双击 `MulimgViewer.cmd`；macOS 双击 `MulimgViewer.command`；Linux 在图形桌面的终端执行 "
-"`./MulimgViewer.command`。首次启动会修正运行环境路径。要换位置，请从原压缩包重新解压。"
-msgstr ""
-"Extract the entire archive into a writable directory you own. On Windows, double-click "
-"`MulimgViewer.cmd`. On macOS, double-click `MulimgViewer.command`. On a Linux desktop, run "
-"`./MulimgViewer.command` in a terminal. The first launch relocates the runtime. To change its "
-"location, extract a fresh copy from the archive."
+msgid "完整解压软件包并进入 MulimgViewer 目录。Windows 双击 `MulimgViewer.exe`，Linux 和 macOS 在图形桌面的终端执行 `./MulimgViewer`。移动软件时请保留整个目录，包括其中的依赖文件。"
+msgstr "Extract the whole archive and open the MulimgViewer directory. On Windows, double-click `MulimgViewer.exe`. On Linux and macOS, run `./MulimgViewer` in a graphical session. Keep the entire directory together when moving the application."
 
 #: ../../resources/install.md:9
-msgid ""
-"离线包自带 Python、wxPython、FFmpeg 和 FFprobe。要复查包内环境，在解压目录运行启动脚本并追加 `--self-check`（Windows PowerShell 用"
-" `.\\MulimgViewer.cmd --self-check`）。自检会短暂打开窗口，并测试图像、视频、内置算法、PDF 和 Excel。"
-msgstr ""
-"The archive includes Python, wxPython, FFmpeg, and FFprobe. To check the extracted runtime, run "
-"the launcher with `--self-check` in its directory (in Windows PowerShell, use "
-"`.\\MulimgViewer.cmd --self-check`). The check briefly opens the GUI and exercises images, video,"
-" a built-in algorithm, PDF, and Excel."
+msgid "离线包自带 Python、wxPython、FFmpeg 和 FFprobe。可在该目录下运行 `.\\MulimgViewer.exe --self-check`（Windows PowerShell）或 `./MulimgViewer --self-check`（Linux、macOS）验证窗口、视频解码、内置算法以及 PNG、PDF 和 Excel 导出。"
+msgstr "The archive includes Python, wxPython, FFmpeg, and FFprobe. From that directory, run `.\\MulimgViewer.exe --self-check` in Windows PowerShell or `./MulimgViewer --self-check` on Linux and macOS to verify the window, video decoding, bundled algorithms, and PNG, PDF, and Excel export."
 
 #: ../../resources/install.md:11
 msgid "运行当前源码版"
 msgstr "Run from source"
 
-msgid "如果下载的是精简压缩格式 `.tar.xz`，可在空目录中执行 `tar -xf 软件包路径` 解压，之后使用相同的启动脚本。"
-msgstr "If you downloaded the compact .tar.xz archive, extract it with `tar -xf ARCHIVE` in an empty directory, then use the same launcher."
+msgid "对于 `.tar.xz` 包，在空目录中执行 `tar -xf 软件包路径` 即可解压。"
+msgstr "For a `.tar.xz` package, run `tar -xf ARCHIVE` in an empty directory."
 
 #: ../../resources/install.md:13
 msgid "以下命令适用于 Windows、Linux 和 macOS。先安装 Git 和 Conda，在终端（Windows 可用 Anaconda Prompt）执行："

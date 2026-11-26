@@ -1,4 +1,5 @@
-"""Build and verify an experimental native PyInstaller onedir archive."""
+"""Build and verify an native PyInstaller onedir archive."""
+import argparse
 import os
 import platform
 import shutil
@@ -41,6 +42,12 @@ def video_binaries():
 
 
 def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--compact", action="store_true")
+    args = parser.parse_args()
+    output = args.output.resolve()
+    output.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix="mulimg-freeze-") as tmp:
         work = Path(tmp)
         stage(work)
@@ -61,9 +68,14 @@ def main():
         subprocess.run([*command, str(entry)], cwd=app, check=True)
         directory = work / "dist/MulimgViewer"
         shutil.copy2(ROOT / "LICENSE", directory)
-        archive = work / f"MulimgViewer-PyInstaller-{platform.system()}-{platform.machine()}.tar.xz"
-        with tarfile.open(archive, "w:xz", preset=6) as tar:
-            tar.add(directory, arcname="MulimgViewer")
+        basename = f"MulimgViewer-{platform.system()}-{platform.machine()}"
+        if args.compact:
+            archive = work / (basename + ".tar.xz")
+            with tarfile.open(archive, "w:xz", preset=6) as tar:
+                tar.add(directory, arcname="MulimgViewer")
+        else:
+            fmt = "zip" if os.name == "nt" else "gztar"
+            archive = Path(shutil.make_archive(str(work / basename), fmt, directory.parent, directory.name))
         extracted = work / "clean install"
         shutil.unpack_archive(archive, extracted)
         root = extracted / "MulimgViewer"
@@ -73,10 +85,11 @@ def main():
             env.pop(key, None)
         env["PATH"] = str(Path(os.environ["SystemRoot"]) / "System32") if os.name == "nt" else os.defpath
         subprocess.run([str(exe), "--self-check"], cwd=root, env=env, timeout=180, check=True)
-        output = ROOT / "dist/packaging-comparison"
-        output.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(archive, output)
-        print(f"Verified {archive.name}: {archive.stat().st_size:,} bytes", flush=True)
+        with tempfile.TemporaryDirectory(dir=output) as staging:
+            staged = Path(staging) / archive.name
+            shutil.copyfile(archive, staged)
+            staged.replace(output / archive.name)
+        print(f"Verified {output / archive.name}", flush=True)
 
 
 if __name__ == "__main__":

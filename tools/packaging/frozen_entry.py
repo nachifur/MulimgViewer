@@ -1,4 +1,4 @@
-"""Entry point used only by the packaging comparison."""
+"""Entry point for the PyInstaller desktop package."""
 import os
 import sys
 from pathlib import Path

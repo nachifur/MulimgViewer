@@ -33,19 +33,25 @@ hide-toc: true
 ```{toctree}
 :maxdepth: 2
 :hidden:
-:caption: 使用与开发
+:caption: 用户指南
 
 resources/install
 resources/usage
 resources/settings
-dev/dev
 ```
 
 ```{toctree}
 :hidden:
-:caption: 项目记录
+:caption: 开发与贡献
+
+dev/dev
+misc/todo
+```
+
+```{toctree}
+:hidden:
+:caption: 版本与致谢
 
 misc/changelog
 misc/acknowledgements
-misc/todo
 ```

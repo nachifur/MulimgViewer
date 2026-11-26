@@ -5,7 +5,7 @@ on:
       compact:
         description: Use a smaller tar.xz download on every platform
         type: boolean
-        default: false
+        default: true
 permissions:
   contents: read
 jobs:
@@ -27,7 +27,7 @@ jobs:
           activate-environment: builder
           channels: conda-forge
           channel-priority: strict
-      - run: conda install -y -c conda-forge python=3.11 conda-pack
+      - run: conda install -y -c conda-forge python=3.11
       - if: runner.os == 'Linux'
         run: |
           sudo apt-get update

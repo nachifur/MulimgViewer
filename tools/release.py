@@ -16,6 +16,12 @@ def verify_wheel(wheel, version):
     with ZipFile(wheel) as archive:
         metadata = BytesParser().parsebytes(
             archive.read(f"mulimgviewer-{version}.dist-info/METADATA"))
+        package = ROOT / "src/mulimgviewer"
+        # Confirm the wheel carries the same offline catalogs tested from source.
+        for source in (package / "src/locales").glob("*.json"):
+            name = "mulimgviewer/" + source.relative_to(package).as_posix()
+            if archive.read(name).splitlines() != source.read_bytes().splitlines():
+                raise ValueError(f"Wheel translation differs: {name}")
         version_file = "src/mulimgviewer/release_version.py"
         if (metadata["Version"] != version or
                 archive.read("mulimgviewer/release_version.py").splitlines() !=
@@ -35,15 +41,41 @@ def check_release(prepare=False, full=False, tag=None):
     if tag and tag != f"v{version}":
         raise ValueError(f"Tag {tag} does not match v{version}")
 
-    template = (ROOT / "README-v4.md").read_text(encoding="utf-8")
+    languages = run_path(str(ROOT / "src/mulimgviewer/src/languages.py"))["LANGUAGE_INFO"]
+    links = []
+    for name, target in languages.values():
+        if not target.startswith("https://") and not (ROOT / "docs" / target).is_file():
+            raise ValueError(f"Missing manual: {target}")
+        links.append(f"[{name}]({target})")
+    directory = ROOT / "docs/languages.md"
+    expected = "# Documentation · 语言\n\n" + "\n\n".join(links) + "\n"
+    if not directory.exists() or directory.read_text(encoding="utf-8") != expected:
+        if not prepare:
+            raise ValueError("Documentation language links are stale. Run tools/release.py --prepare")
+        directory.write_text(expected, encoding="utf-8")
+
+    template_path = ROOT / "README-v4.md"
+    template = template_path.read_text(encoding="utf-8")
+    begin, end = "<!-- manual-links -->", "<!-- /manual-links -->"
+    if template.count(begin) != 1 or template.count(end) != 1 or template.index(begin) >= template.index(end):
+        raise ValueError("README-v4.md needs one marked block for manual links")
+    before, block = template.split(begin)
+    _, after = block.split(end)
+    direct_links = [
+        f"[{name}]({target if target.startswith('https://') else 'docs/' + target})"
+        for name, target in languages.values()
+    ]
+    updated = before + begin + "\n\n" + " · ".join(direct_links) + "\n\n" + end + after
+    if template != updated:
+        if not prepare:
+            raise ValueError("README language links are stale. Run tools/release.py --prepare")
+        template_path.write_text(updated, encoding="utf-8")
+        template = updated
     targets = re.findall(r"\]\(([^ )]+)\)", template)
     targets += re.findall(r'(?:src|href)="([^"]+)"', template)
     for target in targets:
         if "://" in target:
-            if "mulimgviewer.readthedocs.io/" in target and target not in (
-                "https://mulimgviewer.readthedocs.io/zh-cn/",
-                "https://mulimgviewer.readthedocs.io/en/",
-            ):
+            if "mulimgviewer.readthedocs.io/" in target and target not in {url for _, url in languages.values()}:
                 raise ValueError(f"Link to the matching document in docs/ instead: {target}")
             continue
         path, _, anchor = target.partition("#")
@@ -55,6 +87,8 @@ def check_release(prepare=False, full=False, tag=None):
     if int(version.split(".")[0]) >= 4:
         readme = ROOT / "README.md"
         expected = template.replace("{{version}}", version)
+        for _, url in languages.values():
+            expected = expected.replace(url, url.replace("/latest/", f"/v{version}/"))
         if readme.read_text(encoding="utf-8") != expected:
             if not prepare:
                 raise ValueError("README.md is stale. Run python tools/release.py --prepare")
@@ -79,7 +113,9 @@ def check_release(prepare=False, full=False, tag=None):
     if full:
         if subprocess.check_output(["git", "tag", "--list", f"v{version}"], cwd=ROOT).strip():
             raise ValueError(f"v{version} already exists locally. Choose a new release version.")
-        for language in ("zh_CN", "en"):
+        subprocess.run([os.environ.get("SPHINX_PYTHON", sys.executable),
+                        "tools/build_translations.py", "--check-only"], cwd=ROOT, check=True)
+        for language in languages:
             subprocess.run([os.environ.get("SPHINX_PYTHON", sys.executable), "-m",
                             "sphinx", "-E", "-W", "-b", "html", "-D",
                             f"language={language}", "docs", f"docs/_build/release-{language}"],
@@ -88,7 +124,7 @@ def check_release(prepare=False, full=False, tag=None):
                        cwd=ROOT, check=True)
         dist = ROOT / "build" / f"release-{version}" / "dist"
         subprocess.run([sys.executable, "-m", "build", "--outdir", str(dist)],
-                       cwd=ROOT, check=True)
+                       cwd=ROOT, check=True, env={**os.environ, "PYTHONUTF8": "1"})
         wheels = list(dist.glob(f"mulimgviewer-{version}-*.whl"))
         if len(wheels) != 1 or not (dist / f"mulimgviewer-{version}.tar.gz").is_file():
             raise ValueError(f"Expected one v{version} wheel and its source archive under {dist}")

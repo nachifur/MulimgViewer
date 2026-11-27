@@ -1,0 +1,67 @@
+msgid ""
+msgstr ""
+"Language: fr\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "待办与社区反馈"
+msgstr "Feuille de route et retours de la communauté"
+
+msgid "以下整理自 2026-11-25 核对的公开议题。功能建议仍在讨论，排期和进展以 [GitHub 开放议题](https://github.com/nachifur/MulimgViewer/issues?q=is%3Aissue+is%3Aopen) 为准。"
+msgstr "Ces questions publiques ont été examinées le 25 novembre 2026. Les propositions sont en cours de discussion. Suivez les [ouvrir les problèmes de GitHub](https://github.com/nachifur/MulimgViewer/issues?q=is%3Aissue+is%3Aopen) pour la planification et les progrès."
+
+msgid "待评估的功能建议"
+msgstr "Propositions de caractéristiques"
+
+msgid "用户希望完成的操作"
+msgstr "Ce que les utilisateurs veulent faire"
+
+msgid "相关讨论"
+msgstr "Débat"
+
+msgid "收藏一组输入路径，从最近访问记录重新打开，或恢复上次的浏览会话"
+msgstr "Marquez un groupe de chemins d'entrée, rouvrez des sources récentes ou réinstallez une session de navigation."
+
+msgid "[#216 路径组与会话恢复](https://github.com/nachifur/MulimgViewer/issues/216)"
+msgstr "[#16 Groups de chemin et restauration des sessions](https://github.com/nachifur/MulimgViewer/issues/216)"
+
+msgid "在界面中更方便地管理自定义函数"
+msgstr "Gérer les fonctions personnalisées plus facilement à partir de l'interface."
+
+msgid "[#217 函数管理](https://github.com/nachifur/MulimgViewer/issues/217)"
+msgstr "[#217 Gestion des fonctions](https://github.com/nachifur/MulimgViewer/issues/217)"
+
+msgid "为放大区域选择虚线边框"
+msgstr "Utilisez un contour marqué pour les boîtes d'amplificateurs."
+
+msgid "[#215 放大框线型](https://github.com/nachifur/MulimgViewer/issues/215)"
+msgstr "[#15 Les styles de la ligne de boîte](https://github.com/nachifur/MulimgViewer/issues/215)"
+
+msgid "以项目为入口组织多个工作任务，并改进导出界面"
+msgstr "Organiser plusieurs tâches en projets et améliorer l'interface d'exportation."
+
+msgid "[#206 多项目工作流](https://github.com/nachifur/MulimgViewer/issues/206)、[#205 导出界面](https://github.com/nachifur/MulimgViewer/issues/205)"
+msgstr "[#206 Flux de travail multiprojets](https://github.com/nachifur/MulimgViewer/issues/206), [#205 Interface d'exportation](https://github.com/nachifur/MulimgViewer/issues/205)"
+
+msgid "在浏览器中使用查看器，或扩展音频处理能力"
+msgstr "Utilisez le spectateur dans un navigateur ou étendre pour traiter l'audio."
+
+msgid "[#207 Web 界面](https://github.com/nachifur/MulimgViewer/issues/207)、[#162 音频处理](https://github.com/nachifur/MulimgViewer/issues/162)"
+msgstr "[#207 Interface Web](https://github.com/nachifur/MulimgViewer/issues/207), [#162 Traitement audio](https://github.com/nachifur/MulimgViewer/issues/162)"
+
+msgid "使用反馈与已有功能"
+msgstr "Les commentaires sur l'utilisation et les caractéristiques existantes"
+
+msgid "Ubuntu 下的滚轮缩放和图像拖动有单独的反馈帖。补充反馈时请附系统版本、输入模式和具体鼠标操作。[#87 Ubuntu 缩放](https://github.com/nachifur/MulimgViewer/issues/87)、[#115 拖动图片](https://github.com/nachifur/MulimgViewer/issues/115)"
+msgstr "Le zoom de la souris sur Ubuntu et le tirage d'images ont des fils distincts. Incluez votre version du système d'exploitation, le mode de saisie et les actions exactes de la souris lors du signalement des problèmes. [#87 Zoom sur Ubuntu](https://github.com/nachifur/MulimgViewer/issues/87), [#155 Traîner des images](https://github.com/nachifur/MulimgViewer/issues/115)"
+
+msgid "视频导入、自动播放与多视频并排对比已有操作示例。可先依照手册打开两段视频，再在原议题补充仍有困难的场景。[操作示例](../resources/usage.md)、[#53 视频并行对比](https://github.com/nachifur/MulimgViewer/issues/53)"
+msgstr "Le manuel couvre l'importation de vidéos, la lecture automatique et la comparaison côte à côte. Essayez la vidéo de deux pages et décris les difficultés restantes dans le numéro. [Parcours](../resources/usage.md), [#53 Comparaison vidéo parallèle](https://github.com/nachifur/MulimgViewer/issues/53)"
+
+msgid "中文界面需求和项目合作分别在对应议题讨论。[#55 中文界面](https://github.com/nachifur/MulimgViewer/issues/55)、[#7 招募合作者](https://github.com/nachifur/MulimgViewer/issues/7)、[#222 合作](https://github.com/nachifur/MulimgViewer/issues/222)"
+msgstr "Pour une interface chinoise ou des possibilités de collaboration, voir les discussions correspondantes. [#55 Interface chinoise](https://github.com/nachifur/MulimgViewer/issues/55), [#7 Chercher des collaborateurs](https://github.com/nachifur/MulimgViewer/issues/7), [#222 Collaboration](https://github.com/nachifur/MulimgViewer/issues/222)"
+
+msgid "查找已实现的功能"
+msgstr "Trouver les fonctionnalités déjà disponibles"
+
+msgid "定位图片、同步放大和成组挑图见[操作录屏](../resources/usage.md)。框线、标题和导出比例见[设置栏参考](../resources/settings.md)。历次变化见[更新记录](changelog.md)，早期建议的贡献者见[致谢](acknowledgements.md)。"
+msgstr "Voir le [flux de travail enregistrés](../resources/usage.md) pour localiser une image, agrandir une région et sélectionner un groupe. Les contours des cases, les titres et l'échelle des exportations sont documentés dans le [référence des paramètres](../resources/settings.md). Voir le [le changement](changelog.md) pour l'historique de la libération et le [crédits](acknowledgements.md) pour les cotisations anticipées."

@@ -1,0 +1,67 @@
+msgid ""
+msgstr ""
+"Language: hi\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "待办与社区反馈"
+msgstr "विकास योजना और समुदाय की प्रतिक्रिया"
+
+msgid "以下整理自 2026-11-25 核对的公开议题。功能建议仍在讨论，排期和进展以 [GitHub 开放议题](https://github.com/nachifur/MulimgViewer/issues?q=is%3Aissue+is%3Aopen) 为准。"
+msgstr "इन सार्वजनिक मुद्दों की समीक्षा 25 नवंबर 2026 को की गई। प्रस्तावों पर चर्चा की जा रही है। अनुशरण करें [GitHub समस्याएं खोलें](https://github.com/nachifur/MulimgViewer/issues?q=is%3Aissue+is%3Aopen) समय और प्रगति के लिए।"
+
+msgid "待评估的功能建议"
+msgstr "विशेषताओं के प्रस्ताव"
+
+msgid "用户希望完成的操作"
+msgstr "उपयोगकर्ता क्या करना चाहते हैं"
+
+msgid "相关讨论"
+msgstr "चर्चा"
+
+msgid "收藏一组输入路径，从最近访问记录重新打开，或恢复上次的浏览会话"
+msgstr "इनपुट पथों के समूह को बुकमार्क करें, हालिया स्रोतों को फिर से खोलें या ब्राउज़िंग सत्र को बहाल करें।"
+
+msgid "[#216 路径组与会话恢复](https://github.com/nachifur/MulimgViewer/issues/216)"
+msgstr "[#266 पथ समूह और सत्र पुनर्स्थापना](https://github.com/nachifur/MulimgViewer/issues/216)"
+
+msgid "在界面中更方便地管理自定义函数"
+msgstr "इंटरफ़ेस से कस्टम कार्यों को अधिक आसानी से प्रबंधित करें।"
+
+msgid "[#217 函数管理](https://github.com/nachifur/MulimgViewer/issues/217)"
+msgstr "[#217 कार्य प्रबंधन](https://github.com/nachifur/MulimgViewer/issues/217)"
+
+msgid "为放大区域选择虚线边框"
+msgstr "बढ़ाव बॉक्स के लिए एक रेखांकित रूपरेखा का उपयोग करें।"
+
+msgid "[#215 放大框线型](https://github.com/nachifur/MulimgViewer/issues/215)"
+msgstr "[#15 बॉक्स लाइन शैली](https://github.com/nachifur/MulimgViewer/issues/215)"
+
+msgid "以项目为入口组织多个工作任务，并改进导出界面"
+msgstr "परियोजनाओं में कई कार्यों का आयोजन करें और निर्यात इंटरफ़ेस को सुधारें।"
+
+msgid "[#206 多项目工作流](https://github.com/nachifur/MulimgViewer/issues/206)、[#205 导出界面](https://github.com/nachifur/MulimgViewer/issues/205)"
+msgstr "[#206 बहु-परियोजना कार्यप्रवाह](https://github.com/nachifur/MulimgViewer/issues/206), [#205 निर्यात इंटरफ़ेस](https://github.com/nachifur/MulimgViewer/issues/205)"
+
+msgid "在浏览器中使用查看器，或扩展音频处理能力"
+msgstr "ब्राउज़र में दर्शक का उपयोग करें या इसे ऑडियो प्रोसेस करने के लिए बढ़ाएं।"
+
+msgid "[#207 Web 界面](https://github.com/nachifur/MulimgViewer/issues/207)、[#162 音频处理](https://github.com/nachifur/MulimgViewer/issues/162)"
+msgstr "[#207 वेब इंटरफ़ेस](https://github.com/nachifur/MulimgViewer/issues/207), [#162 ऑडियो प्रसंस्करण](https://github.com/nachifur/MulimgViewer/issues/162)"
+
+msgid "使用反馈与已有功能"
+msgstr "उपयोग प्रतिक्रिया और मौजूदा विशेषताएं"
+
+msgid "Ubuntu 下的滚轮缩放和图像拖动有单独的反馈帖。补充反馈时请附系统版本、输入模式和具体鼠标操作。[#87 Ubuntu 缩放](https://github.com/nachifur/MulimgViewer/issues/87)、[#115 拖动图片](https://github.com/nachifur/MulimgViewer/issues/115)"
+msgstr "उबंटू पर माउस-व्हील ज़ूम और छवि खींचने में अलग-अलग थ्रेड होते हैं। समस्या रिपोर्ट करते समय अपने ओएस संस्करण, इनपुट मोड और माउस की सटीक क्रियाओं को शामिल करें। [#87 उबंटू पर ज़ूम करें](https://github.com/nachifur/MulimgViewer/issues/87), [#15 खींचती हुई छवियां](https://github.com/nachifur/MulimgViewer/issues/115)"
+
+msgid "视频导入、自动播放与多视频并排对比已有操作示例。可先依照手册打开两段视频，再在原议题补充仍有困难的场景。[操作示例](../resources/usage.md)、[#53 视频并行对比](https://github.com/nachifur/MulimgViewer/issues/53)"
+msgstr "मैनुअल में वीडियो आयात, ऑटोप्ले और साइड-बाय-साइड तुलना शामिल है। दो वीडियो के माध्यम से चलें और इस अंक में शेष कठिनाइयों का वर्णन करें। [पार](../resources/usage.md), [#53 समानांतर वीडियो तुलना](https://github.com/nachifur/MulimgViewer/issues/53)"
+
+msgid "中文界面需求和项目合作分别在对应议题讨论。[#55 中文界面](https://github.com/nachifur/MulimgViewer/issues/55)、[#7 招募合作者](https://github.com/nachifur/MulimgViewer/issues/7)、[#222 合作](https://github.com/nachifur/MulimgViewer/issues/222)"
+msgstr "चीनी इंटरफ़ेस या सहयोग के अवसरों के लिए, संबंधित चर्चाओं को देखें। [#55 चीनी इंटरफ़ेस](https://github.com/nachifur/MulimgViewer/issues/55), [#7 सहयोगियों की तलाश](https://github.com/nachifur/MulimgViewer/issues/7), [#222 सहयोग](https://github.com/nachifur/MulimgViewer/issues/222)"
+
+msgid "查找已实现的功能"
+msgstr "पहले से उपलब्ध सुविधाएँ खोजें"
+
+msgid "定位图片、同步放大和成组挑图见[操作录屏](../resources/usage.md)。框线、标题和导出比例见[设置栏参考](../resources/settings.md)。历次变化见[更新记录](changelog.md)，早期建议的贡献者见[致谢](acknowledgements.md)。"
+msgstr "देखें [रिकॉर्ड किए गए कार्यप्रवाह](../resources/usage.md) एक छवि को खोजने, क्षेत्र का विस्तार करने और समूह चुनने के लिए। बक्से की रूपरेखा, शीर्षक और निर्यात पैमाने पर दस्तावेज [सेटिंग्स संदर्भ](../resources/settings.md). देखें [परिवर्तनशीलता](changelog.md) रिलीज़ इतिहास और [क्रेडिट](acknowledgements.md) प्रारंभिक योगदान के लिए।"

@@ -306,6 +306,20 @@ class IndexWindowTests(unittest.TestCase):
         self.assertEqual(self.window.index_table.GetItemCount(),13)
         self.assertIn('1-33',self.window.index_table.GetItemText(6,2))
 
+    def test_chinese_index_preserves_view_and_search_on_switch(self):
+        from mulimgviewer.src import localization
+        self.addCleanup(localization.set_language, 'en')
+        self.window.m_search_txt.ChangeValue('two.mp4')
+        localization.set_language('zh_CN')
+        self.assertEqual(self.window.view_choice.GetStringSelection(), '来源')
+        self.window._choose_view(2)
+        self.window.change_view(None)
+        self.assertEqual(self.window.view, 2)
+        self.assertEqual(self.window.index_table.GetColumn(0).GetText(), '显示编号')
+        localization.set_language('en')
+        self.assertEqual(self.window.view_choice.GetStringSelection(), 'Visual items')
+        self.assertEqual(self.window.m_search_txt.GetValue(), 'two.mp4')
+
     def test_visual_frame_paths_change_cached_state_without_decoding(self):
         self.window._choose_view(2);self.window.change_view(None)
         self.window._select_index(0)

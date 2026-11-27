@@ -1,0 +1,67 @@
+msgid ""
+msgstr ""
+"Language: ur\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "待办与社区反馈"
+msgstr "ترقیاتی منصوبہ اور صارفین کی آرا"
+
+msgid "以下整理自 2026-11-25 核对的公开议题。功能建议仍在讨论，排期和进展以 [GitHub 开放议题](https://github.com/nachifur/MulimgViewer/issues?q=is%3Aissue+is%3Aopen) 为准。"
+msgstr "ان عوامی مسائل کا جائزہ 25 نومبر 2026 کو لیا گیا۔ تجاویز زیر بحث ہیں۔ اس کے بعد [GitHub مسائل کھولیں](https://github.com/nachifur/MulimgViewer/issues?q=is%3Aissue+is%3Aopen) شیڈولنگ اور ترقی کے لیے۔"
+
+msgid "待评估的功能建议"
+msgstr "خصوصیت کی تجاویز"
+
+msgid "用户希望完成的操作"
+msgstr "صارفین کیا کرنا چاہتے ہیں"
+
+msgid "相关讨论"
+msgstr "بحث"
+
+msgid "收藏一组输入路径，从最近访问记录重新打开，或恢复上次的浏览会话"
+msgstr "ان پٹ کے راستے کا ایک گروپ بک مارک کریں، حالیہ ذرائع دوبارہ کھولیں یا براؤزنگ سیشن کو بحال کریں۔"
+
+msgid "[#216 路径组与会话恢复](https://github.com/nachifur/MulimgViewer/issues/216)"
+msgstr "[# 216 راہ گروپ اور سیشن کی بحالی](https://github.com/nachifur/MulimgViewer/issues/216)"
+
+msgid "在界面中更方便地管理自定义函数"
+msgstr "انٹرفیس سے اپنی مرضی کے مطابق افعال کو زیادہ آسانی سے منظم کریں."
+
+msgid "[#217 函数管理](https://github.com/nachifur/MulimgViewer/issues/217)"
+msgstr "[#217 فنکشن مینجمنٹ](https://github.com/nachifur/MulimgViewer/issues/217)"
+
+msgid "为放大区域选择虚线边框"
+msgstr "بڑھانے والے خانوں کے لئے ایک ڈرائنگ خاکہ کا استعمال کریں."
+
+msgid "[#215 放大框线型](https://github.com/nachifur/MulimgViewer/issues/215)"
+msgstr "[# 215 باکس لائن سٹائل](https://github.com/nachifur/MulimgViewer/issues/215)"
+
+msgid "以项目为入口组织多个工作任务，并改进导出界面"
+msgstr "کئی کاموں کو منصوبوں میں منظم کریں اور برآمد انٹرفیس کو بہتر بنائیں۔"
+
+msgid "[#206 多项目工作流](https://github.com/nachifur/MulimgViewer/issues/206)、[#205 导出界面](https://github.com/nachifur/MulimgViewer/issues/205)"
+msgstr "[#206 کثیر منصوبوں کے ورک فلوز](https://github.com/nachifur/MulimgViewer/issues/206), [205 برآمد انٹرفیس](https://github.com/nachifur/MulimgViewer/issues/205)"
+
+msgid "在浏览器中使用查看器，或扩展音频处理能力"
+msgstr "براؤزر میں دیکھنے والا استعمال کریں یا اسے آڈیو پروسیسنگ کے لئے بڑھا دیں۔"
+
+msgid "[#207 Web 界面](https://github.com/nachifur/MulimgViewer/issues/207)、[#162 音频处理](https://github.com/nachifur/MulimgViewer/issues/162)"
+msgstr "[#207 ویب انٹرفیس](https://github.com/nachifur/MulimgViewer/issues/207), [#162 آڈیو پروسیسنگ](https://github.com/nachifur/MulimgViewer/issues/162)"
+
+msgid "使用反馈与已有功能"
+msgstr "استعمال کی رائے اور موجودہ خصوصیات"
+
+msgid "Ubuntu 下的滚轮缩放和图像拖动有单独的反馈帖。补充反馈时请附系统版本、输入模式和具体鼠标操作。[#87 Ubuntu 缩放](https://github.com/nachifur/MulimgViewer/issues/87)、[#115 拖动图片](https://github.com/nachifur/MulimgViewer/issues/115)"
+msgstr "اوبنٹو پر ماؤس پہیے زوم اور تصویر ڈریگ الگ تھلگ موضوعات ہیں. مسائل کی اطلاع دیتے وقت اپنے OS ورژن، ان پٹ موڈ اور ماؤس کے عین مطابق اقدامات کو شامل کریں۔ [#87 اوبنٹو پر زوم کریں](https://github.com/nachifur/MulimgViewer/issues/87), [# 115 تصاویر کو گھسیٹنا](https://github.com/nachifur/MulimgViewer/issues/115)"
+
+msgid "视频导入、自动播放与多视频并排对比已有操作示例。可先依照手册打开两段视频，再在原议题补充仍有困难的场景。[操作示例](../resources/usage.md)、[#53 视频并行对比](https://github.com/nachifur/MulimgViewer/issues/53)"
+msgstr "اس دستی میں ویڈیو درآمد، آٹو پلے اور باہمی موازنہ کا احاطہ کیا گیا ہے۔ دو ویڈیو کی گلی میں کوشش کریں اور اس مسئلے میں باقی مشکلات کا بیان کریں۔ [سفر](../resources/usage.md), [#53 متوازی ویڈیو موازنہ](https://github.com/nachifur/MulimgViewer/issues/53)"
+
+msgid "中文界面需求和项目合作分别在对应议题讨论。[#55 中文界面](https://github.com/nachifur/MulimgViewer/issues/55)、[#7 招募合作者](https://github.com/nachifur/MulimgViewer/issues/7)、[#222 合作](https://github.com/nachifur/MulimgViewer/issues/222)"
+msgstr "چینی انٹرفیس یا تعاون کے مواقع کے لیے متعلقہ مباحثے دیکھیں۔ [#55 چینی انٹرفیس](https://github.com/nachifur/MulimgViewer/issues/55), [#7 تعاون کرنے والوں کی تلاش](https://github.com/nachifur/MulimgViewer/issues/7), [#222 تعاون](https://github.com/nachifur/MulimgViewer/issues/222)"
+
+msgid "查找已实现的功能"
+msgstr "پہلے سے دستیاب خصوصیات تلاش کریں"
+
+msgid "定位图片、同步放大和成组挑图见[操作录屏](../resources/usage.md)。框线、标题和导出比例见[设置栏参考](../resources/settings.md)。历次变化见[更新记录](changelog.md)，早期建议的贡献者见[致谢](acknowledgements.md)。"
+msgstr "دیکھیں [ریکارڈ شدہ ورک فلو](../resources/usage.md) تصویر کی جگہ تلاش کرنے، کسی علاقے کو بڑھانے اور گروپ کا انتخاب کرنے کے لئے. باکس کی خاکہ، عنوانات اور برآمد کی پیمانے پر دستاویزی ہیں [ترتیبات کا حوالہ](../resources/settings.md). دیکھیں [تبدیلی کا ریکارڈ](changelog.md) ریلیز کی تاریخ اور [کریڈٹ](acknowledgements.md) ابتدائی شراکت کے لیے۔"

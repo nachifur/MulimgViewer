@@ -90,3 +90,6 @@ msgstr "The box covers a 160 × 160 region in each source. GIF quantizes colours
 
 msgid "[下载录屏中的六张样图（ZIP）](../media/parallel-picks.zip)。解压后，用 **Parallel auto** 打开包含 A、B 的 `parallel-picks` 目录。"
 msgstr "[Download the six sample images (ZIP)](../media/parallel-picks.zip). Extract the archive and open the `parallel-picks` folder containing A and B in **Parallel auto**."
+
+msgid "完整窗口演示：在十张图的缩略图上选取鸟头，再隐藏原图，按原尺寸比较十个局部"
+msgstr "Full window: select a detail in the overview and hide the originals to compare ten native-resolution crops"

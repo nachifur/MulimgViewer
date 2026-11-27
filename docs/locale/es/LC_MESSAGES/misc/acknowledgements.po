@@ -1,0 +1,34 @@
+msgid ""
+msgstr ""
+"Language: es\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "致谢"
+msgstr "Agradecimientos"
+
+msgid "感谢 QQ 交流群里提供使用反馈的每一位成员，也感谢以下贡献者。"
+msgstr "Gracias a todos en el grupo QQ que compartieron comentarios, y a los siguientes colaboradores."
+
+msgid "nothingeasy — 输入路径清单的导入与保存建议。"
+msgstr "No es fácil  ⁇  Se sugiere importar y guardar listas de vías de entrada."
+
+msgid "JuZiSYJ — 同步放大与带框原图导出建议。"
+msgstr "JuZiSYJ  ⁇  Sugerido aumento sincronizado y exportación de originales con cajas."
+
+msgid "ymingsu — 实现文件清单导入。"
+msgstr "Ymingsu  ⁇  Importar la lista de archivos implementada."
+
+msgid "Faberman — 建议增加图像标题和放大图 1:1 输出，翻译并润色英文 README。"
+msgstr "Faberman  ⁇  Sugirió títulos de imágenes y exportación de amplificador 1:1, y tradujo y editou el README en inglés."
+
+msgid "stefanklut — 建议支持隐藏放大图边框。"
+msgstr "Stefanklut sugirió una opción para ocultar fronteras más amplias."
+
+msgid "FunkyKoki — 提出局部显示图像和放大图排布建议。"
+msgstr "FunkyKoki  ⁇  Sugerido vistas parciales de imágenes y diseños adicionales del amplificador."
+
+msgid "wwhio — 放大框颜色设置。"
+msgstr "wwhio  ⁇  Configuración de color del zoom box contribuido."
+
+msgid "wzy — 引入 CI/CD，搭建多语言 Read the Docs 网站，支持通过 pip 安装。"
+msgstr "wzy  ⁇  Introducción de CI/CD, configuración multilingüe de alojamiento de Read the Docs y instalación de pip habilitada."

@@ -1,0 +1,94 @@
+msgid ""
+msgstr ""
+"Language: pcm\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "使用技巧"
+msgstr "Tips wey fit help"
+
+msgid "已经能打开来源、调整布局后，可以用下面的方法排查对错图、取错帧、看不清细节等问题。首次操作可跟着[浏览录屏](usage.md)练习；查控件名称和取值请看[右侧设置栏](settings.md)。"
+msgstr "As comparison show di wrong file, di wrong moment or too little detail For first run, follow di follow di follow di yarn [Di recorded workflows recorded workflows](usage.md). How individual controls for di di house [Di settings reference](settings.md)."
+
+msgid "先确认比的是同一个样本"
+msgstr "Di sample really match di sample"
+
+msgid "**某个方法少了一张图。** 并排比较目录时，第一个来源提供文件名清单。若参考目录有 `bird.png`，就去每个方法目录核对是否也有 `bird.png`，包括大小写和扩展名。某个方法独有的文件不会自动成为新的一页。把样本最完整的目录放在第一位，开始前先核对一组已知结果。"
+msgstr "**One method dey missing image** For side-by-side image folder, di first source supplies di filenames If di reference contains anything if di reference contains `bird.png`Di exact name, case and extension for each method folder. A file wey no find only for one folder no create page Di most complete reference first and verify a known sample before review di set."
+
+msgid "**方法顺序与预期不同。** Parallel auto 按来源目录名作文本排序，`1, 10, 2` 就会依次相邻。长期使用的数据集可以统一为 `01, 02, …, 10`；只想临时交换两列时，用 Parallel manual 按所需顺序添加目录即可。"
+msgstr "**Di Methods dey dey out of order.** Di Parallel auto sort source folder name as text, putting dem a text, putting dem put text, putting dem putting dem `10` Emmediately afta wey dey immediately after afta `1` before and before before `2`. For use `01, 02, …, 10` For permanent dataset For one-off comparison, add folders for your preferred order for Parallel manual."
+
+msgid "**把样本顺序交给同事复查。** 在数据目录旁保存一份 UTF-8 TXT，按检查顺序每行写一个相对文件路径，如 `01-Reference/bird.png`。用 **Image/Video File List** 打开它。把清单和数据目录一起移动并保留相对位置，在另一台电脑上仍能找到同一批文件。"
+msgstr "**One review order** As UTF-8 TXT beside di data folder, wit one relative file path per line for review order, such as as as e dey relative file path per line for review order, such as as e dey review order, such as as e dey relative file path per line for review order, such as as e dey review order, such as as e dey relative file path per line for review order, such as as e dey review order, such as as as e dey review order, such as as e dey relative file path per line for review order, such as as e dey relative file path per line for review order, such as as e dey relative file path per line for review order, such as as e dey review order, such as `01-Reference/bird.png`. One open am wit e dey Open am wit e Open am wit e Open am wit e **Di image/Video file list**. Di list and data together, preserving dia relative locations, so colleague go reopen di same files on one computer."
+
+msgid "每个来源同页显示三张时，怎样并行挑出第二张？"
+msgstr "How do I pick di second image from each source wen three dey visible?"
+
+msgid "[下载录屏中的六张样图（ZIP）](../media/parallel-picks.zip)。解压后，用 **Parallel auto** 打开包含 A、B 的 `parallel-picks` 目录。"
+msgstr "[Di six sample images (ZIP)](../media/parallel-picks.zip). E dey extract di archive and open di archive `parallel-picks` A and B for folder wey dey containing A and B for folder wey dey containing A and B for di folder wey dey containing A and B for folder wey dey containing A and B for folder wey dey containing A and B for di folder wey dey containing A and B for di folder wey dey containing A and B for di folder wey dey containing A and B for A and B for di folder wey dey containing A and B for di folder wey dey containing A and B for A and B for A and B for A and B for A and B for A and B for A and B for A and B for A and B for A and B for A and B for A and B for A and B for A and B for A and B for **As e dey connected auto**."
+
+msgid "以 A、B 两个目录各有 01.png、02.png、03.png 为例。选择 **Parallel auto** 或 **Parallel manual**，勾选 **Multiple frames per source**，关闭 **Play sources sequentially**。在布局中设 **Page** 为 `2,1`、**Per source** 为 `1,3`，按 **Ctrl+R**，每个来源会并排显示三张。"
+msgstr "Di Suppose folder A and B each contain 01.png, 02.png and 03.png Di Choose Choose Choose **As e dey connected auto** Di e no go dey **Di reverse manual manual**Di enable , enable , enable **One frame per source**Di clear , and clear clear **play source sequentially**. Di Set Set **Di homepage** Di awa e dey reach `2,1` Di awa and di awa **Di source dey source** Di awa e dey reach `1,3`Di press press , then press press press **E dey Ctrl+R** Di source go see three images side by side for each source."
+
+msgid "右键 B 的第二张，选择 **Select image**，即可将 A、B 各自的 02.png 一起挑出。也可以将保存内容设为 **Selected images**、关闭整批保存，左键点中 B 的第二张后按 **Ctrl+S**。末页某个来源若缺少这个位置，只保存其他来源中对应的图像。"
+msgstr "Right-click di second image from B and choose di second image from B and choose di second image from B and choose di second image from B and choose di second image from B **Select image** E and B. Di alternatively, choose choose choose one **Wey dey Selected images** E dey turn off saving all pages, left-click di second image from B and press press **E dey Ctrl+S**. On partial last page, only source wit image for dat position doncontribute file"
+
+msgid "多路视频同页，怎样核对是否同一时刻？"
+msgstr "Di clips show di same moment"
+
+msgid "暂停后依次单击两路画面，查看状态栏各自的视频路径和时间。软件按采样帧的位置并排：当 **Skip frames** 为 `0` 时，从头计数的第 31 帧，在 30 FPS 视频中约为 1 秒，在 60 FPS 视频中约为 0.5 秒。即使帧率相同，两段视频的拍摄起点也可能不同。要比较同一事件，先用一个两路都能认出的动作核对起点；需要整段同步时，先把素材对齐到相同起点和帧率。"
+msgstr "Di Pause, click each clip for turn and check dia path and time for di status bar. Di viewer align sample frame position: wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit wit **As frames dey skip frame frame** Di awa wey dey apun `0`Di frame 31 dey about one second into 30 FPS clip but half a second into 60 FPS clip but half a second into 60 FPS clip. Even clips wit identical frame rate go start for different moments. Di recognizable action for both clips first For synchronized comparison throughout, prepare clips wit match start times and frame rate."
+
+msgid "比较多个细节时，保持取样面积一致"
+msgstr "But detail samples di same size"
+
+msgid "开启工具栏放大镜，先拖出第一个框定下宽高。要同时看第二处纹理，在该处右键选 **Create zoom box here**，新框会沿用第一个框的大小。再次左键拖框会重新开始一组取样。如果想保留已有位置，就用右键追加，并把 **Magnifiers** 网格设为能容纳所有框。"
+msgstr "Di toolbar magnifier and drag di first box to set dia width and height To compare second texture, right-click am and choose am **Na create zoom box here**. Di new box use di first box size. Di left button start fresh set. To keep existing sample, append wit di context menu and give di di context menu and give di di context menu **Di Magnifiers Magnifiers** Di grid room for all box"
+
+msgid "看不全画布时，先决定是否需要保留像素"
+msgstr "Make room without sacrificing detail"
+
+msgid "**画布只差一点就能放下。** 按 **Ctrl+H** 暂时收起工具栏和右侧设置区，再按一次恢复。要以原尺寸巡看更大的画布，取消 **Select individual box**，让焦点回到图像区，再用方向键平移。焦点在参数编辑框时，左右键会移动文本光标。"
+msgstr "**Di canvas fit fit fit** Di Press Press **E dey Ctrl+H** Di toolbar and settings sidebar, and press am again to restore dem To pan larger canvas for its current scale, clearly clear **Select individual box**Di arrow keys dey use di arrow key For di settings text field, Left and Right move di text cursor."
+
+msgid "**估算一页的像素开销。** 单击一个来源，将鼠标移到状态栏第一栏，可分别查看原图和最终拼接图的分辨率与像素内存估算。磁盘上很小的 JPG 解码后也可能很大：一张 4608 × 2592 的 RGB 图，仅像素就约占 34 MiB。若只关心纹理，可用下例只显示局部，减少最终画布面积；解码、算法和界面副本仍会占用额外内存。"
+msgstr "**Di pixel cost of a page** Di source and hover over di first status field to see di dimensions and estimated pixel memory of di original and di final stitch. Di small JPEG on disk don decode to large image: di RGB pixels of 4608 × 2592 image alone take about 34 MiB. If you only need texture detail, di example below reduce di final canvas area by show crops Dicoding, processing and GUI copies still need additional memory."
+
+msgid "用十张超 4K 图像比较同一处原尺寸细节"
+msgstr "Di native-resolution detail wey dey across ten images wey dey small than 4K"
+
+msgid "想判断超分辨率结果是否保留羽毛纹理，先用全图找到鸟头，再让十个来源只显示鸟头的同一小块。这样既能看到原始像素，又能在一个窗口里读完两行五列。"
+msgstr "To inspect feather detail, find di bird head for di overview, then show only say region from each of ten source. A two-by-five grid fit fit di native-resolution crops for one window."
+
+msgid "录屏使用一张鸟类照片作为参考。第一格是参考图，其余九格是将同一张图分别缩小 2、3、4 倍，再用 Nearest、Bicubic、Lanczos 放回原尺寸的结果。十个输入均为 **4608 × 2592**。这些插值基线用来演示查看方法；对比自己的超分辨率模型时，换成各模型对同一输入的输出，并先确认尺寸和坐标已对齐。"
+msgstr "Di recording use bird photograph as its reference Di first cell dey di reference; di oda nine show 2×, 3× and 4× downsampling follow by nearest-neighbour, bicubic or Lanczos upsampling. All ten inputs dey input for all ten inputs dey input **4608 × 2592**. Di interpolation baselines demonstrate di workflow. For model comparison, substitute model output for di same input and check say image dimension and coordinates align."
+
+msgid "准备十个对应来源"
+msgstr "For ten matching source"
+
+msgid "已有十组结果时，每个方法用一个子目录，同一张图在各目录中使用相同的文件名和扩展名。例如 `01-Reference/bird.png` 与 `02-2x-Nearest/bird.png`。打开时选择它们共同的父目录。"
+msgstr "Di method for its own folder and use di same filename and extension for corresponding images, for example, for example example put each method for dia own folder and use di same filename and extension for corresponding images, for example `01-Reference/bird.png` Di awa and di awa `02-2x-Nearest/bird.png`. Di common parent directory"
+
+msgid "要自己生成演示数据，在已安装 MulimgViewer 的 Python 环境下载 [示例生成脚本](../media/make_sr_example.py)，选一张至少 4608 × 2592 的横向照片，运行下面的命令。脚本裁出中心区域并生成十张 PNG；输出目录须为新目录。"
+msgstr "To generate di demonstration data, download di demonstration data, download di demonstration data [For sample generator generator generator generator generator](../media/make_sr_example.py) Di following command for MulimgViewer Python environment wit landscape photograph at least 4608 × 2592. Di script crop di centre and create ten PNGs Di Supply new output directory"
+
+msgid "先定位，再切换到 1:1"
+msgstr "Di detail, then switch to 1:1"
+
+msgid "取消 **Video mode**，选择 **Parallel auto**。关闭 **Multiple frames per source** 与 **Play sources sequentially**。在 **Layout & Display** 勾选 **Image、Title、Fit window to image**，保持 **Auto title**。设 **Page** 为 `2,5`、**Per source** 为 `1,1`、**Image unit** 为 `2,1`、**Image size** 为 `-1,-1`。先把 **Display scale** 设为 `0.05,0.05`，打开父目录并按 **Ctrl+R**，确认十个来源的位置。"
+msgstr "Clear **Di video mode**Di choice , choose choose , choose choose , choose choose , choose choose **As e dey connected auto**Di clear , and clear clear **One frame per source** Di awa and di awa **play source sequentially**. Di Enable **Di image, Title, fit window to image, Title, fit window to image**Di keeper , keeping , keep keeping **As Auto title** Di enabled Di Set Set **Di homepage** Di awa e dey reach `2,5`, **Di source dey source** Di awa e dey reach `1,1`, **Di image unit wey dey display** Di awa e dey reach `2,1` Di awa and di awa **As image size size** Di awa e dey reach `-1,-1`. For start wit start wit start wit start wit start wit start wit start wit start wit start wit start wit start wit start wit start wit start wit start wit start wit start wit start wit start wit start wit start wit start wit start wit start wit start wit start wit start wit start wit start wit start wit start wit start wit start wit start wit start wit start wit start wit start wit start wit start wit start wit start wit start wit start wit start wit start wit start wit start wit start wit start wit start wit start wit start wit start wit start wit start wit start wit start wit start wit start wit start wit start wit start wit start wit start wit start wit start wit start wit start wit start wit start wit start wit start wit start wit start wit start wit start wit start wit start wit start wit start wit start wit start wit start wit start wit start wit start wit start wit start wit start **Di Display scale scale** Di awa wey dey apun `0.05,0.05`Di parent directory and press press **E dey Ctrl+R** Di source dey see all ten source"
+
+msgid "勾选 **Magnifier** 后刷新，点击工具栏放大镜。在第一格鸟头的边缘拖出一个小框；录屏中的框在缩略图上约为 8 × 8 像素。先确认各来源的取样位置，再隐藏全图。"
+msgstr "Di Enable **As e dey Magnifier**Di toolbar magnifier Di big box wey dey across di edge of di bird head for di first cell. Di box for di recording span about 8 × 8 thumbnail pixels. Di location wey dey across source before hid di overview"
+
+msgid "取消 **Image**，保留 **Magnifier** 和 **Title**。将 **Display scale** 和 **Zoom scale** 都设为 `1,1`，**Zoom size** 保持 `-1,-1`，一次按 **Ctrl+R** 应用。此时每格只显示同一位置的局部和来源标题。这里的 1:1 指源图像素与拼接画布像素一一对应；网页中的录屏会随浏览器窗口缩放。"
+msgstr "Clear **Di image wey dey graphic** We dey keep e dey keep and keep **As e dey Magnifier** Di awa and di awa **Di title wey dey title** Di enabled For both dem set both **Di Display scale scale** Di awa and di awa **Wey dey scale for Zoom scale** Di awa e dey reach `1,1`Di leave , leave leave **Na e dey zoom size** Di awa wey dey apun `-1,-1`Di apply all change wit , then apply all change wit changes wit changes wit , then apply all change wit changes wit changes wit , then apply all change wit changes wit changes wit , then apply all change wit changes wit changes wit changes wit changes wit , then apply all change wit changes wit changes wit , then apply all change wit changes wit changes wit changes wit changes wit changes wit changes wit changes wit changes wit , then apply all change wit changes wit , then apply all change wit changes wit , then apply all change wit , then apply all change wit changes wit changes wit , then apply all change wit changes wit , then apply all change wit changes wit **E dey Ctrl+R**. Di cell now show only di corresponding crop and its source title Di 1:1 means one source pixel per canvas pixel Di browser go scale di recording to fit fit"
+
+msgid "![完整窗口演示：在十张图的缩略图上选取鸟头，再隐藏原图，按原尺寸比较十个局部](../media/walkthrough-sr-detail.gif)"
+msgstr "![Di window: select detail for di overview and hide di originals to compare ten native-resolution crops wey dey compare ten native-resolution crops](../media/walkthrough-sr-detail.gif)"
+
+msgid "完整窗口演示：在十张图的缩略图上选取鸟头，再隐藏原图，按原尺寸比较十个局部"
+msgstr "Di window: select detail for di overview and hide di originals to compare ten native-resolution crops wey dey compare ten native-resolution crops"
+
+msgid "录屏中的框对应源图的 160 × 160 像素区域。GIF 会量化颜色；要检查实际像素，请下载 [无损结果 PNG](../media/sr-detail-native.png)，按 100% 查看。第二格和第八格分别使用 2 倍与 4 倍最近邻插值，可以沿鸟喙斜边直接比较块状边缘。"
+msgstr "Di box cover 160 × 160 region for each source. Di GIF quantizes colours. To inspect di actual pixels, download di actual pixels [For lossless PNG result result lossless PNG result](../media/sr-detail-native.png) Di view am for 100% Di Cell 2 and 8 use 2× and 4× nearest-neighbour interpolation; compare di block edges along di diagonal beak."

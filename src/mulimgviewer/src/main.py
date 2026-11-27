@@ -9,6 +9,8 @@ import wx
 from PIL import Image
 from ..gui.main_gui import MulimgViewerGui
 from .. import __version__ as VERSION
+from . import localization
+from .localization import tr
 from .about import About
 from .index_table import IndexCatalog, IndexTable
 from .render_layout import normalize_gaps
@@ -149,6 +151,7 @@ class MulimgViewer(SettingsPanelMixin, NavigationMixin, StatusBarMixin, VideoPla
         self._bind_legacy_control_aliases()
         self.refresh_algorithm_list()
         self._initialize_settings_panels()
+        localization.install_language_menu(self)
         self._capture_configuration_defaults()
 
         # open default path
@@ -179,6 +182,21 @@ class MulimgViewer(SettingsPanelMixin, NavigationMixin, StatusBarMixin, VideoPla
         self.scrolledWindow_img.Bind(wx.EVT_KEY_UP, self.key_up_detect)
         self._restore_window_state()
         self._restore_sidebar_width()
+
+    def _refresh_language(self):
+        self._language_items[localization.language].Check(True)
+        for section in self._settings_sections().values():
+            section._update_caption()
+        self.update_hotkey_menu_labels()
+        self._sync_title_controls()
+        if getattr(self.ImgManager, 'img_num', 0):
+            self.update_status_bar_for_current_page()
+        else:
+            self._show_input_status()
+        output = getattr(self, '_last_output_message', 'Output: not set')
+        self.SetStatusText_(['-1', '-1', '-1', output])
+        self._refresh_power_tooltip()
+        self._layout_settings_sections()
 
     def _bind_legacy_control_aliases(self):
         # Keep older handwritten logic working after GUI control renames.
@@ -332,24 +350,26 @@ class MulimgViewer(SettingsPanelMixin, NavigationMixin, StatusBarMixin, VideoPla
             if not hasattr(field, '_cache_input_background'):
                 field._cache_input_background = field.GetBackgroundColour()
                 tip = field.GetToolTip()
-                field._cache_input_tip = tip.GetTip() if tip else 'Integer >= 1'
+                if not hasattr(field, '_cache_input_tip'):
+                    field._cache_input_tip = tip.GetTip() if tip else 'Integer >= 1'
             try:
                 value = positive_cache_integer(field.GetValue())
             except ValueError:
                 invalid_cache_fields.add(id(field))
                 effective = getattr(self.shared_config, attribute)
-                message = f'{label}: enter an integer >= 1; current effective value: {effective}'
+                message = tr('{label}: enter an integer >= 1; current effective value: {effective}').format(
+                    label=tr(label), effective=effective)
                 errors.append(message)
                 field.SetBackgroundColour(wx.Colour(255, 225, 225))
                 field.SetToolTip(message)
             else:
                 setattr(self.shared_config, attribute, value)
                 field.SetBackgroundColour(field._cache_input_background)
-                field.SetToolTip(field._cache_input_tip)
+                field.SetToolTip(tr(field._cache_input_tip))
             field.Refresh()
         self._performance_input_errors = errors
         if errors:
-            self.SetStatusText_(['-1', '-1', '***Invalid parameter: ' + '; '.join(errors) + '***', '-1'])
+            self.SetStatusText_(['-1', '-1', '***' + tr('Invalid parameter: ') + '; '.join(errors) + '***', '-1'])
 
         # ---- Skip Frame (跳过帧数) ----
         skip = _read_number(self.m_textCtrl281, 0, 0)
@@ -587,30 +607,31 @@ class MulimgViewer(SettingsPanelMixin, NavigationMixin, StatusBarMixin, VideoPla
             if group is not None:
                 with group.lock:admitted=group.total_budget;decode=group.active[0]
             else:admitted=cfg.thread;decode=0
-        text=f"Budget: {cfg.thread} CPU slots"
-        if admitted!=cfg.thread:text+=f" (limit: {admitted})"
+        text=tr("Budget: {n} CPU slots").format(n=cfg.thread)
+        if admitted!=cfg.thread:text+=tr(" (limit: {n})").format(n=admitted)
         memory_budget=getattr(cfg,'memory_budget',None)
         if memory_budget is not None:text+=f" | RAM: {memory_budget/1024**3:.2f} GiB"
         control=getattr(self,'_export_control',None)
         save=control.active_count() if control is not None and getattr(self,'_export_active',False) else 0
-        text+=f"\nActive: Decode: {decode} | Process: {stages.get(0,0)} | Stitch: {stages.get(1,0)} | Compose: {stages.get(2,0)} | Save: {save}"
+        text+="\n"+tr("Active: Decode: {d} | Process: {p} | Stitch: {s} | Compose: {c} | Save: {w}").format(
+            d=decode, p=stages.get(0,0), s=stages.get(1,0), c=stages.get(2,0), w=save)
         monitor = getattr(self, 'resource_monitor', None)
         stats = monitor.read_snapshot() if monitor is not None else {}
         cpu, memory, fps = stats.get('cpu'), stats.get('memory'), stats.get('fps')
         if cpu is None or memory is None:
-            text += '\nAverage (10s): sampling...' if stats.get('available', True) else '\nCPU / RAM: unavailable'
+            text += ('\n'+tr('Average (10s): sampling...')) if stats.get('available', True) else ('\n'+tr('CPU / RAM: unavailable'))
         else:
             usage = f'{memory / 1024**3:.2f} GiB' if memory >= 1024**3 else f'{memory / 1024**2:.0f} MiB'
-            text += f'\nAverage (10s): CPU {cpu:.1f}% | RAM {usage}'
+            text += '\n'+tr('Average (10s): CPU {cpu:.1f}% | RAM {ram}').format(cpu=cpu, ram=usage)
             current = stats.get('memory_now')
             if memory_budget and current is not None and max(current, memory) > memory_budget:
                 text += f' (now {current / 1024**3:.2f} GiB)'
-        text += ('\nPlayback: paused' if not cfg.is_playing else
-                 f'\nPlayback: {fps:.1f} FPS' if fps is not None else '\nPlayback: sampling...')
+        text += (('\n'+tr('Playback: paused')) if not cfg.is_playing else
+                 '\n'+tr('Playback: {fps:.1f} FPS').format(fps=fps) if fps is not None else ('\n'+tr('Playback: sampling...')))
         if cfg.is_playing:
             period=(vm.supply_period() if cfg.video_mode else self.image_pipeline.supply_pacer.supply_period())
-            text+=(f" | Supply: {1/period:.2f} FPS" if period is not None and period>0
-                   else " | Supply: sampling...")
+            text+=(" | "+tr("Supply: {fps:.2f} FPS").format(fps=1/period) if period is not None and period>0
+                   else " | "+tr("Supply: sampling..."))
         tooltip = self.power_mode.GetToolTip()
         if tooltip is None:
             self.power_mode.SetToolTip(text)
@@ -911,7 +932,7 @@ class MulimgViewer(SettingsPanelMixin, NavigationMixin, StatusBarMixin, VideoPla
             if not getattr(candidate,'img_num',0):
                 raise ValueError('No supported image files found; enable Video mode to open videos')
         except (OSError,ValueError,UnicodeError,IndexError,TypeError) as error:
-            self._show_input_status(f'Unable to open images: {error}','Input error',path,persistent=True)
+            self._show_input_status(tr('Unable to open images: {error}').format(error=tr(str(error))),'Input error',path,persistent=True)
             return False
         previous=dict(self.ImgManager.__dict__)
         previous_position=(self.shared_config.batch_idx,self.shared_config.input_mode)
@@ -933,7 +954,7 @@ class MulimgViewer(SettingsPanelMixin, NavigationMixin, StatusBarMixin, VideoPla
             self._reset_image_view_origin()
         except (OSError,ValueError,RuntimeError,IndexError) as error:
             restore()
-            self._show_input_status(f'Unable to display images: {error}','Display error',path)
+            self._show_input_status(tr('Unable to display images: {error}').format(error=tr(str(error))),'Display error',path)
             return False
         return True
 
@@ -942,7 +963,7 @@ class MulimgViewer(SettingsPanelMixin, NavigationMixin, StatusBarMixin, VideoPla
         try:return self._open_all_img(event)
         except Exception as error:
             self.shared_config.batch_idx,self.shared_config.input_mode=previous
-            self._show_input_status(f'Unable to open input: {error}','Input error',persistent=True)
+            self._show_input_status(tr('Unable to open input: {error}').format(error=tr(str(error))),'Input error',persistent=True)
             return False
 
     def _open_all_img(self, event):
@@ -985,7 +1006,7 @@ class MulimgViewer(SettingsPanelMixin, NavigationMixin, StatusBarMixin, VideoPla
             # Initialize the image stitch pool
             self._init_image_stitch_executor()
 
-            dlg = wx.DirDialog(None, "Parallel auto choose input dir", "",
+            dlg = wx.DirDialog(None, tr("Parallel auto choose input dir"), "",
                            wx.DD_DEFAULT_STYLE | wx.DD_DIR_MUST_EXIST)
             try:
                 if dlg.ShowModal() != wx.ID_OK:
@@ -1349,7 +1370,7 @@ class MulimgViewer(SettingsPanelMixin, NavigationMixin, StatusBarMixin, VideoPla
             # Initialize the image stitch pool
             self._init_image_stitch_executor()
 
-            dlg = wx.DirDialog(None, "Choose input dir", "",
+            dlg = wx.DirDialog(None, tr("Choose input dir"), "",
                                wx.DD_DEFAULT_STYLE | wx.DD_DIR_MUST_EXIST)
 
             try:
@@ -1380,7 +1401,7 @@ class MulimgViewer(SettingsPanelMixin, NavigationMixin, StatusBarMixin, VideoPla
         self.SetStatusText_(["Choose the File List", "", "", "-1"])
         self._init_image_stitch_executor()
         wildcard = "List file (*.txt; *.csv)|*.txt; *.csv|All files (*.*)|*.*"
-        dlg = wx.FileDialog(None, "Choose the File List", "", "", wildcard,
+        dlg = wx.FileDialog(None, tr("Choose the File List"), "", "", wildcard,
                             wx.FD_DEFAULT_STYLE | wx.FD_FILE_MUST_EXIST)
         try:
             if dlg.ShowModal() != wx.ID_OK:
@@ -1402,7 +1423,7 @@ class MulimgViewer(SettingsPanelMixin, NavigationMixin, StatusBarMixin, VideoPla
 
         wildcard = "List file (*.txt;)|*.txt;|" \
             "All files (*.*)|*.*"
-        dlg = wx.FileDialog(None, "choose the Images List", "", "",
+        dlg = wx.FileDialog(None, tr("choose the Images List"), "", "",
                             wildcard, wx.FD_DEFAULT_STYLE | wx.FD_FILE_MUST_EXIST)
 
         if dlg.ShowModal() == wx.ID_OK:
@@ -1436,7 +1457,7 @@ class MulimgViewer(SettingsPanelMixin, NavigationMixin, StatusBarMixin, VideoPla
                     ["-1", "-1", "Save" + str(Path(self.out_path_str)/"input_flist_parallel_manual.txt")+" success!", "-1"])
 
     def out_path(self, event):
-        dlg = wx.DirDialog(None, "Choose output dir", "",
+        dlg = wx.DirDialog(None, tr("Choose output dir"), "",
                         wx.DD_DEFAULT_STYLE | wx.DD_DIR_MUST_EXIST)
 
         if dlg.ShowModal() == wx.ID_OK:
@@ -1795,26 +1816,26 @@ class MulimgViewer(SettingsPanelMixin, NavigationMixin, StatusBarMixin, VideoPla
         # Right-click Menu​
         menu = wx.Menu()
         refresh_id = wx.Window.NewControlId()
-        menu.Append(refresh_id, "🔄 refresh")
+        menu.Append(refresh_id, tr("🔄 refresh"))
         menu.Bind(wx.EVT_MENU, self.refresh, id=refresh_id)
 
         prev_id = wx.Window.NewControlId()
-        menu.Append(prev_id, "⬅️ Previous Page")
+        menu.Append(prev_id, tr("⬅️ Previous Page"))
         menu.Bind(wx.EVT_MENU, self.last_img, id=prev_id)
 
         next_id = wx.Window.NewControlId()
-        menu.Append(next_id, "➡️ Next Page")
+        menu.Append(next_id, tr("➡️ Next Page"))
         menu.Bind(wx.EVT_MENU, self.next_img, id=next_id)
 
         save_single_id = wx.Window.NewControlId()
-        menu.Append(save_single_id, "💾 Save")
+        menu.Append(save_single_id, tr("💾 Save"))
         def save_current_page(evt):
             # Default Save
             self.save_img(evt)
         menu.Bind(wx.EVT_MENU, save_current_page, id=save_single_id)
 
         save_column_id = wx.Window.NewControlId()
-        menu.Append(save_column_id, "Select image")
+        menu.Append(save_column_id, tr("Select image"))
         def save_selected_column(evt):
             x, y = event.GetPosition()
             grid = self._select_image_at_point(x,y)
@@ -1824,7 +1845,7 @@ class MulimgViewer(SettingsPanelMixin, NavigationMixin, StatusBarMixin, VideoPla
 
         if self.magnifier.Value:
             new_box_id = wx.Window.NewControlId()
-            menu.Append(new_box_id, "🔍 Create zoom box here")
+            menu.Append(new_box_id, tr("🔍 Create zoom box here"))
 
             def create_magnifier_box(evt):
                 event.menu_triggered = True
@@ -1859,7 +1880,7 @@ class MulimgViewer(SettingsPanelMixin, NavigationMixin, StatusBarMixin, VideoPla
 
         if len(self.xy_magnifier) > 0:
             clear_all_id = wx.Window.NewControlId()
-            menu.Append(clear_all_id, "🗑️ Clear all zoom boxes")
+            menu.Append(clear_all_id, tr("🗑️ Clear all zoom boxes"))
             menu.Bind(wx.EVT_MENU, self.img_left_dclick, id=clear_all_id)
 
         if self.select_img_box.Value:
@@ -1867,7 +1888,7 @@ class MulimgViewer(SettingsPanelMixin, NavigationMixin, StatusBarMixin, VideoPla
 
             if self.box_id != -1:
                 move_box_id = wx.Window.NewControlId()
-                box_menu.Append(move_box_id, f"Move box {self.box_id} to this position")
+                box_menu.Append(move_box_id, tr("Move box {box} to this position").format(box=self.box_id))
 
                 def move_box_to_position(evt):
                     event.menu_triggered = True
@@ -1877,7 +1898,7 @@ class MulimgViewer(SettingsPanelMixin, NavigationMixin, StatusBarMixin, VideoPla
                     self.SetStatusText_([f"Move box {self.box_id}", "-1", "-1", "-1"])
                 box_menu.Bind(wx.EVT_MENU, move_box_to_position, id=move_box_id)
                 delete_box_id = wx.Window.NewControlId()
-                box_menu.Append(delete_box_id, f"Delete box {self.box_id}")
+                box_menu.Append(delete_box_id, tr("Delete box {box}").format(box=self.box_id))
                 def delete_specific_box(evt):
                     if self.select_img_box.Value and self.box_id != -1:
                         self.xy_magnifier.pop(self.box_id)
@@ -1885,16 +1906,16 @@ class MulimgViewer(SettingsPanelMixin, NavigationMixin, StatusBarMixin, VideoPla
                             self.box_position.SetSelection(0)
                         self._invalidate_render_cache()
                         self.refresh(evt)
-                        self.SetStatusText_([f"Delete box {self.box_id}", "-1", "-1", "-1"])
+                        self.SetStatusText_([tr("Delete box {box}").format(box=self.box_id), "-1", "-1", "-1"])
                 box_menu.Bind(wx.EVT_MENU, delete_specific_box, id=delete_box_id)
-            menu.AppendSubMenu(box_menu, f"Selection box" + (f" ({self.box_id})" if self.box_id != -1 else ""))
+            menu.AppendSubMenu(box_menu, tr("Selection box") + (f" ({self.box_id})" if self.box_id != -1 else ""))
 
         if hasattr(self, 'rename_edit_txt'):
             new_title = self.rename_edit_txt.GetValue().strip()
             if new_title:
                 inject_title_id = wx.Window.NewControlId()
                 display_title = new_title[:20] + "..." if len(new_title) > 20 else new_title
-                menu.Append(inject_title_id, f"📝 Inject title: {display_title}")
+                menu.Append(inject_title_id, tr("📝 Inject title: {title}").format(title=display_title))
                 from .export_controller import source_slot
                 x,y=event.GetPosition()
                 inject_grid=self.get_img_id_from_point([x,y])
@@ -2642,7 +2663,7 @@ class MulimgViewer(SettingsPanelMixin, NavigationMixin, StatusBarMixin, VideoPla
                 or batch != int(self.shared_config.batch_idx)):
             return
         if error:
-            self._show_input_status(f'Load cache failed: {error}','Display error',persistent=True)
+            self._show_input_status(tr('Load cache failed: {error}').format(error=tr(str(error))),'Display error',persistent=True)
             return
         image, rgba = pixels
         for name, value in state.items():
@@ -2656,8 +2677,8 @@ class MulimgViewer(SettingsPanelMixin, NavigationMixin, StatusBarMixin, VideoPla
         if self.shared_config.is_playing:
             self.resource_monitor.frame_presented(batch, self.shared_config.play_direction)
         self._status_display_batch = batch
-        feedback=getattr(self,'_input_feedback',None)
-        if feedback and feedback[0].endswith('Display error'):self._input_feedback=None
+        if getattr(self, '_input_feedback_state', None) == 'Display error':
+            self._input_feedback = self._input_feedback_state = None
         self._apply_pending_index_selection()
         self.update_status_bar_for_current_page()
         self._show_resource_tooltip()
@@ -3111,9 +3132,9 @@ class MulimgViewer(SettingsPanelMixin, NavigationMixin, StatusBarMixin, VideoPla
 
     def title_down_up_fc(self, event):
         if self.title_down_up.Value:
-            self.title_down_up.SetLabel('Up  ')
+            self.title_down_up.SetLabel(tr('Above'))
         else:
-            self.title_down_up.SetLabel('Down')
+            self.title_down_up.SetLabel(tr('Below'))
 
     def title_rename_fc(self, event):
         # Apply together with the other title settings on manual Refresh.
@@ -3122,6 +3143,7 @@ class MulimgViewer(SettingsPanelMixin, NavigationMixin, StatusBarMixin, VideoPla
     def _sync_title_controls(self):
         # SetValue during configuration restoration emits no checkbox event.
         # This only updates editability; render settings still apply on Refresh.
+        self.title_down_up_fc(None)
         enabled=not self.title_auto.GetValue()
         for control in (self.title_down_up,self.title_show_parent,self.title_show_name,
                         self.title_show_suffix,self.title_show_prefix,self.title_position,self.title_exif,
@@ -3204,19 +3226,19 @@ class MulimgViewer(SettingsPanelMixin, NavigationMixin, StatusBarMixin, VideoPla
 
         source_path = Path(algorithm_path)
         if not source_path.exists():
-            wx.MessageBox(f"Path does not exist: {algorithm_path}", "Path Error", wx.OK | wx.ICON_ERROR)
+            wx.MessageBox(tr("Path does not exist: {algorithm_path}").format(algorithm_path=algorithm_path), tr("Path Error"), wx.OK | wx.ICON_ERROR)
             return
         if not source_path.is_dir():
-            wx.MessageBox(f"Path must be a folder: {algorithm_path}", "Path Error", wx.OK | wx.ICON_ERROR)
+            wx.MessageBox(tr("Path must be a folder: {algorithm_path}").format(algorithm_path=algorithm_path), tr("Path Error"), wx.OK | wx.ICON_ERROR)
             return
         if not (source_path / "main.py").exists():
-            wx.MessageBox(f"main.py file missing in algorithm folder: {algorithm_path}", "File Missing", wx.OK | wx.ICON_ERROR)
+            wx.MessageBox(tr("main.py file missing in algorithm folder: {algorithm_path}").format(algorithm_path=algorithm_path), tr("File Missing"), wx.OK | wx.ICON_ERROR)
             return
 
         algorithm_name = source_path.name
         existing = [self.customfunc_choice.GetString(i) for i in range(self.customfunc_choice.GetCount())]
         if algorithm_name in existing:
-            wx.MessageBox(f"Algorithm '{algorithm_name}' already exists!", "Duplicate Algorithm", wx.OK | wx.ICON_WARNING)
+            wx.MessageBox(tr("Algorithm '{algorithm_name}' already exists!").format(algorithm_name=algorithm_name), tr("Duplicate Algorithm"), wx.OK | wx.ICON_WARNING)
             return
 
         try:
@@ -3229,9 +3251,9 @@ class MulimgViewer(SettingsPanelMixin, NavigationMixin, StatusBarMixin, VideoPla
             self.custom_algorithm_input.SetValue("")
             self._custom_settings_changed()
             self.Layout()
-            wx.MessageBox(f"Algorithm '{algorithm_name}' added successfully!", "Add Success", wx.OK | wx.ICON_INFORMATION)
+            wx.MessageBox(tr("Algorithm '{algorithm_name}' added successfully!").format(algorithm_name=algorithm_name), tr("Add Success"), wx.OK | wx.ICON_INFORMATION)
         except Exception as exc:
-            wx.MessageBox(f"Failed to add algorithm: {exc}", "Add Failed", wx.OK | wx.ICON_ERROR)
+            wx.MessageBox(tr("Failed to add algorithm: {exc}").format(exc=exc), tr("Add Failed"), wx.OK | wx.ICON_ERROR)
 
     def copy_algorithm_from_path(self, source_path, algorithm_name):
         target_folder = Path(__file__).parent / "custom_func" / algorithm_name
@@ -3245,14 +3267,14 @@ class MulimgViewer(SettingsPanelMixin, NavigationMixin, StatusBarMixin, VideoPla
     def remove_custom_algorithm(self, event):
         selected_index = self.customfunc_choice.GetSelection()
         if selected_index == wx.NOT_FOUND:
-            wx.MessageBox("Please select an algorithm to remove first!", "No Algorithm Selected", wx.OK | wx.ICON_WARNING)
+            wx.MessageBox(tr("Please select an algorithm to remove first!"), tr("No Algorithm Selected"), wx.OK | wx.ICON_WARNING)
             return
 
         selected_algorithm = self.customfunc_choice.GetString(selected_index)
         dlg = wx.MessageDialog(
             self,
-            f"Are you sure you want to remove algorithm '{selected_algorithm}'?",
-            "Confirm Removal",
+            tr("Are you sure you want to remove algorithm '{selected_algorithm}'?").format(selected_algorithm=selected_algorithm),
+            tr("Confirm Removal"),
             wx.YES_NO | wx.ICON_QUESTION,
         )
         if dlg.ShowModal() == wx.ID_YES:
@@ -3261,9 +3283,9 @@ class MulimgViewer(SettingsPanelMixin, NavigationMixin, StatusBarMixin, VideoPla
                 self._clear_custom_algorithm_modules()
                 self.refresh_algorithm_list()
                 self._custom_settings_changed()
-                wx.MessageBox(f"Algorithm '{selected_algorithm}' removed successfully!", "Remove Success", wx.OK | wx.ICON_INFORMATION)
+                wx.MessageBox(tr("Algorithm '{selected_algorithm}' removed successfully!").format(selected_algorithm=selected_algorithm), tr("Remove Success"), wx.OK | wx.ICON_INFORMATION)
             except Exception as exc:
-                wx.MessageBox(f"Failed to remove algorithm: {exc}", "Remove Failed", wx.OK | wx.ICON_ERROR)
+                wx.MessageBox(tr("Failed to remove algorithm: {exc}").format(exc=exc), tr("Remove Failed"), wx.OK | wx.ICON_ERROR)
         dlg.Destroy()
 
     def remove_custom_algorithm_folder(self, algorithm_name):

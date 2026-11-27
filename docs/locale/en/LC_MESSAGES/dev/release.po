@@ -34,11 +34,11 @@ msgstr "Check whether the candidate is ready to commit"
 msgid "在无显示器的 Linux 构建机上，安装 Xvfb 和 xauth 后运行 `xvfb-run -a python tools/release.py --full`。检查使用当前 Python 运行 GUI 回归测试。单独安装了 Sphinx 时，可用 `SPHINX_PYTHON` 指定文档环境的 Python 可执行文件。"
 msgstr "On a headless Linux builder, install Xvfb and xauth and run `xvfb-run -a python tools/release.py --full`. GUI regression tests run with the current Python interpreter. If Sphinx is installed separately, set `SPHINX_PYTHON` to the documentation environment’s Python executable."
 
-msgid "依次检查本地标签是否已占用、中英文文档能否严格构建、全量回归是否通过，再生成 wheel 和源码包并核对版本。看到 `Local checks passed for v4.0.0` 后，打开以下结果核对。"
-msgstr "The script checks for an existing local tag, builds both manuals with warnings treated as errors, runs strict regression tests, then builds and validates the Python distributions. After `Local checks passed for v4.0.0`, review these outputs."
+msgid "依次检查本地标签是否已占用、清单中的各语言文档能否严格构建、全量回归是否通过，再生成 wheel 和源码包并核对版本。看到 `Local checks passed for v4.0.0` 后，打开以下结果核对。"
+msgstr "The script checks for an existing local tag, builds every registered manual with warnings treated as errors, runs strict regression tests, then builds and validates the Python distributions. After `Local checks passed for v4.0.0`, review these outputs."
 
-msgid "中文和英文手册分别在 `docs/_build/release-zh_CN/index.html` 和 `docs/_build/release-en/index.html`。"
-msgstr "Open `docs/_build/release-zh_CN/index.html` and `docs/_build/release-en/index.html` for the Chinese and English manuals."
+msgid "每种语言的手册位于 `docs/_build/release-<code>/index.html`。例如日语为 `docs/_build/release-ja/index.html`。"
+msgstr "Open `docs/_build/release-<code>/index.html` for each language, for example `docs/_build/release-ja/index.html` for Japanese."
 
 msgid "`auto_test_scripts/reports/latest.json` 指向本次回归报告目录。打开其中的 `report.html` 查看失败、跳过及运行环境。"
 msgstr "`auto_test_scripts/reports/latest.json` points to the most recent regression report directory. Open its `report.html` to review failures, skips and the test environment."
@@ -64,8 +64,8 @@ msgstr "The following commands trigger a public release. Use `git rev-parse HEAD
 msgid "在 GitHub Actions 核对标签对应的构建和发布任务。三个系统的 Python 构建成功后，工作流从 CHANGELOG 提取说明，将 Python 分发包上传至 GitHub Release 和 PyPI。维护者需在仓库配置有效的 `PYPI_API_TOKEN`。桌面离线归档由独立工作流生成；在同一 Release 的附件中上传已验收的归档。"
 msgstr "Check the build and publication jobs for the tag in GitHub Actions. After Python builds pass on all three systems, the workflow extracts the release notes from the changelog and publishes the Python distributions to GitHub Releases and PyPI. The repository requires a valid `PYPI_API_TOKEN` for PyPI. Desktop archives come from a separate workflow. Attach the verified archives to the same release."
 
-msgid "README 的功能链接直接打开同一次提交中的手册章节。中文和英文在线手册入口跟随 Read the Docs 项目设置的默认版本。发布后核对两个语言项目的新标签构建，确认可访问后再按需切换默认版本。"
-msgstr "README feature links open the manual sections from the same commit. The online Chinese and English manual links follow the configured Read the Docs default. Verify the tagged builds in both projects before changing the default."
-
 msgid "按{ref}`桌面离线包教程 <desktop-bundle>`核对目标平台和架构，解开下载的归档。在每个目标系统实际启动该包，用[示例视频](../resources/usage.md)检查并排播放，导出后重新打开结果，再将这份产物作为发布附件。"
 msgstr "Use the {ref}`desktop bundle guide <desktop-bundle>` to check the target platform and architecture, then extract the downloaded archive. Launch the package on each target system, verify side-by-side playback with the [sample clips](../resources/usage.md), export and reopen a result, and attach that tested artifact to the release."
+
+msgid "[多语言维护教程](localization.md)包括界面译表、完整手册、回归检查和 Read the Docs 发布流程。"
+msgstr "The [translation guide](localization.md) covers desktop catalogs, complete manuals, regression checks and publication on Read the Docs."

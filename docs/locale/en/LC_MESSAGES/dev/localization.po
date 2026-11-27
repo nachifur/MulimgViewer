@@ -1,0 +1,46 @@
+msgid ""
+msgstr ""
+"Language: en\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "维护多语言版本"
+msgstr "Maintain translations"
+
+msgid "选择语言与版本"
+msgstr "Choose the language and version"
+
+msgid "界面和文档共用 `src/mulimgviewer/src/languages.py` 的语言代码。首次打开桌面程序和恢复默认设置时使用英语；手动切换的语言会随会话和配置保存。维护手册时先检出要发布的分支或标签，确保图示、菜单、快捷键与该版本的程序一致。"
+msgstr "The desktop UI and manuals use the language codes in `src/mulimgviewer/src/languages.py`. First launch and Reset use English. The selected language is saved in the session and configuration. Check out the branch or tag you intend to publish so that screenshots, menu names and shortcuts match the application."
+
+msgid "修改界面译文"
+msgstr "Edit desktop messages"
+
+msgid "以英文界面文字为键更新译表。中、西文分别在 `translations_zh.py`、`translations_es.py`，其他语言位于 `src/mulimgviewer/src/locales/<code>.json`。"
+msgstr "Use the English interface text as the key. Chinese and Spanish use `translations_zh.py` and `translations_es.py`. Other catalogs live in `src/mulimgviewer/src/locales/<code>.json`."
+
+msgid "保留格式占位符、快捷键、算法名和文件名。菜单名称使用目标语言自己的文字。新增语言时，在语言清单中登记代码、名称和手册地址。"
+msgstr "Preserve format fields, shortcuts, algorithm names and filenames. Use the native language name in the menu. Register the code, native name and manual URL when adding a language."
+
+msgid "运行配置回归测试。启动程序，切换语言，保存配置，重新打开并加载，再点击 Reset 核对英文默认值。"
+msgstr "Run the configuration regressions. Switch languages in the app, save the configuration, reopen it, load the saved settings and check that Reset restores English."
+
+msgid "更新整本手册"
+msgstr "Update the complete manual"
+
+msgid "中文 Markdown 是各语言共用的源文件。安装、使用、设置、技巧、开发、发布和项目记录使用同一棵目录树。修改页面后，在仓库根目录建立翻译模板，再更新目标语言目录。下例更新日语。"
+msgstr "The Chinese Markdown files are shared by all editions. Installation, browsing, settings, tips, development, releases and project history use the same navigation tree. After editing a page, generate new templates from the repository root and update the catalog. This example updates Japanese."
+
+msgid "在 `docs/locale/ja/LC_MESSAGES/` 按页面编辑 PO 文件。核对每条新文字以及标为 fuzzy 的旧译文，确认后移除 fuzzy 标记。保留 MyST 角色、链接目的地、代码和示例数值。截图和录屏由各语言共用；翻译图注、替代文字及首页互动控件。更新其他语言时替换命令中的语言代码。语言目录页的各语言名称保留原文。"
+msgstr "Edit the PO files under `docs/locale/ja/LC_MESSAGES/` by page. Review new messages and fuzzy translations, then remove the fuzzy flag after confirming each entry. Preserve MyST roles, link targets, code and example values. Editions share screenshots and recordings. Translate captions, alternative text and interactive controls on the home page. Substitute another language code to update its catalog. Keep native language names in the directory."
+
+msgid "构建与核对"
+msgstr "Build and verify"
+
+msgid "打开 `docs/_build/html/ja/index.html`。从侧栏进入安装、播放、开发和更新记录，试用首页轮播，检查示例下载、目录跳转及代码块。阿拉伯语和乌尔都语正文应从右向左阅读，命令仍从左向右排列。"
+msgstr "Open `docs/_build/html/ja/index.html`. Follow the sidebar to installation, playback, development and the changelog. Try the carousel, downloads, navigation links and code examples. Arabic and Urdu prose should read right to left while commands remain left to right."
+
+msgid "发布到 Read the Docs"
+msgstr "Publish on Read the Docs"
+
+msgid "从 v4 起，只在中文项目 `mulimgviewer` 激活发布标签。一次构建生成全部 15 种手册：中文位于版本根目录，英文和其他语言位于 `i18n/<code>/`。构建后从语言目录核对各版本。保留 3.9.7 标签及其历史文档。"
+msgstr "From v4 onward, activate the release tag only in the Chinese project `mulimgviewer`. One build publishes all 15 manuals. Chinese is at the version root and the other editions, including English, are under `i18n/<code>/`. Check the editions from the language directory after the build. Keep the 3.9.7 tag and its historical documentation."

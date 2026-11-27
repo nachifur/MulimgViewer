@@ -1,0 +1,88 @@
+msgid ""
+msgstr ""
+"Language: ja\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "下载与安装"
+msgstr "ダウンロードとインストール"
+
+msgid "下载适合当前系统的桌面包"
+msgstr "システムにデスクトップパケットをダウンロードする"
+
+msgid "[打开 GitHub Releases 下载软件](https://github.com/nachifur/MulimgViewer/releases)。"
+msgstr "[GitHub のリリースからMulimgViewer をダウンロードする](https://github.com/nachifur/MulimgViewer/releases)."
+
+msgid "在发布页打开对应版本的 **Assets**。Windows 选 Windows 包，macOS 注意区分 Apple 芯片与 Intel，Linux 选择与处理器架构一致的包。如果该版本只提供 **Source code**，请使用下方的源码安装步骤。"
+msgstr "オープン **資産** 必要な解放のために Windows では,Windows バンデルを選択します. MacOSでは Apple Siliconや Intel に匹敵します Linuxでは,プロセッサのアーキテクチャに一致します. 公開された場合 **ソースコード**ソースインストール手順を"
+
+msgid "解压并启动"
+msgstr "抽出と発射"
+
+msgid "完整解压软件包并进入 MulimgViewer 目录。Windows 双击 `MulimgViewer.exe`，Linux 和 macOS 在图形桌面的终端执行 `./MulimgViewer`。移动软件时请保留整个目录，包括其中的依赖文件。"
+msgstr "ファイル全体を抽出して,ムリム・ビューアディレクトリを開けます. Windows では,ダブルクリック `MulimgViewer.exe`. Linux と macOS で実行する `./MulimgViewer` グラフィックセッションで アプリケーションを移動する際に,すべてのディレクトリをまとめておく."
+
+msgid "离线包自带 Python、wxPython、FFmpeg 和 FFprobe。可在该目录下运行 `.\\MulimgViewer.exe --self-check`（Windows PowerShell）或 `./MulimgViewer --self-check`（Linux、macOS）验证窗口、视频解码、内置算法以及 PNG、PDF 和 Excel 导出。"
+msgstr "ファイルには Python,wxPython,FFmpeg,およびFFprobeが含まれています. そのディレクトリから,実行 `.\\MulimgViewer.exe --self-check` Windows PowerShell または `./MulimgViewer --self-check` Linuxと macOS でウィンドウ,ビデオ解読,バインドされたアルゴリズム, PNG, PDF,Excelの輸出を確認します."
+
+msgid "对于 `.tar.xz` 包，在空目录中执行 `tar -xf 软件包路径` 即可解压。"
+msgstr "⁇ `.tar.xz` 包装,ラン `tar -xf ARCHIVE` ファイルは空っぽの目録に"
+
+msgid "运行当前源码版"
+msgstr "源から実行する"
+
+msgid "以下命令适用于 Windows、Linux 和 macOS。先安装 Git 和 Conda，在终端（Windows 可用 Anaconda Prompt）执行："
+msgstr "コンピュータをインストールする 端末で次のコマンドを実行します (Anaconda Prompt は Windows でも動作します)."
+
+msgid "已有仓库时，从项目根目录的第三条命令开始；已有可用环境时，从激活环境开始。`environment.yml` 指定 Python 3.11，由 conda-forge 安装 wxPython、FFmpeg 和 PyAV。以后启动只需激活同一环境，在仓库根目录执行最后一条命令。"
+msgstr "ルーツディレクトリ内の第3コマンドから始めます 作業環境が既にある場合は,アクティベーションから始めましょう. environment.yml ファイルでは Python 3.11 を指定し, conda-forge から wxPython, FFmpeg,および PyAV をインストールします. 後に起動すると同じ環境をアクティベーションし,リポジトリルーツから最終コマンドを実行します."
+
+msgid "验证安装"
+msgstr "設置を確認する"
+
+msgid "检查"
+msgstr "チェック"
+
+msgid "怎么做"
+msgstr "どうしたらいいのか"
+
+msgid "应该看到什么"
+msgstr "予想結果"
+
+msgid "图形界面"
+msgstr "グラフィックインターフェース"
+
+msgid "启动程序，选择 Sequential，打开 `auto_test_scripts/assets/images/source_001`"
+msgstr "アプリケーションを起動し,Sequentialを選択して開きます `auto_test_scripts/assets/images/source_001`."
+
+msgid "能显示图像并翻页"
+msgstr "画像が表示されます. そしてページを曲がることができます."
+
+msgid "视频工具"
+msgstr "ビデオツール"
+
+msgid "运行 `python tools/check_video_tools.py`"
+msgstr "走る `python tools/check_video_tools.py`."
+
+msgid "列出当前解释器、FFmpeg 和 FFprobe 的路径，两个程序均可执行"
+msgstr "スクリプトは,アクティブ・インタープリターとFFmpegおよびFFprobeへの経路をリストする. 両ツールは動作します"
+
+msgid "多视频播放"
+msgstr "ビデオを並行再生する"
+
+msgid "按[双视频示例](usage.md)打开 Cat 和 Sunset，翻到下一页"
+msgstr "オープンキャットとサンセット [2 ビデオウォークルー](usage.md) ページを前へ"
+
+msgid "两个标题仍在各自画面下，两路视频同时前进"
+msgstr "ビデオはそれぞれが自分の動画に収録されている"
+
+msgid "![双视频自检的预期画面：左侧 Cat，右侧 Sunset，右栏已开启 Video mode](../media/input-window.png)"
+msgstr "![予想されるビデオチェック:左側の猫,右の夕日,サイドバーで動画モードが有効](../media/input-window.png)"
+
+msgid "双视频自检的预期画面：左侧 Cat，右侧 Sunset，右栏已开启 Video mode"
+msgstr "予想されるビデオチェック:左側の猫,右の夕日,サイドバーで動画モードが有効"
+
+msgid "如果提示找不到 FFmpeg 或 FFprobe，在当前环境执行 `conda install -c conda-forge ffmpeg`，再运行检测脚本。在 IDE 中调试时，选择检测脚本输出的同一个 Python 解释器。使用自行安装的工具时，可用环境变量 `FFMPEG_BINARY`、`FFPROBE_BINARY` 分别指定两个可执行文件的完整路径。"
+msgstr "FFmpeg または FFprobe が欠けている場合は,実行します `conda install -c conda-forge ffmpeg` チェックを繰り返す IDE では,脚本によって報告された翻訳者を選択します. 切り離して設置された道具には,セット `FFMPEG_BINARY` 及び `FFPROBE_BINARY` 実行可能なもの全体の経路に."
+
+msgid "如果 Linux 上安装 wxPython 时提示缺少 GTK，先确认已用仓库的 Conda 环境安装原生依赖。macOS 如提示 wxPython 需要框架启动器，可在该环境安装 `conda install -c conda-forge python.app`，然后用 `pythonw MulimgViewer.py` 启动。"
+msgstr "Linux で wxPython をインストールすると GTK ライブラリが欠けていると報告されている場合は,Conda 環境でネイティブ依存をインストールしたかどうかを確認してください. MacOS がフレームワークランチャーを要求した場合, `conda install -c conda-forge python.app` 打ち上げ `pythonw MulimgViewer.py`."

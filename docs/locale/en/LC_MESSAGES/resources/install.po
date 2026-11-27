@@ -144,3 +144,6 @@ msgstr "Extract and launch"
 
 msgid "[打开 GitHub Releases 下载软件](https://github.com/nachifur/MulimgViewer/releases)。"
 msgstr "[Download MulimgViewer from GitHub Releases](https://github.com/nachifur/MulimgViewer/releases)."
+
+msgid "双视频自检的预期画面：左侧 Cat，右侧 Sunset，右栏已开启 Video mode"
+msgstr "Expected video check: Cat on the left, Sunset on the right, and Video mode enabled in the sidebar"

@@ -1,0 +1,268 @@
+msgid ""
+msgstr ""
+"Language: ja\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "右侧设置栏"
+msgstr "設定サイドバー"
+
+msgid "从工具栏选择输入模式，点击文件夹图标打开来源。右侧分组可点击标题展开；用 **Expand all / Collapse all** 展开或收起全部。设置较多时可滚动右栏，或拖动与图像区之间的分隔条。下面的截图均为运行中的完整主窗口。"
+msgstr "ツールバーの入力モードを選択し,フォルダアイコンをクリックしてソースを開きます. 横行列の標題をクリックして拡張するか, **拡大する / すべてを崩壊させる**. サイドバーをスクロールして,より多くのコントロールに到達するか,分割器を引っ張って,その幅を変更します. 画面に表示されるのは,アプリケーションの全窓です."
+
+msgid "先设置同一组相关参数，再按 **Ctrl+R** 一次应用布局、算法和缓存编辑。**Power mode** 切换运行预算；工具栏保存按钮使用点击时的导出设置。截图均已勾选 **Layout & Display → Fit window to image** 和 **Title**，并启用 **Titles → Auto title**；刷新后窗口会按画布调整。要跟做示例，先打开[使用指南](usage.md)中对应的输入目录。"
+msgstr "関連設定を編集し,押す **Ctrl+R** レイアウト,アルゴリズム,キャッシュ変更を適用する. **電力モード** 資源予算を変化させる. ツールバーの保存ボタンは,クリックすると有効な輸出設定を使用します. 画面は使用する **レイアウト & ディスプレイ → 画像に合わせて表示**, **タイトル**及び **タイトル → オートタイトル**. 窓をキャンバスに収めるようにリフレッシュする 参照の入力ディレクトリを開く [ブラウジングガイド](usage.md)."
+
+msgid "<a name=\"readme-input-playback\"></a>"
+msgstr "<a name=\"readme-input-playback\"></a>"
+
+msgid "Input & Playback｜来源顺序和播放节奏"
+msgstr "入力&再生  ⁇ ソース順序とタイミング"
+
+msgid "![双视频并排，右栏展开 Input & Playback](../media/input-window.png)"
+msgstr "![入力と再生を拡張した2つのビデオ](../media/input-window.png)"
+
+msgid "双视频并排，右栏展开 Input & Playback"
+msgstr "入力と再生を拡張した2つのビデオ"
+
+msgid "控件"
+msgstr "制御"
+
+msgid "设置方法"
+msgstr "活用方法"
+
+msgid "Video mode"
+msgstr "ビデオモード"
+
+msgid "打开视频前勾选，浏览图像前取消。再从工具栏选择输入模式并打开来源。"
+msgstr "ビデオを開く前に有効にする. 画像を閲覧する前に清掃します その後,入力モードを選択し,ツールバーからソースを開きます."
+
+msgid "Interval (s)"
+msgstr "インターバル (s)"
+
+msgid "手动输入希望的最短翻页间隔，例如 `1.0` 表示至少停留一秒。供给不足时，实际间隔可以更长。"
+msgstr "ページ間の最短の期間の時間を入力します. 実験をしてみましょう `1.0` ページを少なくとも1秒間可視に保つ. 次のページが準備ができていない場合,間隔は増加します."
+
+msgid "Skip frames"
+msgstr "スキップフレーム"
+
+msgid "两个采样帧之间跳过的视频帧数。填 `0` 逐帧查看；填 `1` 每隔一帧取一帧。"
+msgstr "試料間をスキップするフレームの数 使用 `0` フレームごとに `1` フレームを表示する"
+
+msgid "Multiple frames per source"
+msgstr "ソースごとに複数のフレーム"
+
+msgid "并行来源各自连续显示多项。要同时查看每路的三个位置，在 Layout & Display 将 **Per source** 设为 `1,3`。"
+msgstr "各並行源から連続した項目を表示します. 源ごとに3つの位置を表示するには,セット **源ごとに** について `1,3` レイアウトと表示"
+
+msgid "Play sources sequentially"
+msgstr "フォースを順序的に再生する"
+
+msgid "按来源依次浏览，例如先看完视频 A 再进入 B。这两个复选框互斥；要让两路视频始终并排、每路一帧，两项都取消。"
+msgstr "動画 A を 続いて B を 閲覧 する の は,その よう な 源 に つい て 調べる こと です. ソース順のチェックボックスは相互に除外されます. 片付けを片付けて それぞれのビデオから1つのフレームを隔てます"
+
+msgid "Performance & Cache｜速度、内存和画质"
+msgstr "性能&キャッシュ  ⁇ 速度,メモリ,品質"
+
+msgid "![双视频的性能模式与缓存设置](../media/performance-window.png)"
+msgstr "![2つのビデオのパフォーマンスとキャッシュ設定](../media/performance-window.png)"
+
+msgid "双视频的性能模式与缓存设置"
+msgstr "2つのビデオのパフォーマンスとキャッシュ設定"
+
+msgid "**Power mode** 提供 Eco、Balanced、Performance、Maximum 四档。先用 Balanced；在持续播放时悬停查看播放与供给 FPS、CPU、内存和活动任务，再决定是否提高预算。"
+msgstr "**電力モード** 効率性,バランス,性能,最大限度 バランスから始めましょう 継続的な再生中に,予算を増やす前に制御を横切ってFPSを再生し,FPS,CPU,メモリ,アクティブタスクを供給します."
+
+msgid "**Cache frames** 是当前页附近优先准备的半径，**Cache multiplier** 扩展外层半径，两项均填至少为 1 的整数。例如 `2` 和 `3` 对应内层 2 页、外层 6 页；靠近首尾时仅缓存有效页。"
+msgstr "**キャッシュフレーム** 現在のページの周辺に優先半径を設定します. **キャッシュ倍数** 半径を伸ばす 両方とも少なくとも 1 の整数を取ります. 値 `2` 及び `3` 2ページと6ページの内外半径を表示する. 両端で有効なページのみがキャッシュされます."
+
+msgid "**Cache format** 选 `jpg` 可减少磁盘占用，`png` 可避免缓存阶段的 JPG 损失，`auto` 按导出格式和比例选择。勾 **Use saved JPG quality** 时沿用导出质量，取消后可单独调节 **Cache JPG quality**。"
+msgstr "について **キャッシュ形式**使用 `jpg` ディスクスペースを節約するため, `png` キャッシュ中にJPEGの損失を回避するため,または `auto` 輸出形式と規模に応じて選択する. 有効にする **保存されたJPG品質を使用** 輸出品質を監視する,または設定に許可する **キャッシュ JPG の質** 別に"
+
+msgid "<a name=\"readme-layout-display\"></a>"
+msgstr "<a name=\"readme-layout-display\"></a>"
+
+msgid "Layout & Display｜画布怎么排"
+msgstr "レイアウト&ディスプレイ  ⁇ キャンバスを配置する"
+
+msgid "![Layout & Display 展示视频示例的行列、间距与显示比例](../media/layout-window.png)"
+msgstr "![レイアウト&ディスプレイのビデオグリッド,スペース,表示スケール](../media/layout-window.png)"
+
+msgid "Layout & Display 展示视频示例的行列、间距与显示比例"
+msgstr "レイアウト&ディスプレイのビデオグリッド,スペース,表示スケール"
+
+msgid "**Rows, cols** 先填行、再填列；右侧 **Vertical** 改为按列填充。**Size mode** 可选 resize、crop、fill；**Zoom interpolation** 控制放大区的插值方式。**Fit window to image** 在刷新时按画布调整窗口。"
+msgstr "列を最初に入力し,列を2つ目に入力する **列,コール**. 選択する **縦** 列を最初に記入する **サイズモード** サイズ変更,作物,そして填料を提供します **拡大インターポレーション** 拡大を制御する **画像に適したウィンドウ** 窓とキャンバスに合わせて リフレッシュする"
+
+msgid "网格"
+msgstr "網"
+
+msgid "管什么"
+msgstr "制御するものは"
+
+msgid "示例"
+msgstr "例"
+
+msgid "Algorithms"
+msgstr "アルゴリズム"
+
+msgid "每种算法的整幅拼接图占一格"
+msgstr "アルゴリズムごとに1つの縫いパネル"
+
+msgid "`2,1` 上下对照原图与一种算法"
+msgstr "使用 `2,1` 算法の結果を1つ以上に積み重ねる"
+
+msgid "Page"
+msgstr "ページ"
+
+msgid "页面主网格"
+msgstr "主ページ格"
+
+msgid "`1,2` 左右对比；`-1,-1` 自动计算"
+msgstr "使用 `1,2` 横並ぶ比較または `-1,-1` 自動配置のために"
+
+msgid "Per source"
+msgstr "源ごとに"
+
+msgid "每个来源的连续项"
+msgstr "各源からの連続項目は"
+
+msgid "配合 **Multiple frames per source** 使用"
+msgstr "配合する **ソースごとに複数のフレーム**."
+
+msgid "Image unit"
+msgstr "画像ユニット"
+
+msgid "一项内部的显示单元"
+msgstr "品種内の表示ユニット"
+
+msgid "演示取 `3,1`，为图像、放大区和标题留出位置"
+msgstr "例は `3,1` 画像や放大機,タイトルにスペースを"
+
+msgid "Magnifiers"
+msgstr "放大機"
+
+msgid "多个框的放大图"
+msgstr "複数のボックスから拡大したビュー"
+
+msgid "两个框可用 `1,2` 横排"
+msgstr "使用 `1,2` 箱を並べて 2個ずつ"
+
+msgid "**Gaps (X,Y for each level)** 按上表顺序给五对水平、垂直间距。**Image / Magnifier / Title** 决定哪些内容出现；单张输入已包含多个小图时可用 **Split image into units**，共用标题时选 **Shared title**。"
+msgstr "**ギャップ (各レベル X,Y)** 上記のように5つの水平/垂直のペアを採取する. **画像 / 加速器 / タイトルは** 登場する要素を制御します 使用 **画像を単位に分割する** 入力には既に複数のサブ画像が含まれている場合,および **共有タイトル** 共通のタイトルに"
+
+msgid "**Display scale / Zoom scale** 填水平、垂直比例；**Image size / Zoom size** 填宽、高像素。`-1,-1` 在尺寸框中表示自动。需要固定放大图尺寸时使用 **Keep zoom size**。导出比例在 Save Settings 单独设置。"
+msgstr "**画面スケール / 拡大スケール** 水平と垂直の要素を考慮する. **画像サイズ / 拡大サイズ** 幅と高度をピクセルで `-1,-1` 自動サイズに 有効にする **拡大サイズを保持する** 固定放大器のサイズについて 輸出スケールを保存設定で別々に設定します."
+
+msgid "<a name=\"readme-custom-functions\"></a>"
+msgstr "<a name=\"readme-custom-functions\"></a>"
+
+msgid "Custom Functions｜对比原图和算法"
+msgstr "定番機能  ⁇  原作と結果を比較する"
+
+msgid "![选中 Image Darkening，保留原图面板](../media/custom-window.png)"
+msgstr "![画像暗化が選択され,元のパネルが表示される](../media/custom-window.png)"
+
+msgid "选中 Image Darkening，保留原图面板"
+msgstr "画像暗化が選択され,元のパネルが表示される"
+
+msgid "在下拉框选 **Image Darkening**，勾 **Selected** 和 **Show original panel**，将 **Layout & Display → Algorithms** 设为 `2,1` 后刷新。上排显示原图，下排显示同一输入变暗后的结果。要比较更多算法，改选 **All algorithms**，并给网格留足位置；超出容量的算法不会进入这次处理。**Add function (Enter)** 输入名称后回车，**Remove** 移除选中的算法。编写算法见[开发指南](../dev/dev.md)。"
+msgstr "選択する **画像暗く**実現させる **選択した** 及び **原始パネルを表示する**セット **レイアウト&ディスプレイ → アルゴリズム** について `2,1`清潔な状態で 原始は暗黒した結果の上に表示されます. アルゴリズムを表示する **すべてのアルゴリズム** 十分な格列細胞を容認します ネットワーク容量の超えたアルゴリズムが 飛ばされています 名前入力 **追加関数 (入力)** 追加するには Enter を押します. **削除する** 選択されたアルゴリズムを削除します. 参照 [開発者ガイド](../dev/dev.md) 書き出すために"
+
+msgid "Magnifier & Boxes｜框与放大区"
+msgstr "放大機と箱 地域を検査する"
+
+msgid "![同一位置在两个来源中的框和放大细节](../media/magnifier-window.png)"
+msgstr "![2つのソースで一致するボックスと拡大された詳細](../media/magnifier-window.png)"
+
+msgid "同一位置在两个来源中的框和放大细节"
+msgstr "2つのソースで一致するボックスと拡大された詳細"
+
+msgid "显示放大区需要先勾选 **Layout & Display → Magnifier**。打开放大工具，在图像上拖出矩形。**Boxes on images** 和 **Boxes on magnifiers** 分别控制两处框线。**Line widths** 填两处线宽；**Position** 选择放置位置，例如 **middle bottom** 为底部居中。**Magnifier fit** 可按等宽、等高或等宽高排列。要调整已有框，勾选 **Select individual box** 后单击该框，用方向键微调。"
+msgstr "有効にする **レイアウトとディスプレイ → マグニファー**拡大器を起動して,画像に矩形を引っ張ります. **画像の箱** 及び **放大器の箱** 図表を制御する **線幅** 幅を決定する **位置** 拡大した景色を表示します **中部底** 底部に集中します **放大機のフィット** 幅や高さ,または両方とも一致する 箱を調整するには, **単行本を選択**矢印をクリックして"
+
+msgid "Titles｜选择标题字段"
+msgstr "タイトル  ⁇  タイトルフィールドを選択"
+
+msgid "![Titles 分组，Auto title 已勾选](../media/title-window.png)"
+msgstr "![自動タイトルが有効になっているタイトルは](../media/title-window.png)"
+
+msgid "Titles 分组，Auto title 已勾选"
+msgstr "自動タイトルが有効になっているタイトルは"
+
+msgid "视频示例画布上显示 Cat 和 Sunset。先在 **Layout & Display** 勾 **Title** 才能看到标题。**Auto title** 根据输入来源生成标题。若要手动选择内容，取消它，再选择 **Parent**（父目录）、**Prefix / Name / Suffix**（文件名组成部分）或 **EXIF**。**Below** 将标题放在图片下方，**Alignment** 控制对齐，**Font size / Font** 控制字号和字体。为单张图显示自定义文本时，填写 **Rename** 旁的文本，右键目标图注入，再开启 **Rename**。修改字体颜色见 Colour & Transparency。"
+msgstr "ビデオの例では \"猫と夕暮れ\"を示しています 有効にする **タイトル** 対象 **レイアウトと表示**. **自動タイトル** タイトルを源から作ります 選択する **親** (親のフォルダー) **前文字 / 名字 / 尾文字** (ファイル名コンポーネント) または **輸出額**. **下に** 画像の下にタイトルを置く. **調整**, **フォントサイズ**及び **フォント** 制御型号 画像の1つにカスタムタイトルの場合は,隣にテキストを入力します **名前変更**画像 ⁇ のコンテキストメニューを使用してインジェクタを挿入し, **名前変更**. フォントの色を\"カラー&透明性\"に設定します."
+
+msgid "<a name=\"readme-save-settings\"></a>"
+msgstr "<a name=\"readme-save-settings\"></a>"
+
+msgid "Save Settings｜导出内容和质量"
+msgstr "設定を保存する  ⁇ 輸出内容と品質"
+
+msgid "![Save Settings 展示输出路径、内容、格式、质量和比例](../media/save-window.png)"
+msgstr "![フォルダー,コンテンツ,フォーマット,品質,スケールで設定を保存する](../media/save-window.png)"
+
+msgid "Save Settings 展示输出路径、内容、格式、质量和比例"
+msgstr "フォルダー,コンテンツ,フォーマット,品質,スケールで設定を保存する"
+
+msgid "在 **Output folder** 点击 **Browse…** 选目录。在 **Content** 选择 **Stitch**（拼接）、**Selected images**（挑图）、**Magnifiers**（放大区域），或选包含多项的组合。"
+msgstr "クリックする **ブラウズ...** 対象 **輸出フォルダ** ダイレクトリを選択する 底 **内容**選択する **縫い目**, **選択した画像**, **放大機**組み合わせたもの"
+
+msgid "**Format** 选 jpg、png 或 pdf。对应设置为 **JPG quality**、**PNG compression**、**PDF compression**。PNG 的 Fast、Balanced、Smaller file 调整编码速度与体积；PDF 的 Lossless 和 Compact (JPG) 决定图片嵌入方式。"
+msgstr "jpg, png,または pdf を選択してください. **フォーマット**. 調整する **JPG品質**, **PNG圧縮**及び **PDF圧縮** 適用される. PNG ⁇ のFast,Balanced, and Smallerファイル設定はサイズにコードング時間を交換します. PDF  ⁇ s Lossless と Compact (JPG) の設定は,画像の埋め込み方法を制御します."
+
+msgid "**Output scale** 控制主图输出比例，**Zoom output scale** 控制放大图。填 `1,1` 保留已配置的尺寸。点击工具栏保存按钮导出当前结果。"
+msgstr "**輸出スケール** 画像を制御する **拡大出力スケール** 放大器を制御する 使用 `1,1` 設定された次元を保持する 輸出するにはツールバーの保存をクリックします."
+
+msgid "勾 **Save all pages** 后保存整批，按 **Esc** 暂停，再点保存继续。如果修改了导出参数，再次保存会从头开始。**Move files** 只适用于图像模式。组合输出没有放大框时会跳过放大项，仍会保存勾选的拼接或挑图结果。"
+msgstr "有効にする **すべてのページを保存する** 荷物を輸出する. プレス **株式会社** 停止して再開するには保存をクリックします. 輸出設定を変更すると,パッチが再起動します. **ファイル移動** 画像のみに適用されます. 拡大ボックスがない組み合わせの輸出では,縫い目と選択はまだ実行されます."
+
+msgid "要保留视频解码得到的细节，使用 **png** 缓存，**Output scale** 设为 `1,1`，导出 PNG 或 Lossless PDF。修改缓存格式后按 **Ctrl+R**。`auto` 在导出 PNG/PDF 且水平、垂直输出比例均至少为 1 时选 PNG，其余情况可用 JPG。缩小预览时仍可单独设置导出比例。"
+msgstr "解読されたビデオ詳細を保存するには, **プン** キャッシュ,セット **輸出スケール** について `1,1`ファイルは PNG または Lossless PDF を出口します プレス **Ctrl+R** キャッシュ形式を変更した後に 及び `auto`, PNG/PDF輸出では,水平および垂直の両方の出力スケールは少なくとも 1 である場合, PNGキャッシュを使用します. 他の設定では JPG が許可されます. 輸出スケールは,前見から独立して選択できます."
+
+msgid "Colour & Transparency｜颜色和透明度"
+msgstr "色と透明性 色と不透明性"
+
+msgid "![Colour & Transparency 分组，三种颜色分别可调](../media/colour-window.png)"
+msgstr "![3つの独立色制御用カラー&透明性](../media/colour-window.png)"
+
+msgid "Colour & Transparency 分组，三种颜色分别可调"
+msgstr "3つの独立色制御用カラー&透明性"
+
+msgid "**Box** 设置框线颜色，**Gap** 设置画布间隙颜色，**Font** 设置标题颜色。希望自己指定框色时，先取消 **Automatic box colour**。**Background opacity** 控制画布背景，**Image opacity** 控制图像内容；`0` 为透明，`255` 为完全不透明。需要透明背景时，保留图像不透明，降低背景不透明度，并使用支持透明通道的 PNG 导出。JPG 会把透明区域合成到 Gap 颜色上。"
+msgstr "**箱**, **ギャップ**及び **フォント** 概要,キャンバス空白,タイトルの色を設定します 透明 **自動ボックス色** 自分で選ぶ **背景の不透明性** 及び **画像の不透明性** 範囲 `0` (透明) に `255` (不透明) 透明な背景のために,画像を不透明にして,背景の不透明性を低くして PNG を輸出してください. JPGは透明な領域をギャップ色に平坦化します"
+
+msgid "Configuration｜记住或恢复一套设置"
+msgstr "設定  ⁇ 保存・復元する設定"
+
+msgid "![Configuration 分组的 Load、Save、Reset](../media/configuration-window.png)"
+msgstr "![読み込み,保存,設定を再セット](../media/configuration-window.png)"
+
+msgid "Configuration 分组的 Load、Save、Reset"
+msgstr "読み込み,保存,設定を再セット"
+
+msgid "操作"
+msgstr "行動"
+
+msgid "何时用"
+msgstr "いつ使うか"
+
+msgid "Save"
+msgstr "保存する"
+
+msgid "布局、缓存和导出参数调好后，手动保存一套可复用的设置，也会记录分组折叠状态与右栏宽度。"
+msgstr "レイアウト,キャッシュ,および輸出設定のリニューアル利用可能なスナップショットを保存します."
+
+msgid "Load"
+msgstr "負荷"
+
+msgid "尝试其他参数后，找回手动保存的那套设置。"
+msgstr "他の設定を試してみた後に保存したスナップショットを復元します."
+
+msgid "Reset"
+msgstr "セット"
+
+msgid "恢复默认参数、分组折叠状态和自动栏宽。手动保存的快照仍可用 Load 取回。"
+msgstr "デフォルト設定,セクション状態,および自動サイドバー幅を復元します. 保存したスナップショットをまだ読み取りできます"
+
+msgid "正常关闭后再启动会恢复上次使用状态。这里的 **Save** 保存配置；工具栏上的磁盘图标导出图像。"
+msgstr "通常のリセットでは,最後のセッションの設定が復元されます. **保存する** 設定を保存します ツールバーのディスクアイコンは画像を輸出します"

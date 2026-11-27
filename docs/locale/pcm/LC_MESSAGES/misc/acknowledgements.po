@@ -1,0 +1,34 @@
+msgid ""
+msgstr ""
+"Language: pcm\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "致谢"
+msgstr "People wey help"
+
+msgid "感谢 QQ 交流群里提供使用反馈的每一位成员，也感谢以下贡献者。"
+msgstr "Di following contributors dey dey share feedback, and to di following contributors."
+
+msgid "nothingeasy — 输入路径清单的导入与保存建议。"
+msgstr "Dem suggest import and saving list of input paths."
+
+msgid "JuZiSYJ — 同步放大与带框原图导出建议。"
+msgstr "Di Suggested synchronized magnification and export original wit box"
+
+msgid "ymingsu — 实现文件清单导入。"
+msgstr "Di file-list import"
+
+msgid "Faberman — 建议增加图像标题和放大图 1:1 输出，翻译并润色英文 README。"
+msgstr "Di image title and 1:1 magnifier export, and translate and edited di English README"
+
+msgid "stefanklut — 建议支持隐藏放大图边框。"
+msgstr "Di option to hide magnifier borders"
+
+msgid "FunkyKoki — 提出局部显示图像和放大图排布建议。"
+msgstr "Di Suggest partial image views and additional magnifier layouts."
+
+msgid "wwhio — 放大框颜色设置。"
+msgstr "Di contribution zoom-box colour settings."
+
+msgid "wzy — 引入 CI/CD，搭建多语言 Read the Docs 网站，支持通过 pip 安装。"
+msgstr "E Introduced CI/CD, set up multilingual read di Docs hosting and enabled pipo installation"

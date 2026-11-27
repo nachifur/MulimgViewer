@@ -1,0 +1,70 @@
+msgid ""
+msgstr ""
+"Language: pt\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "新版本构建与发布"
+msgstr "Preparar e publicar uma versão"
+
+msgid "以下以 `4.0.0` 为例。准备 README、构建 Python 包和验证文档都可以在打标签前完成。推送 `v4.0.0` 标签才会触发正式发布。如果只需要在本机生成可分发的桌面程序，可直接按{ref}`桌面离线包教程 <desktop-bundle>`操作。"
+msgstr "Este guia utiliza `4.0.0` Como exemplo. Prepare o README, construa os pacotes Python e verifique ambos os manuais antes de marcar. Empurrar o `v4.0.0` A tag desencadeia a publicação. Para criar um aplicativo de desktop independente localmente, vá diretamente para {ref}`Construa um pacote de desktop offline <desktop-bundle>`."
+
+msgid "准备构建环境"
+msgstr "Preparar o ambiente de construção"
+
+msgid "按[下载与安装](../resources/install.md)创建应用环境，确认能启动 GUI，且 `ffmpeg` 和 `ffprobe` 可用。在仓库根目录执行以下命令，取得已有标签并安装回归测试、文档和 Python 打包工具。"
+msgstr "Segue-me [Instalação e verificação](../resources/install.md) criar o ambiente de aplicação. Confirme o início da interface gráfica e ambos `ffmpeg` e `ffprobe` - estão disponíveis. A partir da raiz do repositório, busque tags existentes e instale as ferramentas de regressão, documentação e construção de pacotes."
+
+msgid "准备版本内容"
+msgstr "Preparar o conteúdo de liberação"
+
+msgid "在 `src/mulimgviewer/release_version.py` 将 `__version__` 设为 `\"4.0.0\"`。版本号使用三段数字；前缀 `v` 只写在 Git 标签中。"
+msgstr "Set `__version__` para `\"4.0.0\"` em `src/mulimgviewer/release_version.py`. Use três componentes numéricos. O `v` O prefixo pertence à etiqueta Git."
+
+msgid "平时将变更说明写在 `CHANGELOG.md` 的 `## 未发布` 下。发布时只需在上述版本文件中填写一次版本号。`--prepare` 会将待发布说明归入该版本，并生成对应的 README。检查模板里的示例与配图后执行以下命令。"
+msgstr "Colecionar notas de liberação no `## 未发布` em `CHANGELOG.md`. Insira o número de versão apenas no arquivo de versão acima. O comando prepare move notas pendentes para essa versão e gera o seu README. Revise os exemplos e imagens antes de executar os comandos."
+
+msgid "版本为 3.9.7 时保留原 README。从 4.0.0 起，脚本会用模板生成根目录的 `README.md`。修改新版介绍时编辑模板，再重新生成。"
+msgstr "A versão 3.9.7 mantém o README original. A partir de 4.0.0, o script gera a raiz `README.md` do modelo. Modifique o modelo e regenere ao alterar a introdução de lançamento."
+
+msgid "检查是否可以提交"
+msgstr "Verifique se o candidato está pronto para"
+
+msgid "在无显示器的 Linux 构建机上，安装 Xvfb 和 xauth 后运行 `xvfb-run -a python tools/release.py --full`。检查使用当前 Python 运行 GUI 回归测试。单独安装了 Sphinx 时，可用 `SPHINX_PYTHON` 指定文档环境的 Python 可执行文件。"
+msgstr "Em um construtor Linux sem cabeça, instale Xvfb e xauth e execute `xvfb-run -a python tools/release.py --full`. Os testes de regressão da interface gráfica são executados com o atual intérprete Python. Se a Esfinge for instalada separadamente, `SPHINX_PYTHON` Para o ambiente de documentação, Python é executável."
+
+msgid "依次检查本地标签是否已占用、清单中的各语言文档能否严格构建、全量回归是否通过，再生成 wheel 和源码包并核对版本。看到 `Local checks passed for v4.0.0` 后，打开以下结果核对。"
+msgstr "O script verifica uma etiqueta local existente, constrói todos os manuais registrados com advertências tratadas como erros, executa testes de regressão rigorosos e depois constrói e valida as distribuições Python. Depois `Local checks passed for v4.0.0`- Revisar estas saídas."
+
+msgid "每种语言的手册位于 `docs/_build/release-<code>/index.html`。例如日语为 `docs/_build/release-ja/index.html`。"
+msgstr "Abre `docs/_build/release-<code>/index.html` para cada língua, por exemplo `docs/_build/release-ja/index.html` Para os japoneses."
+
+msgid "`auto_test_scripts/reports/latest.json` 指向本次回归报告目录。打开其中的 `report.html` 查看失败、跳过及运行环境。"
+msgstr "`auto_test_scripts/reports/latest.json` aponta para o diretório mais recente de relatórios de regressão. Abre o seu `report.html` Revisão das falhas, desvios e ambiente de ensaio."
+
+msgid "`build/release-4.0.0/dist/` 包含供 Python 安装的 `.whl` 和源码 `.tar.gz`。需要双击启动的用户请使用下一步的桌面离线包。"
+msgstr "`build/release-4.0.0/dist/` contém a roda Python instalada e o arquivo fonte. Para os usuários que desejam um lançador de desktop, construam os pacotes offline no próximo passo."
+
+msgid "如果提示 README 过期，重新运行 `--prepare`；如果提示同名标签已存在，先核对版本号。文档或测试失败时，按输出定位问题，修复后重新执行 `--full`。"
+msgstr "Para um README obsoleto, reiniciar `--prepare`. Se a etiqueta já existe, verifique o número de versão. Para uma falha de documentação ou teste, corrigir o problema relatado e repetir `--full`."
+
+msgid "验证将要分发的提交"
+msgstr "Verifique o compromisso que pretende distribuir"
+
+msgid "将版本文件、模板、生成的 README、发布说明和对应源码一起提交。推送待发布分支，核对该提交的 CI 和回归报告。需要分发离线包时，在 **Actions → Desktop packages → Run workflow** 选该分支，核对运行记录的提交 SHA，再下载各平台产物。"
+msgstr "Compromete o arquivo de versão, modelo, README gerado, notas de lançamento e fonte correspondente juntos. Puxar o ramo candidato e revisar a CI e o relatório de regressão para esse compromisso. Para pacotes offline, selecione o ramo em **Ações → Pacotes de desktop → Execução do fluxo de trabalho**, verificar as operações de SHA e baixar os artefatos da plataforma."
+
+msgid "按{ref}`桌面离线包教程 <desktop-bundle>`核对目标平台和架构，解开下载的归档。在每个目标系统实际启动该包，用[示例视频](../resources/usage.md)检查并排播放，导出后重新打开结果，再将这份产物作为发布附件。"
+msgstr "Usar o {ref}`guia de pacote de desktop <desktop-bundle>` Para verificar a plataforma e arquitetura do alvo, depois extrair o arquivo baixado. Lançar o pacote em cada sistema-alvo, verificar a reprodução lado a lado com [Clipes de amostra](../resources/usage.md), exportar e reabrir um resultado, e anexar o artefato testado à liberação."
+
+msgid "打标签并核对发布结果"
+msgstr "Marcar a publicação verificada de compromissos e verificações"
+
+msgid "以下命令会触发正式发布。先用 `git rev-parse HEAD` 确认当前提交就是通过 CI 并用于打包的提交；如果经过合并或变基后 SHA 改变，应核对最终提交的检查结果。"
+msgstr "Os seguintes comandos desencadeam uma liberação pública. Utilização `git rev-parse HEAD` Para confirmar a correspondência do compromisso atual com o verificado pela CI e utilizado para embalagens. Se a fusão ou o rebasamento alterarem a SHA, revise os controlos relativos ao compromisso final."
+
+msgid "在 GitHub Actions 核对标签对应的构建和发布任务。三个系统的 Python 构建成功后，工作流从 CHANGELOG 提取说明，将 Python 分发包上传至 GitHub Release 和 PyPI。维护者需在仓库配置有效的 `PYPI_API_TOKEN`。桌面离线归档由独立工作流生成；在同一 Release 的附件中上传已验收的归档。"
+msgstr "Verifique os trabalhos de construção e publicação para a etiqueta em Ações do GitHub. Depois que o Python constrói passagem em todos os três sistemas, o fluxo de trabalho extrai as notas de lançamento do logueiro e publica as distribuições do Python para GitHub Releases e PyPI. O repositório requer um `PYPI_API_TOKEN` para PyPI. Arquivos de desktop vêm de um fluxo de trabalho separado. Anexar os arquivos verificados à mesma publicação."
+
+msgid "[多语言维护教程](localization.md)包括界面译表、完整手册、回归检查和 Read the Docs 发布流程。"
+msgstr "O [guia de tradução](localization.md) Representa catálogos de escritório, manuais completos, verificações de regressão e publicação no Read the Docs."

@@ -3,6 +3,8 @@ import os
 import wx
 from pathlib import Path
 
+from .localization import tr
+
 
 
 # Selection metadata and field sizing
@@ -90,12 +92,13 @@ def image_memory_tooltip(manager, canvas, grid=0):
     for label, info in (('Original (selected)', sources[slot] if slot is not None and slot<len(sources) else None),
                         ('Page mosaic',canvas)):
         if info is None:
-            lines.append(f'{label}: unavailable')
+            lines.append(tr('{label}: unavailable').format(label=tr(label)))
             continue
         size,mode=info
         amount=pixel_memory(size,mode)/1024**2
-        lines.append(f'{label}: {size[0]} x {size[1]} {mode} | pixels ~ {amount:.2f} MiB')
-    lines.append('Pixel estimates only; codec, processing and GUI copies need extra RAM.')
+        lines.append(tr('{label}: {w} x {h} {mode} | pixels ~ {mib:.2f} MiB').format(
+            label=tr(label), w=size[0], h=size[1], mode=mode, mib=amount))
+    lines.append(tr('Pixel estimates only; codec, processing and GUI copies need extra RAM.'))
     return '\n'.join(lines)
 
 
@@ -121,9 +124,9 @@ def selection_info(manager, cfg, grid=0):
         minutes, seconds = divmod(seconds, 60)
         hours, minutes = divmod(int(minutes), 60)
         timestamp = f'{hours:02}:{minutes:02}:{seconds:06.3f}'
-        return dict(position=f'Frame {logical+1}/{counts[video]} | Video {video+1}/{len(videos)}',
-                    source=os.path.abspath(os.path.expanduser(str(videos[video]))), detail=f'Time {timestamp}; original frame {physical+1}'
-                    + (f'; sample every {step} frames' if step > 1 else ''), timestamp=timestamp)
+        return dict(position=f'{tr("Frame")} {logical+1}/{counts[video]} | {tr("Video")} {video+1}/{len(videos)}',
+                    source=os.path.abspath(os.path.expanduser(str(videos[video]))), detail=f'{tr("Time")} {timestamp}; {tr("original frame")} {physical+1}'
+                    + ('; '+tr('sample every {n} frames').format(n=step) if step > 1 else ''), timestamp=timestamp)
     index = getattr(manager, '_status_source_index', None)
     if index is None:
         return None
@@ -131,7 +134,7 @@ def selection_info(manager, cfg, grid=0):
     position, total, folder, folders = index.locate(paths[slot], hint)
     if position is None or folder is None:
         return None
-    return dict(position=f'Image {position+1}/{total} | Folder {folder+1}/{folders}',
+    return dict(position=f'{tr("Image")} {position+1}/{total} | {tr("Folder")} {folder+1}/{folders}',
                 source=os.path.abspath(os.path.expanduser(str(paths[slot]))),
                 detail=os.path.abspath(os.path.expanduser(str(Path(paths[slot]).parent))), timestamp='')
 
@@ -171,10 +174,11 @@ class StatusBarMixin:
         if message is None:
             message=('Video mode: please select a video input' if self.shared_config.video_mode
                      else 'Image mode: please select an image input')
-        detail=f'{mode} | {message}'
+        detail=f'{mode} | {tr(message)}'
         if path is not None:detail+=f' | {path}'
-        action=f'{media} | {state}'
+        action=f'{tr(media)} | {tr(state)}'
         self._input_feedback=(action,detail) if persistent else None
+        self._input_feedback_state = state if persistent else None
         loaded=(getattr(self.ImgManager,'img_num',0) and
                 bool(getattr(self.ImgManager,'video_mode',False))==bool(self.shared_config.video_mode))
         selection='-1' if loaded else 'No source loaded'
@@ -217,6 +221,14 @@ class StatusBarMixin:
         for field, text in enumerate(texts[:self.Status_number]):
             if text != '-1':
                 if field==3 and getattr(self,'_export_active',False):text=self._export_status
+                if field == 3:
+                    self._last_output_message = text
+                text = tr(str(text))
+                if field == 3:
+                    for prefix in ('Saving:', 'Output:'):
+                        if text.startswith(prefix):
+                            text = tr(prefix) + text[len(prefix):]
+                            break
                 if self.main_status_bar.GetStatusText(field) != str(text):
                     self.main_status_bar.SetStatusText(str(text), field)
                     changed = True
@@ -239,19 +251,19 @@ class StatusBarMixin:
         playback = 'Playing' if self.shared_config.is_playing else 'Paused'
         from .data import loaded_input_mode
 
-        input_mode = loaded_input_mode(self.ImgManager, self.shared_config, painted=True)
-        position = info['position'] if info else 'No source selected'
+        input_mode = tr(loaded_input_mode(self.ImgManager, self.shared_config, painted=True))
+        position = info['position'] if info else tr('No source selected')
         if self.select_img_box.Value:
             total=min(len(self.xy_magnifier),len(getattr(self.ImgManager,'crop_points',())))
             selected=getattr(self,'box_id',-1)
             if 0<=selected<total:
-                position+=f' | Box {selected+1}/{total}'
+                position+=f' | {tr("Box")} {selected+1}/{total}'
         feedback=getattr(self,'_input_feedback',None)
         source = f'{input_mode} | {info["source"]}' if info else input_mode
         if info and info['timestamp']:
             source += f' | {info["timestamp"]}'
-        self.SetStatusText_([feedback[0] if feedback else f'{mode} | {playback}',
-            f'Page {batch+1}/{pages} | {position}',feedback[1] if feedback else source,'-1'])
+        self.SetStatusText_([feedback[0] if feedback else f'{tr(mode)} | {tr(playback)}',
+            f'{tr("Page")} {batch+1}/{pages} | {position}',feedback[1] if feedback else source,'-1'])
         if info:
-            self._status_field_tooltips[1] = f'Page {batch+1}/{pages}\n{position}\n{info["detail"]}'
+            self._status_field_tooltips[1] = f'{tr("Page")} {batch+1}/{pages}\n{position}\n{info["detail"]}'
             if not feedback:self._status_field_tooltips[2] = f'{input_mode}\n{info["source"]}\n{info["detail"]}'

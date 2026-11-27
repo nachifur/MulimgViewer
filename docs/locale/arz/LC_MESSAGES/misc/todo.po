@@ -1,0 +1,67 @@
+msgid ""
+msgstr ""
+"Language: arz\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "待办与社区反馈"
+msgstr "خطة التطوير واقتراحات المستخدمين"
+
+msgid "以下整理自 2026-11-25 核对的公开议题。功能建议仍在讨论，排期和进展以 [GitHub 开放议题](https://github.com/nachifur/MulimgViewer/issues?q=is%3Aissue+is%3Aopen) 为准。"
+msgstr "تم مراجعة القضايا العامة دي في 25 نوفمبر 2026. تقديم الاقتراحات بتدخل في المناقشة. اتبعوا [أشكال مفتوحة في GitHub](https://github.com/nachifur/MulimgViewer/issues?q=is%3Aissue+is%3Aopen) لجدول التوقيت والتقدم."
+
+msgid "待评估的功能建议"
+msgstr "مقترحات الميزات"
+
+msgid "用户希望完成的操作"
+msgstr "اللي عايز المستخدمين يفعلو"
+
+msgid "相关讨论"
+msgstr "المناقشة"
+
+msgid "收藏一组输入路径，从最近访问记录重新打开，或恢复上次的浏览会话"
+msgstr "علامة كتابية مجموعة من مسارات المدخلات، إعادة فتح المصادر الأخيرة، أو استعادة جلسة تصفح."
+
+msgid "[#216 路径组与会话恢复](https://github.com/nachifur/MulimgViewer/issues/216)"
+msgstr "[#216 مجموعة المسار واستعادة الجلسة](https://github.com/nachifur/MulimgViewer/issues/216)"
+
+msgid "在界面中更方便地管理自定义函数"
+msgstr "ادير وظائف مخصصة بسهولة من واجهة."
+
+msgid "[#217 函数管理](https://github.com/nachifur/MulimgViewer/issues/217)"
+msgstr "[#217 إدارة الوظائف](https://github.com/nachifur/MulimgViewer/issues/217)"
+
+msgid "为放大区域选择虚线边框"
+msgstr "استخدم مخططًا مُحَدَّدًا لرباك المكبرات."
+
+msgid "[#215 放大框线型](https://github.com/nachifur/MulimgViewer/issues/215)"
+msgstr "[#215 أساليب خط الصندوق](https://github.com/nachifur/MulimgViewer/issues/215)"
+
+msgid "以项目为入口组织多个工作任务，并改进导出界面"
+msgstr "تنظيم كتير من المهام في مشاريع وتحسين واجهة التصدير."
+
+msgid "[#206 多项目工作流](https://github.com/nachifur/MulimgViewer/issues/206)、[#205 导出界面](https://github.com/nachifur/MulimgViewer/issues/205)"
+msgstr "[#206 سير العمل متعدد المشاريع](https://github.com/nachifur/MulimgViewer/issues/206), [205 واجهة تصدير](https://github.com/nachifur/MulimgViewer/issues/205)"
+
+msgid "在浏览器中使用查看器，或扩展音频处理能力"
+msgstr "استخدم المشاهد في متصفح أو تمددله لعمل الصوت."
+
+msgid "[#207 Web 界面](https://github.com/nachifur/MulimgViewer/issues/207)、[#162 音频处理](https://github.com/nachifur/MulimgViewer/issues/162)"
+msgstr "[#207 واجهة الويب](https://github.com/nachifur/MulimgViewer/issues/207), [#162 معالجة الصوت](https://github.com/nachifur/MulimgViewer/issues/162)"
+
+msgid "使用反馈与已有功能"
+msgstr "ردود الفعل عن الاستخدام والخصائص القائمة"
+
+msgid "Ubuntu 下的滚轮缩放和图像拖动有单独的反馈帖。补充反馈时请附系统版本、输入模式和具体鼠标操作。[#87 Ubuntu 缩放](https://github.com/nachifur/MulimgViewer/issues/87)、[#115 拖动图片](https://github.com/nachifur/MulimgViewer/issues/115)"
+msgstr "زوم الجرعة الماوسية على أوبونتو وجذب الصور ليها خيوط منفصلة. إدخل نسخة نظام التشغيل الخاص بك، وضع المدخلات، وأفعال الماوس الدقيقة عند الإبلاغ عن المشكلات. [#87 زوم على أوبونتو](https://github.com/nachifur/MulimgViewer/issues/87), [#115 جذب الصور](https://github.com/nachifur/MulimgViewer/issues/115)"
+
+msgid "视频导入、自动播放与多视频并排对比已有操作示例。可先依照手册打开两段视频，再在原议题补充仍有困难的场景。[操作示例](../resources/usage.md)、[#53 视频并行对比](https://github.com/nachifur/MulimgViewer/issues/53)"
+msgstr "الكد يغطى استيراد الفيديو، التشغيل الآلي، ومقارنة جانباً إلى جانبه. جرب المقطع الفيديوين ووصف اى صعوبات متبقية في العدد. [مشي من خلال](../resources/usage.md), [#53 مقارنة فيديو متوازية](https://github.com/nachifur/MulimgViewer/issues/53)"
+
+msgid "中文界面需求和项目合作分别在对应议题讨论。[#55 中文界面](https://github.com/nachifur/MulimgViewer/issues/55)、[#7 招募合作者](https://github.com/nachifur/MulimgViewer/issues/7)、[#222 合作](https://github.com/nachifur/MulimgViewer/issues/222)"
+msgstr "للوجهة الصينية أو فرص التعاون، راجع المناقشات المتعلقة. [#55 واجهة الصينية](https://github.com/nachifur/MulimgViewer/issues/55), [#7 تبحث عن متعاونين](https://github.com/nachifur/MulimgViewer/issues/7), [#222 التعاون](https://github.com/nachifur/MulimgViewer/issues/222)"
+
+msgid "查找已实现的功能"
+msgstr "ابحث عن الميزات اللي موجودة بالفعل"
+
+msgid "定位图片、同步放大和成组挑图见[操作录屏](../resources/usage.md)。框线、标题和导出比例见[设置栏参考](../resources/settings.md)。历次变化见[更新记录](changelog.md)，早期建议的贡献者见[致谢](acknowledgements.md)。"
+msgstr "شوف البطاقة [سير العمل المسجل](../resources/usage.md) لوجود صورة، وزيادة منطقة واختيار مجموعة. المخططات الصندوقية والعناوين ومقياس التصدير مُوثق في [إشارة الإعدادات](../resources/settings.md). شوف البطاقة [تغييرات](changelog.md) ل تاريخ الإفراج و [مصاريف](acknowledgements.md) للمساهمات المبكرة."

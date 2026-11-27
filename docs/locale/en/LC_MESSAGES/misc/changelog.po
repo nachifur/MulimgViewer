@@ -106,3 +106,6 @@ msgstr "Fixed a display issue affecting images with an alpha channel (RGBA)."
 
 msgid "未发布"
 msgstr "Unreleased"
+
+msgid "3.9.7"
+msgstr "3.9.7"

@@ -1,0 +1,70 @@
+msgid ""
+msgstr ""
+"Language: id\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "新版本构建与发布"
+msgstr "Membangun dan menerbitkan rilis"
+
+msgid "以下以 `4.0.0` 为例。准备 README、构建 Python 包和验证文档都可以在打标签前完成。推送 `v4.0.0` 标签才会触发正式发布。如果只需要在本机生成可分发的桌面程序，可直接按{ref}`桌面离线包教程 <desktop-bundle>`操作。"
+msgstr "Panduan ini menggunakan `4.0.0` Sebagai contoh. Persiapkan README, bangun paket Python dan verifikasi kedua manual sebelum tag. Memaksa `v4.0.0` Tag memicu publikasi. Untuk membangun aplikasi desktop mandiri secara lokal, langsung ke {ref}`Buat paket desktop offline <desktop-bundle>`."
+
+msgid "准备构建环境"
+msgstr "Persiapkan lingkungan bangunan"
+
+msgid "按[下载与安装](../resources/install.md)创建应用环境，确认能启动 GUI，且 `ffmpeg` 和 `ffprobe` 可用。在仓库根目录执行以下命令，取得已有标签并安装回归测试、文档和 Python 打包工具。"
+msgstr "Ikuti [Instalasi dan verifikasi](../resources/install.md) untuk menciptakan lingkungan aplikasi. Konfirmasi GUI dimulai dan keduanya `ffmpeg` dan `ffprobe` tersedia. Dari akar repositori, cari tag yang ada dan pasang alat regresi, dokumentasi dan paket."
+
+msgid "准备版本内容"
+msgstr "Persiapkan isi release"
+
+msgid "在 `src/mulimgviewer/release_version.py` 将 `__version__` 设为 `\"4.0.0\"`。版本号使用三段数字；前缀 `v` 只写在 Git 标签中。"
+msgstr "Set `__version__` untuk `\"4.0.0\"` di `src/mulimgviewer/release_version.py`. Gunakan tiga komponen numerik. Pemberantasan `v` Prefix milik di tag Git."
+
+msgid "平时将变更说明写在 `CHANGELOG.md` 的 `## 未发布` 下。发布时只需在上述版本文件中填写一次版本号。`--prepare` 会将待发布说明归入该版本，并生成对应的 README。检查模板里的示例与配图后执行以下命令。"
+msgstr "Kumpulkan catatan rilis di bawah `## 未发布` di `CHANGELOG.md`. Masukkan nomor versi hanya di file versi di atas. Komando siap memindahkan catatan pending ke versi tersebut dan menghasilkan README. Periksa contoh dan gambar sebelum menjalankan perintah."
+
+msgid "版本为 3.9.7 时保留原 README。从 4.0.0 起，脚本会用模板生成根目录的 `README.md`。修改新版介绍时编辑模板，再重新生成。"
+msgstr "Versi 3.9.7 menyimpan README asli. Mulai dari 4.0.0, skrip menghasilkan root `README.md` dari template. Mengedit template dan regenerasi saat mengubah rilis pengenalan."
+
+msgid "检查是否可以提交"
+msgstr "Periksa apakah calon siap untuk berkomitmen"
+
+msgid "在无显示器的 Linux 构建机上，安装 Xvfb 和 xauth 后运行 `xvfb-run -a python tools/release.py --full`。检查使用当前 Python 运行 GUI 回归测试。单独安装了 Sphinx 时，可用 `SPHINX_PYTHON` 指定文档环境的 Python 可执行文件。"
+msgstr "Pada pembangun Linux tanpa kepala, pasang Xvfb dan xauth dan jalankan `xvfb-run -a python tools/release.py --full`. GUI regression tes berjalan dengan Python interpreter saat ini. Jika Sphinx dipasang secara terpisah, set `SPHINX_PYTHON` untuk lingkungan dokumentasi Python dapat dieksekusi."
+
+msgid "依次检查本地标签是否已占用、清单中的各语言文档能否严格构建、全量回归是否通过，再生成 wheel 和源码包并核对版本。看到 `Local checks passed for v4.0.0` 后，打开以下结果核对。"
+msgstr "Skrip memeriksa tag lokal yang ada, membangun setiap manual terdaftar dengan peringatan dianggap sebagai kesalahan, menjalankan tes regresi ketat, kemudian membangun dan memvalidasi distribusi Python. Setelah `Local checks passed for v4.0.0`, meninjau hasil ini."
+
+msgid "每种语言的手册位于 `docs/_build/release-<code>/index.html`。例如日语为 `docs/_build/release-ja/index.html`。"
+msgstr "Buka `docs/_build/release-<code>/index.html` untuk setiap bahasa, misalnya `docs/_build/release-ja/index.html` Untuk Jepang."
+
+msgid "`auto_test_scripts/reports/latest.json` 指向本次回归报告目录。打开其中的 `report.html` 查看失败、跳过及运行环境。"
+msgstr "`auto_test_scripts/reports/latest.json` menunjukkan direktori laporan regresi terbaru. Buka `report.html` untuk meninjau kegagalan, melompat dan lingkungan uji."
+
+msgid "`build/release-4.0.0/dist/` 包含供 Python 安装的 `.whl` 和源码 `.tar.gz`。需要双击启动的用户请使用下一步的桌面离线包。"
+msgstr "`build/release-4.0.0/dist/` berisi roda Python yang dapat diinstal dan arsip sumber. Untuk pengguna yang ingin peluncuran desktop, bangun paket offline di langkah berikutnya."
+
+msgid "如果提示 README 过期，重新运行 `--prepare`；如果提示同名标签已存在，先核对版本号。文档或测试失败时，按输出定位问题，修复后重新执行 `--full`。"
+msgstr "Untuk README yang sudah usang, jalankan kembali `--prepare`. Jika tag sudah ada, periksa nomor versi. Untuk dokumentasi atau kegagalan uji, perbaiki masalah yang dilaporkan dan jalankan kembali `--full`."
+
+msgid "验证将要分发的提交"
+msgstr "Verifikasi commit yang ingin Anda distribusikan"
+
+msgid "将版本文件、模板、生成的 README、发布说明和对应源码一起提交。推送待发布分支，核对该提交的 CI 和回归报告。需要分发离线包时，在 **Actions → Desktop packages → Run workflow** 选该分支，核对运行记录的提交 SHA，再下载各平台产物。"
+msgstr "Mengikat file versi, template, README yang dihasilkan, catatan rilis dan sumber yang sesuai bersama. Tekan cabang calon dan meninjau CI dan laporan regresi untuk komitmen tersebut. Untuk paket offline, pilih cabang di **Aksi → Paket Desktop → Jalankan alur kerja**, memverifikasi run ⁇ s melakukan SHA dan mengunduh artefak platform."
+
+msgid "按{ref}`桌面离线包教程 <desktop-bundle>`核对目标平台和架构，解开下载的归档。在每个目标系统实际启动该包，用[示例视频](../resources/usage.md)检查并排播放，导出后重新打开结果，再将这份产物作为发布附件。"
+msgstr "Gunakan {ref}`panduan paket desktop <desktop-bundle>` untuk memeriksa platform target dan arsitektur, kemudian mengekstrak arsip yang diunduh. Mulai paket di setiap sistem target, verifikasi side-by-side playback dengan [klip sampel](../resources/usage.md), ekspor dan membuka kembali hasil, dan melekat artefak yang diuji ke pelepasan."
+
+msgid "打标签并核对发布结果"
+msgstr "Tag publikasi komitmen dan cek yang diverifikasi"
+
+msgid "以下命令会触发正式发布。先用 `git rev-parse HEAD` 确认当前提交就是通过 CI 并用于打包的提交；如果经过合并或变基后 SHA 改变，应核对最终提交的检查结果。"
+msgstr "Perintah berikut memicu pelepasan publik. Penggunaan `git rev-parse HEAD` untuk mengkonfirmasi komitmen saat ini cocok dengan yang diverifikasi oleh CI dan digunakan untuk kemasan. Jika penggabungan atau rebasing mengubah SHA, periksa kembali pemeriksaan untuk komitmen akhir."
+
+msgid "在 GitHub Actions 核对标签对应的构建和发布任务。三个系统的 Python 构建成功后，工作流从 CHANGELOG 提取说明，将 Python 分发包上传至 GitHub Release 和 PyPI。维护者需在仓库配置有效的 `PYPI_API_TOKEN`。桌面离线归档由独立工作流生成；在同一 Release 的附件中上传已验收的归档。"
+msgstr "Periksa pekerjaan membangun dan publikasi untuk tag di GitHub Actions. Setelah Python membangun pass pada ketiga sistem, alur kerja mengekstrak catatan rilis dari changelog dan mempublikasikan distribusi Python ke GitHub Releases dan PyPI. Repository membutuhkan valid `PYPI_API_TOKEN` untuk PyPI. Arsip desktop berasal dari alur kerja yang terpisah. Atas arsip yang diverifikasi ke rilis yang sama."
+
+msgid "[多语言维护教程](localization.md)包括界面译表、完整手册、回归检查和 Read the Docs 发布流程。"
+msgstr "Pemberantasan [panduan penerjemahan](localization.md) mencakup katalog desktop, manual lengkap, pemeriksaan regresi dan publikasi di Read the Docs."

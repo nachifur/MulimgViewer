@@ -1,0 +1,67 @@
+msgid ""
+msgstr ""
+"Language: id\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "待办与社区反馈"
+msgstr "Rencana pengembangan dan masukan komunitas"
+
+msgid "以下整理自 2026-11-25 核对的公开议题。功能建议仍在讨论，排期和进展以 [GitHub 开放议题](https://github.com/nachifur/MulimgViewer/issues?q=is%3Aissue+is%3Aopen) 为准。"
+msgstr "Isu-isu publik ini ditinjau pada tanggal 25 November 2026. Proposal sedang dibahas. Ikuti [Buka masalah GitHub](https://github.com/nachifur/MulimgViewer/issues?q=is%3Aissue+is%3Aopen) untuk penjadwalan dan kemajuan."
+
+msgid "待评估的功能建议"
+msgstr "Proposal fitur"
+
+msgid "用户希望完成的操作"
+msgstr "Apa yang ingin dilakukan pengguna"
+
+msgid "相关讨论"
+msgstr "Perdebatan"
+
+msgid "收藏一组输入路径，从最近访问记录重新打开，或恢复上次的浏览会话"
+msgstr "Tanda daftar sekelompok jalur input, buka kembali sumber baru-baru ini, atau restore sesi browsing."
+
+msgid "[#216 路径组与会话恢复](https://github.com/nachifur/MulimgViewer/issues/216)"
+msgstr "[#16 Grup jalur dan pemulihan sesi](https://github.com/nachifur/MulimgViewer/issues/216)"
+
+msgid "在界面中更方便地管理自定义函数"
+msgstr "Mengelola fungsi kustom lebih mudah dari antarmuka."
+
+msgid "[#217 函数管理](https://github.com/nachifur/MulimgViewer/issues/217)"
+msgstr "[#217 Manajemen Fungsi](https://github.com/nachifur/MulimgViewer/issues/217)"
+
+msgid "为放大区域选择虚线边框"
+msgstr "Gunakan garis besar yang bergaris untuk kotak pembesar."
+
+msgid "[#215 放大框线型](https://github.com/nachifur/MulimgViewer/issues/215)"
+msgstr "[#15 Gaya garis kotak](https://github.com/nachifur/MulimgViewer/issues/215)"
+
+msgid "以项目为入口组织多个工作任务，并改进导出界面"
+msgstr "Mengorganisir beberapa tugas menjadi proyek dan meningkatkan antarmuka ekspor."
+
+msgid "[#206 多项目工作流](https://github.com/nachifur/MulimgViewer/issues/206)、[#205 导出界面](https://github.com/nachifur/MulimgViewer/issues/205)"
+msgstr "[#206 Aliran kerja multiproyek](https://github.com/nachifur/MulimgViewer/issues/206), [# 205 Antarmuka ekspor](https://github.com/nachifur/MulimgViewer/issues/205)"
+
+msgid "在浏览器中使用查看器，或扩展音频处理能力"
+msgstr "Gunakan pemirsa di browser atau memperluasnya untuk memproses audio."
+
+msgid "[#207 Web 界面](https://github.com/nachifur/MulimgViewer/issues/207)、[#162 音频处理](https://github.com/nachifur/MulimgViewer/issues/162)"
+msgstr "[#207 Antarmuka Web](https://github.com/nachifur/MulimgViewer/issues/207), [#162 Pengolahan Audio](https://github.com/nachifur/MulimgViewer/issues/162)"
+
+msgid "使用反馈与已有功能"
+msgstr "Ulasan penggunaan dan fitur yang ada"
+
+msgid "Ubuntu 下的滚轮缩放和图像拖动有单独的反馈帖。补充反馈时请附系统版本、输入模式和具体鼠标操作。[#87 Ubuntu 缩放](https://github.com/nachifur/MulimgViewer/issues/87)、[#115 拖动图片](https://github.com/nachifur/MulimgViewer/issues/115)"
+msgstr "Zoom mouse-wheel di Ubuntu dan gambar drag memiliki benang terpisah. Sertakan versi OS Anda, mode input, dan tindakan mouse yang tepat saat melaporkan masalah. [#87 Zoom di Ubuntu](https://github.com/nachifur/MulimgViewer/issues/87), [#155 Menggaruk gambar](https://github.com/nachifur/MulimgViewer/issues/115)"
+
+msgid "视频导入、自动播放与多视频并排对比已有操作示例。可先依照手册打开两段视频，再在原议题补充仍有困难的场景。[操作示例](../resources/usage.md)、[#53 视频并行对比](https://github.com/nachifur/MulimgViewer/issues/53)"
+msgstr "Manual ini mencakup import video, autoplay, dan perbandingan sisi-sisi. Cobalah video dua kali dan jelaskan apa saja kesulitan yang tersisa dalam masalah ini. [Perjalanannya](../resources/usage.md), [#53 Perbandingan video paralel](https://github.com/nachifur/MulimgViewer/issues/53)"
+
+msgid "中文界面需求和项目合作分别在对应议题讨论。[#55 中文界面](https://github.com/nachifur/MulimgViewer/issues/55)、[#7 招募合作者](https://github.com/nachifur/MulimgViewer/issues/7)、[#222 合作](https://github.com/nachifur/MulimgViewer/issues/222)"
+msgstr "Untuk antarmuka Cina atau kesempatan untuk berkolaborasi, lihat diskusi yang sesuai. [#55 antarmuka Cina](https://github.com/nachifur/MulimgViewer/issues/55), [#7 Mencari kolaborator](https://github.com/nachifur/MulimgViewer/issues/7), [#222 Kolaborasi](https://github.com/nachifur/MulimgViewer/issues/222)"
+
+msgid "查找已实现的功能"
+msgstr "Temukan fitur yang sudah tersedia"
+
+msgid "定位图片、同步放大和成组挑图见[操作录屏](../resources/usage.md)。框线、标题和导出比例见[设置栏参考](../resources/settings.md)。历次变化见[更新记录](changelog.md)，早期建议的贡献者见[致谢](acknowledgements.md)。"
+msgstr "Lihatlah [alur kerja yang tercatat](../resources/usage.md) untuk menemukan gambar, memperbesar wilayah dan memilih kelompok. Keterangan, judul dan skala ekspor didokumentasikan dalam [Referensi pengaturan](../resources/settings.md). Lihatlah [perubahan](changelog.md) untuk sejarah rilis dan [kredit](acknowledgements.md) untuk kontribusi awal."

@@ -1,0 +1,94 @@
+msgid ""
+msgstr ""
+"Language: pt\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "使用技巧"
+msgstr "Dicas práticas"
+
+msgid "已经能打开来源、调整布局后，可以用下面的方法排查对错图、取错帧、看不清细节等问题。首次操作可跟着[浏览录屏](usage.md)练习；查控件名称和取值请看[右侧设置栏](settings.md)。"
+msgstr "Use estas dicas quando uma comparação mostra o arquivo errado, o momento errado ou pouco detalhe. Para uma primeira corrida, siga o [fluxos de trabalho registados](usage.md). Procure os controles individuais no [Referência de configurações](settings.md)."
+
+msgid "先确认比的是同一个样本"
+msgstr "Verifique se as amostras correspondem"
+
+msgid "**某个方法少了一张图。** 并排比较目录时，第一个来源提供文件名清单。若参考目录有 `bird.png`，就去每个方法目录核对是否也有 `bird.png`，包括大小写和扩展名。某个方法独有的文件不会自动成为新的一页。把样本最完整的目录放在第一位，开始前先核对一组已知结果。"
+msgstr "**Um método está faltando uma imagem.** Para pastas de imagem lado a lado, a primeira fonte fornece os nomes dos arquivos. Se a referência conter: `bird.png`, verifique o nome exato, caso e extensão em cada pasta de métodos. Um arquivo encontrado apenas em outra pasta não cria uma página. Coloque a referência mais completa em primeiro lugar e verifique uma amostra conhecida antes de rever o conjunto."
+
+msgid "**方法顺序与预期不同。** Parallel auto 按来源目录名作文本排序，`1, 10, 2` 就会依次相邻。长期使用的数据集可以统一为 `01, 02, …, 10`；只想临时交换两列时，用 Parallel manual 按所需顺序添加目录即可。"
+msgstr "**Os métodos parecem estar fora de ordem.** Paralelas auto classifica nomes de pastas fonte como texto, colocando `10` imediatamente após `1` e antes `2`. Utilização `01, 02, …, 10` para um conjunto de dados permanente. Para uma comparação única, adicione pastas na sua ordem preferida no manual paralelo."
+
+msgid "**把样本顺序交给同事复查。** 在数据目录旁保存一份 UTF-8 TXT，按检查顺序每行写一个相对文件路径，如 `01-Reference/bird.png`。用 **Image/Video File List** 打开它。把清单和数据目录一起移动并保留相对位置，在另一台电脑上仍能找到同一批文件。"
+msgstr "**Compartilhar uma ordem de revisão.** Salve um TXT UTF-8 ao lado das pastas de dados, com um caminho relativo de arquivo por linha em ordem de revisão, como `01-Reference/bird.png`. Abre com **Lista de arquivos de imagem/vídeo**. Mover a lista e os dados juntos, preservando as suas localizações relativas, para que um colega possa reabrir os mesmos arquivos em outro computador."
+
+msgid "每个来源同页显示三张时，怎样并行挑出第二张？"
+msgstr "Como escolho a segunda imagem de cada fonte quando três são visíveis?"
+
+msgid "[下载录屏中的六张样图（ZIP）](../media/parallel-picks.zip)。解压后，用 **Parallel auto** 打开包含 A、B 的 `parallel-picks` 目录。"
+msgstr "[Descarregar as seis imagens de amostra (ZIP)](../media/parallel-picks.zip). Extrair o arquivo e abrir a `parallel-picks` pasta que contém A e B no **Auto paralelo**."
+
+msgid "以 A、B 两个目录各有 01.png、02.png、03.png 为例。选择 **Parallel auto** 或 **Parallel manual**，勾选 **Multiple frames per source**，关闭 **Play sources sequentially**。在布局中设 **Page** 为 `2,1`、**Per source** 为 `1,3`，按 **Ctrl+R**，每个来源会并排显示三张。"
+msgstr "Suponha que as pastas A e B contenham cada uma 01.png, 02.png e 03.png. Escolha **Auto paralelo** ou **Manual paralelo**, permitir **Múltiples quadros por fonte**E claro . **Reproduzir fontes sequencialmente**. Set **Página** para `2,1` e **Por fonte** para `1,3`, depois pressione **Ctrl+R** Para ver três imagens lado a lado para cada fonte."
+
+msgid "右键 B 的第二张，选择 **Select image**，即可将 A、B 各自的 02.png 一起挑出。也可以将保存内容设为 **Selected images**、关闭整批保存，左键点中 B 的第二张后按 **Ctrl+S**。末页某个来源若缺少这个位置，只保存其他来源中对应的图像。"
+msgstr "Clique com o botão direito na segunda imagem de B e escolha **Selecionar imagem** Para escolher 02.png de ambos os A e B. Alternativamente, escolha **Imagens selecionadas** Como o conteúdo de salvar, desativar a salvação de todas as páginas, clique à esquerda na segunda imagem de B e pressione **Ctrl+S**. Em uma última página parcial, somente fontes com uma imagem nessa posição contribuem um arquivo."
+
+msgid "多路视频同页，怎样核对是否同一时刻？"
+msgstr "Verifique se dois clips mostram o mesmo momento"
+
+msgid "暂停后依次单击两路画面，查看状态栏各自的视频路径和时间。软件按采样帧的位置并排：当 **Skip frames** 为 `0` 时，从头计数的第 31 帧，在 30 FPS 视频中约为 1 秒，在 60 FPS 视频中约为 0.5 秒。即使帧率相同，两段视频的拍摄起点也可能不同。要比较同一事件，先用一个两路都能认出的动作核对起点；需要整段同步时，先把素材对齐到相同起点和帧率。"
+msgstr "Pausa, clique em cada clip e verifique seu caminho e hora na barra de status. O espectador alinha as posições do quadro de amostragem: com **Arrancas de deslizar** em `0`O quadro 31 é cerca de um segundo num clip de 30 FPS, mas meio segundo num clip de 60 FPS. Mesmo os clips com velocidades de quadros idênticas podem começar em momentos diferentes. Verifique uma ação reconhecível em ambos os clips primeiro. Para uma comparação sincronizada em toda a parte, prepare clipes com os horários de início e as taxas de quadros correspondentes."
+
+msgid "比较多个细节时，保持取样面积一致"
+msgstr "Mantenha as amostras detalhadas do mesmo tamanho"
+
+msgid "开启工具栏放大镜，先拖出第一个框定下宽高。要同时看第二处纹理，在该处右键选 **Create zoom box here**，新框会沿用第一个框的大小。再次左键拖框会重新开始一组取样。如果想保留已有位置，就用右键追加，并把 **Magnifiers** 网格设为能容纳所有框。"
+msgstr "Ativa o amplificador da barra de ferramentas e arrasta a primeira caixa para definir sua largura e altura. Para comparar uma segunda textura, clique com o botão direito e escolha **Criar caixa de zoom aqui**. A nova caixa usa o primeiro tamanho da caixa. Arrastar novamente com o botão esquerdo começa um novo conjunto. Para manter amostras existentes, aplique com o menu de contexto e indique a **Amplificadores** Espaço para todas as caixas."
+
+msgid "看不全画布时，先决定是否需要保留像素"
+msgstr "Faça espaço sem sacrificar detalhes"
+
+msgid "**画布只差一点就能放下。** 按 **Ctrl+H** 暂时收起工具栏和右侧设置区，再按一次恢复。要以原尺寸巡看更大的画布，取消 **Select individual box**，让焦点回到图像区，再用方向键平移。焦点在参数编辑框时，左右键会移动文本光标。"
+msgstr "**A tela quase se encaixa.** Pressão **Ctrl+H** para ocultar a barra de ferramentas e a barra lateral de configurações, e pressioná-lo novamente para restaurá-los. Para revesti-lo em grande escala, limpo **Selecionar caixa individual**, voltar foco para a área da imagem e usar as teclas de flecha. Em um campo de texto de configurações, mover o cursor de texto para esquerda e direita."
+
+msgid "**估算一页的像素开销。** 单击一个来源，将鼠标移到状态栏第一栏，可分别查看原图和最终拼接图的分辨率与像素内存估算。磁盘上很小的 JPG 解码后也可能很大：一张 4608 × 2592 的 RGB 图，仅像素就约占 34 MiB。若只关心纹理，可用下例只显示局部，减少最终画布面积；解码、算法和界面副本仍会占用额外内存。"
+msgstr "**Estima o custo de pixels de uma página.** Selecione uma fonte e passe sobre o primeiro campo de status para ver as dimensões e a memória estimada de pixels do original e da puntura final. Mesmo um pequeno JPEG em disco pode decodificar para uma imagem grande: os pixels RGB de uma imagem 4608 × 2592 sozinho levam cerca de 34 MiB. Se só precisar de detalhes textuais, o exemplo abaixo reduz a área final da tela mostrando culturas. A decodificação, o processamento e as cópias da interface gráfica ainda precisam de memória adicional."
+
+msgid "用十张超 4K 图像比较同一处原尺寸细节"
+msgstr "Comparar um detalhe de resolução nativa em dez imagens maiores que 4K"
+
+msgid "想判断超分辨率结果是否保留羽毛纹理，先用全图找到鸟头，再让十个来源只显示鸟头的同一小块。这样既能看到原始像素，又能在一个窗口里读完两行五列。"
+msgstr "Para inspecionar detalhes de penas, localize a cabeça do pássaro na visão geral, e depois mostre apenas essa região de cada uma das dez fontes. Uma grade de dois por cinco encaixa nas culturas nativas em uma janela."
+
+msgid "录屏使用一张鸟类照片作为参考。第一格是参考图，其余九格是将同一张图分别缩小 2、3、4 倍，再用 Nearest、Bicubic、Lanczos 放回原尺寸的结果。十个输入均为 **4608 × 2592**。这些插值基线用来演示查看方法；对比自己的超分辨率模型时，换成各模型对同一输入的输出，并先确认尺寸和坐标已对齐。"
+msgstr "A gravação usa uma fotografia de pássaro como referência. A primeira célula é a referência; as outras nove mostram 2×, 3× e 4× downsampling seguido por vizinho mais próximo, bicubo ou Lanczos upsampling. Todas as dez entradas são **4608 × 2592**. Estas linhas de base de interpolação demonstram o fluxo de trabalho. Para uma comparação de modelos, substitua as saídas do modelo para a mesma entrada e verifique se as dimensões e coordenadas da imagem estão alinhadas."
+
+msgid "准备十个对应来源"
+msgstr "Preparar dez fontes correspondentes"
+
+msgid "已有十组结果时，每个方法用一个子目录，同一张图在各目录中使用相同的文件名和扩展名。例如 `01-Reference/bird.png` 与 `02-2x-Nearest/bird.png`。打开时选择它们共同的父目录。"
+msgstr "Coloque cada método em sua própria pasta e use o mesmo nome de arquivo e extensão para imagens correspondentes, por exemplo `01-Reference/bird.png` e `02-2x-Nearest/bird.png`. Abre o diretório dos pais comuns."
+
+msgid "要自己生成演示数据，在已安装 MulimgViewer 的 Python 环境下载 [示例生成脚本](../media/make_sr_example.py)，选一张至少 4608 × 2592 的横向照片，运行下面的命令。脚本裁出中心区域并生成十张 PNG；输出目录须为新目录。"
+msgstr "Para gerar os dados de demonstração, descarregue o [gerador de amostras](../media/make_sr_example.py) e executar o seguinte comando no ambiente MulimgViewer Python com uma fotografia de paisagem, pelo menos 4608 × 2592. O script corta o centro e cria dez PNGs. Forneça um novo diretório de saída."
+
+msgid "先定位，再切换到 1:1"
+msgstr "Localize o detalhe, e depois mude para 1: 1"
+
+msgid "取消 **Video mode**，选择 **Parallel auto**。关闭 **Multiple frames per source** 与 **Play sources sequentially**。在 **Layout & Display** 勾选 **Image、Title、Fit window to image**，保持 **Auto title**。设 **Page** 为 `2,5`、**Per source** 为 `1,1`、**Image unit** 为 `2,1`、**Image size** 为 `-1,-1`。先把 **Display scale** 设为 `0.05,0.05`，打开父目录并按 **Ctrl+R**，确认十个来源的位置。"
+msgstr "- Claro. **Modo de vídeo**, escolher **Auto paralelo**E claro . **Múltiples quadros por fonte** e **Reproduzir fontes sequencialmente**. Ativar **Imagem, Título, Aplicação da janela para a imagem**, mantendo **Título automático** - Ativado. Set **Página** para `2,5`, **Por fonte** para `1,1`, **Unidade de imagem** para `2,1` e **Tamanho da imagem** para `-1,-1`. Comece com: **Escala de exibição** em `0.05,0.05`, abrir o diretório dos pais e pressionar **Ctrl+R** Para ver todas as dez fontes."
+
+msgid "勾选 **Magnifier** 后刷新，点击工具栏放大镜。在第一格鸟头的边缘拖出一个小框；录屏中的框在缩略图上约为 8 × 8 像素。先确认各来源的取样位置，再隐藏全图。"
+msgstr "Ativar **Amplificador**, refrescar e clicar no amplificador da barra de ferramentas. Arraste uma pequena caixa pela borda da cabeça do pássaro na primeira cela. A caixa na gravação abrange cerca de 8 × 8 pixels miniatura. Verifique a localização das fontes antes de esconder o quadro geral."
+
+msgid "取消 **Image**，保留 **Magnifier** 和 **Title**。将 **Display scale** 和 **Zoom scale** 都设为 `1,1`，**Zoom size** 保持 `-1,-1`，一次按 **Ctrl+R** 应用。此时每格只显示同一位置的局部和来源标题。这里的 1:1 指源图像素与拼接画布像素一一对应；网页中的录屏会随浏览器窗口缩放。"
+msgstr "- Claro. **Imagem** e manter **Amplificador** e **Título** - Ativado. Configura os dois **Escala de exibição** e **Escala de zoom** para `1,1`- Não . **Dimensão do zoom** em `-1,-1`, aplicam-se todas as alterações com **Ctrl+R**. Cada célula agora mostra apenas a colheita correspondente e seu título de origem. Aqui 1:1 significa um pixel fonte por pixel de tela. O navegador pode escalar a gravação para se adequar."
+
+msgid "![完整窗口演示：在十张图的缩略图上选取鸟头，再隐藏原图，按原尺寸比较十个局部](../media/walkthrough-sr-detail.gif)"
+msgstr "![Janela completa: selecione um detalhe na visão geral e esconda os originais para comparar dez culturas de resolução nativa](../media/walkthrough-sr-detail.gif)"
+
+msgid "完整窗口演示：在十张图的缩略图上选取鸟头，再隐藏原图，按原尺寸比较十个局部"
+msgstr "Janela completa: selecione um detalhe na visão geral e esconda os originais para comparar dez culturas de resolução nativa"
+
+msgid "录屏中的框对应源图的 160 × 160 像素区域。GIF 会量化颜色；要检查实际像素，请下载 [无损结果 PNG](../media/sr-detail-native.png)，按 100% 查看。第二格和第八格分别使用 2 倍与 4 倍最近邻插值，可以沿鸟喙斜边直接比较块状边缘。"
+msgstr "A caixa abrange uma região de 160 × 160 em cada fonte. GIF quantiza cores. Para inspecionar os pixels reais, baixar o [resultado PNG sem perda](../media/sr-detail-native.png) e vê-lo a 100%. As células 2 e 8 usam interpolação de dois x e quatro x ao vizinho mais próximo; compare as bordas do bloco ao longo do pico diagonal."

@@ -10,8 +10,10 @@
   }
   if (slides.length < 2) return;
 
-  const zh = document.documentElement.lang.toLowerCase().startsWith("zh");
-  const label = (cn, en) => zh ? cn : en;
+  const labelText = Array.from(document.querySelectorAll(".demo-labels li"), item => item.textContent.trim());
+  if (labelText.length !== 11) return;
+  const [close, stepThrough, previousLabel, nextLabel, synchronizedViews, pickSet,
+    pickHint, selectedTogether, highlights, resume, pause] = labelText;
   const dialog = document.createElement("dialog");
   dialog.className = "highlight-demo";
   document.body.append(dialog);
@@ -33,21 +35,21 @@
       dialog.setAttribute("aria-labelledby", heading.id);
       dialog.replaceChildren(heading);
       render();
-      dialog.append(action(label("关闭", "Close"), () => dialog.close()));
+      dialog.append(action(close, () => dialog.close()));
       dialog.showModal();
     });
     slide.querySelector(".manual-intro p:last-child").append(trigger);
   }
-  addDemo(slides[0], label("试试同步翻帧", "Step through both clips"), () => {
+  addDemo(slides[0], stepThrough, () => {
     const image = document.createElement("img");
     const position = document.createElement("output");
     let step = 1;
-    const prev = action(label("上一帧", "Previous frame"), () => update(step - 1));
-    const next = action(label("下一帧", "Next frame"), () => update(step + 1));
+    const prev = action(previousLabel, () => update(step - 1));
+    const next = action(nextLabel, () => update(step + 1));
     function update(n) {
       step = n;
       image.src = "_static/playback/step-" + n + ".webp";
-      image.alt = label("Cat 与 Sunset 同步画面", "Synchronized Cat and Sunset views");
+      image.alt = synchronizedViews;
       position.textContent = n + " / 5";
       prev.disabled = n === 1;
       next.disabled = n === 5;
@@ -55,9 +57,9 @@
     update(1);
     dialog.append(image, prev, position, next);
   });
-  addDemo(slides[2], label("试试并行挑图", "Try picking a set"), () => {
+  addDemo(slides[2], pickSet, () => {
     const hint = document.createElement("p");
-    hint.textContent = label("点选任一文件，查看两个来源会一起保存哪一张。", "Choose a file to see the matching selection from both sources.");
+    hint.textContent = pickHint;
     const result = document.createElement("output");
     dialog.append(hint);
     const buttons = [];
@@ -66,7 +68,7 @@
       for (const name of ["01.png", "02.png", "03.png"]) {
         const button = action(source + "/" + name, () => {
           for (const item of buttons) item.setAttribute("aria-pressed", String(item.dataset.name === name));
-          result.textContent = label("将一起保存 ", "Selected together: ") + "A/" + name + " + B/" + name;
+          result.textContent = selectedTogether + " A/" + name + " + B/" + name;
         });
         button.dataset.name = name;
         button.setAttribute("aria-pressed", "false");
@@ -81,7 +83,7 @@
   const controls = document.createElement("div");
   controls.className = "highlight-controls";
   controls.setAttribute("role", "group");
-  controls.setAttribute("aria-label", zh ? "功能亮点" : "Feature highlights");
+  controls.setAttribute("aria-label", highlights);
   const toggle = document.createElement("button");
   const selectors = slides.map((slide, i) => {
     const button = document.createElement("button");
@@ -107,7 +109,7 @@
     index = (position + slides.length) % slides.length;
     slides.forEach((slide, i) => { slide.hidden = i !== index; });
     selectors.forEach((button, i) => button.setAttribute("aria-pressed", String(i === index)));
-    toggle.textContent = paused ? (zh ? "恢复轮播" : "Resume rotation") : (zh ? "暂停轮播" : "Pause rotation");
+    toggle.textContent = paused ? resume : pause;
     schedule();
   }
   toggle.onclick = () => { paused = !paused; show(index); };

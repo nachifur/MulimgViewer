@@ -1,0 +1,160 @@
+msgid ""
+msgstr ""
+"Language: pt\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "工具栏、菜单与快捷键"
+msgstr "Barra de ferramentas, menus e atalhos"
+
+msgid "主窗口顶部的 **Language** 菜单用各语言的本地名称列出选项，选择后立即切换。首次启动和恢复默认设置使用英语。关闭时会保存当前语言，手动保存和加载配置也会保存和恢复这项选择。下图为英文界面。"
+msgstr "Escolha uma língua com o seu nome nativo no **Língua** - O menu. A alteração entra em vigor imediatamente. Primeiro lançamento e Reset usar Inglês. A sua escolha é guardada na saída e em imagens de configuração manual. A captura de tela mostra a interface em inglês."
+
+msgid "![主窗口全貌：顶部菜单与工具栏、中央双视频视图、右侧设置及底部状态栏](../media/input-window.png)"
+msgstr "![Janela completa com menus e barra de ferramentas acima de dois clips, configurações à direita e status abaixo](../media/input-window.png)"
+
+msgid "主窗口全貌：顶部菜单与工具栏、中央双视频视图、右侧设置及底部状态栏"
+msgstr "Janela completa com menus e barra de ferramentas acima de dois clips, configurações à direita e status abaixo"
+
+msgid "工具栏从左到右怎么用"
+msgstr "Leia a barra de ferramentas da esquerda para a direita"
+
+msgid "位置或图标"
+msgstr "Posição ou ícone"
+
+msgid "操作"
+msgstr "Ação"
+
+msgid "文件夹 · 输入模式下拉框"
+msgstr "Modo de entrada"
+
+msgid "先选输入模式，再点左侧文件夹。视频输入还需勾选 **Video mode**。四种输入方式的素材要求见[浏览指南](usage.md)。"
+msgstr "Escolha o modo de entrada, e clique na pasta à esquerda. Ativar **Modo de vídeo** Para vídeos. Veja o [guia de navegação](usage.md) para os quatro tipos de entrada."
+
+msgid "软盘"
+msgstr "Disco"
+
+msgid "按 **Save Settings** 导出。首次使用先指定输出目录。右侧 **Configuration → Save** 用于保存设置。"
+msgstr "Exportação utilizando **Salvar Configurações**. Escolha um diretório de saída primeiro. **Configuração → Salvar** na barra lateral armazena uma imagem de configuração."
+
+msgid "左箭头 · 播放 · 右箭头"
+msgstr "Anterior · Jogar · Próximo"
+
+msgid "单击箭头翻一页。播放沿最近一次翻页方向继续；想倒放时先点左箭头再点播放。再次点播放或按 Esc 可暂停。"
+msgstr "Clique em uma seta para virar uma página. O jogo segue a direcção de paging mais recente. Para reprodução inversa, clique em Anterior e depois em Reproduzir. Clique em Reproduir novamente ou pressione Esc para pausar."
+
+msgid "环形箭头 ⟳"
+msgstr "Flecha circular  ⁇"
+
+msgid "刷新。一次应用积累的布局、显示、算法和缓存修改。"
+msgstr "Refrescar para aplicar em conjunto layout pendent, exibição, algoritmo e cache edições."
+
+msgid "数字框 · 滑块 · 末尾数字"
+msgstr "Campo de número · deslizador · etiqueta final"
+
+msgid "输入页码后按 Enter 精确跳页，或拖动滑块浏览。页码从 1 起，最右数字是总页数。一页可以包含多个来源和多个帧。"
+msgstr "Digite um número de página e pressione Enter para pular, ou arrastre o deslizador para navegar. As páginas começam em 1; a etiqueta à direita é o número de páginas. Uma página pode conter várias fontes e quadros."
+
+msgid "放大镜"
+msgstr "Amplificador"
+
+msgid "切换画框工具，左键拖出矩形。要看放大内容，还需开启 **Layout & Display → Magnifier** 并刷新。"
+msgstr "Desenho de caixa, e depois arrasta um retângulo para a esquerda. Ativar **Layout & Display → Magnificador** e refrescar para mostrar os detalhes."
+
+msgid "弯箭头 ↷ · 镜像 ⏃"
+msgstr "Flecha curva  ⁇  · espelho  ⁇"
+
+msgid "先启用工具，再单击目标图。每次点击顺时针旋转 90° 或左右翻转。放大、旋转、镜像三个工具互斥；用完再点已启用的按钮退出。"
+msgstr "Ativa uma ferramenta, e clique na imagem alvo. Cada clique gira-o 90° no sentido do relógio ou espelha-o horizontalmente. A ampliação, a rotação e o espelho são mutuamente excluídos. Clique novamente na ferramenta ativa para desligá-la."
+
+msgid "**旋转和镜像会写文件。** 图像模式会在被点中图像的文件路径写回，编码取自当前保存格式；处理珍贵原图前请先复制。视频模式操作的是已拆出的缓存帧，缓存重新生成后修改可能消失。"
+msgstr "**Gira e espelha escrever no disco.** No modo imagem, eles escrevem para o caminho de arquivo clicado usando o formato de salvação atual. Faça primeiro cópias de valiosos originais. No modo vídeo, o alvo é um quadro extraído; regenerar o cache pode substituí-lo."
+
+msgid "File：打开输入和复用来源清单"
+msgstr "Arquivo: entradas abertas e listas de fontes reutilizadas"
+
+msgid "菜单项"
+msgstr "Item do menu"
+
+msgid "默认按键与用途"
+msgstr "Chave de padrão e ação"
+
+msgid "Open → Sequential / Parallel auto"
+msgstr "Abre → Auto sequencial / paralelo"
+
+msgid "**Ctrl+E** 打开单个来源；**Ctrl+A** 打开并自动发现并行来源。"
+msgstr "**Ctrl+E** abre uma fonte; **Ctrl+A** abre uma pasta e descobre fontes paralelas."
+
+msgid "Open → Parallel manual / Image File List"
+msgstr "Abra → Manual paralelo / Lista de arquivos de imagem"
+
+msgid "**Ctrl+M** 手动选择来源；**Ctrl+F** 打开图像或视频文件清单。"
+msgstr "**Ctrl+M** seleciona manualmente as fontes; **Ctrl+F** abre uma lista de arquivos de imagem ou vídeo."
+
+msgid "Select output path"
+msgstr "Selecionar caminho de saída"
+
+msgid "**Ctrl+O** 选择输出目录。"
+msgstr "**Ctrl+O** seleciona o diretório de saída."
+
+msgid "Save flist / Input flist – Parallel manual"
+msgstr "Salvar flist / Input flist  ⁇  Manual paralelo"
+
+msgid "手动选好一组图像目录后，**Ctrl+P** 将目录列表写到输出目录的 `input_flist_parallel_manual.txt`；**Ctrl+I** 读回这份目录列表。要逐项打开图片或视频文件，请用 Ctrl+F。"
+msgstr "Depois de selecionar diretórios de imagens manualmente, **Ctrl+P** escreve a lista de diretórios para `input_flist_parallel_manual.txt` no diretório de saída. **Ctrl+I** Recarregar essa lista. Use Ctrl+F para listas de arquivos individuais de imagem ou vídeo."
+
+msgid "Edit 与 Help：默认快捷键"
+msgstr "Edição e ajuda: atalhos padrão"
+
+msgid "命令"
+msgstr "Comando"
+
+msgid "Next / Last"
+msgstr "Próximo / Último"
+
+msgid "**Ctrl+N / Ctrl+L** 下一页 / 上一页。"
+msgstr "**Ctrl+N / Ctrl+L** Mover para a página seguinte / anterior."
+
+msgid "Save / Refresh / Hidden"
+msgstr "Salvar / Refrescar / Escondido"
+
+msgid "**Ctrl+S** 导出，**Ctrl+R** 应用修改，**Ctrl+H** 收起或恢复顶部工具栏和右侧设置区。"
+msgstr "**Ctrl+S** exportações, **Ctrl+R** aplica edições e **Ctrl+H** Esconde ou restaura a barra de ferramentas e a barra lateral."
+
+msgid "Pause saving / playback · Cancel saving"
+msgstr "Pausa de salvação / reprodução · Cancela a salvação"
+
+msgid "**Esc** 暂停正在播放的视频或图像，也暂停正在进行的批量保存；两者同时进行时会一起暂停。点播放或保存可分别继续。要结束本次保存，选择 **Edit → Cancel saving**。"
+msgstr "**Esc** Pausas de reprodução e uma salvação ativa em lote, incluindo ambas quando executadas juntas. Reiniciar cada um com Play ou Save. Para encerrar a operação de salvação, escolha **Edit → Cancelar a salvação**."
+
+msgid "Up / Down / Left / Right"
+msgstr "Para cima / para baixo / esquerda / direita"
+
+msgid "**方向键**平移超出窗口的画布；在选框模式中移动选中的框。编辑参数时方向键交给文本框，点回图像区即可恢复画布操作。"
+msgstr "**Chaves de flecha** O cartão de entrada deve ser colocado em um quadro maior que a janela ou mover o cartão selecionado no modo individual. Durante a edição, as teclas de flecha navegarão pelo texto. Clique na área de imagem para restaurar a navegação em tela."
+
+msgid "Delete box"
+msgstr "Caixa de exclusão"
+
+msgid "**Delete** 在 **Select individual box** 模式删除选中的框；关闭该模式时会清除全部框。"
+msgstr "**Excluir** remove a caixa selecionada no **Selecionar caixa individual** - O modo. Com esse modo desligado, limpa todas as caixas."
+
+msgid "Index table / About"
+msgstr "Tabela de índices / Sobre"
+
+msgid "**F2** 打开索引表；**F1** 打开关于窗口。"
+msgstr "**F2** abre a tabela de índices; **F1** abre sobre."
+
+msgid "表中列出默认配置。加载过自定义快捷键后，以当前菜单项旁显示的按键为准。"
+msgstr "Estes são os padrões. Se você carrega uma configuração de atalho personalizada, use as ligações exibidas ao lado dos itens do menu atual."
+
+msgid "右键菜单与底部反馈"
+msgstr "Menú de contexto e feedback do status"
+
+msgid "鼠标在图像区时，滚轮可上下移动画布，Shift 加滚轮可横向移动。开启工具栏放大镜后，Ctrl 加滚轮会改变 **Display scale** 并刷新整页。要精确检查 1:1 局部，请按[使用技巧](large-images.md)设置显示与放大比例。"
+msgstr "Com o ponteiro sobre a área da imagem, use a roda para fazer uma panela vertical e Shift com a roda para fazer uma panela horizontal. Com o amplificador da barra de ferramentas ativado, Ctrl com a roda muda **Escala de exibição** e refresca a página. Para culturas de resolução nativa, definir as escalas de exibição e zoom como mostrado no [Dicas práticas](large-images.md)."
+
+msgid "右键目标图可直接刷新、翻页、保存，或用 **Select image** 按点击位置挑图。放大镜开启后可追加同尺寸框；已有框时可清空，选中单框后可移动或删除该框。填写 **Rename** 旁的文字后，右键菜单还会出现 **Inject title**，仅作用于点中的图。挑图范围和输出示例见{ref}`挑图和导出 <select-export>`。"
+msgstr "Clique com o botão direito em um alvo para atualizar, virar páginas, salvar ou usar **Selecionar imagem** Para escolher por posição. Com o amplificador ativado, pode adicionar uma caixa de correspondência. As caixas existentes podem ser limpas e uma caixa selecionada pode ser movida ou excluída. Digite texto ao lado **Renomeamento** para fazer **Título de injecção** disponível para a imagem clicada. Veja {ref}`Seleção e exportação <select-export>` Para os exemplos de seleção e de saída."
+
+msgid "单击画面后，从左到右读状态栏：第一栏是当前模式和运行状态；第二栏是页码、来源内的位置及已选框；第三栏是输入模式、来源路径和视频时间；第四栏是输出目录或保存进度。路径被截断时将鼠标悬停在对应栏；要复制路径，按 **F2**。"
+msgstr "Após clicar em uma imagem, leia a barra de status da esquerda para a direita: modo e atividade; página, posição e caixa selecionada; modo de entrada, caminho de origem e tempo do vídeo; pasta de saída ou guardar o progresso. Passe sobre um campo truncado para o texto completo. Pressão **F2** para acessar a cópia de caminho."

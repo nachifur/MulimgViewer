@@ -227,3 +227,8 @@ article a:focus-visible { outline: 2px solid var(--color-brand-primary); outline
   .manual-figure figcaption { color: black; }
   .manual-guides li { break-inside: avoid; }
 }
+
+/* Keep shell commands and numeric grid pairs in reading order in RTL guides. */
+article [dir="rtl"] :is(code, pre) { direction: ltr; unicode-bidi: isolate; }
+
+.demo-labels { display: none; }

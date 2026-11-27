@@ -1,0 +1,52 @@
+msgid ""
+msgstr ""
+"Language: es\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "Documentation · 语言"
+msgstr "Idiomas de la documentación"
+
+msgid "[English](https://mulimgviewer.readthedocs.io/zh-cn/latest/i18n/en/)"
+msgstr "[English](https://mulimgviewer.readthedocs.io/zh-cn/latest/i18n/en/)"
+
+msgid "[简体中文](https://mulimgviewer.readthedocs.io/zh-cn/latest/)"
+msgstr "[简体中文](https://mulimgviewer.readthedocs.io/zh-cn/latest/)"
+
+msgid "[हिन्दी](https://mulimgviewer.readthedocs.io/zh-cn/latest/i18n/hi/)"
+msgstr "[हिन्दी](https://mulimgviewer.readthedocs.io/zh-cn/latest/i18n/hi/)"
+
+msgid "[Español](https://mulimgviewer.readthedocs.io/zh-cn/latest/i18n/es/)"
+msgstr "[Español](https://mulimgviewer.readthedocs.io/zh-cn/latest/i18n/es/)"
+
+msgid "[العربية](https://mulimgviewer.readthedocs.io/zh-cn/latest/i18n/ar/)"
+msgstr "[العربية](https://mulimgviewer.readthedocs.io/zh-cn/latest/i18n/ar/)"
+
+msgid "[Français](https://mulimgviewer.readthedocs.io/zh-cn/latest/i18n/fr/)"
+msgstr "[Français](https://mulimgviewer.readthedocs.io/zh-cn/latest/i18n/fr/)"
+
+msgid "[বাংলা](https://mulimgviewer.readthedocs.io/zh-cn/latest/i18n/bn/)"
+msgstr "[বাংলা](https://mulimgviewer.readthedocs.io/zh-cn/latest/i18n/bn/)"
+
+msgid "[Português](https://mulimgviewer.readthedocs.io/zh-cn/latest/i18n/pt/)"
+msgstr "[Português](https://mulimgviewer.readthedocs.io/zh-cn/latest/i18n/pt/)"
+
+msgid "[Bahasa Indonesia](https://mulimgviewer.readthedocs.io/zh-cn/latest/i18n/id/)"
+msgstr "[Bahasa Indonesia](https://mulimgviewer.readthedocs.io/zh-cn/latest/i18n/id/)"
+
+msgid "[اردو](https://mulimgviewer.readthedocs.io/zh-cn/latest/i18n/ur/)"
+msgstr "[اردو](https://mulimgviewer.readthedocs.io/zh-cn/latest/i18n/ur/)"
+
+msgid "[Русский](https://mulimgviewer.readthedocs.io/zh-cn/latest/i18n/ru/)"
+msgstr "[Русский](https://mulimgviewer.readthedocs.io/zh-cn/latest/i18n/ru/)"
+
+msgid "[Deutsch](https://mulimgviewer.readthedocs.io/zh-cn/latest/i18n/de/)"
+msgstr "[Deutsch](https://mulimgviewer.readthedocs.io/zh-cn/latest/i18n/de/)"
+
+msgid "[日本語](https://mulimgviewer.readthedocs.io/zh-cn/latest/i18n/ja/)"
+msgstr "[日本語](https://mulimgviewer.readthedocs.io/zh-cn/latest/i18n/ja/)"
+
+msgid "[Naijá](https://mulimgviewer.readthedocs.io/zh-cn/latest/i18n/pcm/)"
+msgstr "[Naijá](https://mulimgviewer.readthedocs.io/zh-cn/latest/i18n/pcm/)"
+
+msgid "[مصرى](https://mulimgviewer.readthedocs.io/zh-cn/latest/i18n/arz/)"
+msgstr "[مصرى](https://mulimgviewer.readthedocs.io/zh-cn/latest/i18n/arz/)"

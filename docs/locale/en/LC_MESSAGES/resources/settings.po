@@ -62,7 +62,7 @@ msgstr "How to use it"
 
 #: ../../resources/settings.md
 msgid "Video mode"
-msgstr ""
+msgstr "Video mode"
 
 #: ../../resources/settings.md
 msgid "打开视频前勾选，浏览图像前取消。再从工具栏选择输入模式并打开来源。"
@@ -72,7 +72,7 @@ msgstr ""
 
 #: ../../resources/settings.md
 msgid "Interval (s)"
-msgstr ""
+msgstr "Interval (s)"
 
 #: ../../resources/settings.md
 msgid "手动输入希望的最短翻页间隔，例如 `1.0` 表示至少停留一秒。供给不足时，实际间隔可以更长。"
@@ -82,7 +82,7 @@ msgstr ""
 
 #: ../../resources/settings.md
 msgid "Skip frames"
-msgstr ""
+msgstr "Skip frames"
 
 #: ../../resources/settings.md
 msgid "两个采样帧之间跳过的视频帧数。填 `0` 逐帧查看；填 `1` 每隔一帧取一帧。"
@@ -90,7 +90,7 @@ msgstr "Number of frames to skip between samples. Use `0` for every frame or `1`
 
 #: ../../resources/settings.md
 msgid "Multiple frames per source"
-msgstr ""
+msgstr "Multiple frames per source"
 
 #: ../../resources/settings.md
 msgid "并行来源各自连续显示多项。要同时查看每路的三个位置，在 Layout & Display 将 **Per source** 设为 `1,3`。"
@@ -100,7 +100,7 @@ msgstr ""
 
 #: ../../resources/settings.md
 msgid "Play sources sequentially"
-msgstr ""
+msgstr "Play sources sequentially"
 
 #: ../../resources/settings.md
 msgid "按来源依次浏览，例如先看完视频 A 再进入 B。这两个复选框互斥；要让两路视频始终并排、每路一帧，两项都取消。"
@@ -183,7 +183,7 @@ msgstr "Example"
 
 #: ../../resources/settings.md
 msgid "Algorithms"
-msgstr ""
+msgstr "Algorithms"
 
 #: ../../resources/settings.md
 msgid "每种算法的整幅拼接图占一格"
@@ -195,7 +195,7 @@ msgstr "Use `2,1` to stack the original above one algorithm result."
 
 #: ../../resources/settings.md
 msgid "Page"
-msgstr ""
+msgstr "Page"
 
 #: ../../resources/settings.md
 msgid "页面主网格"
@@ -207,7 +207,7 @@ msgstr "Use `1,2` for side-by-side comparison or `-1,-1` for automatic layout."
 
 #: ../../resources/settings.md
 msgid "Per source"
-msgstr ""
+msgstr "Per source"
 
 #: ../../resources/settings.md
 msgid "每个来源的连续项"
@@ -219,7 +219,7 @@ msgstr "Use with **Multiple frames per source**."
 
 #: ../../resources/settings.md
 msgid "Image unit"
-msgstr ""
+msgstr "Image unit"
 
 #: ../../resources/settings.md
 msgid "一项内部的显示单元"
@@ -231,7 +231,7 @@ msgstr "The example uses `3,1` to make room for the image, magnifier, and title.
 
 #: ../../resources/settings.md
 msgid "Magnifiers"
-msgstr ""
+msgstr "Magnifiers"
 
 #: ../../resources/settings.md
 msgid "多个框的放大图"
@@ -414,7 +414,7 @@ msgstr "When to use it"
 
 #: ../../resources/settings.md
 msgid "Save"
-msgstr ""
+msgstr "Save"
 
 #: ../../resources/settings.md
 msgid "布局、缓存和导出参数调好后，手动保存一套可复用的设置，也会记录分组折叠状态与右栏宽度。"
@@ -424,7 +424,7 @@ msgstr ""
 
 #: ../../resources/settings.md
 msgid "Load"
-msgstr ""
+msgstr "Load"
 
 #: ../../resources/settings.md
 msgid "尝试其他参数后，找回手动保存的那套设置。"
@@ -432,7 +432,7 @@ msgstr "Restore your saved snapshot after trying other settings."
 
 #: ../../resources/settings.md
 msgid "Reset"
-msgstr ""
+msgstr "Reset"
 
 #: ../../resources/settings.md
 msgid "恢复默认参数、分组折叠状态和自动栏宽。手动保存的快照仍可用 Load 取回。"
@@ -451,3 +451,54 @@ msgstr "Enable **Save all pages** to export the batch. Press **Esc** to pause an
 
 msgid "要保留视频解码得到的细节，使用 **png** 缓存，**Output scale** 设为 `1,1`，导出 PNG 或 Lossless PDF。修改缓存格式后按 **Ctrl+R**。`auto` 在导出 PNG/PDF 且水平、垂直输出比例均至少为 1 时选 PNG，其余情况可用 JPG。缩小预览时仍可单独设置导出比例。"
 msgstr "To preserve decoded video detail, use **png** caching, set **Output scale** to `1,1`, and export PNG or Lossless PDF. Press **Ctrl+R** after changing the cache format. With `auto`, PNG/PDF exports use PNG caching when both horizontal and vertical output scales are at least 1. Other settings allow JPG. You can choose the export scale independently of the preview."
+
+msgid "<a name=\"readme-input-playback\"></a>"
+msgstr "<a name=\"readme-input-playback\"></a>"
+
+msgid "Video mode"
+msgstr "Video mode"
+
+msgid "Interval (s)"
+msgstr "Interval (s)"
+
+msgid "Skip frames"
+msgstr "Skip frames"
+
+msgid "Multiple frames per source"
+msgstr "Multiple frames per source"
+
+msgid "Play sources sequentially"
+msgstr "Play sources sequentially"
+
+msgid "<a name=\"readme-layout-display\"></a>"
+msgstr "<a name=\"readme-layout-display\"></a>"
+
+msgid "Algorithms"
+msgstr "Algorithms"
+
+msgid "Page"
+msgstr "Page"
+
+msgid "Per source"
+msgstr "Per source"
+
+msgid "Image unit"
+msgstr "Image unit"
+
+msgid "Magnifiers"
+msgstr "Magnifiers"
+
+msgid "<a name=\"readme-custom-functions\"></a>"
+msgstr "<a name=\"readme-custom-functions\"></a>"
+
+msgid "<a name=\"readme-save-settings\"></a>"
+msgstr "<a name=\"readme-save-settings\"></a>"
+
+msgid "Save"
+msgstr "Save"
+
+msgid "Load"
+msgstr "Load"
+
+msgid "Reset"
+msgstr "Reset"

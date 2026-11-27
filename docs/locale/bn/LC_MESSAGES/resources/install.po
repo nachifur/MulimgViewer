@@ -1,0 +1,88 @@
+msgid ""
+msgstr ""
+"Language: bn\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "下载与安装"
+msgstr "ডাউনলোড ও ইনস্টলেশন"
+
+msgid "下载适合当前系统的桌面包"
+msgstr "আপনার সিস্টেমের জন্য একটি ডেস্কটপ প্যাকেজ ডাউনলোড করুন"
+
+msgid "[打开 GitHub Releases 下载软件](https://github.com/nachifur/MulimgViewer/releases)。"
+msgstr "[GitHub রিলিজ থেকে MulimgViewer ডাউনলোড করুন](https://github.com/nachifur/MulimgViewer/releases)."
+
+msgid "在发布页打开对应版本的 **Assets**。Windows 选 Windows 包，macOS 注意区分 Apple 芯片与 Intel，Linux 选择与处理器架构一致的包。如果该版本只提供 **Source code**，请使用下方的源码安装步骤。"
+msgstr "খোলা **সম্পদ** প্রয়োজনে মুক্তির জন্য। উইন্ডোজের জন্য, উইন্ডোজ প্যাকেজ নির্বাচন করুন। ম্যাকোস-এ, অ্যাপল সিলিকন বা ইন্টেলের সাথে মেলে। লিনাক্সে, আপনার প্রসেসরের আর্কিটেকচারটি মিলে নিন। যদি প্রকাশিত হয় শুধুমাত্র তালিকা **সোর্স কোড**, নীচের উৎস ইনস্টলেশন ধাপ ব্যবহার করুন."
+
+msgid "解压并启动"
+msgstr "এক্সট্র্যাক্ট এবং লঞ্চ"
+
+msgid "完整解压软件包并进入 MulimgViewer 目录。Windows 双击 `MulimgViewer.exe`，Linux 和 macOS 在图形桌面的终端执行 `./MulimgViewer`。移动软件时请保留整个目录，包括其中的依赖文件。"
+msgstr "পুরো আর্কাইভ বের করে মুলিমগ ভিউয়ার ডিরেক্টরি খুলুন। উইন্ডোজ-এ, ডাবল ক্লিক করুন `MulimgViewer.exe`. লিনাক্স এবং ম্যাকোস-এ, চালান `./MulimgViewer` একটি গ্রাফিক সেশনে। অ্যাপ্লিকেশনটি সরানোর সময় পুরো ডিরেক্টরি একসাথে রাখুন।"
+
+msgid "离线包自带 Python、wxPython、FFmpeg 和 FFprobe。可在该目录下运行 `.\\MulimgViewer.exe --self-check`（Windows PowerShell）或 `./MulimgViewer --self-check`（Linux、macOS）验证窗口、视频解码、内置算法以及 PNG、PDF 和 Excel 导出。"
+msgstr "এই আর্কাইভে পাইথন, wxPython, FFmpeg এবং FFprobe অন্তর্ভুক্ত রয়েছে। সেই ডিরেক্টরি থেকে, চালান `.\\MulimgViewer.exe --self-check` উইন্ডোজ পাওয়ারশেল বা `./MulimgViewer --self-check` উইন্ডো, ভিডিও ডিকোডিং, বান্ডিল অ্যালগরিদম এবং PNG, PDF এবং Excel এক্সপোর্ট যাচাই করতে।"
+
+msgid "对于 `.tar.xz` 包，在空目录中执行 `tar -xf 软件包路径` 即可解压。"
+msgstr "একটি জন্য `.tar.xz` প্যাকেজ, চালান `tar -xf ARCHIVE` একটি ফাঁকা ডিরেক্টরিতে।"
+
+msgid "运行当前源码版"
+msgstr "উৎস থেকে চালান"
+
+msgid "以下命令适用于 Windows、Linux 和 macOS。先安装 Git 和 Conda，在终端（Windows 可用 Anaconda Prompt）执行："
+msgstr "উইন্ডোজ, লিনাক্স বা ম্যাকোস-এ প্রথমে গিট এবং কন্ডা ইনস্টল করুন। একটি টার্মিনালের মধ্যে নিম্নলিখিত কমান্ডগুলি চালান (অ্যানাকোন্ডা প্রম্পট উইন্ডোজের ক্ষেত্রেও কাজ করে) ।"
+
+msgid "已有仓库时，从项目根目录的第三条命令开始；已有可用环境时，从激活环境开始。`environment.yml` 指定 Python 3.11，由 conda-forge 安装 wxPython、FFmpeg 和 PyAV。以后启动只需激活同一环境，在仓库根目录执行最后一条命令。"
+msgstr "যদি আপনার কাছে ইতিমধ্যে রিপোজিটরি থাকে, তাহলে তার রুট ডিরেক্টরিতে তৃতীয় কমান্ড দিয়ে শুরু করুন। যদি আপনার ইতিমধ্যে কাজের পরিবেশ থাকে, তাহলে সক্রিয়করণ দিয়ে শুরু করুন। environment.yml ফাইলটি Python 3.11 নির্দিষ্ট করে এবং conda-forge থেকে wxPython, FFmpeg এবং PyAV ইনস্টল করে। পরবর্তী লঞ্চের সময়, একই পরিবেশটি সক্রিয় করুন এবং রিপোজিটরি রুট থেকে শেষ কমান্ড চালান।"
+
+msgid "验证安装"
+msgstr "ইনস্টলেশন যাচাই করুন"
+
+msgid "检查"
+msgstr "চেক"
+
+msgid "怎么做"
+msgstr "কী করা উচিত"
+
+msgid "应该看到什么"
+msgstr "প্রত্যাশিত ফলাফল"
+
+msgid "图形界面"
+msgstr "গ্রাফিকাল ইন্টারফেস"
+
+msgid "启动程序，选择 Sequential，打开 `auto_test_scripts/assets/images/source_001`"
+msgstr "অ্যাপ্লিকেশনটি শুরু করুন, সিকোয়েন্সিয়াল নির্বাচন করুন এবং খুলুন `auto_test_scripts/assets/images/source_001`."
+
+msgid "能显示图像并翻页"
+msgstr "ছবিগুলো দেখা যাবে এবং আপনি পৃষ্ঠাটি ঘুরে দেখতে পারবেন।"
+
+msgid "视频工具"
+msgstr "ভিডিও সরঞ্জাম"
+
+msgid "运行 `python tools/check_video_tools.py`"
+msgstr "দৌড়াও `python tools/check_video_tools.py`."
+
+msgid "列出当前解释器、FFmpeg 和 FFprobe 的路径，两个程序均可执行"
+msgstr "স্ক্রিপ্টটি সক্রিয় অনুবাদক এবং FFmpeg এবং FFprobe এর পথ তালিকাভুক্ত করে। উভয় সরঞ্জামই কাজ করতে পারে।"
+
+msgid "多视频播放"
+msgstr "সমান্তরাল ভিডিও প্লেব্যাক"
+
+msgid "按[双视频示例](usage.md)打开 Cat 和 Sunset，翻到下一页"
+msgstr "ওপেন ক্যাট এবং সানসট যেমন দেখানো হয়েছে [দুই ভিডিও হাঁটা](usage.md) এবং এক পাতা এগিয়ে"
+
+msgid "两个标题仍在各自画面下，两路视频同时前进"
+msgstr "উভয় ক্লিপ এগিয়ে যায় যখন প্রতিটি শিরোনাম তার নিজস্ব ভিডিও অধীনে থাকে"
+
+msgid "![双视频自检的预期画面：左侧 Cat，右侧 Sunset，右栏已开启 Video mode](../media/input-window.png)"
+msgstr "![ভিডিও চেক করার জন্য প্রত্যাশিতঃ বাম দিকে বিড়াল, ডানদিকে সূর্যাস্ত এবং সাইডবারে ভিডিও মোড সক্ষম করা হয়েছে](../media/input-window.png)"
+
+msgid "双视频自检的预期画面：左侧 Cat，右侧 Sunset，右栏已开启 Video mode"
+msgstr "ভিডিও চেক করার জন্য প্রত্যাশিতঃ বাম দিকে বিড়াল, ডানদিকে সূর্যাস্ত এবং সাইডবারে ভিডিও মোড সক্ষম করা হয়েছে"
+
+msgid "如果提示找不到 FFmpeg 或 FFprobe，在当前环境执行 `conda install -c conda-forge ffmpeg`，再运行检测脚本。在 IDE 中调试时，选择检测脚本输出的同一个 Python 解释器。使用自行安装的工具时，可用环境变量 `FFMPEG_BINARY`、`FFPROBE_BINARY` 分别指定两个可执行文件的完整路径。"
+msgstr "যদি FFmpeg বা FFprobe অনুপস্থিত থাকে, চালান `conda install -c conda-forge ffmpeg` সক্রিয় পরিবেশে এবং আবার চেক চালান। একটি আইডিইতে, স্ক্রিপ্ট দ্বারা রিপোর্ট করা অনুবাদক নির্বাচন করুন। পৃথকভাবে ইনস্টল করা সরঞ্জামগুলির জন্য, সেট `FFMPEG_BINARY` এবং `FFPROBE_BINARY` প্রতিটি এক্সিকিউটেবলের পূর্ণ পথ।"
+
+msgid "如果 Linux 上安装 wxPython 时提示缺少 GTK，先确认已用仓库的 Conda 环境安装原生依赖。macOS 如提示 wxPython 需要框架启动器，可在该环境安装 `conda install -c conda-forge python.app`，然后用 `pythonw MulimgViewer.py` 启动。"
+msgstr "যদি লিনাক্সে wxPython ইনস্টলেশন GTK লাইব্রেরি অনুপস্থিত রিপোর্ট করে, তাহলে নিশ্চিত করুন যে আপনি Conda পরিবেশের সাথে রেপোজিটরিতে নেটিভ নির্ভরতা ইনস্টল করেছেন। যদি macOS একটি ফ্রেমওয়ার্ক লঞ্চার অনুরোধ করে, এটি ইনস্টল করুন `conda install -c conda-forge python.app` এবং লঞ্চ সঙ্গে `pythonw MulimgViewer.py`."

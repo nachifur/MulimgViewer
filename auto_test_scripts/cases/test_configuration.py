@@ -54,6 +54,110 @@ class ConfigurationTests(unittest.TestCase):
         self.assertEqual(frame.hotkeys['pause_tasks'],'ESC')
         self.assertNotIn('F8',frame.hotkeys.values())
 
+    def test_language_menu_round_trip_keeps_control_values(self):
+        from mulimgviewer.src import localization
+        frame = self.frame()
+        self.addCleanup(localization.set_language, 'en')
+        def choose(code):
+            item = frame._language_items[code]
+            frame.ProcessWindowEvent(wx.CommandEvent(wx.EVT_MENU.typeId, item.GetId()))
+        frame.row_col.ChangeValue('2,3')
+        frame.choice_input_mode.SetSelection(1)
+        algorithms = frame.customfunc_choice.GetItems()
+        self.assertTrue(frame._language_items['en'].IsChecked())
+        for code in localization.LANGUAGE_INFO:
+            choose(code)
+            self.assertTrue(frame._language_items[code].IsChecked())
+            self.assertEqual(frame.choice_input_mode.GetSelection(), 1)
+            self.assertEqual(frame.video_mode.GetLabel(), localization.tr('Video mode'))
+        choose('es')
+        self.assertEqual(frame.video_mode.GetLabel(), 'Modo de vídeo')
+        frame.save_configuration(None)
+        self.assertEqual(self.read()['language'], 'es')
+        choose('en')
+        frame.load_configuration(None)
+        self.assertEqual(frame.choice_input_mode.GetStringSelection(), 'Paralelo automático')
+        choose('zh_CN')
+        self.assertEqual(frame.choice_input_mode.GetStringSelection(), '自动并行')
+        self.assertEqual(frame.video_mode.GetLabel(), '视频模式')
+        self.assertEqual(frame.row_col.GetValue(), '2,3')
+        self.assertEqual(frame.customfunc_choice.GetItems(), algorithms)
+        frame.save_configuration(None)
+        self.assertEqual(self.read()['language'], 'zh_CN')
+        choose('en')
+        frame.load_configuration(None)
+        self.assertTrue(frame._language_items['zh_CN'].IsChecked())
+        frame._save_session_configuration()
+        reopened = self.frame()
+        self.assertEqual(reopened.video_mode.GetLabel(), '视频模式')
+        reopened.reset_configuration(None)
+        self.assertEqual(reopened.video_mode.GetLabel(), 'Video mode')
+        self.assertEqual(self.read('session_config.json')['language'], 'en')
+
+    def test_translations_cover_messages_and_preserve_fields(self):
+        from string import Formatter
+        from mulimgviewer.src.localization import LANGUAGE_INFO, catalog
+        formatter = Formatter()
+        def fields(message):
+            return sorted((name, fmt, conversion) for _, name, fmt, conversion
+                          in formatter.parse(message) if name is not None)
+        for code in LANGUAGE_INFO:
+            if code == 'en':
+                continue
+            messages = catalog(code)
+            self.assertEqual(messages.keys(), catalog('zh_CN').keys())
+            for key, value in messages.items():
+                with self.subTest(language=code, message=key):
+                    self.assertTrue(value.strip())
+                    self.assertEqual(fields(key), fields(value))
+
+    def test_unknown_language_falls_back_to_english(self):
+        frame = self.frame()
+        saved = self.read()
+        saved.update(language='unknown')
+        saved['output']['row_col'] = '3,2'
+        write_config(self.directory/'userdef_config.json', saved)
+        frame.load_configuration(None)
+        self.assertTrue(frame._language_items['en'].IsChecked())
+        self.assertEqual(frame.row_col.GetValue(), '3,2')
+
+    def test_language_switch_keeps_open_dataset_and_pending_edit(self):
+        from mulimgviewer.src import localization
+        self.addCleanup(localization.set_language, 'en')
+        frame = self.frame()
+        source = Path(__file__).resolve().parents[1] / 'assets/images/source_001'
+        self.assertTrue(frame._open_image_input(str(source), 2))
+        paths = tuple(frame.ImgManager.path_list)
+        page = frame.shared_config.batch_idx
+        frame.row_col.ChangeValue('2,3')
+        with patch.object(frame, 'refresh', side_effect=AssertionError('Unexpected refresh')):
+            localization.set_language('zh_CN')
+        self.assertEqual(tuple(frame.ImgManager.path_list), paths)
+        self.assertEqual(frame.shared_config.batch_idx, page)
+        self.assertEqual(frame.row_col.GetValue(), '2,3')
+
+    def test_open_source_editor_and_about_follow_language(self):
+        from mulimgviewer.src import localization
+        from mulimgviewer.src.about import About
+        from mulimgviewer.src.path_select import PathSelectFrame
+        frame = self.frame()
+        picker = PathSelectFrame(frame, lambda *a: None, lambda: -1)
+        about = About(frame, '4.0')
+        try:
+            picker.paths_text.ChangeValue('D:/Example/Save')
+            localization.set_language('zh_CN')
+            self.assertEqual(picker.apply_button.GetLabel(), '应用并返回')
+            self.assertEqual(about.GetTitle(), '关于 MulimgViewer')
+            self.assertIn('维护者', about.about_txt.GetValue())
+            self.assertEqual(picker.paths_text.GetValue(), 'D:/Example/Save')
+            localization.set_language('en')
+            self.assertEqual(picker.apply_button.GetLabel(), 'Apply and return')
+            self.assertIn('Maintainer', about.about_txt.GetValue())
+        finally:
+            localization.set_language('en')
+            about.Destroy()
+            picker.Destroy()
+
     def test_saved_automatic_magnifier_scale_typo_is_repaired_on_load(self):
         write_config(self.directory/'userdef_config.json',{'output':{'magnifier_show_scale':'-1.-1'}})
         write_config(self.directory/'config_schema.json',{'roles_version':2})

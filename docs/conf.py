@@ -2,6 +2,7 @@ r"""Configure the Sphinx documentation builder.
 
 https://www.sphinx-doc.org/en/master/usage/configuration.html
 """
+import os
 from pathlib import Path
 from runpy import run_path
 
@@ -98,3 +99,38 @@ html_theme_options = {
         "color-background-border": "#344464",
     },
 }
+
+
+LANGUAGE_INFO = run_path(str(Path(__file__).resolve().parents[1] /
+                             "src/mulimgviewer/src/languages.py"))["LANGUAGE_INFO"]
+
+
+def manual_page_context(app, pagename, template, context, doctree):
+    body = context.get("body")
+    if not body:
+        return
+    code = app.config.language
+    if pagename == "languages":
+        version_slug = os.environ.get("READTHEDOCS_VERSION", "")
+        for target_code, (_, url) in LANGUAGE_INFO.items():
+            if version_slug:
+                suffix = "" if target_code == "zh_CN" else f"i18n/{target_code}/"
+                target = f"https://mulimgviewer.readthedocs.io/zh-cn/{version_slug}/{suffix}"
+            elif os.environ.get("MULIMGVIEWER_BUNDLE"):
+                # Sibling manuals in an offline preview of the RTD post-build output.
+                if code == "zh_CN":
+                    target = "./" if target_code == "zh_CN" else f"i18n/{target_code}/"
+                else:
+                    target = "../../" if target_code == "zh_CN" else f"../{target_code}/"
+                target += "index.html"
+            else:
+                continue
+            body = body.replace(f'href="{url}"', f'href="{target}"')
+    if code in ("ar", "arz", "ur"):
+        body = f'<div lang="{code}" dir="rtl">{body}</div>'
+    context["body"] = body
+
+
+def setup(app):
+    app.connect("html-page-context", manual_page_context)
+    return {"parallel_read_safe": True}

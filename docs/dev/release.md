@@ -33,9 +33,9 @@ python tools/release.py --full
 
 在无显示器的 Linux 构建机上，安装 Xvfb 和 xauth 后运行 `xvfb-run -a python tools/release.py --full`。检查使用当前 Python 运行 GUI 回归测试。单独安装了 Sphinx 时，可用 `SPHINX_PYTHON` 指定文档环境的 Python 可执行文件。
 
-依次检查本地标签是否已占用、中英文文档能否严格构建、全量回归是否通过，再生成 wheel 和源码包并核对版本。看到 `Local checks passed for v4.0.0` 后，打开以下结果核对。
+依次检查本地标签是否已占用、清单中的各语言文档能否严格构建、全量回归是否通过，再生成 wheel 和源码包并核对版本。看到 `Local checks passed for v4.0.0` 后，打开以下结果核对。
 
-- 中文和英文手册分别在 `docs/_build/release-zh_CN/index.html` 和 `docs/_build/release-en/index.html`。
+- 每种语言的手册位于 `docs/_build/release-<code>/index.html`。例如日语为 `docs/_build/release-ja/index.html`。
 
 - `auto_test_scripts/reports/latest.json` 指向本次回归报告目录。打开其中的 `report.html` 查看失败、跳过及运行环境。
 
@@ -61,4 +61,4 @@ git push origin "refs/tags/$(python tools/release.py --print-tag)"
 
 在 GitHub Actions 核对标签对应的构建和发布任务。三个系统的 Python 构建成功后，工作流从 CHANGELOG 提取说明，将 Python 分发包上传至 GitHub Release 和 PyPI。维护者需在仓库配置有效的 `PYPI_API_TOKEN`。桌面离线归档由独立工作流生成；在同一 Release 的附件中上传已验收的归档。
 
-README 的功能链接直接打开同一次提交中的手册章节。中文和英文在线手册入口跟随 Read the Docs 项目设置的默认版本。发布后核对两个语言项目的新标签构建，确认可访问后再按需切换默认版本。
+[多语言维护教程](localization.md)包括界面译表、完整手册、回归检查和 Read the Docs 发布流程。

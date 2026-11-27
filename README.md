@@ -16,6 +16,8 @@
 
 # MulimgViewer
 
+[Choose your documentation language](docs/languages.md)
+
 Doc: [**English Doc**](https://mulimgviewer.readthedocs.io/en/) | [**完整官网文档**](https://mulimgviewer.readthedocs.io/zh-cn/) | [**Wiki**](https://github.com/nachifur/MulimgViewer/wiki)
 
 

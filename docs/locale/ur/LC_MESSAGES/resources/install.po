@@ -1,0 +1,88 @@
+msgid ""
+msgstr ""
+"Language: ur\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "下载与安装"
+msgstr "ڈاؤن لوڈ اور تنصیب"
+
+msgid "下载适合当前系统的桌面包"
+msgstr "اپنے سسٹم کے لئے ڈیسک ٹاپ بنڈل ڈاؤن لوڈ کریں"
+
+msgid "[打开 GitHub Releases 下载软件](https://github.com/nachifur/MulimgViewer/releases)。"
+msgstr "[GitHub ریلیز سے MulimgViewer ڈاؤن لوڈ کریں](https://github.com/nachifur/MulimgViewer/releases)."
+
+msgid "在发布页打开对应版本的 **Assets**。Windows 选 Windows 包，macOS 注意区分 Apple 芯片与 Intel，Linux 选择与处理器架构一致的包。如果该版本只提供 **Source code**，请使用下方的源码安装步骤。"
+msgstr "کھلیں **اثاثہ جات** مطلوبہ رہائی کے لیے۔ ونڈوز پر، ونڈوز بنڈل منتخب کریں. میک او ایس پر، ایپل سلکان یا انٹیل کے ساتھ مماثل. لینکس پر، آپ کے پروسیسر فن تعمیر سے ملنے. اگر ریلیز میں صرف فہرستیں ہیں **ماخذ کوڈ**، نیچے دیئے گئے ماخذ تنصیب کے اقدامات کا استعمال کریں."
+
+msgid "解压并启动"
+msgstr "نکالنے اور لانچ کرنے"
+
+msgid "完整解压软件包并进入 MulimgViewer 目录。Windows 双击 `MulimgViewer.exe`，Linux 和 macOS 在图形桌面的终端执行 `./MulimgViewer`。移动软件时请保留整个目录，包括其中的依赖文件。"
+msgstr "پورے آرکائیو نکالیں اور مولمیگ ویور ڈائریکٹری کھولیں۔ ونڈوز پر، ڈبل کلک کریں `MulimgViewer.exe`. لینکس اور میک او ایس پر، چلائیں `./MulimgViewer` گرافک سیشن میں. درخواست منتقل کرتے وقت پوری ڈائرکٹری کو ایک ساتھ رکھیں."
+
+msgid "离线包自带 Python、wxPython、FFmpeg 和 FFprobe。可在该目录下运行 `.\\MulimgViewer.exe --self-check`（Windows PowerShell）或 `./MulimgViewer --self-check`（Linux、macOS）验证窗口、视频解码、内置算法以及 PNG、PDF 和 Excel 导出。"
+msgstr "آرکائیو میں پتھون، wxPython، FFmpeg، اور FFprobe شامل ہیں. اس ڈائرکٹری سے، چلائیں `.\\MulimgViewer.exe --self-check` ونڈوز پاور شیل یا `./MulimgViewer --self-check` لینکس اور میک او ایس پر ونڈو کی تصدیق کرنے کے لئے، ویڈیو کوڈنگ، بنڈل الگورتھم، اور PNG، پی ڈی ایف، اور ایکسل برآمد."
+
+msgid "对于 `.tar.xz` 包，在空目录中执行 `tar -xf 软件包路径` 即可解压。"
+msgstr "ایک کے لئے `.tar.xz` پیکج، چلائیں `tar -xf ARCHIVE` ایک خالی ڈائرکٹری میں."
+
+msgid "运行当前源码版"
+msgstr "ماخذ سے چلنا"
+
+msgid "以下命令适用于 Windows、Linux 和 macOS。先安装 Git 和 Conda，在终端（Windows 可用 Anaconda Prompt）执行："
+msgstr "ونڈوز، لینکس یا میک او ایس پر پہلے گیٹ اور کونڈا انسٹال کریں۔ ٹرمینل میں درج ذیل کمانڈز چلائیں (Anaconda Prompt ونڈوز پر بھی کام کرتا ہے) ۔"
+
+msgid "已有仓库时，从项目根目录的第三条命令开始；已有可用环境时，从激活环境开始。`environment.yml` 指定 Python 3.11，由 conda-forge 安装 wxPython、FFmpeg 和 PyAV。以后启动只需激活同一环境，在仓库根目录执行最后一条命令。"
+msgstr "اگر آپ کے پاس پہلے ہی ذخیرہ ہے تو، اس کی جڑ ڈائرکٹری میں تیسرے حکم سے شروع کریں. اگر آپ کے پاس پہلے سے ہی کام کرنے کا ماحول ہے تو، فعال ہونے سے شروع کریں. environment.yml فائل میں Python 3.11 کی وضاحت کی گئی ہے اور conda-forge سے wxPython، FFmpeg، اور PyAV انسٹال کیا جاتا ہے۔ بعد میں لانچ کرنے پر، اسی ماحول کو چالو کریں اور ریپوزٹری جڑ سے آخری کمانڈ چلائیں."
+
+msgid "验证安装"
+msgstr "تنصیب کی تصدیق کریں"
+
+msgid "检查"
+msgstr "چیک کریں"
+
+msgid "怎么做"
+msgstr "کیا کرنا ہے"
+
+msgid "应该看到什么"
+msgstr "متوقع نتیجہ"
+
+msgid "图形界面"
+msgstr "گرافک انٹرفیس"
+
+msgid "启动程序，选择 Sequential，打开 `auto_test_scripts/assets/images/source_001`"
+msgstr "ایپلی کیشن شروع کریں، ترتیب منتخب کریں اور کھولیں `auto_test_scripts/assets/images/source_001`."
+
+msgid "能显示图像并翻页"
+msgstr "تصاویر ظاہر ہوتی ہیں اور آپ صفحہ بدل سکتے ہیں۔"
+
+msgid "视频工具"
+msgstr "ویڈیو ٹولز"
+
+msgid "运行 `python tools/check_video_tools.py`"
+msgstr "بھاگنا `python tools/check_video_tools.py`."
+
+msgid "列出当前解释器、FFmpeg 和 FFprobe 的路径，两个程序均可执行"
+msgstr "اسکرپٹ میں فعال مترجم اور FFmpeg اور FFprobe کے راستے درج ہیں۔ دونوں آلات چل سکتے ہیں."
+
+msgid "多视频播放"
+msgstr "متوازی ویڈیو پلے بیک"
+
+msgid "按[双视频示例](usage.md)打开 Cat 和 Sunset，翻到下一页"
+msgstr "کٹ اور سنسنیپ کھولیں جیسا کہ دکھایا گیا ہے [دو ویڈیو واک ٹر](usage.md) اور ایک صفحہ آگے بڑھائیں"
+
+msgid "两个标题仍在各自画面下，两路视频同时前进"
+msgstr "دونوں کلپس آگے بڑھتی ہیں جبکہ ہر عنوان اپنی ویڈیو کے تحت رہتا ہے"
+
+msgid "![双视频自检的预期画面：左侧 Cat，右侧 Sunset，右栏已开启 Video mode](../media/input-window.png)"
+msgstr "![متوقع ویڈیو چیک: بائیں طرف کی بلی، دائیں جانب غروب آفتاب اور سائیڈ بار میں ویڈیو موڈ فعال](../media/input-window.png)"
+
+msgid "双视频自检的预期画面：左侧 Cat，右侧 Sunset，右栏已开启 Video mode"
+msgstr "متوقع ویڈیو چیک: بائیں طرف کی بلی، دائیں جانب غروب آفتاب اور سائیڈ بار میں ویڈیو موڈ فعال"
+
+msgid "如果提示找不到 FFmpeg 或 FFprobe，在当前环境执行 `conda install -c conda-forge ffmpeg`，再运行检测脚本。在 IDE 中调试时，选择检测脚本输出的同一个 Python 解释器。使用自行安装的工具时，可用环境变量 `FFMPEG_BINARY`、`FFPROBE_BINARY` 分别指定两个可执行文件的完整路径。"
+msgstr "اگر FFmpeg یا FFprobe غائب ہے تو، چلائیں `conda install -c conda-forge ffmpeg` فعال ماحول میں اور چیک دوبارہ چلائیں. ایک IDE میں، اسکرپٹ کی طرف سے رپورٹ کردہ مترجم منتخب کریں. الگ سے نصب آلات کے لئے، سیٹ `FFMPEG_BINARY` اور `FFPROBE_BINARY` متعلقہ ایگزیکٹیوز کے مکمل راستے پر."
+
+msgid "如果 Linux 上安装 wxPython 时提示缺少 GTK，先确认已用仓库的 Conda 环境安装原生依赖。macOS 如提示 wxPython 需要框架启动器，可在该环境安装 `conda install -c conda-forge python.app`，然后用 `pythonw MulimgViewer.py` 启动。"
+msgstr "اگر لینکس پر wxPython تنصیب GTK لائبریریوں کی کمی کی اطلاع دیتا ہے تو ، چیک کریں کہ آپ نے ذخیرہ  ⁇  کے Conda ماحول کے ساتھ مقامی انحصار نصب کیے ہیں۔ اگر میک او ایس فریم ورک لانچر کی درخواست کرتا ہے تو اسے انسٹال کریں `conda install -c conda-forge python.app` اور لانچ کے ساتھ `pythonw MulimgViewer.py`."

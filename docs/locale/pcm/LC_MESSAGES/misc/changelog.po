@@ -1,0 +1,58 @@
+msgid ""
+msgstr ""
+"Language: pcm\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "更新记录"
+msgstr "Wetin change"
+
+msgid "操作示例见[图像与视频浏览](../resources/usage.md)，参数见[设置说明](../resources/settings.md)，测试方法见[开发指南](../dev/dev.md)。"
+msgstr "As e dey see [E dey search images and videos](../resources/usage.md) Di example wey dey for example, di examples, di examples, di examples, di examples, di examples, di examples, di examples, di examples, di examples, di examples, di examples, di examples, di examples, di examples, di examples, di examples, di examples, di examples, di examples, di examples, di examples, di examples, di examples, di examples, di examples, di examples, di examples, di examples, di examples, di examples, di examples, di examples, di examples, di examples, di examples, di examples, di examples, di examples, di examples, di examples, di examples, di examples, di examples [One sidebar](../resources/settings.md) Di controls for controls, and di di controls for controls, and di di controls for controls, and di di di controls for controls, and di di di controls for controls, and di di di controls for controls, and di di di controls for controls, and di di di controls for controls, and di di di controls for controls, and di di di controls for controls, and di di di controls for controls, and di di di controls for controls, and di di controls for controls, and di di di controls for controls, and di di di controls for controls, and di di controls for controls, and di di controls for controls, and di di controls for controls, and di di controls for controls, [Di developer guide guide](../dev/dev.md) For tests"
+
+msgid "未发布"
+msgstr "Di release don release"
+
+msgid "**多路视频浏览**。支持从目录或文件清单载入视频，并排查看同一帧。跳转到长视频中段时优先准备当前页，后台沿播放方向预取后续页面。"
+msgstr "**Di Multi-video browsing** Open videos from a directory or file list and compare corresponding frame side by side For a seek into long video, di current page don priority while di application prefetch pages for playback direction."
+
+msgid "**播放与缓存**。四档 Power mode 控制并行任务的资源预算。拆帧、算法处理、各算法拼接和最终合成可交错执行。内外两层缓存随浏览位置移动，播放间隔会参考拼接画面的实际供给速度。"
+msgstr "**Di playback and caching** Four power mode set resource budgets for concurrent work. Extraction, processing, per-algorithm stitching, and final composition dey overlap Di cache window follow di browsing position, and playback timing account for how quickly finish pages dey available"
+
+msgid "**算法对比**。可以并排查看原图和所选算法，也可以按布局容量展示多个算法。后台缓存处理图和拼接结果，便于反复查看同一页。"
+msgstr "**Di Algorithm comparison** Di original alongside a selected algorithm or compare several algorithms wey dey inside di grid capacity. Di process images and stitched results dey cache for repeat visits."
+
+msgid "**索引与定位**。索引表可按画面中的图像、页面或来源浏览，支持与主窗口双向定位、查看原始路径和视频帧路径，以及导出 Excel。"
+msgstr "**Di Index and navigation** E dey search visual items, pages, or source Di index and di main window, inspect original and frame paths, and export di current view to Excel."
+
+msgid "**挑图与导出**。支持在后台按点击保存时的参数导出拼接图、选中图像和放大图。可分别设置显示与输出比例，选择 JPG、PNG 或 PDF，并暂停、继续批量保存。"
+msgstr "**Di Selection and export** Di export stitched pages, selected images, and magnified regions for di background using di settings captured when you click Save. E set separate display and export scale, choose JPG, PNG, or PDF, and pause or resume batch export."
+
+msgid "**设置与回归测试**。右侧设置区按功能折叠，重新打开时恢复上次配置。开发者可一键运行图像与视频回归测试并查看逐项报告。"
+msgstr "**Di Settings and regression tests** Di sidebar section collapse by function and di application restore your settings on restart Di Developers go run di image and video regression suite wit one command and inspect individual results."
+
+msgid "**安装与兼容性**。增加 PyPI 安装支持和 Linux 桌面入口，修复 macOS 上的兼容问题。"
+msgstr "**Di installation and compatibility** Dem add PyPI installation support and a Linux desktop entry, and fixed compatibility issues on macOS"
+
+msgid "**放大与标题**。放大图的显示比例与输出比例可分别设置。支持共享标题和显示 EXIF 信息，修复放大框位置及拼接间距问题。"
+msgstr "**Na e dey magnifier and titles** Di set display and export scales independently for magnifiers Di Titles don dey share and fit include EXIF information For fix cover box placement and spacing between stitched images"
+
+msgid "3.9.7"
+msgstr "3.9.7"
+
+msgid "可以手动设置放大框的颜色。[#35](https://github.com/nachifur/MulimgViewer/issues/35)"
+msgstr "Di magnifier box colour manually. [#35](https://github.com/nachifur/MulimgViewer/issues/35)"
+
+msgid "原图和放大图上的框线可以分别设置宽度。[#39](https://github.com/nachifur/MulimgViewer/issues/39)"
+msgstr "Di set separate box line widths for di original image and its magnified view [#39](https://github.com/nachifur/MulimgViewer/issues/39)"
+
+msgid "检测到新版本时，软件会提示更新。[#41](https://github.com/nachifur/MulimgViewer/issues/41)"
+msgstr "Di application prompt you when new version dey available [#41](https://github.com/nachifur/MulimgViewer/issues/41)"
+
+msgid "按 `Ctrl+H` 可隐藏顶部工具栏和右侧设置栏。[#42](https://github.com/nachifur/MulimgViewer/issues/42)"
+msgstr "Di Press Press `Ctrl+H` Di top toolbar and di settings sidebar. [#42](https://github.com/nachifur/MulimgViewer/issues/42)"
+
+msgid "优化了主窗口的控件布局。"
+msgstr "Di layout of di main window"
+
+msgid "修复了带透明通道的图像（RGBA）显示异常的问题。"
+msgstr "Di display issue affect images wit alpha channel (RGBA)."

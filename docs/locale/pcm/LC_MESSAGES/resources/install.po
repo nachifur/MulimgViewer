@@ -1,0 +1,88 @@
+msgid ""
+msgstr ""
+"Language: pcm\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "下载与安装"
+msgstr "Download and install"
+
+msgid "下载适合当前系统的桌面包"
+msgstr "Di desktop bundle for your system"
+
+msgid "[打开 GitHub Releases 下载软件](https://github.com/nachifur/MulimgViewer/releases)。"
+msgstr "[Di MulimgViewer from GitHub release](https://github.com/nachifur/MulimgViewer/releases)."
+
+msgid "在发布页打开对应版本的 **Assets**。Windows 选 Windows 包，macOS 注意区分 Apple 芯片与 Intel，Linux 选择与处理器架构一致的包。如果该版本只提供 **Source code**，请使用下方的源码安装步骤。"
+msgstr "Naija Open **Dem dey Assets** Di desired release On Windows, choose di Windows bundle On macOS, match Apple silicon or Intel On Linux, match your processor architecture. If di release only list lists if di release only list **Di source code code**Di source installation step below"
+
+msgid "解压并启动"
+msgstr "E dey launch and launch"
+
+msgid "完整解压软件包并进入 MulimgViewer 目录。Windows 双击 `MulimgViewer.exe`，Linux 和 macOS 在图形桌面的终端执行 `./MulimgViewer`。移动软件时请保留整个目录，包括其中的依赖文件。"
+msgstr "Di whole archive and open di MulimgViewer directory On Windows, double-click `MulimgViewer.exe`. On Linux and macOS, run on Linux and macOS `./MulimgViewer` Di graphical session dey graphical session Di entire directory together wen dey move di application."
+
+msgid "离线包自带 Python、wxPython、FFmpeg 和 FFprobe。可在该目录下运行 `.\\MulimgViewer.exe --self-check`（Windows PowerShell）或 `./MulimgViewer --self-check`（Linux、macOS）验证窗口、视频解码、内置算法以及 PNG、PDF 和 Excel 导出。"
+msgstr "Di archive include Python, wxPython, FFmpeg, and FFprobe. Di directory, run di directory, run `.\\MulimgViewer.exe --self-check` For Windows PowerShell or Windows PowerShell or for Windows PowerShell or for Windows PowerShell or for Windows PowerShell or for Windows PowerShell or for Windows PowerShell or for Windows PowerShell or for Windows PowerShell or for Windows PowerShell or for Windows PowerShell or for Windows PowerShell or for Windows PowerShell or for Windows PowerShell or for Windows PowerShell or for Windows PowerShell or for Windows PowerShell or for Windows PowerShell or for Windows PowerShell or for Windows PowerShell or for Windows PowerShell or for Windows PowerShell or for Windows PowerShell or for Windows PowerShell or for Windows PowerShell or for Windows PowerShell or for Windows PowerShell or for Windows PowerShell or for Windows PowerShell or for Windows PowerShell or for Windows PowerShell or for Windows PowerShell or for Windows PowerShell or for Windows PowerShell or for Windows PowerShell or for Windows PowerShell or for `./MulimgViewer --self-check` Di window, video decoding, bundled algorithms, and PNG, PDF, Excel export"
+
+msgid "对于 `.tar.xz` 包，在空目录中执行 `tar -xf 软件包路径` 即可解压。"
+msgstr "For a apun `.tar.xz` Dem run package, run run package, run run package, run run package, run run package, run run package, run run package, run run package, run run package, run run package, run package, run run package, run package, run run package, run package, run package, run package, run package, run package, run package, run package, run package, run package, run package, run package, run package, run package, run package, run package, run package, run package, run package, run package, run package, run package, run package, run package, run package, run package, run package, run package, run package, run package, run package, run package, run package, run package, run package, run package, run package, run package, run package, run package, run package, run package, run package, `tar -xf ARCHIVE` Di empty directory dey empty for di empty directory"
+
+msgid "运行当前源码版"
+msgstr "Dem run from source"
+
+msgid "以下命令适用于 Windows、Linux 和 macOS。先安装 Git 和 Conda，在终端（Windows 可用 Anaconda Prompt）执行："
+msgstr "On Windows, Linux, or macOS, install Git and Conda first Di following commands for terminal (Anaconda Prompt also works on Windows)."
+
+msgid "已有仓库时，从项目根目录的第三条命令开始；已有可用环境时，从激活环境开始。`environment.yml` 指定 Python 3.11，由 conda-forge 安装 wxPython、FFmpeg 和 PyAV。以后启动只需激活同一环境，在仓库根目录执行最后一条命令。"
+msgstr "If you don get di repository, start wit di second command for its root directory If you don get work environment, start wit activation Di environment.yml file dey specifi Python 3.11 and install wxPython, FFmpeg, and PyAV from conda-forge. On subsequent launches, activate di same environment and run di final command from di repository root."
+
+msgid "验证安装"
+msgstr "Di installation wey dey Verify di installation"
+
+msgid "检查"
+msgstr "E don check di latest"
+
+msgid "怎么做"
+msgstr "How to do am"
+
+msgid "应该看到什么"
+msgstr "Expect result"
+
+msgid "图形界面"
+msgstr "Di Graphical interface"
+
+msgid "启动程序，选择 Sequential，打开 `auto_test_scripts/assets/images/source_001`"
+msgstr "Di application, select Sequential, and open di application `auto_test_scripts/assets/images/source_001`."
+
+msgid "能显示图像并翻页"
+msgstr "Di image dey appear and you fit turn di page"
+
+msgid "视频工具"
+msgstr "Di video tools wey dey use"
+
+msgid "运行 `python tools/check_video_tools.py`"
+msgstr "But e no dey run `python tools/check_video_tools.py`."
+
+msgid "列出当前解释器、FFmpeg 和 FFprobe 的路径，两个程序均可执行"
+msgstr "Di script list di active interpreter and di paths to FFmpeg and FFprobe. Di tool go run"
+
+msgid "多视频播放"
+msgstr "Di Parallel video playback"
+
+msgid "按[双视频示例](usage.md)打开 Cat 和 Sunset，翻到下一页"
+msgstr "As show for di Open Cat and Sunset as show for di di show for di open cat and sunset as show for di Sunset as show for di Sunset as show for di di show for di di show for di di show for di Sunset as show for di Sunset as show for di Sunset as show for di Sunset as show for di Sunset as show for di Sunset as show for di Sunset as show for di Sunset as show for di Sunset as show for di Sunset as show for di Sunset as show for di Sunset as show for di Sunset as show for di Sunset as show for di di show for di Sunset as show for di Sunset as show for di Sunset as show for di Sunset as show for di Sunset as show for di Sunset as show for di Sunset as show for di [Dem dey two-video walkthrough](usage.md) Di page wey dey advance one page and advance one page"
+
+msgid "两个标题仍在各自画面下，两路视频同时前进"
+msgstr "Di Both clips advance while each title stay under its own video"
+
+msgid "![双视频自检的预期画面：左侧 Cat，右侧 Sunset，右栏已开启 Video mode](../media/input-window.png)"
+msgstr "![E dey notice video check: Cat on di left, Sunset on di right, and Video mode enabled for di sidebar](../media/input-window.png)"
+
+msgid "双视频自检的预期画面：左侧 Cat，右侧 Sunset，右栏已开启 Video mode"
+msgstr "E dey notice video check: Cat on di left, Sunset on di right, and Video mode enabled for di sidebar"
+
+msgid "如果提示找不到 FFmpeg 或 FFprobe，在当前环境执行 `conda install -c conda-forge ffmpeg`，再运行检测脚本。在 IDE 中调试时，选择检测脚本输出的同一个 Python 解释器。使用自行安装的工具时，可用环境变量 `FFMPEG_BINARY`、`FFPROBE_BINARY` 分别指定两个可执行文件的完整路径。"
+msgstr "If FFmpeg or FFprobe no fit missing, run run run `conda install -c conda-forge ffmpeg` Di active environment and run di check again For IDE, select di interpreter wey dey report by di script For separately installed tools, set separately installed tools `FFMPEG_BINARY` Di awa and di awa `FFPROBE_BINARY` Di full path of di respective executables."
+
+msgid "如果 Linux 上安装 wxPython 时提示缺少 GTK，先确认已用仓库的 Conda 环境安装原生依赖。macOS 如提示 wxPython 需要框架启动器，可在该环境安装 `conda install -c conda-forge python.app`，然后用 `pythonw MulimgViewer.py` 启动。"
+msgstr "If wxPython installation on Linux report missing GTK libraries, check say you install native dependncies wit di repository’s Conda environment. If macOS request framework launcher, install am wit wit wit wit e dey install am wit wit wit e wit wit wit e install am wit wit wit wit wit e install am wit wit wit wit wit wit wit wit macOS `conda install -c conda-forge python.app` Di launch wit launch wit launch wit launch wit launch wit launch wit launch wit launch wit launch wit launch wit launch wit launch wit launch wit launch wit launch wit launch wit launch wit launch wit launch wit launch wit launch wit launch wit launch wit launch wit launch wit launch wit launch wit launch wit launch wit launch wit launch wit launch wit launch wit launch wit launch wit launch wit launch wit launch wit launch wit launch wit launch wit launch wit launch wit launch wit launch wit launch wit launch wit launch wit launch wit launch wit launch wit launch wit launch wit launch wit launch wit launch wit launch wit launch wit launch wit launch wit launch wit launch wit launch wit launch wit launch wit launch wit launch wit launch wit launch wit launch wit launch wit launch wit launch wit launch wit launch wit launch wit launch wit launch wit launch wit launch wit launch wit launch wit launch wit launch wit launch wit launch wit launch wit launch wit launch wit launch `pythonw MulimgViewer.py`."

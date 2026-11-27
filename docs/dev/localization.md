@@ -1,0 +1,38 @@
+# 维护多语言版本
+
+## 选择语言与版本
+
+界面和文档共用 `src/mulimgviewer/src/languages.py` 的语言代码。首次打开桌面程序和恢复默认设置时使用英语；手动切换的语言会随会话和配置保存。维护手册时先检出要发布的分支或标签，确保图示、菜单、快捷键与该版本的程序一致。
+
+## 修改界面译文
+
+1. 以英文界面文字为键更新译表。中、西文分别在 `translations_zh.py`、`translations_es.py`，其他语言位于 `src/mulimgviewer/src/locales/<code>.json`。
+2. 保留格式占位符、快捷键、算法名和文件名。菜单名称使用目标语言自己的文字。新增语言时，在语言清单中登记代码、名称和手册地址。
+3. 运行配置回归测试。启动程序，切换语言，保存配置，重新打开并加载，再点击 Reset 核对英文默认值。
+
+## 更新整本手册
+
+中文 Markdown 是各语言共用的源文件。安装、使用、设置、技巧、开发、发布和项目记录使用同一棵目录树。修改页面后，在仓库根目录建立翻译模板，再更新目标语言目录。下例更新日语。
+
+```sh
+python -m pip install -r docs/requirements.txt sphinx-intl
+python -m sphinx -E -b gettext docs docs/_build/gettext
+sphinx-intl update -p docs/_build/gettext -d docs/locale -l ja
+```
+
+在 `docs/locale/ja/LC_MESSAGES/` 按页面编辑 PO 文件。核对每条新文字以及标为 fuzzy 的旧译文，确认后移除 fuzzy 标记。保留 MyST 角色、链接目的地、代码和示例数值。截图和录屏由各语言共用；翻译图注、替代文字及首页互动控件。更新其他语言时替换命令中的语言代码。语言目录页的各语言名称保留原文。
+
+## 构建与核对
+
+```sh
+python -m sphinx -E -W -b html -D language=ja docs docs/_build/html/ja
+python tools/build_translations.py --check-only
+python tools/build_translations.py --output docs/_build/multilingual
+python tools/release.py --prepare
+```
+
+打开 `docs/_build/html/ja/index.html`。从侧栏进入安装、播放、开发和更新记录，试用首页轮播，检查示例下载、目录跳转及代码块。阿拉伯语和乌尔都语正文应从右向左阅读，命令仍从左向右排列。
+
+## 发布到 Read the Docs
+
+从 v4 起，只在中文项目 `mulimgviewer` 激活发布标签。一次构建生成全部 15 种手册：中文位于版本根目录，英文和其他语言位于 `i18n/<code>/`。构建后从语言目录核对各版本。保留 3.9.7 标签及其历史文档。

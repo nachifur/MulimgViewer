@@ -95,7 +95,7 @@ msgstr "When to use it"
 
 #: ../../resources/usage.md
 msgid "Sequential"
-msgstr ""
+msgstr "Sequential"
 
 #: ../../resources/usage.md
 msgid "单个图像目录"
@@ -111,7 +111,7 @@ msgstr "Browse a photo set or inspect one video."
 
 #: ../../resources/usage.md
 msgid "Parallel auto"
-msgstr ""
+msgstr "Parallel auto"
 
 #: ../../resources/usage.md
 msgid "含多个来源子目录的父目录"
@@ -127,7 +127,7 @@ msgstr "Compare corresponding positions. Matching filenames across image sources
 
 #: ../../resources/usage.md
 msgid "Parallel manual"
-msgstr ""
+msgstr "Parallel manual"
 
 #: ../../resources/usage.md
 msgid "逐个选择来源目录"
@@ -143,7 +143,7 @@ msgstr "Compare a subset of sources or change their order."
 
 #: ../../resources/usage.md
 msgid "Image/Video File List"
-msgstr ""
+msgstr "Image/Video File List"
 
 #: ../../resources/usage.md
 msgid "指定图片清单"
@@ -266,7 +266,7 @@ msgstr "What is saved"
 
 #: ../../resources/usage.md
 msgid "Stitch"
-msgstr ""
+msgstr "Stitch"
 
 #: ../../resources/usage.md
 msgid "最终画面在 `composed`，各算法的拼接图在 `algorithms/<算法>/stitch_images`"
@@ -276,7 +276,7 @@ msgstr ""
 
 #: ../../resources/usage.md
 msgid "Selected images"
-msgstr ""
+msgstr "Selected images"
 
 #: ../../resources/usage.md
 msgid "选择结果在各算法的 `select_images` 中，按来源归档"
@@ -284,7 +284,7 @@ msgstr "Selected images in each algorithm’s `select_images` folder, grouped by
 
 #: ../../resources/usage.md
 msgid "Magnifiers"
-msgstr ""
+msgstr "Magnifiers"
 
 #: ../../resources/usage.md
 msgid "输出放大区域和带框图。组合模式下，没有框会跳过这一项，其他已选输出照常保存"
@@ -382,3 +382,33 @@ msgstr "![Compare the original and blurred photo, magnify the window and export]
 
 msgid "![依次加入连续帧、两个取样框和第二个算法面板](../media/walkthrough-grid.gif)"
 msgstr "![Add consecutive frames, two sample boxes and a second algorithm panel](../media/walkthrough-grid.gif)"
+
+msgid "Sequential"
+msgstr "Sequential"
+
+msgid "Parallel auto"
+msgstr "Parallel auto"
+
+msgid "Parallel manual"
+msgstr "Parallel manual"
+
+msgid "Image/Video File List"
+msgstr "Image/Video File List"
+
+msgid "<a name=\"readme-compare-details\"></a>"
+msgstr "<a name=\"readme-compare-details\"></a>"
+
+msgid "<a name=\"readme-select-export\"></a>"
+msgstr "<a name=\"readme-select-export\"></a>"
+
+msgid "Stitch"
+msgstr "Stitch"
+
+msgid "Selected images"
+msgstr "Selected images"
+
+msgid "Magnifiers"
+msgstr "Magnifiers"
+
+msgid "拼接输出 PNG：左列原图、右列 Gaussian Blur，下排为两列各自的放大细节"
+msgstr "Exported PNG: original on the left, Gaussian Blur on the right, corresponding detail crops below"

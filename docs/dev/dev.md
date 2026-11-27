@@ -22,6 +22,8 @@
 3. 在实现层连接回调。布局参数沿用“修改多项后手动刷新”的交互；后台任务使用应用后的设置，保存使用点击时的参数。新增设置需检查加载、保存、重置和旧配置兼容。
 4. 打开主窗口实际操作一次，覆盖图像和视频两条入口，再执行对应测试。
 
+新增界面语言时，在 `src/mulimgviewer/src/languages.py` 登记稳定的语言代码、菜单名称和手册路径，在 `src/mulimgviewer/src/locales/<code>.json` 添加 UTF-8 译表。参考已有译表，保留英文键、格式占位符、快捷键和技术参数。运行配置回归测试，核对语言切换、设置保存与重置。
+
 ### 添加图像处理算法
 
 在 `src/mulimgviewer/src/custom_func/<算法名>/main.py` 中实现单图核函数。例如内置的 Gaussian Blur：
@@ -182,23 +184,7 @@ python tools/package_desktop.py --compact
 
 ## 构建文档与维护翻译
 
-在仓库根目录执行以下命令，浏览器打开 `docs/_build/html/zh-cn/index.html`。要更新英文目录，先成功生成 POT，再运行翻译更新。
-
-```sh
-python -m pip install -r docs/requirements.txt sphinx-intl
-python -m sphinx -b html docs docs/_build/html/zh-cn
-python -m sphinx -b gettext docs docs/_build/gettext
-python -m sphinx_intl update -p docs/_build/gettext -d docs/locale -l en
-```
-
-在 `docs/locale/en/LC_MESSAGES/` 对应的 PO 文件填写或核对 `msgstr`，移除已确认条目的 fuzzy 标记。保持命令、路径和链接可用，随后运行：
-
-```sh
-python -m sphinx_intl build -d docs/locale -l en
-python -m sphinx -b html -D language=en docs docs/_build/html/en
-```
-
-Read the Docs 使用各分支或标签中的 `.readthedocs.yaml`。构建只安装文档依赖，从检出的源码读取版本号和图标。
+[多语言维护教程](localization.md)包括界面译表、完整手册、回归检查和 Read the Docs 发布流程。
 
 ## 准备发布版本
 

@@ -1,0 +1,46 @@
+msgid ""
+msgstr ""
+"Language: pcm\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "维护多语言版本"
+msgstr "How to maintain translations"
+
+msgid "选择语言与版本"
+msgstr "Choose di language and version"
+
+msgid "界面和文档共用 `src/mulimgviewer/src/languages.py` 的语言代码。首次打开桌面程序和恢复默认设置时使用英语；手动切换的语言会随会话和配置保存。维护手册时先检出要发布的分支或标签，确保图示、菜单、快捷键与该版本的程序一致。"
+msgstr "Di app and di manuals use di language codes wey dey inside `src/mulimgviewer/src/languages.py`. When you first open di app, or when you press Reset, e go use English. Di app go save di language wey you choose. Before you publish, checkout di correct branch or tag so di screenshots, menus and shortcuts go match dat version."
+
+msgid "修改界面译文"
+msgstr "Edit di words wey show for di app"
+
+msgid "以英文界面文字为键更新译表。中、西文分别在 `translations_zh.py`、`translations_es.py`，其他语言位于 `src/mulimgviewer/src/locales/<code>.json`。"
+msgstr "Use di English text as di key. Chinese and Spanish dey use `translations_zh.py` and `translations_es.py`. Di files for di oda languages dey for `src/mulimgviewer/src/locales/<code>.json`."
+
+msgid "保留格式占位符、快捷键、算法名和文件名。菜单名称使用目标语言自己的文字。新增语言时，在语言清单中登记代码、名称和手册地址。"
+msgstr "Keep all format fields, shortcuts, algorithm names and filenames as dem be. For di menu, use di name wey people call di language for dia own language. When you add one language, register di code, di name and di manual URL."
+
+msgid "运行配置回归测试。启动程序，切换语言，保存配置，重新打开并加载，再点击 Reset 核对英文默认值。"
+msgstr "Run di configuration tests. Change language for di app, save di settings, close am, open am again and load wetin you save. Press Reset and check say English don come back."
+
+msgid "更新整本手册"
+msgstr "Update di whole manual"
+
+msgid "中文 Markdown 是各语言共用的源文件。安装、使用、设置、技巧、开发、发布和项目记录使用同一棵目录树。修改页面后，在仓库根目录建立翻译模板，再更新目标语言目录。下例更新日语。"
+msgstr "All di editions use di same Chinese Markdown files. Installation, browsing, settings, tips, development, releases and project history follow di same menu. After you edit one page, generate new templates from di root of di repository and update di catalog. Dis example na for Japanese."
+
+msgid "在 `docs/locale/ja/LC_MESSAGES/` 按页面编辑 PO 文件。核对每条新文字以及标为 fuzzy 的旧译文，确认后移除 fuzzy 标记。保留 MyST 角色、链接目的地、代码和示例数值。截图和录屏由各语言共用；翻译图注、替代文字及首页互动控件。更新其他语言时替换命令中的语言代码。语言目录页的各语言名称保留原文。"
+msgstr "Edit di PO file for each page inside `docs/locale/ja/LC_MESSAGES/`. Check new entries and entries wey get fuzzy mark. Remove di mark after you check di translation. Keep MyST roles, link addresses, code and example values as dem be. All di languages use di same screenshots and recordings. Translate di captions, image descriptions and homepage controls. To update anoda language, use im code for di command. For di language list, keep each language name as im speakers dey write am."
+
+msgid "构建与核对"
+msgstr "Build and check di manual"
+
+msgid "打开 `docs/_build/html/ja/index.html`。从侧栏进入安装、播放、开发和更新记录，试用首页轮播，检查示例下载、目录跳转及代码块。阿拉伯语和乌尔都语正文应从右向左阅读，命令仍从左向右排列。"
+msgstr "Open `docs/_build/html/ja/index.html`. Use di sidebar enter di installation, playback, development and changelog pages. Try di slides, downloads, links and code examples. For Arabic and Urdu, people dey read di text from right to left. Commands still go from left to right."
+
+msgid "发布到 Read the Docs"
+msgstr "Publish for Read the Docs"
+
+msgid "从 v4 起，只在中文项目 `mulimgviewer` 激活发布标签。一次构建生成全部 15 种手册：中文位于版本根目录，英文和其他语言位于 `i18n/<code>/`。构建后从语言目录核对各版本。保留 3.9.7 标签及其历史文档。"
+msgstr "From v4, activate di release tag only for di Chinese project `mulimgviewer`. One build go publish all 15 manuals. Di Chinese manual dey for di version root. English and di oda languages dey under `i18n/<code>/`. After di build, use di language list check each manual. Keep di 3.9.7 tag and im old docs."

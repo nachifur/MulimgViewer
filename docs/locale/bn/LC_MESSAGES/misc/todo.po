@@ -1,0 +1,67 @@
+msgid ""
+msgstr ""
+"Language: bn\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "待办与社区反馈"
+msgstr "উন্নয়ন পরিকল্পনা ও ব্যবহারকারীদের মতামত"
+
+msgid "以下整理自 2026-11-25 核对的公开议题。功能建议仍在讨论，排期和进展以 [GitHub 开放议题](https://github.com/nachifur/MulimgViewer/issues?q=is%3Aissue+is%3Aopen) 为准。"
+msgstr "এই প্রকাশ্য বিষয়গুলো ২০২৬ সালের ২৫ নভেম্বর পর্যালোচনা করা হয়। প্রস্তাবগুলো আলোচনা করা হচ্ছে। অনুসরণ করুন [GitHub সমস্যা খুলুন](https://github.com/nachifur/MulimgViewer/issues?q=is%3Aissue+is%3Aopen) সময়সূচী এবং অগ্রগতি।"
+
+msgid "待评估的功能建议"
+msgstr "বৈশিষ্ট্য প্রস্তাব"
+
+msgid "用户希望完成的操作"
+msgstr "ব্যবহারকারীরা কি করতে চান"
+
+msgid "相关讨论"
+msgstr "আলোচনা"
+
+msgid "收藏一组输入路径，从最近访问记录重新打开，或恢复上次的浏览会话"
+msgstr "ইনপুট পাথের একটি গ্রুপ বুকমার্ক করুন, সাম্প্রতিক উত্সগুলি পুনরায় খুলুন বা ব্রাউজিং সেশনটি পুনরুদ্ধার করুন।"
+
+msgid "[#216 路径组与会话恢复](https://github.com/nachifur/MulimgViewer/issues/216)"
+msgstr "[#২১৬ পথ গ্রুপ এবং সেশন পুনরুদ্ধার](https://github.com/nachifur/MulimgViewer/issues/216)"
+
+msgid "在界面中更方便地管理自定义函数"
+msgstr "ইন্টারফেস থেকে কাস্টম ফাংশনগুলি আরও সহজেই পরিচালনা করুন।"
+
+msgid "[#217 函数管理](https://github.com/nachifur/MulimgViewer/issues/217)"
+msgstr "[#217 ফাংশন ব্যবস্থাপনা](https://github.com/nachifur/MulimgViewer/issues/217)"
+
+msgid "为放大区域选择虚线边框"
+msgstr "বড় করার জন্য একটি টুকরো আকারের লাইন ব্যবহার করুন।"
+
+msgid "[#215 放大框线型](https://github.com/nachifur/MulimgViewer/issues/215)"
+msgstr "[#২১৫ বক্স লাইন স্টাইল](https://github.com/nachifur/MulimgViewer/issues/215)"
+
+msgid "以项目为入口组织多个工作任务，并改进导出界面"
+msgstr "প্রকল্পে বিভিন্ন কাজ সংগঠিত করুন এবং এক্সপোর্ট ইন্টারফেস উন্নত করুন।"
+
+msgid "[#206 多项目工作流](https://github.com/nachifur/MulimgViewer/issues/206)、[#205 导出界面](https://github.com/nachifur/MulimgViewer/issues/205)"
+msgstr "[#206 একাধিক প্রকল্পের কর্মপ্রবাহ](https://github.com/nachifur/MulimgViewer/issues/206), [#205 এক্সপোর্ট ইন্টারফেস](https://github.com/nachifur/MulimgViewer/issues/205)"
+
+msgid "在浏览器中使用查看器，或扩展音频处理能力"
+msgstr "ব্রাউজারে ভিউয়ার ব্যবহার করুন অথবা অডিও প্রসেসিং করতে এটি সম্প্রসারণ করুন।"
+
+msgid "[#207 Web 界面](https://github.com/nachifur/MulimgViewer/issues/207)、[#162 音频处理](https://github.com/nachifur/MulimgViewer/issues/162)"
+msgstr "[#207 ওয়েব ইন্টারফেস](https://github.com/nachifur/MulimgViewer/issues/207), [#162 অডিও প্রসেসিং](https://github.com/nachifur/MulimgViewer/issues/162)"
+
+msgid "使用反馈与已有功能"
+msgstr "ব্যবহারের প্রতিক্রিয়া এবং বিদ্যমান বৈশিষ্ট্য"
+
+msgid "Ubuntu 下的滚轮缩放和图像拖动有单独的反馈帖。补充反馈时请附系统版本、输入模式和具体鼠标操作。[#87 Ubuntu 缩放](https://github.com/nachifur/MulimgViewer/issues/87)、[#115 拖动图片](https://github.com/nachifur/MulimgViewer/issues/115)"
+msgstr "উবুন্টুতে মাউস-হুইল জুম এবং ইমেজ ড্র্যাগিংয়ের আলাদা থ্রেড রয়েছে। সমস্যা রিপোর্ট করার সময় আপনার OS সংস্করণ, ইনপুট মোড এবং মাউস এর সঠিক ক্রিয়া অন্তর্ভুক্ত করুন। [#87 উবুন্টুতে জুম করুন](https://github.com/nachifur/MulimgViewer/issues/87), [#১৫৫ ছবি টেনে আনুন](https://github.com/nachifur/MulimgViewer/issues/115)"
+
+msgid "视频导入、自动播放与多视频并排对比已有操作示例。可先依照手册打开两段视频，再在原议题补充仍有困难的场景。[操作示例](../resources/usage.md)、[#53 视频并行对比](https://github.com/nachifur/MulimgViewer/issues/53)"
+msgstr "এই ম্যানুয়ালটিতে ভিডিও আমদানি, স্বয়ংক্রিয় প্লে এবং পাশের তুলনা অন্তর্ভুক্ত রয়েছে। দুই ভিডিওর মাধ্যমে দেখুন এবং এই সংখ্যার যে কোন সমস্যা বর্ণনা করুন। [হাঁটা](../resources/usage.md), [#53 সমান্তরাল ভিডিও তুলনা](https://github.com/nachifur/MulimgViewer/issues/53)"
+
+msgid "中文界面需求和项目合作分别在对应议题讨论。[#55 中文界面](https://github.com/nachifur/MulimgViewer/issues/55)、[#7 招募合作者](https://github.com/nachifur/MulimgViewer/issues/7)、[#222 合作](https://github.com/nachifur/MulimgViewer/issues/222)"
+msgstr "চীনা ইন্টারফেস বা সহযোগিতার সুযোগের জন্য, সংশ্লিষ্ট আলোচনা দেখুন। [#55 চীনা ইন্টারফেস](https://github.com/nachifur/MulimgViewer/issues/55), [#7 সহযোগীদের খোঁজ](https://github.com/nachifur/MulimgViewer/issues/7), [#222 সহযোগিতা](https://github.com/nachifur/MulimgViewer/issues/222)"
+
+msgid "查找已实现的功能"
+msgstr "ইতিমধ্যে উপলব্ধ বৈশিষ্ট্যগুলি সন্ধান করুন"
+
+msgid "定位图片、同步放大和成组挑图见[操作录屏](../resources/usage.md)。框线、标题和导出比例见[设置栏参考](../resources/settings.md)。历次变化见[更新记录](changelog.md)，早期建议的贡献者见[致谢](acknowledgements.md)。"
+msgstr "দেখুন [রেকর্ড করা কর্মপ্রবাহ](../resources/usage.md) একটি চিত্রের অবস্থান নির্ধারণ, একটি অঞ্চলকে বড় করা এবং একটি গ্রুপ নির্বাচন করার জন্য। বাক্সের সারসংকলন, শিরোনাম এবং রপ্তানি স্কেল [সেটিংসের রেফারেন্স](../resources/settings.md). দেখুন [পরিবর্তন](changelog.md) মুক্তির ইতিহাস এবং [ক্রেডিট](acknowledgements.md) প্রাথমিক অবদানের জন্য।"

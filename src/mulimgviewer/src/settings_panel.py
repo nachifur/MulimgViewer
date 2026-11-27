@@ -2,6 +2,7 @@
 import json
 import wx
 
+from .localization import tr
 from .resources import positive_cache_integer
 
 
@@ -55,9 +56,9 @@ class SettingsSection(wx.Panel):
 
     def _update_caption(self):
         arrow='\u25b8' if self._collapsed else '\u25be'
-        self._header.SetLabel('  '+arrow+'  '+self._title)
+        self._header.SetLabel('  '+arrow+'  '+tr(self._title))
         action='Expand' if self._collapsed else 'Collapse'
-        self._header.SetToolTip(action+' '+self._title.replace('&&','&'))
+        self._header.SetToolTip(tr(action)+' '+tr(self._title).replace('&&','&'))
 
     def GetPane(self):
         self.Initialise()
@@ -147,17 +148,18 @@ class SettingsPanelMixin:
         if not hasattr(field,'_cache_input_background'):
             field._cache_input_background=field.GetBackgroundColour()
             tip=field.GetToolTip()
-            field._cache_input_tip=tip.GetTip() if tip else 'Integer >= 1'
+            if not hasattr(field, '_cache_input_tip'):
+                field._cache_input_tip=tip.GetTip() if tip else 'Integer >= 1'
         try:
             positive_cache_integer(field.GetValue())
         except ValueError:
             base=wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOW)
             red,green,blue=base.Get()[:3]
             field.SetBackgroundColour(wx.Colour(round(red*.8+255*.2),round(green*.8),round(blue*.8)))
-            field.SetToolTip('Enter a whole number >= 1. The previous effective value is kept until a valid Refresh.')
+            field.SetToolTip(tr('Enter a whole number >= 1. The previous effective value is kept until a valid Refresh.'))
         else:
             field.SetBackgroundColour(field._cache_input_background)
-            field.SetToolTip(field._cache_input_tip)
+            field.SetToolTip(tr(field._cache_input_tip))
         field.Refresh(False)
         event.Skip()
 

@@ -1,0 +1,121 @@
+msgid ""
+msgstr ""
+"Language: es\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "安装与上手"
+msgstr "Primeros pasos"
+
+msgid "操作参考"
+msgstr "Referencia de uso"
+
+msgid "开发与贡献"
+msgstr "Desarrollo y contribuciones"
+
+msgid "版本与致谢"
+msgstr "Versiones y créditos"
+
+msgid "Languages"
+msgstr "Idiomas"
+
+msgid "MulimgViewer 中文手册"
+msgstr "Manual de MulimgViewer"
+
+msgid "[选择文档语言 · Choose your language](languages.md)"
+msgstr "[Elige el idioma de la documentación](languages.md)"
+
+msgid "**并行浏览，逐帧对比。**"
+msgstr "**- Explora uno al lado del otro. Compare cuadro por cuadro.**"
+
+msgid "在同一页对齐多个图像或视频来源，同步放大细节，将原图与算法结果一起导出。"
+msgstr "Alinear imágenes o videos de múltiples fuentes en una página, ampliar la misma región entre las fuentes y exportar originales junto con los resultados del algoritmo."
+
+msgid "[运行双视频示例](resources/usage.md)"
+msgstr "[Prueba el ejemplo de dos videos](resources/usage.md)"
+
+msgid "Cat 和 Sunset 并排翻页，右侧展开 Input & Playback。"
+msgstr "Cat y Sunset avanzan lado a lado con la entrada y reproducción visibles."
+
+msgid "左格是 Cat，右格是 Sunset。单击下一页，两路同时前进一帧。"
+msgstr "Cat está a la izquierda y Sunset a la derecha. Avanza una página para mover los dos clips hacia adelante por un marco."
+
+msgid "**十张超 4K 图，只比同一处细节。**"
+msgstr "**Diez imágenes más allá de 4K. Un detalle en resolución nativa.**"
+
+msgid "在鸟头上画一次框，隐藏原图。十张 4608 × 2592 图像的同一块 160 × 160 像素区域并排铺开，沿鸟喙就能比较不同插值的边缘。"
+msgstr "Encaje la cabeza del pájaro una vez y oculte las imágenes completas. Comparar los mismos 160 × 160 píxeles de diez imágenes 4608 × 2592, siguiendo el borde del pico a través de métodos de interpolación."
+
+msgid "{ref}`跟做 1:1 对比 <native-detail>` [下载无损 PNG](media/sr-detail-native.png)"
+msgstr "{ref}`Prueba la comparación 1:1 <native-detail>` [Descarga el PNG sin pérdidas](media/sr-detail-native.png)"
+
+msgid "在完整窗口内框选鸟头，切换到只显示十个原尺寸局部。"
+msgstr "Una grabación completa muestra cómo encasillar la cabeza del pájaro y mostrar diez cultivos de resolución nativa."
+
+msgid "跟随录屏设置放大框，再下载最终画布的 PNG，按 100% 查看边缘细节。"
+msgstr "Sigue la grabación para configurar el magnificador. Descarga el lienzo final como una PNG y ve al 100% para comparar los bordes."
+
+msgid "**点一个位置，挑出一组样本。**"
+msgstr "**Elige una posición. Mantenga el juego de coincidencia.**"
+
+msgid "A、B 两个来源各占一行，每行显示三张。点中 B 行的第二张并保存，A 行的第二张也会一起导出。"
+msgstr "Las fuentes A y B ocupan cada una de tres filas de imágenes. Seleccione la imagen media en la fila B y guarde para exportar la imagen media de ambas filas."
+
+msgid "{ref}`跟做并行挑图 <multi-source-picks>`"
+msgstr "{ref}`Sigue el camino <multi-source-picks>`"
+
+msgid "两行三列显示 A、B 的图像，点中下排中间一张，保存后重新打开两个来源的结果。"
+msgstr "Seis imágenes en dos filas. Se selecciona la imagen media en la fila inferior y se vuelve a abrir el par guardado."
+
+msgid "Per source 设为 1,3。点中 B/02.png，按 Ctrl+S，再打开输出目录核对两张 02.png。"
+msgstr "Se establece por fuente a 1,3. Haga clic en B/02.png, pulse Ctrl+S y vuelva a abrir la carpeta de salida para comprobar ambas copias de 02.png."
+
+msgid "关闭"
+msgstr "Cerrar"
+
+msgid "试试同步翻帧"
+msgstr "Avanzar ambos vídeos fotograma a fotograma"
+
+msgid "上一帧"
+msgstr "Fotograma anterior"
+
+msgid "下一帧"
+msgstr "Fotograma siguiente"
+
+msgid "Cat 与 Sunset 同步画面"
+msgstr "Vista sincronizada de gatos y puestas de sol"
+
+msgid "试试并行挑图"
+msgstr "Probar la selección en paralelo"
+
+msgid "点选任一文件，查看两个来源会一起保存哪一张。"
+msgstr "Seleccione un archivo para ver la selección de coincidencia en ambas fuentes."
+
+msgid "将一起保存"
+msgstr "Se guardan juntos:"
+
+msgid "功能亮点"
+msgstr "Funciones destacadas"
+
+msgid "恢复轮播"
+msgstr "Reanudar el carrusel"
+
+msgid "暂停轮播"
+msgstr "Pausar el carrusel"
+
+msgid "[下载与安装](resources/install.md) 选择系统对应的桌面包，或从源码安装"
+msgstr "[Descargar e instalar](resources/install.md) Elige un paquete de escritorio o instala desde la fuente"
+
+msgid "[界面与快捷键](resources/interface.md) 从图标或菜单名查操作"
+msgstr "[Interfaz y atajos](resources/interface.md) Busca una acción por icono o nombre del menú"
+
+msgid "[右侧设置栏](resources/settings.md) 按分组查参数和生效方式"
+msgstr "[Bar de configuración lateral](resources/settings.md) Busca los controles y cuándo las modificaciones entran en vigor"
+
+msgid "[使用技巧](resources/large-images.md) 核对来源、视频时间与原尺寸细节"
+msgstr "[Consejos prácticos](resources/large-images.md) Verifique la coincidencia de las fuentes, el tiempo y los detalles de resolución nativa"
+
+msgid "本页演示开发版功能。正在使用 3.9.7？请查看 [3.9.7 中文手册](https://mulimgviewer.readthedocs.io/zh-cn/docs-v3.9.7-r1/)。"
+msgstr "Esta página muestra la versión de desarrollo. ¿Corre 3,9.7? Vean el [archivado 3.9.7 manual (chino)](https://mulimgviewer.readthedocs.io/zh-cn/docs-v3.9.7-r1/)."
+
+msgid "当前手册版本为 {sub-ref}`release`。[查看 3.9.7 中文手册](https://mulimgviewer.readthedocs.io/zh-cn/docs-v3.9.7-r1/)。"
+msgstr "Este manual cubre la versión {sub-ref}`release`. [Ver el manual archivado 3.9.7 (chino)](https://mulimgviewer.readthedocs.io/zh-cn/docs-v3.9.7-r1/)."

@@ -9,8 +9,8 @@ msgstr "With the pointer over the image area, use the wheel to pan vertically an
 msgid "工具栏、菜单与快捷键"
 msgstr "Toolbar, menus and shortcuts"
 
-msgid "主窗口上方是 File、Edit、Help 三个菜单，下一行是工具栏。下图保留了完整窗口，可按从左到右的顺序对照按钮。"
-msgstr "The main window has three menus, File, Edit and Help, with the toolbar immediately below. Read the controls in the screenshot from left to right."
+msgid "主窗口顶部的 **Language** 菜单用各语言的本地名称列出选项，选择后立即切换。首次启动和恢复默认设置使用英语。关闭时会保存当前语言，手动保存和加载配置也会保存和恢复这项选择。下图为英文界面。"
+msgstr "Choose a language by its native name in the **Language** menu. The change takes effect immediately. First launch and Reset use English. Your choice is saved on exit and in manual configuration snapshots. The screenshot shows the English interface."
 
 msgid "![主窗口全貌：顶部菜单与工具栏、中央双视频视图、右侧设置及底部状态栏](../media/input-window.png)"
 msgstr "![Full window with menus and toolbar above two clips, settings on the right and status below](../media/input-window.png)"
@@ -155,3 +155,6 @@ msgstr "Right-click a target to refresh, turn pages, save, or use **Select image
 
 msgid "单击画面后，从左到右读状态栏：第一栏是当前模式和运行状态；第二栏是页码、来源内的位置及已选框；第三栏是输入模式、来源路径和视频时间；第四栏是输出目录或保存进度。路径被截断时将鼠标悬停在对应栏；要复制路径，按 **F2**。"
 msgstr "After clicking an image, read the status bar from left to right: mode and activity; page, position and selected box; input mode, source path and video time; output folder or save progress. Hover over a truncated field for the full text. Press **F2** to access path copying."
+
+msgid "主窗口全貌：顶部菜单与工具栏、中央双视频视图、右侧设置及底部状态栏"
+msgstr "Full window with menus and toolbar above two clips, settings on the right and status below"

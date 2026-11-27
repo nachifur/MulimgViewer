@@ -1,0 +1,268 @@
+msgid ""
+msgstr ""
+"Language: pcm\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "图像与视频浏览"
+msgstr "Browse pictures and videos"
+
+msgid "第一次并排播放两段视频"
+msgstr "Di video side by side"
+
+msgid "录屏保留窗口标题栏、工具栏、设置区和状态栏。首次跟做时，若已有自己的配置，可在 **Configuration** 点 **Save** 留一份快照，再点 **Reset** 从默认布局开始；结束后点 **Load** 取回。开启 **Fit window to image** 和 **Title**，保留 **Auto title**。每个案例给出输入模式和需改的参数，改完按 **Ctrl+R**。控件位置见[设置栏参考](settings.md)。"
+msgstr "Di recording include di title bar, toolbar, settings and status bar To follow from di default, save your current settings wit di current settings wit di current settings wit di current settings wit di current settings wit di current settings wit di current settings wit di current settings wit di current settings wit di current settings wit di current settings wit di current settings wit di current settings wit di current settings wit di current settings wit di current settings wit di current settings wit di current settings wit di current settings wit di current settings wit di current settings wit di current settings wit di current settings wit di current settings wit di current settings wit di current settings wit di current settings wit di current settings wit di current settings wit di current settings wit di current settings wit di current settings wit di current settings wit di current settings wit di current settings wit di current settings wit di current settings wit di current settings wit di current settings wit di current settings wit di current settings wit di current settings wit di current settings wit **Di Configuration**Di link go click , then click click **Dem Reset**. For use **Di latest** Di snapshot go restore di snapshot Di Enable **For fit window to image** Di awa and di awa **Di title wey dey title** We dey keep e dey keep and keep **As Auto title** Di enabled Di example give dia input mode and settings Di Press Press **E dey Ctrl+R** Di editor dey editing Dem see di following di e [Di settings reference](settings.md) For control locations"
+
+msgid "展开右侧 **Input & Playback**，勾选 **Video mode**。在工具栏选择 **Parallel auto**。"
+msgstr "Di Expand **Di Input & Playback**Di enable , enable , enable **Di video mode**Di choice wey dey , and choose choose , and choose choose **As e dey connected auto** Di toolbar dey open on di toolbar"
+
+msgid "在 **Layout & Display** 将 **Page** 设为 `1,2`（一行两列），**Per source** 设为 `1,1`。在 **Input & Playback** 取消 **Multiple frames per source** 和 **Play sources sequentially**。"
+msgstr "For di latest **Di Layout & Display**Di set , set set **Di homepage** Di awa e dey reach `1,2` Dem (one row, two columns) and dem (one row, two columns) and dem (one row, two columns) and and two columns **Di source dey source** Di awa e dey reach `1,1`. For di latest **Di Input & Playback**Clear , clear , clear **One frame per source** Di awa and di awa **play source sequentially**."
+
+msgid "点击工具栏的文件夹，选择仓库中的 `docs/media/example-videos`。按 **Ctrl+R** 应用布局。左格为猫咪（Cat.mp4），右格为海上日落（Sunset.mp4）。在线阅读时可下载 [Cat.mp4](../media/example-videos/Cat.mp4) 和 [Sunset.mp4](../media/example-videos/Sunset.mp4)，放入同一空目录后打开。"
+msgstr "Di toolbar folder and open di toolbar folder and open di toolbar folder and open di toolbar folder `docs/media/example-videos` Di repository dey dey repository Di Press Press **E dey Ctrl+R** Di layout dey apply di layout Di Cat.mp4 appear on di left and Sunset.mp4 on di right If reading online, download online [E.mp4](../media/example-videos/Cat.mp4) Di awa and di awa [Dem Sunset](../media/example-videos/Sunset.mp4) One empty folder and open am"
+
+msgid "点 **>** 后点 **▶** 向前播放；点 **<** 后再点 **▶** 则向后播放。按 **Esc** 暂停。页码从 1 开始，可用滑块跳转。修改多个布局或算法参数后，统一刷新即可。"
+msgstr "Di awa visitor **>** Di e no dey tok **▶** Di play forward, or e go play forward, or or play forward **<** Di e no dey tok **▶** Di goal wey dey play backward Di Press Press **Ec Esc Esc** Di pause to pause Di page number start for 1. Di slider to jump For editing several layout or algorithm settings, refresh once to apply dem together"
+
+msgid "![并行播放示例：每一页保留左右两个来源，同时更新帧](../media/parallel-playback.gif)"
+msgstr "![Di Parallel playback wit both sources wey dey advancing on each page](../media/parallel-playback.gif)"
+
+msgid "并行播放示例：每一页保留左右两个来源，同时更新帧"
+msgstr "Di Parallel playback wit both sources wey dey advancing on each page"
+
+msgid "要复现动图的尺寸，在 **Layout & Display** 将 **Display scale** 设为 `1,1`（两个演示片段均为 416 × 416），**Gaps (X,Y for each level)** 填 `8,8,6,6,0,0,0,0,0,0`，勾选 **Image**、**Title** 和 **Fit window to image**，取消 **Magnifier**，在 **Titles** 保留 **Auto title**，再按 **Ctrl+R**。画布中应出现 Cat、Sunset 两个标题；较矮的窗口可滚动右栏查看其余参数。动图逐页展示前五页，帧间停留时间用于阅读。"
+msgstr "To match di animation, set di animation, set di set **Di Display scale scale** Di awa e dey reach `1,1` For di economy **Di Layout & Display** Di clips dey 416 × 416 E don enter `8,8,6,6,0,0,0,0,0,0` For di e no dey necessary **E, Y for each level)**. Di Enable **Di image wey dey graphic**, **Di title wey dey title**Di , and and and and **For fit window to image**Clear , clear , clear **As e dey Magnifier**Di leave , leave leave **As Auto titles → Auto title** Di press enabled, and press press **E dey Ctrl+R**. Di title go read Cat and Sunset One Scroll di sidebar for shorter window Di animation pause on each of di first five pages for readability"
+
+msgid "选对输入和布局"
+msgstr "Di input mode and layout choose input mode and layout"
+
+msgid "工具栏模式"
+msgstr "Di Toolbar mode mode"
+
+msgid "图像输入"
+msgstr "As image input"
+
+msgid "视频输入"
+msgstr "Di video input"
+
+msgid "适用场景"
+msgstr "But wia to use am"
+
+msgid "Sequential"
+msgstr "Di Sequential Sequential"
+
+msgid "单个图像目录"
+msgstr "One image folder"
+
+msgid "单个视频文件"
+msgstr "One video file file"
+
+msgid "浏览一组照片或检查一个视频"
+msgstr "One photo set or inspect one video"
+
+msgid "Parallel auto"
+msgstr "As e dey connected auto"
+
+msgid "含多个来源子目录的父目录"
+msgstr "A parent folder wey dey contain source folders"
+
+msgid "含多个视频的目录"
+msgstr "A folder wey dey containing multiple videos"
+
+msgid "同一位置对照；图像来源宜使用对应文件名"
+msgstr "Di positions dey compare corresponding position Di matching filenames wey dey across image source work best."
+
+msgid "Parallel manual"
+msgstr "Di reverse manual manual"
+
+msgid "逐个选择来源目录"
+msgstr "One source folder individually"
+
+msgid "逐个选择视频"
+msgstr "We go choose video individually"
+
+msgid "只比较部分来源或调整来源顺序"
+msgstr "Di subset of sources or change dia order"
+
+msgid "Image/Video File List"
+msgstr "Di image/Video file list"
+
+msgid "指定图片清单"
+msgstr "Di image file list"
+
+msgid "指定视频清单"
+msgstr "A video file list"
+
+msgid "重现固定输入。可从仓库的 `auto_test_scripts/assets/lists/` 打开 TXT 示例，相对路径以清单所在目录为基准；也支持 CSV"
+msgstr "Di fixed selection Di TXT example from TXT example from TXT example from `auto_test_scripts/assets/lists/`. Di Relative path resolve from di list’s directory Di CSV dey also support"
+
+msgid "**Page** 控制每页的行列，`-1,-1` 请求自动布局。**Multiple frames per source** 可在每个来源内连续显示多项，例如 **Per source** 为 `1,3` 时横排三个位置；**Play sources sequentially** 把来源串起来依次浏览。后者也改变挑图范围。"
+msgstr "**Di homepage** Di page dey set rows and columns per page For use `-1,-1` Di default layout for automatic layout **One frame per source** For example three side by side wit side wit side wit side wit side wit side wit side wit side wit side wit side wit side wit side wit side wit side wit side wit side wit side wit side wit side wit side wit side wit side wit side wit side wit side wit side wit side wit side wit side wit side wit side wit side wit side wit side wit side wit side wit side wit side wit side wit side wit side wit side wit side wit side wit side wit side wit side wit side wit side wit side wit side wit side wit side wit side wit side wit side wit side wit side wit side wit side wit side wit side wit side wit side wit side wit side wit side wit side wit side wit side wit side wit side wit side wit side wit side wit side wit side wit side wit side wit side wit side wit side wit side wit side wit side wit side wit side wit side **Di source dey source** As dem set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to `1,3`. **play source sequentially** Di source dey play one source after another and also change which image dey selected for export"
+
+msgid "在同一页比较连续帧"
+msgstr "Di consecutive frame for one page"
+
+msgid "继续使用 Cat 和 Sunset。勾选 **Multiple frames per source**，关闭 **Play sources sequentially**。保持 **Page** 为 `1,2`，将 **Per source** 设为 `1,3`、**Display scale** 设为 `0.35,0.35`、**Skip frames** 设为 `0`。按 **Ctrl+R** 后翻页。左边三格来自 Cat，右边三格来自 Sunset，每组三个帧号连续。"
+msgstr "For Cat and Sunset open, enable enable Cat and Sunset open, enable enable Cat and Sunset open, enable enable Cat and Sunset open, enable enable Cat and Sunset open, enable enable Cat and Sunset open, enable enable Cat and Sunset open **One frame per source** Di very clear and clear **play source sequentially**. We dey Keep catch **Di homepage** Di awa wey dey apun `1,2`Di set , set set **Di source dey source** Di awa e dey reach `1,3`, **Di Display scale scale** Di awa e dey reach `0.35,0.35` Di awa and di awa **As frames dey skip frame frame** Di awa e dey reach `0`. Di Press Press **E dey Ctrl+R** Di page dey advance and advance a page Di left three frame belong to Cat and di right three to Sunset Di frame numbers dey consecutive for each group."
+
+msgid "![开启每路多帧、修改行列并翻页](../media/walkthrough-frames.gif)"
+msgstr "![Di enable multiple frame per source, change di grid and advance page](../media/walkthrough-frames.gif)"
+
+msgid "开启每路多帧、修改行列并翻页"
+msgstr "Di enable multiple frame per source, change di grid and advance page"
+
+msgid "<a name=\"readme-compare-details\"></a>"
+msgstr "<a name=\"readme-compare-details\"></a>"
+
+msgid "给两个来源放大同一处细节"
+msgstr "Di same detail for two sources for two sources"
+
+msgid "复现下图：取消 **Video mode**，用 **Parallel auto** 打开仓库的 `docs/media/example-images`。其中两个子目录各有一张 200 × 200 图片。在线阅读时也可下载 [来源 01](../media/example-images/01/00.png) 和 [来源 02](../media/example-images/02/00.png)，分别存为 `example-images/01/00.png` 与 `example-images/02/00.png`。将 **Page** 设为 `1,2`、**Image unit** 设为 `3,1`、**Display scale** 设为 `1,1`，勾选 **Image**、**Title** 和 **Fit window to image**，保留 **Auto title**，按 **Ctrl+R**。两项的标题分别为来源目录名 01 和 02。"
+msgstr "To reproduce di example, clearly **Di video mode** Di use and use use **As e dey connected auto** For open open to open open to open `docs/media/example-images`. Di subfolder contains one 200 × 200 image Di readers go download online readers [As e dey source](../media/example-images/01/00.png) Di awa and di awa [E dey source](../media/example-images/02/00.png) As dem save dem as dem save dem as dem save dem `example-images/01/00.png` Di awa and di awa `example-images/02/00.png`. Di Set Set **Di homepage** Di awa e dey reach `1,2`, **Di image unit wey dey display** Di awa e dey reach `3,1`Di , and and and and **Di Display scale scale** Di awa e dey reach `1,1`. Di Enable **Di image wey dey graphic**, **Di title wey dey title**Di , and and and and **For fit window to image**E keep , keep , keep , keep , keep , keep , keep , keep , keep , keep , keep , keep , keep , keep , keep , keep , keep , keep , keep , keep , keep , keep , keep , keep , keep , keep , keep , keep , keep , keep , keep , keep , keep , keep , keep , keep , keep , keep , keep , keep , keep , keep , keep , keep , keep , keep , keep , keep , keep , keep , keep , keep , keep , keep , keep , keep , keep , keep , keep , keep **As Auto title** Di press enabled, and press press **E dey Ctrl+R**. Di title show di source folder, 01 and 02."
+
+msgid "开启 **Layout & Display → Magnifier** 后刷新，点工具栏放大镜。在左图建筑外墙上按住鼠标拖出矩形并松开。两张图会同时出现框，下方各显示来自自己来源的局部。"
+msgstr "Di Enable **Di Magnifier**Di toolbar magnifier Di drag rectangle over di facade for di left image and release. Di image show box and its own detail view underneath"
+
+msgid "![在左图建筑外墙上画框，松开后两个来源同时显示各自框内的细节](../media/walkthrough-magnifier.gif)"
+msgstr "![Di facade for di left image and release to see di corresponding detail from each source.](../media/walkthrough-magnifier.gif)"
+
+msgid "在左图建筑外墙上画框，松开后两个来源同时显示各自框内的细节"
+msgstr "Di facade for di left image and release to see di corresponding detail from each source."
+
+msgid "找到某一张图"
+msgstr "For a particular image"
+
+msgid "用 **Parallel auto** 打开上例的 `example-images`，将 **Page** 设为 `1,2`。两张照片都叫 `00.png`。单击右图，按 **F2** 打开索引表，在 **Visual items** 中点击 **Go to current ID**。选中的应是 ID 2（第 1 页、第 1 行、第 2 列），**Original source** 末尾应为 `02/00.png`。点击 **Copy original source** 可复制路径。"
+msgstr "Di same thing `example-images` For di economy **As e dey connected auto** For di clash of us **Di homepage** As dem set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to set to `1,2`. Dem don named two photos `00.png`. Di right photo, press di right photo **For F2**Di click , and click click **Di current ID go go current ID** For di economy **Di Visual items wey dey useful**. Di ID 2 go select (page 1, row 1, column 2), and and and and **For source source** We go end for di beginning `02/00.png`. Di awa visitor **Di original source** Di path dey copy di path"
+
+msgid "![从主窗口右图定位到索引表中的来源 02](../media/walkthrough-index.gif)"
+msgstr "![Di source 02 for di index from di right photo for di main window](../media/walkthrough-index.gif)"
+
+msgid "从主窗口右图定位到索引表中的来源 02"
+msgstr "Di source 02 for di index from di right photo for di main window"
+
+msgid "双击索引行可跳回对应页。要按页或按来源查找，切换到 **Pages** 或 **Sources**。视频帧路径可能先于文件生成；可将当前视图导出为 Excel。"
+msgstr "Di double-click row to return to its page Di Switch to Switch to Switch **Di pages wey dey published** Di e no go dey **Di Sources dey reach** Di website or source dey search by page or source A video frame path go dey list before di file exist Di current view to Excel for offline inspection"
+
+msgid "<a name=\"readme-select-export\"></a>"
+msgstr "<a name=\"readme-select-export\"></a>"
+
+msgid "挑图和导出"
+msgstr "Select and export images"
+
+msgid "在 **Save Settings** 选择输出目录、输出模式、格式和比例。点击工具栏保存图标或 **Ctrl+S** 后，后台按点击时的设置生成文件，右侧状态栏显示进度。"
+msgstr "For di latest **Di save**Di output folder, content, format, and scale. Di toolbar save icon or press di toolbar **E dey Ctrl+S**. Di background export use di settings for di time of di click, wit progress show on di right of di status bar."
+
+msgid "输出选项"
+msgstr "Di Output option option option"
+
+msgid "得到什么"
+msgstr "Di saving wey dey save"
+
+msgid "Stitch"
+msgstr "Wey dey Stitch Stitch"
+
+msgid "最终画面在 `composed`，各算法的拼接图在 `algorithms/<算法>/stitch_images`"
+msgstr "Di final page for di final page for di final page `composed` Di algorithm’s stitch panel for di panel wey dey stitch panel for each algorithm’s stitch panel for di panel for each algorithm’s stitch panel for di panel for each algorithm’s stitch panel for each algorithm’s stitch panel for each algorithm’s stitch panel for di panel for each algorithm’s stitch panel for each algorithm’s stitch panel for each algorithm’s stitch panel for di panel for each algorithm’s stitch panel for each algorithm’s stitch panel for each algorithm’s stitch panel for each algorithm’s stitch panel for each algorithm’s stitch panel for each algorithm’s stitch panel for each algorithm’s stitch panel `algorithms/<algorithm>/stitch_images`."
+
+msgid "Selected images"
+msgstr "Wey dey Selected images"
+
+msgid "选择结果在各算法的 `select_images` 中，按来源归档"
+msgstr "Di Selected images for each algorithm’s `select_images` Di folder wey dey group by source"
+
+msgid "Magnifiers"
+msgstr "Di Magnifiers Magnifiers"
+
+msgid "输出放大区域和带框图。组合模式下，没有框会跳过这一项，其他已选输出照常保存"
+msgstr "E dey magnified regions and images wit box. Di oda request output and no boxes, di oda request output still saved"
+
+msgid "**挑选规则。** 单击确定位置，再保存 **Selected images**；右键 **Select image** 是该操作的快捷方式。Parallel auto/manual 会从各来源选同一位置，在 Multiple frames per source 下会保留点中的来源内偏移。Sequential、File List 和 Play sources sequentially 只挑当前项；显示算法时也可输出相应处理结果。图像模式的移动选项会移动源文件，首次尝试建议使用副本；视频模式不会移动源视频。"
+msgstr "**Di Selection rules** Di position and save a position and save **Wey dey Selected images**Di use , or use use use use , or use use use use **Select image** Di context menu Di Parallel auto/manual select di corresponding position from every source, retaining di clicked offset wit Multiple frame per source. Di current item only. Di Visible algorithm results go also export Wey move file move original image files, so try am on copies first Di source video stay for place"
+
+msgid "**跟做一次并行挑图。** 用 **Parallel auto** 打开 `example-images`，关闭 **Play sources sequentially** 和 **Move files**。选择空输出目录，**Content** 选 **Selected images**，**Format** 选 **png**。点右图后按 **Ctrl+S**。等右下角提示保存成功，再用 **Parallel auto** 打开输出中的 `image/algorithms/original/select_images`。应同时看到来自 01 和 02 的照片。"
+msgstr "**Di pair dey select.** Naija Open `example-images` For di economy **As e dey connected auto** Di very clear and clear **play source sequentially** Di awa and di awa **Di file no dey move files**. Di empty output folder, **Wey dey Selected images** E dey under armour **Di Content**Di , and and and and **Di png** E dey under armour **For format**. Di right photo and press di right photo and press di right photo **E dey Ctrl+S**. Di lower-right status field confirm success, open open `image/algorithms/original/select_images` Di output for di output for di output for di output for di output for di output for di output for di output for di output for di output for di output for di output for di output **As e dey connected auto**. Di 01 and di 02 photo go appear"
+
+msgid "![保存一个位置，再打开输出目录核对两个来源](../media/walkthrough-selection.gif)"
+msgstr "![Di output to verify both sources and reopen di output to verify both sources](../media/walkthrough-selection.gif)"
+
+msgid "保存一个位置，再打开输出目录核对两个来源"
+msgstr "Di output to verify both sources and reopen di output to verify both sources"
+
+msgid "导出画质和暂停批量保存见{ref}`保存设置 <export-settings>`。"
+msgstr "As e dey see {ref}`Di save <export-settings>` E dey export quality and pausing batch"
+
+msgid "用同一张原图检查算法效果"
+msgstr "Di algorithm wey dey use one original image"
+
+msgid "取消 **Video mode**，用 **Sequential** 打开 `example-images/01`。选择 **Gaussian Blur**，勾选 **Selected** 和 **Show original panel**。将 **Algorithms** 设为 `1,2`、**Page** 设为 `1,1`，刷新。左右两格现在来自同一张街景照片。开启 **Magnifier** 并刷新，在窗框上取样，比较左侧原图的细线和右侧平滑后的边缘。录屏最后选择 **Stitch** 和 **png**，指定输出目录，按 **Ctrl+S** 导出。"
+msgstr "Clear **Di video mode** Di open and open `example-images/01` For di economy **Di Sequential Sequential**. Di Choose Choose Choose **Di Gaussian Blur**Di enable , enable , enable **For Selected** Di awa and di awa **Dem show original panel**Di set , set set **Di Algorithms** Di awa e dey reach `1,2` Di awa and di awa **Di homepage** Di awa e dey reach `1,1`Di refresh Dem don use di same street photo Di Enable **As e dey Magnifier**Di window frame wey dey refresh, and box window frame to compare di fine line on di left wit di smoother edges on di right. Di recording ends by choosing di recording ends by choosing **Wey dey Stitch Stitch** Di awa and di awa **Di png**Di output folder and pressing output folder and pressing output folder and pressing output folder and pressing output folder and pressing output folder and pressing output folder and pressing output folder and pressing output folder and pressing output folder **E dey Ctrl+S**."
+
+msgid "![将同一张照片的原图与模糊结果并排，放大窗框并导出](../media/walkthrough-algorithm.gif)"
+msgstr "![Di original and blurred photo, magnify di window and export](../media/walkthrough-algorithm.gif)"
+
+msgid "将同一张照片的原图与模糊结果并排，放大窗框并导出"
+msgstr "Di original and blurred photo, magnify di window and export"
+
+msgid "导出的拼接 PNG 如下。上排对照整图，下排对照同一个窗框；图中保留了来源标题和取样框。"
+msgstr "Di exported stitch dey show below Di full images above and di same window detail below Dem include."
+
+msgid "![拼接输出 PNG：左列原图、右列 Gaussian Blur，下排为两列各自的放大细节](../media/paper-comparison.png)"
+msgstr "![Di original on di left, Gaussian Blur on di right, corresponding detail crops below](../media/paper-comparison.png)"
+
+msgid "拼接输出 PNG：左列原图、右列 Gaussian Blur，下排为两列各自的放大细节"
+msgstr "Di original on di left, Gaussian Blur on di right, corresponding detail crops below"
+
+msgid "在一页对齐算法、来源、时间和局部细节"
+msgstr "Di Align algorithm, sources, time and detail for one page"
+
+msgid "用 **Video mode → Parallel auto** 打开 Cat 和 Sunset，勾选 **Multiple frames per source**。在 **Layout & Display** 从上到下将 **Algorithms、Page、Per source、Image unit、Magnifiers** 设为 `2,1`、`1,2`、`1,2`、`3,1`、`1,2`。勾选 **Image、Magnifier、Title**，将 **Display scale** 设为 `0.3,0.3` 后刷新。在猫咪图上拖出第一个放大框，再到另一处右键选 **Create zoom box here**。选中 **Gaussian Blur**，勾选 **Selected** 和 **Show original panel** 后刷新。"
+msgstr "Na Open Cat and Sunset for Sunset for Sunset for Sunset for Sunset for Sunset for Sunset for Sunset for Sunset for Sunset for Sunset for Sunset for Sunset for Sunset for Sunset for Sunset for Sunset for Sunset for Sunset for Sunset for Sunset for Sunset for Sunset for Sunset for Sunset for Sunset for Sunset for Sunset for Sunset for Sunset for Sunset for Sunset for Sunset for Sunset for Sunset for Sunset for Sunset for Sunset for Sunset for Sunset for Sunset for Sunset for Sunset for Sunset for Sunset for Sunset for Sunset for Sunset for Sunset for Sunset for Sunset for Sunset for Sunset for Sunset for Sunset for Sunset for Sunset for Sunset for Sunset **Di video mode → Parallel auto** Di enable and enable enable **One frame per source**. For di latest **Di Layout & Display**Di set , set set **For Algorithms, Page, Per source, Image unit, Magnifiers** Di awa e dey reach `2,1`, `1,2`, `1,2`, `3,1` Di awa and di awa `1,2` Di respectively Di Enable **Di image, Magnifier, Title, Title, Magnifier, Title, Title, Title, Magnifier, Title, Title, Title,**Di set , set set **Di Display scale scale** Di awa e dey reach `0.3,0.3` Di refresh and refresh Di first magnifier box over di cat, then right-click another detail and choose one detail and choose another detail and choose another detail and choose another detail and choose another detail and choose another detail and choose another detail and choose choose another detail and choose choose another detail and choose choose another detail and choose choose another detail and choose choose another detail and choose choose another detail and choose choose another detail and choose choose another detail and choose choose another detail and choose choose another detail and choose choose another detail and choose choose another detail and choose choose another detail and choose choose another detail and choose choose another detail and choose **Na create zoom box here**. Di Choose Choose Choose **Di Gaussian Blur**Di enable , enable , enable **For Selected** Di awa and di awa **Dem show original panel**Di refresh"
+
+msgid "![依次加入连续帧、两个取样框和第二个算法面板](../media/walkthrough-grid.gif)"
+msgstr "![As consecutive frame, two sample box and second algorithm panel](../media/walkthrough-grid.gif)"
+
+msgid "依次加入连续帧、两个取样框和第二个算法面板"
+msgstr "As consecutive frame, two sample box and second algorithm panel"
+
+msgid "核对最后的画面：上下比较处理前后，每排左边是 Cat，右边是 Sunset。每个来源有两帧，每帧下方并列两个局部。这样一页共有 8 个整帧视图和 16 个局部视图；翻页后，同一位置仍可对应比较。"
+msgstr "In di final layout, compare original and processed views vertically. Di row don get Cat on di left and Sunset on di right, wit two frame per source and two details below each frame. Di don give eight full frame views and sixteen details Di position dey consistent as you advance"
+
+msgid "播放卡顿时看什么"
+msgstr "Di Diagnose slow playback"
+
+msgid "把鼠标放在 **Performance & Cache → Power mode** 上，对比实际播放 FPS 与供给 FPS（后台产出可显示页面的速度）。每秒显示一页可以同时更新多路视频，不能把页率乘以来源数当作单路帧率。"
+msgstr "One Hover over over **Power mode** Di pages produce per second Di video go advance on one page Di multiplyin di page rate by di number of sources go overstate di frame rate of an individual video."
+
+msgid "现象"
+msgstr "Di symptoms wey dey Symptom"
+
+msgid "可先调整"
+msgstr "How to check di check"
+
+msgid "播放均匀，但比预期慢"
+msgstr "Di Playback dey steady but slower than expected"
+
+msgid "查看 **Interval (s)**。手动设定是切换间隔的下限，例如 1 秒最多约每秒翻一页；需要更快时先减小它"
+msgstr "E don check di latest **Di Interval (s)**Di minimum time wey dey between pages One second limit playback to about one page per second Di playback dey lower for faster playback"
+
+msgid "跳转后首屏慢，随后恢复"
+msgstr "Di first page dey slow after seek, then playback recover"
+
+msgid "跳到长视频深处需要寻帧并准备当前页；先用较小预览比例，比较各来源的分辨率和编码"
+msgstr "A deep seek requires locating frame and preparing di current page. Di smaller preview and compare source resolution and codecs."
+
+msgid "供给持续跟不上"
+msgstr "Di Supply dey consistently lags behind playback"
+
+msgid "从 Balanced 切到 Performance 或 Maximum；如果仍受限，减小预览尺寸、可见算法数或每页图像数"
+msgstr "Di Switch from Balanced to Performance or Maximum. If supply still lags, reduce di preview size, visible algorithm count, or items per page."
+
+msgid "大体流畅，偶尔等下一页"
+msgstr "Mostly smooth, wit occasional wait for di next page"
+
+msgid "**Cache frames** 控制近区，乘以 **Cache multiplier** 得到外层范围。适当增大可利用空闲资源提前准备，代价是更多磁盘读写和空间"
+msgstr "**Di Cache frame frames** Di inner radius Di Multiply am by e dey Multiply am **Di multiplier multiplier** Di outer radius dey dey for di outer radius A small window fit use idle capacity to prefetch more pages for di cost of disk space and I/O."
+
+msgid "Eco、Balanced、Performance、Maximum 提供不同的 CPU 和内存预算。持续速度还取决于解码、算法、拼接和磁盘。缓存会随浏览位置更新；需要长期保留的结果请导出。"
+msgstr "Di Eco, Balanced, Performance, and Maximum offer different CPU and memory budgets. Di Sustained speed also depend on decoding, algorithms, stitching, and disk I/O. Di cache follow your browsing position Di result wey dey need to keep"

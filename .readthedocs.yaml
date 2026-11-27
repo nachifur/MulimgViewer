@@ -4,6 +4,12 @@ version: 2
 
 build:
   os: ubuntu-22.04
+  jobs:
+    post_checkout:
+      - |
+        if [ "$READTHEDOCS_PROJECT" = "mulimgviewer-en" ]; then exit 183; fi
+    post_build:
+      - python tools/build_translations.py
   tools:
     python: "3"
 

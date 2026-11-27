@@ -57,7 +57,7 @@ msgstr "Frame extraction, long-video seeking, and video cache scheduling"
 
 #: ../../dev/dev.md
 msgid "`video_source.py`、`video_decoder.py`、`video_manager.py`"
-msgstr ""
+msgstr "`video_source.py`, `video_decoder.py`, `video_manager.py`"
 
 #: ../../dev/dev.md
 msgid "图像异步显示、播放节奏、任务预算"
@@ -65,7 +65,7 @@ msgstr "Asynchronous image display, playback timing, and task budgets"
 
 #: ../../dev/dev.md
 msgid "`image_pipeline.py`、`playback_controls.py`、`playback_policy.py`、`pipeline_executor.py`"
-msgstr ""
+msgstr "`image_pipeline.py`, `playback_controls.py`, `playback_policy.py`, `pipeline_executor.py`"
 
 #: ../../dev/dev.md
 msgid "算法执行、布局、缓存路径"
@@ -73,7 +73,7 @@ msgstr "Algorithm execution, layout, and cache paths"
 
 #: ../../dev/dev.md
 msgid "`custom_pipeline.py`、`render_layout.py`、`cache_layout.py`"
-msgstr ""
+msgstr "`custom_pipeline.py`, `render_layout.py`, `cache_layout.py`"
 
 #: ../../dev/dev.md
 msgid "后台保存与编码"
@@ -81,7 +81,7 @@ msgstr "Background saving and encoding"
 
 #: ../../dev/dev.md
 msgid "`export_controller.py`、`image_encoding.py`"
-msgstr ""
+msgstr "`export_controller.py`, `image_encoding.py`"
 
 #: ../../dev/dev.md
 msgid "配置、右侧设置栏、状态栏和索引表"
@@ -89,7 +89,7 @@ msgstr "Configuration, settings sidebar, status bar, and index table"
 
 #: ../../dev/dev.md
 msgid "`configuration.py`、`settings_panel.py`、`status_bar.py`、`index_table.py`"
-msgstr ""
+msgstr "`configuration.py`, `settings_panel.py`, `status_bar.py`, `index_table.py`"
 
 #: ../../dev/dev.md:18
 msgid "修改 GUI"
@@ -298,7 +298,7 @@ msgstr "Purpose"
 
 #: ../../dev/dev.md
 msgid "`report.html`"
-msgstr ""
+msgstr "`report.html`"
 
 #: ../../dev/dev.md
 msgid "查看功能分组、案例状态、参数子案例和错误堆栈。"
@@ -306,7 +306,7 @@ msgstr "Browse feature groups, case and subtest results, and tracebacks."
 
 #: ../../dev/dev.md
 msgid "`report.json`"
-msgstr ""
+msgstr "`report.json`"
 
 #: ../../dev/dev.md
 msgid "核对提交、源码指纹、测试环境和完整结果。"
@@ -314,7 +314,7 @@ msgstr "Check the commit, source fingerprint, environment, and full results."
 
 #: ../../dev/dev.md
 msgid "`junit.xml`"
-msgstr ""
+msgstr "`junit.xml`"
 
 #: ../../dev/dev.md
 msgid "供 CI 和 JUnit 工具解析结果。"
@@ -322,7 +322,7 @@ msgstr "Provide machine-readable results for CI and JUnit tools."
 
 #: ../../dev/dev.md
 msgid "`summary.md`"
-msgstr ""
+msgstr "`summary.md`"
 
 #: ../../dev/dev.md
 msgid "查看失败、跳过和环境错误摘要。"
@@ -330,7 +330,7 @@ msgstr "Read a summary of failures, skips, and environment errors."
 
 #: ../../dev/dev.md
 msgid "`test_*.log`"
-msgstr ""
+msgstr "`test_*.log`"
 
 #: ../../dev/dev.md
 msgid "查看对应测试模块的执行日志。"
@@ -516,3 +516,42 @@ msgstr "Prepare a release"
 
 msgid "维护者请按[新版本构建与发布](release.md)准备发布提交、验证安装包并推送正式标签。"
 msgstr "See [Build and publish a release](release.md) to prepare the release commit, verify packages and push the release tag."
+
+msgid "新增界面语言时，在 `src/mulimgviewer/src/languages.py` 登记稳定的语言代码、菜单名称和手册路径，在 `src/mulimgviewer/src/locales/<code>.json` 添加 UTF-8 译表。参考已有译表，保留英文键、格式占位符、快捷键和技术参数。运行配置回归测试，核对语言切换、设置保存与重置。"
+msgstr "Register a stable code, native menu name and guide path in `src/mulimgviewer/src/languages.py`. Add a UTF-8 catalog at `src/mulimgviewer/src/locales/<code>.json`. Preserve English keys, format fields, shortcuts and technical parameters. Run the configuration regressions for switching, saving and resetting languages."
+
+msgid "在清单指定的位置编写快速指南，运行 `python tools/release.py --prepare` 同步多语言文档入口。用 `python -m sphinx -W -b html -D language=ja docs docs/_build/html/ja` 可单独检查日语，替换语言代码即可检查其他语言。README 链接到同一入口。"
+msgstr "Write the quick start at the registered path and run `python tools/release.py --prepare` to sync the documentation directory. Preview Japanese with `python -m sphinx -W -b html -D language=ja docs docs/_build/html/ja`, substituting another language code as needed. Both READMEs link to the same directory."
+
+msgid "`video_source.py`、`video_decoder.py`、`video_manager.py`"
+msgstr "`video_source.py`、`video_decoder.py`、`video_manager.py`"
+
+msgid "`image_pipeline.py`、`playback_controls.py`、`playback_policy.py`、`pipeline_executor.py`"
+msgstr "`image_pipeline.py`、`playback_controls.py`、`playback_policy.py`、`pipeline_executor.py`"
+
+msgid "`custom_pipeline.py`、`render_layout.py`、`cache_layout.py`"
+msgstr "`custom_pipeline.py`、`render_layout.py`、`cache_layout.py`"
+
+msgid "`export_controller.py`、`image_encoding.py`"
+msgstr "`export_controller.py`、`image_encoding.py`"
+
+msgid "`configuration.py`、`settings_panel.py`、`status_bar.py`、`index_table.py`"
+msgstr "`configuration.py`、`settings_panel.py`、`status_bar.py`、`index_table.py`"
+
+msgid "`report.html`"
+msgstr "`report.html`"
+
+msgid "`report.json`"
+msgstr "`report.json`"
+
+msgid "`junit.xml`"
+msgstr "`junit.xml`"
+
+msgid "`summary.md`"
+msgstr "`summary.md`"
+
+msgid "`test_*.log`"
+msgstr "`test_*.log`"
+
+msgid "[多语言维护教程](localization.md)包括界面译表、完整手册、回归检查和 Read the Docs 发布流程。"
+msgstr "The [translation guide](localization.md) covers desktop catalogs, complete manuals, regression checks and publication on Read the Docs."

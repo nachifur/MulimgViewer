@@ -1,5 +1,6 @@
 """Video decoding, bounded caches, composition scheduling and performance metrics."""
 from .image_encoding import cache_extension, ffmpeg_jpeg_args, ffmpeg_jpeg_options, jpeg_quality
+from .localization import tr
 import threading
 from pathlib import Path
 import ffmpeg, os, time, math, sys
@@ -3068,7 +3069,7 @@ class VideoManager:
             try:valid=Path(path).is_file() and Path(path).suffix.lower() in self.VIDEO_EXTENSIONS
             except (OSError,ValueError,TypeError):valid=False
             if not valid:
-                return f'Not a supported video file: {path}. Turn off Video mode to open image directories'
+                return tr('Not a supported video file: {path}. Turn off Video mode to open image directories').format(path=path)
         return None
 
     def collect_video_paths(self, dlg, selection_type):
@@ -3102,11 +3103,11 @@ class VideoManager:
 
     def select_video(self, type=0, paths=None):
         '''Shared initialization flow across selection modes.'''
-        wildcard='Video files|'+';'.join('*'+suffix for suffix in self.VIDEO_EXTENSIONS)
+        wildcard=tr('Video files')+'|'+';'.join('*'+suffix for suffix in self.VIDEO_EXTENSIONS)
         if type==1:
-            dlg=wx.DirDialog(None,'Select folder containing videos',style=wx.DD_DEFAULT_STYLE)
+            dlg=wx.DirDialog(None,tr('Select folder containing videos'),style=wx.DD_DEFAULT_STYLE)
         elif type==0:
-            dlg=wx.FileDialog(None,'Choose video file','','',wildcard,wx.FD_OPEN|wx.FD_FILE_MUST_EXIST)
+            dlg=wx.FileDialog(None,tr('Choose video file'),'','',wildcard,wx.FD_OPEN|wx.FD_FILE_MUST_EXIST)
         candidates=list(paths if paths is not None else self.shared_config.real_video_path) if type==-1 else self.collect_video_paths(dlg,type)
         if type!=-1 and getattr(self,'_selection_cancelled',False):
             ui=self._ui()

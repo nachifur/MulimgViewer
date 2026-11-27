@@ -1,0 +1,67 @@
+msgid ""
+msgstr ""
+"Language: ja\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "待办与社区反馈"
+msgstr "開発計画とフィードバック"
+
+msgid "以下整理自 2026-11-25 核对的公开议题。功能建议仍在讨论，排期和进展以 [GitHub 开放议题](https://github.com/nachifur/MulimgViewer/issues?q=is%3Aissue+is%3Aopen) 为准。"
+msgstr "これらの公的な問題については2026年11月25日に検討されました. 提案は議論されている. フォローする [GitHub の問題を開く](https://github.com/nachifur/MulimgViewer/issues?q=is%3Aissue+is%3Aopen) 予定と進展について"
+
+msgid "待评估的功能建议"
+msgstr "特徴提案"
+
+msgid "用户希望完成的操作"
+msgstr "ユーザーが何をしたいのか"
+
+msgid "相关讨论"
+msgstr "議論"
+
+msgid "收藏一组输入路径，从最近访问记录重新打开，或恢复上次的浏览会话"
+msgstr "入力経路をグループにブックマークし,最近のソースを再開するか,ブラウジングセッションを再起動する."
+
+msgid "[#216 路径组与会话恢复](https://github.com/nachifur/MulimgViewer/issues/216)"
+msgstr "[#216 パスグループとセッション復元](https://github.com/nachifur/MulimgViewer/issues/216)"
+
+msgid "在界面中更方便地管理自定义函数"
+msgstr "インターフェースからカスタム機能を簡単に管理します."
+
+msgid "[#217 函数管理](https://github.com/nachifur/MulimgViewer/issues/217)"
+msgstr "[#217 機能管理](https://github.com/nachifur/MulimgViewer/issues/217)"
+
+msgid "为放大区域选择虚线边框"
+msgstr "放大機箱には,細紋の図を用い"
+
+msgid "[#215 放大框线型](https://github.com/nachifur/MulimgViewer/issues/215)"
+msgstr "[#15 箱ラインスタイル](https://github.com/nachifur/MulimgViewer/issues/215)"
+
+msgid "以项目为入口组织多个工作任务，并改进导出界面"
+msgstr "複数の課題をプロジェクトにまとめ,輸出インターフェースを改善する."
+
+msgid "[#206 多项目工作流](https://github.com/nachifur/MulimgViewer/issues/206)、[#205 导出界面](https://github.com/nachifur/MulimgViewer/issues/205)"
+msgstr "[#206 多プロジェクトワークフロー](https://github.com/nachifur/MulimgViewer/issues/206), [#205 エクスポートインターフェース](https://github.com/nachifur/MulimgViewer/issues/205)"
+
+msgid "在浏览器中使用查看器，或扩展音频处理能力"
+msgstr "ブラウザで視聴器を使用するか,オーディオ処理に拡張します."
+
+msgid "[#207 Web 界面](https://github.com/nachifur/MulimgViewer/issues/207)、[#162 音频处理](https://github.com/nachifur/MulimgViewer/issues/162)"
+msgstr "[#207 ウェブインターフェース](https://github.com/nachifur/MulimgViewer/issues/207), [#162 オーディオ処理](https://github.com/nachifur/MulimgViewer/issues/162)"
+
+msgid "使用反馈与已有功能"
+msgstr "ユーザーフィードバックと既存の機能"
+
+msgid "Ubuntu 下的滚轮缩放和图像拖动有单独的反馈帖。补充反馈时请附系统版本、输入模式和具体鼠标操作。[#87 Ubuntu 缩放](https://github.com/nachifur/MulimgViewer/issues/87)、[#115 拖动图片](https://github.com/nachifur/MulimgViewer/issues/115)"
+msgstr "Ubuntuでマウスホイールズームと画像ドラッグは別々のスレッドを持っています. 問題を報告する際には,OSバージョン,入力モード,マウスの正確なアクションを記載してください. [#87 Ubuntuで拡大](https://github.com/nachifur/MulimgViewer/issues/87), [#155 画像を引っ張る](https://github.com/nachifur/MulimgViewer/issues/115)"
+
+msgid "视频导入、自动播放与多视频并排对比已有操作示例。可先依照手册打开两段视频，再在原议题补充仍有困难的场景。[操作示例](../resources/usage.md)、[#53 视频并行对比](https://github.com/nachifur/MulimgViewer/issues/53)"
+msgstr "ビデオインポート,自動再生,並べ替えをカバーする 2 ビデオ の 案内 を 試し て,その 問題 に 関する 残り の 困難 を 説明 し て みてください. [歩行](../resources/usage.md), [#53 平行ビデオ比較](https://github.com/nachifur/MulimgViewer/issues/53)"
+
+msgid "中文界面需求和项目合作分别在对应议题讨论。[#55 中文界面](https://github.com/nachifur/MulimgViewer/issues/55)、[#7 招募合作者](https://github.com/nachifur/MulimgViewer/issues/7)、[#222 合作](https://github.com/nachifur/MulimgViewer/issues/222)"
+msgstr "中国語インターフェースや協力機会については,関連する議論を参照してください. [#55 中国語インターフェース](https://github.com/nachifur/MulimgViewer/issues/55), [#7 協力者を探す](https://github.com/nachifur/MulimgViewer/issues/7), [#222 協力](https://github.com/nachifur/MulimgViewer/issues/222)"
+
+msgid "查找已实现的功能"
+msgstr "すでに利用可能な機能を見つけ"
+
+msgid "定位图片、同步放大和成组挑图见[操作录屏](../resources/usage.md)。框线、标题和导出比例见[设置栏参考](../resources/settings.md)。历次变化见[更新记录](changelog.md)，早期建议的贡献者见[致谢](acknowledgements.md)。"
+msgstr "参照 [記録された作業流程](../resources/usage.md) 画像の位置付け,地域拡大とグループ選択のために 箱の概要,タイトルおよび輸出規模は [設定参照](../resources/settings.md). 参照 [変更記号](changelog.md) リリース履歴と [信用](acknowledgements.md) 早期の貢献について"

@@ -112,3 +112,42 @@ msgstr "Cat is on the left and Sunset on the right. Advance one page to move bot
 
 msgid "[下载与安装](resources/install.md) 选择系统对应的桌面包，或从源码安装"
 msgstr "[Download and install](resources/install.md) Choose a desktop bundle or install from source"
+
+msgid "[选择文档语言 · Choose your language](languages.md)"
+msgstr "[Choose your documentation language](languages.md)"
+
+msgid "Languages"
+msgstr "Languages"
+
+msgid "关闭"
+msgstr "Close"
+
+msgid "试试同步翻帧"
+msgstr "Step through both clips"
+
+msgid "上一帧"
+msgstr "Previous frame"
+
+msgid "下一帧"
+msgstr "Next frame"
+
+msgid "Cat 与 Sunset 同步画面"
+msgstr "Synchronized Cat and Sunset views"
+
+msgid "试试并行挑图"
+msgstr "Try picking a set"
+
+msgid "点选任一文件，查看两个来源会一起保存哪一张。"
+msgstr "Choose a file to see the matching selection from both sources."
+
+msgid "将一起保存"
+msgstr "Selected together:"
+
+msgid "功能亮点"
+msgstr "Feature highlights"
+
+msgid "恢复轮播"
+msgstr "Resume rotation"
+
+msgid "暂停轮播"
+msgstr "Pause rotation"

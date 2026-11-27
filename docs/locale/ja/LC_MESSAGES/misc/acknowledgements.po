@@ -1,0 +1,34 @@
+msgid ""
+msgstr ""
+"Language: ja\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "致谢"
+msgstr "謝辞"
+
+msgid "感谢 QQ 交流群里提供使用反馈的每一位成员，也感谢以下贡献者。"
+msgstr "QQグループで 意見を共有した皆さんにも そして以下の貢献者達にも感謝します"
+
+msgid "nothingeasy — 输入路径清单的导入与保存建议。"
+msgstr "輸入経路のリストを輸入し保存する提案."
+
+msgid "JuZiSYJ — 同步放大与带框原图导出建议。"
+msgstr "⁇  シンクロ化放大と原作を箱付きの輸出を提案した."
+
+msgid "ymingsu — 实现文件清单导入。"
+msgstr "導入されたファイルリストインポート."
+
+msgid "Faberman — 建议增加图像标题和放大图 1:1 输出，翻译并润色英文 README。"
+msgstr "ファバーマン  ⁇  画像タイトルと 1:1 の拡大器の輸出を提案し,英語README を翻訳・編集しました."
+
+msgid "stefanklut — 建议支持隐藏放大图边框。"
+msgstr "拡大する境界を隠す方法を提案した"
+
+msgid "FunkyKoki — 提出局部显示图像和放大图排布建议。"
+msgstr "FunkyKoki  ⁇  部分画像表示と追加拡大器のレイアウトを提案しました"
+
+msgid "wwhio — 放大框颜色设置。"
+msgstr "wwhio  ⁇  拡大ボックス色設定を提供した."
+
+msgid "wzy — 引入 CI/CD，搭建多语言 Read the Docs 网站，支持通过 pip 安装。"
+msgstr "⁇  CI/CDを導入し,多言語の読み書き文書をホストしてパイプインストールが有効になった."

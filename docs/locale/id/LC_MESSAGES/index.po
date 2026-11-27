@@ -1,0 +1,121 @@
+msgid ""
+msgstr ""
+"Language: id\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "安装与上手"
+msgstr "Memulai"
+
+msgid "操作参考"
+msgstr "Referensi penggunaan"
+
+msgid "开发与贡献"
+msgstr "Pengembangan dan kontribusi"
+
+msgid "版本与致谢"
+msgstr "Rilis dan penghargaan"
+
+msgid "Languages"
+msgstr "Bahasa"
+
+msgid "MulimgViewer 中文手册"
+msgstr "Panduan MulimgViewer"
+
+msgid "[选择文档语言 · Choose your language](languages.md)"
+msgstr "[Pilih bahasa dokumentasi Anda](languages.md)"
+
+msgid "**并行浏览，逐帧对比。**"
+msgstr "**Periksa di samping. Bandingkan frame per frame.**"
+
+msgid "在同一页对齐多个图像或视频来源，同步放大细节，将原图与算法结果一起导出。"
+msgstr "Aliansi gambar atau video dari beberapa sumber di satu halaman, memperbesar wilayah yang sama di seluruh sumber, dan ekspor asli bersama dengan hasil algoritma."
+
+msgid "[运行双视频示例](resources/usage.md)"
+msgstr "[Cobalah contoh video dua](resources/usage.md)"
+
+msgid "Cat 和 Sunset 并排翻页，右侧展开 Input & Playback。"
+msgstr "Cat dan Sunset maju berdekatan dengan Input & Playback terlihat."
+
+msgid "左格是 Cat，右格是 Sunset。单击下一页，两路同时前进一帧。"
+msgstr "Cat di sebelah kiri dan Sunset di kanan. Pergi ke depan satu halaman untuk memindahkan kedua klip ke depan dengan satu frame."
+
+msgid "**十张超 4K 图，只比同一处细节。**"
+msgstr "**Sepuluh gambar di luar 4K. Satu detail pada resolusi asli.**"
+
+msgid "在鸟头上画一次框，隐藏原图。十张 4608 × 2592 图像的同一块 160 × 160 像素区域并排铺开，沿鸟喙就能比较不同插值的边缘。"
+msgstr "Kotak kepala burung sekali dan sembunyikan gambar penuh. Bandingkan 160 × 160 piksel yang sama dari sepuluh gambar 4608 × 2592, mengikuti tepi bibir melalui metode interpolasi."
+
+msgid "{ref}`跟做 1:1 对比 <native-detail>` [下载无损 PNG](media/sr-detail-native.png)"
+msgstr "{ref}`Coba perbandingan 1:1 <native-detail>` [Unduh PNG tanpa kehilangan](media/sr-detail-native.png)"
+
+msgid "在完整窗口内框选鸟头，切换到只显示十个原尺寸局部。"
+msgstr "Rekaman penuh jendela menunjukkan bagaimana kotak kepala burung dan menampilkan sepuluh tanaman resolusi asli."
+
+msgid "跟随录屏设置放大框，再下载最终画布的 PNG，按 100% 查看边缘细节。"
+msgstr "Ikuti rekaman untuk mengatur pembesar. Unduh kanvas akhir sebagai PNG dan lihat pada 100% untuk membandingkan tepi."
+
+msgid "**点一个位置，挑出一组样本。**"
+msgstr "**Pilih satu posisi. Jaga set yang cocok.**"
+
+msgid "A、B 两个来源各占一行，每行显示三张。点中 B 行的第二张并保存，A 行的第二张也会一起导出。"
+msgstr "Sumber A dan B masing-masing menempati satu baris dari tiga gambar. Pilih gambar tengah di baris B dan simpan untuk mengekspor gambar tengah dari kedua baris."
+
+msgid "{ref}`跟做并行挑图 <multi-source-picks>`"
+msgstr "{ref}`Ikuti jalan <multi-source-picks>`"
+
+msgid "两行三列显示 A、B 的图像，点中下排中间一张，保存后重新打开两个来源的结果。"
+msgstr "Enam gambar dalam dua baris. Gambar tengah di baris bawah dipilih, dan pasangan yang disimpan dibuka kembali."
+
+msgid "Per source 设为 1,3。点中 B/02.png，按 Ctrl+S，再打开输出目录核对两张 02.png。"
+msgstr "Set Per sumber menjadi 1,3. Klik B/02.png, tekan Ctrl+S dan buka kembali folder output untuk memeriksa kedua salinan 02.png."
+
+msgid "关闭"
+msgstr "Tutup"
+
+msgid "试试同步翻帧"
+msgstr "Telusuri kedua video bingkai demi bingkai"
+
+msgid "上一帧"
+msgstr "Bingkai sebelumnya"
+
+msgid "下一帧"
+msgstr "Bingkai berikutnya"
+
+msgid "Cat 与 Sunset 同步画面"
+msgstr "Synchronized Cat dan Sunset view"
+
+msgid "试试并行挑图"
+msgstr "Coba pilih satu set"
+
+msgid "点选任一文件，查看两个来源会一起保存哪一张。"
+msgstr "Pilih file untuk melihat pilihan yang cocok dari kedua sumber."
+
+msgid "将一起保存"
+msgstr "Dipilih bersama:"
+
+msgid "功能亮点"
+msgstr "Fitur utama"
+
+msgid "恢复轮播"
+msgstr "Lanjutkan tayangan"
+
+msgid "暂停轮播"
+msgstr "Jeda tayangan"
+
+msgid "[下载与安装](resources/install.md) 选择系统对应的桌面包，或从源码安装"
+msgstr "[Unduh dan pasang](resources/install.md) Pilih paket desktop atau pasang dari sumber"
+
+msgid "[界面与快捷键](resources/interface.md) 从图标或菜单名查操作"
+msgstr "[Interface dan Shortcuts](resources/interface.md) Cari tindakan dengan ikon atau nama menu"
+
+msgid "[右侧设置栏](resources/settings.md) 按分组查参数和生效方式"
+msgstr "[Tab sisi pengaturan](resources/settings.md) Cari kontrol dan kapan suntingan mulai berlaku"
+
+msgid "[使用技巧](resources/large-images.md) 核对来源、视频时间与原尺寸细节"
+msgstr "[Tips praktis](resources/large-images.md) Periksa pencocokan sumber, waktu dan detail resolusi asli"
+
+msgid "本页演示开发版功能。正在使用 3.9.7？请查看 [3.9.7 中文手册](https://mulimgviewer.readthedocs.io/zh-cn/docs-v3.9.7-r1/)。"
+msgstr "Halaman ini memantau versi pengembangan. Berjalan 3.9.7? Lihatlah [Arsip 3.9.7 manual (Cina)](https://mulimgviewer.readthedocs.io/zh-cn/docs-v3.9.7-r1/)."
+
+msgid "当前手册版本为 {sub-ref}`release`。[查看 3.9.7 中文手册](https://mulimgviewer.readthedocs.io/zh-cn/docs-v3.9.7-r1/)。"
+msgstr "Buku panduan ini mencakup versi {sub-ref}`release`. [Lihat manual yang diarsipkan 3.9.7 (bahasa Cina)](https://mulimgviewer.readthedocs.io/zh-cn/docs-v3.9.7-r1/)."

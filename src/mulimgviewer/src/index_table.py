@@ -534,6 +534,9 @@ def write_index_xlsx(path, model, view, cancelled=lambda:False, cache_states=Non
 
 
 # Index window and user interactions
+from .localization import bind_window, tr
+
+
 class IndexTable(IndexTableGui):
     def __init__(self, parent, catalog, out_path_str='', on_jump=None, refresh=None, auto_export=False, show=True, on_locate=None, on_jump_item=None):
         super().__init__(parent)
@@ -559,6 +562,7 @@ class IndexTable(IndexTableGui):
         self._probe_timer = wx.Timer(self)
         self.Bind(wx.EVT_TIMER,self._probe_visible,self._probe_timer)
         self._probe_timer.Start(500)
+        bind_window(self)
         self.Show(show)
         if auto_export and out_path_str:
             self._export(Path(out_path_str)/export_filename(0,catalog.video),view=0)
@@ -568,23 +572,32 @@ class IndexTable(IndexTableGui):
         self._revision += 1
         self.id_list, self.id = [], 0
         caption = self.view_choice.GetStringSelection()
-        self.view = {'Sources': 0, 'Pages': 1, 'Visual items': 2}.get(caption,0)
+        self.view = next((i for i, name in enumerate(('Sources', 'Pages', 'Visual items'))
+                          if caption in (name, tr(name))), 0)
         self.index_table.SetItemCount(0)
         self.index_table.DeleteAllColumns()
         for number,column in enumerate(view_columns(self.view,self.catalog.video)):
-            self.index_table.InsertColumn(number,column.label,width=column.width)
+            self.index_table.InsertColumn(number,tr(column.label),width=column.width)
         self.index_table.get_row = self._display_row
         self.index_table.SetItemCount(self.catalog.rows(self.view))
         self.index_table.Refresh()
-        mode = 'Video' if self.catalog.video else 'Image'
-        self.summary.SetLabel(f'{mode} | {self.catalog.input_mode} | {self.catalog.pages} pages | '
-                              f'{self.catalog.sources} source entries | {self.catalog.visual_total} visual items')
-        self.match_label.SetLabel('Double-click a row to go to its page; counters start at 1')
+        self._refresh_language()
         self._selected_entry = None
         self._selected_index = None
         self.path_details.ChangeValue('')
         self.copy_frame_button.Disable(); self.copy_source_button.Disable(); self.jump_button.Disable()
         self._update_buttons()
+
+    def _refresh_language(self):
+        self.m_search_txt.SetDescriptiveText(tr('Name, path, page:12 or id:25'))
+        for n, column in enumerate(view_columns(self.view, self.catalog.video)):
+            item = self.index_table.GetColumn(n)
+            item.SetText(tr(column.label))
+            self.index_table.SetColumn(n, item)
+        mode = tr('Video' if self.catalog.video else 'Image')
+        self.summary.SetLabel(tr('{mode} | {input} | {pages} pages | {sources} source entries | {items} visual items').format(
+            mode=mode, input=tr(self.catalog.input_mode), pages=self.catalog.pages, sources=self.catalog.sources, items=self.catalog.visual_total))
+        self.match_label.SetLabel(tr('Double-click a row to go to its page; counters start at 1'))
 
     def _update_buttons(self):
         self.b_last_txt.Enable(bool(self.id_list) and self.id > 0)
@@ -600,7 +613,7 @@ class IndexTable(IndexTableGui):
         self._search_cancel.set()
         self._search_cancel = cancel = threading.Event()
         model, view, stop = self.catalog, self.view, self._stop
-        self.match_label.SetLabel('Searching...')
+        self.match_label.SetLabel(tr('Searching...'))
         ref = weakref.ref(self)
         future = self._workers.submit(model.search, query, view, lambda: stop.is_set() or cancel.is_set())
         def done(completed):
@@ -616,7 +629,7 @@ class IndexTable(IndexTableGui):
                     return
                 owner.id_list, owner.id = matches, 0
                 owner._matches_limited = limited
-                owner.match_label.SetLabel(f'{len(matches)}'+('+' if limited else '')+' matches' if matches else 'No matches')
+                owner.match_label.SetLabel(tr('{count} matches').format(count=str(len(matches))+('+' if limited else '')) if matches else tr('No matches'))
                 owner.set_pos(0)
             wx.CallAfter(deliver)
         future.add_done_callback(done)
@@ -626,7 +639,7 @@ class IndexTable(IndexTableGui):
         self._revision += 1
         self.m_search_txt.ChangeValue('')
         self.id_list, self.id = [], 0
-        self.match_label.SetLabel('Search cleared')
+        self.match_label.SetLabel(tr('Search cleared'))
         self._update_buttons()
 
     def set_pos(self, index):
@@ -636,8 +649,8 @@ class IndexTable(IndexTableGui):
             self.index_table.Select(row)
             self.index_table.Focus(row)
             self.index_table.EnsureVisible(row)
-            self.match_label.SetLabel(f'Match {self.id+1}/{len(self.id_list)}'
-                                     + (' (first 10000)' if getattr(self,'_matches_limited',False) else ''))
+            self.match_label.SetLabel(tr('Match {current}/{total}').format(current=self.id+1,total=len(self.id_list))
+                                     + (tr(' (first 10000)') if getattr(self,'_matches_limited',False) else ''))
         self._update_buttons()
 
     def next_txt(self, event):
@@ -655,7 +668,7 @@ class IndexTable(IndexTableGui):
         self.change_view(None)
 
     def export_index(self, event):
-        with wx.FileDialog(self, 'Export index', defaultDir=self.out_path_str,
+        with wx.FileDialog(self, tr('Export index'), defaultDir=self.out_path_str,
                            defaultFile=export_filename(self.view,self.catalog.video), wildcard='Excel workbook (*.xlsx)|*.xlsx',
                            style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT) as dialog:
             if dialog.ShowModal() == wx.ID_OK:
@@ -664,10 +677,10 @@ class IndexTable(IndexTableGui):
     def _export(self, path, view=None):
         model, view, stop = self.catalog, self.view if view is None else view, self._stop
         self.export_button.Disable()
-        self.match_label.SetLabel('Exporting index...')
+        self.match_label.SetLabel(tr('Exporting index...'))
         if Path(path).suffix.lower() != '.xlsx':
             self.export_button.Enable()
-            self.match_label.SetLabel('Use the .xlsx extension for Excel export')
+            self.match_label.SetLabel(tr('Use the .xlsx extension for Excel export'))
             return
         states = dict(self._cache_states)
         def write():
@@ -677,9 +690,9 @@ class IndexTable(IndexTableGui):
         def done(completed):
             try:
                 completed.result()
-                message = f'Exported: {path}'
+                message = tr('Exported: {path}').format(path=path)
             except Exception as error:
-                message = f'Export failed: {error}'
+                message = tr('Export failed: {error}').format(error=error)
             def deliver():
                 owner = ref()
                 if owner is not None and not owner._closed:
@@ -710,7 +723,7 @@ class IndexTable(IndexTableGui):
             state=self._cache_states.get(values[6])
             cached=self.catalog.video or self.catalog.visual_entry(index).get('processed',False)
             status=('Cached' if cached else 'Exists') if state else ('Virtual / not cached' if cached else 'Missing')
-            values=values[:-1]+(('Checking...' if state is None else status),)
+            values=values[:-1]+(tr('Checking...' if state is None else status),)
         return tuple(str(value) for value in view_row(self.catalog,self.view,index,values))
 
     def _probe_visible(self, event):
@@ -748,9 +761,9 @@ class IndexTable(IndexTableGui):
             state=self._cache_states.get(entry['path'])
             cached=self.catalog.video or entry.get('processed',False)
             cache='Checking...' if state is None else ('Cached' if cached else 'Exists') if state else ('Virtual / not cached' if cached else 'Missing')
-            text=f'ID {entry["id"]} | Page {entry["page"]+1} | Row {entry["row"]}, Col {entry["column"]} | {cache}\nOriginal source: {entry["source"]}\nImage / frame path: {entry["path"]}'
+            text=f'ID {entry["id"]} | {tr("Page")} {entry["page"]+1} | {tr("Row")} {entry["row"]}, {tr("Col")} {entry["column"]} | {tr(cache)}\n{tr("Original source")}: {entry["source"]}\n{tr("Image / frame path")}: {entry["path"]}'
             if entry.get('algorithm'):
-                text+=f'\nAlgorithm: {entry["algorithm"]}\nAlgorithm path: {entry.get("algorithm_path","")}\nRaw image / frame path: {entry.get("raw_path",entry["path"])}'
+                text+=f'\n{tr("Algorithm")}: {entry["algorithm"]}\n{tr("Algorithm path")}: {entry.get("algorithm_path","")}\n{tr("Raw image / frame path")}: {entry.get("raw_path",entry["path"])}'
         elif self.view==0:
             source=str(Path(self.catalog.paths[index]).absolute()) if self.catalog.video else self.catalog._image(index)[2]
             entry=dict(source=source,path=source if not self.catalog.video else '',page=self.catalog.target(0,index))
@@ -802,7 +815,7 @@ class IndexTable(IndexTableGui):
                         break
             accepted = self.on_jump_item(page,rank,getattr(self.catalog,'context',None))
             if accepted is False:
-                self.match_label.SetLabel('Main layout/input changed. Refresh the index before jumping.')
+                self.match_label.SetLabel(tr('Main layout/input changed. Refresh the index before jumping.'))
         elif self.on_jump:
             self.on_jump(page)
 
@@ -813,12 +826,12 @@ class IndexTable(IndexTableGui):
         self.refresh_index(None)
         location = self.on_locate()
         if not self.catalog.pages or not self.catalog.visual_total:
-            self.match_label.SetLabel('No displayed image to locate')
+            self.match_label.SetLabel(tr('No displayed image to locate'))
             return
         page = max(0,min(int(location['page']),self.catalog.pages-1))
         first,last = self.catalog.visual_page_start(page), self.catalog.visual_page_start(page+1)
         if first == last:
-            self.match_label.SetLabel('No visible image on this page')
+            self.match_label.SetLabel(tr('No visible image on this page'))
             return
         rank = int(location.get('rank',0))
         index = first+rank if 0 <= rank < last-first else first
@@ -828,12 +841,12 @@ class IndexTable(IndexTableGui):
         self.index_table.Focus(index)
         self.index_table.EnsureVisible(index)
         self._select_index(index)
-        self.match_label.SetLabel(f'Located Visual ID {index+1} on page {page+1}')
+        self.match_label.SetLabel(tr('Located Visual ID {item} on page {page}').format(item=index+1,page=page+1))
 
     def _choose_view(self, view):
         """Resolve semantic view IDs independently of the FBP choice order."""
         caption = ('Sources', 'Pages', 'Visual items')[view]
-        index = self.view_choice.FindString(caption)
+        index = self.view_choice.FindString(tr(caption))
         if index != wx.NOT_FOUND:
             self.view_choice.SetSelection(index)
 

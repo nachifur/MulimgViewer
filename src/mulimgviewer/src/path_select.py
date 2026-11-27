@@ -2,6 +2,7 @@
 from pathlib import Path
 import wx
 from ..gui.path_select_gui import PathSelectFrameGui
+from .localization import bind_window, tr
 from .utils import get_resource_path
 
 _PATH_SELECT_STATE = {"video_mode": False, "last_manual_paths": []}
@@ -38,13 +39,17 @@ class PathSelectFrame(PathSelectFrameGui):
             if self._paths():
                 self._last_folder_dir = self._paths()[0]
         self._update_actions()
-        self.Layout()
+        bind_window(self)
+
+    def _refresh_language(self):
+        self._sync_mode()
+        self._update_actions()
 
     def _sync_mode(self):
         video = _PATH_SELECT_STATE["video_mode"]
-        self.SetTitle(self._custom_title or ("Parallel video sources" if video else "Parallel image folders"))
+        self.SetTitle(self._custom_title or tr("Parallel video sources" if video else "Parallel image folders"))
         self._set_source_hint()
-        self.browse_button.SetLabel("Add videos..." if video else "Add folders...")
+        self.browse_button.SetLabel(tr("Add videos..." if video else "Add folders..."))
         self.Layout()
 
     def _paths(self):
@@ -63,13 +68,13 @@ class PathSelectFrame(PathSelectFrameGui):
         if not hasattr(self, 'source_count'):
             return
         count = len(self._paths())
-        self.source_count.SetLabel(f"{count} source" + ("" if count == 1 else "s"))
+        self.source_count.SetLabel(tr("{count} source" if count == 1 else "{count} sources").format(count=count))
         for control in (self.apply_button, self.button_clear_last, self.button_clear_all):
             control.Enable(count > 0)
 
     def _set_source_hint(self, message=None):
         media = "video" if _PATH_SELECT_STATE["video_mode"] else "folder"
-        self.source_hint.SetLabel(message or f"One {media} per line, in display order.")
+        self.source_hint.SetLabel(tr(message or f"One {media} per line, in display order."))
         self.Layout()
 
     def on_paths_changed(self, event):
@@ -123,7 +128,7 @@ class PathSelectFrame(PathSelectFrameGui):
             else:
                 for index, path in enumerate(paths, 1):
                     if not Path(path).is_dir():
-                        self._set_source_hint(f"Source {index}: choose an existing image folder.")
+                        self._set_source_hint(tr("Source {index}: choose an existing image folder.").format(index=index))
                         return False
                 self.UpdateUI(0, input_path=paths)
                 _PATH_SELECT_STATE["last_manual_paths"] = paths
@@ -145,10 +150,10 @@ class PathSelectFrame(PathSelectFrameGui):
         if video:
             from .video_manager import VideoManager
             wildcard = 'Video files|' + ';'.join('*' + suffix for suffix in VideoManager.VIDEO_EXTENSIONS) + '|All files (*.*)|*.*'
-            dialog = wx.FileDialog(self, "Add video sources", self._last_video_dir,
+            dialog = wx.FileDialog(self, tr("Add video sources"), self._last_video_dir,
                                    wildcard=wildcard, style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST | wx.FD_MULTIPLE)
         else:
-            dialog = wx.DirDialog(self, "Add image folder", self._last_folder_dir,
+            dialog = wx.DirDialog(self, tr("Add image folder"), self._last_folder_dir,
                                   style=wx.DD_DEFAULT_STYLE | wx.DD_DIR_MUST_EXIST)
         try:
             if dialog.ShowModal() != wx.ID_OK:

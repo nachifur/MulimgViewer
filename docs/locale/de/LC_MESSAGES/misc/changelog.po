@@ -1,0 +1,58 @@
+msgid ""
+msgstr ""
+"Language: de\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "更新记录"
+msgstr "Änderungsverlauf"
+
+msgid "操作示例见[图像与视频浏览](../resources/usage.md)，参数见[设置说明](../resources/settings.md)，测试方法见[开发指南](../dev/dev.md)。"
+msgstr "Sieh mal . [Übersicht von Bildern und Videos](../resources/usage.md) Die [Seitenscheiben von Einstellungen](../resources/settings.md) für die Kontrollen und [Entwicklerleitfaden](../dev/dev.md) für Tests."
+
+msgid "未发布"
+msgstr "Nicht veröffentlicht"
+
+msgid "**多路视频浏览**。支持从目录或文件清单载入视频，并排查看同一帧。跳转到长视频中段时优先准备当前页，后台沿播放方向预取后续页面。"
+msgstr "**Mehrvideobesuch.** Öffnen Sie Videos aus einem Verzeichnis oder einer Dateiliste und vergleichen Sie die entsprechenden Frames Seite an Seite. Nach einer Suche nach einem langen Video hat die aktuelle Seite Priorität, während die Anwendung Seiten in der Wiedergaberichtung vorbereitet."
+
+msgid "**播放与缓存**。四档 Power mode 控制并行任务的资源预算。拆帧、算法处理、各算法拼接和最终合成可交错执行。内外两层缓存随浏览位置移动，播放间隔会参考拼接画面的实际供给速度。"
+msgstr "**Wiedergabe und Caching.** Vier Strommodi setzen Ressourcenbudgets für gleichzeitige Arbeiten fest. Die Extraktion, Verarbeitung, das Nähen pro Algorithmus und die endgültige Zusammensetzung können sich überlappen. Beide Cache-Fenster folgen der Browsingposition und die Wiedergabezeit wird abgesehen, wie schnell fertiges Webseite verfügbar ist."
+
+msgid "**算法对比**。可以并排查看原图和所选算法，也可以按布局容量展示多个算法。后台缓存处理图和拼接结果，便于反复查看同一页。"
+msgstr "**Algorithmenvergleich.** Siehe das Original neben einem gewählten Algorithmus oder vergleiche mehrere Algorithmen innerhalb der Netzkapazität. Verarbeitete Bilder und gestrickte Ergebnisse werden für wiederholte Besuche gespeichert."
+
+msgid "**索引与定位**。索引表可按画面中的图像、页面或来源浏览，支持与主窗口双向定位、查看原始路径和视频帧路径，以及导出 Excel。"
+msgstr "**Index und Navigation.** Durchsuchen Sie visuelle Gegenstände, Seiten oder Quellen. Navigieren Sie zwischen dem Index und dem Hauptfenster, überprüfen Sie die Original- und Rahmenwege und exportieren Sie die aktuelle Ansicht in Excel."
+
+msgid "**挑图与导出**。支持在后台按点击保存时的参数导出拼接图、选中图像和放大图。可分别设置显示与输出比例，选择 JPG、PNG 或 PDF，并暂停、继续批量保存。"
+msgstr "**Auswahl und Export.** Exportieren Sie gestrickte Seiten, ausgewählte Bilder und vergrößerte Regionen im Hintergrund mit den Einstellungen, die beim Klicken auf Speichern erfasst werden. Setzen Sie separate Anzeige- und Exportskalien ein, wählen Sie JPG, PNG oder PDF aus und pausieren oder wieder aufnehmen Sie die Chargenexport."
+
+msgid "**设置与回归测试**。右侧设置区按功能折叠，重新打开时恢复上次配置。开发者可一键运行图像与视频回归测试并查看逐项报告。"
+msgstr "**Einstellungen und Regressionsprüfungen.** Seitenschicht-Abschnitte kollabieren nach Funktion und die Anwendung stellt Ihre Einstellungen beim Neustart wiederher. Entwickler können die Bild- und Videoregressionssuite mit einem Befehl ausführen und einzelne Ergebnisse überprüfen."
+
+msgid "**安装与兼容性**。增加 PyPI 安装支持和 Linux 桌面入口，修复 macOS 上的兼容问题。"
+msgstr "**Installation und Kompatibilität.** Hinzugefügt wurde die Installationsunterstützung für PyPI und ein Linux-Desktop-Eintrag sowie Probleme mit der Kompatibilität auf macOS."
+
+msgid "**放大与标题**。放大图的显示比例与输出比例可分别设置。支持共享标题和显示 EXIF 信息，修复放大框位置及拼接间距问题。"
+msgstr "**Vergrößerer und Titel.** Setzen Sie die Anzeige- und Exportskalien für Vergrößerer unabhängig ein. Die Titel können geteilt werden und EXIF-Informationen enthalten. Befestigt die Platzierung der Abdeckungsbox und den Abstand zwischen den gestrickten Bildern."
+
+msgid "3.9.7"
+msgstr "3.9.7"
+
+msgid "可以手动设置放大框的颜色。[#35](https://github.com/nachifur/MulimgViewer/issues/35)"
+msgstr "Wählen Sie die Vergrößerungskasse manuell aus. [#35](https://github.com/nachifur/MulimgViewer/issues/35)"
+
+msgid "原图和放大图上的框线可以分别设置宽度。[#39](https://github.com/nachifur/MulimgViewer/issues/39)"
+msgstr "Setzen Sie für das Originalbild und die vergrößerte Ansicht separate Zeilenbreiten ein. [#39](https://github.com/nachifur/MulimgViewer/issues/39)"
+
+msgid "检测到新版本时，软件会提示更新。[#41](https://github.com/nachifur/MulimgViewer/issues/41)"
+msgstr "Die Anwendung weist Ihnen auf, wann eine neue Version verfügbar ist. [#41](https://github.com/nachifur/MulimgViewer/issues/41)"
+
+msgid "按 `Ctrl+H` 可隐藏顶部工具栏和右侧设置栏。[#42](https://github.com/nachifur/MulimgViewer/issues/42)"
+msgstr "Druck `Ctrl+H` um die oberste Werkzeugleiste und die Seitenleiste der Einstellungen zu verbergen. [#42](https://github.com/nachifur/MulimgViewer/issues/42)"
+
+msgid "优化了主窗口的控件布局。"
+msgstr "Das Layout des Hauptfensters verbessert."
+
+msgid "修复了带透明通道的图像（RGBA）显示异常的问题。"
+msgstr "Ein Display-Problem mit einem Alpha-Kanal (RGBA) wurde behoben."

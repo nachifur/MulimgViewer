@@ -1,0 +1,268 @@
+msgid ""
+msgstr ""
+"Language: id\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "图像与视频浏览"
+msgstr "Menelusuri gambar dan video"
+
+msgid "第一次并排播放两段视频"
+msgstr "Mainkan dua video berdekatan"
+
+msgid "录屏保留窗口标题栏、工具栏、设置区和状态栏。首次跟做时，若已有自己的配置，可在 **Configuration** 点 **Save** 留一份快照，再点 **Reset** 从默认布局开始；结束后点 **Load** 取回。开启 **Fit window to image** 和 **Title**，保留 **Auto title**。每个案例给出输入模式和需改的参数，改完按 **Ctrl+R**。控件位置见[设置栏参考](settings.md)。"
+msgstr "Rekaman termasuk title bar, toolbar, settings dan status bar. Untuk mengikuti dari default, simpan pengaturan saat ini dengan **Konfigurasi → Simpan**, lalu klik **Set ulang**. Penggunaan **Pengecapan** setelah itu untuk mengembalikan snapshot. Memungkinkan **Jendela yang cocok untuk gambar** dan **Judul** dan tetap **Judul otomatis** diaktifkan. Setiap contoh memberikan mode input dan pengaturan. Pencet **Ctrl+R** setelah mengedit. Lihatlah [Referensi pengaturan](settings.md) untuk lokasi kontrol."
+
+msgid "展开右侧 **Input & Playback**，勾选 **Video mode**。在工具栏选择 **Parallel auto**。"
+msgstr "Meningkatkan **Input & Playback**, memungkinkan **Mode video**, dan memilih **Otomatis paralel** di toolbar."
+
+msgid "在 **Layout & Display** 将 **Page** 设为 `1,2`（一行两列），**Per source** 设为 `1,1`。在 **Input & Playback** 取消 **Multiple frames per source** 和 **Play sources sequentially**。"
+msgstr "Dalam **Layout & Display**, set **Halaman** untuk `1,2` (satu baris, dua kolom) dan **Per sumber** untuk `1,1`. Dalam **Input & Playback**, jelas **Berbagai frame per sumber** dan **Main sumber secara berurutan**."
+
+msgid "点击工具栏的文件夹，选择仓库中的 `docs/media/example-videos`。按 **Ctrl+R** 应用布局。左格为猫咪（Cat.mp4），右格为海上日落（Sunset.mp4）。在线阅读时可下载 [Cat.mp4](../media/example-videos/Cat.mp4) 和 [Sunset.mp4](../media/example-videos/Sunset.mp4)，放入同一空目录后打开。"
+msgstr "Klik folder toolbar dan buka `docs/media/example-videos` di gudang. Pencet **Ctrl+R** untuk menerapkan tata letak. Cat.mp4 muncul di kiri dan Sunset.mp4 di kanan. Jika membaca online, unduh [Cat.mp4](../media/example-videos/Cat.mp4) dan [Sunset.mp4](../media/example-videos/Sunset.mp4) masuk ke dalam satu folder kosong dan buka."
+
+msgid "点 **>** 后点 **▶** 向前播放；点 **<** 后再点 **▶** 则向后播放。按 **Esc** 暂停。页码从 1 开始，可用滑块跳转。修改多个布局或算法参数后，统一刷新即可。"
+msgstr "Klik **>** Lalu **▶** untuk bermain maju, atau **<** Lalu **▶** untuk bermain mundur. Pencet **Esc** untuk berhenti sejenak. Nomor halaman dimulai dari 1. Tarik slider untuk melompat. Setelah mengedit beberapa pengaturan tata letak atau algoritma, refresh sekali untuk menerapkannya bersama-sama."
+
+msgid "![并行播放示例：每一页保留左右两个来源，同时更新帧](../media/parallel-playback.gif)"
+msgstr "![Putar ulang paralel dengan kedua sumber maju di setiap halaman](../media/parallel-playback.gif)"
+
+msgid "并行播放示例：每一页保留左右两个来源，同时更新帧"
+msgstr "Putar ulang paralel dengan kedua sumber maju di setiap halaman"
+
+msgid "要复现动图的尺寸，在 **Layout & Display** 将 **Display scale** 设为 `1,1`（两个演示片段均为 416 × 416），**Gaps (X,Y for each level)** 填 `8,8,6,6,0,0,0,0,0,0`，勾选 **Image**、**Title** 和 **Fit window to image**，取消 **Magnifier**，在 **Titles** 保留 **Auto title**，再按 **Ctrl+R**。画布中应出现 Cat、Sunset 两个标题；较矮的窗口可滚动右栏查看其余参数。动图逐页展示前五页，帧间停留时间用于阅读。"
+msgstr "Untuk cocok dengan animasi, set **Skala tampilan** untuk `1,1` di **Layout & Display** (kedua klip adalah 416 × 416). Masuk `8,8,6,6,0,0,0,0,0,0` untuk **Kesenjangan (X, Y untuk setiap level)**. Memungkinkan **Gambar**, **Judul**, dan **Jendela yang cocok untuk gambar**, jelas **Penggedek**, pergi **Judul → Judul Otomatis** diaktifkan, dan tekan **Ctrl+R**. Judulnya harus dibaca Cat dan Sunset. Gulung sidebar di jendela yang lebih pendek. Animasi berhenti di setiap lima halaman pertama untuk dapat dibaca."
+
+msgid "选对输入和布局"
+msgstr "Pilih mode input dan tata letak"
+
+msgid "工具栏模式"
+msgstr "Mode toolbar"
+
+msgid "图像输入"
+msgstr "Masukan gambar"
+
+msgid "视频输入"
+msgstr "Video input"
+
+msgid "适用场景"
+msgstr "Kapan harus digunakan"
+
+msgid "Sequential"
+msgstr "Sequential"
+
+msgid "单个图像目录"
+msgstr "Satu folder gambar"
+
+msgid "单个视频文件"
+msgstr "Satu file video"
+
+msgid "浏览一组照片或检查一个视频"
+msgstr "Lihat set foto atau lihat video."
+
+msgid "Parallel auto"
+msgstr "Otomatis paralel"
+
+msgid "含多个来源子目录的父目录"
+msgstr "Folder induk yang berisi folder sumber"
+
+msgid "含多个视频的目录"
+msgstr "Folder yang berisi beberapa video"
+
+msgid "同一位置对照；图像来源宜使用对应文件名"
+msgstr "Bandingkan posisi yang sesuai. Memperbandingkan nama file di sumber gambar bekerja terbaik."
+
+msgid "Parallel manual"
+msgstr "Manual paralel"
+
+msgid "逐个选择来源目录"
+msgstr "Pilih folder sumber secara individual"
+
+msgid "逐个选择视频"
+msgstr "Pilih video secara individual"
+
+msgid "只比较部分来源或调整来源顺序"
+msgstr "Bandingkan subset sumber atau ubah urutannya."
+
+msgid "Image/Video File List"
+msgstr "Daftar File Gambar/Video"
+
+msgid "指定图片清单"
+msgstr "Daftar file gambar"
+
+msgid "指定视频清单"
+msgstr "Daftar file video"
+
+msgid "重现固定输入。可从仓库的 `auto_test_scripts/assets/lists/` 打开 TXT 示例，相对路径以清单所在目录为基准；也支持 CSV"
+msgstr "Buka kembali pilihan tetap. Coba contoh TXT dari `auto_test_scripts/assets/lists/`. Jalur relatif akan dihapus dari direktori daftar. CSV juga didukung."
+
+msgid "**Page** 控制每页的行列，`-1,-1` 请求自动布局。**Multiple frames per source** 可在每个来源内连续显示多项，例如 **Per source** 为 `1,3` 时横排三个位置；**Play sources sequentially** 把来源串起来依次浏览。后者也改变挑图范围。"
+msgstr "**Halaman** mengatur baris dan kolom per halaman. Penggunaan `-1,-1` untuk tata letak otomatis. **Berbagai frame per sumber** menunjukkan item berturut-turut dari setiap sumber, misalnya tiga sisi dengan **Per sumber** ditetapkan untuk `1,3`. **Main sumber secara berurutan** memainkan satu sumber setelah yang lain dan juga mengubah gambar yang dipilih untuk ekspor."
+
+msgid "在同一页比较连续帧"
+msgstr "Bandingkan frame berturut-turut pada satu halaman"
+
+msgid "继续使用 Cat 和 Sunset。勾选 **Multiple frames per source**，关闭 **Play sources sequentially**。保持 **Page** 为 `1,2`，将 **Per source** 设为 `1,3`、**Display scale** 设为 `0.35,0.35`、**Skip frames** 设为 `0`。按 **Ctrl+R** 后翻页。左边三格来自 Cat，右边三格来自 Sunset，每组三个帧号连续。"
+msgstr "Dengan Cat dan Sunset terbuka, memungkinkan **Berbagai frame per sumber** dan jelas **Main sumber secara berurutan**. Tetaplah **Halaman** di `1,2`, set **Per sumber** untuk `1,3`, **Skala tampilan** untuk `0.35,0.35` dan **Rangka skip** untuk `0`. Pencet **Ctrl+R** dan maju halaman. Tiga frame kiri milik Cat dan tiga kanan milik Sunset. Angka frame berturut-turut dalam setiap kelompok."
+
+msgid "![开启每路多帧、修改行列并翻页](../media/walkthrough-frames.gif)"
+msgstr "![Memungkinkan beberapa frame per sumber, ubah grid dan maju halaman](../media/walkthrough-frames.gif)"
+
+msgid "开启每路多帧、修改行列并翻页"
+msgstr "Memungkinkan beberapa frame per sumber, ubah grid dan maju halaman"
+
+msgid "<a name=\"readme-compare-details\"></a>"
+msgstr "<a name=\"readme-compare-details\"></a>"
+
+msgid "给两个来源放大同一处细节"
+msgstr "Menggrandi detail yang sama dalam dua sumber"
+
+msgid "复现下图：取消 **Video mode**，用 **Parallel auto** 打开仓库的 `docs/media/example-images`。其中两个子目录各有一张 200 × 200 图片。在线阅读时也可下载 [来源 01](../media/example-images/01/00.png) 和 [来源 02](../media/example-images/02/00.png)，分别存为 `example-images/01/00.png` 与 `example-images/02/00.png`。将 **Page** 设为 `1,2`、**Image unit** 设为 `3,1`、**Display scale** 设为 `1,1`，勾选 **Image**、**Title** 和 **Fit window to image**，保留 **Auto title**，按 **Ctrl+R**。两项的标题分别为来源目录名 01 和 02。"
+msgstr "Untuk mereproduksi contoh, jelas **Mode video** dan penggunaan **Otomatis paralel** untuk dibuka `docs/media/example-images`. Setiap subfolder berisi satu gambar 200 × 200. Pembaca online dapat mengunduh [sumber 01](../media/example-images/01/00.png) dan [sumber 02](../media/example-images/02/00.png) dan menyelamatkan mereka sebagai `example-images/01/00.png` dan `example-images/02/00.png`. Set **Halaman** untuk `1,2`, **Unit gambar** untuk `3,1`, dan **Skala tampilan** untuk `1,1`. Memungkinkan **Gambar**, **Judul**, dan **Jendela yang cocok untuk gambar**, teruskan **Judul otomatis** diaktifkan, dan tekan **Ctrl+R**. Judul menunjukkan folder sumber, 01 dan 02."
+
+msgid "开启 **Layout & Display → Magnifier** 后刷新，点工具栏放大镜。在左图建筑外墙上按住鼠标拖出矩形并松开。两张图会同时出现框，下方各显示来自自己来源的局部。"
+msgstr "Memungkinkan **Layout & Display → Magnifier**, refresh, dan klik pembesar toolbar. Seret persegi panjang di atas fasad dalam gambar kiri dan lepaskan. Setiap gambar menunjukkan kotak dan tampilan detailnya sendiri di bawah."
+
+msgid "![在左图建筑外墙上画框，松开后两个来源同时显示各自框内的细节](../media/walkthrough-magnifier.gif)"
+msgstr "![Kotak fasad di gambar kiri dan lepaskan untuk melihat detail yang sesuai dari setiap sumber](../media/walkthrough-magnifier.gif)"
+
+msgid "在左图建筑外墙上画框，松开后两个来源同时显示各自框内的细节"
+msgstr "Kotak fasad di gambar kiri dan lepaskan untuk melihat detail yang sesuai dari setiap sumber"
+
+msgid "找到某一张图"
+msgstr "Temukan gambar tertentu"
+
+msgid "用 **Parallel auto** 打开上例的 `example-images`，将 **Page** 设为 `1,2`。两张照片都叫 `00.png`。单击右图，按 **F2** 打开索引表，在 **Visual items** 中点击 **Go to current ID**。选中的应是 ID 2（第 1 页、第 1 行、第 2 列），**Original source** 末尾应为 `02/00.png`。点击 **Copy original source** 可复制路径。"
+msgstr "Buka yang sama `example-images` di **Otomatis paralel** dengan **Halaman** ditetapkan untuk `1,2`. Kedua foto ini diberi nama `00.png`. Klik foto yang tepat, tekan **F2**, dan klik **Pergi ke ID saat ini** di **Barang visual**. ID 2 harus dipilih (halaman 1, baris 1, kolom 2) dan **Sumber asli** harus berakhir di `02/00.png`. Klik **Salin sumber asli** untuk menyalin jalan."
+
+msgid "![从主窗口右图定位到索引表中的来源 02](../media/walkthrough-index.gif)"
+msgstr "![Temukan sumber 02 di indeks dari foto kanan di jendela utama](../media/walkthrough-index.gif)"
+
+msgid "从主窗口右图定位到索引表中的来源 02"
+msgstr "Temukan sumber 02 di indeks dari foto kanan di jendela utama"
+
+msgid "双击索引行可跳回对应页。要按页或按来源查找，切换到 **Pages** 或 **Sources**。视频帧路径可能先于文件生成；可将当前视图导出为 Excel。"
+msgstr "Klik dua kali pada baris untuk kembali ke halaman. Pindah ke **Halaman** atau **Sumber** untuk mencari halaman atau sumber. Jalur frame video mungkin terdaftar sebelum file ada. Mengekspor tampilan saat ini ke Excel untuk pemeriksaan offline."
+
+msgid "<a name=\"readme-select-export\"></a>"
+msgstr "<a name=\"readme-select-export\"></a>"
+
+msgid "挑图和导出"
+msgstr "Pilih dan ekspor gambar"
+
+msgid "在 **Save Settings** 选择输出目录、输出模式、格式和比例。点击工具栏保存图标或 **Ctrl+S** 后，后台按点击时的设置生成文件，右侧状态栏显示进度。"
+msgstr "Dalam **Simpan Setelan**, pilih folder output, konten, format, dan skala. Klik toolbar Save icon atau tekan **Ctrl+S**. Ekspor latar belakang menggunakan pengaturan pada saat klik, dengan kemajuan ditunjukkan di sebelah kanan bar status."
+
+msgid "输出选项"
+msgstr "Opsi output"
+
+msgid "得到什么"
+msgstr "Apa yang diselamatkan"
+
+msgid "Stitch"
+msgstr "Jelang"
+
+msgid "最终画面在 `composed`，各算法的拼接图在 `algorithms/<算法>/stitch_images`"
+msgstr "Halaman terakhir di `composed` dan setiap algoritma ⁇ s disusun panel di `algorithms/<algorithm>/stitch_images`."
+
+msgid "Selected images"
+msgstr "Gambar yang dipilih"
+
+msgid "选择结果在各算法的 `select_images` 中，按来源归档"
+msgstr "Gambar yang dipilih dalam setiap algoritma ⁇ s `select_images` folder, dikelompokkan menurut sumber."
+
+msgid "Magnifiers"
+msgstr "Pengembang"
+
+msgid "输出放大区域和带框图。组合模式下，没有框会跳过这一项，其他已选输出照常保存"
+msgstr "Daerah yang diperbesar dan gambar dengan kotak. Dengan output gabungan dan tidak ada kotak, output yang diminta lainnya masih disimpan."
+
+msgid "**挑选规则。** 单击确定位置，再保存 **Selected images**；右键 **Select image** 是该操作的快捷方式。Parallel auto/manual 会从各来源选同一位置，在 Multiple frames per source 下会保留点中的来源内偏移。Sequential、File List 和 Play sources sequentially 只挑当前项；显示算法时也可输出相应处理结果。图像模式的移动选项会移动源文件，首次尝试建议使用副本；视频模式不会移动源视频。"
+msgstr "**Aturan pemilihan.** Klik posisi dan simpan **Gambar yang dipilih**, atau penggunaan **Pilih gambar** di menu konteks. Parallel auto/manual memilih posisi yang sesuai dari setiap sumber, mempertahankan ofset yang diklik dengan beberapa frame per sumber. Sequential, File List, dan Play sumber secara berurutan memilih item saat ini saja. Hasil algoritma yang terlihat juga dapat diekspor. Pindahkan file memindahkan file gambar asli, jadi cobalah pada salinan terlebih dahulu. Video sumber tetap di tempatnya."
+
+msgid "**跟做一次并行挑图。** 用 **Parallel auto** 打开 `example-images`，关闭 **Play sources sequentially** 和 **Move files**。选择空输出目录，**Content** 选 **Selected images**，**Format** 选 **png**。点右图后按 **Ctrl+S**。等右下角提示保存成功，再用 **Parallel auto** 打开输出中的 `image/algorithms/original/select_images`。应同时看到来自 01 和 02 的照片。"
+msgstr "**Cobalah memilih pasangan.** Buka `example-images` di **Otomatis paralel** dan jelas **Main sumber secara berurutan** dan **Pindahkan file**. Pilih folder output kosong, **Gambar yang dipilih** di bawah **Konten**, dan **Png** di bawah **Format**. Klik foto yang tepat dan tekan **Ctrl+S**. Setelah medan status kanan bawah mengkonfirmasi keberhasilan, buka `image/algorithms/original/select_images` dari output di **Otomatis paralel**. Foto 01 dan 02 harus muncul."
+
+msgid "![保存一个位置，再打开输出目录核对两个来源](../media/walkthrough-selection.gif)"
+msgstr "![Simpan satu posisi dan buka kembali output untuk memverifikasi kedua sumber](../media/walkthrough-selection.gif)"
+
+msgid "保存一个位置，再打开输出目录核对两个来源"
+msgstr "Simpan satu posisi dan buka kembali output untuk memverifikasi kedua sumber"
+
+msgid "导出画质和暂停批量保存见{ref}`保存设置 <export-settings>`。"
+msgstr "Lihatlah {ref}`Simpan Setelan <export-settings>` untuk kualitas ekspor dan menghentikan seri."
+
+msgid "用同一张原图检查算法效果"
+msgstr "Pemeriksaan algoritma menggunakan satu gambar asli"
+
+msgid "取消 **Video mode**，用 **Sequential** 打开 `example-images/01`。选择 **Gaussian Blur**，勾选 **Selected** 和 **Show original panel**。将 **Algorithms** 设为 `1,2`、**Page** 设为 `1,1`，刷新。左右两格现在来自同一张街景照片。开启 **Magnifier** 并刷新，在窗框上取样，比较左侧原图的细线和右侧平滑后的边缘。录屏最后选择 **Stitch** 和 **png**，指定输出目录，按 **Ctrl+S** 导出。"
+msgstr "Bersih **Mode video** dan terbuka `example-images/01` di **Sequential**. Pilihlah **Gaussian Blur**, memungkinkan **Dipilih** dan **Tampilkan panel asli**, set **Algoritma** untuk `1,2` dan **Halaman** untuk `1,1`, lalu menyegarkan. Kedua sel sekarang menggunakan foto jalan yang sama. Memungkinkan **Penggedek**, refresh, dan kotak bingkai jendela untuk membandingkan garis halus di kiri dengan tepi yang lebih halus di kanan. Rekaman berakhir dengan memilih **Jelang** dan **Png**, mengatur folder output dan menekan **Ctrl+S**."
+
+msgid "![将同一张照片的原图与模糊结果并排，放大窗框并导出](../media/walkthrough-algorithm.gif)"
+msgstr "![Bandingkan foto asli dan kabur, memperbesar jendela dan ekspor](../media/walkthrough-algorithm.gif)"
+
+msgid "将同一张照片的原图与模糊结果并排，放大窗框并导出"
+msgstr "Bandingkan foto asli dan kabur, memperbesar jendela dan ekspor"
+
+msgid "导出的拼接 PNG 如下。上排对照整图，下排对照同一个窗框；图中保留了来源标题和取样框。"
+msgstr "Jempol yang diekspor ditunjukkan di bawah ini. Bandingkan gambar lengkap di atas dan detail jendela yang sama di bawah. Judul dan kotak pengambilan sampel disertakan."
+
+msgid "![拼接输出 PNG：左列原图、右列 Gaussian Blur，下排为两列各自的放大细节](../media/paper-comparison.png)"
+msgstr "![PNG yang diekspor: asli di kiri, Gaussian Blur di kanan, hasil panen detail yang sesuai di bawah ini](../media/paper-comparison.png)"
+
+msgid "拼接输出 PNG：左列原图、右列 Gaussian Blur，下排为两列各自的放大细节"
+msgstr "PNG yang diekspor: asli di kiri, Gaussian Blur di kanan, hasil panen detail yang sesuai di bawah ini"
+
+msgid "在一页对齐算法、来源、时间和局部细节"
+msgstr "Algorithm, sumber, waktu dan detail di satu halaman"
+
+msgid "用 **Video mode → Parallel auto** 打开 Cat 和 Sunset，勾选 **Multiple frames per source**。在 **Layout & Display** 从上到下将 **Algorithms、Page、Per source、Image unit、Magnifiers** 设为 `2,1`、`1,2`、`1,2`、`3,1`、`1,2`。勾选 **Image、Magnifier、Title**，将 **Display scale** 设为 `0.3,0.3` 后刷新。在猫咪图上拖出第一个放大框，再到另一处右键选 **Create zoom box here**。选中 **Gaussian Blur**，勾选 **Selected** 和 **Show original panel** 后刷新。"
+msgstr "Buka Cat dan Sunset **Mode Video → Parallel auto** dan memungkinkan **Berbagai frame per sumber**. Dalam **Layout & Display**, set **Algoritma, Halaman, Per sumber, Image unit, Magnifiers** untuk `2,1`, `1,2`, `1,2`, `3,1` dan `1,2` masing-masing. Memungkinkan **Gambar, Pengembang, Judul**, set **Skala tampilan** untuk `0.3,0.3` dan menyegarkan. Seret kotak pembesar pertama di atas kucing, lalu klik kanan detail lain dan pilih **Buat kotak zoom di sini**. Pilihlah **Gaussian Blur**, memungkinkan **Dipilih** dan **Tampilkan panel asli**, dan menyegarkan."
+
+msgid "![依次加入连续帧、两个取样框和第二个算法面板](../media/walkthrough-grid.gif)"
+msgstr "![Tambahkan kerangka berturut-turut, dua kotak sampel dan panel algoritma kedua](../media/walkthrough-grid.gif)"
+
+msgid "依次加入连续帧、两个取样框和第二个算法面板"
+msgstr "Tambahkan kerangka berturut-turut, dua kotak sampel dan panel algoritma kedua"
+
+msgid "核对最后的画面：上下比较处理前后，每排左边是 Cat，右边是 Sunset。每个来源有两帧，每帧下方并列两个局部。这样一页共有 8 个整帧视图和 16 个局部视图；翻页后，同一位置仍可对应比较。"
+msgstr "Dalam tata letak akhir, bandingkan tampilan asli dan yang diproses secara vertikal. Setiap baris memiliki Cat di kiri dan Sunset di kanan, dengan dua frame per sumber dan dua detail di bawah setiap frame. Itu memberikan delapan tampilan full-frame dan 16 detail. Posisi tetap konsisten saat Anda maju."
+
+msgid "播放卡顿时看什么"
+msgstr "Diagnosis pemutaran lambat"
+
+msgid "把鼠标放在 **Performance & Cache → Power mode** 上，对比实际播放 FPS 与供给 FPS（后台产出可显示页面的速度）。每秒显示一页可以同时更新多路视频，不能把页率乘以来源数当作单路帧率。"
+msgstr "Berjalan ke atas **Performance & Cache → Mode Power** dan membandingkan FPS pemutaran dengan FPS pasokan (halaman selesai yang dihasilkan per detik). Beberapa video dapat maju di satu halaman. Mengganda kecepatan halaman dengan jumlah sumber akan melebih-lebihkan tingkat frame rate video individu."
+
+msgid "现象"
+msgstr "Gejala"
+
+msgid "可先调整"
+msgstr "Apa yang harus diperiksa"
+
+msgid "播放均匀，但比预期慢"
+msgstr "Putar kembali stabil tetapi lebih lambat dari yang diharapkan"
+
+msgid "查看 **Interval (s)**。手动设定是切换间隔的下限，例如 1 秒最多约每秒翻一页；需要更快时先减小它"
+msgstr "Periksa **Interval (s)**, waktu minimal antara halaman. Satu detik membatasi pemutaran menjadi sekitar satu halaman per detik. Turunkan untuk puterkannya lebih cepat."
+
+msgid "跳转后首屏慢，随后恢复"
+msgstr "Halaman pertama lambat setelah pencarian, kemudian pemutaran pulih"
+
+msgid "跳到长视频深处需要寻帧并准备当前页；先用较小预览比例，比较各来源的分辨率和编码"
+msgstr "Pencarian mendalam membutuhkan menemukan bingkai dan mempersiapkan halaman saat ini. Cobalah pratinjau yang lebih kecil dan bandingkan resolusi sumber dan codec."
+
+msgid "供给持续跟不上"
+msgstr "Pasokan terus tertinggal di belakang pemutaran"
+
+msgid "从 Balanced 切到 Performance 或 Maximum；如果仍受限，减小预览尺寸、可见算法数或每页图像数"
+msgstr "Pergeseran dari Balanced ke Performance atau Maximum. Jika persediaan masih tertinggal, kurangi ukuran pratinjau, jumlah algoritma yang terlihat, atau item per halaman."
+
+msgid "大体流畅，偶尔等下一页"
+msgstr "Sebagian besar halus, dengan terkadang menunggu untuk halaman berikutnya"
+
+msgid "**Cache frames** 控制近区，乘以 **Cache multiplier** 得到外层范围。适当增大可利用空闲资源提前准备，代价是更多磁盘读写和空间"
+msgstr "**Kerangka cache** mengatur radius dalam. Perkalikan dengan **Multiplikator cache** untuk radius luar. Jendela yang lebih besar dapat menggunakan kapasitas kosong untuk memesan lebih banyak halaman dengan biaya ruang disk dan I / O."
+
+msgid "Eco、Balanced、Performance、Maximum 提供不同的 CPU 和内存预算。持续速度还取决于解码、算法、拼接和磁盘。缓存会随浏览位置更新；需要长期保留的结果请导出。"
+msgstr "Eco, Balanced, Performance, dan Maximum menawarkan anggaran CPU dan memori yang berbeda. Kecepatan yang berkelanjutan juga tergantung pada dekoding, algoritma, jahitan, dan disk I / O. Cache mengikuti posisi penelusuran Anda. Ekspor hasil apapun yang ingin Anda simpan."

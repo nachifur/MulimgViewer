@@ -8,6 +8,7 @@ import time
 import wx
 from pathlib import Path
 
+from . import localization
 from .image_encoding import LEGACY_TO_CURRENT, ORDER
 from .path_select import on_video_mode_change
 from .render_layout import normalize_gaps
@@ -99,7 +100,7 @@ def read_config(path):
         return {}
     if 'output' not in data:
         sections = {key: data.pop(key) for key in
-                    ('hotkeys', 'exif_display', 'exif_tag_mappings', 'window_state', 'save_format_order', 'settings_sections') if key in data}
+                    ('hotkeys', 'exif_display', 'exif_tag_mappings', 'window_state', 'save_format_order', 'settings_sections', 'language') if key in data}
         data = dict(sections, output=data)
     output = data.get('output')
     if not isinstance(output, dict):
@@ -174,13 +175,14 @@ def synchronize(directory, gui_defaults, hotkeys, section_defaults=None):
     directory = Path(directory)
     migrate_config_roles(directory)
     baseline_path, saved_path = directory / 'default_config.json', directory / 'userdef_config.json'
-    fallback = {'output': gui_defaults, 'hotkeys': hotkeys}
+    fallback = {'output': gui_defaults, 'hotkeys': hotkeys, 'language': localization.DEFAULT_LANGUAGE}
     if section_defaults is not None:
         fallback['settings_sections']=section_defaults
         fallback['window_state']={'sidebar_width_dip':None}
     if 'save_format' in gui_defaults:fallback['save_format_order']=ORDER
     baseline = read_config(baseline_path)
     baseline = merge_missing(baseline, fallback)
+    baseline["language"] = localization.DEFAULT_LANGUAGE
     if section_defaults is not None:
         # Reset follows the current FBP; saved and session fold preferences
         # remain independent and are only backfilled for newly added groups.
@@ -394,6 +396,7 @@ class ConfigurationMixin:
             # frame's AcceleratorTable leaves these active on some platforms.
             parsed = self.parse_hotkey(self.hotkeys[action])
             reserved = getattr(self, '_editing_accelerators', False) and parsed and parsed[1] in EDITOR_NAVIGATION_KEYS
+            base_label = localization.tr(base_label)
             label = base_label if reserved else f"{base_label}\t{hotkey_text}"
             if menu_item.GetItemLabel() != label:
                 menu_item.SetItemLabel(label)
@@ -451,6 +454,7 @@ class ConfigurationMixin:
             data['interval'] = str(self.shared_config.manual_interval)
         data['output_directory']=self.out_path_str
         current['output'].update(data)
+        current['language'] = localization.language
         current['hotkeys'] = self.hotkeys
         current['settings_sections'] = self._capture_settings_sections()
         self._capture_sidebar_preference(current)
@@ -480,6 +484,8 @@ class ConfigurationMixin:
             # Reset first so invalid values cannot inherit a previous session's UI.
             apply_value(name, control, self._gui_config_defaults[name])
             apply_value(name, control, full_config['output'].get(name))
+        localization.set_language(full_config.get('language'))
+        full_config['language'] = localization.language
         self._restore_settings_sections(full_config.get('settings_sections'))
         self._sync_title_controls()
         self._sync_save_controls()

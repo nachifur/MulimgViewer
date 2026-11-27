@@ -4,6 +4,8 @@ hide-toc: true
 
 # MulimgViewer 中文手册
 
+[选择文档语言 · Choose your language](languages.md)
+
 `````{container} manual-highlights
 
 ````{container} product-hero
@@ -61,6 +63,20 @@ Per source 设为 1,3。点中 B/02.png，按 Ctrl+S，再打开输出目录核�
 ````
 `````
 
+```{container} demo-labels
+- 关闭
+- 试试同步翻帧
+- 上一帧
+- 下一帧
+- Cat 与 Sunset 同步画面
+- 试试并行挑图
+- 点选任一文件，查看两个来源会一起保存哪一张。
+- 将一起保存
+- 功能亮点
+- 恢复轮播
+- 暂停轮播
+```
+
 ```{container} manual-guides
 - [下载与安装](resources/install.md) 选择系统对应的桌面包，或从源码安装
 - [界面与快捷键](resources/interface.md) 从图标或菜单名查操作
@@ -100,6 +116,7 @@ resources/large-images
 :caption: 开发与贡献
 
 dev/dev
+dev/localization
 dev/release
 misc/todo
 ```
@@ -110,4 +127,11 @@ misc/todo
 
 misc/changelog
 misc/acknowledgements
+```
+
+```{toctree}
+:hidden:
+:caption: Languages
+
+languages
 ```

@@ -22,11 +22,27 @@ def verify_wheel(wheel, version):
             name = "mulimgviewer/" + source.relative_to(package).as_posix()
             if archive.read(name).splitlines() != source.read_bytes().splitlines():
                 raise ValueError(f"Wheel translation differs: {name}")
+        resources = ["mulimgviewer.png", "mulimgviewer.svg", "configs/default_config.json",
+                     "configs/config_schema.json", "configs/userdef_config.json"]
+        for pattern in ("src/custom_func/*/main.py", "src/custom_func/*/plugin.json",
+                        "font/using/*", "images/*.png"):
+            resources.extend(path.relative_to(package).as_posix()
+                             for path in package.glob(pattern) if path.is_file())
+        missing = sorted(name for name in resources if f"mulimgviewer/{name}" not in archive.namelist())
+        if missing:
+            raise ValueError(f"Missing runtime resources in {wheel.name}: {', '.join(missing)}")
         version_file = "src/mulimgviewer/release_version.py"
         if (metadata["Version"] != version or
                 archive.read("mulimgviewer/release_version.py").splitlines() !=
                 (ROOT / version_file).read_bytes().splitlines()):
             raise ValueError(f"Wheel metadata or packaged application version differs: {wheel}")
+
+
+def verify_distributions(dist, version):
+    wheels = list(dist.glob(f"mulimgviewer-{version}-*.whl"))
+    if len(wheels) != 1 or not (dist / f"mulimgviewer-{version}.tar.gz").is_file():
+        raise ValueError(f"Expected one v{version} wheel and its source archive under {dist}")
+    verify_wheel(wheels[0], version)
 
 
 def release_version():
@@ -41,6 +57,15 @@ def check_release(prepare=False, full=False, tag=None):
     if tag and tag != f"v{version}":
         raise ValueError(f"Tag {tag} does not match v{version}")
 
+    # Older install instructions still point to install.yaml.
+    environment = (ROOT / "environment.yml").read_bytes().replace(b"\r\n", b"\n")
+    legacy = ROOT / "install.yaml"
+    expected_environment = b"# Generated from environment.yml by tools/release.py --prepare.\n" + environment
+    if not legacy.is_file() or legacy.read_bytes().replace(b"\r\n", b"\n") != expected_environment:
+        if not prepare:
+            raise ValueError("install.yaml is stale. Run tools/release.py --prepare")
+        legacy.write_bytes(expected_environment)
+
     languages = run_path(str(ROOT / "src/mulimgviewer/src/languages.py"))["LANGUAGE_INFO"]
     links = []
     for name, target in languages.values():
@@ -54,11 +79,11 @@ def check_release(prepare=False, full=False, tag=None):
             raise ValueError("Documentation language links are stale. Run tools/release.py --prepare")
         directory.write_text(expected, encoding="utf-8")
 
-    template_path = ROOT / "README-v4.md"
+    template_path = ROOT / "README.template.md"
     template = template_path.read_text(encoding="utf-8")
     begin, end = "<!-- manual-links -->", "<!-- /manual-links -->"
     if template.count(begin) != 1 or template.count(end) != 1 or template.index(begin) >= template.index(end):
-        raise ValueError("README-v4.md needs one marked block for manual links")
+        raise ValueError("README.template.md needs one marked block for manual links")
     before, block = template.split(begin)
     _, after = block.split(end)
     direct_links = [
@@ -125,10 +150,7 @@ def check_release(prepare=False, full=False, tag=None):
         dist = ROOT / "build" / f"release-{version}" / "dist"
         subprocess.run([sys.executable, "-m", "build", "--outdir", str(dist)],
                        cwd=ROOT, check=True, env={**os.environ, "PYTHONUTF8": "1"})
-        wheels = list(dist.glob(f"mulimgviewer-{version}-*.whl"))
-        if len(wheels) != 1 or not (dist / f"mulimgviewer-{version}.tar.gz").is_file():
-            raise ValueError(f"Expected one v{version} wheel and its source archive under {dist}")
-        verify_wheel(wheels[0], version)
+        verify_distributions(dist, version)
         print(f"Local checks passed for v{version}. Commit the reviewed files and verify CI before tagging.")
     else:
         print(f"Release metadata verified: {version}")
@@ -139,11 +161,14 @@ if __name__ == "__main__":
     parser.add_argument("--prepare", action="store_true", help="Update the root README for v4 and later")
     parser.add_argument("--full", action="store_true", help="Check local tag availability, docs, tests and distributions")
     parser.add_argument("--tag", help="Verify a release tag and write GitHub release notes")
+    parser.add_argument("--dist", type=Path, help="Check the built wheel, runtime resources and source archive")
     parser.add_argument("--print-tag", action="store_true", help="Print the tag for the configured version")
     args = parser.parse_args()
     try:
         if args.print_tag:
             print(f"v{release_version()}")
+        elif args.dist:
+            verify_distributions(args.dist, release_version())
         else:
             check_release(args.prepare, args.full, args.tag)
     except (ValueError, OSError, subprocess.CalledProcessError) as error:

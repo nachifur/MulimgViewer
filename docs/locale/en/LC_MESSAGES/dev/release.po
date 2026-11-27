@@ -25,8 +25,8 @@ msgstr "Set `__version__` to `\"4.0.0\"` in `src/mulimgviewer/release_version.py
 msgid "平时将变更说明写在 `CHANGELOG.md` 的 `## 未发布` 下。发布时只需在上述版本文件中填写一次版本号。`--prepare` 会将待发布说明归入该版本，并生成对应的 README。检查模板里的示例与配图后执行以下命令。"
 msgstr "Collect release notes under `## 未发布` in `CHANGELOG.md`. Enter the version number only in the version file above. The prepare command moves pending notes into that version and generates its README. Review the examples and images before running the commands."
 
-msgid "版本为 3.9.7 时保留原 README。从 4.0.0 起，脚本会用模板生成根目录的 `README.md`。修改新版介绍时编辑模板，再重新生成。"
-msgstr "Version 3.9.7 keeps the original README. Starting with 4.0.0, the script generates the root `README.md` from the template. Edit the template and regenerate when changing the release introduction."
+msgid "版本为 3.9.7 时保留原 README。从 4.0.0 起，脚本会用根目录的 `README.template.md` 生成根目录的 `README.md`。修改新版介绍时编辑模板，再重新生成。"
+msgstr "Version 3.9.7 keeps the original README. Starting with 4.0.0, the script generates the root `README.md` from the template. Edit the template and regenerate when changing the release introduction. (`README.template.md` → `README.md`)"
 
 msgid "检查是否可以提交"
 msgstr "Check whether the candidate is ready to commit"
@@ -69,3 +69,6 @@ msgstr "Use the {ref}`desktop bundle guide <desktop-bundle>` to check the target
 
 msgid "[多语言维护教程](localization.md)包括界面译表、完整手册、回归检查和 Read the Docs 发布流程。"
 msgstr "The [translation guide](localization.md) covers desktop catalogs, complete manuals, regression checks and publication on Read the Docs."
+
+msgid "发布门槛包括三平台分发包检查和同一标签的 Windows 严格回归。"
+msgstr "Publication requires distribution checks on all three platforms and strict Windows regression tests on the same tag."

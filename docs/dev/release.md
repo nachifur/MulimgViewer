@@ -23,7 +23,7 @@ python tools/release.py --prepare
 git diff -- README.md CHANGELOG.md src/mulimgviewer/release_version.py
 ```
 
-版本为 3.9.7 时保留原 README。从 4.0.0 起，脚本会用模板生成根目录的 `README.md`。修改新版介绍时编辑模板，再重新生成。
+版本为 3.9.7 时保留原 README。从 4.0.0 起，脚本会用根目录的 `README.template.md` 生成根目录的 `README.md`。修改新版介绍时编辑模板，再重新生成。
 
 ## 检查是否可以提交
 
@@ -58,6 +58,8 @@ git rev-parse HEAD
 git tag -a $(python tools/release.py --print-tag) -m "MulimgViewer release"
 git push origin "refs/tags/$(python tools/release.py --print-tag)"
 ```
+
+发布门槛包括三平台分发包检查和同一标签的 Windows 严格回归。
 
 在 GitHub Actions 核对标签对应的构建和发布任务。三个系统的 Python 构建成功后，工作流从 CHANGELOG 提取说明，将 Python 分发包上传至 GitHub Release 和 PyPI。维护者需在仓库配置有效的 `PYPI_API_TOKEN`。桌面离线归档由独立工作流生成；在同一 Release 的附件中上传已验收的归档。
 

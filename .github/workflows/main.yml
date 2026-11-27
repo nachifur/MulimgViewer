@@ -74,13 +74,26 @@ jobs:
       - name: Build
         run: |
           python -m build
+          python tools/release.py --dist dist
+      - name: Build the versioned multilingual manual before publishing
+        if: runner.os == 'Linux' && startsWith(github.ref, 'refs/tags/v')
+        env:
+          READTHEDOCS_VERSION: ${{ github.ref_name }}
+        run: |
+          python -m pip install -r docs/requirements.txt
+          python tools/build_translations.py --output docs/_build/multilingual
       - uses: actions/upload-artifact@v7
         if: runner.os == 'Linux'
         with:
           name: python-distributions
           path: dist/*
+  release-regression:
+    if: startsWith(github.ref, 'refs/tags/v')
+    uses: ./.github/workflows/regression-tests.yml
+    permissions:
+      contents: read
   publish:
-    needs: build
+    needs: [build, release-regression]
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     steps:

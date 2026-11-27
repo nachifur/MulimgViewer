@@ -115,7 +115,7 @@ msgid "[使用技巧](resources/large-images.md) 核对来源、视频时间与�
 msgstr "[Praktische Tipps](resources/large-images.md) Überprüfen Sie die Quelle, den Zeitpunkt und die Details der nativen Auflösung"
 
 msgid "本页演示开发版功能。正在使用 3.9.7？请查看 [3.9.7 中文手册](https://mulimgviewer.readthedocs.io/zh-cn/docs-v3.9.7-r1/)。"
-msgstr "Diese Seite zeigt die Entwicklungsversion vor. - 3.9.7 läuft? Sieh die [Archivd 3.9.7 Handbuch (chinesisch)](https://mulimgviewer.readthedocs.io/zh-cn/docs-v3.9.7-r1/)."
+msgstr "Diese Seite zeigt die Entwicklungsversion. Verwenden Sie Version 3.9.7? Lesen Sie das [chinesische Handbuch zu 3.9.7](https://mulimgviewer.readthedocs.io/zh-cn/docs-v3.9.7-r1/)."
 
 msgid "当前手册版本为 {sub-ref}`release`。[查看 3.9.7 中文手册](https://mulimgviewer.readthedocs.io/zh-cn/docs-v3.9.7-r1/)。"
 msgstr "Dieses Handbuch umfasst die Version {sub-ref}`release`. [Siehe das archivierte Handbuch 3.9.7 (chinesisch)](https://mulimgviewer.readthedocs.io/zh-cn/docs-v3.9.7-r1/)."

@@ -102,4 +102,3 @@ def install_language_menu(frame):
         frame.Bind(wx.EVT_MENU, lambda event, selected=code: set_language(selected), item)
     frame.main_menu_bar.Append(menu, "Language")
     bind_window(frame)
-

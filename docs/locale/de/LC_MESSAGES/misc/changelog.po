@@ -56,3 +56,6 @@ msgstr "Das Layout des Hauptfensters verbessert."
 
 msgid "修复了带透明通道的图像（RGBA）显示异常的问题。"
 msgstr "Ein Display-Problem mit einem Alpha-Kanal (RGBA) wurde behoben."
+
+msgid "桌面界面和使用手册支持 15 种语言；从语言菜单切换，配置会记住选择。"
+msgstr "Oberfläche und Handbuch unterstützen 15 Sprachen. Die im Sprachmenü gewählte Sprache wird gespeichert."

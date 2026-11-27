@@ -85,10 +85,10 @@ def main():
     parser.add_argument('--case', action='append', default=[], help='Full test id/glob, e.g. *save*')
     parser.add_argument('--failed', type=Path, help='Rerun failed cases from a prior report.json')
     parser.add_argument('--list', action='store_true', help='List modules without running tests')
-    parser.add_argument('--timeout', type=int, default=600, help='Seconds per module; includes GUI setup')
+    parser.add_argument('--timeout', type=int, help='Override module deadline in seconds (600 by default, 3600 for the full asynchronous GUI suite)')
     parser.add_argument('--strict-skips', action='store_true', help='Return failure if any case is skipped')
     args=parser.parse_args()
-    if args.timeout<1:parser.error('--timeout must be positive')
+    if args.timeout is not None and args.timeout<1:parser.error('--timeout must be positive')
     modules=sorted(path.stem for path in (HOME/'cases').glob('test_*.py'))
     selected={}
     if args.failed:
@@ -121,6 +121,7 @@ def main():
                 for name,path in report['tools'].items()})
         for index,name in enumerate(modules,1):
             print(f'[{index}/{len(modules)}] {name}', flush=True)
+            timeout = args.timeout or (3600 if name == 'test_video_gui_async' else 600)
             target=output/(name+'.json')
             runtime=output/'workspaces'/name;runtime.mkdir(parents=True)
             command=[sys.executable,str(HOME/'support/worker.py'),name,str(target)]
@@ -128,7 +129,7 @@ def main():
             with (output/(name+'.log')).open('w',encoding='utf-8') as log:
                 process=subprocess.Popen(command,cwd=runtime,env=env,stdout=log,stderr=subprocess.STDOUT)
                 timed_out=False
-                try:code=process.wait(timeout=args.timeout)
+                try:code=process.wait(timeout=timeout)
                 except subprocess.TimeoutExpired:
                     terminate_tree(process);code=-1;timed_out=True
                 except KeyboardInterrupt:
@@ -139,7 +140,7 @@ def main():
             else:module=dict(name=name,status='failed',cases=[],infrastructure_error='Worker exited without a report')
             if code or timed_out:
                 module['status']='failed'
-                if timed_out:module['infrastructure_error']=f'Timed out after {args.timeout}s; inspect {name}.log'
+                if timed_out:module['infrastructure_error']=f'Timed out after {timeout}s; inspect {name}.log'
                 elif not module.get('infrastructure_error') and not any(r['status'] in ('failed','error') for r in module['cases']):
                     module['infrastructure_error']=f'Worker exit code {code}; inspect {name}.log'
             report['modules'].append(module)

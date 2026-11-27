@@ -6,6 +6,7 @@ name: Functional regression report
   push:
     branches: [master, main]
   workflow_dispatch:
+  workflow_call:
 
 permissions:
   contents: read
@@ -13,7 +14,7 @@ permissions:
 jobs:
   windows-regression:
     runs-on: windows-latest
-    timeout-minutes: 35
+    timeout-minutes: 120
     env:
       PYTHONUTF8: '1'
       PYTHONIOENCODING: utf-8

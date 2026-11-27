@@ -37,7 +37,7 @@ from .video_manager import VideoManager, PerformanceMonitor
 from .playback_controls import NavigationMixin, VideoPlaybackMixin
 from .status_bar import StatusBarMixin
 from .configuration import ConfigurationMixin
-from .settings_panel import SettingsPanelMixin
+from .settings_panel import SettingsPanelMixin, SettingsSection
 
 
 try:
@@ -186,7 +186,8 @@ class MulimgViewer(SettingsPanelMixin, NavigationMixin, StatusBarMixin, VideoPla
     def _refresh_language(self):
         self._language_items[localization.language].Check(True)
         for section in self._settings_sections().values():
-            section._update_caption()
+            if isinstance(section, SettingsSection):
+                section._update_caption()
         self.update_hotkey_menu_labels()
         self._sync_title_controls()
         if getattr(self.ImgManager, 'img_num', 0):

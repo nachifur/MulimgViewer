@@ -24,8 +24,8 @@ msgstr "Set `__version__` untuk `\"4.0.0\"` di `src/mulimgviewer/release_version
 msgid "平时将变更说明写在 `CHANGELOG.md` 的 `## 未发布` 下。发布时只需在上述版本文件中填写一次版本号。`--prepare` 会将待发布说明归入该版本，并生成对应的 README。检查模板里的示例与配图后执行以下命令。"
 msgstr "Kumpulkan catatan rilis di bawah `## 未发布` di `CHANGELOG.md`. Masukkan nomor versi hanya di file versi di atas. Komando siap memindahkan catatan pending ke versi tersebut dan menghasilkan README. Periksa contoh dan gambar sebelum menjalankan perintah."
 
-msgid "版本为 3.9.7 时保留原 README。从 4.0.0 起，脚本会用模板生成根目录的 `README.md`。修改新版介绍时编辑模板，再重新生成。"
-msgstr "Versi 3.9.7 menyimpan README asli. Mulai dari 4.0.0, skrip menghasilkan root `README.md` dari template. Mengedit template dan regenerasi saat mengubah rilis pengenalan."
+msgid "版本为 3.9.7 时保留原 README。从 4.0.0 起，脚本会用根目录的 `README.template.md` 生成根目录的 `README.md`。修改新版介绍时编辑模板，再重新生成。"
+msgstr "Versi 3.9.7 menyimpan README asli. Mulai dari 4.0.0, skrip menghasilkan root `README.md` dari template. Mengedit template dan regenerasi saat mengubah rilis pengenalan. (`README.template.md` → `README.md`)"
 
 msgid "检查是否可以提交"
 msgstr "Periksa apakah calon siap untuk berkomitmen"
@@ -68,3 +68,6 @@ msgstr "Periksa pekerjaan membangun dan publikasi untuk tag di GitHub Actions. S
 
 msgid "[多语言维护教程](localization.md)包括界面译表、完整手册、回归检查和 Read the Docs 发布流程。"
 msgstr "Pemberantasan [panduan penerjemahan](localization.md) mencakup katalog desktop, manual lengkap, pemeriksaan regresi dan publikasi di Read the Docs."
+
+msgid "发布门槛包括三平台分发包检查和同一标签的 Windows 严格回归。"
+msgstr "Rilis memerlukan pemeriksaan paket pada ketiga platform dan uji regresi ketat di Windows untuk tag yang sama."

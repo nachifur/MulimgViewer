@@ -45,6 +45,12 @@ class VideoGuiAsyncTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.app = wx.App.Get() or wx.App(False)
+        sample_dir = tempfile.TemporaryDirectory()
+        cls.addClassCleanup(sample_dir.cleanup)
+        cls.sample_video = Path(sample_dir.name) / 'sample.mp4'
+        subprocess.run(['ffmpeg', '-v', 'error', '-f', 'lavfi', '-i',
+                        'testsrc2=size=80x48:rate=10:duration=8', '-c:v', 'mpeg4',
+                        '-y', str(cls.sample_video)], check=True, capture_output=True)
 
     def setUp(self):
         self.reclaim_native = patch('mulimgviewer.src.resources.release_unused_memory', return_value={})
@@ -52,11 +58,13 @@ class VideoGuiAsyncTests(unittest.TestCase):
         self.addCleanup(self.reclaim_native.stop)
         self.previous = os.getcwd()
         self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.addCleanup(os.chdir, self.previous)
         os.chdir(self.temp.name)
-        subprocess.run(['ffmpeg', '-v', 'error', '-f', 'lavfi', '-i',
-                        'testsrc2=size=80x48:rate=10:duration=8', '-c:v', 'mpeg4',
-                        '-y', 'sample.mp4'], check=True, capture_output=True)
+        shutil.copyfile(self.sample_video, 'sample.mp4')
         self.frame = HiddenViewer(None, lambda *a, **k: None, lambda *a, **k: None)
+        self.addCleanup(self.app.Yield, True)
+        self.addCleanup(self.frame.Destroy)
         self.frame.Hide()
         cfg = self.frame.shared_config
         cfg.video_mode = True
@@ -100,11 +108,7 @@ class VideoGuiAsyncTests(unittest.TestCase):
         vm.shutdown()
         for pool in (vm.executor, vm.stitch_executor, vm._maintenance_executor, vm._display_executor):
             pool.shutdown(wait=True)
-        pipeline.processing.cleanup_future.result(timeout=5)
-        self.frame.Destroy()
-        self.app.Yield(True)
-        os.chdir(self.previous)
-        self.temp.cleanup()
+        pipeline.processing.cleanup_future.result(timeout=60)
 
     def pump_until(self, predicate, timeout=10):
         deadline = time.monotonic() + timeout

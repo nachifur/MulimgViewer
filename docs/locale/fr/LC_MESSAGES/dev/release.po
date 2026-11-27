@@ -24,8 +24,8 @@ msgstr "Série `__version__` à `\"4.0.0\"` dans `src/mulimgviewer/release_versi
 msgid "平时将变更说明写在 `CHANGELOG.md` 的 `## 未发布` 下。发布时只需在上述版本文件中填写一次版本号。`--prepare` 会将待发布说明归入该版本，并生成对应的 README。检查模板里的示例与配图后执行以下命令。"
 msgstr "Rassembler les notes de libération sous `## 未发布` dans `CHANGELOG.md`. Entrez le numéro de version uniquement dans le fichier de version ci-dessus. La commande préparer déplace les notes en attente dans cette version et génère son README. Examinez les exemples et les images avant d'exécuter les commandes."
 
-msgid "版本为 3.9.7 时保留原 README。从 4.0.0 起，脚本会用模板生成根目录的 `README.md`。修改新版介绍时编辑模板，再重新生成。"
-msgstr "La version 3.9.7 conserve le README original. À partir de 4.0.0, le script génère la racine `README.md` du modèle. Modifier le modèle et régénérer en modifiant l'introduction de la version."
+msgid "版本为 3.9.7 时保留原 README。从 4.0.0 起，脚本会用根目录的 `README.template.md` 生成根目录的 `README.md`。修改新版介绍时编辑模板，再重新生成。"
+msgstr "La version 3.9.7 conserve le README original. À partir de 4.0.0, le script génère la racine `README.md` du modèle. Modifier le modèle et régénérer en modifiant l'introduction de la version. (`README.template.md` → `README.md`)"
 
 msgid "检查是否可以提交"
 msgstr "Vérifiez si le candidat est prêt à s'engager"
@@ -68,3 +68,6 @@ msgstr "Vérifiez les tâches de construction et de publication pour la balise d
 
 msgid "[多语言维护教程](localization.md)包括界面译表、完整手册、回归检查和 Read the Docs 发布流程。"
 msgstr "Les [guide de traduction](localization.md) couvre les catalogues de bureau, des manuels complets, des contrôles de régression et la publication sur Read the Docs."
+
+msgid "发布门槛包括三平台分发包检查和同一标签的 Windows 严格回归。"
+msgstr "La publication exige la validation des paquets sur les trois plateformes et des tests de régression stricts sous Windows pour le même tag."

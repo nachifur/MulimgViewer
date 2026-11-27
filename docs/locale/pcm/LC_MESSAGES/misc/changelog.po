@@ -56,3 +56,6 @@ msgstr "Di layout of di main window"
 
 msgid "修复了带透明通道的图像（RGBA）显示异常的问题。"
 msgstr "Di display issue affect images wit alpha channel (RGBA)."
+
+msgid "桌面界面和使用手册支持 15 种语言；从语言菜单切换，配置会记住选择。"
+msgstr "Di desktop app and manual dey for 15 languages. Choose di language for di menu; di settings go remember wetin you choose."

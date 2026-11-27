@@ -56,3 +56,6 @@ msgstr "Meningkatkan tata letak jendela utama."
 
 msgid "修复了带透明通道的图像（RGBA）显示异常的问题。"
 msgstr "Dilengkapi masalah tampilan yang mempengaruhi gambar dengan saluran alfa (RGBA)."
+
+msgid "桌面界面和使用手册支持 15 种语言；从语言菜单切换，配置会记住选择。"
+msgstr "Antarmuka aplikasi dan panduan tersedia dalam 15 bahasa. Bahasa yang dipilih dalam menu disimpan di pengaturan."

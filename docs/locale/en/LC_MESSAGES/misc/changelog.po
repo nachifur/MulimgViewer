@@ -109,3 +109,6 @@ msgstr "Unreleased"
 
 msgid "3.9.7"
 msgstr "3.9.7"
+
+msgid "桌面界面和使用手册支持 15 种语言；从语言菜单切换，配置会记住选择。"
+msgstr "The desktop interface and manual support 15 languages. Select a language in the menu and the configuration remembers your choice."

@@ -5,12 +5,14 @@ repos:
   - repo: local
     hooks:
       - id: release-readme
-        name: Synchronize release README
+        name: Synchronize release files
         entry: python tools/release.py --prepare
         language: python
         pass_filenames: false
         files: >-
-          ^(src/mulimgviewer/release_version.py|README(-v4)?.md|CHANGELOG.md)$
+          (?x)^(src/mulimgviewer/(release_version|src/languages)\.py|
+          README(\.template)?\.md|CHANGELOG\.md|environment\.yml|install\.yaml|
+          docs/languages\.md)$
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
     hooks:
@@ -40,6 +42,8 @@ repos:
     rev: v2.4.3
     hooks:
       - id: codespell
+        # The English dictionary treats valid translated words as typos.
+        exclude: ^(docs/locale/(?!en/)[^/]+/LC_MESSAGES/.*\.po|src/mulimgviewer/src/(locales/(?!en\.json$)[^/]+\.json|translations_es\.py))$
         additional_dependencies:
           - tomli
   - repo: https://github.com/jorisroovers/gitlint
